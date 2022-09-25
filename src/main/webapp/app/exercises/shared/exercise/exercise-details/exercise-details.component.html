@@ -17,7 +17,7 @@
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
 <dd>
-    <span>{{ exercise.title }}</span>
+    <span id="exercise-detail-title">{{ exercise.title }}</span>
 </dd>
 <ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING">
     <dt><span jhiTranslate="artemisApp.exercise.shortName">short Name</span></dt>
@@ -120,7 +120,7 @@
     </dd>
 </ng-container>
 <ng-container *ngIf="isExamExercise === false && exercise.course?.onlineCourse === true && exercise.isAtLeastEditor === true">
-    <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
+    <dt><span jhiTranslate="artemisApp.lti.lti">LTI</span></dt>
     <dd>
         <a [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id, 'lti-configuration']">LTI Configuration</a>
     </dd>

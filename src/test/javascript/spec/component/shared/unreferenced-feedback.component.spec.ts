@@ -4,11 +4,14 @@ import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockComponent } from 'ng-mocks';
 import { Feedback } from 'app/entities/feedback.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/assessment-detail.component';
+import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 describe('UnreferencedFeedbackComponent', () => {
     let comp: UnreferencedFeedbackComponent;
     let fixture: ComponentFixture<UnreferencedFeedbackComponent>;
+    let sgiService: StructuredGradingCriterionService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -20,6 +23,7 @@ describe('UnreferencedFeedbackComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UnreferencedFeedbackComponent);
                 comp = fixture.componentInstance;
+                sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
             });
     });
 
@@ -46,14 +50,14 @@ describe('UnreferencedFeedbackComponent', () => {
         comp.addReferenceIdForExampleSubmission = true;
         comp.addUnreferencedFeedback();
 
-        expect(comp.unreferencedFeedback.length).toBe(1);
-        expect(comp.unreferencedFeedback[0].reference).not.toBe(undefined);
+        expect(comp.unreferencedFeedback).toHaveLength(1);
+        expect(comp.unreferencedFeedback[0].reference).toBeDefined();
 
         fixture.detectChanges();
         comp.addUnreferencedFeedback();
 
-        expect(comp.unreferencedFeedback.length).toBe(2);
-        expect(comp.unreferencedFeedback[1].reference).not.toBe(undefined);
+        expect(comp.unreferencedFeedback).toHaveLength(2);
+        expect(comp.unreferencedFeedback[1].reference).toBeDefined();
     });
 
     it('should update unreferenced feedback', () => {
@@ -63,7 +67,7 @@ describe('UnreferencedFeedbackComponent', () => {
         feedback.text = newFeedbackText;
         comp.updateAssessment(feedback);
 
-        expect(comp.unreferencedFeedback.length).toBe(1);
+        expect(comp.unreferencedFeedback).toHaveLength(1);
         expect(comp.unreferencedFeedback[0].text).toBe(newFeedbackText);
     });
 
@@ -72,6 +76,20 @@ describe('UnreferencedFeedbackComponent', () => {
         comp.unreferencedFeedback = [feedback];
         comp.deleteAssessment(feedback);
 
-        expect(comp.unreferencedFeedback.length).toBe(0);
+        expect(comp.unreferencedFeedback).toHaveLength(0);
+    });
+
+    it('should add unreferenced feedback on dropping assessment instruction', () => {
+        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
+        comp.unreferencedFeedback = [];
+        jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
+            comp.unreferencedFeedback[0].gradingInstruction = instruction;
+            comp.unreferencedFeedback[0].credits = instruction.credits;
+        });
+        // Call spy function with empty event
+        comp.createAssessmentOnDrop(new Event(''));
+        expect(comp.unreferencedFeedback).toHaveLength(1);
+        expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(instruction);
+        expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
     });
 });

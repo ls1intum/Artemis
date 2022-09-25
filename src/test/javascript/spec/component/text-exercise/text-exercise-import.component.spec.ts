@@ -136,10 +136,37 @@ describe('TextExercise Import Component', () => {
         expect(comp.searchTerm).toBe(expectedSearchTerm);
 
         // It should wait first before executing search.
-        expect(pagingServiceSpy).toHaveBeenCalledTimes(0);
+        expect(pagingServiceSpy).not.toHaveBeenCalled();
 
         tick(300);
 
         expect(pagingServiceSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('should switch courseFilter/examFilter and search', fakeAsync(() => {
+        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExercises');
+        pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<TextExercise>));
+
+        fixture.detectChanges();
+        expect(comp.isCourseFilter).toBeTrue();
+        expect(comp.isExamFilter).toBeTrue();
+
+        comp.onCourseFilterChange();
+        comp.onExamFilterChange();
+        tick();
+        expect(comp.isCourseFilter).toBeFalse();
+        expect(comp.isExamFilter).toBeFalse();
+
+        expect(pagingServiceSpy).not.toHaveBeenCalled();
+        tick(300);
+
+        const expectedSearchObject = {
+            page: 1,
+            pageSize: 10,
+            searchTerm: '',
+            sortedColumn: 'ID',
+            sortingOrder: 'DESCENDING',
+        };
+        expect(pagingServiceSpy).toHaveBeenCalledWith(expectedSearchObject, false, false);
     }));
 });

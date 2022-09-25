@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks" })
-    ProgrammingSubmission findFirstByParticipationIdAndCommitHash(Long participationId, String commitHash);
+    ProgrammingSubmission findFirstByParticipationIdAndCommitHashOrderByIdDesc(Long participationId, String commitHash);
 
     @Query("""
             SELECT s FROM ProgrammingSubmission s
@@ -90,5 +90,11 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @NotNull
     default ProgrammingSubmission findByResultIdElseThrow(Long resultId) {
         return findByResultId(resultId).orElseThrow(() -> new EntityNotFoundException("Programming Submission for Result", resultId));
+    }
+
+    @NotNull
+    default ProgrammingSubmission findByIdWithEagerResultsFeedbacksAssessorElseThrow(Long submissionId) {
+        return findWithEagerResultsFeedbacksAssessorById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
     }
 }

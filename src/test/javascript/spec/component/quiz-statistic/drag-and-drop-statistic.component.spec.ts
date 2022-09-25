@@ -65,7 +65,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
         quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
     });
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         it('should call functions on Init', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
@@ -73,10 +73,10 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalled();
+            expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
-            expect(comp.websocketChannelForData).toEqual('/topic/statistic/42');
+            expect(comp.websocketChannelForData).toBe('/topic/statistic/42');
         });
 
         it('should not load Quiz if not authorised', () => {
@@ -85,7 +85,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalled();
+            expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSpy).not.toHaveBeenCalled();
         });
@@ -102,10 +102,10 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadLayout();
 
-            expect(orderDropLocationSpy).toHaveBeenCalled();
-            expect(resetLabelsSpy).toHaveBeenCalled();
-            expect(addLastBarSpy).toHaveBeenCalled();
-            expect(loadInvalidLayoutSpy).toHaveBeenCalled();
+            expect(orderDropLocationSpy).toHaveBeenCalledTimes(2);
+            expect(resetLabelsSpy).toHaveBeenCalledTimes(2);
+            expect(addLastBarSpy).toHaveBeenCalledTimes(2);
+            expect(loadInvalidLayoutSpy).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -118,8 +118,8 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadData();
 
-            expect(resetDataSpy).toHaveBeenCalled();
-            expect(updateDataSpy).toHaveBeenCalled();
+            expect(resetDataSpy).toHaveBeenCalledTimes(2);
+            expect(updateDataSpy).toHaveBeenCalledTimes(2);
         });
     });
 });

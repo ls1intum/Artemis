@@ -104,6 +104,11 @@
             "answerPost": {
                 "created": "New reply successfully created",
                 "deleted": "Reply successfully deleted"
+            },
+            "userAuthorityTooltips": {
+                "instructor": "Instructor: Responsible for course conduction.",
+                "ta": "Tutor: Responsible for helping users with their questions about the course and exercises.",
+                "student": "Student: Takes courses, participates in exercises, and asks questions."
             }
         }
     }

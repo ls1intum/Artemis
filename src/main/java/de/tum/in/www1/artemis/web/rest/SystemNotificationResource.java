@@ -60,10 +60,11 @@ public class SystemNotificationResource {
     public ResponseEntity<Notification> createSystemNotification(@RequestBody SystemNotification systemNotification) throws URISyntaxException {
         log.debug("REST request to save SystemNotification : {}", systemNotification);
         if (systemNotification.getId() != null) {
-            throw new BadRequestAlertException("A new system notification cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new system notification cannot already have an ID", ENTITY_NAME, "idExists");
         }
+        validateDatesOrThrow(systemNotification);
         SystemNotification result = systemNotificationRepository.save(systemNotification);
-        systemNotificationService.sendNotification(systemNotification);
+        systemNotificationService.distributeActiveAndFutureNotificationsToClients();
         return ResponseEntity.created(new URI("/api/notifications/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -80,11 +81,25 @@ public class SystemNotificationResource {
     public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotification systemNotification) {
         log.debug("REST request to update SystemNotification : {}", systemNotification);
         if (systemNotification.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("ID must not be null", ENTITY_NAME, "idnull");
+        }
+        validateDatesOrThrow(systemNotification);
+        if (!systemNotificationRepository.existsById(systemNotification.getId())) {
+            throw new BadRequestAlertException("No system notification with this ID found", ENTITY_NAME, "idNull");
         }
         SystemNotification result = systemNotificationRepository.save(systemNotification);
-        systemNotificationService.sendNotification(result);
+        systemNotificationService.distributeActiveAndFutureNotificationsToClients();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, systemNotification.getId().toString())).body(result);
+    }
+
+    private void validateDatesOrThrow(SystemNotification systemNotification) {
+        if (systemNotification.getNotificationDate() == null || systemNotification.getExpireDate() == null) {
+            throw new BadRequestAlertException("System notification needs both a notification and expiration date.", ENTITY_NAME, "systemNotificationNeedsBothDates");
+        }
+        if (systemNotification.getNotificationDate().isAfter(systemNotification.getExpireDate())
+                || systemNotification.getNotificationDate().equals(systemNotification.getExpireDate())) {
+            throw new BadRequestAlertException("The notification date must be before the expiration date.", ENTITY_NAME, "systemNotificationNeedsNotificationBeforeExpiration");
+        }
     }
 
     /**
@@ -127,19 +142,19 @@ public class SystemNotificationResource {
     public ResponseEntity<Void> deleteSystemNotification(@PathVariable Long id) {
         log.debug("REST request to delete SystemNotification : {}", id);
         systemNotificationRepository.deleteById(id);
-        systemNotificationService.sendNotification(null);
+        systemNotificationService.distributeActiveAndFutureNotificationsToClients();
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }
 
     /**
-     * GET /system-notifications/:id : get the "id" system notification.
+     * Returns all system notifications with an expiry date in the future or no expiry date.
      * This route is also accessible for unauthenticated users.
      *
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
-    @GetMapping("/system-notifications/active-notification")
-    public SystemNotification getActiveSystemNotification() {
-        log.debug("REST request to get active SystemNotification");
-        return systemNotificationService.findActiveSystemNotification();
+    @GetMapping("/system-notifications/active")
+    public List<SystemNotification> getActiveAndFutureSystemNotifications() {
+        log.debug("REST request to get relevant system notifications");
+        return systemNotificationService.findAllActiveAndFutureSystemNotifications();
     }
 }

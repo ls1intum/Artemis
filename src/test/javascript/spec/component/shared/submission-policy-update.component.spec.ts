@@ -31,13 +31,13 @@ describe('Submission Policy Update Form Component', () => {
         component.programmingExercise = expectedProgrammingExercise;
     });
 
-    it('Should set policy object on exercise', fakeAsync(() => {
+    it('should set policy object on exercise', fakeAsync(() => {
         component.programmingExercise.submissionPolicy = undefined;
         component.ngOnInit();
         fixture.detectChanges();
         tick();
 
-        expect(expectedProgrammingExercise.submissionPolicy).toBe(undefined);
+        expect(expectedProgrammingExercise.submissionPolicy).toBeUndefined();
 
         const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
         // We revert the enum values, since 'none' is the default type for the type picker. Therefore we
@@ -49,11 +49,11 @@ describe('Submission Policy Update Form Component', () => {
             tick();
 
             expect(expectedProgrammingExercise.submissionPolicy?.type).toBe(type);
-            expect(expectedProgrammingExercise.submissionPolicy?.id).toBe(undefined);
+            expect(expectedProgrammingExercise.submissionPolicy?.id).toBeUndefined();
         }
     }));
 
-    it('Should set submission limit correctly for all policy types', fakeAsync(() => {
+    it('should set submission limit correctly for all policy types', fakeAsync(() => {
         component.ngOnInit();
         fixture.detectChanges();
         tick();
@@ -74,7 +74,7 @@ describe('Submission Policy Update Form Component', () => {
         }
     }));
 
-    it('Should set exceeding penalty correctly for submission penalty type', fakeAsync(() => {
+    it('should set exceeding penalty correctly for submission penalty type', fakeAsync(() => {
         component.ngOnInit();
         fixture.detectChanges();
         tick();
@@ -93,7 +93,7 @@ describe('Submission Policy Update Form Component', () => {
         expect(expectedProgrammingExercise.submissionPolicy?.exceedingPenalty).toBe(73.73);
     }));
 
-    it('Should display correct input fields when penalty policy is already set', fakeAsync(() => {
+    it('should display correct input fields when penalty policy (lock repo) is already set', fakeAsync(() => {
         expectedProgrammingExercise.submissionPolicy = lockRepositoryPolicy;
         component.ngOnInit();
         fixture.detectChanges();
@@ -106,7 +106,7 @@ describe('Submission Policy Update Form Component', () => {
         expect(submissionLimitInputField.value).toBe('5');
     }));
 
-    it('Should display correct input fields when penalty policy is already set', fakeAsync(() => {
+    it('should display correct input fields when penalty policy is already set', fakeAsync(() => {
         expectedProgrammingExercise.submissionPolicy = submissionPenaltyPolicy;
         component.ngOnInit();
         fixture.detectChanges();
@@ -121,7 +121,7 @@ describe('Submission Policy Update Form Component', () => {
         expect(submissionLimitExceededPenaltyInputField.value).toBe('50.4');
     }));
 
-    it('Should display correct input fields when set policy is broken', fakeAsync(() => {
+    it('should display correct input fields when set policy is broken', fakeAsync(() => {
         expectedProgrammingExercise.submissionPolicy = brokenPenaltyPolicy;
         component.ngOnInit();
         fixture.detectChanges();
@@ -134,14 +134,14 @@ describe('Submission Policy Update Form Component', () => {
         expect(submissionLimitExceededPenaltyInputField.value).toBe('');
     }));
 
-    it('Should not be invalid when no policy is undefined', () => {
+    it('should not be invalid when no policy is undefined', () => {
         component.programmingExercise.submissionPolicy = undefined;
         component.ngOnInit();
         fixture.detectChanges();
         expect(component.invalid).toBeFalse();
     });
 
-    it('Should not be invalid when no policy is of type none', () => {
+    it('should not be invalid when no policy is of type none', () => {
         component.programmingExercise.submissionPolicy = { type: SubmissionPolicyType.NONE };
         component.ngOnInit();
         fixture.detectChanges();

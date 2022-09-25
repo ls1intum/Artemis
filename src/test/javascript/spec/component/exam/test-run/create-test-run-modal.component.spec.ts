@@ -43,8 +43,8 @@ describe('Create Test Run Modal Component', () => {
         jest.restoreAllMocks();
     });
 
-    describe('OnInit', () => {
-        it('should initialise the working time form ', fakeAsync(() => {
+    describe('onInit', () => {
+        it('should initialise the working time form', fakeAsync(() => {
             comp.exam = exam;
             // WHEN
             comp.ngOnInit();
@@ -66,16 +66,16 @@ describe('Create Test Run Modal Component', () => {
             exerciseRow.click();
             fixture.detectChanges();
             expect(comp.testRunConfiguration[1]).toEqual(exercise);
-            expect(comp.exam.exerciseGroups!.length).toEqual(1);
+            expect(comp.exam.exerciseGroups!).toHaveLength(1);
             expect(comp.testRunConfigured).toBeTrue();
             const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton')).nativeElement;
             createTestRunButton.click();
-            expect(closeStub).toHaveBeenCalled();
+            expect(closeStub).toHaveBeenCalledOnce();
             const testRun = closeStub.mock.calls[0][0] as StudentExam;
             expect(testRun).not.toBeNull();
             expect(testRun.exam).toEqual(exam);
             expect(testRun.exercises).toContain(exercise);
-            expect(testRun.workingTime).toEqual(1800);
+            expect(testRun.workingTime).toBe(1800);
         });
     });
 
@@ -84,7 +84,7 @@ describe('Create Test Run Modal Component', () => {
             comp.exam = exam;
             comp.exam.exerciseGroups = [exerciseGroup1, exerciseGroup2];
             fixture.detectChanges();
-            expect(comp.exam.exerciseGroups!.length).toEqual(1);
+            expect(comp.exam.exerciseGroups!).toHaveLength(1);
         });
     });
 

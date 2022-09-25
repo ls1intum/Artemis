@@ -1,9 +1,14 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
@@ -12,6 +17,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismSubmissionRepository;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
 
@@ -26,12 +32,15 @@ public class PlagiarismCaseService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
+    private final PlagiarismSubmissionRepository plagiarismSubmissionRepository;
+
     public PlagiarismCaseService(PlagiarismCaseRepository plagiarismCaseRepository, PlagiarismComparisonRepository plagiarismComparisonRepository, UserRepository userRepository,
-            SingleUserNotificationService singleUserNotificationService) {
+            SingleUserNotificationService singleUserNotificationService, PlagiarismSubmissionRepository plagiarismSubmissionRepository) {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.userRepository = userRepository;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.plagiarismSubmissionRepository = plagiarismSubmissionRepository;
     }
 
     /**
@@ -47,17 +56,17 @@ public class PlagiarismCaseService {
      */
     public PlagiarismCase updatePlagiarismCaseVerdict(long plagiarismCaseId, PlagiarismVerdictDTO plagiarismVerdictDTO) {
         PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(plagiarismCaseId);
-        plagiarismCase.setVerdict(plagiarismVerdictDTO.getVerdict());
-        if (plagiarismVerdictDTO.getVerdict().equals(PlagiarismVerdict.POINT_DEDUCTION)) {
-            plagiarismCase.setVerdictPointDeduction(plagiarismVerdictDTO.getVerdictPointDeduction());
+        plagiarismCase.setVerdict(plagiarismVerdictDTO.verdict());
+        if (plagiarismVerdictDTO.verdict().equals(PlagiarismVerdict.POINT_DEDUCTION)) {
+            plagiarismCase.setVerdictPointDeduction(plagiarismVerdictDTO.verdictPointDeduction());
         }
-        else if (plagiarismVerdictDTO.getVerdict().equals(PlagiarismVerdict.WARNING)) {
-            plagiarismCase.setVerdictMessage(plagiarismVerdictDTO.getVerdictMessage());
+        else if (plagiarismVerdictDTO.verdict().equals(PlagiarismVerdict.WARNING)) {
+            plagiarismCase.setVerdictMessage(plagiarismVerdictDTO.verdictMessage());
         }
         plagiarismCase.setVerdictDate(ZonedDateTime.now());
         var user = userRepository.getUserWithGroupsAndAuthorities();
         plagiarismCase.setVerdictBy(user);
-        plagiarismCaseRepository.save(plagiarismCase);
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         // Notify the student about the verdict
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, plagiarismCase.getStudent());
         return plagiarismCase;
@@ -72,7 +81,7 @@ public class PlagiarismCaseService {
     public void savePostForPlagiarismCaseAndNotifyStudent(long plagiarismCaseId, Post post) {
         PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
         plagiarismCase.setPost(post);
-        plagiarismCaseRepository.save(plagiarismCase);
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, plagiarismCase.getStudent());
     }
 
@@ -106,7 +115,9 @@ public class PlagiarismCaseService {
         if (plagiarismCase.isPresent()) {
             // add submission to existing PlagiarismCase for student
             plagiarismSubmission.setPlagiarismCase(plagiarismCase.get());
-            plagiarismComparisonRepository.save(plagiarismComparison);
+            // we do not save plagiarism comparison or plagiarism submission directly because due to issues with Cascade_All, it will automatically delete matches and re-add them
+            // we actually use a custom modifying query to avoid all issues with Cascade ALL
+            plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismSubmission.getId(), plagiarismCase.get());
         }
         else {
             // create new PlagiarismCase for student
@@ -116,7 +127,9 @@ public class PlagiarismCaseService {
             newPlagiarismCase.setStudent(student);
             var savedPlagiarismCase = plagiarismCaseRepository.save(newPlagiarismCase);
             plagiarismSubmission.setPlagiarismCase(savedPlagiarismCase);
-            plagiarismComparisonRepository.save(plagiarismComparison);
+            // we do not save plagiarism comparison or plagiarism submission directly because due to issues with Cascade_All, it will automatically delete matches and re-add them
+            // we actually use a custom modifying query to avoid all issues with Cascade ALL
+            plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismSubmission.getId(), savedPlagiarismCase);
         }
     }
 
@@ -131,18 +144,58 @@ public class PlagiarismCaseService {
         var plagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparisonId);
         plagiarismComparison.getSubmissionA().setPlagiarismCase(null);
         plagiarismComparison.getSubmissionB().setPlagiarismCase(null);
-        plagiarismComparisonRepository.save(plagiarismComparison);
+        // we do not save plagiarism comparison or plagiarism submission directly because due to issues with Cascade_All, it will automatically delete matches and re-add them
+        // we actually use a custom modifying query to avoid all issues with Cascade ALL
+        plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionA().getId(), null);
+        plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionB().getId(), null);
+
         // delete plagiarism case of Student A if it doesn't contain any submissions now
         var plagiarismCaseA = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionA().getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCaseA.isPresent() && plagiarismCaseA.get().getPlagiarismSubmissions().isEmpty()) {
             plagiarismCaseRepository.delete(plagiarismCaseA.get());
         }
+
         // delete plagiarism case of Student B if it doesn't contain any submissions now
         var plagiarismCaseB = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismComparison.getSubmissionB().getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCaseB.isPresent() && plagiarismCaseB.get().getPlagiarismSubmissions().isEmpty()) {
             plagiarismCaseRepository.delete(plagiarismCaseB.get());
+        }
+    }
+
+    public record PlagiarismMapping(Map<Long, Map<Long, PlagiarismCase>> studentIdToExerciseIdToPlagiarismCaseMap) {
+
+        /**
+         * Factory method to create a PlagiarismMapping from a PlagiarismCase collection.
+         * Useful for creating PlagiarismMapping from a database repository response.
+         *
+         * @param plagiarismCases a collection of relavant plagiarism cases with student/team ids and exercise ids present
+         * @return a populated PlagiarismMapping instance
+         */
+        public static PlagiarismMapping createFromPlagiarismCases(Collection<PlagiarismCase> plagiarismCases) {
+            Map<Long, Map<Long, PlagiarismCase>> outerMap = new HashMap<>();
+            for (PlagiarismCase plagiarismCase : plagiarismCases) {
+                for (User student : plagiarismCase.getStudents()) {
+                    var innerMap = outerMap.computeIfAbsent(student.getId(), studentId -> new HashMap<>());
+                    innerMap.put(plagiarismCase.getExercise().getId(), plagiarismCase);
+                }
+            }
+            return new PlagiarismMapping(outerMap);
+        }
+
+        public PlagiarismCase getPlagiarismCase(Long studentId, Long exerciseId) {
+            var innerMap = studentIdToExerciseIdToPlagiarismCaseMap.get(studentId);
+            return innerMap != null ? innerMap.get(exerciseId) : null;
+        }
+
+        public Map<Long, PlagiarismCase> getPlagiarismCasesForStudent(Long studentId) {
+            return studentIdToExerciseIdToPlagiarismCaseMap.getOrDefault(studentId, Collections.emptyMap());
+        }
+
+        public boolean studentHasVerdict(Long studentId, PlagiarismVerdict plagiarismVerdict) {
+            var innerMap = getPlagiarismCasesForStudent(studentId);
+            return innerMap.values().stream().anyMatch(plagiarismCase -> plagiarismVerdict.equals(plagiarismCase.getVerdict()));
         }
     }
 }

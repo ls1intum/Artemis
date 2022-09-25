@@ -14,6 +14,9 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 /**
@@ -25,12 +28,16 @@ public class ExamActivityResource {
 
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     private final ExamAccessService examAccessService;
 
     private final ExamRepository examRepository;
 
-    public ExamActivityResource(ExamMonitoringScheduleService examMonitoringScheduleService, ExamAccessService examAccessService, ExamRepository examRepository) {
+    public ExamActivityResource(ExamMonitoringScheduleService examMonitoringScheduleService, InstanceMessageSendService instanceMessageSendService,
+            ExamAccessService examAccessService, ExamRepository examRepository) {
         this.examMonitoringScheduleService = examMonitoringScheduleService;
+        this.instanceMessageSendService = instanceMessageSendService;
         this.examAccessService = examAccessService;
         this.examRepository = examRepository;
     }
@@ -42,6 +49,7 @@ public class ExamActivityResource {
      * @param action    action performed by the user
      */
     @MessageMapping("/topic/exam-monitoring/{examId}/actions")
+    @FeatureToggle(Feature.ExamLiveStatistics)
     public void updatePerformedExamActions(@DestinationVariable Long examId, @Payload ExamAction action) {
         examMonitoringScheduleService.addExamActions(examId, action);
     }
@@ -68,6 +76,7 @@ public class ExamActivityResource {
      */
     @PutMapping("api/courses/{courseId}/exams/{examId}/statistics")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.ExamLiveStatistics)
     public ResponseEntity<Boolean> updateMonitoring(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody boolean monitoring) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
@@ -76,10 +85,10 @@ public class ExamActivityResource {
         Exam result = examRepository.save(exam);
 
         if (result.isMonitoring()) {
-            examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
+            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
         }
         else {
-            examMonitoringScheduleService.cancelExamActivitySave(result.getId());
+            instanceMessageSendService.sendExamMonitoringScheduleCancel(result.getId());
         }
         examMonitoringScheduleService.notifyMonitoringUpdate(result.getId(), result.isMonitoring());
 

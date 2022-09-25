@@ -27,6 +27,10 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 
 @Component({
     template: '',
@@ -71,6 +75,7 @@ describe('ExamDetailComponent', () => {
                 MockDirective(NgbTooltip),
                 MockComponent(CourseExamArchiveButtonComponent),
                 MockDirective(DeleteButtonDirective),
+                MockPipe(ArtemisDurationFromSecondsPipe),
             ],
             providers: [
                 {
@@ -89,6 +94,8 @@ describe('ExamDetailComponent', () => {
                 MockProvider(ArtemisMarkdownService, {
                     safeHtmlForMarkdown: () => exampleHTML,
                 }),
+                MockProvider(AlertService),
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
             ],
             schemas: [],
         })
@@ -133,7 +140,7 @@ describe('ExamDetailComponent', () => {
         const editButton = examDetailComponentFixture.debugElement.query(By.css('#editButton')).nativeElement;
         editButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/edit');
+            expect(location.path()).toBe('/course-management/1/exams/1/edit');
         });
     }));
 
@@ -143,7 +150,7 @@ describe('ExamDetailComponent', () => {
         const studentExamsButton = examDetailComponentFixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
         studentExamsButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/student-exams');
+            expect(location.path()).toBe('/course-management/1/exams/1/student-exams');
         });
     }));
 
@@ -153,7 +160,7 @@ describe('ExamDetailComponent', () => {
         const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#assessment-dashboard-button')).nativeElement;
         dashboardButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/assessment-dashboard');
+            expect(location.path()).toBe('/course-management/1/exams/1/assessment-dashboard');
         });
     }));
 
@@ -163,7 +170,7 @@ describe('ExamDetailComponent', () => {
         const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#exercises-button-groups')).nativeElement;
         dashboardButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/exercise-groups');
+            expect(location.path()).toBe('/course-management/1/exams/1/exercise-groups');
         });
     }));
 
@@ -173,7 +180,7 @@ describe('ExamDetailComponent', () => {
         const scoresButton = examDetailComponentFixture.debugElement.query(By.css('#scores-button')).nativeElement;
         scoresButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/scores');
+            expect(location.path()).toBe('/course-management/1/exams/1/scores');
         });
     }));
 
@@ -183,7 +190,7 @@ describe('ExamDetailComponent', () => {
         const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#students-button')).nativeElement;
         studentsButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/students');
+            expect(location.path()).toBe('/course-management/1/exams/1/students');
         });
     }));
 
@@ -193,7 +200,7 @@ describe('ExamDetailComponent', () => {
         const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#testrun-button')).nativeElement;
         studentsButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/test-runs');
+            expect(location.path()).toBe('/course-management/1/exams/1/test-runs');
         });
     }));
 
@@ -202,12 +209,15 @@ describe('ExamDetailComponent', () => {
         expect(JSON.stringify(route)).toEqual(JSON.stringify(['/course-management', exam.course!.id, 'exams', exam.id, 'edit']));
     });
 
-    it('Should reset an exam when reset exam is called', () => {
+    it('should reset an exam when reset exam is called', () => {
+        const alertService = TestBed.inject(AlertService);
+
         // GIVEN
         examDetailComponent.exam = { ...exam, studentExams: [{ id: 1 }] };
         const responseFakeReset = { body: exam } as HttpResponse<Exam>;
         jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
         jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
+        const alertSpy = jest.spyOn(alertService, 'success').mockImplementation();
 
         // WHEN
         examDetailComponent.resetExam();
@@ -215,6 +225,8 @@ describe('ExamDetailComponent', () => {
         // THEN
         expect(service.reset).toHaveBeenCalledOnce();
         expect(examDetailComponent.exam).toEqual(exam);
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.reset.success');
     });
 
     it('should delete an exam when delete exam is called', () => {

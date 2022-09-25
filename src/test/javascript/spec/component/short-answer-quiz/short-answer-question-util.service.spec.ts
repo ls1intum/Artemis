@@ -10,7 +10,7 @@ describe('ShortAnswerQuestionUtil', () => {
         shortAnswerQuestionUtil = new ShortAnswerQuestionUtil();
     }));
 
-    it('Should transform text parts to html correctly', fakeAsync(() => {
+    it('should transform text parts to html correctly', fakeAsync(() => {
         const originalTextParts1 = [['random text'], ['    some more text', '[-spot 1]'], ['last paragraph']];
         const formattedTextParts1 = [['<p>random text</p>'], ['<p>&nbsp;&nbsp;&nbsp;&nbsp;some more text</p>', '<p>[-spot 1]</p>'], ['<p>last paragraph</p>']];
         expect(shortAnswerQuestionUtil.transformTextPartsIntoHTML(originalTextParts1)).toEqual(formattedTextParts1);
@@ -30,21 +30,21 @@ describe('ShortAnswerQuestionUtil', () => {
         expect(shortAnswerQuestionUtil.transformTextPartsIntoHTML(originalTextParts3)).toEqual(formattedTextParts3);
     }));
 
-    it('Should return the correct indentation', fakeAsync(() => {
+    it('should return the correct indentation', fakeAsync(() => {
         const sentence1 = '    this is a test';
         const sentence2 = '  `another test`';
         const sentence3 = '`last test`';
-        expect(shortAnswerQuestionUtil.getIndentation(sentence1)).toEqual('    ');
-        expect(shortAnswerQuestionUtil.getIndentation(sentence2)).toEqual('  ');
-        expect(shortAnswerQuestionUtil.getIndentation(sentence3)).toEqual('');
+        expect(shortAnswerQuestionUtil.getIndentation(sentence1)).toBe('    ');
+        expect(shortAnswerQuestionUtil.getIndentation(sentence2)).toBe('  ');
+        expect(shortAnswerQuestionUtil.getIndentation(sentence3)).toBe('');
     }));
 
-    it('Should return first word of a sentence', fakeAsync(() => {
+    it('should return first word of a sentence', fakeAsync(() => {
         const sentence1 = '         this is a test';
         const sentence2 = '    `another test`';
         const sentence3 = '';
-        expect(shortAnswerQuestionUtil.getFirstWord(sentence1)).toEqual('this');
-        expect(shortAnswerQuestionUtil.getFirstWord(sentence2)).toEqual('another');
-        expect(shortAnswerQuestionUtil.getFirstWord(sentence3)).toEqual('');
+        expect(shortAnswerQuestionUtil.getFirstWord(sentence1)).toBe('this');
+        expect(shortAnswerQuestionUtil.getFirstWord(sentence2)).toBe('another');
+        expect(shortAnswerQuestionUtil.getFirstWord(sentence3)).toBe('');
     }));
 });

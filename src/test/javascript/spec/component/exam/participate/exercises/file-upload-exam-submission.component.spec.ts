@@ -122,7 +122,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         it('should call updateViewFromSubmission', () => {
             const updateViewStub = jest.spyOn(comp, 'updateViewFromSubmission');
             comp.ngOnInit();
-            expect(updateViewStub).toHaveBeenCalled();
+            expect(updateViewStub).toHaveBeenCalledOnce();
         });
     });
 
@@ -196,15 +196,15 @@ describe('FileUploadExamSubmissionComponent', () => {
             comp.studentSubmission.isSynced = false;
             comp.submissionFile = new File([], 'file2');
             comp.updateViewFromSubmission();
-            expect(comp.submissionFile).not.toBeUndefined();
+            expect(comp.submissionFile).toBeDefined();
         });
         it('should set submitted filename and file extension', () => {
             comp.studentSubmission.isSynced = true;
             comp.submissionFile = new File([], 'file2');
             comp.updateViewFromSubmission();
-            expect(comp.submittedFileName).toEqual('file1.png');
-            expect(comp.submittedFileExtension).toEqual('png');
-            expect(comp.submissionFile).toEqual(undefined);
+            expect(comp.submittedFileName).toBe('file1.png');
+            expect(comp.submittedFileExtension).toBe('png');
+            expect(comp.submissionFile).toBeUndefined();
         });
     });
 
@@ -232,7 +232,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).not.toBeNull();
         expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-        expect(fileUploadInput.nativeElement.value).toEqual('');
+        expect(fileUploadInput.nativeElement.value).toBe('');
         jest.restoreAllMocks();
     }));
 
@@ -260,7 +260,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).not.toBeNull();
         expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-        expect(fileUploadInput.nativeElement.value).toEqual('');
+        expect(fileUploadInput.nativeElement.value).toBe('');
 
         tick();
         fixture.destroy();
@@ -279,7 +279,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         it('should just return if submissionFile is undefined', () => {
             const updateStub = jest.spyOn(fileUploadSubmissionService, 'update');
             comp.saveUploadedFile();
-            expect(updateStub).toHaveBeenCalledTimes(0);
+            expect(updateStub).not.toHaveBeenCalled();
         });
 
         it('should save if submissionFile is defined', () => {
@@ -288,7 +288,7 @@ describe('FileUploadExamSubmissionComponent', () => {
             comp.submissionFile = new File([], 'name.png');
             expect(comp.studentSubmission.filePath).not.toEqual(newFilePath);
             comp.saveUploadedFile();
-            expect(updateStub).toHaveBeenCalled();
+            expect(updateStub).toHaveBeenCalledOnce();
             expect(comp.studentSubmission.filePath).toEqual(newFilePath);
         });
     });

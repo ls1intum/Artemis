@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe, MockProviders } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProviders } from 'ng-mocks';
 describe('AttachmentUnitFormComponent', () => {
     let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentUnitFormComponent>;
     let attachmentUnitFormComponent: AttachmentUnitFormComponent;
@@ -13,7 +15,13 @@ describe('AttachmentUnitFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule],
-            declarations: [AttachmentUnitFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent)],
+            declarations: [
+                AttachmentUnitFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(FaIconComponent),
+                MockDirective(NgbTooltip),
+            ],
             providers: [MockProviders(TranslateService)],
             schemas: [],
         })
@@ -91,7 +99,7 @@ describe('AttachmentUnitFormComponent', () => {
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalled();
+        expect(submitFormSpy).toHaveBeenCalledOnce();
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -132,8 +140,8 @@ describe('AttachmentUnitFormComponent', () => {
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledTimes(0);
-        expect(submitFormEventSpy).toHaveBeenCalledTimes(0);
+        expect(submitFormSpy).not.toHaveBeenCalled();
+        expect(submitFormEventSpy).not.toHaveBeenCalled();
     });
 
     it('calls on file change on changed file', () => {
@@ -144,11 +152,5 @@ describe('AttachmentUnitFormComponent', () => {
         const fileInput = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         fileInput.dispatchEvent(new Event('change'));
         expect(onFileChangeStub).toHaveBeenCalledOnce();
-    });
-
-    it('sets file upload error correctly', () => {
-        attachmentUnitFormComponentFixture.detectChanges();
-        attachmentUnitFormComponent.setFileUploadError('lorem ipsum');
-        expect(attachmentUnitFormComponent.fileUploadErrorMessage).toEqual('lorem ipsum');
     });
 });

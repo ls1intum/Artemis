@@ -157,7 +157,7 @@ describe('CourseOverviewComponent', () => {
         sessionStorage.clear();
     });
 
-    it('Should call all methods on init', async () => {
+    it('should call all methods on init', async () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
@@ -168,12 +168,12 @@ describe('CourseOverviewComponent', () => {
 
         await component.ngOnInit();
 
-        expect(getCourseStub).toHaveBeenCalled();
-        expect(subscribeForQuizChangesStub).toHaveBeenCalled();
-        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalled();
+        expect(getCourseStub).toHaveBeenCalledOnce();
+        expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
+        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
 
-    it('Should call load Course methods on init', async () => {
+    it('should call load Course methods on init', async () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
@@ -183,9 +183,9 @@ describe('CourseOverviewComponent', () => {
 
         await component.ngOnInit();
 
-        expect(getCourseStub).toHaveBeenCalled();
-        expect(subscribeForQuizChangesStub).toHaveBeenCalled();
-        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalled();
+        expect(getCourseStub).toHaveBeenCalledTimes(2);
+        expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
+        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
 
     it('should have visible exams', () => {
@@ -259,8 +259,8 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
         component.subscribeForQuizChanges();
 
-        expect(jhiWebsocketServiceSubscribeStub).toHaveBeenCalled();
-        expect(jhiWebsocketServiceReceiveStub).toHaveBeenCalled();
+        expect(jhiWebsocketServiceSubscribeStub).toHaveBeenCalledOnce();
+        expect(jhiWebsocketServiceReceiveStub).toHaveBeenCalledOnce();
     });
 
     it('should do ngOnDestroy', () => {
@@ -270,7 +270,7 @@ describe('CourseOverviewComponent', () => {
         component.subscribeForQuizChanges(); // to have quizExercisesChannel set
         component.ngOnDestroy();
 
-        expect(jhiWebsocketServiceStub).toHaveBeenCalled();
+        expect(jhiWebsocketServiceStub).toHaveBeenCalledOnce();
     });
 
     it('should render controls if child has configuration', () => {
@@ -285,7 +285,7 @@ describe('CourseOverviewComponent', () => {
         stubSubComponent.detectChanges();
 
         const expectedButton = fixture.debugElement.query(By.css('#test-button'));
-        expect(expectedButton).not.toBe(null);
+        expect(expectedButton).not.toBeNull();
         expect(expectedButton.nativeElement.innerHTML).toBe('TestButton');
     });
 });

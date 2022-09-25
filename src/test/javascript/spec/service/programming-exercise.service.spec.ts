@@ -14,7 +14,6 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 
 describe('ProgrammingExercise Service', () => {
@@ -190,7 +189,7 @@ describe('ProgrammingExercise Service', () => {
         }));
 
         it('should delete a ProgrammingExercise', fakeAsync(() => {
-            service.delete(123, false, false).subscribe((resp) => expect(resp.ok));
+            service.delete(123, false, false).subscribe((resp) => expect(resp.ok).toBeTrue());
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
@@ -202,16 +201,6 @@ describe('ProgrammingExercise Service', () => {
             service.exportInstructorExercise(123).subscribe((resp) => expect(resp.body).toEqual(expectedBlob));
             const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/export-instructor-exercise` });
             req.flush(expectedBlob);
-            tick();
-        }));
-
-        it('should make get request', fakeAsync(() => {
-            const expected = new ProgrammingExerciseFullGitDiffReport();
-            expected.templateRepositoryCommitHash = 'XYZ';
-            expected.solutionRepositoryCommitHash = 'ABC';
-            service.getFullDiffReport(123).subscribe((resp) => expect(resp).toEqual(expected));
-            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/full-diff-report` });
-            req.flush(expected);
             tick();
         }));
     });

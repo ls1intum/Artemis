@@ -79,8 +79,8 @@ describe('User Management Update Component', () => {
         jest.restoreAllMocks();
     });
 
-    describe('OnInit', () => {
-        it('Should load authorities and language on init', inject(
+    describe('onInit', () => {
+        it('should load authorities and language on init', inject(
             [JhiLanguageHelper],
             fakeAsync((languageHelper: JhiLanguageHelper) => {
                 // GIVEN
@@ -91,9 +91,9 @@ describe('User Management Update Component', () => {
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.authorities).toHaveBeenCalled();
+                expect(service.authorities).toHaveBeenCalledOnce();
                 expect(comp.authorities).toEqual(['USER']);
-                expect(getAllSpy).toHaveBeenCalled();
+                expect(getAllSpy).toHaveBeenCalledOnce();
             }),
         ));
 
@@ -201,7 +201,7 @@ describe('User Management Update Component', () => {
     });
 
     describe('save', () => {
-        it('Should call update service on save for existing user', inject(
+        it('should call update service on save for existing user', inject(
             [],
             fakeAsync(() => {
                 // GIVEN
@@ -225,7 +225,7 @@ describe('User Management Update Component', () => {
             }),
         ));
 
-        it('Should call create service on save for new user', inject(
+        it('should call create service on save for new user', inject(
             [],
             fakeAsync(() => {
                 // GIVEN
@@ -253,7 +253,7 @@ describe('User Management Update Component', () => {
     it('should set password to undefined if random password should be used', () => {
         comp.user = { password: 'abc' } as User;
         comp.shouldRandomizePassword(true);
-        expect(comp.user.password).toBe(undefined);
+        expect(comp.user.password).toBeUndefined();
 
         comp.shouldRandomizePassword(false);
         expect(comp.user.password).toBe('');

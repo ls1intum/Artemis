@@ -16,8 +16,8 @@
             "success": "<strong>Registrierung gespeichert!</strong> Bitte überprüfe deine E-Mails für die Bestätigung.",
             "error": {
                 "fail": "<strong>Registrierung fehlgeschlagen!</strong> Bitte versuche es später nochmal.",
-                "userexists": "<strong>Login bereits vergeben!</strong> Bitte wähle einen anderen aus.",
-                "emailexists": "<strong>E-Mail wird bereits verwendet!</strong> Bitte wähle eine andere aus.",
+                "userExists": "<strong>Login bereits vergeben!</strong> Bitte wähle einen anderen aus.",
+                "emailExists": "<strong>E-Mail wird bereits verwendet!</strong> Bitte wähle eine andere aus.",
                 "blocked": "<strong>Die Registrierung für die E-Mail bzw. den Login ist gesperrt!</strong> Bitte versuche es später noch einmal."
             }
         }

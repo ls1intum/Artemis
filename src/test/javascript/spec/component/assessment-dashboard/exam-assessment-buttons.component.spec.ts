@@ -152,9 +152,9 @@ describe('ExamAssessmentButtons', () => {
         expect(course).toBeTruthy();
         const assessSpy = jest.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations');
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).not.toBe(null);
+        expect(assessButton).not.toBeNull();
         assessButton.nativeElement.click();
-        expect(assessSpy).toBeCalled();
+        expect(assessSpy).toHaveBeenCalledOnce();
     });
 
     it('should correctly catch HTTPError when assessing unsubmitted exams', () => {
@@ -175,7 +175,7 @@ describe('ExamAssessmentButtons', () => {
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
         expect(assessButton).toBeTruthy();
         assessButton.nativeElement.click();
-        expect(alertServiceSpy).toBeCalled();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should evaluate Quiz exercises', () => {
@@ -195,7 +195,7 @@ describe('ExamAssessmentButtons', () => {
         expect(evaluateQuizExercisesButton.nativeElement.disabled).toBeFalse();
 
         evaluateQuizExercisesButton.nativeElement.click();
-        expect(evaluateQuizExercises).toBeCalled();
+        expect(evaluateQuizExercises).toHaveBeenCalledOnce();
     });
 
     it('should correctly catch HTTPError when evaluating quiz exercises', () => {
@@ -219,14 +219,14 @@ describe('ExamAssessmentButtons', () => {
         expect(evaluateQuizExercisesButton).toBeTruthy();
         expect(evaluateQuizExercisesButton.nativeElement.disabled).toBeFalse();
         evaluateQuizExercisesButton.nativeElement.click();
-        expect(alertServiceSpy).toBeCalled();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should not show assess unsubmitted student exam modeling and text participations', () => {
         // user is not an instructor
         examAssessmentButtonsFixture.detectChanges();
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
-        expect(assessButton).toBe(null);
+        expect(assessButton).toBeNull();
     });
 
     it('should disable show assess unsubmitted student exam modeling and text participations', () => {

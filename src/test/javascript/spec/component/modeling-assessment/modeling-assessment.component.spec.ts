@@ -183,7 +183,7 @@ describe('ModelingAssessmentComponent', () => {
 
     it('should filter references by result feedbacks', () => {
         expect(comp.referencedFeedbacks).toBeEmpty();
-        expect(comp.feedbacks).toBe(undefined);
+        expect(comp.feedbacks).toBeUndefined();
 
         comp.umlModel = mockModel;
         comp.resultFeedbacks = mockFeedbacks;
@@ -224,7 +224,7 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
 
         elementCounts.forEach((elementCount) =>
-            expect(spy).toHaveBeenCalledWith('modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCount.numberOfOtherElements }),
+            expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCount.numberOfOtherElements }),
         );
 
         expect(spy).toHaveBeenCalledTimes(elementCounts.length);
@@ -254,11 +254,11 @@ describe('ModelingAssessmentComponent', () => {
         const notHighlightedElement = elements.find((el) => el.id === 'elementId2');
         const relationship = apollonModel.relationships[0];
         expect(highlightedElement).not.toBeNull();
-        expect(highlightedElement!.highlight).toEqual('red');
+        expect(highlightedElement!.highlight).toBe('red');
         expect(notHighlightedElement).not.toBeNull();
         expect(notHighlightedElement!.highlight).toBeUndefined();
         expect(relationship).not.toBeNull();
-        expect(relationship!.highlight).toEqual('blue');
+        expect(relationship!.highlight).toBe('blue');
     });
 
     it('should update model', () => {
@@ -285,7 +285,7 @@ describe('ModelingAssessmentComponent', () => {
         const notHighlightedElement = elements.find((el) => el.id === 'elementId1');
         const relationship = apollonModel.relationships[0];
         expect(highlightedElement).not.toBeNull();
-        expect(highlightedElement!.highlight).toEqual('green');
+        expect(highlightedElement!.highlight).toBe('green');
         expect(notHighlightedElement).not.toBeNull();
         expect(notHighlightedElement!.highlight).toBeUndefined();
         expect(relationship).not.toBeNull();
@@ -307,8 +307,8 @@ describe('ModelingAssessmentComponent', () => {
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = apollonModel.assessments;
         expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
-        expect(assessments[0].label).toEqual('Second correction round');
-        expect(assessments[0].score).toEqual(30);
+        expect(assessments[0].label).toBe('Second correction round');
+        expect(assessments[0].score).toBe(30);
     });
 
     it('should update highlighted assessments', () => {
@@ -326,8 +326,8 @@ describe('ModelingAssessmentComponent', () => {
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = apollonModel.assessments;
         expect(assessments[0].labelColor).toEqual(comp.firstCorrectionRoundColor);
-        expect(assessments[0].label).toEqual('First correction round');
-        expect(assessments[0].score).toEqual(35);
+        expect(assessments[0].label).toBe('First correction round');
+        expect(assessments[0].score).toBe(35);
     });
 
     it('should update feedbacks', () => {

@@ -135,7 +135,7 @@ describe('Plagiarism Inspector Component', () => {
         tick();
 
         expect(websocketServiceSpy).toHaveBeenCalledWith(comp.getPlagarismDetectionTopic());
-        expect(comp.getPlagarismDetectionTopic()).toEqual(`/topic/modeling-exercises/${modelingExercise.id}/plagiarism-check`);
+        expect(comp.getPlagarismDetectionTopic()).toBe(`/topic/modeling-exercises/${modelingExercise.id}/plagiarism-check`);
         expect(comp.detectionInProgress).toBeFalse();
         expect(comp.plagiarismResult).toBe(modelingPlagiarismResult);
     }));
@@ -144,7 +144,7 @@ describe('Plagiarism Inspector Component', () => {
         const exerciseTypes = [ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING];
         exerciseTypes.forEach((exerciseType) => {
             comp.exercise = { id: 1, type: exerciseType } as Exercise;
-            expect(comp.getPlagarismDetectionTopic()).toEqual(`/topic/${exerciseType}-exercises/1/plagiarism-check`);
+            expect(comp.getPlagarismDetectionTopic()).toBe(`/topic/${exerciseType}-exercises/1/plagiarism-check`);
         });
     });
 
@@ -172,7 +172,7 @@ describe('Plagiarism Inspector Component', () => {
 
         comp.checkPlagiarism();
 
-        expect(modelingExerciseService.checkPlagiarism).toHaveBeenCalled();
+        expect(modelingExerciseService.checkPlagiarism).toHaveBeenCalledOnce();
     });
 
     it('should fetch the plagiarism detection results for programming exercises', () => {
@@ -181,7 +181,7 @@ describe('Plagiarism Inspector Component', () => {
 
         comp.checkPlagiarism();
 
-        expect(programmingExerciseService.checkPlagiarism).toHaveBeenCalled();
+        expect(programmingExerciseService.checkPlagiarism).toHaveBeenCalledOnce();
     });
 
     it('should fetch the plagiarism detection results for text exercises', () => {
@@ -190,20 +190,20 @@ describe('Plagiarism Inspector Component', () => {
 
         comp.checkPlagiarism();
 
-        expect(textExerciseService.checkPlagiarism).toHaveBeenCalled();
+        expect(textExerciseService.checkPlagiarism).toHaveBeenCalledOnce();
     });
 
     it('should comparisons by similarity', () => {
         comp.sortComparisonsForResult(modelingPlagiarismResult);
 
-        expect(modelingPlagiarismResult.comparisons[0].similarity).toEqual(0.8);
+        expect(modelingPlagiarismResult.comparisons[0].similarity).toBe(0.8);
     });
 
     it('should select a comparison at the given index', () => {
         comp.selectedComparisonId = 0;
         comp.selectComparisonWithID(1);
 
-        expect(comp.selectedComparisonId).toEqual(1);
+        expect(comp.selectedComparisonId).toBe(1);
     });
 
     it('should download the plagiarism detection results as JSON', () => {
@@ -211,7 +211,7 @@ describe('Plagiarism Inspector Component', () => {
         comp.plagiarismResult = modelingPlagiarismResult;
         comp.downloadPlagiarismResultsJson();
 
-        expect(downloadFile).toHaveBeenCalled();
+        expect(downloadFile).toHaveBeenCalledOnce();
     });
 
     it('should download the plagiarism detection results as CSV', () => {
@@ -219,8 +219,8 @@ describe('Plagiarism Inspector Component', () => {
         comp.plagiarismResult = modelingPlagiarismResult;
         comp.downloadPlagiarismResultsCsv();
 
-        expect(ExportToCsv).toHaveBeenCalled();
-        expect(generateCsv).toHaveBeenCalled();
+        expect(ExportToCsv).toHaveBeenCalledOnce();
+        expect(generateCsv).toHaveBeenCalledOnce();
     });
 
     it('should get the latest plagiarism result for modeling exercise', fakeAsync(() => {
@@ -356,7 +356,7 @@ describe('Plagiarism Inspector Component', () => {
 
         expect(cleanUpPlagiarismSpy).toHaveBeenCalledWith(textExercise.id, textPlagiarismResult.id, true);
         expect(comp.deleteAllPlagiarismComparisons).toBeFalse();
-        expect(comp.plagiarismResult).toBe(undefined);
+        expect(comp.plagiarismResult).toBeUndefined();
     }));
 
     it('should call cleanUpPlagiarism on confirm modal', fakeAsync(() => {

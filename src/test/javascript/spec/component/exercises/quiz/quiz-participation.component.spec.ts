@@ -195,7 +195,7 @@ describe('QuizParticipationComponent', () => {
             expect(component.dragAndDropMappings.get(question1.id!)).toEqual([]);
             expect(component.selectedAnswerOptions.get(question2.id!)).toEqual([]);
             expect(component.shortAnswerSubmittedTexts.get(question3.id!)).toEqual([]);
-            expect(component.submission).not.toBe(null);
+            expect(component.submission).not.toBeNull();
         });
 
         it('should update in intervals', fakeAsync(() => {
@@ -206,7 +206,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
             discardPeriodicTasks();
 
-            expect(updateSpy).toHaveBeenCalled();
+            expect(updateSpy).toHaveBeenCalledTimes(50);
         }));
 
         it('should check quiz end in intervals', fakeAsync(() => {
@@ -217,7 +217,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
             discardPeriodicTasks();
 
-            expect(checkQuizEndSpy).toHaveBeenCalled();
+            expect(checkQuizEndSpy).toHaveBeenCalledTimes(50);
         }));
 
         it('should add alert on quiz end', fakeAsync(() => {
@@ -236,7 +236,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
             discardPeriodicTasks();
 
-            expect(checkQuizEndSpy).toHaveBeenCalled();
+            expect(checkQuizEndSpy).toHaveBeenCalledTimes(20);
             expect(alertSpy).toHaveBeenCalledOnce();
         }));
 
@@ -255,7 +255,7 @@ describe('QuizParticipationComponent', () => {
             const initLiveModeSpy = jest.spyOn(component, 'initLiveMode');
 
             const refreshButton = fixture.debugElement.nativeElement.querySelector('#refresh-quiz button');
-            expect(refreshButton).not.toBe(null);
+            expect(refreshButton).not.toBeNull();
 
             refreshButton.click();
             fixture.detectChanges();
@@ -287,7 +287,7 @@ describe('QuizParticipationComponent', () => {
             const refreshQuizSpy = jest.spyOn(component, 'refreshQuiz').mockReturnValue();
 
             const joinButton = fixture.debugElement.nativeElement.querySelector(quizMode === QuizMode.BATCHED ? '#join-batch button' : '#start-batch button');
-            expect(joinButton).not.toBe(null);
+            expect(joinButton).not.toBeNull();
 
             joinButton.click();
             fixture.detectChanges();
@@ -301,7 +301,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).not.toBe(null);
+            expect(submitButton).not.toBeNull();
 
             submitButton.click();
             fixture.detectChanges();
@@ -344,7 +344,7 @@ describe('QuizParticipationComponent', () => {
             component.remainingTimeSeconds = 200;
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).not.toBe(null);
+            expect(submitButton).not.toBeNull();
 
             submitButton.click();
             fixture.detectChanges();
@@ -354,7 +354,7 @@ describe('QuizParticipationComponent', () => {
             expect(request.request.url).toBe(`api/exercises/${quizExercise.id}/submissions/live`);
             fixture.detectChanges();
 
-            expect(confirmSpy).toHaveBeenCalled();
+            expect(confirmSpy).toHaveBeenCalledOnce();
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
             expect(component.isSubmitting).toBeFalse();
         });
@@ -382,8 +382,8 @@ describe('QuizParticipationComponent', () => {
 
             component.onSelectionChanged();
 
-            expect(applySpy).toHaveBeenCalled();
-            expect(webSocketSpy).toHaveBeenCalled();
+            expect(applySpy).toHaveBeenCalledOnce();
+            expect(webSocketSpy).toHaveBeenCalledOnce();
         });
 
         it('should react to errors', () => {
@@ -398,7 +398,7 @@ describe('QuizParticipationComponent', () => {
             expect(component.isSubmitting).toBeFalse();
             expect(component.unsavedChanges).toBeTrue();
 
-            expect(alertSpy).toHaveBeenCalled();
+            expect(alertSpy).toHaveBeenCalledTimes(2);
         });
 
         it('should express timespan in humanized text', () => {
@@ -487,8 +487,8 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExercise.id);
-            expect(startSpy).toHaveBeenCalled();
-            expect(randomizeSpy).toHaveBeenCalled();
+            expect(startSpy).toHaveBeenCalledOnce();
+            expect(randomizeSpy).toHaveBeenCalledOnce();
         });
 
         it('should submit quiz', () => {
@@ -496,7 +496,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).not.toBe(null);
+            expect(submitButton).not.toBeNull();
 
             submitButton.click();
             fixture.detectChanges();
@@ -567,8 +567,8 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
-            expect(startSpy).toHaveBeenCalled();
-            expect(randomizeSpy).toHaveBeenCalled();
+            expect(startSpy).toHaveBeenCalledOnce();
+            expect(randomizeSpy).toHaveBeenCalledOnce();
         });
 
         it('should submit quiz', () => {
@@ -576,7 +576,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).not.toBe(null);
+            expect(submitButton).not.toBeNull();
 
             submitButton.click();
             fixture.detectChanges();
@@ -670,7 +670,7 @@ describe('QuizParticipationComponent', () => {
             component.updateDisplayedTimes();
             fixture.detectChanges();
 
-            expect(component.remainingTimeText).toBe('showStatistic.quizHasEnded');
+            expect(component.remainingTimeText).toBe('artemisApp.showStatistic.quizHasEnded');
             expect(component.timeUntilStart).toBe('');
         });
     });

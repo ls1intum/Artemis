@@ -69,7 +69,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
         quizExercise = { id: 22, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
     });
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         it('should call functions on Init', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
@@ -77,10 +77,10 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalled();
+            expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(22);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
-            expect(comp.websocketChannelForData).toEqual('/topic/statistic/22');
+            expect(comp.websocketChannelForData).toBe('/topic/statistic/22');
         });
 
         it('should not load Quiz if not authorised', () => {
@@ -89,7 +89,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalled();
+            expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSpy).not.toHaveBeenCalled();
         });
@@ -106,10 +106,10 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadLayout();
 
-            expect(resetLabelsSpy).toHaveBeenCalled();
-            expect(addLastBarSpy).toHaveBeenCalled();
-            expect(loadInvalidLayoutSpy).toHaveBeenCalled();
-            expect(loadSolutionSpy).toHaveBeenCalled();
+            expect(resetLabelsSpy).toHaveBeenCalledTimes(2);
+            expect(addLastBarSpy).toHaveBeenCalledTimes(2);
+            expect(loadInvalidLayoutSpy).toHaveBeenCalledTimes(2);
+            expect(loadSolutionSpy).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -129,9 +129,9 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadData();
 
-            expect(resetDataSpy).toHaveBeenCalled();
-            expect(addDataSpy).toHaveBeenCalled();
-            expect(updateDataSpy).toHaveBeenCalled();
+            expect(resetDataSpy).toHaveBeenCalledTimes(2);
+            expect(addDataSpy).toHaveBeenCalledTimes(2);
+            expect(updateDataSpy).toHaveBeenCalledTimes(2);
         });
 
         it('should load solution data in diagram', () => {
@@ -159,7 +159,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
             expect(comp.backgroundColors).toEqual(['#fcba03', greyColor, '#fc03d2', greyColor]);
             expect(comp.backgroundSolutionColors).toEqual(['#fcba03', greyColor, '#fc03d2', greyColor]);
-            expect(comp.labels).toEqual(['test', 'B. showStatistic.invalid', 'test3', 'D. showStatistic.invalid']);
+            expect(comp.labels).toEqual(['test', 'B. artemisApp.showStatistic.invalid', 'test3', 'D. artemisApp.showStatistic.invalid']);
         });
 
         it('should navigate back if the quiz does not contain any questions', () => {
@@ -169,7 +169,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
             const result = comp.loadQuizCommon(emptyQuizExercise);
 
-            expect(navigateByUrlMock).toHaveBeenCalledOnce;
+            expect(navigateByUrlMock).toHaveBeenCalledOnce();
             expect(navigateByUrlMock).toHaveBeenCalledWith('courses');
             expect(result).toBeUndefined();
         });
@@ -189,7 +189,12 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             comp.loadSolutionLayout();
 
             expect(comp.backgroundSolutionColors).toEqual([greenColor, redColor, '#fc03d2', '#fc5203']);
-            expect(comp.solutionLabels).toEqual(['A. (showStatistic.questionStatistic.correct)', 'B. (showStatistic.questionStatistic.incorrect)', 'test3', 'test4']);
+            expect(comp.solutionLabels).toEqual([
+                'A. (artemisApp.showStatistic.questionStatistic.correct)',
+                'B. (artemisApp.showStatistic.questionStatistic.incorrect)',
+                'test3',
+                'test4',
+            ]);
         });
     });
 });

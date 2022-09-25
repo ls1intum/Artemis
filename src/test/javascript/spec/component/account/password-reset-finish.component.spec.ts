@@ -45,7 +45,7 @@ describe('Component Tests', () => {
 
         it('should define its initial state', () => {
             expect(comp.initialized).toBeTrue();
-            expect(comp.key).toEqual('XYZPDQ');
+            expect(comp.key).toBe('XYZPDQ');
         });
 
         it('sets focus after the view has been initialized', () => {
@@ -57,7 +57,7 @@ describe('Component Tests', () => {
 
             comp.ngAfterViewInit();
 
-            expect(node.focus).toHaveBeenCalled();
+            expect(node.focus).toHaveBeenCalledOnce();
         });
 
         it('should ensure the two passwords entered match', () => {

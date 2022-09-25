@@ -50,6 +50,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { MockExamParticipationService } from '../../../../helpers/mocks/service/mock-exam-participation.service';
 import { SubmissionType } from 'app/entities/submission.model';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 
 let fixture: ComponentFixture<ExamParticipationSummaryComponent>;
 let component: ExamParticipationSummaryComponent;
@@ -209,12 +210,12 @@ describe('ExamParticipationSummaryComponent', () => {
         toggleCollapseExerciseButtonTwo.nativeElement.click();
         toggleCollapseExerciseButtonThree.nativeElement.click();
         toggleCollapseExerciseButtonFour.nativeElement.click();
-        expect(component.collapsedExerciseIds.length).toEqual(4);
+        expect(component.collapsedExerciseIds).toHaveLength(4);
 
         exportToPDFButton.nativeElement.click();
         expect(component.collapsedExerciseIds).toBeEmpty();
         tick();
-        expect(printStub).toHaveBeenCalled();
+        expect(printStub).toHaveBeenCalledOnce();
         printStub.mockRestore();
     }));
 
@@ -289,26 +290,39 @@ describe('ExamParticipationSummaryComponent', () => {
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('.badge.bg-danger'));
         if (shouldBeNonNull) {
-            expect(span).not.toBe(null);
+            expect(span).not.toBeNull();
         } else {
-            expect(span).toBe(null);
+            expect(span).toBeNull();
         }
     });
 
     it('should update student exam correctly', () => {
+        const plagiarismService = fixture.debugElement.injector.get(PlagiarismCasesService);
+        const plagiarismServiceSpy = jest.spyOn(plagiarismService, 'getPlagiarismCaseInfosForStudent');
+
+        const courseId = 10;
+        component.courseId = courseId;
+
         const studentExam2 = { id: 2 } as StudentExam;
         component.studentExam = studentExam2;
         expect(component.studentExamGradeInfoDTO).toBeUndefined();
+        expect(component.studentExam.id).toBe(studentExam2.id);
+        expect(plagiarismServiceSpy).not.toHaveBeenCalled();
 
         component.studentExam = studentExam;
         fixture.detectChanges();
 
         expect(component.studentExam).toEqual(studentExam);
         expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam);
+        expect(component.studentExam.id).toBe(studentExam.id);
+        expect(plagiarismServiceSpy).toHaveBeenCalledOnce();
+        expect(plagiarismServiceSpy).toHaveBeenCalledWith(courseId, [1, 2, 3, 4]);
 
         const studentExam3 = { id: 3 } as StudentExam;
         component.studentExam = studentExam3;
         expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam3);
+        expect(component.studentExam.id).toBe(studentExam3.id);
+        expect(plagiarismServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should correctly identify a TestExam', () => {

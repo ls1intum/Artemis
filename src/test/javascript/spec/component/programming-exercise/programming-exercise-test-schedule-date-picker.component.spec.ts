@@ -54,14 +54,14 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
         comp.writeValue(undefined);
 
         expect(comp.selectedDate).toEqual(selectedDate);
-        expect(spy).toHaveBeenCalledTimes(0);
+        expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not change date when value is reference-equal to selected date', () => {
         const spy = jest.spyOn(comp, '_onChange');
         comp.writeValue(selectedDate);
 
-        expect(spy).toHaveBeenCalledTimes(0);
+        expect(spy).not.toHaveBeenCalled();
     });
 
     it('should update date with dayjs object and invoke change', () => {
@@ -88,7 +88,7 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
         const spy = jest.spyOn(comp.onDateReset, 'emit');
         comp.resetDate();
 
-        expect(comp.selectedDate).toBe(null);
-        expect(spy).toBeCalledTimes(1);
+        expect(comp.selectedDate).toBeNull();
+        expect(spy).toHaveBeenCalledOnce();
     });
 });

@@ -82,7 +82,7 @@ public class ExerciseGroupResource {
             throws URISyntaxException {
         log.debug("REST request to create an exercise group : {}", exerciseGroup);
         if (exerciseGroup.getId() != null) {
-            throw new BadRequestAlertException("A new exerciseGroup cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new exerciseGroup cannot already have an ID", ENTITY_NAME, "idExists");
         }
 
         if (exerciseGroup.getExam() == null) {
@@ -101,8 +101,7 @@ public class ExerciseGroupResource {
         Exam savedExam = examRepository.save(examFromDB);
         ExerciseGroup savedExerciseGroup = savedExam.getExerciseGroups().get(savedExam.getExerciseGroups().size() - 1);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/exerciseGroups/" + savedExerciseGroup.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedExerciseGroup.getTitle())).body(savedExerciseGroup);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/exerciseGroups/" + savedExerciseGroup.getId())).body(savedExerciseGroup);
     }
 
     /**
@@ -130,7 +129,7 @@ public class ExerciseGroupResource {
         examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, courseId, examId, updatedExerciseGroup);
 
         ExerciseGroup result = exerciseGroupRepository.save(updatedExerciseGroup);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -140,12 +139,10 @@ public class ExerciseGroupResource {
      * @param examId the exam to which the exercise groups should be added
      * @param updatedExerciseGroup the list of Exercise Groups to be imported
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exercise groups, or with status 400 (Bad Request)
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/import-exercise-group")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<List<ExerciseGroup>> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExerciseGroup> updatedExerciseGroup)
-            throws URISyntaxException {
+    public ResponseEntity<List<ExerciseGroup>> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExerciseGroup> updatedExerciseGroup) {
         log.debug("REST request to import {} exercise group(s) to exam {}", updatedExerciseGroup.size(), examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);

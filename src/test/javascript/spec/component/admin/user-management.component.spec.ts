@@ -1,5 +1,13 @@
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
-import { AuthorityFilter, OriginFilter, StatusFilter, UserFilter, UserManagementComponent, UserStorageKey } from 'app/admin/user-management/user-management.component';
+import {
+    AuthorityFilter,
+    OriginFilter,
+    RegistrationNumberFilter,
+    StatusFilter,
+    UserFilter,
+    UserManagementComponent,
+    UserStorageKey,
+} from 'app/admin/user-management/user-management.component';
 import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -21,9 +29,13 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { Course } from 'app/entities/course.model';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
@@ -34,6 +46,7 @@ describe('UserManagementComponent', () => {
     let courseManagementService: CourseManagementService;
     let localStorageService: LocalStorageService;
     let httpMock: HttpTestingController;
+    let profileService: ProfileService;
 
     const course1 = new Course();
     course1.id = 1;
@@ -68,6 +81,8 @@ describe('UserManagementComponent', () => {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: Router, useClass: MockRouter },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -94,6 +109,7 @@ describe('UserManagementComponent', () => {
                 courseManagementService = TestBed.inject(CourseManagementService);
                 localStorageService = TestBed.inject(LocalStorageService);
                 httpMock = TestBed.inject(HttpTestingController);
+                profileService = TestBed.inject(ProfileService);
             });
     });
 
@@ -112,6 +128,7 @@ describe('UserManagementComponent', () => {
                 }),
             ),
         );
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ ldap: 'false' } as any));
 
         comp.ngOnInit();
         // 1 sec of pause, because of the debounce time
@@ -124,7 +141,7 @@ describe('UserManagementComponent', () => {
     }));
 
     describe('setActive', () => {
-        it('Should update user and call load all', inject(
+        it('should update user and call load all', inject(
             [],
             fakeAsync(() => {
                 // GIVEN
@@ -138,9 +155,12 @@ describe('UserManagementComponent', () => {
                         }),
                     ),
                 );
+
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
+
                 comp.ngOnInit();
 
-                jest.spyOn(userService, 'update').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
+                const profileSpy = jest.spyOn(userService, 'update').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
                 // WHEN
                 comp.setActive(user, true);
                 tick(1000); // simulate async
@@ -149,6 +169,7 @@ describe('UserManagementComponent', () => {
                 expect(userService.update).toHaveBeenCalledWith({ ...user, activated: true });
                 expect(userService.query).toHaveBeenCalledOnce();
                 expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
+                expect(profileSpy).toHaveBeenCalledOnce();
             }),
         ));
     });
@@ -163,10 +184,14 @@ describe('UserManagementComponent', () => {
                 }),
             ),
         );
+
+        const profileSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
+
         comp.ngOnInit();
         tick(1000);
 
         expect(identitySpy).toHaveBeenCalledOnce();
+        expect(profileSpy).toHaveBeenCalledOnce();
         expect(comp.currentAccount).toEqual({ id: 99 });
 
         expect(comp.page).toBe(1);
@@ -218,10 +243,10 @@ describe('UserManagementComponent', () => {
     });
 
     it('should validate user search correctly', () => {
-        expect(comp.validateUserSearch({ value: [] } as AbstractControl)).toBe(null);
+        expect(comp.validateUserSearch({ value: [] } as AbstractControl)).toBeNull();
         expect(comp.validateUserSearch({ value: [0] } as AbstractControl)).toEqual({ searchControl: true });
         expect(comp.validateUserSearch({ value: [0, 0] } as AbstractControl)).toEqual({ searchControl: true });
-        expect(comp.validateUserSearch({ value: [0, 0, 0] } as AbstractControl)).toBe(null);
+        expect(comp.validateUserSearch({ value: [0, 0, 0] } as AbstractControl)).toBeNull();
     });
 
     it('should sort courses', () => {
@@ -233,18 +258,23 @@ describe('UserManagementComponent', () => {
             ),
         );
 
+        const profileSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
+
         comp.ngOnInit();
 
         expect(spy).toHaveBeenCalledOnce();
+        expect(profileSpy).toHaveBeenCalledOnce();
         expect(comp.courses).toEqual(courses.sort((c1, c2) => c1.title!.localeCompare(c2.title!)));
     });
 
     it('should call initFilters', () => {
         const spy = jest.spyOn(comp, 'initFilters');
+        const initSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
 
         comp.ngOnInit();
 
         expect(spy).toHaveBeenCalledOnce();
+        expect(initSpy).toHaveBeenCalledOnce();
     });
 
     it.each`
@@ -311,6 +341,19 @@ describe('UserManagementComponent', () => {
 
         comp.toggleFilter(comp.filters.statusFilter, param.input);
         expect(comp.filters.statusFilter).toEqual(new Set([]));
+    });
+
+    it.each`
+        input
+        ${RegistrationNumberFilter.WITH_REG_NO}
+        ${RegistrationNumberFilter.WITHOUT_REG_NO}
+    `('should toggle registration number filters', (param: { input: RegistrationNumberFilter }) => {
+        // Registration number
+        comp.toggleFilter(comp.filters.registrationNumberFilter, param.input);
+        expect(comp.filters.registrationNumberFilter).toEqual(new Set([param.input]));
+
+        comp.toggleFilter(comp.filters.registrationNumberFilter, param.input);
+        expect(comp.filters.registrationNumberFilter).toEqual(new Set([]));
     });
 
     it('should return correct filter values', () => {
@@ -384,11 +427,14 @@ describe('UserManagementComponent', () => {
         comp.filters.noAuthority = true;
         expect(comp.filters.numberOfAppliedFilters).toBe(2);
 
-        comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
+        comp.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
         expect(comp.filters.numberOfAppliedFilters).toBe(3);
 
+        comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
+        expect(comp.filters.numberOfAppliedFilters).toBe(4);
+
         comp.filters.authorityFilter.delete(AuthorityFilter.ADMIN);
-        expect(comp.filters.numberOfAppliedFilters).toBe(2);
+        expect(comp.filters.numberOfAppliedFilters).toBe(3);
     });
 
     it('should toggle course filter', () => {
@@ -443,6 +489,22 @@ describe('UserManagementComponent', () => {
         comp.toggleOriginFilter(OriginFilter.EXTERNAL);
         expect(spy).toHaveBeenCalledWith(UserStorageKey.ORIGIN, '');
         expect(comp.filters.authorityFilter).toEqual(new Set<OriginFilter>());
+    });
+
+    it('should toggle registration number filter', () => {
+        const spy = jest.spyOn(localStorageService, 'store');
+
+        comp.filters = new UserFilter();
+
+        comp.toggleRegistrationNumberFilter(RegistrationNumberFilter.WITHOUT_REG_NO);
+
+        expect(comp.filters.registrationNumberFilter).toEqual(new Set<RegistrationNumberFilter>([RegistrationNumberFilter.WITHOUT_REG_NO]));
+        expect(spy).toHaveBeenCalledOnce();
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.REGISTRATION_NUMBER, 'WITHOUT_REG_NO');
+
+        comp.toggleRegistrationNumberFilter(RegistrationNumberFilter.WITHOUT_REG_NO);
+        expect(spy).toHaveBeenCalledWith(UserStorageKey.REGISTRATION_NUMBER, '');
+        expect(comp.filters.authorityFilter).toEqual(new Set<RegistrationNumberFilter>());
     });
 
     it('should toggle status filter', () => {
@@ -537,23 +599,32 @@ describe('UserManagementComponent', () => {
         let httpParams = new HttpParams();
         comp.filters = new UserFilter();
 
-        httpParams = httpParams.append('authorities', 'NO_AUTHORITY').append('origins', '').append('status', '').append('courseIds', '');
+        httpParams = httpParams.append('authorities', 'NO_AUTHORITY').append('origins', '').append('registrationNumbers', '').append('status', '').append('courseIds', '');
         comp.filters.noAuthority = true;
 
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.noAuthority = false;
-        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('status', '').append('courseIds', '');
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', '').append('status', '').append('courseIds', '');
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.noCourse = true;
-        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('status', '').append('courseIds', -1);
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', '').append('status', '').append('courseIds', -1);
+        expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
+
+        comp.filters.registrationNumberFilter.add(RegistrationNumberFilter.WITH_REG_NO);
+        httpParams = new HttpParams().append('authorities', '').append('origins', '').append('registrationNumbers', 'WITH_REG_NO').append('status', '').append('courseIds', -1);
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
 
         comp.filters.originFilter.add(OriginFilter.INTERNAL);
         comp.filters.authorityFilter.add(AuthorityFilter.ADMIN);
         comp.filters.statusFilter.add(StatusFilter.ACTIVATED);
-        httpParams = new HttpParams().append('authorities', 'ADMIN').append('origins', 'INTERNAL').append('status', 'ACTIVATED').append('courseIds', -1);
+        httpParams = new HttpParams()
+            .append('authorities', 'ADMIN')
+            .append('origins', 'INTERNAL')
+            .append('registrationNumbers', 'WITH_REG_NO')
+            .append('status', 'ACTIVATED')
+            .append('courseIds', -1);
         expect(comp.filters.adjustOptions(new HttpParams())).toEqual(httpParams);
     });
 });

@@ -42,7 +42,7 @@
             },
             "postsEnabled": {
                 "title": "Kommunikationsfunktionen aktivieren",
-                "description": "Kommunikationsbereich auf Vorlesungs- und Übungsseiten aktivieren."
+                "description": "Kurskommunikationsübersicht und Kommunikationsbereich auf Vorlesungs- und Übungsseiten aktivieren."
             },
             "complaintsEnabled": {
                 "title": "Beschwerden von Studierenden aktivieren",
@@ -156,7 +156,7 @@
                 "outOf": "von",
                 "usersPerPage": "{{number}} Nutzer:innen pro Seite",
                 "showAllUsers": "Alle Nutzer:innen anzeigen",
-                "searchForUsers": "Nutzer:in zu dieser Kursgruppe hinzufügen durch Suchen nach Login oder Namen",
+                "searchForUsers": "Nutzer:in zu dieser Gruppe hinzufügen durch Suchen nach Login oder Namen",
                 "searchNoResults": "Kein:e Nutzer:innen gefunden",
                 "login": "Login",
                 "registrationNumber": "Matrikelnummer",

@@ -174,7 +174,7 @@ describe('Example Modeling Submission Component', () => {
         tick(1);
 
         // This service request should also start after the previous one ends.
-        expect(modelingAssessmentServiceSpy).toHaveBeenCalledTimes(0);
+        expect(modelingAssessmentServiceSpy).not.toHaveBeenCalled();
         tick(1);
 
         // THEN
@@ -291,7 +291,7 @@ describe('Example Modeling Submission Component', () => {
 
         // THEN
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenCalledWith('modelingAssessment.invalidAssessments');
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessment.invalidAssessments');
     });
 
     it('should update assessment explanation and example assessment', () => {
@@ -313,7 +313,7 @@ describe('Example Modeling Submission Component', () => {
         // THEN
         expect(comp.result).toBe(result);
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenCalledWith('modelingAssessmentEditor.messages.saveSuccessful');
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
     });
 
     it('should update assessment explanation but create error message on example assessment update failure', () => {
@@ -331,9 +331,9 @@ describe('Example Modeling Submission Component', () => {
         comp.saveExampleAssessment();
 
         // THEN
-        expect(comp.result).toBe(undefined);
+        expect(comp.result).toBeUndefined();
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenCalledWith('modelingAssessmentEditor.messages.saveFailed');
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.saveFailed');
     });
 
     it('should mark all feedback correct', () => {
@@ -395,7 +395,7 @@ describe('Example Modeling Submission Component', () => {
         // THEN
         comp.result = result;
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenCalledWith('modelingAssessmentEditor.messages.saveSuccessful');
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
     });
 
     it('should create error alert on example assessment update failure', () => {
@@ -413,7 +413,7 @@ describe('Example Modeling Submission Component', () => {
 
         // THEN
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).toHaveBeenCalledWith('modelingAssessmentEditor.messages.saveFailed');
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.saveFailed');
     });
 
     it('should handle explanation change', () => {

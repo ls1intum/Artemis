@@ -83,30 +83,30 @@ describe('QuizExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, true, true);
             expect(comp.listSorting).toBeTrue();
         });
     }));
 
     it('should set content to paging result on pageChange', fakeAsync(() => {
-        expect(comp.page).toEqual(1);
+        expect(comp.page).toBe(1);
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, page: 5 });
-            expect(comp.page).toEqual(5);
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, page: 5 }, true, true);
+            expect(comp.page).toBe(5);
         });
     }));
 
     it('should set content to paging result on search', fakeAsync(() => {
-        expect(comp.searchTerm).toEqual('');
+        expect(comp.searchTerm).toBe('');
         setStateAndCallOnInit(() => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledTimes(0);
+            expect(searchForExercisesStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, true, true);
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -116,7 +116,7 @@ describe('QuizExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = TableColumn.TITLE;
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE });
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE }, true, true);
             expect(comp.sortedColumn).toEqual(TableColumn.TITLE);
         });
     }));
@@ -124,4 +124,31 @@ describe('QuizExerciseImportComponent', () => {
     it('should return quiz exercise id', () => {
         expect(comp.trackId(0, quizExercise)).toEqual(quizExercise.id);
     });
+
+    it('should switch courseFilter/examFilter and search', fakeAsync(() => {
+        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExercises');
+        pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<QuizExercise>));
+
+        fixture.detectChanges();
+        expect(comp.isCourseFilter).toBeTrue();
+        expect(comp.isExamFilter).toBeTrue();
+
+        comp.onCourseFilterChange();
+        comp.onExamFilterChange();
+        tick();
+        expect(comp.isCourseFilter).toBeFalse();
+        expect(comp.isExamFilter).toBeFalse();
+
+        expect(pagingServiceSpy).not.toHaveBeenCalled();
+        tick(300);
+
+        const expectedSearchObject = {
+            page: 1,
+            pageSize: 10,
+            searchTerm: '',
+            sortedColumn: 'ID',
+            sortingOrder: 'DESCENDING',
+        };
+        expect(pagingServiceSpy).toHaveBeenCalledWith(expectedSearchObject, false, false);
+    }));
 });

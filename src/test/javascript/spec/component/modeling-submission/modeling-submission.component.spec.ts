@@ -113,7 +113,7 @@ describe('ModelingSubmission Management Component', () => {
         console.error = originalConsoleError;
     });
 
-    it('Should call load getDataForModelingEditor on init', () => {
+    it('should call load getDataForModelingEditor on init', () => {
         // GIVEN
         const getLatestSubmissionForModelingEditorStub = jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 
@@ -133,10 +133,10 @@ describe('ModelingSubmission Management Component', () => {
         comp.isLoading = false;
         fixture.detectChanges();
 
-        expect(debugElement.query(By.css('div'))).not.toBe(null);
+        expect(debugElement.query(By.css('div'))).not.toBeNull();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).not.toBe(null);
+        expect(submitButton).not.toBeNull();
         expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
         expect(comp.isActive).toBeTrue();
     });
@@ -149,7 +149,7 @@ describe('ModelingSubmission Management Component', () => {
         fixture.detectChanges();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).not.toBe(null);
+        expect(submitButton).not.toBeNull();
         expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
     });
 
@@ -163,7 +163,7 @@ describe('ModelingSubmission Management Component', () => {
 
         expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).not.toBe(null);
+        expect(submitButton).not.toBeNull();
         expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
         submission.submitted = true;
     });
@@ -175,7 +175,7 @@ describe('ModelingSubmission Management Component', () => {
         fixture.detectChanges();
 
         const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton).not.toBe(null);
+        expect(submitButton).not.toBeNull();
         expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
     });
 
@@ -360,7 +360,7 @@ describe('ModelingSubmission Management Component', () => {
         comp.updateSubmissionWithCurrentValues();
         expect(currentModelStub).toHaveBeenCalledTimes(2);
         expect(comp.hasElements).toBeTrue();
-        expect(comp.submission).not.toBe(undefined);
+        expect(comp.submission).toBeDefined();
         expect(comp.submission.model).toBe(JSON.stringify(model));
         expect(comp.submission.explanationText).toBe('Explanation Test');
     });
@@ -460,10 +460,10 @@ describe('ModelingSubmission Management Component', () => {
         const unreferencedFeedback = comp.unreferencedFeedback;
         const referencedFeedback = comp.referencedFeedback;
 
-        expect(unreferencedFeedback).not.toBe(undefined);
-        expect(unreferencedFeedback!.length).toBe(1);
-        expect(unreferencedFeedback![0].isSubsequent).toBe(undefined);
-        expect(referencedFeedback).not.toBe(undefined);
+        expect(unreferencedFeedback).toBeDefined();
+        expect(unreferencedFeedback).toHaveLength(1);
+        expect(unreferencedFeedback![0].isSubsequent).toBeUndefined();
+        expect(referencedFeedback).toBeDefined();
         expect(referencedFeedback).toHaveLength(1);
         expect(referencedFeedback![0].isSubsequent).toBeTrue();
     });

@@ -29,6 +29,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -204,7 +205,7 @@ describe('Exam Update Component', () => {
         it('should update', fakeAsync(() => {
             fixture.detectChanges();
 
-            const updateSpy = jest.spyOn(examManagementService, 'update');
+            const updateSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...examWithoutExercises, id: 1 } })));
 
             // trigger save
             component.save();
@@ -213,7 +214,7 @@ describe('Exam Update Component', () => {
             expect(component.isSaving).toBeFalse();
         }));
 
-        it('should calculate the working time for RealExams correctly', () => {
+        it('should calculate the working time for real exams correctly', () => {
             examWithoutExercises.testExam = false;
 
             examWithoutExercises.startDate = undefined;
@@ -239,7 +240,7 @@ describe('Exam Update Component', () => {
             expect(component.calculateWorkingTime).toBe(0);
         });
 
-        it('should not calculate the working time for testExams', () => {
+        it('should not calculate the working time for test exams', () => {
             examWithoutExercises.testExam = true;
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
@@ -249,7 +250,7 @@ describe('Exam Update Component', () => {
             expect(component.calculateWorkingTime).toBe(60);
         });
 
-        it('validates the working time for TestExams correctly', () => {
+        it('validates the working time for test exams correctly', () => {
             examWithoutExercises.testExam = true;
             examWithoutExercises.workingTime = undefined;
             fixture.detectChanges();
@@ -274,7 +275,7 @@ describe('Exam Update Component', () => {
             expect(component.validateWorkingTime).toBeFalse();
         });
 
-        it('validates the working time for RealExams correctly', () => {
+        it('validates the working time for real exams correctly', () => {
             examWithoutExercises.testExam = false;
 
             examWithoutExercises.workingTime = undefined;
@@ -314,7 +315,7 @@ describe('Exam Update Component', () => {
             examWithoutExercises.id = undefined;
             fixture.detectChanges();
 
-            const createSpy = jest.spyOn(examManagementService, 'create');
+            const createSpy = jest.spyOn(examManagementService, 'create').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...examWithoutExercises, id: 1 } })));
 
             // trigger save
             component.save();
@@ -340,13 +341,21 @@ describe('Exam Update Component', () => {
             createStub.mockRestore();
         }));
 
-        it('should correctly validate the number of correction rounds in a testExams', () => {
+        it('should call the back method on the nav util service on previousState', () => {
+            const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
+            const spy = jest.spyOn(navUtilService, 'navigateBackWithOptional').mockImplementation();
+            component.course = course;
+            component.exam = examWithoutExercises;
+            examWithoutExercises.id = 1;
+            component.previousState();
+            expect(spy).toHaveBeenCalledOnce();
+            expect(spy).toHaveBeenCalledWith(['course-management', course.id!.toString(), 'exams'], examWithoutExercises.id!.toString());
+        });
+
+        it('should correctly validate the number of correction rounds in a test Exams', () => {
             examWithoutExercises.testExam = true;
             examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
             fixture.detectChanges();
-
-            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(0);
-            expect(component.isValidNumberOfCorrectionRounds).toBeTrue();
 
             examWithoutExercises.numberOfCorrectionRoundsInExam = 0;
             fixture.detectChanges();
@@ -512,29 +521,29 @@ describe('Exam Update Component', () => {
             expect(component.isImport).toBeTrue();
             expect(component.exam).not.toBeNull();
             expect(component.exam.id).toBeUndefined();
-            expect(component.exam.title).toEqual('RealExam for Testing');
+            expect(component.exam.title).toBe('RealExam for Testing');
             expect(component.exam.testExam).toBeFalse();
-            expect(component.exam.examiner).toEqual('Bruegge');
-            expect(component.exam.moduleNumber).toEqual('IN0006');
-            expect(component.exam.courseName).toEqual('Artemis');
+            expect(component.exam.examiner).toBe('Bruegge');
+            expect(component.exam.moduleNumber).toBe('IN0006');
+            expect(component.exam.courseName).toBe('Artemis');
             expect(component.exam.visibleDate).toBeUndefined();
             expect(component.exam.startDate).toBeUndefined();
             expect(component.exam.endDate).toBeUndefined();
-            expect(component.exam.workingTime).toEqual(0);
-            expect(component.exam.gracePeriod).toEqual(90);
-            expect(component.exam.maxPoints).toEqual(15);
-            expect(component.exam.numberOfExercisesInExam).toEqual(5);
+            expect(component.exam.workingTime).toBe(0);
+            expect(component.exam.gracePeriod).toBe(90);
+            expect(component.exam.maxPoints).toBe(15);
+            expect(component.exam.numberOfExercisesInExam).toBe(5);
             expect(component.exam.randomizeExerciseOrder).toBeTrue();
             expect(component.exam.publishResultsDate).toBeUndefined();
             expect(component.exam.examStudentReviewStart).toBeUndefined();
             expect(component.exam.examStudentReviewEnd).toBeUndefined();
-            expect(component.exam.numberOfCorrectionRoundsInExam).toEqual(2);
-            expect(component.exam.startText).toEqual('Hello World');
-            expect(component.exam.endText).toEqual('Goodbye World');
-            expect(component.exam.confirmationStartText).toEqual('111');
-            expect(component.exam.confirmationEndText).toEqual('222');
+            expect(component.exam.numberOfCorrectionRoundsInExam).toBe(2);
+            expect(component.exam.startText).toBe('Hello World');
+            expect(component.exam.endText).toBe('Goodbye World');
+            expect(component.exam.confirmationStartText).toBe('111');
+            expect(component.exam.confirmationEndText).toBe('222');
             expect(component.exam.course).toEqual(course);
-            expect(component.exam.numberOfRegisteredUsers).toEqual(1);
+            expect(component.exam.numberOfRegisteredUsers).toBe(1);
             expect(component.exam.registeredUsers).toBeUndefined();
             expect(component.exam.studentExams).toBeUndefined();
         });
@@ -553,7 +562,7 @@ describe('Exam Update Component', () => {
             component.save();
             expect(importSpy).toHaveBeenCalledOnce();
             expect(importSpy).toHaveBeenCalledWith(1, examForImport);
-            expect(alertSpy).toHaveBeenCalledTimes(0);
+            expect(alertSpy).not.toHaveBeenCalled();
         });
 
         it('should  trigger an alarm for a wrong user input in the examWithoutExercises exercises', () => {

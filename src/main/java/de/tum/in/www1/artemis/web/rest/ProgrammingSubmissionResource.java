@@ -26,7 +26,9 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -41,6 +43,10 @@ public class ProgrammingSubmissionResource {
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionResource.class);
 
     private final ProgrammingSubmissionService programmingSubmissionService;
+
+    private final ProgrammingTriggerService programmingTriggerService;
+
+    private final ProgrammingMessagingService programmingMessagingService;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -66,13 +72,16 @@ public class ProgrammingSubmissionResource {
 
     private final ExerciseDateService exerciseDateService;
 
-    public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ExerciseRepository exerciseRepository,
-            ParticipationRepository participationRepository, AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
+    public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingMessagingService programmingMessagingService, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
+            AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
             UserRepository userRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, GradingCriterionRepository gradingCriterionRepository,
             SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService) {
         this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingTriggerService = programmingTriggerService;
+        this.programmingMessagingService = programmingMessagingService;
         this.exerciseRepository = exerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -96,17 +105,17 @@ public class ProgrammingSubmissionResource {
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
      */
     @PostMapping(value = Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}")
-    public ResponseEntity<?> notifyPush(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
+    public ResponseEntity<?> processNewProgrammingSubmission(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
         log.debug("REST request to inform about new commit+push for participation: {}", participationId);
 
         try {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
-            ProgrammingSubmission submission = programmingSubmissionService.notifyPush(participationId, requestBody);
+            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(participationId, requestBody);
             // Remove unnecessary information from the new submission.
             submission.getParticipation().setSubmissions(null);
-            programmingSubmissionService.notifyUserAboutSubmission(submission);
+            programmingMessagingService.notifyUserAboutSubmission(submission);
         }
         catch (IllegalArgumentException ex) {
             log.error(
@@ -128,7 +137,7 @@ public class ProgrammingSubmissionResource {
             throw ex;
         }
 
-        // TODO: we should not really return status code other than 200, because Bitbucket might kill the webhook, if there are too many errors
+        // Note: we should not really return status code other than 200, because Bitbucket might kill the webhook, if there are too many errors
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -165,7 +174,7 @@ public class ProgrammingSubmissionResource {
 
         try {
             var submission = programmingSubmissionService.getOrCreateSubmissionWithLastCommitHashForParticipation(programmingExerciseParticipation, submissionType);
-            programmingSubmissionService.triggerBuildAndNotifyUser(submission);
+            programmingTriggerService.triggerBuildAndNotifyUser(submission);
         }
         catch (IllegalStateException ex) {
             throw new EntityNotFoundException(ex.getMessage());
@@ -203,7 +212,7 @@ public class ProgrammingSubmissionResource {
             if (buildStatus == ContinuousIntegrationService.BuildStatus.BUILDING || buildStatus == ContinuousIntegrationService.BuildStatus.QUEUED) {
                 // We inform the user through the websocket that the submission is still in progress (build is running/queued, result should arrive soon).
                 // This resets the pending submission timer in the client.
-                programmingSubmissionService.notifyUserAboutSubmission(submission);
+                programmingMessagingService.notifyUserAboutSubmission(submission);
                 return ResponseEntity.ok().build();
             }
         }
@@ -213,7 +222,7 @@ public class ProgrammingSubmissionResource {
             throw new EntityNotFoundException("Cannot trigger failed build. There is a submission after the exercise due date");
         }
         // If there is no result on the CIS, we trigger a new build and hope it will arrive in Artemis this time.
-        programmingSubmissionService.triggerBuildAndNotifyUser(submission);
+        programmingTriggerService.triggerBuildAndNotifyUser(submission);
         return ResponseEntity.ok().build();
     }
 
@@ -231,8 +240,8 @@ public class ProgrammingSubmissionResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
-        programmingSubmissionService.logTriggerInstructorBuild(user, exercise, exercise.getCourseViaExerciseGroupOrCourseMember());
-        programmingSubmissionService.triggerInstructorBuildForExercise(exerciseId);
+        programmingTriggerService.logTriggerInstructorBuild(user, exercise, exercise.getCourseViaExerciseGroupOrCourseMember());
+        programmingTriggerService.triggerInstructorBuildForExercise(exerciseId);
         return ResponseEntity.ok().build();
     }
 
@@ -261,7 +270,7 @@ public class ProgrammingSubmissionResource {
         log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
                 programmingExercise.getId());
         var participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndParticipationIds(exerciseId, participationIds);
-        programmingSubmissionService.triggerBuildForParticipations(participations);
+        programmingTriggerService.triggerBuildForParticipations(participations);
 
         return ResponseEntity.ok().build();
     }
@@ -300,9 +309,9 @@ public class ProgrammingSubmissionResource {
 
         // When the tests were changed, the solution repository will be built. We therefore create a submission for the solution participation.
         ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exerciseId, lastCommitHash);
-        programmingSubmissionService.notifyUserAboutSubmission(submission);
+        programmingMessagingService.notifyUserAboutSubmission(submission);
         // It is possible that there is now a new test case or an old one has been removed. We use this flag to inform the instructor about outdated student results.
-        programmingSubmissionService.setTestCasesChanged(exerciseId, true);
+        programmingTriggerService.setTestCasesChanged(exerciseId, true);
 
         return ResponseEntity.ok().build();
     }
@@ -432,7 +441,7 @@ public class ProgrammingSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        this.programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
+        programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
 
         // Check if the limit of simultaneously locked submissions has been reached
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());

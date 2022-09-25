@@ -83,13 +83,12 @@ public class LectureResource {
     public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", lecture);
         if (lecture.getId() != null) {
-            throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         Lecture result = lectureRepository.save(lecture);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
     }
 
     /**
@@ -104,7 +103,7 @@ public class LectureResource {
     public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) {
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
@@ -115,7 +114,7 @@ public class LectureResource {
         lecture.setLectureUnits(originalLecture.getLectureUnits());
 
         Lecture result = lectureRepository.save(lecture);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, lecture.getId().toString())).body(result);
+        return ResponseEntity.ok().body(result);
     }
 
     /**
@@ -200,8 +199,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
         final var result = lectureImportService.importLecture(sourceLecture, destinationCourse);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
     }
 
     /**
@@ -272,6 +270,8 @@ public class LectureResource {
                 Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
                 // we replace the exercise with one that contains all the information needed for correct display
                 exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
+                // re-add the learning goals already loaded with the exercise unit
+                ((ExerciseUnit) lectureUnit).getExercise().setLearningGoals(exercise.getLearningGoals());
             }
         }).collect(Collectors.toCollection(ArrayList::new));
 
@@ -290,11 +290,13 @@ public class LectureResource {
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         Lecture lecture = lectureRepository.findByIdElseThrow(id);
 
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lecture.getCourse(), null);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
+
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
         log.debug("REST request to delete Lecture : {}", id);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();

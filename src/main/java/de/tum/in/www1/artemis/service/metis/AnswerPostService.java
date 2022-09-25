@@ -65,7 +65,7 @@ public class AnswerPostService extends PostingService {
 
         // check
         if (answerPost.getId() != null) {
-            throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idExists");
         }
 
         final Course course = preCheckUserAndCourse(user, courseId);
@@ -75,6 +75,7 @@ public class AnswerPostService extends PostingService {
         answerPost.setPost(post);
         // set author to current user
         answerPost.setAuthor(user);
+        setAuthorRoleForPosting(answerPost, course);
         // on creation of an answer post, we set the resolves_post field to false per default
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
@@ -99,7 +100,7 @@ public class AnswerPostService extends PostingService {
 
         // checks
         if (answerPost.getId() == null || !Objects.equals(answerPost.getId(), answerPostId)) {
-            throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idNull");
         }
         AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPostId);
         final Course course = preCheckUserAndCourse(user, courseId);

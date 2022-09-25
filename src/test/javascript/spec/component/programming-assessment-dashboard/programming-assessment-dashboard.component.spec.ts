@@ -104,7 +104,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
         expect(component.reverse).toBeFalse();
-        expect(component.predicate).toEqual('id');
+        expect(component.predicate).toBe('id');
         expect(component.filteredSubmissions).toEqual([]);
 
         // call
@@ -130,8 +130,8 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         component.ngOnInit();
         tick(500);
         // check
-        expect(component['getSubmissions']).toHaveBeenCalled();
-        expect(getProgrammingSubmissionsForExerciseByCorrectionRoundStub).toHaveBeenCalled();
+        expect(component['getSubmissions']).toHaveBeenCalledOnce();
+        expect(getProgrammingSubmissionsForExerciseByCorrectionRoundStub).toHaveBeenCalledOnce();
         expect(getProgrammingSubmissionsForExerciseByCorrectionRoundStub).toHaveBeenCalledWith(programmingExercise2.id, { submittedOnly: true });
         expect(exerciseServiceFindMock).toHaveBeenCalledWith(programmingExercise2.id);
         expect(component.submissions).toEqual([programmingSubmission1]);
@@ -156,7 +156,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
 
         tick(100);
         // check
-        expect(component['getSubmissions']).toHaveBeenCalled();
+        expect(component['getSubmissions']).toHaveBeenCalledOnce();
         expect(exerciseServiceFind).toHaveBeenCalledWith(programmingExercise2.id);
         expect(component.submissions).toEqual([]);
         expect(component.filteredSubmissions).toEqual([]);
@@ -183,7 +183,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
 
         // check
         expect(modelAssServiceCancelAssSpy).toHaveBeenCalledWith(programmingSubmission2.id);
-        expect(windowSpy).toHaveBeenCalled();
+        expect(windowSpy).toHaveBeenCalledOnce();
     }));
 
     it('should sortRows', () => {
@@ -199,8 +199,8 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
 
     it('should assessmentTypeTranslationKey', () => {
         const result = { id: 55, assessmentType: AssessmentType.SEMI_AUTOMATIC };
-        expect(component.assessmentTypeTranslationKey(result)).toEqual(`artemisApp.AssessmentType.${result.assessmentType}`);
-        expect(component.assessmentTypeTranslationKey(undefined)).toEqual(`artemisApp.AssessmentType.null`);
+        expect(component.assessmentTypeTranslationKey(result)).toBe(`artemisApp.AssessmentType.${result.assessmentType}`);
+        expect(component.assessmentTypeTranslationKey(undefined)).toBe(`artemisApp.AssessmentType.null`);
     });
 
     describe('shouldGetAssessmentLink', () => {

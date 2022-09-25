@@ -31,10 +31,13 @@
                 "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
                 "search": "Suche nach einer Aufgabe",
                 "loading": "Lade...",
+                "searchInCourses": "Suche in Kursen?",
+                "searchInExams": "Suche in Klausuren?",
                 "table": {
                     "title": "Titel",
-                    "language": "Programmiersprache",
+                    "language": "Sprache",
                     "course": "Kurs",
+                    "exam": "Klausur",
                     "examQuestion": "Klausuraufgabe",
                     "doImport": "Importieren"
                 }
@@ -216,10 +219,6 @@
             },
             "isUsedForTutorial": "Tutor:in muss überprüfen",
             "action": "Aktion"
-        },
-        "exerciseLtiConfiguration": {
-            "lti": "LTI",
-            "configurationForExercise": "LTI Konfiguration der Übung {{ title }}"
         }
     }
 }

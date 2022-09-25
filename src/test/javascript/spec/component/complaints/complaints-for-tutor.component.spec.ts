@@ -104,7 +104,7 @@ describe('ComplaintsForTutorComponent', () => {
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
-        expect(createLockStub).toHaveBeenCalled();
+        expect(createLockStub).toHaveBeenCalledOnce();
         expect(complaintsForTutorComponent.complaint).toEqual(freshlyCreatedComplaintResponse.complaint);
         expect(complaintsForTutorComponent.complaintResponse).toEqual(freshlyCreatedComplaintResponse);
         const lockButton = complaintForTutorComponentFixture.debugElement.query(By.css('#lockButton')).nativeElement;
@@ -116,7 +116,7 @@ describe('ComplaintsForTutorComponent', () => {
         // now we test if we can give up the lock
         const removeLockStub = jest.spyOn(injectedComplaintResponseService, 'removeLock').mockReturnValue(of());
         lockButton.click();
-        expect(removeLockStub).toHaveBeenCalled();
+        expect(removeLockStub).toHaveBeenCalledOnce();
     }));
 
     it('should refresh a complaint response for a unhandled complaint with a connected complaint response', fakeAsync(() => {
@@ -150,7 +150,7 @@ describe('ComplaintsForTutorComponent', () => {
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
-        expect(createLockStub).toHaveBeenCalled();
+        expect(createLockStub).toHaveBeenCalledOnce();
         expect(complaintsForTutorComponent.complaint).toEqual(freshlyCreatedComplaintResponse.complaint);
         expect(complaintsForTutorComponent.complaintResponse).toEqual(freshlyCreatedComplaintResponse);
         const lockButton = complaintForTutorComponentFixture.debugElement.query(By.css('#lockButton')).nativeElement;
@@ -162,7 +162,7 @@ describe('ComplaintsForTutorComponent', () => {
         // now we test if we can give up the lock
         const removeLockStub = jest.spyOn(injectedComplaintResponseService, 'removeLock').mockReturnValue(of());
         lockButton.click();
-        expect(removeLockStub).toHaveBeenCalled();
+        expect(removeLockStub).toHaveBeenCalledOnce();
     }));
 
     it('should send event when accepting a complaint', () => {
@@ -187,7 +187,7 @@ describe('ComplaintsForTutorComponent', () => {
 
         const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
         acceptComplaintButton.click();
-        expect(emitSpy).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledOnce();
         const event = emitSpy.mock.calls[0][0];
         expect(event).not.toBeNull();
     });
@@ -227,7 +227,7 @@ describe('ComplaintsForTutorComponent', () => {
         const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         rejectComplaintButton.click();
 
-        expect(resolveStub).toHaveBeenCalled();
+        expect(resolveStub).toHaveBeenCalledOnce();
     });
 
     it('should just display disabled accept and reject complaint button', fakeAsync(() => {
@@ -263,7 +263,7 @@ describe('ComplaintsForTutorComponent', () => {
 
         const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
         responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
-        expect(responseTextArea.value.length).toBe(26);
+        expect(responseTextArea.value).toHaveLength(26);
 
         const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
@@ -271,7 +271,7 @@ describe('ComplaintsForTutorComponent', () => {
         expect(acceptComplaintButton.disabled).toBeFalse();
 
         responseTextArea.value = responseTextArea.value + 'A';
-        expect(responseTextArea.value.length).toBe(27);
+        expect(responseTextArea.value).toHaveLength(27);
 
         // Update fixture
         complaintForTutorComponentFixture.detectChanges();

@@ -11,7 +11,7 @@ import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/vide
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -28,6 +28,8 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({ selector: 'jhi-learning-goals-popover', template: '' })
 class LearningGoalsPopoverStubComponent {
@@ -70,7 +72,6 @@ describe('LectureUnitManagementComponent', () => {
                 MockComponent(FaIconComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
-                MockDirective(RouterOutlet),
                 MockRouterLinkDirective,
             ],
             providers: [
@@ -127,42 +128,13 @@ describe('LectureUnitManagementComponent', () => {
             });
     });
 
-    it('should move down', () => {
+    it('should reorder', () => {
         const originalOrder = [...lecture.lectureUnits!];
         lectureUnitManagementComponentFixture.detectChanges();
-        const moveDownSpy = jest.spyOn(lectureUnitManagementComponent, 'moveDown');
-        const moveUpSpy = jest.spyOn(lectureUnitManagementComponent, 'moveUp');
-        const upButton = lectureUnitManagementComponentFixture.debugElement.query(By.css('#up-0'));
-        expect(upButton).toBeDefined();
-        upButton.nativeElement.click();
-        expect(moveUpSpy).toHaveBeenCalledTimes(0);
-        // not moved as first one
         expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[0].id);
-        const downButton = lectureUnitManagementComponentFixture.debugElement.query(By.css('#down-0'));
-        expect(downButton).toBeDefined;
-        downButton.nativeElement.click();
-        expect(moveDownSpy).toHaveBeenCalledOnce();
+        lectureUnitManagementComponent.drop({ previousIndex: 0, currentIndex: 1 } as CdkDragDrop<LectureUnit[]>);
         expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[1].id);
         expect(lectureUnitManagementComponent.lectureUnits[1].id).toEqual(originalOrder[0].id);
-    });
-
-    it('should move up', () => {
-        const originalOrder = [...lecture.lectureUnits!];
-        lectureUnitManagementComponentFixture.detectChanges();
-        const moveDownSpy = jest.spyOn(lectureUnitManagementComponent, 'moveDown');
-        const moveUpSpy = jest.spyOn(lectureUnitManagementComponent, 'moveUp');
-        const lastPosition = lectureUnitManagementComponent.lectureUnits.length - 1;
-        const downButton = lectureUnitManagementComponentFixture.debugElement.query(By.css(`#down-${lastPosition}`));
-        expect(downButton).toBeDefined();
-        downButton.nativeElement.click();
-        expect(moveDownSpy).toHaveBeenCalledTimes(0);
-
-        expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).toEqual(originalOrder[lastPosition].id);
-        const upButton = lectureUnitManagementComponentFixture.debugElement.query(By.css(`#up-${lastPosition}`));
-        expect(upButton).toBeDefined;
-        upButton.nativeElement.click();
-        expect(moveUpSpy).toHaveBeenCalledOnce();
-        expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).toEqual(originalOrder[lastPosition - 1].id);
     });
 
     it('should navigate to edit attachment unit page', () => {
@@ -176,17 +148,17 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should give the correct delete question translation key', () => {
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentUnit())).toEqual('artemisApp.attachmentUnit.delete.question');
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).toEqual('artemisApp.exerciseUnit.delete.question');
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new TextUnit())).toEqual('artemisApp.textUnit.delete.question');
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new VideoUnit())).toEqual('artemisApp.videoUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentUnit())).toBe('artemisApp.attachmentUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new TextUnit())).toBe('artemisApp.textUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.question');
     });
 
     it('should give the correct confirmation text translation key', () => {
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentUnit())).toEqual('artemisApp.attachmentUnit.delete.typeNameToConfirm');
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).toEqual('artemisApp.exerciseUnit.delete.typeNameToConfirm');
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new VideoUnit())).toEqual('artemisApp.videoUnit.delete.typeNameToConfirm');
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new TextUnit())).toEqual('artemisApp.textUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentUnit())).toBe('artemisApp.attachmentUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new TextUnit())).toBe('artemisApp.textUnit.delete.typeNameToConfirm');
     });
 
     it('should give the correct action type', () => {

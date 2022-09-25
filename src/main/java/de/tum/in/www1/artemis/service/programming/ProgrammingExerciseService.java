@@ -20,6 +20,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +48,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -80,6 +82,8 @@ public class ProgrammingExerciseService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
+
     private final ResourceLoaderService resourceLoaderService;
 
     private final InstanceMessageSendService instanceMessageSendService;
@@ -105,10 +109,10 @@ public class ProgrammingExerciseService {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
             ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, InstanceMessageSendService instanceMessageSendService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository) {
+            ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
+            InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -123,6 +127,7 @@ public class ProgrammingExerciseService {
         this.authCheckService = authCheckService;
         this.resourceLoaderService = resourceLoaderService;
         this.groupNotificationService = groupNotificationService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
@@ -155,7 +160,7 @@ public class ProgrammingExerciseService {
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException If the template files couldn't be read
      */
-    @Transactional
+    @Transactional // TODO: apply the transaction on a smaller scope
     // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
@@ -184,13 +189,10 @@ public class ProgrammingExerciseService {
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
         // The creation of the webhooks must occur after the initial push, because the participation is
-        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
+        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
         versionControlService.get().addWebHooksForExercise(programmingExercise);
-
         scheduleOperations(programmingExercise.getId());
-
-        groupNotificationService.checkNotificationsForNewExercise(programmingExercise, instanceMessageSendService);
-
+        groupNotificationScheduleService.checkNotificationsForNewExercise(programmingExercise);
         return programmingExercise;
     }
 
@@ -421,15 +423,10 @@ public class ProgrammingExerciseService {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
-
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
-
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
-
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
-                instanceMessageSendService);
-
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
     }
 
@@ -592,7 +589,7 @@ public class ProgrammingExerciseService {
             }
             else {
                 // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
-                boolean isMaven = projectType == null || projectType.isMaven();
+                boolean isMaven = ProjectType.isMavenProject(projectType);
                 sectionsMap.put("non-sequential", false);
                 sectionsMap.put("sequential", true);
 
@@ -744,12 +741,8 @@ public class ProgrammingExerciseService {
         programmingExercise.setExampleSolutionPublicationDate(updatedProgrammingExercise.getExampleSolutionPublicationDate());
 
         programmingExercise.validateDates();
-
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
-                instanceMessageSendService);
-
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
     }
 
@@ -855,7 +848,7 @@ public class ProgrammingExerciseService {
      * @param programmingExerciseId     id of the programming exercise to delete.
      * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
@@ -944,19 +937,39 @@ public class ProgrammingExerciseService {
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
-     * @param search The search query defining the search term and the size of the returned page
-     * @param user   The user for whom to fetch all available exercises
+     * @param search         The search query defining the search term and the size of the returned page
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
+     * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
+            final User user) {
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
-
-        final var exercisePage = authCheckService.isAdmin(user)
-                ? programmingExerciseRepository.findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(searchTerm, searchTerm,
-                        pageable)
-                : programmingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
-
+        Page<ProgrammingExercise> exercisePage = Page.empty();
+        if (authCheckService.isAdmin(user)) {
+            if (isCourseFilter && isExamFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm, pageable);
+            }
+            else if (isCourseFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
+            }
+            else if (isExamFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllExams(searchTerm, pageable);
+            }
+        }
+        else {
+            if (isCourseFilter && isExamFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else if (isCourseFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else if (isExamFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+        }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 

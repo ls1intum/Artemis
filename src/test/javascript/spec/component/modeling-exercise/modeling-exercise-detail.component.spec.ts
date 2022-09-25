@@ -61,7 +61,7 @@ describe('ModelingExercise Management Detail Component', () => {
         fixture.detectChanges();
     });
 
-    it('Should load exercise on init', fakeAsync(() => {
+    it('should load exercise on init', fakeAsync(() => {
         // GIVEN
         const subscribeSpy = jest.spyOn(eventManager, 'subscribe');
         const headers = new HttpHeaders().append('link', 'link;link');
@@ -79,12 +79,12 @@ describe('ModelingExercise Management Detail Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(findStub).toHaveBeenCalled();
-        expect(statisticsServiceStub).toHaveBeenCalled();
+        expect(findStub).toHaveBeenCalledOnce();
+        expect(statisticsServiceStub).toHaveBeenCalledOnce();
         expect(comp.modelingExercise).toEqual(modelingExercise);
-        expect(comp.doughnutStats.participationsInPercent).toEqual(100);
-        expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
-        expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
+        expect(comp.doughnutStats.participationsInPercent).toBe(100);
+        expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
+        expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
         expect(subscribeSpy).toHaveBeenCalledWith('modelingExerciseListModification', expect.anything());
         tick();
         expect(comp.exampleSolutionUML).toEqual(model);
@@ -93,6 +93,6 @@ describe('ModelingExercise Management Detail Component', () => {
     it('should destroy event manager on destroy', () => {
         const destroySpy = jest.spyOn(eventManager, 'destroy');
         comp.ngOnDestroy();
-        expect(destroySpy).toHaveBeenCalled();
+        expect(destroySpy).toHaveBeenCalledOnce();
     });
 });

@@ -59,7 +59,7 @@ describe('CodeEditorAceComponent', () => {
     it('without any inputs, should still render correctly without ace, showing a placeholder', () => {
         fixture.detectChanges();
         const placeholder = debugElement.query(By.css('#no-file-selected'));
-        expect(placeholder).not.toBe(null);
+        expect(placeholder).not.toBeNull();
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
         expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeTrue();
     });
@@ -69,7 +69,7 @@ describe('CodeEditorAceComponent', () => {
         comp.isLoading = true;
         fixture.detectChanges();
         const placeholder = debugElement.query(By.css('#no-file-selected'));
-        expect(placeholder).toBe(null);
+        expect(placeholder).toBeNull();
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
         expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeTrue();
         expect(comp.editor.getEditor().getReadOnly()).toBeTrue();
@@ -85,13 +85,13 @@ describe('CodeEditorAceComponent', () => {
         comp.isLoading = false;
         fixture.detectChanges();
         const placeholder = debugElement.query(By.css('#no-file-selected'));
-        expect(placeholder).toBe(null);
+        expect(placeholder).toBeNull();
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
         expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeFalse();
         expect(comp.editor.getEditor().getReadOnly()).toBeFalse();
     });
 
-    it('should not load the file from server on selected file change if the file is already in session', () => {
+    it('should correctly init editor after file change', () => {
         const selectedFile = 'dummy';
         const fileSession = {};
         const loadFileSubject = new Subject();
@@ -209,8 +209,8 @@ describe('CodeEditorAceComponent', () => {
         const observerDomSpy = jest.spyOn(comp, 'observerDom');
         comp.onFileTextChanged('newFileContent');
 
-        expect(setupLineIconsSpy).toBeCalledTimes(1);
-        expect(observerDomSpy).toBeCalledTimes(1);
+        expect(setupLineIconsSpy).toHaveBeenCalledOnce();
+        expect(observerDomSpy).toHaveBeenCalledOnce();
     });
 
     it('should only allow tab sizes between 1 and the maximum size', () => {

@@ -133,7 +133,7 @@ describe('ExamPointsSummaryComponent', () => {
                         userId: 1,
                         name: 'user1',
                         login: 'user1',
-                        eMail: 'user1@tum.de',
+                        email: 'user1@tum.de',
                         registrationNumber: '111',
                         overallPointsAchieved: 35.33,
                         overallScoreAchieved: (35.33 / 40) * 100,
@@ -213,7 +213,7 @@ describe('ExamPointsSummaryComponent', () => {
         fixture.detectChanges();
         expect(fixture).not.toBeNull();
 
-        expect(component.getAchievedPointsSum()).toEqual(0);
-        expect(component.getMaxPointsSum()).toEqual(0);
+        expect(component.getAchievedPointsSum()).toBe(0);
+        expect(component.getMaxPointsSum()).toBe(0);
     });
 });

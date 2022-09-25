@@ -54,7 +54,7 @@ describe('ParticipantScoresAverageTable', () => {
 
     it('should render the data in a row', () => {
         const participantScoreAverageDTO = new ParticipantScoreAverageDTO();
-        participantScoreAverageDTO.userName = 'testUser';
+        participantScoreAverageDTO.name = 'testUser';
         participantScoreAverageDTO.averageRatedScore = 10;
         participantScoreAverageDTO.averageScore = 5;
         participantScoreAverageDTO.averagePoints = 8;
@@ -68,36 +68,35 @@ describe('ParticipantScoresAverageTable', () => {
         fixture.detectChanges();
 
         const cellElements = fixture.debugElement.queryAll(By.css('.datatable-body-cell-label > span'));
-        expect(cellElements.length).toEqual(8);
-        expect(cellElements[0].nativeElement.innerHTML).toContain(participantScoreAverageDTO.userName);
-        expect(cellElements[1].nativeElement.innerHTML).toContain('');
-        expect(cellElements[2].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageScore.toString());
-        expect(cellElements[3].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averagePoints.toString());
-        expect(cellElements[4].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageRatedScore.toString());
-        expect(cellElements[5].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageRatedPoints.toString());
-        expect(cellElements[6].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageGrade.toString());
-        expect(cellElements[7].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageRatedGrade.toString());
+        expect(cellElements).toHaveLength(7);
+        expect(cellElements[0].nativeElement.innerHTML).toContain(participantScoreAverageDTO.name);
+        expect(cellElements[1].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageScore.toString());
+        expect(cellElements[2].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averagePoints.toString());
+        expect(cellElements[3].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageRatedScore.toString());
+        expect(cellElements[4].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageRatedPoints.toString());
+        expect(cellElements[5].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageGrade.toString());
+        expect(cellElements[6].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageRatedGrade.toString());
     });
 
     it('should extract participant name correctly', () => {
         let participantScoreAverageDTO = new ParticipantScoreAverageDTO();
-        participantScoreAverageDTO.userName = 'testUser';
+        participantScoreAverageDTO.name = 'testUser';
         participantScoreAverageDTO.averageRatedScore = 10;
         participantScoreAverageDTO.averageScore = 5;
         participantScoreAverageDTO.averagePoints = 12;
         participantScoreAverageDTO.averageRatedPoints = 20;
         let castedParticipantScoreAverageDTO = participantScoreAverageDTO as BaseEntity;
 
-        expect(component.extractParticipantName(castedParticipantScoreAverageDTO)).toEqual(participantScoreAverageDTO.userName);
+        expect(component.extractParticipantName(castedParticipantScoreAverageDTO)).toEqual(participantScoreAverageDTO.name);
 
         participantScoreAverageDTO = new ParticipantScoreAverageDTO();
         participantScoreAverageDTO.averageRatedScore = 10;
         participantScoreAverageDTO.averageScore = 5;
-        participantScoreAverageDTO.teamName = 'testTeam';
+        participantScoreAverageDTO.name = 'testTeam';
         participantScoreAverageDTO.averageRatedPoints = 20;
         participantScoreAverageDTO.averagePoints = 12;
         castedParticipantScoreAverageDTO = participantScoreAverageDTO as BaseEntity;
 
-        expect(component.extractParticipantName(castedParticipantScoreAverageDTO)).toEqual(participantScoreAverageDTO.teamName);
+        expect(component.extractParticipantName(castedParticipantScoreAverageDTO)).toEqual(participantScoreAverageDTO.name);
     });
 });

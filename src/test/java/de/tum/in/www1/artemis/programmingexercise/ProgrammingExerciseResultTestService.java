@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -262,6 +263,21 @@ public class ProgrammingExerciseResultTestService {
         assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
     }
 
+    // Test
+    public void shouldNotStoreBuildLogsForSubmission(Object resultNotification) {
+        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+
+        var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(programmingExerciseStudentParticipation.getId());
+        var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.get().getId());
+        var expectedNoOfLogs = 0; // No logs should be stored because the build was successful
+        assertThat(((ProgrammingSubmission) optionalResult.get().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
+        assertThat(submissionWithLogs.get().getBuildLogEntries()).hasSize(expectedNoOfLogs);
+
+        // Call again and should not re-create new submission.
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+    }
+
     public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
         buildLogEntryRepository.deleteAll();
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
@@ -270,8 +286,20 @@ public class ProgrammingExerciseResultTestService {
         var expectedBuildLogs = getNumberOfBuildLogs(resultNotification) - 3; // 3 of those should be filtered
 
         assertThat(savedBuildLogs).hasSize(expectedBuildLogs);
-        savedBuildLogs.forEach(
-                buildLogEntry -> assertThat(buildLogEntry.getProgrammingSubmission().getParticipation().getId()).isEqualTo(programmingExerciseStudentParticipation.getId()));
+
+        // Call again and should not re-create new submission.
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+    }
+
+    public void shouldNotSaveBuildLogsInBuildLogRepository(Object resultNotification) {
+        buildLogEntryRepository.deleteAll();
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+
+        var savedBuildLogs = buildLogEntryRepository.findAll();
+        var expectedBuildLogs = 0; // No logs should be stored because the build was successful
+
+        assertThat(savedBuildLogs).hasSize(expectedBuildLogs);
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
@@ -305,7 +333,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldGenerateTestwiseCoverageFileReports(Object resultNotification) throws GitAPIException, InterruptedException {
+    public void shouldGenerateTestwiseCoverageFileReports(Object resultNotification) throws GitAPIException {
         // set testwise coverage analysis for programming exercise
         programmingExercise.setTestwiseCoverageEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
@@ -332,9 +360,27 @@ public class ProgrammingExerciseResultTestService {
         assertThat(resultFromDatabase.getCoverageFileReportsByTestCaseName()).isNull();
     }
 
+    // Test
+    public void shouldIgnoreResultIfNotOnDefaultBranch(Object resultNotification) {
+        solutionParticipation.setProgrammingExercise(programmingExercise);
+
+        assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // Test
+    public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, Object resultNotification) {
+        programmingExercise.setBranch(defaultBranch);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        solutionParticipation.setProgrammingExercise(programmingExercise);
+        programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
+
+        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        assertThat(result).isPresent();
+    }
+
     private int getNumberOfBuildLogs(Object resultNotification) {
         if (resultNotification instanceof BambooBuildResultNotificationDTO) {
-            return ((BambooBuildResultNotificationDTO) resultNotification).getBuild().getJobs().iterator().next().getLogs().size();
+            return ((BambooBuildResultNotificationDTO) resultNotification).getBuild().jobs().iterator().next().logs().size();
         }
         throw new UnsupportedOperationException("Build logs are only part of the Bamboo notification");
     }

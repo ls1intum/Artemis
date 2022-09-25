@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -114,7 +114,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(HtmlForMarkdownPipe),
-                MockDirective(RouterOutlet),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SubmissionResultStatusComponent),
@@ -241,59 +240,59 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should not be a quiz exercise', () => {
         comp.exercise = { ...exercise };
-        expect(comp.quizExerciseStatus).toBe(undefined);
+        expect(comp.quizExerciseStatus).toBeUndefined();
     });
 
     it('should fill & empty sample modeling solution', () => {
         comp.showIfExampleSolutionPresent({ ...modelingExercise });
-        expect(comp.exampleSolution).toBe(undefined);
+        expect(comp.exampleSolution).toBeUndefined();
         expect(comp.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
         expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
 
         comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.exampleSolution).toBeUndefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
         expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
     });
 
     it('should fill & empty sample text solution', () => {
         comp.showIfExampleSolutionPresent({ ...textExercise });
-        expect(comp.exampleSolution).not.toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.exampleSolution).toBeDefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
         expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
 
         comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.exampleSolution).toBeUndefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
         expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
     });
 
     it('should fill & empty sample file upload solution', () => {
         comp.showIfExampleSolutionPresent({ ...fileUploadExercise });
-        expect(comp.exampleSolution).not.toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.exampleSolution).toBeDefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
         expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
 
         comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.exampleSolution).toBeUndefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
         expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
     });
 
     it('should fill & empty sample programming exercise solution', () => {
         comp.showIfExampleSolutionPresent({ ...programmingExercise });
-        expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.exampleSolution).toBeUndefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
         expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeTrue();
 
         comp.showIfExampleSolutionPresent({ ...programmingExercise, exampleSolutionPublished: false });
-        expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.exampleSolution).toBeUndefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
         expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
 
         comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
+        expect(comp.exampleSolution).toBeUndefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
         expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
     });
 });

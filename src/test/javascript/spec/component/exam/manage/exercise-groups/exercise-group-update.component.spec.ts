@@ -62,16 +62,17 @@ describe('ExerciseGroupUpdateComponent', () => {
     beforeEach(fakeAsync(() => {
         fixture.detectChanges();
         tick();
-        expect(component).not.toBeNull();
-        expect(component.exam).toEqual(exam);
-        expect(component.exerciseGroup).toEqual(exerciseGroup);
     }));
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('Should save exercise group', fakeAsync(() => {
+    it('should save exercise group', fakeAsync(() => {
+        expect(component).not.toBeNull();
+        expect(component.exam).toEqual(exam);
+        expect(component.exerciseGroup).toEqual(exerciseGroup);
+
         const responseFakeExerciseGroup = { body: exerciseGroup } as EntityResponseType;
         jest.spyOn(service, 'update').mockReturnValue(of(responseFakeExerciseGroup));
 
@@ -82,7 +83,7 @@ describe('ExerciseGroupUpdateComponent', () => {
         flush();
     }));
 
-    it('Should save exercise group without ID', fakeAsync(() => {
+    it('should save exercise group without ID', fakeAsync(() => {
         component.exerciseGroup.id = undefined;
 
         const responseFakeExerciseGroup = { body: exerciseGroup } as EntityResponseType;
@@ -96,7 +97,7 @@ describe('ExerciseGroupUpdateComponent', () => {
         flush();
     }));
 
-    it('Should fail while saving with ErrorResponse', fakeAsync(() => {
+    it('should fail while saving with ErrorResponse', fakeAsync(() => {
         alertServiceStub = jest.spyOn(alertService, 'error');
         const error = { status: 404 };
         component.exerciseGroup.id = undefined;

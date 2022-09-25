@@ -46,11 +46,14 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -68,6 +71,7 @@ import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.web.rest.ParticipationResource;
+import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
@@ -117,6 +121,9 @@ public class ProgrammingExerciseTestService {
     private SubmissionRepository submissionRepository;
 
     @Autowired
+    private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
+
+    @Autowired
     @Qualifier("staticCodeAnalysisConfiguration")
     private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
 
@@ -146,6 +153,12 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private JavaTemplateUpgradeService javaTemplateUpgradeService;
+
+    @Autowired
+    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    @Autowired
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     @Autowired
     private UrlService urlService;
@@ -457,6 +470,15 @@ public class ProgrammingExerciseTestService {
 
         // Setup exercises for import
         database.addTestCasesToProgrammingExercise(sourceExercise);
+        database.addTasksToProgrammingExercise(sourceExercise);
+        // Manually add task
+        var task = new ProgrammingExerciseTask();
+        task.setTaskName("Task 1");
+        task.setExercise(sourceExercise);
+        task.setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(sourceExercise.getId()));
+        sourceExercise.setTasks(Collections.singletonList(task));
+        programmingExerciseTaskRepository.save(task);
+        programmingExerciseRepository.save(sourceExercise);
         database.addHintsToExercise(sourceExercise);
 
         // Reset because we will add mocks for new requests
@@ -486,6 +508,9 @@ public class ProgrammingExerciseTestService {
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
         importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
+
+        // Check that the tasks were imported correctly (see #5474)
+        assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSameSizeAs(sourceExercise.getTasks());
 
         // TODO: check why the assertions do not work correctly
         // Assert correct creation of test cases
@@ -1834,5 +1859,42 @@ public class ProgrammingExerciseTestService {
 
         exportSolutionRepository(exerciseRepo, HttpStatus.FORBIDDEN);
 
+    }
+
+    // TEST
+    void buildLogStatistics_unauthorized() throws Exception {
+        exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
+        request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.FORBIDDEN, BuildLogStatisticsDTO.class);
+    }
+
+    // TEST
+    void buildLogStatistics_noStatistics() throws Exception {
+        exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
+        var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
+        assertThat(statistics.getBuildCount()).isEqualTo(0);
+        assertThat(statistics.getAgentSetupDuration()).isNull();
+        assertThat(statistics.getTestDuration()).isNull();
+        assertThat(statistics.getScaDuration()).isNull();
+        assertThat(statistics.getTotalJobDuration()).isNull();
+        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+    }
+
+    // TEST
+    void buildLogStatistics() throws Exception {
+        exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
+        var participation = createStudentParticipationWithSubmission(INDIVIDUAL);
+        var submission1 = database.createProgrammingSubmission(participation, false);
+        var submission2 = database.createProgrammingSubmission(participation, false);
+
+        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission1, 10, 20, 30, 60, 5));
+        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission2, 8, 15, null, 30, 0));
+
+        var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
+        assertThat(statistics.getBuildCount()).isEqualTo(2);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(9);
+        assertThat(statistics.getTestDuration()).isEqualTo(17.5);
+        assertThat(statistics.getScaDuration()).isEqualTo(30);
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(45);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2.5);
     }
 }

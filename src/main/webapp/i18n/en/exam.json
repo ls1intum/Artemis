@@ -56,14 +56,23 @@
                     "bonus": "Bonus Points",
                     "youAchievedWithBonus": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points and an additional {{bonusPoints}} bonus points",
                     "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points",
+                    "youAchievedFromBonus": {
+                        "GRADES_CONTINUOUS": "You got a grade bonus of {{achievedBonus}} from {{bonusFromTitle}}",
+                        "GRADES_DISCRETE": "You got a grade bonus of {{achievedBonus}} step(s) according to the grading scale which equals {{gradePointDiff}} from {{bonusFromTitle}}",
+                        "POINTS": "You got {{achievedBonus}} bonus points from {{bonusFromTitle}}"
+                    },
+                    "youAchievedPointsAfterBonus": "Your final points are {{finalPoints}} after the bonus",
                     "maxPointsNotSet": "The maximum number of points in the exam is not set."
                 },
                 "grade": "Grade",
+                "gradeBeforeBonus": "Grade before bonus",
+                "gradeAfterBonus": "Grade after bonus",
                 "bonus": "Bonus points for the final exam",
                 "interval": "Interval (%)",
                 "intervalPoints": "Interval (Points)",
                 "gradeKeyButton": "View Grading Key",
-                "gradeKeyButtonBonus": "View Bonus Rules"
+                "gradeKeyButtonBonus": "View Bonus Rules",
+                "bonusGradeKeyButton": "View Bonus Grading Key"
             },
             "title": "Exam",
             "startExam": "Start",
@@ -159,7 +168,12 @@
             "overallScoreColumn": "Overall Score (%)",
             "overallGradeColumn": "Overall Grade",
             "overallBonusColumn": "Overall Bonus Points",
+            "bonusGradeColumn": "Bonus Grade",
+            "finalGradeColumn": "Final Grade",
             "passedColumn": "Passed",
+            "mostSeverePlagiarismVerdictColumn": "Plagiarism Verdict",
+            "mostSeverePlagiarismVerdictInBonusColumn": "Plagiarism Verdict in Bonus",
+            "presentationScoreThresholdColumn": "Presentation Score Threshold: {{ threshold }}",
             "exportCSV": "Export Results as CSV",
             "filterForSubmittedExams": "Include only submitted exams",
             "filterForNonEmptySubmissions": "Include only exercises with at least one non-empty submission",
@@ -171,7 +185,9 @@
             "noExerciseGroups": "Exercise Groups",
             "submittedColumn": "Submitted",
             "totalColumn": "Total",
-            "exerciseGroupTitle": "Average scores of exercise group \"{{ groupTitle }}\" in comparison"
+            "exerciseGroupTitle": "Average scores of exercise group \"{{ groupTitle }}\" in comparison",
+            "gradesBeforeBonus": "Grades before bonus",
+            "gradesAfterBonus": "Grades after bonus"
         },
         "examParticipation": {
             "timer": "Time left: ",
@@ -246,6 +262,8 @@
             "submitted": "Submitted",
             "submissionDate": "Submission date",
             "grade": "Grade",
+            "gradeBeforeBonus": "Grade before bonus",
+            "gradeAfterBonus": "Grade after bonus",
             "bonus": "Bonus Points",
             "passed": "Passed",
             "participationStatus": "Participation status",
@@ -260,13 +278,13 @@
             "studentExamGenerationError": "There was an error during student exam generation:\n {{message}}",
             "missingStudentExamGenerationSuccess": "{{number}} missing student exams successfully generated!",
             "missingStudentExamGenerationError": "There was an error during the missing student exam generation:\n {{message}}",
-            "startExerciseSuccess": "{{number}} exercises successfully prepared!",
+            "startExerciseSuccess": "The exercises will now be prepared. This may take a while.",
             "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}",
-            "studentExamGenerationModalText": "Some student exams already exist. If you continue, those individual exams will be deleted and new student exams generated.",
+            "studentExamGenerationModalText": "Some student exams already exist. If you continue, those individual exams will be deleted and new student exams generated.\n\nNote that existing participations and submissions will also be removed!",
             "studentExamStatusSuccess": "All registered students have an individual exam",
             "studentExamStatusWarning": "Not all registered students have an individual exam",
             "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
-            "studentExamStatusTestExam": "StudentExams are automatically created once a student requests to start a Test Exam",
+            "studentExamStatusTestExam": "Student exams are automatically created once a student requests to start a test exam",
             "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
             "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Reviewed all student exams and assessed the unsubmitted or empty modeling and text exercises with 0 points.",
@@ -276,6 +294,7 @@
             "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
             "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}",
             "setWorkingTime": "Absolute:",
+            "usedWorkingTime": "Used working time",
             "setWorkingTimeRelative": "Addition relative to regular working time:",
             "removeAllStudents": {
                 "title": "Remove all students",
@@ -291,6 +310,15 @@
                 "warningRemove": "<strong class='text-danger'>Recovering the original submission date will not be possible after deletion!</strong>",
                 "submit": "Submit",
                 "unsubmit": "Unsubmit"
+            },
+            "exercisePreparationProgress": {
+                "label": "Exercise preparation progress:",
+                "failed": "failed",
+                "remaining": "remaining",
+                "finished": "Finished",
+                "noeta": "No ETA",
+                "participations": "Participations",
+                "exams": "Exams"
             }
         },
         "examManagement": {
@@ -344,6 +372,7 @@
             "studentExams": "Student Exams",
             "students": "Students",
             "gradingSystem": "Grading Key",
+            "bonus": "Bonus",
             "testExam": {
                 "realExam": "Exam",
                 "testExam": "Test Exam",
@@ -388,7 +417,6 @@
                 "showAllUsers": "Show all students",
                 "searchForUsers": "Register a student for this exam by searching for login or name",
                 "searchNoResults": "No students found",
-                "testExamSelfRegistration": "Students are automatically registered for the Test Exam when starting a Test Exam",
                 "login": "Login",
                 "name": "Name",
                 "firstName": "First name",
@@ -447,7 +475,8 @@
             },
             "reset": {
                 "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted. Registered students and the exercise configurations will remain. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+                "typeNameToConfirm": "Please type in the name of the exam to confirm.",
+                "success": "The exam has been successfully reset."
             },
             "checklist": {
                 "title": "Exam Checklist",
@@ -461,7 +490,10 @@
                 "goTo": "Page",
                 "testExam": {
                     "title": "Test Exam Checklist",
-                    "introduction": "This page gives an overview over the various steps when creating a Test Exam."
+                    "introduction": "This page gives an overview over the various steps when creating a test exam.",
+                    "detailsHintForTestExams": "For test exams, the following applies",
+                    "studentRegistration": "Students are automatically registered for the test exam when starting a test exam",
+                    "instantResults": "The results are automatically published once a student submits the exam"
                 },
                 "tableItem": {
                     "register": "Register students for the exam",
@@ -532,6 +564,7 @@
             "enable": "Enable",
             "disable": "Disable",
             "enabled": "Enabled",
+            "globallyDisabled": "Globally disabled",
             "disabled": "Disabled",
             "table": {
                 "panelHeader": "Exam Information",
@@ -707,7 +740,8 @@
                 "planned": "Planned",
                 "running": "Running",
                 "finished": "Finished",
-                "complaints": "Complaints"
+                "complaints": "Complaints",
+                "complaintsCount": "({{ done }} out of {{ total}})"
             }
         }
     }

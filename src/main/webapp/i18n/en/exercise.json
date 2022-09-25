@@ -31,10 +31,13 @@
                 "markdownWarning": "You can edit the problem statement after importing the exercise.",
                 "search": "Search for exercise",
                 "loading": "Loading...",
+                "searchInCourses": "Search in courses?",
+                "searchInExams": "Search in exams?",
                 "table": {
                     "title": "Title",
-                    "language": "Programming Language",
+                    "language": "Language",
                     "course": "Course",
+                    "exam": "Exam",
                     "examQuestion": "Exam Question",
                     "doImport": "Import"
                 }
@@ -216,10 +219,6 @@
             },
             "isUsedForTutorial": "Tutor needs to review",
             "action": "Action"
-        },
-        "exerciseLtiConfiguration": {
-            "lti": "LTI",
-            "configurationForExercise": "LTI configuration for exercise {{ title }}"
         }
     }
 }

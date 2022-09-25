@@ -41,6 +41,7 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import {
+    BONUS_GRADE_KEY,
     EMAIL_KEY,
     EXAM_ACHIEVED_POINTS,
     EXAM_ACHIEVED_SCORE,
@@ -48,11 +49,15 @@ import {
     EXAM_OVERALL_POINTS_KEY,
     EXAM_OVERALL_SCORE_KEY,
     EXAM_SUBMITTED,
+    FINAL_GRADE_KEY,
     NAME_KEY,
+    PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY,
+    PLAGIARISM_VERDICT_KEY,
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -174,7 +179,7 @@ describe('ExamScoresComponent', () => {
         userId: 1,
         name: 'user1',
         login: 'user1',
-        eMail: 'user1@tum.de',
+        email: 'user1@tum.de',
         registrationNumber: '111',
         overallPointsAchieved: 100,
         overallScoreAchieved: 100,
@@ -187,7 +192,7 @@ describe('ExamScoresComponent', () => {
         userId: 2,
         name: 'user2',
         login: 'user2',
-        eMail: 'user2@tum.de',
+        email: 'user2@tum.de',
         registrationNumber: '222',
         overallPointsAchieved: 20,
         overallScoreAchieved: 20,
@@ -200,7 +205,7 @@ describe('ExamScoresComponent', () => {
         userId: 3,
         name: 'user3',
         login: 'user3',
-        eMail: 'user3@tum.de',
+        email: 'user3@tum.de',
         registrationNumber: '333',
         overallPointsAchieved: 50,
         overallScoreAchieved: 50,
@@ -208,6 +213,23 @@ describe('ExamScoresComponent', () => {
         submitted: false,
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult3ForGroup1 },
     } as StudentResult;
+
+    const studentResultsWithBonusAndPlagiarism = [
+        {
+            ...studentResult1,
+            gradeWithBonus: { bonusGrade: 1, finalGrade: '2.0' },
+            mostSeverePlagiarismVerdict: PlagiarismVerdict.WARNING,
+        },
+        { ...studentResult2, gradeWithBonus: { bonusGrade: 2, finalGrade: '1.0' } },
+        {
+            ...studentResult3,
+            gradeWithBonus: {
+                bonusGrade: 2,
+                finalGrade: '5.0',
+                mostSeverePlagiarismVerdict: PlagiarismVerdict.WARNING,
+            },
+        },
+    ];
 
     let findExamScoresSpy: jest.SpyInstance;
 
@@ -437,7 +459,7 @@ describe('ExamScoresComponent', () => {
         expect(groupResult1!.averagePercentage).toBe((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
-        expect(groupResult1!.exerciseResults.length).toBe(5);
+        expect(groupResult1!.exerciseResults).toHaveLength(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
             let averageExPoints = 0;
             let exInfo;
@@ -519,7 +541,7 @@ describe('ExamScoresComponent', () => {
         expect(groupResult1!.averagePercentage).toBe((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
-        expect(groupResult1!.exerciseResults.length).toBe(5);
+        expect(groupResult1!.exerciseResults).toHaveLength(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
             let averageExPoints = 0;
             let exInfo;
@@ -557,13 +579,13 @@ describe('ExamScoresComponent', () => {
         comp.exportExamResults(testOptions);
 
         const generatedRows = exportAsCsvStub.mock.calls[0][1];
-        expect(generatedRows.length).toBe(noOfSubmittedExercises);
+        expect(generatedRows).toHaveLength(noOfSubmittedExercises);
         const user1Row = generatedRows[0];
         validateUserRow(
             user1Row,
             studentResult1.name,
             studentResult1.login,
-            studentResult1.eMail,
+            studentResult1.email,
             studentResult1.registrationNumber,
             'exResult1_1',
             '100',
@@ -577,7 +599,7 @@ describe('ExamScoresComponent', () => {
             user2Row,
             studentResult2.name,
             studentResult2.login,
-            studentResult2.eMail,
+            studentResult2.email,
             studentResult2.registrationNumber,
             'exResult1_2',
             '20',
@@ -591,7 +613,7 @@ describe('ExamScoresComponent', () => {
             user3Row,
             studentResult3.name,
             studentResult3.login,
-            studentResult3.eMail,
+            studentResult3.email,
             studentResult3.registrationNumber,
             'exResult1_2',
             '50',
@@ -599,6 +621,95 @@ describe('ExamScoresComponent', () => {
             '50',
             '50%',
             studentResult3.submitted ? 'yes' : 'no',
+        );
+    });
+
+    it('should initialize correctly with bonus and plagiarism', () => {
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(
+            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusAndPlagiarism } as ExamScoreDTO })),
+        );
+        fixture.detectChanges();
+        const finalGrades = studentResultsWithBonusAndPlagiarism.map((studentResult) => studentResult.gradeWithBonus.finalGrade);
+        expect(comp.hasBonus).toBeTrue();
+        expect(comp.hasPlagiarismVerdicts).toBeTrue();
+        expect(comp.hasPlagiarismVerdictsInBonusSource).toBeTrue();
+        expect(comp.gradesWithBonus).toEqual(finalGrades);
+    });
+
+    it('should generate csv correctly with bonus and plagiarism', () => {
+        const noOfSubmittedExercises = examScoreDTO.studentResults.length;
+        jest.spyOn(examService, 'getExamScores').mockReturnValue(
+            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusAndPlagiarism } as ExamScoreDTO })),
+        );
+        fixture.detectChanges();
+        comp.gradingScale = gradingScale;
+        comp.gradingScale.gradeSteps = [gradeStep1];
+        comp.gradingScaleExists = true;
+
+        const exportAsCsvStub = jest.spyOn(comp, 'exportAsCsv');
+        // create csv
+        const testOptions: CsvExportOptions = {
+            fieldSeparator: CsvFieldSeparator.SEMICOLON,
+            quoteStrings: CsvQuoteStrings.QUOTES_DOUBLE,
+            decimalSeparator: CsvDecimalSeparator.PERIOD,
+        };
+        comp.exportExamResults(testOptions);
+
+        const generatedRows = exportAsCsvStub.mock.calls[0][1];
+        expect(generatedRows).toHaveLength(noOfSubmittedExercises);
+        const user1Row = generatedRows[0];
+        validateUserRow(
+            user1Row,
+            studentResult1.name,
+            studentResult1.login,
+            studentResult1.email,
+            studentResult1.registrationNumber,
+            'exResult1_1',
+            '100',
+            '100%',
+            '100',
+            '100%',
+            studentResult1.submitted ? 'yes' : 'no',
+            studentResultsWithBonusAndPlagiarism[0].gradeWithBonus.bonusGrade,
+            studentResultsWithBonusAndPlagiarism[0].gradeWithBonus.finalGrade,
+            studentResultsWithBonusAndPlagiarism[0].mostSeverePlagiarismVerdict,
+            '',
+        );
+        const user2Row = generatedRows[1];
+        validateUserRow(
+            user2Row,
+            studentResult2.name,
+            studentResult2.login,
+            studentResult2.email,
+            studentResult2.registrationNumber,
+            'exResult1_2',
+            '20',
+            '20%',
+            '20',
+            '20%',
+            studentResult2.submitted ? 'yes' : 'no',
+            studentResultsWithBonusAndPlagiarism[1].gradeWithBonus.bonusGrade,
+            studentResultsWithBonusAndPlagiarism[1].gradeWithBonus.finalGrade,
+            '',
+            '',
+        );
+        const user3Row = generatedRows[2];
+        validateUserRow(
+            user3Row,
+            studentResult3.name,
+            studentResult3.login,
+            studentResult3.email,
+            studentResult3.registrationNumber,
+            'exResult1_2',
+            '50',
+            '50%',
+            '50',
+            '50%',
+            studentResult3.submitted ? 'yes' : 'no',
+            studentResultsWithBonusAndPlagiarism[2].gradeWithBonus.bonusGrade,
+            studentResultsWithBonusAndPlagiarism[2].gradeWithBonus.finalGrade,
+            '',
+            studentResultsWithBonusAndPlagiarism[2].gradeWithBonus.mostSeverePlagiarismVerdict,
         );
     });
 
@@ -855,6 +966,10 @@ function validateUserRow(
     expectedOverAllPoints: string,
     expectedOverAllScore: string,
     expectedSubmitted: string,
+    expectedBonusGrade?: number,
+    expectedFinalGrade?: number | string,
+    expectedPlagiarism?: string,
+    expectedPlagiarismVerdictInBonus?: string,
 ) {
     expect(userRow[NAME_KEY]).toBe(expectedName);
     expect(userRow[USERNAME_KEY]).toBe(expectedUsername);
@@ -866,4 +981,8 @@ function validateUserRow(
     expect(userRow[EXAM_OVERALL_POINTS_KEY]).toBe(expectedOverAllPoints);
     expect(userRow[EXAM_OVERALL_SCORE_KEY]).toBe(expectedOverAllScore);
     expect(userRow[EXAM_SUBMITTED]).toBe(expectedSubmitted);
+    expect(userRow[BONUS_GRADE_KEY]).toBe(expectedBonusGrade);
+    expect(userRow[FINAL_GRADE_KEY]).toBe(expectedFinalGrade);
+    expect(userRow[PLAGIARISM_VERDICT_KEY]).toBe(expectedPlagiarism);
+    expect(userRow[PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY]).toBe(expectedPlagiarismVerdictInBonus);
 }

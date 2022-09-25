@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -55,11 +56,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ParticipationRepository participationRepository;
 
+    private final PlagiarismService plagiarismService;
+
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService) {
         super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
         this.participationService = participationService;
         this.examSubmissionService = examSubmissionService;
@@ -67,6 +70,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.submissionPolicyService = submissionPolicyService;
         this.participationRepository = participationRepository;
+        this.plagiarismService = plagiarismService;
     }
 
     @Override
@@ -86,13 +90,15 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
             lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, participation);
         }
-        // Error case 3: The user does not have permissions to push into the repository.
+        // Error case 3: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
         boolean hasPermissions = participationService.canAccessParticipation(programmingParticipation);
-        if (!hasPermissions) {
+        if (!hasPermissions && !plagiarismService.wasUserNotifiedByInstructor(participationId, userRepository.getUser().getLogin())) {
+            // TODO: change to AccessForbiddenException
             throw new IllegalAccessException();
         }
         // Error case 4: The user's participation repository is locked.
         if (repositoryAction == RepositoryActionType.WRITE && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
+            // TODO: change to AccessForbiddenException
             throw new IllegalAccessException();
         }
 
@@ -105,6 +111,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 isOwner = authCheckService.isOwnerOfParticipation((StudentParticipation) participation);
             }
             if (isStudent && programmingParticipation.isLocked()) {
+                // TODO: change to AccessForbiddenException
                 throw new IllegalAccessException();
             }
             // A tutor/instructor who is owner of the exercise should always be able to reset the repository
@@ -112,20 +119,25 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 // Check if a tutor is allowed to reset during the assessment
                 // Check for a regular course exercise
                 if (!programmingExercise.isExamExercise() && !programmingParticipation.isLocked()) {
+                    // TODO: change to AccessForbiddenException
                     throw new IllegalAccessException();
                 }
                 // Check for an exam exercise, as it might not be locked but a student might still be allowed to submit
                 var optStudent = ((StudentParticipation) participation).getStudent();
                 if (optStudent.isPresent() && programmingExercise.isExamExercise()
                         && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get(), false)) {
+                    // TODO: change to AccessForbiddenException
                     throw new IllegalAccessException();
                 }
             }
         }
         // Error case 6: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         // This must be a student participation as hasPermissions would have been false and an error already thrown
+        // But the student should still be able to access if they are notified for a related plagiarism case.
         boolean isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
-        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)) {
+        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)
+                && !plagiarismService.wasUserNotifiedByInstructor(participationId, userRepository.getUser().getLogin())) {
+            // TODO: change to AccessForbiddenException
             throw new IllegalAccessException();
         }
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();

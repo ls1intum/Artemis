@@ -53,9 +53,9 @@ describe('VideoUnitFormComponent', () => {
         const submitButton = videoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        videoUnitFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalledTimes(0);
-            expect(submitFormEventSpy).toHaveBeenCalledTimes(0);
+        return videoUnitFormComponentFixture.whenStable().then(() => {
+            expect(submitFormSpy).not.toHaveBeenCalled();
+            expect(submitFormEventSpy).not.toHaveBeenCalled();
         });
     });
 
@@ -78,9 +78,9 @@ describe('VideoUnitFormComponent', () => {
         const submitButton = videoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        videoUnitFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalledTimes(0);
-            expect(submitFormEventSpy).toHaveBeenCalledTimes(0);
+        return videoUnitFormComponentFixture.whenStable().then(() => {
+            expect(submitFormSpy).not.toHaveBeenCalled();
+            expect(submitFormEventSpy).not.toHaveBeenCalled();
         });
     });
 
@@ -104,8 +104,8 @@ describe('VideoUnitFormComponent', () => {
         const submitButton = videoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        videoUnitFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalled();
+        return videoUnitFormComponentFixture.whenStable().then(() => {
+            expect(submitFormSpy).toHaveBeenCalledOnce();
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 name: exampleName,
                 description: exampleDescription,
@@ -131,7 +131,7 @@ describe('VideoUnitFormComponent', () => {
         const transformButton = videoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
         transformButton.click();
 
-        videoUnitFormComponentFixture.whenStable().then(() => {
+        return videoUnitFormComponentFixture.whenStable().then(() => {
             expect(videoUnitFormComponent.sourceControl?.value).toEqual(validYouTubeUrlInEmbeddableFormat);
         });
     });

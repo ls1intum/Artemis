@@ -86,22 +86,22 @@ describe('LectureImportComponent', () => {
     }));
 
     it('should set content to paging result on pageChange', fakeAsync(() => {
-        expect(comp.page).toEqual(1);
+        expect(comp.page).toBe(1);
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
             expect(searchForLecturesStub).toHaveBeenCalledWith({ ...state, page: 5 });
-            expect(comp.page).toEqual(5);
+            expect(comp.page).toBe(5);
         });
     }));
 
     it('should set content to paging result on search', fakeAsync(() => {
-        expect(comp.searchTerm).toEqual('');
+        expect(comp.searchTerm).toBe('');
         setStateAndCallOnInit(() => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForLecturesStub).toHaveBeenCalledTimes(0);
+            expect(searchForLecturesStub).not.toHaveBeenCalled();
             tick(290);
             expect(searchForLecturesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
             expect(comp.searchTerm).toEqual(givenSearchTerm);

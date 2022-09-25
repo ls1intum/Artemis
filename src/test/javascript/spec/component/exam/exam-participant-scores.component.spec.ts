@@ -91,7 +91,7 @@ describe('ExamParticipantScores', () => {
         const findAllOfExamStub = jest.spyOn(participantScoreService, 'findAllOfExam').mockReturnValue(of(findAllOfExamResponse));
         // stub find average of exam
         const participantScoreAverageDTO = new ParticipantScoreAverageDTO();
-        participantScoreAverageDTO.userName = 'test';
+        participantScoreAverageDTO.name = 'test';
         participantScoreAverageDTO.averageScore = 10;
         const findAverageOfExamPerParticipantResponse: HttpResponse<ParticipantScoreAverageDTO[]> = new HttpResponse({
             body: [participantScoreAverageDTO],
@@ -117,11 +117,11 @@ describe('ExamParticipantScores', () => {
 
         expect(component.participantScores).toEqual([participantScoreDTO]);
         expect(component.participantScoresAverage).toEqual([participantScoreAverageDTO]);
-        expect(component.avgScore).toEqual(99);
-        expect(component.avgRatedScore).toEqual(99);
-        expect(findAllOfExamStub).toHaveBeenCalled();
-        expect(findAverageOfExamPerParticipantStub).toHaveBeenCalled();
-        expect(findAverageOfExamStub).toHaveBeenCalled();
-        expect(findGradingScaleForExamStub).toHaveBeenCalled();
+        expect(component.avgScore).toBe(99);
+        expect(component.avgRatedScore).toBe(99);
+        expect(findAllOfExamStub).toHaveBeenCalledOnce();
+        expect(findAverageOfExamPerParticipantStub).toHaveBeenCalledOnce();
+        expect(findAverageOfExamStub).toHaveBeenCalledTimes(2);
+        expect(findGradingScaleForExamStub).toHaveBeenCalledOnce();
     });
 });

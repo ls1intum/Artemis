@@ -121,14 +121,14 @@ describe('QuizExercise Re-evaluate Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should initialize quiz exercise', () => {
+    it('should initialize quiz exercise', () => {
         comp.ngOnInit();
         expect(comp.isValidQuiz()).toBeTrue();
         expect(comp.quizExercise).toEqual(quizExercise);
         expect(quizServiceFindStub).toHaveBeenCalledOnce();
     });
 
-    it('Should create correct duration strings', () => {
+    it('should create correct duration strings', () => {
         comp.duration = new Duration(1, 0);
         expect(comp.durationString()).toBe('1:00');
 
@@ -139,14 +139,14 @@ describe('QuizExercise Re-evaluate Component', () => {
         expect(comp.durationString()).toBe('1:10');
     });
 
-    it('Should delete quiz question', () => {
+    it('should delete quiz question', () => {
         comp.ngOnInit();
-        expect(comp.quizExercise.quizQuestions!.length).toBe(2);
+        expect(comp.quizExercise.quizQuestions).toHaveLength(2);
         comp.deleteQuestion(comp.quizExercise.quizQuestions![0]);
-        expect(comp.quizExercise.quizQuestions!.length).toBe(1);
+        expect(comp.quizExercise.quizQuestions).toHaveLength(1);
     });
 
-    it('Should update and reset quiz questions', () => {
+    it('should update and reset quiz questions', () => {
         comp.ngOnInit();
         comp.quizExercise.title = 'New Title';
         comp.quizExercise.quizQuestions![0].points = 5;
@@ -161,20 +161,20 @@ describe('QuizExercise Re-evaluate Component', () => {
         expect(comp.quizExercise).toEqual(comp.savedEntity);
     });
 
-    it('Should have pending changes', () => {
+    it('should have pending changes', () => {
         comp.ngOnInit();
         comp.quizExercise.quizQuestions![0].points = 5;
         expect(comp.pendingChanges()).toBeTrue();
     });
 
-    it('Should move down the quiz question', () => {
+    it('should move down the quiz question', () => {
         comp.ngOnInit();
         expect(comp.quizExercise.quizQuestions![0].type).toEqual(QuizQuestionType.MULTIPLE_CHOICE);
         comp.moveDown(comp.quizExercise.quizQuestions![0]);
         expect(comp.quizExercise.quizQuestions![1].type).toEqual(QuizQuestionType.MULTIPLE_CHOICE);
     });
 
-    it('Should move up the quiz question', () => {
+    it('should move up the quiz question', () => {
         comp.ngOnInit();
         expect(comp.quizExercise.quizQuestions![1].type).toEqual(QuizQuestionType.DRAG_AND_DROP);
         comp.moveUp(comp.quizExercise.quizQuestions![1]);
@@ -198,8 +198,6 @@ describe('QuizExercise Re-evaluate Component', () => {
         afterEach(() => {
             comp.resetAll();
             comp.onQuestionUpdated();
-
-            expect(comp.quizIsValid).toBeTrue();
         });
 
         describe('Quiz mc question validation', () => {
@@ -210,7 +208,7 @@ describe('QuizExercise Re-evaluate Component', () => {
                 answerOption1 = mcQuestion.answerOptions![0];
             });
 
-            it('Should be invalid if quiz hint is too long', () => {
+            it('should be invalid if quiz hint is too long', () => {
                 mcQuestion.hint = new Array(256 + 1).join('x');
                 expect(mcQuestion.hint).toHaveLength(256);
 
@@ -219,7 +217,7 @@ describe('QuizExercise Re-evaluate Component', () => {
                 expect(comp.quizIsValid).toBeFalse();
             });
 
-            it('Should be invalid if quiz explanation is too long', () => {
+            it('should be invalid if quiz explanation is too long', () => {
                 mcQuestion.explanation = new Array(501 + 1).join('x');
                 expect(mcQuestion.explanation).toHaveLength(501);
 
@@ -228,7 +226,7 @@ describe('QuizExercise Re-evaluate Component', () => {
                 expect(comp.quizIsValid).toBeFalse();
             });
 
-            it('Should be invalid if answer option hint is too long', () => {
+            it('should be invalid if answer option hint is too long', () => {
                 answerOption1.hint = new Array(501 + 1).join('x');
 
                 comp.onQuestionUpdated();
@@ -236,7 +234,7 @@ describe('QuizExercise Re-evaluate Component', () => {
                 expect(comp.quizIsValid).toBeFalse();
             });
 
-            it('Should be invalid if answer option explanation is too long', () => {
+            it('should be invalid if answer option explanation is too long', () => {
                 answerOption1.explanation = new Array(501 + 1).join('x');
 
                 comp.onQuestionUpdated();
@@ -251,7 +249,7 @@ describe('QuizExercise Re-evaluate Component', () => {
                 dndQuestion = comp.quizExercise.quizQuestions![1] as DragAndDropQuestion;
             });
 
-            it('Should be invalid if question hint is invalid', () => {
+            it('should be invalid if question hint is invalid', () => {
                 dndQuestion.hint = new Array(256 + 1).join('x');
                 expect(dndQuestion.hint).toHaveLength(256);
 
@@ -260,7 +258,7 @@ describe('QuizExercise Re-evaluate Component', () => {
                 expect(comp.quizIsValid).toBeFalse();
             });
 
-            it('Should be invalid if question explanation is invalid', () => {
+            it('should be invalid if question explanation is invalid', () => {
                 dndQuestion.explanation = new Array(501 + 1).join('x');
                 expect(dndQuestion.explanation).toHaveLength(501);
 
@@ -271,7 +269,7 @@ describe('QuizExercise Re-evaluate Component', () => {
         });
     });
 
-    it('Should change score calculation type', () => {
+    it('should change score calculation type', () => {
         comp.ngOnInit();
         expect(comp.quizExercise.includedInOverallScore).toEqual(IncludedInOverallScore.INCLUDED_COMPLETELY);
         comp.includedInOverallScoreChange(IncludedInOverallScore.INCLUDED_AS_BONUS);

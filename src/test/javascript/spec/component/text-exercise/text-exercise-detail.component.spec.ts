@@ -58,7 +58,7 @@ describe('TextExercise Management Detail Component', () => {
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
     });
 
-    describe('OnInit with course exercise', () => {
+    describe('onInit with course exercise', () => {
         const course: Course = { id: 123 } as Course;
         const textExerciseWithCourse: TextExercise = new TextExercise(course, undefined);
         textExerciseWithCourse.id = 123;
@@ -68,7 +68,7 @@ describe('TextExercise Management Detail Component', () => {
             route.params = of({ exerciseId: textExerciseWithCourse.id });
         });
 
-        it('Should call load on init and be not in exam mode', () => {
+        it('should call load on init and be not in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
             const exerciseServiceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(
@@ -85,17 +85,17 @@ describe('TextExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(exerciseServiceStub).toHaveBeenCalled();
-            expect(statisticsServiceStub).toHaveBeenCalled();
+            expect(exerciseServiceStub).toHaveBeenCalledTimes(2);
+            expect(statisticsServiceStub).toHaveBeenCalledTimes(2);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.textExercise).toEqual(textExerciseWithCourse);
-            expect(comp.doughnutStats.participationsInPercent).toEqual(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
+            expect(comp.doughnutStats.participationsInPercent).toBe(100);
+            expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
+            expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
         });
     });
 
-    describe('OnInit with exam exercise', () => {
+    describe('onInit with exam exercise', () => {
         const exerciseGroup: ExerciseGroup = new ExerciseGroup();
         const textExerciseWithExerciseGroup: TextExercise = new TextExercise(undefined, exerciseGroup);
         textExerciseWithExerciseGroup.id = 123;
@@ -105,7 +105,7 @@ describe('TextExercise Management Detail Component', () => {
             route.params = of({ exerciseId: textExerciseWithExerciseGroup.id });
         });
 
-        it('Should call load on init and be in exam mode', () => {
+        it('should call load on init and be in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
             const exerciseServiceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(
@@ -123,8 +123,8 @@ describe('TextExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(exerciseServiceStub).toHaveBeenCalled();
-            expect(statisticsServiceStub).toHaveBeenCalled();
+            expect(exerciseServiceStub).toHaveBeenCalledTimes(2);
+            expect(statisticsServiceStub).toHaveBeenCalledTimes(2);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.textExercise).toEqual(textExerciseWithExerciseGroup);
         });

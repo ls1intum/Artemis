@@ -75,9 +75,14 @@ public class ExamAccessService {
             studentExam = optionalStudentExam.get();
         }
         else {
-            // Only Test Exams can be self-created by the user. To limit the number of DB-calls, the following method
-            // will check, if the exam is a Real Exam (throws Forbidden Exception) or a Test Exam (new Test Exam generated)
-            studentExam = studentExamService.generateTestExam(examId, currentUser);
+            // Only Test Exams can be self-created by the user.
+            Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+
+            if (!examWithExerciseGroupsAndExercises.isTestExam()) {
+                throw new BadRequestAlertException("The requested Exam is no test exam and thus no student exam can be created", ENTITY_NAME,
+                        "StudentExamGenerationOnlyForTestExams");
+            }
+            studentExam = studentExamService.generateTestExam(examWithExerciseGroupsAndExercises, currentUser);
             // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
             studentExam.setExercises(null);
         }
@@ -96,7 +101,7 @@ public class ExamAccessService {
         }
 
         if (exam.isTestExam()) {
-            // Check that the current user is registered for the test exam. Otherwise, the student can self-register.
+            // Check that the current user is registered for the test exam. Otherwise, the student can self-register
             examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
         }
         else {
@@ -245,6 +250,25 @@ public class ExamAccessService {
     public void checkCourseAndExamAccessForTeachingAssistantElseThrow(Long courseId, Long examId) {
         checkCourseAccessForTeachingAssistantElseThrow(courseId);
         checkExamBelongsToCourseElseThrow(courseId, examId);
+    }
+
+    /**
+     * Checks if the current user is has a student exam in the given exam of the given course and that the exam
+     * belongs to the given course.
+     *
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     */
+    public void checkCourseAndExamAccessForStudentElseThrow(Long courseId, Long examId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
+        if (authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
+            checkExamBelongsToCourseElseThrow(courseId, examId);
+        }
+        else if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(courseId, examId, currentUser.getId())) {
+            throw new AccessForbiddenException("You are not allowed to access this exam!");
+        }
     }
 
     private void checkExamBelongsToCourseElseThrow(Long courseId, Long examId) {

@@ -321,7 +321,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(rows).toHaveLength(testCases1.filter(({ active }) => active).length);
 
         const saveButton = debugElement.query(By.css(saveTableButton));
-        expect(saveButton).not.toBe(null);
+        expect(saveButton).not.toBeNull();
         expect(saveButton.nativeElement.disabled).toBeTrue();
     });
 
@@ -337,7 +337,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(rows).toHaveLength(testCases1.length);
 
         const saveButton = debugElement.query(By.css(saveTableButton));
-        expect(saveButton).not.toBe(null);
+        expect(saveButton).not.toBeNull();
         expect(saveButton.nativeElement.disabled).toBeTrue();
     });
 
@@ -355,7 +355,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(editingInputs).toHaveLength(testCases1.length * 3);
 
         const weightInput = editingInputs[0].nativeElement;
-        expect(weightInput).not.toBe(null);
+        expect(weightInput).not.toBeNull();
         weightInput.focus();
 
         // Set new weight.
@@ -363,7 +363,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         weightInput.dispatchEvent(new Event('blur'));
 
         const multiplierInput = editingInputs[1].nativeElement;
-        expect(multiplierInput).not.toBe(null);
+        expect(multiplierInput).not.toBeNull();
         multiplierInput.focus();
 
         // Set new multiplier.
@@ -371,7 +371,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         multiplierInput.dispatchEvent(new Event('blur'));
 
         const bonusInput = editingInputs[2].nativeElement;
-        expect(bonusInput).not.toBe(null);
+        expect(bonusInput).not.toBeNull();
         bonusInput.focus();
 
         // Set new bonus.
@@ -449,7 +449,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         // Set only the weight input fields to 0 of all test cases
         for (let i = 0; i < editingInputs.length; i += 3) {
             const weightInput = editingInputs[i].nativeElement;
-            expect(weightInput).not.toBe(null);
+            expect(weightInput).not.toBeNull();
             weightInput.focus();
 
             // Set new weight.
@@ -523,13 +523,13 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.changedTestCaseIds).toEqual([orderedTests[0].id]);
 
         // The UI should now show that there are unsaved changes.
-        expect(getUnsavedChangesBadge()).not.toBe(null);
-        expect(getNoUnsavedChangesBadge()).toBe(null);
+        expect(getUnsavedChangesBadge()).not.toBeNull();
+        expect(getNoUnsavedChangesBadge()).toBeNull();
 
         // Save weight.
         updateTestCasesStub.mockReturnValue(of({ ...orderedTests[0], afterDueDate: true }));
         const saveTestCases = debugElement.query(By.css(saveTableButton));
-        expect(saveTestCases).not.toBe(null);
+        expect(saveTestCases).not.toBeNull();
         expect(saveTestCases.nativeElement.disabled).toBeFalse();
         saveTestCases.nativeElement.click();
 
@@ -556,8 +556,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getNoUnsavedChangesBadge()).not.toBe(null);
-        expect(getNoUpdatedTestCaseBadge()).not.toBe(null);
+        expect(getNoUnsavedChangesBadge()).not.toBeNull();
+        expect(getNoUpdatedTestCaseBadge()).not.toBeNull();
     });
 
     it('should not show the updatedTests badge when the exercise is released and has no student results', () => {
@@ -565,8 +565,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getNoUnsavedChangesBadge()).not.toBe(null);
-        expect(getNoUpdatedTestCaseBadge()).toBe(null);
+        expect(getNoUnsavedChangesBadge()).not.toBeNull();
+        expect(getNoUpdatedTestCaseBadge()).toBeNull();
     });
 
     it('should not show the updatedTests badge when the exercise is not released and has student results (edge case)', () => {
@@ -574,8 +574,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getNoUnsavedChangesBadge()).not.toBe(null);
-        expect(getNoUpdatedTestCaseBadge()).toBe(null);
+        expect(getNoUnsavedChangesBadge()).not.toBeNull();
+        expect(getNoUpdatedTestCaseBadge()).toBeNull();
     });
 
     it('should show that there are updated test cases if the testCasesChanged flat is set', () => {
@@ -583,8 +583,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getUpdatedTestCaseBadge()).not.toBe(null);
-        expect(getNoUpdatedTestCaseBadge()).toBe(null);
+        expect(getUpdatedTestCaseBadge()).not.toBeNull();
+        expect(getNoUpdatedTestCaseBadge()).toBeNull();
     });
 
     it('should reset all test cases when the reset button is clicked', () => {
@@ -705,7 +705,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(editingInputs).toHaveLength(gradedCategories.length * 2);
 
         const penaltyInput = editingInputs[0].nativeElement;
-        expect(penaltyInput).not.toBe(null);
+        expect(penaltyInput).not.toBeNull();
         penaltyInput.focus();
 
         // Set new penalty.
@@ -713,7 +713,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         penaltyInput.dispatchEvent(new Event('blur'));
 
         const maxPenaltyInput = editingInputs[1].nativeElement;
-        expect(maxPenaltyInput).not.toBe(null);
+        expect(maxPenaltyInput).not.toBeNull();
         maxPenaltyInput.focus();
 
         // Set new max penalty.
@@ -781,7 +781,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(passedBuildCharts).toHaveLength(3);
 
         // this test case is disabled and has no stats
-        expect(passedBuildCharts[0].testCaseStats).toBe(undefined);
+        expect(passedBuildCharts[0].testCaseStats).toBeUndefined();
         expect(passedBuildCharts[0].totalParticipations).toBe(5);
 
         expect(passedBuildCharts[1].testCaseStats).toEqual(gradingStatistics.testCaseStatsMap!.testBubbleSort);
@@ -870,7 +870,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             expect(editingInputs).toHaveLength(3);
 
             const weightInput = editingInputs[0].nativeElement;
-            expect(weightInput).not.toBe(null);
+            expect(weightInput).not.toBeNull();
             weightInput.focus();
 
             // Set new weight.
@@ -878,7 +878,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             weightInput.dispatchEvent(new Event('blur'));
 
             const multiplierInput = editingInputs[1].nativeElement;
-            expect(multiplierInput).not.toBe(null);
+            expect(multiplierInput).not.toBeNull();
             multiplierInput.focus();
 
             // Set new multiplier.
@@ -886,7 +886,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             multiplierInput.dispatchEvent(new Event('blur'));
 
             const bonusInput = editingInputs[2].nativeElement;
-            expect(bonusInput).not.toBe(null);
+            expect(bonusInput).not.toBeNull();
             bonusInput.focus();
 
             // Set new bonus.
@@ -946,7 +946,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             expect(editingInputs).toHaveLength(2);
 
             const penaltyInput = editingInputs[0].nativeElement;
-            expect(penaltyInput).not.toBe(null);
+            expect(penaltyInput).not.toBeNull();
             penaltyInput.focus();
 
             // Set new penalty.
@@ -954,7 +954,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             penaltyInput.dispatchEvent(new Event('blur'));
 
             const maxPenaltyInput = editingInputs[1].nativeElement;
-            expect(maxPenaltyInput).not.toBe(null);
+            expect(maxPenaltyInput).not.toBeNull();
             maxPenaltyInput.focus();
 
             // Set new max penalty.

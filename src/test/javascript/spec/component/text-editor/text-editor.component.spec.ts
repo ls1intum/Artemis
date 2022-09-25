@@ -25,7 +25,7 @@ import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.com
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
-import { Language } from 'app/entities/tutor-group.model';
+import { Language } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -245,7 +245,7 @@ describe('TextEditorComponent', () => {
     it('should return submission for answer', () => {
         jest.spyOn(textService, 'predictLanguage');
         const submissionForAnswer = comp['submissionForAnswer']('abc');
-        expect(submissionForAnswer.text).toEqual('abc');
+        expect(submissionForAnswer.text).toBe('abc');
         expect(submissionForAnswer.language).toEqual(Language.ENGLISH);
     });
 
@@ -261,7 +261,7 @@ describe('TextEditorComponent', () => {
             ],
         } as Result;
         const unreferencedFeedback = comp.unreferencedFeedback;
-        expect(unreferencedFeedback?.length).toEqual(1);
+        expect(unreferencedFeedback?.length).toBe(1);
     });
 
     it('should receive submission from team', () => {
@@ -282,7 +282,7 @@ describe('TextEditorComponent', () => {
         jest.spyOn(comp, 'updateParticipation');
         comp.onReceiveSubmissionFromTeam(submission);
         expect(comp['updateParticipation']).toHaveBeenCalledOnce();
-        expect(comp.answer).toEqual('abc');
+        expect(comp.answer).toBe('abc');
     });
 
     it('should destroy', () => {

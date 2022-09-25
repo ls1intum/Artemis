@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Observable } from 'rxjs';
@@ -10,10 +10,11 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faCheckDouble, faExclamationTriangle, faSave, faFont } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheckDouble, faExclamationTriangle, faFont, faSave } from '@fortawesome/free-solid-svg-icons';
 import { tap } from 'rxjs/operators';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -41,12 +42,15 @@ export class ExamUpdateComponent implements OnInit {
     faCheckDouble = faCheckDouble;
     faFont = faFont;
 
+    readonly FeatureToggle = FeatureToggle;
+
     constructor(
         private route: ActivatedRoute,
         private examManagementService: ExamManagementService,
         private alertService: AlertService,
         private courseManagementService: CourseManagementService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
@@ -115,14 +119,15 @@ export class ExamUpdateComponent implements OnInit {
 
     subscribeToSaveResponse(result: Observable<HttpResponse<Exam>>) {
         result.subscribe({
-            next: () => this.onSaveSuccess(),
+            next: (response: HttpResponse<Exam>) => this.onSaveSuccess(response.body!),
             error: (err: HttpErrorResponse) => this.onSaveError(err),
         });
     }
 
-    private onSaveSuccess() {
+    private onSaveSuccess(exam: Exam) {
         this.isSaving = false;
-        this.previousState();
+        this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
+        window.scrollTo(0, 0);
     }
 
     private onSaveError(httpErrorResponse: HttpErrorResponse) {

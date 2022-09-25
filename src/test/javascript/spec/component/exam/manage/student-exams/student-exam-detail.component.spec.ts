@@ -104,7 +104,7 @@ describe('StudentExamDetailComponent', () => {
                 userId: 1,
                 name: 'user1',
                 login: 'user1',
-                eMail: 'user1@tum.de',
+                email: 'user1@tum.de',
                 registrationNumber: '111',
                 overallPointsAchieved: 40,
                 overallScoreAchieved: 40,
@@ -282,8 +282,8 @@ describe('StudentExamDetailComponent', () => {
     it('should toggle to unsubmitted', () => {
         const toggleSubmittedStateSpy = jest.spyOn(studentExamService, 'toggleSubmittedState');
         studentExamDetailComponentFixture.detectChanges();
-        expect(studentExamDetailComponent.studentExam.submitted).toBe(undefined);
-        expect(studentExamDetailComponent.studentExam.submissionDate).toBe(undefined);
+        expect(studentExamDetailComponent.studentExam.submitted).toBeUndefined();
+        expect(studentExamDetailComponent.studentExam.submissionDate).toBeUndefined();
 
         studentExamDetailComponent.toggle();
 
@@ -291,7 +291,7 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.studentExam.submitted).toBeTrue();
         // the toggle uses the current time as submission date,
         // therefore no useful assertion about a concrete value is possible here
-        expect(studentExamDetailComponent.studentExam.submissionDate).not.toBe(undefined);
+        expect(studentExamDetailComponent.studentExam.submissionDate).toBeDefined();
     });
 
     it('should update the percent difference when the absolute working time changes', () => {
@@ -326,5 +326,15 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.workingTimeFormValues.percent = -100;
         studentExamDetailComponent.updateWorkingTimeDuration();
         expectDuration(0, 0, 0);
+    });
+
+    it.each([
+        [true, undefined, 'artemisApp.studentExams.bonus'],
+        [false, '2.0', 'artemisApp.studentExams.gradeBeforeBonus'],
+        [false, undefined, 'artemisApp.studentExams.grade'],
+    ])('should get the correct grade explanation label', (isBonus: boolean, gradeAfterBonus: string | undefined, gradeExplanation: string) => {
+        studentExamDetailComponent.isBonus = isBonus;
+        studentExamDetailComponent.gradeAfterBonus = gradeAfterBonus;
+        expect(studentExamDetailComponent.getGradeExplanation()).toBe(gradeExplanation);
     });
 });

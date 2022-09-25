@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+
 /**
  * This service is only active on a node that does not run with the 'scheduling' profile.
  * All requests are forwarded to a Hazelcast topic and a node with the 'scheduling' profile will then process it.
@@ -113,7 +116,26 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
         sendMessageDelayed("assessed-exercise-submission-notification-schedule", exerciseId);
     }
 
-    private void sendMessageDelayed(String destination, Long exerciseId) {
-        exec.schedule(() -> hazelcastInstance.getTopic(destination).publish(exerciseId), 1, TimeUnit.SECONDS);
+    @Override
+    @FeatureToggle(Feature.ExamLiveStatistics)
+    public void sendExamMonitoringSchedule(Long examId) {
+        log.info("Sending schedule for exam monitoring {} to broker.", examId);
+        sendMessageDelayed("exam-monitoring-schedule", examId);
+    }
+
+    @Override
+    public void sendExamMonitoringScheduleCancel(Long examId) {
+        log.info("Sending schedule cancel for exam monitoring {} to broker.", examId);
+        sendMessageDelayed("exam-monitoring-schedule-cancel", examId);
+    }
+
+    @Override
+    public void sendParticipantScoreSchedule(Long exerciseId, Long participantId, Long resultId) {
+        log.info("Sending schedule participant score update for exercise {} and participant {}.", exerciseId, participantId);
+        sendMessageDelayed("participant-score-schedule", exerciseId, participantId, resultId);
+    }
+
+    private void sendMessageDelayed(String destination, Long... payload) {
+        exec.schedule(() -> hazelcastInstance.getTopic(destination).publish(payload), 1, TimeUnit.SECONDS);
     }
 }

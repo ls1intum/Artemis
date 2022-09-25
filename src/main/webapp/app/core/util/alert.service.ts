@@ -94,14 +94,14 @@ export class AlertService {
                     });
                     if (errorHeader && !translateService.instant(errorHeader).startsWith(translationNotFoundMessage)) {
                         const entityName = translateService.instant('global.menu.entities.' + entityKey);
-                        this.addErrorAlert(errorHeader, errorHeader, { entityName });
+                        this.addErrorAlert(errorHeader, errorHeader, { entityName, ...httpErrorResponse.error?.params });
                     } else if (httpErrorResponse.error && httpErrorResponse.error.fieldErrors) {
                         const fieldErrors = httpErrorResponse.error.fieldErrors;
                         for (const fieldError of fieldErrors) {
                             // This is most likely related to server side field validations and gentrifies the error message
                             // to only tell the user that the size is wrong instead of the specific field
                             if (['Min', 'Max', 'DecimalMin', 'DecimalMax'].includes(fieldError.message)) {
-                                fieldError.message = 'Size';
+                                fieldError.message = 'size';
                             }
                             // convert 'something[14].other[4].id' to 'something[].other[].id' so translations can be written to it
                             const convertedField = fieldError.field.replace(/\[\d*\]/g, '[]');

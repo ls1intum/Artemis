@@ -68,7 +68,7 @@ describe('QuizExercise Statistic Component', () => {
         quizServiceFindSpy.mockClear();
     });
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         let loadQuizSuccessSpy: jest.SpyInstance;
         let loadDataSpy: jest.SpyInstance;
 
@@ -97,7 +97,7 @@ describe('QuizExercise Statistic Component', () => {
             tick(); // simulate async
 
             // check
-            expect(accountSpy).toHaveBeenCalled();
+            expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
         }));
@@ -111,7 +111,7 @@ describe('QuizExercise Statistic Component', () => {
             tick(); // simulate async
 
             // check
-            expect(accountSpy).toHaveBeenCalled();
+            expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSuccessSpy).not.toHaveBeenCalled();
         }));
@@ -143,8 +143,8 @@ describe('QuizExercise Statistic Component', () => {
 
             // check
             expect(comp.quizExercise).toBe(quizExercise);
-            expect(comp.maxScore).toEqual(11);
-            expect(loadDataSpy).toHaveBeenCalled();
+            expect(comp.maxScore).toBe(11);
+            expect(loadDataSpy).toHaveBeenCalledOnce();
         });
 
         it('should call navigate to courses if called by student', () => {
@@ -214,7 +214,7 @@ describe('QuizExercise Statistic Component', () => {
             comp.loadData();
 
             // check
-            expect(updateChartSpy).toHaveBeenCalled();
+            expect(updateChartSpy).toHaveBeenCalledOnce();
             expect(comp.ratedData).toEqual([1, 2, 17]);
             expect(comp.unratedData).toEqual([3, 4, 39]);
             expect(comp.data).toEqual([1, 2, 17]);
@@ -246,7 +246,7 @@ describe('QuizExercise Statistic Component', () => {
             comp.loadData();
 
             // check
-            expect(updateChartSpy).toHaveBeenCalled();
+            expect(updateChartSpy).toHaveBeenCalledOnce();
             expect(comp.ratedData).toEqual([0]);
             expect(comp.unratedData).toEqual([0]);
             expect(comp.data).toEqual([0]);

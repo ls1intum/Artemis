@@ -15,6 +15,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { faArchive, faCircleNotch, faDownload, faEraser } from '@fortawesome/free-solid-svg-icons';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS';
@@ -29,6 +30,7 @@ export type CourseExamArchiveState = {
 export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;
     ActionType = ActionType;
+    readonly FeatureToggle = FeatureToggle;
 
     @Input()
     archiveMode: 'Exam' | 'Course' = 'Course';

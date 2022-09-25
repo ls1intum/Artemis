@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.scheduled.*;
+import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 /**
  * This service is only available on a node with the 'scheduling' profile.
@@ -25,32 +26,38 @@ public class InstanceMessageReceiveService {
 
     private final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
-
     private final ModelingExerciseScheduleService modelingExerciseScheduleService;
+
+    private final ExamMonitoringScheduleService examMonitoringScheduleService;
+
+    private final NotificationScheduleService notificationScheduleService;
+
+    private final ParticipantScoreSchedulerService participantScoreSchedulerService;
+
+    private final Optional<AtheneScheduleService> atheneScheduleService;
+
+    private final UserScheduleService userScheduleService;
 
     private final TextExerciseRepository textExerciseRepository;
 
     private final ExerciseRepository exerciseRepository;
 
-    private final NotificationScheduleService notificationScheduleService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final Optional<AtheneScheduleService> atheneScheduleService;
+    private final ModelingExerciseRepository modelingExerciseRepository;
 
     private final UserRepository userRepository;
 
-    private final UserScheduleService userScheduleService;
-
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, TextExerciseRepository textExerciseRepository,
-            ExerciseRepository exerciseRepository, Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository,
-            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService) {
+            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService,
+            ExamMonitoringScheduleService examMonitoringScheduleService, TextExerciseRepository textExerciseRepository, ExerciseRepository exerciseRepository,
+            Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository, UserScheduleService userScheduleService,
+            NotificationScheduleService notificationScheduleService, ParticipantScoreSchedulerService participantScoreSchedulerService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
+        this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.textExerciseRepository = textExerciseRepository;
         this.atheneScheduleService = atheneScheduleService;
         this.modelingExerciseRepository = modelingExerciseRepository;
@@ -59,6 +66,7 @@ public class InstanceMessageReceiveService {
         this.userRepository = userRepository;
         this.userScheduleService = userScheduleService;
         this.notificationScheduleService = notificationScheduleService;
+        this.participantScoreSchedulerService = participantScoreSchedulerService;
 
         hazelcastInstance.<Long>getTopic("programming-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -115,6 +123,18 @@ public class InstanceMessageReceiveService {
         hazelcastInstance.<Long>getTopic("assessed-exercise-submission-notification-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processScheduleAssessedExerciseSubmittedNotification((message.getMessageObject()));
+        });
+        hazelcastInstance.<Long>getTopic("exam-monitoring-schedule").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleExamMonitoring(message.getMessageObject());
+        });
+        hazelcastInstance.<Long>getTopic("exam-monitoring-schedule-cancel").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleExamMonitoringCancel(message.getMessageObject());
+        });
+        hazelcastInstance.<Long[]>getTopic("participant-score-schedule").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleParticipantScore(message.getMessageObject()[0], message.getMessageObject()[1], message.getMessageObject()[2]);
         });
     }
 
@@ -203,5 +223,20 @@ public class InstanceMessageReceiveService {
         log.info("Received schedule update for assessed exercise submitted {} notification ", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         notificationScheduleService.updateSchedulingForAssessedExercisesSubmissions(exercise);
+    }
+
+    public void processScheduleExamMonitoring(Long examId) {
+        log.info("Received schedule update for exam monitoring {}", examId);
+        examMonitoringScheduleService.scheduleExamMonitoringTask(examId);
+    }
+
+    public void processScheduleExamMonitoringCancel(Long examId) {
+        log.info("Received schedule cancel for exam monitoring {}", examId);
+        examMonitoringScheduleService.cancelExamMonitoringTask(examId);
+    }
+
+    public void processScheduleParticipantScore(Long exerciseId, Long participantId, Long resultId) {
+        log.info("Received schedule participant score update for exercise {} and participant {}", exerciseId, participantId);
+        participantScoreSchedulerService.scheduleTask(exerciseId, participantId, resultId);
     }
 }

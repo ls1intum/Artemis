@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router, RouterEvent, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
@@ -27,7 +27,7 @@ describe('SystemNotificationManagementComponent', () => {
 
     beforeEach(() => {
         router = new MockRouter();
-        router.events = of({ id: 1, url: '' } as RouterEvent);
+        router.setUrl('');
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -36,7 +36,6 @@ describe('SystemNotificationManagementComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockRouterLinkDirective,
-                MockDirective(RouterOutlet),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(SortDirective),
                 MockComponent(ItemCountComponent),

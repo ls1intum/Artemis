@@ -13,10 +13,12 @@
     </h2>
 </div>
 <jhi-exam-information *ngIf="studentExam?.exam" [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-information>
-<div class="mb-4 text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart()">
-    <a class="btn btn-success" style="cursor: default; pointer-events: none">
-        {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
-    </a>
+<div class="mb-4 container text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart()">
+    <div class="row justify-content-center">
+        <div class="alert alert-success col-12 col-lg-6" role="alert">
+            {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
+        </div>
+    </div>
 </div>
 <div class="mb-4 container exam-points-summary-container" *ngIf="studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO">
     <jhi-exam-points-summary [studentExamWithGrade]="studentExamGradeInfoDTO"></jhi-exam-points-summary>
@@ -50,11 +52,25 @@
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id!)">
             <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && resultsPublished">
-                <a *ngIf="exercise.studentParticipations?.length" class="btn btn-primary float-end" [routerLink]="generateLink(exercise)">
+                <a *ngIf="exercise.studentParticipations?.length" class="btn btn-primary ms-2 float-end" [routerLink]="generateLink(exercise)">
                     <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                     <span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
                 </a>
             </div>
+            <a
+                *ngIf="plagiarismCaseInfos[exercise.id!]"
+                class="btn ms-4 float-end"
+                [ngClass]="plagiarismCaseInfos[exercise.id!]!.verdict === PlagiarismVerdict.NO_PLAGIARISM ? 'btn-info' : 'btn-danger'"
+                [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfos[exercise.id!]!.id]"
+            >
+                <span
+                    [jhiTranslate]="
+                        'artemisApp.plagiarism.plagiarismCases.' +
+                        (plagiarismCaseInfos[exercise.id!]!.verdict === PlagiarismVerdict.NO_PLAGIARISM ? 'resolvedPlagiarismCase' : 'plagiarismCase')
+                    "
+                    >Plagiarism Case</span
+                >
+            </a>
             <!-- prettier-ignore -->
             <h5>{{ exercise.title }} [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}
                 <span

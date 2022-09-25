@@ -71,32 +71,36 @@ describe('VideoUnitComponent', () => {
         expect(container).not.toBeNull();
         container.click();
 
-        expect(handleCollapseSpy).toHaveBeenCalled();
+        expect(handleCollapseSpy).toHaveBeenCalledOnce();
         expect(videoUnitComponent.isCollapsed).toBeFalse();
 
         handleCollapseSpy.mockRestore();
     });
 
-    it('should call complete callback when uncollapsed after timeout', (done) => {
-        jest.useFakeTimers();
-        jest.spyOn(global, 'setTimeout');
-        videoUnitComponent.onCompletion.subscribe((event) => {
-            expect(event.lectureUnit).toEqual(videoUnit);
-            expect(event.completed).toBeTrue();
-            done();
+    it('should call complete callback when uncollapsed after timeout', () => {
+        return new Promise<void>((done) => {
+            jest.useFakeTimers();
+            jest.spyOn(global, 'setTimeout');
+            videoUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(videoUnit);
+                expect(event.completed).toBeTrue();
+                done();
+            });
+            videoUnitComponent.handleCollapse(new Event('click'));
+            expect(setTimeout).toHaveBeenCalledOnce();
+            expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1000 * 60 * 5);
+            jest.runAllTimers();
         });
-        videoUnitComponent.handleCollapse(new Event('click'));
-        expect(setTimeout).toHaveBeenCalledTimes(1);
-        expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1000 * 60 * 5);
-        jest.runAllTimers();
     }, 1000);
 
-    it('should call completion callback when clicked', (done) => {
-        videoUnitComponent.onCompletion.subscribe((event) => {
-            expect(event.lectureUnit).toEqual(videoUnit);
-            expect(event.completed).toBeFalse();
-            done();
+    it('should call completion callback when clicked', () => {
+        return new Promise<void>((done) => {
+            videoUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(videoUnit);
+                expect(event.completed).toBeFalse();
+                done();
+            });
+            videoUnitComponent.handleClick(new Event('click'), false);
         });
-        videoUnitComponent.handleClick(new Event('click'), false);
     }, 1000);
 });

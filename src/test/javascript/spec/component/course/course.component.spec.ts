@@ -152,8 +152,8 @@ describe('CoursesComponent', () => {
         jest.restoreAllMocks();
     });
 
-    describe('OnInit', () => {
-        it('Should call loadAndFilterCourses on init', () => {
+    describe('onInit', () => {
+        it('should call loadAndFilterCourses on init', () => {
             const loadAndFilterCoursesSpy = jest.spyOn(component, 'loadAndFilterCourses');
 
             component.ngOnInit();
@@ -161,7 +161,7 @@ describe('CoursesComponent', () => {
             expect(loadAndFilterCoursesSpy).toHaveBeenCalledOnce();
         });
 
-        it('Should load courses on init', () => {
+        it('should load courses on init', () => {
             const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
             const courseScoreCalculationServiceSpy = jest.spyOn(courseScoreCalculationService, 'setCourses');
             const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
@@ -180,7 +180,7 @@ describe('CoursesComponent', () => {
             expect(component.nextRelevantExams?.[0]).toEqual(exam1);
         });
 
-        it('Should load exercises on init', () => {
+        it('should load exercises on init', () => {
             const mockFunction = (arg1: Exercise[]) => {
                 switch (arg1[0].id) {
                     case exercise1.id:
@@ -246,7 +246,7 @@ describe('CoursesComponent', () => {
         });
     });
 
-    it('Should load next relevant exam', fakeAsync(() => {
+    it('should load next relevant exam', fakeAsync(() => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         component.nextRelevantCourseForExam = course1;
         component.nextRelevantExams = [exam1];
@@ -254,10 +254,10 @@ describe('CoursesComponent', () => {
         tick();
 
         expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'exams', 3]);
-        expect(location.path()).toEqual('/courses/1/exams/3');
+        expect(location.path()).toBe('/courses/1/exams/3');
     }));
 
-    it('Should load next relevant exam ignoring testExams', fakeAsync(() => {
+    it('should load next relevant exam ignoring test exams', fakeAsync(() => {
         const testExam1 = {
             id: 5,
             startDate: dayjs().add(1, 'hour'),

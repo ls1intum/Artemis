@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { NavigationEnd, Params, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { filter, skip, take } from 'rxjs/operators';
@@ -24,10 +24,10 @@ export class ArtemisNavigationUtilService {
      * Navigates to the last page if possible or to the fallback url if not
      * @param fallbackUrl Url to navigate to if current page is first navigation
      */
-    navigateBack(fallbackUrl: string[]) {
+    navigateBack(fallbackUrl?: (string | number)[]) {
         if (!this.onFirstPage) {
             this.location.back();
-        } else {
+        } else if (fallbackUrl) {
             this.router.navigate(fallbackUrl);
         }
     }
@@ -45,26 +45,47 @@ export class ArtemisNavigationUtilService {
     }
 
     /**
-     * Go back to the previous page, equivalent with pressing the back button in the browser.
-     * If no previous page exists:
-     * Returns to the exercise group page if in exam mode.
-     * Returns to the detail page edited an existing exercise.
-     * Returns to the overview page if created a new exercise.
-     * @param exercise Exercise to return from
+     * Navigate to exercise detail page after creating or editing it.
+     * @param exercise the updated or created exercise
      */
-    navigateBackFromExerciseUpdate(exercise: Exercise) {
-        if (exercise.exerciseGroup) {
+    navigateForwardFromExerciseUpdateOrCreation(exercise?: Exercise) {
+        if (exercise?.exerciseGroup?.exam?.course?.id) {
             // If an exercise group is set we are in exam mode
-            this.navigateBack([
+            this.router.navigate([
                 'course-management',
-                exercise.exerciseGroup!.exam!.course!.id!.toString(),
+                exercise.exerciseGroup.exam.course.id,
                 'exams',
-                exercise.exerciseGroup!.exam!.id!.toString(),
+                exercise.exerciseGroup.exam.id!,
                 'exercise-groups',
+                exercise.exerciseGroup.id!,
+                exercise.type! + '-exercises',
+                exercise.id,
             ]);
+        } else if (exercise?.course?.id) {
+            this.router.navigate(['course-management', exercise.course.id, exercise.type! + '-exercises', exercise.id]);
         } else {
-            this.navigateBackWithOptional(['course-management', exercise.course!.id!.toString(), exercise.type! + '-exercises'], exercise.id?.toString());
+            // Fallback
+            this.navigateBack();
         }
+    }
+
+    /**
+     * Navigate to exercise detail page if cancelling the update or creation
+     * Either
+     * - move back in the history
+     * - if in exam mode, go to the exercise group view
+     * - go to exercises overview
+     * @param exercise the updated or created exercise
+     */
+    navigateBackFromExerciseUpdate(exercise?: Exercise) {
+        let fallback: (string | number)[] | undefined = undefined;
+        if (exercise?.exerciseGroup?.exam?.course?.id) {
+            // If an exercise group is set we are in exam mode
+            fallback = ['/course-management', exercise.exerciseGroup.exam.course.id, 'exams', exercise.exerciseGroup.exam.id!, 'exercise-groups'];
+        } else if (exercise?.course?.id) {
+            fallback = ['/course-management', exercise.course.id, 'exercises'];
+        }
+        this.navigateBack(fallback);
     }
 
     replaceNewWithIdInUrl(url: string, id: number) {
@@ -83,28 +104,6 @@ export class ArtemisNavigationUtilService {
         window.open(url, '_blank');
     }
 }
-
-export const navigateToExampleSubmissions = (router: Router, exercise: Exercise): void => {
-    setTimeout(() => {
-        // If an exercise group is set -> we are in exam mode
-        if (exercise.exerciseGroup) {
-            router.navigate([
-                'course-management',
-                exercise.exerciseGroup!.exam!.course!.id!.toString(),
-                'exams',
-                exercise.exerciseGroup!.exam!.id!.toString(),
-                'exercise-groups',
-                exercise.exerciseGroup!.id!,
-                exercise.type! + '-exercises',
-                exercise.id,
-                'example-submissions',
-            ]);
-            return;
-        }
-
-        router.navigate(['course-management', exercise.course!.id!, exercise.type! + '-exercises', exercise.id, 'example-submissions']);
-    }, 1000);
-};
 
 export const getLinkToSubmissionAssessment = (
     exerciseType: ExerciseType,
@@ -218,4 +217,22 @@ export const navigateToExamExercise = (
     setTimeout(() => {
         navigationUtilService.routeInNewTab(['course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, `${exerciseType}-exercises`, exerciseId, subPage]);
     }, 1000);
+};
+
+/**
+ * Checks router hierarchy to find a given paramKey, starting from the current ActivatedRouteSnapshot
+ * and traversing the parents.
+ * @param route the active route
+ * @param paramKey the desired key of route.snapshot.params
+ */
+export const findParamInRouteHierarchy = (route: ActivatedRoute, paramKey: string): string | undefined => {
+    let currentRoute: ActivatedRoute | null = route;
+    while (currentRoute) {
+        const paramValue = currentRoute.snapshot.params[paramKey];
+        if (paramValue !== undefined) {
+            return paramValue;
+        }
+        currentRoute = currentRoute.parent;
+    }
+    return undefined;
 };

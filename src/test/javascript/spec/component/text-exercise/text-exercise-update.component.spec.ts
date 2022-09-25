@@ -53,7 +53,7 @@ describe('TextExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('Should call update service on save for existing entity', fakeAsync(() => {
+            it('should call update service on save for existing entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
@@ -80,7 +80,7 @@ describe('TextExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('Should call create service on save for new entity', fakeAsync(() => {
+            it('should call create service on save for new entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
@@ -107,7 +107,7 @@ describe('TextExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('Should call import service on save for new entity', fakeAsync(() => {
+            it('should call import service on save for new entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
                 comp.isImport = true;
@@ -135,7 +135,7 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
         });
 
-        it('Should be in exam mode', fakeAsync(() => {
+        it('should be in exam mode', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
@@ -154,7 +154,7 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
         });
 
-        it('Should not be in exam mode', fakeAsync(() => {
+        it('should not be in exam mode', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
@@ -179,16 +179,16 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
         });
 
-        it('Should set isImport and remove all dates', fakeAsync(() => {
+        it('should set isImport and remove all dates', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeFalse();
-            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.textExercise.releaseDate).toEqual(undefined);
-            expect(comp.textExercise.dueDate).toEqual(undefined);
+            expect(comp.textExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.textExercise.releaseDate).toBeUndefined();
+            expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
 
@@ -211,16 +211,16 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
         });
 
-        it('Should set isImport and remove all dates', fakeAsync(() => {
+        it('should set isImport and remove all dates', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeFalse();
-            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.textExercise.releaseDate).toEqual(undefined);
-            expect(comp.textExercise.dueDate).toEqual(undefined);
+            expect(comp.textExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.textExercise.releaseDate).toBeUndefined();
+            expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
 
@@ -239,17 +239,17 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
         });
 
-        it('Should set isImport and isExamMode and remove all dates', fakeAsync(() => {
+        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeTrue();
-            expect(comp.textExercise.course).toEqual(undefined);
-            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.textExercise.releaseDate).toEqual(undefined);
-            expect(comp.textExercise.dueDate).toEqual(undefined);
+            expect(comp.textExercise.course).toBeUndefined();
+            expect(comp.textExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.textExercise.releaseDate).toBeUndefined();
+            expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
 
@@ -269,16 +269,16 @@ describe('TextExercise Management Update Component', () => {
             route.data = of({ textExercise });
         });
 
-        it('Should set isImport and isExamMode and remove all dates', fakeAsync(() => {
+        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeTrue();
-            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.textExercise.releaseDate).toEqual(undefined);
-            expect(comp.textExercise.dueDate).toEqual(undefined);
+            expect(comp.textExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.textExercise.releaseDate).toBeUndefined();
+            expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
 });

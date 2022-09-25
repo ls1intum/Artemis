@@ -37,13 +37,13 @@ describe('UpcomingExamsAndExercisesComponent', () => {
         expect(component).toBeDefined();
     });
 
-    describe('OnInit', () => {
-        it('Should call load exercises and exams on init', () => {
+    describe('onInit', () => {
+        it('should call load exercises and exams on init', () => {
             // WHEN
             component.ngOnInit();
 
             // THEN
-            expect(component.upcomingExercises.length).toEqual(2);
+            expect(component.upcomingExercises).toHaveLength(2);
         });
     });
 });

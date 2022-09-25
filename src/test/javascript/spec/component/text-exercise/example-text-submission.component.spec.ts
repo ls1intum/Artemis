@@ -30,6 +30,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { DebugElement } from '@angular/core';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -60,6 +61,7 @@ describe('ExampleTextSubmissionComponent', () => {
             imports: [ArtemisTestModule, FormsModule],
             declarations: [
                 ExampleTextSubmissionComponent,
+                MockComponent(ConfirmAutofocusModalComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(ScoreDisplayComponent),
                 MockComponent(TextAssessmentAreaComponent),
@@ -151,13 +153,16 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
-        expect(exampleSubmissionService.get).toHaveBeenCalledTimes(0);
-        expect(assessmentsService.getExampleResult).toHaveBeenCalledTimes(0);
+        expect(exampleSubmissionService.get).not.toHaveBeenCalled();
+        expect(assessmentsService.getExampleResult).not.toHaveBeenCalled();
         expect(comp.state.constructor.name).toBe('NewState');
     }));
 
     it('should switch state when starting assessment', fakeAsync(() => {
         // GIVEN
+        jest.spyOn(exampleSubmissionService, 'prepareForAssessment').mockReturnValue(httpResponse({}));
+        jest.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
         comp.ngOnInit();
@@ -250,21 +255,21 @@ describe('ExampleTextSubmissionComponent', () => {
         // WHEN
         fixture.detectChanges();
         tick();
-        debugElement.query(By.css('#editSampleSolution')).nativeElement.click();
+        comp.editSubmission();
         tick();
 
         // THEN
-        expect(comp.state.constructor.name).toEqual('EditState');
+        expect(comp.state.constructor.name).toBe('EditState');
         expect(assessmentsService.deleteExampleAssessment).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID);
-        expect(comp.submission?.blocks).toBe(undefined);
-        expect(comp.submission?.results).toBe(undefined);
-        expect(comp.submission?.latestResult).toBe(undefined);
-        expect(comp.result).toBe(undefined);
+        expect(comp.submission?.blocks).toBeUndefined();
+        expect(comp.submission?.results).toBeUndefined();
+        expect(comp.submission?.latestResult).toBeUndefined();
+        expect(comp.result).toBeUndefined();
         expect(comp.textBlockRefs).toHaveLength(0);
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
     }));
 
-    it('it should verify correct tutorial submission', fakeAsync(() => {
+    it('should verify correct tutorial submission', fakeAsync(() => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
@@ -302,7 +307,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
-        expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalled();
+        expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalledOnce();
     }));
 
     it('should not check the assessment when it is invalid', () => {
@@ -328,8 +333,8 @@ describe('ExampleTextSubmissionComponent', () => {
 
         comp.textBlockRefs = [textBlockRefA, textBlockRefB];
 
-        expect(feedbackA.correctionStatus).toBe(undefined);
-        expect(feedbackB.correctionStatus).toBe(undefined);
+        expect(feedbackA.correctionStatus).toBeUndefined();
+        expect(feedbackB.correctionStatus).toBeUndefined();
 
         const tutorParticipationService = debugElement.injector.get(TutorParticipationService);
         const feedbackError = {

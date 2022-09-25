@@ -281,9 +281,28 @@
                 </label>
             </div>
             <!-- Histogram -->
+            <h4 *ngIf="hasBonus" class="text-center mb-0">
+                {{ 'artemisApp.examScores.gradesBeforeBonus' | artemisTranslate }}
+            </h4>
             <div class="row d-flex justify-content-center">
                 <jhi-participant-scores-distribution
                     [scores]="scores"
+                    [scoreToHighlight]="highlightedValue"
+                    [gradingScale]="gradingScale"
+                    [isCourseScore]="false"
+                    [dataLabelFormatting]="dataLabelFormatting"
+                    (onSelect)="onSelect()"
+                    class="col-lg-11"
+                >
+                </jhi-participant-scores-distribution>
+            </div>
+            <!-- Histogram with bonus -->
+            <h4 *ngIf="hasBonus" class="text-center mt-5 mb-0">
+                {{ 'artemisApp.examScores.gradesAfterBonus' | artemisTranslate }}
+            </h4>
+            <div *ngIf="hasBonus" class="row d-flex justify-content-center">
+                <jhi-participant-scores-distribution
+                    [gradeNames]="gradesWithBonus"
                     [scoreToHighlight]="highlightedValue"
                     [gradingScale]="gradingScale"
                     [isCourseScore]="false"
@@ -300,9 +319,9 @@
             <h4 class="mt-3">
                 <span jhiTranslate="artemisApp.examScores.ExerciseGroupsTitle">Exercise groups statistics</span>
             </h4>
-            <div class="col mb-3">
+            <div class="col mb-3" *ngIf="course">
                 <div *ngFor="let exerciseGroup of aggregatedExerciseGroupResults">
-                    <jhi-exam-scores-average-scores-graph [averageScores]="exerciseGroup"></jhi-exam-scores-average-scores-graph>
+                    <jhi-exam-scores-average-scores-graph [averageScores]="exerciseGroup" [course]="course"></jhi-exam-scores-average-scores-graph>
                 </div>
             </div>
 
@@ -401,7 +420,7 @@
                             <span jhiTranslate="artemisApp.examScores.loginColumn">Login</span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
-                        <th jhiSortBy="eMail">
+                        <th jhiSortBy="email">
                             <span jhiTranslate="artemisApp.examScores.eMailColumn">E-Mail</span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
@@ -430,7 +449,29 @@
                             }}</span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
+                        <ng-container *ngIf="hasBonus">
+                            <th *ngIf="presentationScoreThreshold != undefined" jhiSortBy="gradeWithBonus.achievedPresentationScore">
+                                <span>{{ 'artemisApp.examScores.presentationScoreThresholdColumn' | artemisTranslate: { threshold: presentationScoreThreshold } }}</span>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="gradeWithBonus.bonusGrade">
+                                <span>{{ 'artemisApp.examScores.bonusGradeColumn' | artemisTranslate }}</span>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="gradeWithBonus.finalGrade">
+                                <span>{{ 'artemisApp.examScores.finalGradeColumn' | artemisTranslate }}</span>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                        </ng-container>
                         <th *ngIf="gradingScaleExists && !isBonus">{{ 'artemisApp.examScores.passedColumn' | artemisTranslate }}</th>
+                        <th *ngIf="hasPlagiarismVerdicts" jhiSortBy="mostSeverePlagiarismVerdict">
+                            <span>{{ 'artemisApp.examScores.mostSeverePlagiarismVerdictColumn' | artemisTranslate }}</span>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th *ngIf="hasPlagiarismVerdictsInBonusSource" jhiSortBy="gradeWithBonus.mostSeverePlagiarismVerdict">
+                            <span>{{ 'artemisApp.examScores.mostSeverePlagiarismVerdictInBonusColumn' | artemisTranslate }}</span>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -438,7 +479,7 @@
                         <td>{{ i + 1 }}</td>
                         <td>{{ studentResult.name }}</td>
                         <td>{{ studentResult.login }}</td>
-                        <td>{{ studentResult.eMail ? studentResult.eMail : '-' }}</td>
+                        <td>{{ studentResult.email ? studentResult.email : '-' }}</td>
                         <td>{{ studentResult.registrationNumber ? studentResult.registrationNumber : '-' }}</td>
                         <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
                             <td *ngIf="studentResult.exerciseGroupIdToExerciseResult && studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id]; else empty">
@@ -459,11 +500,28 @@
                         <td *ngIf="gradingScaleExists">
                             {{ studentResult.overallGrade !== null ? studentResult.overallGrade : '-' }}
                         </td>
+                        <ng-container *ngIf="hasBonus">
+                            <td *ngIf="presentationScoreThreshold != undefined">
+                                {{ studentResult.gradeWithBonus?.achievedPresentationScore ?? '-' }}
+                            </td>
+                            <td>
+                                {{ studentResult.gradeWithBonus?.bonusGrade ?? '-' }}
+                            </td>
+                            <td>
+                                {{ studentResult.gradeWithBonus?.finalGrade ?? studentResult.overallGrade ?? '-' }}
+                            </td>
+                        </ng-container>
                         <td *ngIf="gradingScaleExists && !isBonus && studentResult.overallGrade && studentResult.hasPassed" style="text-align: center">
                             <fa-icon [icon]="faCheckCircle" style="color: #28a745; font-size: 1.5em"></fa-icon>
                         </td>
                         <td *ngIf="gradingScaleExists && !isBonus && studentResult.overallGrade && !studentResult.hasPassed" style="text-align: center">
                             <fa-icon [icon]="faTimes" style="color: #ca2024; font-size: 1.5em"></fa-icon>
+                        </td>
+                        <td *ngIf="hasPlagiarismVerdicts">
+                            {{ studentResult.mostSeverePlagiarismVerdict ?? '-' }}
+                        </td>
+                        <td *ngIf="hasPlagiarismVerdictsInBonusSource">
+                            {{ studentResult.gradeWithBonus?.mostSeverePlagiarismVerdict ?? '-' }}
                         </td>
                     </tr>
                 </tbody>

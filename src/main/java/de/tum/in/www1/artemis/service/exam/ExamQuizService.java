@@ -41,14 +41,21 @@ public class ExamQuizService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final QuizSubmissionRepository quizSubmissionRepository;
+
+    private final SubmittedAnswerRepository submittedAnswerRepository;
+
     public ExamQuizService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            QuizExerciseRepository quizExerciseRepository, QuizStatisticService quizStatisticService, ResultService resultService) {
+            QuizExerciseRepository quizExerciseRepository, QuizStatisticService quizStatisticService, ResultService resultService,
+            QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizStatisticService = quizStatisticService;
         this.resultService = resultService;
+        this.quizSubmissionRepository = quizSubmissionRepository;
+        this.submittedAnswerRepository = submittedAnswerRepository;
     }
 
     /**
@@ -77,23 +84,24 @@ public class ExamQuizService {
         final var participations = studentExam.getExercises().stream()
                 .flatMap(exercise -> exercise.getStudentParticipations().stream().filter(participation -> participation.getExercise() instanceof QuizExercise))
                 .collect(Collectors.toSet());
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
         for (final var participation : participations) {
             var quizExercise = (QuizExercise) participation.getExercise();
             final var optionalExistingSubmission = participation.findLatestSubmission();
             if (optionalExistingSubmission.isPresent()) {
-                QuizSubmission submission = (QuizSubmission) submissionRepository.findWithEagerResultAndFeedbackById(optionalExistingSubmission.get().getId())
+                QuizSubmission quizSubmission = quizSubmissionRepository.findWithEagerResultAndFeedbackById(optionalExistingSubmission.get().getId())
                         .orElseThrow(() -> new EntityNotFoundException("Submission with id \"" + optionalExistingSubmission.get().getId() + "\" does not exist"));
                 participation.setExercise(quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId()));
                 quizExercise = (QuizExercise) participation.getExercise();
                 Result result;
-                if (submission.getLatestResult() == null) {
+                if (quizSubmission.getLatestResult() == null) {
                     result = new Result();
                     result.setParticipation(participation);
                     result.setAssessmentType(AssessmentType.AUTOMATIC);
                     // set submission to calculate scores
-                    result.setSubmission(submission);
+                    result.setSubmission(quizSubmission);
                     // calculate scores and update result and submission accordingly
-                    submission.calculateAndUpdateScores(quizExercise);
+                    quizSubmission.calculateAndUpdateScores(quizExercise);
                     result.evaluateQuizSubmission();
                     // remove submission to follow save order for ordered collections
                     result.setSubmission(null);
@@ -103,15 +111,15 @@ public class ExamQuizService {
                     result = resultRepository.save(result);
                     participation.setResults(Set.of(result));
                     studentParticipationRepository.save(participation);
-                    result.setSubmission(submission);
-                    submission.addResult(result);
+                    result.setSubmission(quizSubmission);
+                    quizSubmission.addResult(result);
                 }
                 else {
-                    result = submission.getLatestResult();
+                    result = quizSubmission.getLatestResult();
                     // set submission to calculate scores
-                    result.setSubmission(submission);
+                    result.setSubmission(quizSubmission);
                     // calculate scores and update result and submission accordingly
-                    submission.calculateAndUpdateScores(quizExercise);
+                    quizSubmission.calculateAndUpdateScores(quizExercise);
                     // prevent a lazy exception in the evaluateQuizSubmission method
                     result.setParticipation(participation);
                     result.evaluateQuizSubmission();
@@ -125,7 +133,7 @@ public class ExamQuizService {
                     var quizExercise1 = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
                     quizStatisticService.updateStatistics(Set.of(result), quizExercise1);
                 }
-                submissionRepository.save(submission);
+                submissionRepository.save(quizSubmission);
             }
         }
     }
@@ -149,6 +157,7 @@ public class ExamQuizService {
     private Set<Result> evaluateSubmissions(@NotNull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(studentParticipations);
 
         for (var participation : studentParticipations) {
             if (!participation.isTestRun()) {
@@ -191,7 +200,7 @@ public class ExamQuizService {
                     if (!resultExisting) {
                         // delete result from quizSubmission, to be able to set a new one
                         if (quizSubmission.getLatestResult() != null) {
-                            resultService.deleteResultWithComplaint(quizSubmission.getLatestResult().getId());
+                            resultService.deleteResult(quizSubmission.getLatestResult().getId());
                         }
                         result.setRated(true);
                         result.setAssessmentType(AssessmentType.AUTOMATIC);

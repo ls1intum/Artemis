@@ -56,14 +56,23 @@
                     "bonus": "Bonuspunkte",
                     "youAchievedWithBonus": "Du hast {{achievedPoints}} Punkte von {{normalPoints}} möglichen Punkten, und {{bonusPoints}} Bonuspunkten erreicht.",
                     "youAchieved": "Du hast {{achievedPoints}} von möglichen {{normalPoints}} Punkten",
+                    "youAchievedFromBonus": {
+                        "GRADES_CONTINUOUS": "Du hast einen Notenbonus von {{achievedBonus}} aus {{bonusFromTitle}}",
+                        "GRADES_DISCRETE": "Du hast einen Notenbonus von {{achievedBonus}} Stufe(n) gemäß der Notenskala erhalten, was {{gradePointDifference}} von {{bonusFromTitle}} entspricht",
+                        "POINTS": "Du hast {{achievedBonus}} Bonuspunkte von {{bonusFromTitle}}"
+                    },
+                    "youAchievedPointsAfterBonus": "Deine endgültigen Punkte sind {{finalPoints}} nach dem Bonus",
                     "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
                 },
                 "grade": "Note",
+                "gradeBeforeBonus": "Note vor Bonus",
+                "gradeAfterBonus": "Note nach Bonus",
                 "bonus": "Bonuspunkte für die Klausur",
                 "interval": "Intervall (%)",
                 "intervalPoints": "Intervall (Punkte)",
                 "gradeKeyButton": "Notenschlüssel ansehen",
-                "gradeKeyButtonBonus": "Bonusregeln ansehen"
+                "gradeKeyButtonBonus": "Bonusregeln ansehen",
+                "bonusGradeKeyButton": "Bonusnotenschlüssel ansehen"
             },
             "title": "Klausur",
             "startExam": "Starten",
@@ -158,7 +167,12 @@
             "overallScoreColumn": "Erreichtes Ergebnis (%)",
             "overallGradeColumn": "Gesamtnote",
             "overallBonusColumn": "Gesamt-Bonuspunkte",
+            "bonusGradeColumn": "Bonusnote",
+            "finalGradeColumn": "Endnote",
             "passedColumn": "Bestanden",
+            "mostSeverePlagiarismVerdictColumn": "Urteil",
+            "mostSeverePlagiarismVerdictInBonusColumn": "Urteil in Bonus",
+            "presentationScoreThresholdColumn": "Präsentationsergebnis Schwelle: {{ threshold }}",
             "exportCSV": "Exportiere Ergebnisse als CSV",
             "filterForSubmittedExams": "Berücksichtige nur abgegebene Klausuren",
             "filterForNonEmptySubmissions": "Berücksichtige nur Aufgaben mit mindestens einer nicht leeren Abgabe",
@@ -170,7 +184,9 @@
             "noExerciseGroups": "Aufgabengruppen",
             "submittedColumn": "Abgegeben",
             "totalColumn": "Total",
-            "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe \"{{ groupTitle }}\" im Vergleich"
+            "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe \"{{ groupTitle }}\" im Vergleich",
+            "gradesBeforeBonus": "Noten vor Bonus",
+            "gradesAfterBonus": "Noten nach Bonus"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
@@ -244,6 +260,8 @@
             "submitted": "Abgegeben",
             "submissionDate": "Abgabedatum",
             "grade": "Note",
+            "gradeBeforeBonus": "Note vor Bonus",
+            "gradeAfterBonus": "Note nach Bonus",
             "bonus": "Bonuspunkte",
             "passed": "Bestanden",
             "participationStatus": "Teilnahmestatus",
@@ -258,22 +276,23 @@
             "studentExamGenerationError": "Es gab einen Fehler bei der Generierung der individuellen Klausuren:\n {{message}}",
             "missingStudentExamGenerationSuccess": "{{number}} fehlende individuelle Klausuren erfolgreich generiert!",
             "missingStudentExamGenerationError": "Es gab einen Fehler bei der Generierung der fehlenden individuellen Klausuren:\n {{message}}",
-            "startExerciseSuccess": "{{number}} Aufgaben erfolgreich vorbereitet!",
+            "startExerciseSuccess": "Die Aufgaben werden nun vorbereitet. Dies kann eine Weile dauern.",
             "startExerciseFailure": "Es gab einen Fehler bei der Vorbereitung der Aufgaben:\n {{message}}",
             "evaluateQuizExerciseSuccess": "{{number}} Quiz-Aufgaben erfolgreich ausgewertet!",
             "evaluateQuizExerciseFailure": "Es gab einen Fehler bei der Auswertung der Quiz-Aufgaben:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Alle Klausuren der Studierenden überprüft und die nicht eingereichten oder leeren Modellierungs- und Textaufgaben mit 0 Punkten bewertet.",
             "assessUnsubmittedStudentExamsFailure": "Die Klausur ist noch nicht für alle Studierenden beendet.",
-            "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Beim Fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.",
+            "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Beim Fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.\n\nBestehende Teilnahmen und Abgaben werden ebenfalls gelöscht!",
             "studentExamStatusSuccess": "Alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarning": "Nicht alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren",
-            "studentExamStatusTestExam": "Die Klausuren werden automatisch erstellt, sobald ein Studierender eine Testklausur started",
+            "studentExamStatusTestExam": "Die Klausuren werden automatisch erstellt, sobald ein Studierender eine Testklausur startet",
             "unlockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden entsperrt.",
             "unlockAllRepositoriesFailure": "Es gab einen Fehler beim Entsperren der Repositories:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden gesperrt.",
             "lockAllRepositoriesFailure": "Es gab einen Fehler beim Sperren der Repositories:\n {{message}}",
             "setWorkingTime": "Absolut:",
+            "usedWorkingTime": "Genutzte Bearbeitungszeit",
             "setWorkingTimeRelative": "Verlängerung relativ zur normalen Bearbeitungszeit:",
             "removeAllStudents": {
                 "title": "Entferne alle Studierenden",
@@ -289,6 +308,15 @@
                 "warningRemove": "<strong class='text-danger'>Wiederherstellen des ursprünglichen Abgabedatums ist nach der Löschung nicht möglich!</strong>",
                 "submit": "Abgeben",
                 "unsubmit": "Abgabe entfernen"
+            },
+            "exercisePreparationProgress": {
+                "label": "Aufgabenvorbereitungsfortschritt:",
+                "failed": "fehlgeschlagen",
+                "remaining": "verbleibend",
+                "finished": "Fertig",
+                "noeta": "Kein ETA",
+                "participations": "Teilnahmen",
+                "exams": "Klausuren"
             }
         },
         "examManagement": {
@@ -343,6 +371,7 @@
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
             "gradingSystem": "Notenschlüssel",
+            "bonus": "Bonus",
             "testExam": {
                 "realExam": "Klausur",
                 "testExam": "Testklausur",
@@ -387,7 +416,6 @@
                 "showAllUsers": "Alle Studierenden anzeigen",
                 "searchForUsers": "Studierende für diese Klausur anmelden durch Suchen nach Login oder Namen",
                 "searchNoResults": "Keine Studierenden gefunden",
-                "testExamSelfRegistration": "Studierende werden automatisch für die Klausur registriert, wenn diese mit der Bearbeitung beginnen",
                 "login": "Login",
                 "name": "Name",
                 "firstName": "Vorname",
@@ -446,7 +474,8 @@
             },
             "reset": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft zurückgesetzt werden? Alle Klausuren der Studierenden werden gelöscht. Teilnehmende an der Klausur und die Konfigurationen der Aufgaben bleiben erhalten. Diese Aktion kann NICHT rückgängig gemacht werden!",
-                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
+                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein.",
+                "success": "Die Klausur wurde erfolgreich zurückgesetzt."
             },
             "checklist": {
                 "title": "Checkliste für die Durchführung von Prüfungen",
@@ -460,7 +489,10 @@
                 "goTo": "Seite",
                 "testExam": {
                     "title": "Checkliste für die Durchführung von Testklausuren",
-                    "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren"
+                    "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren",
+                    "detailsHintForTestExams": "Für Testklausuren gilt",
+                    "studentRegistration": "Studierende werden automatisch für die Testklausur registriert, wenn diese mit der Bearbeitung beginnen",
+                    "instantResults": "Die Ergebnisse der Testklausur werden direkt nach dem Einreichen veröffentlicht"
                 },
                 "tableItem": {
                     "register": "Registrierung der Studierenden zur Klausur",
@@ -531,6 +563,7 @@
             "enable": "Aktivieren",
             "disable": "Deaktivieren",
             "enabled": "Aktiviert",
+            "globallyDisabled": "Global deaktiviert",
             "disabled": "Deaktiviert",
             "table": {
                 "panelHeader": "Klausurinformationen",
@@ -706,7 +739,8 @@
                 "planned": "Geplant",
                 "running": "Im Gange",
                 "finished": "Abgeschlossen",
-                "complaints": "Beschwerden"
+                "complaints": "Beschwerden",
+                "complaintsCount": "({{ done }} von {{ total}})"
             }
         }
     }

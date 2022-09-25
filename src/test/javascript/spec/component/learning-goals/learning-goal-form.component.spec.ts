@@ -1,18 +1,18 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
 import { LearningGoalFormComponent, LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { LearningGoal, LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertService } from 'app/core/util/alert.service';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
+import { KeysPipe } from 'app/shared/pipes/keys.pipe';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('LearningGoalFormComponent', () => {
     let learningGoalFormComponentFixture: ComponentFixture<LearningGoalFormComponent>;
@@ -20,10 +20,9 @@ describe('LearningGoalFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbDropdownModule],
-            declarations: [LearningGoalFormComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(LearningGoalService), MockProvider(LectureUnitService), MockProvider(AlertService), MockProvider(TranslateService)],
-            schemas: [],
+            imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
+            declarations: [LearningGoalFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(KeysPipe)],
+            providers: [MockProvider(LearningGoalService), MockProvider(LectureUnitService)],
         })
             .compileComponents()
             .then(() => {
@@ -86,11 +85,7 @@ describe('LearningGoalFormComponent', () => {
 
         learningGoalFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).toHaveBeenCalledOnce();
-            expect(submitFormEventSpy).toHaveBeenCalledWith({
-                title: exampleTitle,
-                description: exampleDescription,
-                connectedLectureUnits: [exampleLectureUnit],
-            });
+            expect(submitFormEventSpy).toHaveBeenCalledOnce();
         });
     }));
 
@@ -99,9 +94,11 @@ describe('LearningGoalFormComponent', () => {
         const textUnit = new TextUnit();
         textUnit.id = 1;
         const formData: LearningGoalFormData = {
+            id: 1,
             title: 'test',
             description: 'lorem ipsum',
             connectedLectureUnits: [textUnit],
+            taxonomy: LearningGoalTaxonomy.ANALYZE,
         };
         learningGoalFormComponentFixture.detectChanges();
         learningGoalFormComponent.formData = formData;

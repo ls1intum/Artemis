@@ -62,7 +62,7 @@ describe('ModelingExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('Should call create service on save for new entity', fakeAsync(() => {
+            it('should call create service on save for new entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
@@ -91,7 +91,7 @@ describe('ModelingExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('Should call update service on save for existing entity', fakeAsync(() => {
+            it('should call update service on save for existing entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
@@ -125,7 +125,7 @@ describe('ModelingExercise Management Update Component', () => {
             route.data = of({ modelingExercise });
         });
 
-        it('Should set isImport and remove all dates', fakeAsync(() => {
+        it('should set isImport and remove all dates', fakeAsync(() => {
             jest.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: categoriesStringified })));
             // WHEN
             comp.ngOnInit();
@@ -133,9 +133,9 @@ describe('ModelingExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeFalse();
-            expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.modelingExercise.releaseDate).toEqual(undefined);
-            expect(comp.modelingExercise.dueDate).toEqual(undefined);
+            expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.modelingExercise.releaseDate).toBeUndefined();
+            expect(comp.modelingExercise.dueDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(course.id);
             expect(comp.existingCategories).toEqual(categories);
         }));
@@ -160,7 +160,7 @@ describe('ModelingExercise Management Update Component', () => {
             route.data = of({ modelingExercise });
         });
 
-        it('Should set isImport and remove all dates', fakeAsync(() => {
+        it('should set isImport and remove all dates', fakeAsync(() => {
             jest.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: categoriesStringified })));
 
             // WHEN
@@ -169,9 +169,9 @@ describe('ModelingExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeFalse();
-            expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.modelingExercise.releaseDate).toEqual(undefined);
-            expect(comp.modelingExercise.dueDate).toEqual(undefined);
+            expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.modelingExercise.releaseDate).toBeUndefined();
+            expect(comp.modelingExercise.dueDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(exerciseGroup!.exam!.course!.id);
             expect(comp.existingCategories).toEqual(categories);
         }));
@@ -192,17 +192,17 @@ describe('ModelingExercise Management Update Component', () => {
             route.data = of({ modelingExercise });
         });
 
-        it('Should set isImport and isExamMode and remove all dates', fakeAsync(() => {
+        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeTrue();
-            expect(comp.modelingExercise.course).toEqual(undefined);
-            expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.modelingExercise.releaseDate).toEqual(undefined);
-            expect(comp.modelingExercise.dueDate).toEqual(undefined);
+            expect(comp.modelingExercise.course).toBeUndefined();
+            expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.modelingExercise.releaseDate).toBeUndefined();
+            expect(comp.modelingExercise.dueDate).toBeUndefined();
         }));
     });
 
@@ -222,16 +222,16 @@ describe('ModelingExercise Management Update Component', () => {
             route.data = of({ modelingExercise });
         });
 
-        it('Should set isImport and isExamMode and remove all dates', fakeAsync(() => {
+        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeTrue();
-            expect(comp.modelingExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.modelingExercise.releaseDate).toEqual(undefined);
-            expect(comp.modelingExercise.dueDate).toEqual(undefined);
+            expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.modelingExercise.releaseDate).toBeUndefined();
+            expect(comp.modelingExercise.dueDate).toBeUndefined();
         }));
     });
 

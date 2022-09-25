@@ -148,7 +148,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         jest.spyOn(component['textareaElement'], 'focus');
         component.focus();
 
-        expect(component['textareaElement'].focus).toHaveBeenCalled();
+        expect(component['textareaElement'].focus).toHaveBeenCalledOnce();
     });
 
     it('should not focus to the text area if it is right conflicting feedback', () => {
@@ -162,7 +162,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         jest.spyOn(component['textareaElement'], 'focus');
         component.focus();
 
-        expect(component['textareaElement'].focus).toHaveBeenCalledTimes(0);
+        expect(component['textareaElement'].focus).not.toHaveBeenCalled();
     });
 
     it('should call escKeyup when keyEvent', () => {
@@ -175,7 +175,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         const textarea = fixture.nativeElement.querySelector('textarea');
         textarea.dispatchEvent(event);
         fixture.detectChanges();
-        expect(component.escKeyup).toHaveBeenCalled();
+        expect(component.escKeyup).toHaveBeenCalledOnce();
     });
 
     it('should show confirmIcon if feedback dismission needs to be confirmed', () => {
@@ -219,14 +219,16 @@ describe('TextblockFeedbackEditorComponent', () => {
         expect(searchOriginIcon).toBeTruthy();
     });
 
-    it('should open modal when open origin of feedback function is called', () => {
+    it('should open modal when open origin of feedback function is called', async () => {
         const modalService: NgbModal = TestBed.inject(NgbModal);
         const content = {};
         const modalServiceSpy = jest.spyOn(modalService, 'open');
 
-        component.openOriginOfFeedbackModal(content).then(() => {
-            expect(modalServiceSpy).toHaveBeenCalledOnce();
-        });
+        await expect(component.openOriginOfFeedbackModal(content))
+            .toResolve()
+            .then(() => {
+                expect(modalServiceSpy).toHaveBeenCalledOnce();
+            });
     });
 
     it('should connect automatic feedback origin blocks with current feedback', fakeAsync(() => {

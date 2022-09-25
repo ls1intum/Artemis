@@ -21,7 +21,7 @@ describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
     let fixture: ComponentFixture<PostCreateEditModalComponent>;
     let metisService: MetisService;
-    let modal: MockNgbModalService;
+    let modal: NgbModal;
     let metisServiceGetPageTypeMock: jest.SpyInstance;
     let metisServiceIsAtLeastInstructorStub: jest.SpyInstance;
     let metisServiceCreateStub: jest.SpyInstance;
@@ -67,10 +67,10 @@ describe('PostCreateEditModalComponent', () => {
         component.ngOnInit();
         component.ngOnChanges();
         expect(component.pageType).toEqual(PageType.OVERVIEW);
-        expect(component.modalTitle).toEqual('artemisApp.metis.createModalTitlePost');
+        expect(component.modalTitle).toBe('artemisApp.metis.createModalTitlePost');
 
         // mock metis service will return a course with a default exercise as well as a default lecture
-        expect(component.course).not.toBe(null);
+        expect(component.course).not.toBeNull();
         expect(component.lectures).toHaveLength(metisCourse.lectures!.length);
         expect(component.exercises).toHaveLength(metisCourse.exercises!.length);
         expect(component.similarPosts).toHaveLength(0);
@@ -165,7 +165,7 @@ describe('PostCreateEditModalComponent', () => {
         component.posting = metisPostLectureUser1;
         component.ngOnChanges();
         expect(component.pageType).toEqual(PageType.PAGE_SECTION);
-        expect(component.modalTitle).toEqual('artemisApp.metis.editPosting');
+        expect(component.modalTitle).toBe('artemisApp.metis.editPosting');
         // provide some updated input before creating the post
         const updatedContent = 'Updated Content';
         const updatedTitle = 'Updated Title';
@@ -195,6 +195,6 @@ describe('PostCreateEditModalComponent', () => {
         });
 
         component.open();
-        expect(modalServiceOpenMock).toHaveBeenCalled();
+        expect(modalServiceOpenMock).toHaveBeenCalledOnce();
     });
 });

@@ -19,8 +19,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -55,30 +56,27 @@ public class FileUploadExerciseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final GroupNotificationService groupNotificationService;
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            CourseService courseService, GroupNotificationService groupNotificationService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
+            CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, InstanceMessageSendService instanceMessageSendService) {
+            ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
-        this.groupNotificationService = groupNotificationService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
-        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -93,7 +91,7 @@ public class FileUploadExerciseResource {
     public ResponseEntity<FileUploadExercise> createFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
         log.debug("REST request to save FileUploadExercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idexists")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idExists")).body(null);
         }
         // validates general settings: points, dates
         fileUploadExercise.validateGeneralSettings();
@@ -105,10 +103,9 @@ public class FileUploadExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
-        groupNotificationService.checkNotificationsForNewExercise(fileUploadExercise, instanceMessageSendService);
+        groupNotificationScheduleService.checkNotificationsForNewExercise(fileUploadExercise);
 
-        return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
     }
 
     private boolean isFilePatternValid(FileUploadExercise exercise) {
@@ -177,13 +174,9 @@ public class FileUploadExerciseResource {
         var updatedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
-
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
-
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText,
-                instanceMessageSendService);
-
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(updatedExercise);
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
+        return ResponseEntity.ok(updatedExercise);
     }
 
     /**
@@ -261,6 +254,7 @@ public class FileUploadExerciseResource {
      */
     @PostMapping("/file-upload-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);

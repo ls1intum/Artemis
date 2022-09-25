@@ -1,19 +1,23 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -30,9 +34,9 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
-import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -42,7 +46,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class StudentExamService {
 
-    private static final String ENTITY_NAME = "studentExam";
+    private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
 
     private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
@@ -74,13 +78,15 @@ public class StudentExamService {
 
     private final ExamRepository examRepository;
 
-    private final InstanceMessageSendService instanceMessageSendService;
+    private final CacheManager cacheManager;
+
+    private final SimpMessageSendingOperations messagingTemplate;
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, InstanceMessageSendService instanceMessageSendService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -95,7 +101,8 @@ public class StudentExamService {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examRepository = examRepository;
-        this.instanceMessageSendService = instanceMessageSendService;
+        this.cacheManager = cacheManager;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -121,11 +128,15 @@ public class StudentExamService {
             log.error("saveSubmissions threw an exception", e);
         }
 
+        // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
         if (studentExam.isTestRun() || studentExam.getExam().isTestExam()) {
             // immediately evaluate quiz participations for test runs and test exams
             examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
         }
-        else if (!studentExam.isTestRun()) {
+
+        // NOTE: only for real exams and test exams, the student repositories need to be locked
+        // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
+        if (!studentExam.isTestRun()) {
             try {
                 // lock the programming exercise repository access (important in case of early exam submissions)
                 lockStudentRepositories(currentUser, existingStudentExam);
@@ -145,7 +156,7 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
-        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
+        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam);
 
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises
@@ -230,7 +241,7 @@ public class StudentExamService {
 
                         // versioning of submission
                         try {
-                            submissionVersionService.saveVersionForIndividual(submission, currentUser.getLogin());
+                            submissionVersionService.saveVersionForIndividual(submission, currentUser);
                         }
                         catch (Exception ex) {
                             log.error("Submission version could not be saved", ex);
@@ -417,6 +428,7 @@ public class StudentExamService {
     public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam, ZonedDateTime startedDate) {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         setUpExerciseParticipationsAndSubmissionsWithInitializationDate(studentExam, generatedParticipations, startedDate);
+        // TODO: Michael Allgaier: schedule an unlock operation for all involved student repositories of this student exam (test exam) at the end of the individual working
         studentParticipationRepository.saveAll(generatedParticipations);
     }
 
@@ -434,7 +446,7 @@ public class StudentExamService {
 
         for (Exercise exercise : studentExam.getExercises()) {
             SecurityUtils.setAuthorizationObject();
-            // NOTE: it is not ideal to invoke the next line several times (e.g. 2000 student exams with 10 exercises would lead to 20.000 database calls to find a participation).
+            // NOTE: it's not ideal to invoke the next line several times (2000 student exams with 10 exercises would lead to 20.000 database calls to find all participations).
             // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
             // those participations exist in Java, however this might lead to memory issues and might be more difficult to program (and more difficult to understand)
             // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
@@ -458,14 +470,16 @@ public class StudentExamService {
                         participation = participationService.startExercise(exercise, student, true);
                     }
                     generatedParticipations.add(participation);
-                    // Unlock Repositories if the exam starts within 5 minutes
-                    if (exercise instanceof ProgrammingExercise programmingExercise
-                            && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
-                        instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
+                    // Unlock repository only if the real exam starts within 5 minutes or if we have a test exam or test run
+                    if (exercise instanceof ProgrammingExercise programmingExercise && (studentExam.isTestRun() || studentExam.getExam().isTestExam()
+                            || ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now()))) {
+                        // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
+                        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
                     }
+                    log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(), student.getId());
                 }
                 catch (Exception ex) {
-                    log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
+                    log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
                             ex.getMessage(), ex);
                 }
             }
@@ -476,37 +490,80 @@ public class StudentExamService {
      * Starts all the exercises of all the student exams of an exam
      *
      * @param examId exam to which the student exams belong
-     * @return number of generated Participations
+     * @return a future that will yield the number of generated participations
      */
-    public int startExercises(Long examId) {
+    public CompletableFuture<Integer> startExercises(Long examId) {
         var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-
-        if (exam.isTestExam()) {
-            throw new AccessForbiddenException("The exercise start for TestExams will be perfomed when the student starts with the conduction");
-        }
         var studentExams = exam.getStudentExams();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
-        executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations)));
-        return generatedParticipations.size();
+
+        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+        if (cache != null) {
+            cache.evict(examId);
+        }
+
+        var finishedExamsCounter = new AtomicInteger(0);
+        var failedExamsCounter = new AtomicInteger(0);
+        var startedAt = ZonedDateTime.now();
+        var lock = new ReentrantLock();
+        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), 0, startedAt, lock);
+        var threadPool = Executors.newFixedThreadPool(10);
+        var futures = studentExams.stream()
+                .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool)
+                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
+                                generatedParticipations.size(), startedAt, lock))
+                        .exceptionally(throwable -> {
+                            log.error("Exception while preparing exercises for student exam " + studentExam.getId(), throwable);
+                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
+                                    generatedParticipations.size(), startedAt, lock);
+                            return null;
+                        }))
+                .toList().toArray(new CompletableFuture<?>[studentExams.size()]);
+        return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
+            threadPool.shutdown();
+            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExams.size(), generatedParticipations.size(), startedAt,
+                    lock);
+            return generatedParticipations.size();
+        });
     }
 
-    private void executeInParallel(Runnable task) {
-        final int numberOfParallelThreads = 10;
-        ForkJoinPool forkJoinPool = new ForkJoinPool(numberOfParallelThreads);
-        Future<?> future = forkJoinPool.submit(task);
-        // Wait for the operation to complete
+    private void sendAndCacheExercisePreparationStatus(Long examId, int finished, int failed, int overall, int participations, ZonedDateTime startTime, ReentrantLock lock) {
+        // Synchronizing and comparing to avoid race conditions here
+        // Otherwise it can happen that a status with less completed exams is sent after one with a higher value
         try {
-            future.get();
+            lock.lock();
+            ExamExerciseStartPreparationStatus status = null;
+            var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+            if (cache != null) {
+                var oldValue = cache.get(examId);
+                if (oldValue != null) {
+                    var oldStatus = (ExamExerciseStartPreparationStatus) oldValue.get();
+                    if (oldStatus != null) {
+                        status = new ExamExerciseStartPreparationStatus(Math.max(finished, oldStatus.finished()), Math.max(failed, oldStatus.failed()),
+                                Math.max(overall, oldStatus.overall()), Math.max(participations, oldStatus.participationCount()), startTime);
+                    }
+                }
+                if (status == null) {
+                    status = new ExamExerciseStartPreparationStatus(finished, failed, overall, participations, startTime);
+                }
+                cache.put(examId, status);
+            }
+            else {
+                log.warn("Unable to add exam exercise start status to distributed cache because it is null");
+            }
+            messagingTemplate.convertAndSend(EXAM_EXERCISE_START_STATUS_TOPIC.formatted(examId), status);
         }
-        catch (InterruptedException e) {
-            log.error("Execute in parallel got interrupted while waiting for task to complete", e);
-        }
-        catch (ExecutionException e) {
-            log.error("Execute in parallel failed, an exception was thrown", e.getCause());
+        catch (Exception e) {
+            log.warn("Failed to send exercise preparation status", e);
         }
         finally {
-            forkJoinPool.shutdown();
+            lock.unlock();
         }
+    }
+
+    public Optional<ExamExerciseStartPreparationStatus> getExerciseStartStatusOfExam(Long examId) {
+        return Optional.ofNullable(cacheManager.getCache(EXAM_EXERCISE_START_STATUS)).map(cache -> cache.get(examId))
+                .map(wrapper -> (ExamExerciseStartPreparationStatus) wrapper.get());
     }
 
     /**
@@ -566,24 +623,19 @@ public class StudentExamService {
     /**
      * Generates a new test exam for the student and stores it in the database
      *
-     * @param examId  the exam for which the StudentExam should be fetched / created
+     * @param exam  the exam with loaded exercie groups and exercise for which the StudentExam should be  created
      * @param student the corresponding student
      * @return a StudentExam for the student and exam
      */
-    public StudentExam generateTestExam(Long examId, User student) {
+    public StudentExam generateTestExam(Exam exam, User student) {
         // To create a new StudentExam, the Exam with loaded ExerciseGroups and Exercises is needed
-        Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-
-        if (!examWithExerciseGroupsAndExercises.isTestExam()) {
-            throw new AccessForbiddenException("The requested Exam is no TestExam and thus no StudentExam can be created");
-        }
         long start = System.nanoTime();
-        StudentExam studentExam = generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
+        StudentExam studentExam = generateIndividualStudentExam(exam, student);
         // we need to break a cycle for the serialization
         studentExam.getExam().setExerciseGroups(null);
         studentExam.getExam().setStudentExams(null);
 
-        log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), examId);
+        log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
 
         return studentExam;
 

@@ -140,12 +140,12 @@ describe('Detailed Grading System Component', () => {
         comp.generateDefaultGradingScale();
 
         expect(comp.gradingScale.gradeType).toStrictEqual(GradeType.GRADE);
-        expect(comp.firstPassingGrade).toStrictEqual('4.0');
+        expect(comp.firstPassingGrade).toBe('4.0');
         expect(comp.lowerBoundInclusivity).toBeTrue();
         expect(comp.gradingScale.gradeSteps).toHaveLength(13);
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
-            expect(gradeStep.id).toBe(undefined);
-            expect(gradeStep.gradeName).not.toBe(undefined);
+            expect(gradeStep.id).toBeUndefined();
+            expect(gradeStep.gradeName).toBeDefined();
             expect(gradeStep.lowerBoundInclusive).toBeTrue();
             expect(gradeStep.lowerBoundPercentage).toBeWithin(0, 101);
             expect(gradeStep.upperBoundPercentage).toBeWithin(0, 101);
@@ -174,8 +174,8 @@ describe('Detailed Grading System Component', () => {
         comp.createGradeStep();
 
         expect(comp.gradingScale.gradeSteps).toHaveLength(4);
-        expect(comp.gradingScale.gradeSteps[3].id).toBe(undefined);
-        expect(comp.gradingScale.gradeSteps[3].gradeName).toStrictEqual('');
+        expect(comp.gradingScale.gradeSteps[3].id).toBeUndefined();
+        expect(comp.gradingScale.gradeSteps[3].gradeName).toBe('');
         expect(comp.gradingScale.gradeSteps[3].lowerBoundPercentage).toBe(100);
         expect(comp.gradingScale.gradeSteps[3].upperBoundPercentage).toBe(100);
         expect(comp.gradingScale.gradeSteps[3].isPassingGrade).toBeTrue();
@@ -187,7 +187,7 @@ describe('Detailed Grading System Component', () => {
         comp.deleteGradeNames();
 
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
-            expect(gradeStep.gradeName).toStrictEqual('');
+            expect(gradeStep.gradeName).toBe('');
         });
     });
 
@@ -222,7 +222,7 @@ describe('Detailed Grading System Component', () => {
     it('should determine first passing grade correctly', () => {
         comp.determineFirstPassingGrade();
 
-        expect(comp.firstPassingGrade).toStrictEqual('Pass');
+        expect(comp.firstPassingGrade).toBe('Pass');
     });
 
     it('should set inclusivity correctly', () => {
@@ -277,8 +277,8 @@ describe('Detailed Grading System Component', () => {
 
         comp.delete();
 
-        expect(gradingSystemDeleteForCourseSpy).toHaveBeenCalledTimes(0);
-        expect(gradingSystemDeleteForExamSpy).toHaveBeenCalledTimes(0);
+        expect(gradingSystemDeleteForCourseSpy).not.toHaveBeenCalled();
+        expect(gradingSystemDeleteForExamSpy).not.toHaveBeenCalled();
     });
 
     it('should delete grading scale for course', () => {
@@ -392,14 +392,14 @@ describe('Detailed Grading System Component', () => {
     it('should handle find response correctly', () => {
         comp.handleFindResponse(comp.gradingScale);
 
-        expect(comp.firstPassingGrade).toStrictEqual('Pass');
+        expect(comp.firstPassingGrade).toBe('Pass');
         expect(comp.lowerBoundInclusivity).toBeTrue();
         expect(comp.existingGradingScale).toBeTrue();
     });
 
     it('should validate valid grading scale correctly', () => {
         expect(comp.validGradeSteps()).toBeTrue();
-        expect(comp.invalidGradeStepsMessage).toBe(undefined);
+        expect(comp.invalidGradeStepsMessage).toBeUndefined();
     });
 
     it('should validate invalid grading scale with empty grade steps correctly', () => {
@@ -407,7 +407,7 @@ describe('Detailed Grading System Component', () => {
         translateStub.mockReturnValue('empty set');
 
         expect(comp.validGradeSteps()).toBeFalse();
-        expect(comp.invalidGradeStepsMessage).toStrictEqual('empty set');
+        expect(comp.invalidGradeStepsMessage).toBe('empty set');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.empty');
         expect(translateStub).toHaveBeenCalledOnce();
     });
@@ -418,7 +418,7 @@ describe('Detailed Grading System Component', () => {
         translateStub.mockReturnValue('negative max points');
 
         expect(comp.validGradeSteps()).toBeFalse();
-        expect(comp.invalidGradeStepsMessage).toStrictEqual('negative max points');
+        expect(comp.invalidGradeStepsMessage).toBe('negative max points');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.negativeMaxPoints');
         expect(translateStub).toHaveBeenCalledOnce();
         course.maxPoints = 100;
@@ -429,7 +429,7 @@ describe('Detailed Grading System Component', () => {
         translateStub.mockReturnValue('empty field');
 
         expect(comp.validGradeSteps()).toBeFalse();
-        expect(comp.invalidGradeStepsMessage).toStrictEqual('empty field');
+        expect(comp.invalidGradeStepsMessage).toBe('empty field');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.emptyFields');
         expect(translateStub).toHaveBeenCalledOnce();
     });
@@ -440,7 +440,7 @@ describe('Detailed Grading System Component', () => {
         translateStub.mockReturnValue('empty field for points');
 
         expect(comp.validGradeSteps()).toBeFalse();
-        expect(comp.invalidGradeStepsMessage).toStrictEqual('empty field for points');
+        expect(comp.invalidGradeStepsMessage).toBe('empty field for points');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.emptyFields');
         expect(translateStub).toHaveBeenCalledOnce();
     });
@@ -450,7 +450,7 @@ describe('Detailed Grading System Component', () => {
         translateStub.mockReturnValue('invalid percentage');
 
         expect(comp.validGradeSteps()).toBeFalse();
-        expect(comp.invalidGradeStepsMessage).toStrictEqual('invalid percentage');
+        expect(comp.invalidGradeStepsMessage).toBe('invalid percentage');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidMinMaxPercentages');
         expect(translateStub).toHaveBeenCalledOnce();
     });
@@ -466,7 +466,7 @@ describe('Detailed Grading System Component', () => {
         translateStub.mockReturnValue('invalid points');
 
         expect(comp.validGradeSteps()).toBeFalse();
-        expect(comp.invalidGradeStepsMessage).toStrictEqual('invalid points');
+        expect(comp.invalidGradeStepsMessage).toBe('invalid points');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidMinMaxPoints');
         expect(translateStub).toHaveBeenCalledOnce();
     });
@@ -483,7 +483,7 @@ describe('Detailed Grading System Component', () => {
         translateStub.mockReturnValue('non-unique grade names');
 
         expect(comp.validGradeSteps()).toBeFalse();
-        expect(comp.invalidGradeStepsMessage).toStrictEqual('non-unique grade names');
+        expect(comp.invalidGradeStepsMessage).toBe('non-unique grade names');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.nonUniqueGradeNames');
         expect(translateStub).toHaveBeenCalledOnce();
     });
@@ -494,7 +494,7 @@ describe('Detailed Grading System Component', () => {
         translateStub.mockReturnValue('unset first passing grade');
 
         expect(comp.validGradeSteps()).toBeFalse();
-        expect(comp.invalidGradeStepsMessage).toStrictEqual('unset first passing grade');
+        expect(comp.invalidGradeStepsMessage).toBe('unset first passing grade');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.unsetFirstPassingGrade');
         expect(translateStub).toHaveBeenCalledOnce();
     });
@@ -505,7 +505,7 @@ describe('Detailed Grading System Component', () => {
         translateStub.mockReturnValue('invalid bonus points');
 
         expect(comp.validGradeSteps()).toBeFalse();
-        expect(comp.invalidGradeStepsMessage).toStrictEqual('invalid bonus points');
+        expect(comp.invalidGradeStepsMessage).toBe('invalid bonus points');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidBonusPoints');
         expect(translateStub).toHaveBeenCalledOnce();
     });
@@ -518,7 +518,7 @@ describe('Detailed Grading System Component', () => {
         translateStub.mockReturnValue('descending bonus points');
 
         expect(comp.validGradeSteps()).toBeFalse();
-        expect(comp.invalidGradeStepsMessage).toStrictEqual('descending bonus points');
+        expect(comp.invalidGradeStepsMessage).toBe('descending bonus points');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.nonStrictlyIncreasingBonusPoints');
         expect(translateStub).toHaveBeenCalledOnce();
     });
@@ -536,7 +536,7 @@ describe('Detailed Grading System Component', () => {
         jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep, gradeStep2, gradeStep3]);
 
         expect(comp.validGradeSteps()).toBeFalse();
-        expect(comp.invalidGradeStepsMessage).toStrictEqual('invalid adjacency');
+        expect(comp.invalidGradeStepsMessage).toBe('invalid adjacency');
         expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidAdjacency');
         expect(translateStub).toHaveBeenCalledOnce();
     });
@@ -555,7 +555,7 @@ describe('Detailed Grading System Component', () => {
         translateStub.mockReturnValue('invalid first grade step');
 
         expect(comp.validGradeSteps()).toBeFalse();
-        expect(comp.invalidGradeStepsMessage).toStrictEqual('invalid first grade step');
+        expect(comp.invalidGradeStepsMessage).toBe('invalid first grade step');
         expect(translateStub).toHaveBeenCalledWith('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
         expect(translateStub).toHaveBeenCalledOnce();
     });
@@ -571,7 +571,7 @@ describe('Detailed Grading System Component', () => {
 
         comp.setPoints(gradeStep1, true);
 
-        expect(gradeStep1.lowerBoundPoints).toBe(undefined);
+        expect(gradeStep1.lowerBoundPoints).toBeUndefined();
 
         comp.maxPoints = 100;
 
@@ -616,12 +616,12 @@ describe('Detailed Grading System Component', () => {
 
         comp.onChangeMaxPoints(-10);
 
-        expect(comp.gradingScale.gradeSteps[0].lowerBoundPoints).toBe(undefined);
-        expect(comp.gradingScale.gradeSteps[0].upperBoundPoints).toBe(undefined);
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundPoints).toBe(undefined);
-        expect(comp.gradingScale.gradeSteps[1].upperBoundPoints).toBe(undefined);
-        expect(comp.gradingScale.gradeSteps[2].lowerBoundPoints).toBe(undefined);
-        expect(comp.gradingScale.gradeSteps[2].upperBoundPoints).toBe(undefined);
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundPoints).toBeUndefined();
+        expect(comp.gradingScale.gradeSteps[0].upperBoundPoints).toBeUndefined();
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundPoints).toBeUndefined();
+        expect(comp.gradingScale.gradeSteps[1].upperBoundPoints).toBeUndefined();
+        expect(comp.gradingScale.gradeSteps[2].lowerBoundPoints).toBeUndefined();
+        expect(comp.gradingScale.gradeSteps[2].upperBoundPoints).toBeUndefined();
     });
 
     const csvColumnsGrade = 'gradeName,lowerBoundPercentage,upperBoundPercentage,isPassingGrade';
@@ -762,8 +762,8 @@ describe('Detailed Grading System Component', () => {
 
     it('should export as csv', () => {
         comp.exportGradingStepsToCsv();
-        expect(ExportToCsv).toHaveBeenCalled();
-        expect(generateCsv).toHaveBeenCalled();
+        expect(ExportToCsv).toHaveBeenCalledTimes(2);
+        expect(generateCsv).toHaveBeenCalledTimes(2);
     });
 });
 

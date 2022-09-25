@@ -77,7 +77,7 @@ describe('QuizExercise Point Statistic Component', () => {
         quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
     });
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         it('should call functions on Init', fakeAsync(() => {
             // setup
             jest.useFakeTimers();
@@ -96,10 +96,10 @@ describe('QuizExercise Point Statistic Component', () => {
             jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
             // check
-            expect(accountSpy).toHaveBeenCalled();
+            expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
-            expect(comp.quizExerciseChannel).toEqual('/topic/courses/2/quizExercises');
+            expect(comp.quizExerciseChannel).toBe('/topic/courses/2/quizExercises');
             expect(updateDisplayedTimesSpy).toHaveBeenCalledOnce();
             discardPeriodicTasks();
         }));
@@ -111,7 +111,7 @@ describe('QuizExercise Point Statistic Component', () => {
             comp.ngOnInit();
             tick();
 
-            expect(accountSpy).toHaveBeenCalled();
+            expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSuccessSpy).not.toHaveBeenCalled();
             discardPeriodicTasks();
@@ -119,7 +119,7 @@ describe('QuizExercise Point Statistic Component', () => {
     });
 
     describe('updateDisplayedTimes', () => {
-        it('should update remaining time ', () => {
+        it('should update remaining time', () => {
             // setup
             quizExercise.dueDate = dayjs();
             comp.quizExercise = quizExercise;
@@ -129,7 +129,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
             // check
             expect(comp.remainingTimeSeconds).toEqual(-1);
-            expect(comp.remainingTimeText).toEqual(translateService.instant('showStatistic.quizHasEnded'));
+            expect(comp.remainingTimeText).toEqual(translateService.instant('artemisApp.showStatistic.quizHasEnded'));
         });
 
         it('should show remaining time as zero if time unknown', () => {
@@ -140,7 +140,7 @@ describe('QuizExercise Point Statistic Component', () => {
             comp.updateDisplayedTimes();
 
             // check
-            expect(comp.remainingTimeSeconds).toEqual(0);
+            expect(comp.remainingTimeSeconds).toBe(0);
             expect(comp.remainingTimeText).toBe('?');
         });
     });
@@ -185,19 +185,19 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(routerSpy).not.toHaveBeenCalled();
             expect(comp.quizExercise).toEqual(quizExercise);
             expect(comp.waitingForQuizStart).toBeFalse();
-            expect(loadDataSpy).toHaveBeenCalled();
+            expect(loadDataSpy).toHaveBeenCalledOnce();
         });
     });
 
     it('should return remaining Time', () => {
         // only minutes if time > 2min 30sec
-        expect(comp.relativeTimeText(220)).toEqual('4 min');
+        expect(comp.relativeTimeText(220)).toBe('4 min');
 
         // minutes and seconds if time in minutes between 1 <= x < 2.5
-        expect(comp.relativeTimeText(130)).toEqual('2 min 10 s');
+        expect(comp.relativeTimeText(130)).toBe('2 min 10 s');
 
         // only seconds if time < 1min
-        expect(comp.relativeTimeText(50)).toEqual('50 s');
+        expect(comp.relativeTimeText(50)).toBe('50 s');
     });
 
     it('should calculate the MaxScore if no quiz questions are contained', () => {
@@ -228,7 +228,7 @@ describe('QuizExercise Point Statistic Component', () => {
             comp.loadData();
 
             // check
-            expect(loadDataInDiagramSpy).toHaveBeenCalled();
+            expect(loadDataInDiagramSpy).toHaveBeenCalledOnce();
             expect(comp.label).toEqual(['[0.5 - 1.5)', '[3.5 - 4]']);
             expect(comp.ratedData).toEqual([2, 5]);
             expect(comp.unratedData).toEqual([3, 6]);

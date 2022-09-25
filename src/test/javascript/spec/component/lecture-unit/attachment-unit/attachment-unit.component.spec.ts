@@ -10,6 +10,8 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { FileService } from 'app/shared/http/file.service';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faFile, faFileCsv, faFileImage, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 
 describe('AttachmentUnitComponent', () => {
     let attachmentUnit: AttachmentUnit;
@@ -74,7 +76,18 @@ describe('AttachmentUnitComponent', () => {
         const getFileNameSpy = jest.spyOn(attachmentUnitComponent, 'getFileName');
         attachmentUnitComponentFixture.detectChanges();
         expect(getFileNameSpy).toHaveReturnedWith('test.pdf');
-        getFileNameSpy.mockRestore();
+    });
+
+    it.each([
+        ['pdf', faFilePdf],
+        ['csv', faFileCsv],
+        ['png', faFileImage],
+        ['exotic', faFile],
+    ])('should use correct icon for extension', (extension: string, icon: IconDefinition) => {
+        const getAttachmentIconSpy = jest.spyOn(attachmentUnitComponent, 'getAttachmentIcon');
+        attachmentUnitComponent.attachmentUnit!.attachment!.link = `/path/to/file/test.${extension}`;
+        attachmentUnitComponentFixture.detectChanges();
+        expect(getAttachmentIconSpy).toHaveReturnedWith(icon);
     });
 
     it('should download attachment when clicked', () => {
@@ -86,21 +99,27 @@ describe('AttachmentUnitComponent', () => {
         expect(downloadFileStub).toHaveBeenCalledOnce();
     });
 
-    it('should call completion callback when downloaded', (done) => {
-        attachmentUnitComponent.onCompletion.subscribe((event) => {
-            expect(event.lectureUnit).toEqual(attachmentUnit);
-            expect(event.completed).toBeTrue();
-            done();
+    it('should call completion callback when downloaded', () => {
+        return new Promise<void>((done) => {
+            attachmentUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(attachmentUnit);
+                expect(event.completed).toBeTrue();
+                done();
+            });
+            const stopPropagation = jest.fn();
+            attachmentUnitComponent.downloadAttachment({ stopPropagation } as any as Event);
+            expect(stopPropagation).toHaveBeenCalledOnce();
         });
-        attachmentUnitComponent.downloadAttachment();
     }, 1000);
 
-    it('should call completion callback when clicked', (done) => {
-        attachmentUnitComponent.onCompletion.subscribe((event) => {
-            expect(event.lectureUnit).toEqual(attachmentUnit);
-            expect(event.completed).toBeFalse();
-            done();
+    it('should call completion callback when clicked', () => {
+        return new Promise<void>((done) => {
+            attachmentUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(attachmentUnit);
+                expect(event.completed).toBeFalse();
+                done();
+            });
+            attachmentUnitComponent.handleClick(new Event('click'), false);
         });
-        attachmentUnitComponent.handleClick(new Event('click'), false);
     }, 1000);
 });

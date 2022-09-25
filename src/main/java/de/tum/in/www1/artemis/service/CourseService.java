@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.*;
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static tech.jhipster.config.JHipsterConstants.*;
 
 import java.nio.file.Files;
@@ -28,6 +30,7 @@ import org.springframework.util.StringUtils;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -37,6 +40,7 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -45,6 +49,9 @@ import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -101,12 +108,37 @@ public class CourseService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final TutorLeaderboardService tutorLeaderboardService;
+
+    private final RatingRepository ratingRepository;
+
+    private final ComplaintService complaintService;
+
+    private final ComplaintRepository complaintRepository;
+
+    private final ComplaintResponseRepository complaintResponseRepository;
+
+    private final SubmissionRepository submissionRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ResultRepository resultRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final ParticipantScoreRepository participantScoreRepository;
+
+    private final TutorialGroupRepository tutorialGroupRepository;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
             UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
             ExamRepository examRepository, CourseExamExportService courseExamExportService, LearningGoalService learningGoalService, GradingScaleRepository gradingScaleRepository,
-            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository) {
+            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
+            RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
+            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -128,6 +160,17 @@ public class CourseService {
         this.gradingScaleRepository = gradingScaleRepository;
         this.statisticsRepository = statisticsRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.tutorLeaderboardService = tutorLeaderboardService;
+        this.ratingRepository = ratingRepository;
+        this.complaintService = complaintService;
+        this.complaintRepository = complaintRepository;
+        this.complaintResponseRepository = complaintResponseRepository;
+        this.submissionRepository = submissionRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.resultRepository = resultRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.participantScoreRepository = participantScoreRepository;
+        this.tutorialGroupRepository = tutorialGroupRepository;
     }
 
     /**
@@ -252,7 +295,12 @@ public class CourseService {
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
+        deleteTutorialGroupsOfCourse(course);
         courseRepository.deleteById(course.getId());
+    }
+
+    private void deleteTutorialGroupsOfCourse(Course course) {
+        this.tutorialGroupRepository.deleteAllByCourse(course);
     }
 
     private void deleteGradingScaleOfCourse(Course course) {
@@ -462,22 +510,104 @@ public class CourseService {
     /**
      * Fetches Course Management Detail View data from repository and returns a DTO
      *
-     * @param courseId id of the course
-     * @param exerciseIds the ids of the exercises the course contains
+     * @param course the course for with the details should be calculated
      * @return The DTO for the course management detail view
      */
-    public CourseManagementDetailViewDTO getStatsForDetailView(Long courseId, Set<Long> exerciseIds) {
-        var dto = new CourseManagementDetailViewDTO();
-        var course = this.courseRepository.findByIdElseThrow(courseId);
+    public CourseManagementDetailViewDTO getStatsForDetailView(Course course) {
 
-        dto.setNumberOfStudentsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getStudentGroupName())));
-        dto.setNumberOfTeachingAssistantsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getTeachingAssistantGroupName())));
-        dto.setNumberOfEditorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName())));
-        dto.setNumberOfInstructorsInCourse(Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName())));
+        Set<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
+        // For the average score we need to only consider scores which are included completely or as bonus
+        Set<Exercise> includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
+                .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
+        Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
+        averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
+        double currentMaxAverageScore = includedExercises.stream().map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
+
+        Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
+
+        var numberOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getStudentGroupName()));
+        var numberOfTeachingAssistantsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
+        var numberOfEditorsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName()));
+        var numberOfInstructorsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName()));
+
         var endDate = this.determineEndDateForActiveStudents(course);
         var spanSize = this.determineTimeSpanSizeForActiveStudents(course, endDate, 17);
-        dto.setActiveStudents(getActiveStudents(exerciseIds, 0, spanSize, endDate));
-        return dto;
+        var activeStudents = getActiveStudents(exerciseIds, 0, spanSize, endDate);
+
+        DueDateStat assessments = resultRepository.countNumberOfAssessments(exerciseIds);
+        long numberOfAssessments = assessments.inTime() + assessments.late();
+
+        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIds)
+                + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIds);
+        long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIds);
+
+        long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
+        var currentPercentageAssessments = calculatePercentage(numberOfAssessments, numberOfSubmissions);
+
+        long currentAbsoluteComplaints = complaintResponseRepository
+                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), COMPLAINT);
+        long currentMaxComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(course.getId(), COMPLAINT);
+        var currentPercentageComplaints = calculatePercentage(currentAbsoluteComplaints, currentMaxComplaints);
+
+        long currentAbsoluteMoreFeedbacks = complaintResponseRepository
+                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), MORE_FEEDBACK);
+        long currentMaxMoreFeedbacks = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(course.getId(), MORE_FEEDBACK);
+        var currentPercentageMoreFeedbacks = calculatePercentage(currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks);
+
+        var currentAbsoluteAverageScore = roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * currentMaxAverageScore, course);
+        var currentPercentageAverageScore = currentMaxAverageScore > 0.0 ? roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course) : 0.0;
+
+        return new CourseManagementDetailViewDTO(numberOfStudentsInCourse, numberOfTeachingAssistantsInCourse, numberOfEditorsInCourse, numberOfInstructorsInCourse,
+                currentPercentageAssessments, numberOfAssessments, numberOfSubmissions, currentPercentageComplaints, currentAbsoluteComplaints, currentMaxComplaints,
+                currentPercentageMoreFeedbacks, currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks, currentPercentageAverageScore, currentAbsoluteAverageScore,
+                currentMaxAverageScore, activeStudents);
+    }
+
+    private double calculatePercentage(double positive, double total) {
+        return total > 0.0 ? Math.round(positive * 1000.0 / total) / 10.0 : 0.0;
+    }
+
+    /**
+     * calculate statistics for the course administration dashboard
+     *
+     * @param course the course for which the statistics should be calculated
+     * @return a DTO containing the statistics
+     */
+    public StatsForDashboardDTO getStatsForDashboardDTO(Course course) {
+        Set<Long> courseExerciseIds = exerciseRepository.findAllIdsByCourseId(course.getId());
+
+        StatsForDashboardDTO stats = new StatsForDashboardDTO();
+
+        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(courseExerciseIds);
+        numberOfInTimeSubmissions += programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(courseExerciseIds);
+
+        final long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(courseExerciseIds);
+        DueDateStat totalNumberOfAssessments = resultRepository.countNumberOfAssessments(courseExerciseIds);
+        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
+
+        // no examMode here, so it's the same as totalNumberOfAssessments
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = { totalNumberOfAssessments };
+        stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
+        stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
+
+        final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(course.getId());
+        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
+        final long numberOfMoreFeedbackComplaintResponses = complaintService.countMoreFeedbackRequestResponsesByCourseId(course.getId());
+        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
+        final long numberOfComplaints = complaintService.countComplaintsByCourseId(course.getId());
+        stats.setNumberOfComplaints(numberOfComplaints);
+        final long numberOfComplaintResponses = complaintService.countComplaintResponsesByCourseId(course.getId());
+        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(),
+                course.getId());
+        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
+        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByCourseId(course.getId());
+        stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
+
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, courseExerciseIds);
+        stats.setTutorLeaderboardEntries(leaderboardEntries);
+        stats.setNumberOfRatings(ratingRepository.countByResult_Participation_Exercise_Course_Id(course.getId()));
+        return stats;
     }
 
     /**
@@ -552,7 +682,7 @@ public class CourseService {
                 exerciseDeletionService.cleanup(exercise.getId(), true);
             }
 
-            // TODO: extend exerciseService.cleanup to clean up all exercise types
+            // TODO: extend exerciseDeletionService.cleanup to clean up all exercise types
         });
 
         log.info("The course {} has been cleaned up!", courseId);
