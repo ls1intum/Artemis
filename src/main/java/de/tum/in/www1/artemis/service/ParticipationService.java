@@ -591,7 +591,7 @@ public class ParticipationService {
      * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
      * @param deleteRepository determines whether the corresponding repository should be deleted as well
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         log.info("Request to delete Participation : {}", participation);
@@ -629,7 +629,7 @@ public class ParticipationService {
      *
      * @param participationId the id of the participation to delete results/submissions from.
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void deleteResultsAndSubmissionsOfParticipation(Long participationId) {
         log.info("Request to delete all results and submissions of participation with id : {}", participationId);
         var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
@@ -655,7 +655,7 @@ public class ParticipationService {
      * @param deleteBuildPlan  specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
         log.info("Request to delete all participations of Exercise with id : {}", exerciseId);
         List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByExerciseId(exerciseId);
@@ -671,7 +671,7 @@ public class ParticipationService {
      * @param deleteBuildPlan  specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void deleteAllByTeamId(Long teamId, boolean deleteBuildPlan, boolean deleteRepository) {
         log.info("Request to delete all participations of Team with id : {}", teamId);
         List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByTeamId(teamId);

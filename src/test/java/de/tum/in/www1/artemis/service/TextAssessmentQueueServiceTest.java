@@ -80,7 +80,7 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
     // Note: this transaction is necessary, because the method call textSubmissionService.getTextSubmissionsByExerciseId does not eagerly load the text blocks that are
     // evaluated in the call textAssessmentQueueService.calculateSmallerClusterPercentageBatch
     // TODO: we should remove transactions in the corresponding production code and make sure to eagerly load text blocks with the submission in such a case
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true) // TODO: remove transactional
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void calculateSmallerClusterPercentageTest() {
         int submissionCount = 5;

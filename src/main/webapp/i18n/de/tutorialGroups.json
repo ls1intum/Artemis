@@ -1,0 +1,97 @@
+{
+    "artemisApp": {
+        "generic": {
+            "offline": "Offline",
+            "online": "Online",
+            "german": "Deutsch",
+            "english": "Englisch"
+        },
+        "entities": {
+            "tutorialGroup": {
+                "plural": "Übungsgruppen",
+                "course": "Kurs",
+                "title": "Titel",
+                "additionalInformation": "Zusätzliche Informationen",
+                "capacity": "Kapazität",
+                "isOnline": "Offline / Online",
+                "campus": "Campus",
+                "language": "Sprache",
+                "teachingAssistant": "Tutor:in",
+                "registrations": "Registrierungen"
+            }
+        },
+        "forms": {
+            "tutorialGroupForm": {
+                "titleInput": {
+                    "label": "Titel",
+                    "placeholder": "Gruppe 1: Montag {{ from }} - {{ to }}",
+                    "requiredValidationError": "Titel ist erforderlich!",
+                    "maxLengthValidationError": "Der Titel kann max {{ max }} Zeichen lang sein!"
+                },
+                "teachingAssistantInput": {
+                    "label": "Tutor:in",
+                    "placeholder": "Wähle eine Tutor:in aus, die für diese Gruppe verantwortlich ist.",
+                    "loadingText": "Tutor:innen laden ...",
+                    "notFoundText": "Keine Tutor:in gefunden.",
+                    "requiredValidationError": "Eine Übungsgruppe braucht eine Tutor:in zugewiesen!",
+                    "taHelp": "In das Feld tippen um nach Tutor:innen zu suchen."
+                },
+                "campusInput": {
+                    "label": "Campus",
+                    "placeholder": "Wähle einen Campus, auf dem sich diese Übungsgruppe trifft.",
+                    "loadingText": "Campus laden ...",
+                    "notFoundText": "Kein Campus gefunden.",
+                    "campusHelp": "In das Feld tippen um nach einem Campus zu suchen.",
+                    "maxLengthValidationError": "Der Campus ist auf {{ max }} Zeichen beschränkt!"
+                },
+                "additionalInformationInput": {
+                    "label": "Zusätzliche Informationen",
+                    "placeholder": "Zusätzliche Informationen zur Übungsgruppe.",
+                    "maxLengthValidationError": "Zusätzliche Informationen sind auf {{ max }} Zeichen beschränkt!"
+                },
+                "capacityInput": {
+                    "label": "Kapazität",
+                    "unit": "Studierende",
+                    "minValidationError": "Die Kapazität muss mindestens 1 sein!"
+                },
+                "languageInput": {
+                    "label": "Sprache",
+                    "placeholder": "Wähle eine Sprache"
+                },
+                "isOnlineInput": {
+                    "label": "Trifft sich sich diese Übungsgruppe online oder offline?"
+                }
+            }
+        },
+        "pages": {
+            "tutorialGroupsManagement": {
+                "title": "Übungsgruppen-Verwaltung",
+                "creatTutorialGroupButton": "Neue Übungsgruppe",
+                "editConfigurationButton": "Globale Konfiguration bearbeiten",
+                "rowButtons": {
+                    "registrations": "Registrierungen"
+                },
+                "deleteDialog": {
+                    "question": "Sicher, dass die Übungsgruppe mit dem Titel {{ title }} gelöscht werden soll?",
+                    "confirm": "Bitte den Titel der Übungsgruppe zur Bestätigung eingeben"
+                }
+            },
+            "createTutorialGroup": {
+                "title": "Übungsgruppe erstellen"
+            },
+            "editTutorialGroup": {
+                "title": "Übungsgruppe bearbeiten"
+            },
+            "tutorialGroupDetail": {
+                "title": "Übungsgruppen-Details",
+                "teachingAssistantNotSet": "Tutor:in nicht gesetzt",
+                "capacityNotSet": "Kapazität nicht eingestellt",
+                "campusNotSet": "Campus nicht gesetzt",
+                "additionalInformationNotSet": "Keine zusätzlichen Informationen festgelegt"
+            },
+            "registeredStudents": {
+                "title": "Registrierte Studierende"
+            }
+        }
+    }
+}

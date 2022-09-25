@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -127,6 +128,8 @@ public class CourseService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
+    private final TutorialGroupRepository tutorialGroupRepository;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -135,7 +138,7 @@ public class CourseService {
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository) {
+            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -167,6 +170,7 @@ public class CourseService {
         this.resultRepository = resultRepository;
         this.exerciseRepository = exerciseRepository;
         this.participantScoreRepository = participantScoreRepository;
+        this.tutorialGroupRepository = tutorialGroupRepository;
     }
 
     /**
@@ -291,7 +295,12 @@ public class CourseService {
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
+        deleteTutorialGroupsOfCourse(course);
         courseRepository.deleteById(course.getId());
+    }
+
+    private void deleteTutorialGroupsOfCourse(Course course) {
+        this.tutorialGroupRepository.deleteAllByCourse(course);
     }
 
     private void deleteGradingScaleOfCourse(Course course) {
