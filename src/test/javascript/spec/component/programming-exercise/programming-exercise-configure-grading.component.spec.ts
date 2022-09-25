@@ -55,6 +55,7 @@ import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -94,6 +95,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     const exercise = {
         id: exerciseId,
         staticCodeAnalysisEnabled: true,
+        maxPoints: 42,
     } as ProgrammingExercise;
     const testCases1 = [
         {
@@ -352,7 +354,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         // get first weight input
         const editingInputs = table.queryAll(By.css(tableEditingInput));
-        expect(editingInputs).toHaveLength(testCases1.length * 3);
+        expect(editingInputs).toHaveLength(testCases1.length * 4);
 
         const weightInput = editingInputs[0].nativeElement;
         expect(weightInput).not.toBeNull();
@@ -397,6 +399,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(testThatWasUpdated.bonusMultiplier).toBe(2);
         expect(testThatWasUpdated.bonusPoints).toBe(1);
         expect(comp.changedTestCaseIds).toHaveLength(0);
+        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(74);
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
@@ -438,6 +441,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(testThatWasUpdated.bonusMultiplier).toBe(1);
         expect(testThatWasUpdated.bonusPoints).toBe(1);
         expect(comp.changedTestCaseIds).toHaveLength(0);
+        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(37.5);
     });
 
     const setAllWeightsToZero = () => {
@@ -445,9 +449,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         // get all input fields
         const editingInputs = table.queryAll(By.css(tableEditingInput));
-        expect(editingInputs).toHaveLength(testCases1.length * 3);
+        expect(editingInputs).toHaveLength(testCases1.length * 4);
         // Set only the weight input fields to 0 of all test cases
-        for (let i = 0; i < editingInputs.length; i += 3) {
+        for (let i = 0; i < editingInputs.length; i += 4) {
             const weightInput = editingInputs[i].nativeElement;
             expect(weightInput).not.toBeNull();
             weightInput.focus();
@@ -867,7 +871,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             fixture.detectChanges();
             const table = debugElement.query(By.css(testCaseTableId));
             const editingInputs = table.queryAll(By.css(tableEditingInput));
-            expect(editingInputs).toHaveLength(3);
+            expect(editingInputs).toHaveLength(4);
 
             const weightInput = editingInputs[0].nativeElement;
             expect(weightInput).not.toBeNull();
