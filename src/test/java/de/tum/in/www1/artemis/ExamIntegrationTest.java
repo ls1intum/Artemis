@@ -1915,11 +1915,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         gradingScale.setExam(exam);
         gradingScaleRepository.save(gradingScale);
 
+        long bonusCourseParticipationCount = 0;
         if (withCourseBonus) {
             configureCourseAsBonusWithIndividualAndTeamResults(course, gradingScale);
+            bonusCourseParticipationCount = 5; // Participations from the bonus course should be included in expected participation count.
         }
 
-        await().until(() -> participantScoreRepository.count() == 90);
+        final long expectedParticipationCount = 90 + bonusCourseParticipationCount; // 90 participations from the exam.
+        await().until(() -> participantScoreRepository.count() == expectedParticipationCount);
 
         var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
