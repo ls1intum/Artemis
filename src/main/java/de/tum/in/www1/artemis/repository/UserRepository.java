@@ -121,6 +121,32 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
 
     /**
+     * Search for all users by login or name in a group
+     *
+     * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
+     * @param loginOrName Search query that will be searched for in login and name field
+     * @param groupName   Name of group in which to search for users
+     * @return all users matching search criteria in the group converted to DTOs
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("select user from User user where :#{#groupName} member of user.groups and "
+            + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)")
+    Page<User> searchAllByLoginOrNameInGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
+
+    /**
+     * Search for all users by login or name in a group and convert them to {@link UserDTO}
+     *
+     * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
+     * @param loginOrName Search query that will be searched for in login and name field
+     * @param groupName   Name of group in which to search for users
+     * @return all users matching search criteria in the group converted to {@link UserDTO}
+     */
+    default Page<UserDTO> searchAllUsersByLoginOrNameInGroupAndConvertToDTO(Pageable pageable, String loginOrName, String groupName) {
+        Page<User> users = searchAllByLoginOrNameInGroup(pageable, loginOrName, groupName);
+        return users.map(UserDTO::new);
+    }
+
+    /**
      * Gets users in a group by their registration number.
      *
      * @param groupName           Name of group in which to search for users
@@ -492,5 +518,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             return false;
         }
         return currentUserLogin.get().equals(login);
+    }
+
+    default User findByIdElseThrow(long userId) throws EntityNotFoundException {
+        return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 }

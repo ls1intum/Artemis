@@ -98,7 +98,7 @@ public class TextBlockService {
         textBlockRepository.saveAll(textBlocks);
     }
 
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void deleteForSubmission(TextSubmission textSubmission) {
         textBlockRepository.deleteAllBySubmission_Id(textSubmission.getId());
     }

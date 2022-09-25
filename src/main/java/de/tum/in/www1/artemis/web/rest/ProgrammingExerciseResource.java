@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
+import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -98,6 +99,8 @@ public class ProgrammingExerciseResource {
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
+    private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
+
     /**
      * Java package name Regex according to Java 14 JLS (<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1">https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1</a>),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -122,7 +125,8 @@ public class ProgrammingExerciseResource {
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
@@ -143,6 +147,7 @@ public class ProgrammingExerciseResource {
         this.submissionPolicyService = submissionPolicyService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
     }
 
     /**
@@ -801,5 +806,24 @@ public class ProgrammingExerciseResource {
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/file-names");
+    }
+
+    /**
+     * GET programming-exercise/:exerciseId/build-log-statistics
+     *
+     * Returns the averaged build log statistics for a given programming exercise.
+     * @param exerciseId the exercise for which the build log statistics should be retrieved
+     * @return a DTO containing the average build log statistics
+     */
+    @GetMapping(BUILD_LOG_STATISTICS)
+    @PreAuthorize("hasRole('EDITOR')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<BuildLogStatisticsDTO> getBuildLogStatistics(@PathVariable Long exerciseId) {
+        log.debug("REST request to get build log statistics for ProgrammingExercise with id : {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId).get();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
+
+        var buildLogStatistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(programmingExercise);
+        return ResponseEntity.ok(buildLogStatistics);
     }
 }

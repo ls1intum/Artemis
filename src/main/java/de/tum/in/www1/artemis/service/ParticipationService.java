@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,47 +48,37 @@ public class ParticipationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ResultRepository resultRepository;
-
     private final SubmissionRepository submissionRepository;
-
-    private final ComplaintResponseRepository complaintResponseRepository;
-
-    private final ComplaintRepository complaintRepository;
-
-    private final RatingRepository ratingRepository;
 
     private final TeamRepository teamRepository;
 
-    private final ParticipantScoreRepository participantScoreRepository;
-
     private final UrlService urlService;
+
+    private final ResultService resultService;
 
     private final CoverageReportRepository coverageReportRepository;
 
-    public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
-            ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, ParticipationRepository participationRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RatingRepository ratingRepository,
-            ParticipantScoreRepository participantScoreRepository, UrlService urlService, CoverageReportRepository coverageReportRepository) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
-        this.participationRepository = participationRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
-        this.exerciseRepository = exerciseRepository;
-        this.resultRepository = resultRepository;
-        this.submissionRepository = submissionRepository;
-        this.complaintResponseRepository = complaintResponseRepository;
-        this.complaintRepository = complaintRepository;
-        this.teamRepository = teamRepository;
+    private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
+
+    public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ExerciseRepository exerciseRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService,
+            ResultService resultService, CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.ratingRepository = ratingRepository;
-        this.participantScoreRepository = participantScoreRepository;
+        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.submissionRepository = submissionRepository;
+        this.teamRepository = teamRepository;
         this.urlService = urlService;
+        this.resultService = resultService;
         this.coverageReportRepository = coverageReportRepository;
+        this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
     }
 
     /**
@@ -651,7 +642,7 @@ public class ParticipationService {
      * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
      * @param deleteRepository determines whether the corresponding repository should be deleted as well
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         log.info("Request to delete Participation : {}", participation);
@@ -676,10 +667,6 @@ public class ParticipationService {
             gitService.deleteLocalRepository(repositoryUrl);
         }
 
-        complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
-        complaintRepository.deleteByResult_Participation_Id(participationId);
-        ratingRepository.deleteByResult_Participation_Id(participationId);
-
         deleteResultsAndSubmissionsOfParticipation(participationId);
 
         Exercise exercise = participation.getExercise();
@@ -693,24 +680,23 @@ public class ParticipationService {
      *
      * @param participationId the id of the participation to delete results/submissions from.
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void deleteResultsAndSubmissionsOfParticipation(Long participationId) {
         log.info("Request to delete all results and submissions of participation with id : {}", participationId);
         var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
         Set<Submission> submissions = participation.getSubmissions();
-        List<Result> resultsToBeDeleted = new ArrayList<>();
-
+        ArrayList<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toCollection(ArrayList::new));
+        resultsToBeDeleted.addAll(participation.getResults());
+        resultsToBeDeleted.forEach(result -> resultService.deleteResult(result.getId()));
         // The result of the submissions will be deleted via cascade
         submissions.forEach(submission -> {
-            resultsToBeDeleted.addAll(submission.getResults());
             coverageReportRepository.deleteBySubmissionId(submission.getId());
+            buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
             submissionRepository.deleteById(submission.getId());
         });
-        resultsToBeDeleted.forEach(result -> participantScoreRepository.deleteAllByResultIdTransactional(result.getId()));
         // The results that are only connected to a participation are also deleted
         resultsToBeDeleted.forEach(participation::removeResult);
-        participation.getResults().forEach(result -> resultRepository.deleteById(result.getId()));
     }
 
     /**
@@ -720,7 +706,7 @@ public class ParticipationService {
      * @param deleteBuildPlan  specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
         log.info("Request to delete all participations of Exercise with id : {}", exerciseId);
         List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByExerciseId(exerciseId);
@@ -736,7 +722,7 @@ public class ParticipationService {
      * @param deleteBuildPlan  specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void deleteAllByTeamId(Long teamId, boolean deleteBuildPlan, boolean deleteRepository) {
         log.info("Request to delete all participations of Team with id : {}", teamId);
         List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByTeamId(teamId);
