@@ -121,6 +121,9 @@ public class CourseTestService {
     @Autowired
     private ParticipationService participationService;
 
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
     private final static int numberOfStudents = 8;
 
     private final static int numberOfTutors = 5;
@@ -1659,6 +1662,8 @@ public class CourseTestService {
 
         courseRepo.save(instructorsCourse);
 
+        await().until(() -> participantScoreRepository.findAll().size() == 2);
+
         // We only added one course, so expect one dto
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
         assertThat(courseDtos).hasSize(1);
@@ -1926,6 +1931,8 @@ public class CourseTestService {
 
         request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
                 + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
+
+        await().until(() -> participantScoreRepository.findAll().size() == 4);
 
         // API call
         var courseDTO = request.get("/api/courses/" + course1.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);

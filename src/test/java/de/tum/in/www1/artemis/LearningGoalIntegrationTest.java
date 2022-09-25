@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -82,6 +83,9 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
     private Long idOfCourse;
 
     private Long idOfCourseTwo;
@@ -150,6 +154,8 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         teams = database.addTeamsForExerciseFixedTeamSize(teamTextExercise, 5, tutor, 3);
 
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 50, true);
+
+        await().until(() -> participantScoreRepository.findAll().size() == 3);
 
         creatingLectureUnitsOfLectureOne();
         creatingLectureUnitsOfLectureTwo();
@@ -616,6 +622,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void getLearningGoalCourseProgressIndividualTest_asInstructorOne_usingParticipantScoreTable() throws Exception {
         cleanUpInitialParticipations();
+
         User student1 = userRepository.findOneByLogin("student1").get();
         User student2 = userRepository.findOneByLogin("student2").get();
         User student3 = userRepository.findOneByLogin("student3").get();
@@ -632,6 +639,8 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         createParticipationSubmissionAndResult(idOfTextExercise, student4, 10.0, 0.0, 50, true);
 
         createParticipationSubmissionAndResult(idOfTextExercise, instructor1, 10.0, 0.0, 100, true); // will be ignored as not a student
+
+        await().until(() -> participantScoreRepository.findAll().size() == 5);
 
         CourseLearningGoalProgress courseLearningGoalProgress = request.get(
                 "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress?useParticipantScoreTable=true", HttpStatus.OK, CourseLearningGoalProgress.class);
@@ -660,6 +669,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         participationService.deleteAllByExerciseId(idOfTextExercise, true, true);
         participationService.deleteAllByExerciseId(idOfModelingExercise, true, true);
         participationService.deleteAllByExerciseId(idOfTeamTextExercise, true, true);
+        await().until(() -> participantScoreRepository.findAll().isEmpty());
     }
 
     @Test
