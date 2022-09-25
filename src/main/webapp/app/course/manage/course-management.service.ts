@@ -267,6 +267,14 @@ export class CourseManagementService {
     }
 
     /**
+     * deletes the course icon corresponding to the given unique identifier using a DELETE request
+     * @param courseId - the id of the course which icon to be deleted
+     */
+    deleteIcon(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/icon`, { observe: 'response' });
+    }
+
+    /**
      * returns the exercise details of the courses for the courses' management dashboard
      * @param onlyActive - if true, only active courses will be considered in the result
      */

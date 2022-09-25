@@ -412,6 +412,13 @@ describe('Course Management Service', () => {
         tick();
     }));
 
+    it('should delete the course icon', fakeAsync(() => {
+        courseManagementService.deleteIcon(course.id!).subscribe((res) => expect(res.body).toEqual({}));
+        const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}/icon` });
+        req.flush({});
+        tick();
+    }));
+
     afterEach(() => {
         httpMock.verify();
         jest.restoreAllMocks();

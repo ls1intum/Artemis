@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -13,9 +14,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -42,6 +46,9 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Autowired
     private ExerciseRepository exerciseRepo;
+
+    @Autowired
+    private FileService fileService;
 
     @AfterEach
     void tearDown() {
@@ -222,5 +229,21 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         courses = courseService.getAllCoursesForManagementOverview(true);
         assertThat(courses).isEmpty();
+    }
+
+    @Test
+    void testDeleteIcon() throws IOException {
+        byte[] iconBytes = "icon1".getBytes();
+        MockMultipartFile iconFile = new MockMultipartFile("file 1", "icon1.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
+        String iconPath = fileService.handleSaveFile(iconFile, false, false);
+        Course course = database.addCourseWithIcon(iconPath);
+
+        courseService.deleteIcon(course);
+
+        course = courseRepository.findById(course.getId()).orElseThrow();
+        assertThat(course.getCourseIcon()).isNull();
+
+        iconBytes = fileService.getFileForPath(iconPath);
+        assertThat(iconBytes).isNull();
     }
 }

@@ -2751,6 +2751,13 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public Course addCourseWithIcon(String icon) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course.setCourseIcon(icon);
+        course = courseRepo.save(course);
+        return course;
+    }
+
     private void saveResultInParticipation(Submission submission, Result result) {
         submission.addResult(result);
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();

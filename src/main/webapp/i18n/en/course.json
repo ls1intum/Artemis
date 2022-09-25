@@ -14,6 +14,9 @@
                 "question": "Are you sure you want to permanently delete the course <strong>{{ title }}</strong>? All associated elements will be deleted, including exams, exercises, repositories and build plans. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the course to confirm."
             },
+            "deleteIcon": {
+                "question": "Are you sure you want to permanently delete the course icon <strong>{{ title }}</strong>? This action can NOT be undone!"
+            },
             "showActive": "Show only active courses",
             "totalScore": "Total Score:",
             "title": "Title",

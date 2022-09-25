@@ -122,6 +122,24 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDeleteCourseIconWithPermission() throws Exception {
+        courseTestService.testDeleteCourseIconWithPermission();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testDeleteCourseIconWithoutPermission() throws Exception {
+        courseTestService.testDeleteCourseIconWithoutPermission();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDeleteNotExistingCourseIcon() throws Exception {
+        courseTestService.testDeleteNotExistingCourseIcon();
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateCourseWithoutPermission() throws Exception {
         courseTestService.testCreateCourseWithoutPermission();

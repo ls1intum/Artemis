@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -16,7 +16,7 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
@@ -475,5 +475,46 @@ describe('Course Management Update Component', () => {
             comp.removeOrganizationFromCourse(organization);
             expect(comp.courseOrganizations).toEqual([secondOrganization]);
         });
+    });
+
+    describe('deleteIcon', () => {
+        it('should remove icon image and delete icon button from component if delete icon is successful', () => {
+            setIcon();
+            const deleteIconStub = jest.spyOn(service, 'deleteIcon').mockReturnValue(of(new HttpResponse<void>()));
+            let deleteIconButton = getDeleteIconButton();
+            deleteIconButton.dispatchEvent(new Event('delete'));
+            fixture.detectChanges();
+            expect(deleteIconStub).toHaveBeenCalledOnce();
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            deleteIconButton = getDeleteIconButton();
+            expect(iconImage).toBeNull();
+            expect(deleteIconButton).toBeNull();
+        });
+
+        it('should not remove icon image and delete icon button from component if delete icon fails', () => {
+            setIcon();
+            const deleteIconStub = jest.spyOn(service, 'deleteIcon').mockReturnValue(throwError(new HttpErrorResponse({ status: 500, message: 'Internal Server Error' })));
+            let deleteIconButton = getDeleteIconButton();
+            deleteIconButton.dispatchEvent(new Event('delete'));
+            fixture.detectChanges();
+            expect(deleteIconStub).toHaveBeenCalledOnce();
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            deleteIconButton = getDeleteIconButton();
+            expect(iconImage).not.toBeNull();
+            expect(deleteIconButton).not.toBeNull();
+        });
+
+        function setIcon(): void {
+            let croppedImage = 'testCroppedImage';
+            comp.croppedImage = 'data:image/png;base64,' + croppedImage;
+            comp.courseImageFileName = 'testFilename';
+            comp.showCropper = true;
+            comp.ngOnInit();
+            fixture.detectChanges();
+        }
+
+        function getDeleteIconButton() {
+            return fixture.debugElement.nativeElement.querySelector('#delete-course-icon');
+        }
     });
 });

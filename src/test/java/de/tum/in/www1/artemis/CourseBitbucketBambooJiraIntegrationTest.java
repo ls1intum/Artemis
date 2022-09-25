@@ -120,6 +120,24 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testDeleteCourseIconWithPermission() throws Exception {
+        courseTestService.testDeleteCourseIconWithPermission();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testDeleteCourseIconWithoutPermission() throws Exception {
+        courseTestService.testDeleteCourseIconWithoutPermission();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testDeleteNotExistingCourseIcon() throws Exception {
+        courseTestService.testDeleteNotExistingCourseIcon();
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateCourseWithoutPermission() throws Exception {
         courseTestService.testCreateCourseWithoutPermission();

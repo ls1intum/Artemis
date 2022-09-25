@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -39,6 +41,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ZipFileService;
@@ -371,6 +374,89 @@ public class CourseTestService {
     // Test
     public void testDeleteNotExistingCourse() throws Exception {
         request.delete("/api/courses/1", HttpStatus.NOT_FOUND);
+    }
+
+    // Test
+    public void testDeleteCourseIconWithPermission() throws Exception {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+
+        byte[] icon1Bytes = "icon1".getBytes();
+        byte[] icon2Bytes = "icon2".getBytes();
+        MockMultipartFile iconFile1 = new MockMultipartFile("file 1", "icon1.png", MediaType.APPLICATION_JSON_VALUE, icon1Bytes);
+        MockMultipartFile iconFile2 = new MockMultipartFile("file 2", "icon2.png", MediaType.APPLICATION_JSON_VALUE, icon2Bytes);
+        String iconPath1 = fileService.handleSaveFile(iconFile1, false, false);
+        String iconPath2 = fileService.handleSaveFile(iconFile2, false, false);
+        iconPath1 = fileService.manageFilesForUpdatedFilePath(null, iconPath1, FilePathService.getCourseIconFilePath(), course1.getId());
+        iconPath2 = fileService.manageFilesForUpdatedFilePath(null, iconPath2, FilePathService.getCourseIconFilePath(), course2.getId());
+
+        course1.setCourseIcon(iconPath1);
+        course2.setCourseIcon(iconPath2);
+        course1 = courseRepo.save(course1);
+        course2 = courseRepo.save(course2);
+
+        iconPath1 = iconPath1.replace(Constants.FILEPATH_ID_PLACEHOLDER, course1.getId().toString());
+        iconPath2 = iconPath2.replace(Constants.FILEPATH_ID_PLACEHOLDER, course2.getId().toString());
+
+        assertThat(course1.getCourseIcon()).as("course 1 icon was set correctly").isEqualTo(iconPath1);
+        assertThat(course2.getCourseIcon()).as("course 2 icon was set correctly").isEqualTo(iconPath2);
+
+        request.delete("/api/courses/" + course1.getId() + "/icon", HttpStatus.OK);
+
+        course1 = courseRepo.findByIdElseThrow(course1.getId());
+        course2 = courseRepo.findByIdElseThrow(course2.getId());
+
+        assertThat(course1.getCourseIcon()).as("course 1 icon was deleted correctly").isNull();
+        assertThat(course2.getCourseIcon()).as("course 2 icon was not deleted").isEqualTo(iconPath2);
+        assertThat(fileService.getFileForPath(fileService.actualPathForPublicPath(iconPath1))).as("course 1 icon file was deleted correctly").isNull();
+        assertThat(fileService.getFileForPath(fileService.actualPathForPublicPath(iconPath2))).as("course 2 icon file was not deleted").isEqualTo(icon2Bytes);
+    }
+
+    // Test
+    public void testDeleteCourseIconWithoutPermission() throws Exception {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+
+        byte[] icon1Bytes = "icon1".getBytes();
+        byte[] icon2Bytes = "icon2".getBytes();
+        MockMultipartFile iconFile1 = new MockMultipartFile("file 1", "icon1.png", MediaType.APPLICATION_JSON_VALUE, icon1Bytes);
+        MockMultipartFile iconFile2 = new MockMultipartFile("file 2", "icon2.png", MediaType.APPLICATION_JSON_VALUE, icon2Bytes);
+        String iconPath1 = fileService.handleSaveFile(iconFile1, false, false);
+        String iconPath2 = fileService.handleSaveFile(iconFile2, false, false);
+        iconPath1 = fileService.manageFilesForUpdatedFilePath(null, iconPath1, FilePathService.getCourseIconFilePath(), course1.getId());
+        iconPath2 = fileService.manageFilesForUpdatedFilePath(null, iconPath2, FilePathService.getCourseIconFilePath(), course2.getId());
+
+        course1.setCourseIcon(iconPath1);
+        course2.setCourseIcon(iconPath2);
+        course1 = courseRepo.save(course1);
+        course2 = courseRepo.save(course2);
+
+        iconPath1 = iconPath1.replace(Constants.FILEPATH_ID_PLACEHOLDER, course1.getId().toString());
+        iconPath2 = iconPath2.replace(Constants.FILEPATH_ID_PLACEHOLDER, course2.getId().toString());
+
+        assertThat(course1.getCourseIcon()).as("course 1 icon was set correctly").isEqualTo(iconPath1);
+        assertThat(course2.getCourseIcon()).as("course 2 icon was set correctly").isEqualTo(iconPath2);
+
+        request.delete("/api/courses/" + course1.getId() + "/icon", HttpStatus.FORBIDDEN);
+
+        course1 = courseRepo.findByIdElseThrow(course1.getId());
+        course2 = courseRepo.findByIdElseThrow(course2.getId());
+
+        assertThat(course1.getCourseIcon()).as("course 1 icon was not deleted").isEqualTo(iconPath1);
+        assertThat(course2.getCourseIcon()).as("course 2 icon was not deleted").isEqualTo(iconPath2);
+        assertThat(fileService.getFileForPath(fileService.actualPathForPublicPath(iconPath1))).as("course 1 icon file was not deleted").isEqualTo(icon1Bytes);
+        assertThat(fileService.getFileForPath(fileService.actualPathForPublicPath(iconPath2))).as("course 2 icon file was not deleted").isEqualTo(icon2Bytes);
+    }
+
+    // Test
+    public void testDeleteNotExistingCourseIcon() throws Exception {
+        request.delete("/api/courses/1/icon", HttpStatus.NOT_FOUND);
     }
 
     // Test

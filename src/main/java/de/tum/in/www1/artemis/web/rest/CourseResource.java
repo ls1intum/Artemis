@@ -619,6 +619,21 @@ public class CourseResource {
     }
 
     /**
+     * DELETE /courses/:courseId/icon : Delete course icon of specified course id
+     *
+     * @param courseId the id of the course
+     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
+     */
+    @DeleteMapping(value = "/courses/{courseId}/icon")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> removeIconFromCourse(@PathVariable Long courseId) {
+        log.debug("REST request to remove icon of course : {}", courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        courseService.deleteIcon(course);
+        return ResponseEntity.ok().body(null);
+    }
+
+    /**
      * PUT /courses/{courseId} : archive an existing course asynchronously. This method starts the process of archiving all course exercises, submissions and results in a large
      * zip file. It immediately returns and runs this task asynchronously. When the task is done, the course is marked as archived, which means the zip file can be downloaded.
      *

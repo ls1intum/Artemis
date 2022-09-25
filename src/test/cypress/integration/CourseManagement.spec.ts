@@ -7,6 +7,7 @@ import { NavigationBar } from '../support/pageobjects/NavigationBar';
 import { ArtemisRequests } from '../support/requests/ArtemisRequests';
 import { generateUUID } from '../support/utils';
 import { Course } from 'app/entities/course.model';
+import day from 'dayjs/esm';
 
 // Requests
 const artemisRequests: ArtemisRequests = new ArtemisRequests();
@@ -119,6 +120,51 @@ describe('Course management', () => {
             cy.get('#confirm-exercise-name').type(courseName);
             cy.get(modalDeleteButton).should('not.be.disabled').click();
             courseManagementPage.getCourseCard(courseShortName).should('not.exist');
+        });
+    });
+
+    describe('Course icon deletion', () => {
+        let courseId: number;
+
+        it('Deletes an existing course icon', () => {
+            cy.fixture('course/icon.png', 'base64')
+                .then(Cypress.Blob.base64StringToBlob)
+                .then((blob) => {
+                    const formData = new FormData();
+                    formData.append('file', blob, 'icon.png');
+                    return cy.formRequest(BASE_API + 'fileUpload', POST, formData).then((response) => {
+                        let courseIcon = response.body!.path;
+                        artemisRequests.courseManagement
+                            .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), courseIcon)
+                            .then((response) => {
+                                courseId = response.body!.id!;
+                            });
+                    });
+                });
+            navigationBar.openCourseManagement();
+            courseManagementPage.openCourse(courseShortName);
+            cy.get('#edit-course').click();
+            cy.get('#delete-course-icon').click();
+            cy.get(modalDeleteButton).should('not.be.disabled').click();
+            cy.get('#delete-course-icon').should('not.exist');
+            cy.get('.no-image').should('exist');
+        });
+
+        it('Deletes not existing course icon', () => {
+            artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).then((response) => {
+                courseId = response.body!.id!;
+            });
+            navigationBar.openCourseManagement();
+            courseManagementPage.openCourse(courseShortName);
+            cy.get('#edit-course').click();
+            cy.get('#delete-course-icon').should('not.exist');
+            cy.get('.no-image').should('exist');
+        });
+
+        after(() => {
+            if (!!courseId) {
+                artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
+            }
         });
     });
 });

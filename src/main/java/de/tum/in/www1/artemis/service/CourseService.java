@@ -130,6 +130,8 @@ public class CourseService {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
+    private final FileService fileService;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -138,7 +140,8 @@ public class CourseService {
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository) {
+            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository,
+            FileService fileService) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -171,6 +174,7 @@ public class CourseService {
         this.exerciseRepository = exerciseRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
+        this.fileService = fileService;
     }
 
     /**
@@ -301,6 +305,13 @@ public class CourseService {
 
     private void deleteTutorialGroupsOfCourse(Course course) {
         this.tutorialGroupRepository.deleteAllByCourse(course);
+    }
+
+    public void deleteIcon(Course course) {
+        log.debug("Request to delete icon of Course : {}", course.getTitle());
+        fileService.deleteFiles(List.of(Path.of(course.getCourseIcon())));
+        course.setCourseIcon(null);
+        courseRepository.save(course);
     }
 
     private void deleteGradingScaleOfCourse(Course course) {
