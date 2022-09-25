@@ -119,7 +119,7 @@ public class ResultService {
      * Deletes result with corresponding complaint and complaint response
      * @param resultId the id of the result
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void deleteResult(long resultId) {
         complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
         complaintRepository.deleteByResult_Id(resultId);
