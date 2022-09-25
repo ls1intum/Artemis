@@ -492,20 +492,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         return (ProgrammingSubmission) manualResult.getSubmission();
     }
 
-    /**
-     * Get a programming submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
-     *
-     * @param exercise        the exercise the submission should belong to
-     * @param correctionRound - the correction round we want our submission to have results for
-     * @return a locked programming submission that needs an assessment
-     */
-    public ProgrammingSubmission lockAndGetRandomAssessableSubmission(ProgrammingExercise exercise, int correctionRound) {
-        ProgrammingSubmission programmingSubmission = getRandomAssessableSubmission(exercise, exercise.isExamExercise(), correctionRound)
-                .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
-        Result newManualResult = lockSubmission(programmingSubmission, correctionRound);
-        return (ProgrammingSubmission) newManualResult.getSubmission();
-    }
-
     // TODO SE: explain in what context this method is even called
 
     /**
