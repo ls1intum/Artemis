@@ -122,6 +122,22 @@ describe('Bonus Service', () => {
     }));
 
     it.each([
+        [undefined, null],
+        [false, 'false'],
+        [true, 'true'],
+    ])(
+        'should set includeSourceGradeSteps when calling findBonusForExam',
+        fakeAsync((inputIncludeSourceGradeSteps: boolean, expectedIncludeSourceGradeSteps: boolean) => {
+            service.findBonusForExam(1, 6, inputIncludeSourceGradeSteps).pipe(take(1)).subscribe();
+
+            const httpRequest = httpMock.expectOne({ method: 'GET' });
+
+            expect(httpRequest.request.params.get('includeSourceGradeSteps')).toBe(expectedIncludeSourceGradeSteps);
+            tick();
+        }),
+    );
+
+    it.each([
         [5, 10, 1, false],
         [5, 10, -1, true],
         [10, 10, 1, false],
