@@ -3,15 +3,15 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { throwError } from 'rxjs';
+import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
 
-describe('MessageInlineInputComponent', () => {
-    let component: MessageInlineInputComponent;
-    let fixture: ComponentFixture<MessageInlineInputComponent>;
+describe('MessageReplyInlineInputComponent', () => {
+    let component: MessageReplyInlineInputComponent;
+    let fixture: ComponentFixture<MessageReplyInlineInputComponent>;
     let metisService: MetisService;
     let metisServiceCreateStub: jest.SpyInstance;
     let metisServiceUpdateStub: jest.SpyInstance;
@@ -19,16 +19,16 @@ describe('MessageInlineInputComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
-            declarations: [MessageInlineInputComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [MessageReplyInlineInputComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(MessageInlineInputComponent);
+                fixture = TestBed.createComponent(MessageReplyInlineInputComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
-                metisServiceCreateStub = jest.spyOn(metisService, 'createPost');
-                metisServiceUpdateStub = jest.spyOn(metisService, 'updatePost');
+                metisServiceCreateStub = jest.spyOn(metisService, 'createAnswerPost');
+                metisServiceUpdateStub = jest.spyOn(metisService, 'updateAnswerPost');
             });
     });
 
@@ -36,7 +36,7 @@ describe('MessageInlineInputComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should invoke metis service with created post', fakeAsync(() => {
+    it('should invoke metis service with created message reply', fakeAsync(() => {
         component.posting = metisPostToCreateUser1;
         component.ngOnChanges();
 
@@ -59,7 +59,7 @@ describe('MessageInlineInputComponent', () => {
         expect(onCreateSpy).toHaveBeenCalledOnce();
     }));
 
-    it('should stop loading when metis service throws error during message creation', fakeAsync(() => {
+    it('should stop loading when metis service throws error during replying to message', fakeAsync(() => {
         metisServiceCreateStub.mockImplementation(throwError);
         const onCreateSpy = jest.spyOn(component.onCreate, 'emit');
 
@@ -78,12 +78,11 @@ describe('MessageInlineInputComponent', () => {
         expect(onCreateSpy).toHaveBeenCalledTimes(0);
     }));
 
-    it('should invoke metis service with edited post', fakeAsync(() => {
+    it('should invoke metis service with edited message reply', fakeAsync(() => {
         component.posting = directMessageUser1;
         component.ngOnChanges();
 
         const editedContent = 'edited content';
-        const onEditSpy = jest.spyOn(component.isModalOpen, 'emit');
 
         component.formGroup.setValue({
             content: editedContent,
@@ -101,10 +100,9 @@ describe('MessageInlineInputComponent', () => {
         });
         tick();
         expect(component.isLoading).toBeFalse();
-        expect(onEditSpy).toHaveBeenCalledOnce();
     }));
 
-    it('should stop loading when metis service throws error during message updating', fakeAsync(() => {
+    it('should stop loading when metis service throws error during message replying', fakeAsync(() => {
         metisServiceUpdateStub.mockImplementation(throwError);
 
         component.posting = directMessageUser1;

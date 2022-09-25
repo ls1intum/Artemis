@@ -13,13 +13,11 @@ export class CourseMessagesComponent {
     postInThread: Post;
     showPostThread = false;
 
-    constructor() {}
-
     selectConversation(conversation: Conversation) {
         this.selectedConversation = conversation;
     }
 
-    selectPostForThread(post: Post) {
+    setPostInThread(post?: Post) {
         this.showPostThread = false;
 
         if (!!post) {

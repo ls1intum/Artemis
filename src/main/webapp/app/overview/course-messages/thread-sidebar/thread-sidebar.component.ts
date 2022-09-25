@@ -15,23 +15,30 @@ export class ThreadSidebarComponent implements AfterViewInit {
     post?: Post;
     createdAnswerPost: AnswerPost;
 
-    @Input() set activePost(activePost: Post) {
-        if (activePost) {
-            this.post = activePost;
-            this.createdAnswerPost = this.createEmptyAnswerPost();
-        }
-    }
-
     // Icons
     faXmark = faXmark;
     faChevronLeft = faChevronLeft;
     faGripLinesVertical = faGripLinesVertical;
     faArrowLeft = faArrowLeft;
 
-    constructor() {}
+    @Input() set activePost(activePost: Post) {
+        this.post = activePost;
+        this.createdAnswerPost = this.createEmptyAnswerPost();
+    }
 
     /**
-     * makes discussion section expandable by configuring 'interact'
+     * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
+     * @return AnswerPost created empty default answer post
+     */
+    createEmptyAnswerPost(): AnswerPost {
+        const answerPost = new AnswerPost();
+        answerPost.content = '';
+        answerPost.post = this.post;
+        return answerPost;
+    }
+
+    /**
+     * makes message thread section expandable by configuring 'interact'
      */
     ngAfterViewInit(): void {
         interact('.expanded-thread')
@@ -56,16 +63,5 @@ export class ThreadSidebarComponent implements AfterViewInit {
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
-    }
-
-    /**
-     * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
-     * @return AnswerPost created empty default answer post
-     */
-    createEmptyAnswerPost(): AnswerPost {
-        const answerPost = new AnswerPost();
-        answerPost.content = '';
-        answerPost.post = this.post;
-        return answerPost;
     }
 }
