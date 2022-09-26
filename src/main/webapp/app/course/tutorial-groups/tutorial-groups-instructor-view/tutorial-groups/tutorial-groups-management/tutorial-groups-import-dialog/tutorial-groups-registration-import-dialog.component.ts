@@ -9,6 +9,7 @@ import { Subject, Subscription } from 'rxjs';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 
 /**
  * Each row is a object with the structure
@@ -33,6 +34,8 @@ function cleanString(str?: string): string {
     return str.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', '').trim();
 }
 
+type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
+
 @Component({
     selector: 'jhi-tutorial-groups-import-dialog',
     templateUrl: './tutorial-groups-registration-import-dialog.component.html',
@@ -46,18 +49,29 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
 
     @Input() courseId: number;
 
-    registrations: TutorialGroupRegistrationImportDTO[] = [];
+    registrationsDisplayedInTable: TutorialGroupRegistrationImportDTO[] = [];
+    allRegistrations: TutorialGroupRegistrationImportDTO[] = [];
+    notImportedRegistrations: TutorialGroupRegistrationImportDTO[] = [];
+    importedRegistrations: TutorialGroupRegistrationImportDTO[] = [];
 
     isCSVParsing = false;
-    validationError?: string;
+    validationErrors: string[] = [];
     isImporting = false;
     isImportDone = false;
     numberOfImportedRegistrations = 0;
-    numberOfUnImportedRegistration = 0;
+    numberOfNotImportedRegistration = 0;
+
+    showOnlyNotImported = false;
 
     private subscriptions: (Subscription | undefined)[] = [];
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    supportedTitleHeader = POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS.join(', ');
+    supportedRegistrationNumberHeaders = POSSIBLE_REGISTRATION_NUMBER_HEADERS.join(', ');
+    supportedLoginHeaders = POSSIBLE_LOGIN_HEADERS.join(', ');
+    supportedFirstNameHeaders = POSSIBLE_FIRST_NAME_HEADERS.join(', ');
+    supportedLastNameHeaders = POSSIBLE_LAST_NAME_HEADERS.join(', ');
 
     fixedPlaceForm: FormGroup;
 
@@ -78,8 +92,15 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
     faCheck = faCheck;
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
+    selectedFilter: filterValues = 'all';
 
-    constructor(private fb: FormBuilder, private activeModal: NgbActiveModal, private alertService: AlertService, private tutorialGroupService: TutorialGroupsService) {}
+    constructor(
+        private fb: FormBuilder,
+        private translateService: TranslateService,
+        private activeModal: NgbActiveModal,
+        private alertService: AlertService,
+        private tutorialGroupService: TutorialGroupsService,
+    ) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
@@ -135,13 +156,18 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
     }
 
     get isSubmitDisabled(): boolean {
-        return this.isImporting || !this.registrations?.length;
+        return this.isImporting || !this.registrationsDisplayedInTable?.length;
     }
     private resetDialog() {
-        this.registrations = [];
+        this.registrationsDisplayedInTable = [];
+        this.allRegistrations = [];
+        this.notImportedRegistrations = [];
+        this.validationErrors = [];
         this.isImportDone = false;
+        this.isImporting = false;
+        this.isCSVParsing = false;
         this.numberOfImportedRegistrations = 0;
-        this.numberOfUnImportedRegistration = 0;
+        this.numberOfNotImportedRegistration = 0;
     }
 
     onCSVFileSelected(event: Event) {
@@ -164,17 +190,17 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
         let csvRows: ParsedCSVRow[] = [];
         try {
             this.isCSVParsing = true;
-            this.validationError = undefined;
+            this.validationErrors = [];
             csvRows = await this.parseCSVFile(csvFile);
         } catch (error) {
-            this.validationError = error.message;
+            this.validationErrors.push(error.message);
         } finally {
             this.isCSVParsing = false;
         }
         if (csvRows.length > 0) {
-            this.performExtraValidations(csvRows);
+            this.performExtraRowValidation(csvRows);
         }
-        if (this.validationError) {
+        if (this.validationErrors && this.validationErrors.length > 0) {
             this.fileInput.nativeElement.value = ''; // remove selected file so user can fix the file and select it again
             return [];
         }
@@ -194,7 +220,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
 
         const csvFixedPlaceRows = csvRows.filter((row) => !statusColumn || !fixedPlaceValue || cleanString(row[statusColumn]) === fixedPlaceValue);
         // convert the 'raw' csv rows into a list of TutorialGroupImportDTOs
-        return csvFixedPlaceRows
+        const registrations = csvFixedPlaceRows
             .map((csvRow) => {
                 const registration: TutorialGroupRegistrationImportDTO = {
                     title: csvRow[usedTitleHeader]?.trim() || '',
@@ -209,11 +235,19 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
                 return registration;
             })
             .sort((a, b) => a.title.localeCompare(b.title));
+
+        this.performExtraDTOValidation(registrations);
+        if (this.validationErrors && this.validationErrors.length > 0) {
+            this.fileInput.nativeElement.value = ''; // remove selected file so user can fix the file and select it again
+            return [];
+        } else {
+            return registrations;
+        }
     }
 
     import() {
         this.isImporting = true;
-        this.tutorialGroupService.import(this.courseId, this.registrations).subscribe({
+        this.tutorialGroupService.import(this.courseId, this.registrationsDisplayedInTable).subscribe({
             next: (res) => this.onSaveSuccess(res),
             error: () => this.onSaveError(),
         });
@@ -223,29 +257,96 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
      * Performs validations on the parsed csv rows
      * - checks if values for the required column 'tutorial group title' are present
      *
-     * @param csvRows Parsed list of users
+     * @param csvRows Parsed list of rows
      */
-    performExtraValidations(csvRows: ParsedCSVRow[]): void {
-        const invalidRows = this.computeInvalidUserEntries(csvRows);
-        if (invalidRows !== null) {
-            const maxLength = 30;
-            this.validationError = invalidRows.length <= maxLength ? invalidRows : invalidRows.slice(0, maxLength) + '...';
+    performExtraRowValidation(csvRows: ParsedCSVRow[]): void {
+        const titleValidationError = this.withoutTitleValidation(csvRows);
+        const withoutIdentifierValidationError = this.withoutIdentifierValidation(csvRows);
+        const maxLength = 1000;
+        if (titleValidationError !== null) {
+            this.validationErrors.push(titleValidationError.length <= maxLength ? titleValidationError : titleValidationError.slice(0, maxLength) + '...');
+        }
+        if (withoutIdentifierValidationError !== null) {
+            this.validationErrors.push(
+                withoutIdentifierValidationError.length <= maxLength ? withoutIdentifierValidationError : withoutIdentifierValidationError.slice(0, maxLength) + '...',
+            );
         }
     }
 
-    /**
-     * Returns a comma separated list of row numbers that contains invalid registration entries, null if all entries are valid
-     */
-    computeInvalidUserEntries(csvUsers: ParsedCSVRow[]): string | null {
+    performExtraDTOValidation(registrations: TutorialGroupRegistrationImportDTO[]): void {
+        const duplicatedRegistrationNumbers = this.duplicatedRegistrationNumbers(registrations);
+        const maxLength = 1000;
+        if (duplicatedRegistrationNumbers !== null) {
+            this.validationErrors.push(
+                duplicatedRegistrationNumbers.length <= maxLength ? duplicatedRegistrationNumbers : duplicatedRegistrationNumbers.slice(0, maxLength) + '...',
+            );
+        }
+        const duplicatedLogins = this.duplicatedLogins(registrations);
+        if (duplicatedLogins !== null) {
+            this.validationErrors.push(duplicatedLogins.length <= maxLength ? duplicatedLogins : duplicatedLogins.slice(0, maxLength) + '...');
+        }
+    }
+    withoutTitleValidation(csvRows: ParsedCSVRow[]): string | null {
         const invalidList: number[] = [];
-        for (const [i, user] of csvUsers.entries()) {
-            const hasTutorialGroupTitle = this.checkIfEntryContainsKey(user, POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS);
+        for (const [i, row] of csvRows.entries()) {
+            const hasTutorialGroupTitle = this.checkIfRowContainsKey(row, POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS);
             if (!hasTutorialGroupTitle) {
                 // '+ 2' instead of '+ 1' due to the header column in the csv file
                 invalidList.push(i + 2);
             }
         }
-        return invalidList.length === 0 ? null : invalidList.join(', ');
+        return invalidList.length === 0 ? null : this.translateService.instant('artemisApp.pages.tutorialGroupsManagement.import.withoutTitle') + invalidList.join(', ');
+    }
+
+    withoutIdentifierValidation(csvRows: ParsedCSVRow[]): string | null {
+        const invalidList: number[] = [];
+        for (const [i, user] of csvRows.entries()) {
+            const specifiesAUser = this.checkIfRowContainsKey(user, POSSIBLE_FIRST_NAME_HEADERS) || this.checkIfRowContainsKey(user, POSSIBLE_LAST_NAME_HEADERS);
+            const specifiesARegistrationNumber = this.checkIfRowContainsKey(user, POSSIBLE_REGISTRATION_NUMBER_HEADERS);
+            const specifiesALogin = this.checkIfRowContainsKey(user, POSSIBLE_LOGIN_HEADERS);
+
+            if (specifiesAUser && !(specifiesARegistrationNumber || specifiesALogin)) {
+                // '+ 2' instead of '+ 1' due to the header column in the csv file
+                invalidList.push(i + 2);
+            }
+        }
+        return invalidList.length === 0
+            ? null
+            : this.translateService.instant('artemisApp.pages.tutorialGroupsManagement.import.noIdentificationInformation') + invalidList.join(', ');
+    }
+
+    duplicatedRegistrationNumbers(registrations: TutorialGroupRegistrationImportDTO[]): string | null {
+        const duplicatedRegistrationNumbers: string[] = [];
+        const registrationNumbers = registrations.map((registration) => registration.student?.registrationNumber).filter((registrationNumber) => registrationNumber);
+
+        const uniqueRegistrationNumbers = [...new Set(registrationNumbers)];
+
+        uniqueRegistrationNumbers.forEach((registrationNumber) => {
+            if (registrationNumbers.filter((rn) => rn === registrationNumber).length > 1) {
+                duplicatedRegistrationNumbers.push(registrationNumber);
+            }
+        });
+
+        return duplicatedRegistrationNumbers.length === 0
+            ? null
+            : this.translateService.instant('artemisApp.pages.tutorialGroupsManagement.import.duplicatedRegistrationNumbers') + duplicatedRegistrationNumbers.join(', ');
+    }
+
+    duplicatedLogins(registrations: TutorialGroupRegistrationImportDTO[]): string | null {
+        const duplicatedLogins: string[] = [];
+        const logins = registrations.map((registration) => registration.student?.login).filter((login) => login);
+
+        const uniqueLogins = [...new Set(logins)];
+
+        uniqueLogins.forEach((login) => {
+            if (logins.filter((l) => l === login).length > 1) {
+                duplicatedLogins.push(login);
+            }
+        });
+
+        return duplicatedLogins.length === 0
+            ? null
+            : this.translateService.instant('artemisApp.pages.tutorialGroupsManagement.import.duplicatedLogins') + duplicatedLogins.join(', ');
     }
 
     /**
@@ -253,7 +354,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
      * @param csvRow which should be checked if it contains one of the keys.
      * @param keys that should be checked for in the row.
      */
-    checkIfEntryContainsKey(csvRow: ParsedCSVRow, keys: string[]): boolean {
+    checkIfRowContainsKey(csvRow: ParsedCSVRow, keys: string[]): boolean {
         return keys.some((key) => csvRow[key] !== undefined && csvRow[key] !== '');
     }
 
@@ -265,13 +366,25 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
         this.activeModal.close();
     }
 
+    onFilterPress() {
+        this.showOnlyNotImported = !this.showOnlyNotImported;
+        if (this.showOnlyNotImported) {
+            this.registrationsDisplayedInTable = this.notImportedRegistrations;
+        } else {
+            this.registrationsDisplayedInTable = this.allRegistrations;
+        }
+    }
+
     onSaveSuccess(registrations: HttpResponse<TutorialGroupRegistrationImportDTO[]>) {
         this.isImporting = false;
         this.isImportDone = true;
-        this.registrations = registrations.body ?? [];
-        this.registrations = this.registrations.sort((a, b) => a.title.localeCompare(b.title));
-        this.numberOfImportedRegistrations = this.registrations.filter((registration) => registration.importSuccessful === true).length;
-        this.numberOfUnImportedRegistration = this.registrations.length - this.numberOfImportedRegistrations;
+        this.registrationsDisplayedInTable = registrations.body ?? [];
+        this.registrationsDisplayedInTable = this.registrationsDisplayedInTable.sort((a, b) => a.title.localeCompare(b.title));
+        this.allRegistrations = this.registrationsDisplayedInTable;
+        this.notImportedRegistrations = this.allRegistrations.filter((registration) => registration.importSuccessful !== true);
+        this.importedRegistrations = this.allRegistrations.filter((registration) => registration.importSuccessful === true);
+        this.numberOfNotImportedRegistration = this.notImportedRegistrations.length;
+        this.numberOfImportedRegistrations = this.importedRegistrations.length;
     }
 
     onSaveError() {
@@ -304,8 +417,23 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
     }
 
     async onParseClicked() {
+        this.resetDialog();
         if (this.selectedFile) {
-            this.registrations = await this.readRegistrationsFromCSVFile(this.selectedFile);
+            this.registrationsDisplayedInTable = await this.readRegistrationsFromCSVFile(this.selectedFile);
+        }
+    }
+
+    onFilterChange(newFilterValue: filterValues) {
+        this.selectedFilter = newFilterValue;
+        switch (newFilterValue) {
+            case 'all':
+                this.registrationsDisplayedInTable = this.allRegistrations;
+                break;
+            case 'onlyImported':
+                this.registrationsDisplayedInTable = this.importedRegistrations;
+                break;
+            case 'onlyNotImported':
+                this.registrationsDisplayedInTable = this.notImportedRegistrations;
         }
     }
 }

@@ -22,6 +22,12 @@
                 "duplicatedLogins": "The following logins are assigned to multiple tutorial groups: ",
                 "duplicatedRegistrationNumbers": "The following registration numbers are assigned to multiple tutorial groups: "
             },
+            "serverErrors": {
+                "notitle": "Kein Titel",
+                "nologinorregistrationnumber": "Kein Login oder Matrikelnummer",
+                "nouserfound": "Kein Nutzer gefunden",
+                "multipleregistrations": "Mehrere Registrierungen"
+            },
             "csvFile": {
                 "label": "Select a .csv file",
                 "validationFailed": "Please repair the file, it is not considered valid due to the following error:",
@@ -51,7 +57,8 @@
                     "registrationNumber": "Registration Number",
                     "login": "Login",
                     "firstName": "First Name",
-                    "lastName": "Last Name"
+                    "lastName": "Last Name",
+                    "error": "Error"
                 }
             }
         }
