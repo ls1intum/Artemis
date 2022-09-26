@@ -1,13 +1,14 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
 import { parse } from 'papaparse';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { HttpResponse } from '@angular/common/http';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 /**
  * Each row is a object with the structure
@@ -18,20 +19,30 @@ import { HttpResponse } from '@angular/common/http';
  */
 type ParsedCSVRow = object;
 
+// ToDo: Idea for future: Let the specify the column names / values in the dialog
 const POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS = ['gruppe', 'titel', 'group', 'title'];
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
 const POSSIBLE_FIRST_NAME_HEADERS = ['firstname', 'firstnameofstudent', 'givenname', 'forename', 'vorname'];
 const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstudent', 'surname', 'nachname', 'familienname', 'name'];
 
+function cleanString(str?: string): string {
+    if (!str) {
+        return '';
+    }
+    return str.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', '').trim();
+}
+
 @Component({
     selector: 'jhi-tutorial-groups-import-dialog',
     templateUrl: './tutorial-groups-registration-import-dialog.component.html',
     styleUrls: ['./tutorial-groups-registration-import-dialog.component.scss'],
 })
-export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
+export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy {
     // ToDo: Implement filter for registrations that are not completed
-    // ToDo: Maybe even return a special dto from the server that contains information why the registration was not imported
+
+    @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
+    selectedFile?: File;
 
     @Input() courseId: number;
 
@@ -44,8 +55,22 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
     numberOfImportedRegistrations = 0;
     numberOfUnImportedRegistration = 0;
 
+    private subscriptions: (Subscription | undefined)[] = [];
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    fixedPlaceForm: FormGroup;
+
+    get statusHeaderControl() {
+        return this.fixedPlaceForm.get('statusHeader');
+    }
+    get fixedPlaceValueControl() {
+        return this.fixedPlaceForm.get('fixedPlaceValue');
+    }
+
+    get specifyFixedPlaceControl() {
+        return this.fixedPlaceForm.get('specifyFixedPlace');
+    }
 
     // Icons
     faBan = faBan;
@@ -54,16 +79,64 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
 
-    constructor(private activeModal: NgbActiveModal, private alertService: AlertService, private tutorialGroupService: TutorialGroupsService) {}
+    constructor(private fb: FormBuilder, private activeModal: NgbActiveModal, private alertService: AlertService, private tutorialGroupService: TutorialGroupsService) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+        this.subscriptions.forEach((sub) => sub?.unsubscribe());
+    }
+
+    ngOnInit(): void {
+        this.fixedPlaceForm = this.fb.group({
+            specifyFixedPlace: [false],
+            statusHeader: ['', [Validators.maxLength(255)]],
+            fixedPlaceValue: ['', [Validators.maxLength(255)]],
+        });
+        this.fixedPlaceValueControl?.disable();
+        this.statusHeaderControl?.disable();
+        this.onStatusChanges();
+        this.onFixedPlaceCheckboxChange();
+    }
+
+    onStatusChanges() {
+        this.subscriptions.push(
+            this.statusHeaderControl?.valueChanges.subscribe((selectedStatusColumn) => {
+                if (!selectedStatusColumn) {
+                    this.fixedPlaceValueControl?.reset();
+                    this.fixedPlaceValueControl?.disable();
+                } else {
+                    this.fixedPlaceValueControl?.enable();
+                }
+            }),
+        );
+    }
+
+    onFixedPlaceCheckboxChange() {
+        this.subscriptions.push(
+            this.specifyFixedPlaceControl?.valueChanges.subscribe((specifyFixedPlace) => {
+                this.fixedPlaceValueControl?.reset();
+                this.statusHeaderControl?.reset();
+                if (specifyFixedPlace) {
+                    this.statusHeaderControl?.enable();
+                } else {
+                    this.statusHeaderControl?.disable();
+                }
+            }),
+        );
+    }
+
+    get isParseDisabled() {
+        return (
+            this.isCSVParsing ||
+            this.isImporting ||
+            (this.specifyFixedPlaceControl?.value && (!this.statusHeaderControl?.value || !this.fixedPlaceValueControl?.value)) ||
+            this.fixedPlaceForm.invalid
+        );
     }
 
     get isSubmitDisabled(): boolean {
         return this.isImporting || !this.registrations?.length;
     }
-
     private resetDialog() {
         this.registrations = [];
         this.isImportDone = false;
@@ -71,13 +144,13 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
         this.numberOfUnImportedRegistration = 0;
     }
 
-    async onCSVFileSelected(event: Event) {
+    onCSVFileSelected(event: Event) {
         const target = event.target as HTMLInputElement;
 
         if (target.files && target.files.length > 0) {
             this.resetDialog();
             if (target.files[0]) {
-                this.registrations = await this.readRegistrationsFromCSVFile(event, target.files[0]);
+                this.selectedFile = target.files[0];
             }
         }
     }
@@ -85,10 +158,9 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
     /**
      * Reads registrations from a csv file
      * The column "title" is mandatory, all other columns are optional
-     * @param event File change event from the HTML input of type file
      * @param csvFile File that contains one registration per row
      */
-    private async readRegistrationsFromCSVFile(event: Event, csvFile: File): Promise<TutorialGroupRegistrationImportDTO[]> {
+    private async readRegistrationsFromCSVFile(csvFile: File): Promise<TutorialGroupRegistrationImportDTO[]> {
         let csvRows: ParsedCSVRow[] = [];
         try {
             this.isCSVParsing = true;
@@ -103,7 +175,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
             this.performExtraValidations(csvRows);
         }
         if (this.validationError) {
-            (event.target as HTMLInputElement).value = ''; // remove selected file so user can fix the file and select it again
+            this.fileInput.nativeElement.value = ''; // remove selected file so user can fix the file and select it again
             return [];
         }
         // get the used headers from the first csv row object returned by the parser
@@ -116,8 +188,13 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
         const usedFirstNameHeader = parsedHeaders.find((value) => POSSIBLE_FIRST_NAME_HEADERS.includes(value)) || '';
         const usedLastNameHeader = parsedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
 
+        // if status header is used filter out those rows that do not have a fixed place
+        const statusColumn = cleanString(this.statusHeaderControl?.value);
+        const fixedPlaceValue = cleanString(this.fixedPlaceValueControl?.value);
+
+        const csvFixedPlaceRows = csvRows.filter((row) => !statusColumn || !fixedPlaceValue || cleanString(row[statusColumn]) === fixedPlaceValue);
         // convert the 'raw' csv rows into a list of TutorialGroupImportDTOs
-        return csvRows
+        return csvFixedPlaceRows
             .map((csvRow) => {
                 const registration: TutorialGroupRegistrationImportDTO = {
                     title: csvRow[usedTitleHeader]?.trim() || '',
@@ -218,11 +295,17 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
         return new Promise((resolve, reject) => {
             parse(csvFile, {
                 header: true,
-                transformHeader: (header: string) => header.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', '').trim(),
+                transformHeader: (header: string) => cleanString(header),
                 skipEmptyLines: true,
                 complete: (results) => resolve(results.data as ParsedCSVRow[]),
                 error: (error) => reject(error),
             });
         });
+    }
+
+    async onParseClicked() {
+        if (this.selectedFile) {
+            this.registrations = await this.readRegistrationsFromCSVFile(this.selectedFile);
+        }
     }
 }

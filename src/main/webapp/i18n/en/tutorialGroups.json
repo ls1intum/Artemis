@@ -87,6 +87,22 @@
                     "failedRows": "ToDo:",
                     "label": "ToDo",
                     "tooltip": "ToDo",
+                    "parseCSVButton": "Parse CSV",
+                    "fixedPlaceForm": {
+                        "checkbox": {
+                            "label": "Do you want to specify a header that marks registrations as confirmed?"
+                        },
+                        "statusHeaderInput": {
+                            "label": "Status Header",
+                            "placeholder": "Enter the header that contains the status of the registration. E.g. 'Place'",
+                            "maxLengthValidationError": "Status Header is limited to {{ max }} characters!"
+                        },
+                        "fixedPlaceValueInput": {
+                            "label": "Confirmed Value",
+                            "placeholder": "Enter the value that indicates a confirmed fixed place. E.g. 'Confirmed Place'",
+                            "maxLengthValidationError": "Confirmed Value is limited to {{ max }} characters!"
+                        }
+                    },
                     "table": {
                         "columns": {
                             "title": "Tutorial Group",

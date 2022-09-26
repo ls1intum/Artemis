@@ -21,7 +21,7 @@ export class TutorialGroupsImportButtonComponent implements OnInit {
     ngOnInit(): void {}
     openTutorialGroupImportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupsRegistrationImportDialog, { fullscreen: true, scrollable: true, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupsRegistrationImportDialog, { size: 'xl', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.courseId = this.courseId;
 
         modalRef.result.then(

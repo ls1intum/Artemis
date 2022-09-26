@@ -72,7 +72,7 @@ public class TutorialGroup extends DomainObject {
     }
 
     public TutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, Language language, User teachingAssistant,
-                         Set<TutorialGroupRegistration> registrations) {
+            Set<TutorialGroupRegistration> registrations) {
         this.course = course;
         this.title = title;
         this.additionalInformation = additionalInformation;

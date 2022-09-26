@@ -1,4 +1,4 @@
-<form>
+<div>
     <div class="modal-header">
         <h4 class="modal-title">
             <span>{{ 'artemisApp.pages.tutorialGroupsManagement.import.dialogTitle' | artemisTranslate }} </span>
@@ -23,7 +23,7 @@
                 <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" *ngIf="isCSVParsing"></fa-icon>
             </div>
             <div class="mt-2">
-                <input type="file" accept=".csv" (change)="onCSVFileSelected($event)" />
+                <input #fileInput type="file" accept=".csv" (change)="onCSVFileSelected($event)" />
                 <div *ngIf="validationError" class="mt-4 mb-2 text-danger">
                     <div>
                         {{ 'artemisApp.pages.tutorialGroupsManagement.import.importFailed' | artemisTranslate }}
@@ -37,6 +37,56 @@
                 </div>
             </div>
         </div>
+        <!-- Fixed Place Filter Form -->
+        <form [formGroup]="fixedPlaceForm">
+            <!-- Specify Fixed Place -->
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="checkbox" formControlName="specifyFixedPlace" />
+                <label class="form-check-label" for="checkbox">
+                    {{ 'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.checkbox.label' | artemisTranslate }}
+                </label>
+            </div>
+            <div [hidden]="specifyFixedPlaceControl?.value === false">
+                <!-- Status Header -->
+                <div class="form-group">
+                    <label for="status-header">{{ 'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.statusHeaderInput.label' | artemisTranslate }}</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="status-header"
+                        formControlName="statusHeader"
+                        [placeholder]="'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.statusHeaderInput.placeholder' | artemisTranslate"
+                    />
+                    <div *ngIf="statusHeaderControl?.invalid && (statusHeaderControl?.dirty || statusHeaderControl?.touched)" class="alert alert-danger">
+                        <div *ngIf="statusHeaderControl?.errors?.maxlength">
+                            {{ 'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.statusHeaderInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
+                        </div>
+                    </div>
+                </div>
+                <!-- Fixed Place Value -->
+                <div class="form-group">
+                    <label for="fixed-place">{{ 'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.fixedPlaceValueInput.label' | artemisTranslate }}</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="fixed-place"
+                        formControlName="fixedPlaceValue"
+                        [placeholder]="'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.fixedPlaceValueInput.placeholder' | artemisTranslate"
+                    />
+                    <div *ngIf="fixedPlaceValueControl?.invalid && (fixedPlaceValueControl?.dirty || fixedPlaceValueControl?.touched)" class="alert alert-danger">
+                        <div *ngIf="fixedPlaceValueControl?.errors?.maxlength">
+                            {{ 'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.fixedPlaceValueInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <div>
+            <button type="button" class="btn btn-secondary" [disabled]="isParseDisabled" (click)="onParseClicked()">
+                {{ 'artemisApp.pages.tutorialGroupsManagement.import.parseCSVButton' | artemisTranslate }}
+            </button>
+        </div>
+        <hr *ngIf="registrations && registrations.length > 0" />
         <!-- Overview Table -->
         <div *ngIf="registrations && registrations.length > 0" class="form-group mt-4">
             <div>
@@ -47,7 +97,7 @@
                 <thead>
                     <tr>
                         <th scope="col">#</th>
-                        <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.title' | artemisTranslate }}</th>
+                        <th scope="col" style="width: 300px">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.title' | artemisTranslate }}</th>
                         <th scope="col" style="width: 300px">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.registrationNumber' | artemisTranslate }}</th>
                         <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.login' | artemisTranslate }}</th>
                         <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.firstName' | artemisTranslate }}</th>
@@ -61,7 +111,7 @@
                         [class.import-fail]="wasNotImported(registration)"
                     >
                         <th scope="row">{{ i + 1 }}</th>
-                        <td>{{ registration?.title ?? '' }}</td>
+                        <td style="width: 300px">{{ registration?.title ?? '' }}</td>
                         <td style="width: 300px">{{ registration?.student?.registrationNumber ?? '' }}</td>
                         <td>{{ registration?.student?.login ?? '' }}</td>
                         <td>{{ registration?.student?.firstName ?? '' }}</td>
@@ -115,4 +165,4 @@
             </ng-template>
         </div>
     </div>
-</form>
+</div>
