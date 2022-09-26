@@ -1,4 +1,4 @@
-<div>
+<div class="tutorial-group-import-dialog">
     <div class="modal-header">
         <h4 class="modal-title">
             <span>{{ 'artemisApp.tutorialGroupImportDialog.dialogTitle' | artemisTranslate }} </span>
@@ -23,11 +23,11 @@
         <div class="form-group">
             <div class="d-flex align-items-end">
                 <div>
-                    <label class="label-narrow font-weight-bold">
+                    <label class="font-weight-bold">
                         {{ 'artemisApp.tutorialGroupImportDialog.csvFile.label' | artemisTranslate }}
                     </label>
                 </div>
-                <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" *ngIf="isCSVParsing"></fa-icon>
+                <fa-icon class="position-relative ms-1" [icon]="faSpinner" [spin]="true" *ngIf="isCSVParsing"></fa-icon>
             </div>
             <div class="mt-2">
                 <input #fileInput type="file" accept=".csv" (change)="onCSVFileSelected($event)" />
@@ -92,10 +92,9 @@
                 {{ 'artemisApp.tutorialGroupImportDialog.csvFile.parseCSVButton' | artemisTranslate }}
             </button>
         </div>
-        <hr *ngIf="registrationsDisplayedInTable && registrationsDisplayedInTable.length > 0" />
+        <hr *ngIf="isImportDone" />
         <!-- Not Imported Filter -->
-        <div *ngIf="isImportDone && numberOfNotImportedRegistration > 0">
-            Copy
+        <div *ngIf="isImportDone">
             <div class="btn-group" role="group">
                 <input
                     type="radio"
@@ -140,36 +139,59 @@
                 <label class="label-narrow font-weight-bold">{{ 'artemisApp.pages.tutorialGroupsManagement.import.label' | artemisTranslate }}</label>
                 <jhi-help-icon placement="top" text="artemisApp.pages.tutorialGroupsManagement.import.tooltip" class="me-1"></jhi-help-icon>
             </div>
-            <table class="table table-striped table-sm header-fixed mt-2">
-                <thead>
-                    <tr>
-                        <th scope="col" style="width: 50px">#</th>
-                        <th scope="col" style="width: 300px">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.title' | artemisTranslate }}</th>
-                        <th scope="col" style="width: 300px">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.registrationNumber' | artemisTranslate }}</th>
-                        <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.login' | artemisTranslate }}</th>
-                        <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.firstName' | artemisTranslate }}</th>
-                        <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.lastName' | artemisTranslate }}</th>
-                    </tr>
-                </thead>
-                <tbody class="table-body--students">
-                    <tr
-                        *ngFor="let registration of registrationsDisplayedInTable; let i = index"
-                        [class.import-success]="wasImported(registration)"
-                        [class.import-fail]="wasNotImported(registration)"
-                    >
-                        <th scope="row" style="width: 50px">{{ i + 1 }}</th>
-                        <td style="width: 300px">
-                            <span class="d-inline-block text-truncate"> {{ registration?.title ?? '' }} </span>
-                        </td>
-                        <td style="width: 300px">
-                            <span class="d-inline-block text-truncate"> {{ registration?.student?.registrationNumber ?? '' }} </span>
-                        </td>
-                        <td>{{ registration?.student?.login ?? '' }}</td>
-                        <td>{{ registration?.student?.firstName ?? '' }}</td>
-                        <td>{{ registration?.student?.lastName ?? '' }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-wrapper-scroll-y my-custom-scrollbar">
+                <table class="table table-striped table-bordered table-sm table-responsive mt-2">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.title' | artemisTranslate }}</th>
+                            <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.registrationNumber' | artemisTranslate }}</th>
+                            <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.login' | artemisTranslate }}</th>
+                            <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.firstName' | artemisTranslate }}</th>
+                            <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.lastName' | artemisTranslate }}</th>
+                            <th *ngIf="isImportDone && numberOfNotImportedRegistration > 0" scope="col">
+                                {{ 'artemisApp.tutorialGroupImportDialog.table.columns.error' | artemisTranslate }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-body">
+                        <tr
+                            *ngFor="let registration of registrationsDisplayedInTable; let i = index"
+                            [class.table-success]="wasImported(registration)"
+                            [class.table-danger]="wasNotImported(registration)"
+                        >
+                            <td>
+                                <span class="d-inline-block text-truncate" style="max-width: 200px">{{ i + 1 }} </span>
+                            </td>
+                            <td>
+                                <span class="d-inline-block text-truncate" style="max-width: 200px"> {{ registration?.title ?? '' }} </span>
+                            </td>
+                            <td>
+                                <span> {{ registration?.student?.registrationNumber ?? '' }} </span>
+                            </td>
+                            <td>
+                                <span class="d-inline-block text-truncate" style="max-width: 200px">{{ registration?.student?.login ?? '' }} </span>
+                            </td>
+                            <td>
+                                <span class="d-inline-block text-truncate" style="max-width: 100px">{{ registration?.student?.firstName ?? '' }}</span>
+                            </td>
+                            <td>
+                                <span class="d-inline-block text-truncate" style="max-width: 100px">{{ registration?.student?.lastName ?? '' }} </span>
+                            </td>
+                            <td *ngIf="isImportDone && numberOfNotImportedRegistration > 0">
+                                <span class="d-inline-block text-truncate" style="max-width: 400px">
+                                    {{
+                                        registration?.error
+                                            ? ('artemisApp.tutorialGroupImportDialog.serverErrors.' + registration.error!.replaceAll('_', '').trim().toLocaleLowerCase()
+                                              | artemisTranslate)
+                                            : ''
+                                    }}
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
     <div class="modal-footer justify-content-between">
