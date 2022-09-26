@@ -4,6 +4,7 @@
             "title": "Grading Key",
             "titleCourse": "Grading Key for Course",
             "titleExam": "Grading Key for Exam",
+            "titleBonus": "Grading Key for Bonus",
             "defaultButton": "Generate Default Grading Key",
             "gradeType": {
                 "title": "Grade Type",

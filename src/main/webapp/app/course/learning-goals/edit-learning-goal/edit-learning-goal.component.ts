@@ -66,9 +66,11 @@ export class EditLearningGoalComponent implements OnInit {
                     }
 
                     this.formData = {
+                        id: this.learningGoal.id,
                         title: this.learningGoal.title,
                         description: this.learningGoal.description,
                         connectedLectureUnits: this.learningGoal.lectureUnits,
+                        taxonomy: this.learningGoal.taxonomy,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -76,11 +78,15 @@ export class EditLearningGoalComponent implements OnInit {
     }
 
     updateLearningGoal(formData: LearningGoalFormData) {
-        const { title, description, connectedLectureUnits } = formData;
+        const { title, description, taxonomy, connectedLectureUnits } = formData;
+
         this.learningGoal.title = title;
         this.learningGoal.description = description;
+        this.learningGoal.taxonomy = taxonomy;
         this.learningGoal.lectureUnits = connectedLectureUnits;
+
         this.isLoading = true;
+
         this.learningGoalService
             .update(this.learningGoal, this.courseId)
             .pipe(

@@ -263,6 +263,21 @@ public class ProgrammingExerciseResultTestService {
         assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
     }
 
+    // Test
+    public void shouldNotStoreBuildLogsForSubmission(Object resultNotification) {
+        final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+
+        var submission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(programmingExerciseStudentParticipation.getId());
+        var submissionWithLogs = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.get().getId());
+        var expectedNoOfLogs = 0; // No logs should be stored because the build was successful
+        assertThat(((ProgrammingSubmission) optionalResult.get().getSubmission()).getBuildLogEntries()).hasSize(expectedNoOfLogs);
+        assertThat(submissionWithLogs.get().getBuildLogEntries()).hasSize(expectedNoOfLogs);
+
+        // Call again and should not re-create new submission.
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+    }
+
     public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
         buildLogEntryRepository.deleteAll();
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
@@ -271,8 +286,20 @@ public class ProgrammingExerciseResultTestService {
         var expectedBuildLogs = getNumberOfBuildLogs(resultNotification) - 3; // 3 of those should be filtered
 
         assertThat(savedBuildLogs).hasSize(expectedBuildLogs);
-        savedBuildLogs.forEach(
-                buildLogEntry -> assertThat(buildLogEntry.getProgrammingSubmission().getParticipation().getId()).isEqualTo(programmingExerciseStudentParticipation.getId()));
+
+        // Call again and should not re-create new submission.
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+    }
+
+    public void shouldNotSaveBuildLogsInBuildLogRepository(Object resultNotification) {
+        buildLogEntryRepository.deleteAll();
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+
+        var savedBuildLogs = buildLogEntryRepository.findAll();
+        var expectedBuildLogs = 0; // No logs should be stored because the build was successful
+
+        assertThat(savedBuildLogs).hasSize(expectedBuildLogs);
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);

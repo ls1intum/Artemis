@@ -39,10 +39,10 @@ public abstract class LectureUnit extends DomainObject implements Completable {
     private boolean completed;
 
     @Column(name = "name")
-    private String name;
+    protected String name;
 
     @Column(name = "release_date")
-    private ZonedDateTime releaseDate;
+    protected ZonedDateTime releaseDate;
 
     // This is explicitly required by Hibernate for the indexed collection (OrderColumn)
     // https://docs.jboss.org/hibernate/stable/annotations/reference/en/html_single/#entity-hibspec-collection-extratype-indexbidir
@@ -58,7 +58,7 @@ public abstract class LectureUnit extends DomainObject implements Completable {
     @ManyToMany(mappedBy = "lectureUnits")
     @OrderBy("title")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    public Set<LearningGoal> learningGoals = new HashSet<>();
+    protected Set<LearningGoal> learningGoals = new HashSet<>();
 
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore

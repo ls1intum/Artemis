@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { LearningGoal, LearningGoalRelation } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map } from 'rxjs/operators';
 import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
@@ -70,6 +70,27 @@ export class LearningGoalService {
 
     removePrerequisite(learningGoalId: number, courseId: number) {
         return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/prerequisites/${learningGoalId}`, { observe: 'response' });
+    }
+
+    createLearningGoalRelation(tailLearningGoalId: number, headLearningGoalId: number, type: string, courseId: number): Observable<EntityResponseType> {
+        let params = new HttpParams();
+        params = params.set('type', type);
+        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/goals/${tailLearningGoalId}/relations/${headLearningGoalId}`, null, {
+            observe: 'response',
+            params,
+        });
+    }
+
+    getLearningGoalRelations(learningGoalId: number, courseId: number) {
+        return this.httpClient.get<LearningGoalRelation[]>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/relations`, {
+            observe: 'response',
+        });
+    }
+
+    removeLearningGoalRelation(learningGoalId: number, learningGoalRelationId: number, courseId: number) {
+        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/relations/${learningGoalRelationId}`, {
+            observe: 'response',
+        });
     }
 
     convertLectureUnitArrayResponseDateFromServer(res: EntityResponseType): EntityResponseType {

@@ -303,6 +303,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         return findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
+    @NotNull
+    default Course findWithEagerLearningGoalsByIdElseThrow(long courseId) {
+        return findWithEagerLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
     /**
      * Utility method used to check whether a user is member of at least one organization of a given course
      * @param user the user to check
