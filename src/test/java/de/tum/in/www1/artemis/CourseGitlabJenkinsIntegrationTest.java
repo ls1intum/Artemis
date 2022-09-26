@@ -574,13 +574,13 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
+    void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
         courseTestService.testSearchStudentsAndTutorsAndInstructorsInCourse();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testSearchStudentsAndTutorsAndInstructorsInOtherCourse_forbidden() throws Exception {
+    void testSearchStudentsAndTutorsAndInstructorsInOtherCourse_forbidden() throws Exception {
         courseTestService.testSearchStudentsAndTutorsAndInstructorsInOtherCourseForbidden();
     }
 

@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 @Service
 public class ConversationService {
@@ -208,18 +207,6 @@ public class ConversationService {
      */
     public String getEntityName() {
         return CONVERSATION_ENTITY_NAME;
-    }
-
-    /**
-     * Updates the time a user last reads a conversation
-     * @param   conversationId ID of the read conversation
-     */
-    public void auditConversationReadTimeOfUser(Long conversationId) {
-        final User user = this.userRepository.getUser();
-
-        Conversation conversation = mayInteractWithConversationElseThrow(conversationId, user);
-        auditConversationReadTimeOfUser(conversation, user);
-        broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION), user);
     }
 
     void auditConversationReadTimeOfUser(Conversation conversation, User user) {

@@ -2,8 +2,9 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
 
 import java.util.List;
 import java.util.Set;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -28,10 +30,10 @@ import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.metis.MessageRepository;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
-class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private MessageRepository messageRepository;
@@ -77,11 +79,8 @@ class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         courseId = course.getId();
 
-        GroupNotificationService groupNotificationService = mock(GroupNotificationService.class);
-        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewPostForExercise(any(), any());
-        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewPostForLecture(any(), any());
-        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewCoursePost(any(), any());
-        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewAnnouncement(any(), any());
+        SimpMessageSendingOperations simpMessageSendingOperations = mock(SimpMessageSendingOperations.class);
+        doNothing().when(simpMessageSendingOperations).convertAndSendToUser(any(), any(), any());
     }
 
     @AfterEach
@@ -101,6 +100,9 @@ class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         PostContextFilter postContextFilter = new PostContextFilter();
         postContextFilter.setConversationId(createdPost.getConversation().getId());
         assertThat(messageRepository.findMessages(postContextFilter, Pageable.unpaged())).hasSize(1);
+
+        // both conversation participants should be notified
+        verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -115,6 +117,9 @@ class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notCreatedPost).isNull();
         assertThat(messageRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
+
+        // conversation participants should not be notified
+        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -170,6 +175,9 @@ class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 HttpStatus.OK);
 
         assertThat(conversationPostToUpdate).isEqualTo(updatedPost);
+
+        // both conversation participants should be notified about the update
+        verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -183,6 +191,9 @@ class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 HttpStatus.FORBIDDEN);
 
         assertThat(notUpdatedPost).isNull();
+
+        // conversation participants should not be notified
+        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -193,6 +204,8 @@ class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.OK);
 
         assertThat(messageRepository.count()).isEqualTo(existingPostsAndConversationPosts.size() - 1);
+        // both conversation participants should be notified
+        verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
@@ -203,6 +216,8 @@ class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.FORBIDDEN);
 
         assertThat(messageRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
+        // conversation participants should not be notified
+        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     private Post createPostWithConversation() {

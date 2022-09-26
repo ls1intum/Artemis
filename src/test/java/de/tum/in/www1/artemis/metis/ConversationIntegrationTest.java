@@ -24,16 +24,12 @@ import de.tum.in.www1.artemis.domain.metis.Conversation;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
-import de.tum.in.www1.artemis.service.metis.ConversationService;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
 
 class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ConversationRepository conversationRepository;
-
-    @Autowired
-    private ConversationService conversationService;
 
     @Autowired
     private SimpMessageSendingOperations messagingTemplate;
@@ -47,7 +43,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         database.addUsers(5, 5, 0, 1);
         course = database.createCourse(1L);
         existingConversation = database.createConversation(course);
-        doNothing().when(messagingTemplate).convertAndSend(any());
+        doNothing().when(messagingTemplate).convertAndSendToUser(any(), any(), any());
     }
 
     @AfterEach
@@ -71,7 +67,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(conversationRepository.findById(createdConversation.getId())).isNotEmpty();
 
         // members of the created conversation are only notified in case the first message within the conversation is created
-        verify(messagingTemplate, times(0)).convertAndSend(anyString(), any(ConversationDTO.class));
+        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationDTO.class));
     }
 
     @Test
@@ -94,7 +90,6 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         conversationParticipant.setUser(database.getUserByLogin("student1"));
         conversationToSave.getConversationParticipants().add(conversationParticipant);
         createConversationBadRequest(conversationToSave);
-
     }
 
     @Test
@@ -129,7 +124,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(createdConversation).isNull();
 
         // checks if members of the created conversation were not notified via broadcast
-        verify(messagingTemplate, times(0)).convertAndSend(anyString(), any(ConversationDTO.class));
+        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationDTO.class));
     }
 
     static Conversation conversationToCreate(Course course, User conversatingUser) {
