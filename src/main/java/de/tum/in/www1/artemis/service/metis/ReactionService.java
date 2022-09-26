@@ -103,6 +103,7 @@ public class ReactionService {
         Post updatedPost;
         if (reaction.getPost() != null) {
             updatedPost = reaction.getPost();
+            updatedPost.setConversation(mayInteractWithConversationIfConversationMessage(user, updatedPost));
             updatedPost.removeReaction(reaction);
         }
         else {
