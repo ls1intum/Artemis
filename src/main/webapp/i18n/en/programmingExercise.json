@@ -206,7 +206,7 @@
                     "bonusMultiplier": "Bonus Multiplier",
                     "bonusPoints": "Bonus Points",
                     "visibility": "Visibility",
-                    "points": "Points",
+                    "resultingPoints": "Resulting Points",
                     "testType": "Type",
                     "passedPercent": "Passed %"
                 },
