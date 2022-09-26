@@ -31,16 +31,6 @@
                 [triggerLastGraded]="false"
             >
             </jhi-submission-result-status>
-            <jhi-submission-result-status
-                [exercise]="exercise"
-                [studentParticipation]="practiceStudentParticipation"
-                updatingResultClass="me-2"
-                [showBadge]="true"
-                [showUngradedResults]="true"
-                [triggerLastGraded]="false"
-                *ngIf="practiceStudentParticipation"
-            >
-            </jhi-submission-result-status>
         </div>
         <div class="col-auto d-md-flex align-items-center" *ngIf="exercise.isAtLeastTutor">
             <span class="ms-1 me-1">{{
@@ -120,12 +110,65 @@
         </div>
     </div>
     <div class="row">
-        <div class="col row pe-0 flex-grow-1">
+        <div class="col pe-0 flex-grow-1">
             <!-- EXERCISE ACTIONS END -->
+            <!-- RESULTS START -->
+            <div class="row" *ngIf="this.sortedHistoryResults?.length && this.sortedHistoryResults.length > 1">
+                <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex">
+                    <div class="col-auto">
+                        <h3>{{ 'artemisApp.courseOverview.exerciseDetails.recentResults' | artemisTranslate }}</h3>
+                    </div>
+                </div>
+                <div class="row">
+                    <jhi-result-history [results]="sortedHistoryResults" [exercise]="exercise"></jhi-result-history>
+                </div>
+                <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults">
+                    <div class="col-auto">
+                        <h3>{{ 'artemisApp.courseOverview.exerciseDetails.allResults' | artemisTranslate }}</h3>
+                    </div>
+                </div>
+                <div class="row" *ngIf="showMoreResults">
+                    <div class="col-12 col-md-12">
+                        <div *ngFor="let result of sortedHistoryResults">
+                            <div *ngIf="result.participation" class="row justify-content-between">
+                                <div class="col">
+                                    <h4>
+                                        <span class="badge w-100" [ngClass]="evaluateBadgeClass(result.participation, result)">
+                                            {{ evaluateBadgeText(result.participation, result) | artemisTranslate | uppercase }}
+                                        </span>
+                                    </h4>
+                                </div>
+                                <div class="col text-start">
+                                    <jhi-result
+                                        [exercise]="exercise"
+                                        [result]="result"
+                                        [participation]="result.participation"
+                                        [showUngradedResults]="true"
+                                        [short]="true"
+                                    ></jhi-result>
+                                </div>
+                                <div class="col text-start d-none d-md-flex">
+                                    <h6 [ngbTooltip]="result.completionDate | artemisDate">({{ result.completionDate! | artemisTimeAgo }})</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="no-results" *ngIf="!sortedHistoryResults">
+                            {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-2 mt-2 align-items-baseline">
+                    <div class="col-auto">
+                        <a class="text-primary" (click)="showMoreResults = !showMoreResults">
+                            {{ 'artemisApp.courseOverview.exerciseDetails.' + (showMoreResults ? 'hideResults' : 'showResults') | artemisTranslate }}</a
+                        >
+                    </div>
+                </div>
+            </div>
+            <!-- RESULTS END -->
             <!-- PROBLEM STATEMENT START -->
             <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="row mb-4">
                 <jhi-programming-exercise-instructions
-                    *ngIf="exercise"
                     [exercise]="exercise"
                     [participation]="practiceStudentParticipation ?? gradedStudentParticipation!"
                     [personalParticipation]="true"
@@ -141,93 +184,6 @@
                 </div>
             </ng-template>
             <!-- PROBLEM STATEMENT END -->
-            <!-- RESULTS START -->
-            <div class="row" [class.order-first]="practiceStudentParticipation">
-                <div
-                    class="row mb-2 mt-2 align-items-baseline d-none d-md-flex"
-                    *ngIf="showResults && ((sortedHistoryResult && sortedHistoryResult.length > 1) || !latestRatedResult?.rated)"
-                >
-                    <div class="col-auto">
-                        <h3>{{ 'artemisApp.courseOverview.exerciseDetails.recentResults' | artemisTranslate }}</h3>
-                    </div>
-                </div>
-                <div class="row mb-2 d-none d-md-flex" *ngIf="showResults && sortedHistoryResult && sortedHistoryResult!.length > 1">
-                    <div class="col-12 col-md-12">
-                        <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults"></jhi-result-history>
-                    </div>
-                </div>
-                <div class="row justify-content-between" *ngIf="showResults && sortedHistoryResult?.length === 1">
-                    <div *ngIf="sortedHistoryResult[0].participation" class="col">
-                        <h4>
-                            <span class="badge w-100" [ngClass]="evaluateBadgeClass(sortedHistoryResult[0].participation, sortedHistoryResult[0])">
-                                {{ evaluateBadgeText(sortedHistoryResult[0].participation, sortedHistoryResult[0]) | artemisTranslate | uppercase }}
-                            </span>
-                        </h4>
-                    </div>
-                    <div class="col text-start">
-                        <jhi-result
-                            [exercise]="exercise"
-                            [result]="sortedHistoryResult![0]"
-                            [participation]="gradedStudentParticipation!"
-                            [showUngradedResults]="true"
-                            [short]="true"
-                        ></jhi-result>
-                    </div>
-                    <div class="col text-start d-none d-md-flex">
-                        <h6 [ngbTooltip]="sortedHistoryResult![0].completionDate | artemisDate">({{ sortedHistoryResult![0].completionDate! | artemisTimeAgo }})</h6>
-                    </div>
-                </div>
-                <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults && showResults">
-                    <div class="col-auto">
-                        <h3>{{ 'artemisApp.courseOverview.exerciseDetails.allResults' | artemisTranslate }}</h3>
-                    </div>
-                </div>
-                <div class="row" *ngIf="showMoreResults && showResults">
-                    <div class="col-12 col-md-12">
-                        <div *ngFor="let result of sortedHistoryResult">
-                            <div class="row justify-content-between">
-                                <div *ngIf="result.participation" class="col">
-                                    <h4>
-                                        <span class="badge w-100" [ngClass]="evaluateBadgeClass(result.participation, result)">
-                                            {{ evaluateBadgeText(result.participation, result) | artemisTranslate | uppercase }}
-                                        </span>
-                                    </h4>
-                                </div>
-                                <div class="col text-start">
-                                    <jhi-result
-                                        [exercise]="exercise"
-                                        [result]="result"
-                                        [participation]="gradedStudentParticipation!"
-                                        [showUngradedResults]="true"
-                                        [short]="true"
-                                    ></jhi-result>
-                                </div>
-                                <div class="col text-start d-none d-md-flex">
-                                    <h6 [ngbTooltip]="result.completionDate | artemisDate">({{ result.completionDate! | artemisTimeAgo }})</h6>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="no-results" *ngIf="!sortedHistoryResult">
-                            {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}
-                        </div>
-                    </div>
-                </div>
-                <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showResults && sortedHistoryResult.length > 1">
-                    <div class="col-auto">
-                        <a class="text-primary" (click)="showMoreResults = !showMoreResults">{{
-                            showMoreResults
-                                ? ('artemisApp.courseOverview.exerciseDetails.hideResults' | artemisTranslate)
-                                : ('artemisApp.courseOverview.exerciseDetails.showResults' | artemisTranslate)
-                        }}</a>
-                    </div>
-                </div>
-                <div class="row mb-2 mt-2 align-items-baseline no-results" *ngIf="!showResults">
-                    <div class="col-auto">
-                        <h3>{{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}</h3>
-                    </div>
-                </div>
-            </div>
-            <!-- RESULTS END -->
             <ng-container *ngIf="exampleSolutionUML || exampleSolution || isProgrammingExerciseExampleSolutionPublished">
                 <div class="row mb-2 mt-2 align-items-baseline">
                     <div class="control-label" (click)="changeExampleSolution()">

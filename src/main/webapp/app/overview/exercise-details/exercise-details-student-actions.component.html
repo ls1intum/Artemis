@@ -199,7 +199,7 @@
             ></button>
             <button
                 [id]="'start-practice-' + exercise.id"
-                class="start-practice"
+                class="start-practice me-1"
                 jhi-exercise-action-button
                 [buttonIcon]="faRedo"
                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -217,6 +217,7 @@
             <ng-container *ngIf="shouldDisplayIDEButtons()">
                 <ng-container *jhiExtensionPoint="overrideCloneOnlineEditorButton; context: { exercise: exercise }">
                     <jhi-open-code-editor-button
+                        class="me-1"
                         [loading]="!!exercise.loading"
                         [smallButtons]="smallButtons"
                         [participations]="exercise.studentParticipations!"

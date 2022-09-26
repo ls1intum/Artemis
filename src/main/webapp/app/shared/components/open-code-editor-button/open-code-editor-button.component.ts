@@ -2,12 +2,15 @@ import { Component, Input, OnInit } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 @Component({
     selector: 'jhi-open-code-editor-button',
     templateUrl: './open-code-editor-button.component.html',
 })
 export class OpenCodeEditorButtonComponent implements OnInit {
+    readonly FeatureToggle = FeatureToggle;
+
     @Input()
     loading = false;
     @Input()
@@ -17,17 +20,20 @@ export class OpenCodeEditorButtonComponent implements OnInit {
     @Input()
     courseAndExerciseNavigationUrlSegment: any[];
 
-    FeatureToggle = FeatureToggle;
-    codeEditorHeadlines: string[] = [];
     courseAndExerciseNavigationUrl: string;
+    activeParticipation: ProgrammingExerciseStudentParticipation;
 
     // Icons
     faFolderOpen = faFolderOpen;
 
+    constructor(private participationService: ParticipationService) {}
+
     ngOnInit() {
-        this.codeEditorHeadlines = this.participations.map((participation) =>
-            participation.testRun ? 'artemisApp.exerciseActions.openPracticeCodeEditor' : 'artemisApp.exerciseActions.openCodeEditor',
-        );
         this.courseAndExerciseNavigationUrl = this.courseAndExerciseNavigationUrlSegment.reduce((acc, segment) => acc + '/' + segment);
+        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, false) ?? this.participations[0];
+    }
+
+    switchPracticeMode() {
+        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, !this.activeParticipation.testRun)!;
     }
 }

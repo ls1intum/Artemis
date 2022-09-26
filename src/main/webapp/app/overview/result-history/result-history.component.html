@@ -2,15 +2,22 @@
     <div class="result-history-element previous-history-element" *ngIf="showPreviousDivider">
         <div class="result-divider"></div>
     </div>
-    <div class="result-history-element" *ngFor="let result of results">
+    <div class="result-history-element" *ngFor="let result of displayedResults; let i = index">
         <div class="result-score" [ngbTooltip]="result.completionDate | artemisDate" placement="top" container="body">
             <div class="result-score-icon" [ngClass]="resultClass(result)">
                 <fa-icon [icon]="resultIcon(result)"></fa-icon>
             </div>
-            <div class="result-score-info text-center">
-                <div>{{ resultService.getResultString(result, result.participation!.exercise!) }}</div>
-            </div>
+            <jhi-result
+                class="result-score-info text-center"
+                [exercise]="exercise"
+                [result]="result"
+                [participation]="result.participation!"
+                [showUngradedResults]="true"
+                [showBadge]="true"
+                [short]="true"
+            >
+            </jhi-result>
         </div>
-        <div class="result-divider"></div>
+        <div class="result-divider" [ngStyle]="i === 0 && movedLastRatedResult ? { 'border-top': '1px dashed' } : {}"></div>
     </div>
 </div>

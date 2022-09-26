@@ -190,7 +190,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
         this.translate.onLangChange.subscribe(() => {
             if (!!this.resultString) {
-                this.resultString = this.resultService.getResultString(this.result, this.exercise);
+                this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             }
         });
 
@@ -227,13 +227,13 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = this.getTextColorClass();
             this.resultIconClass = this.getResultIconClass();
-            this.resultString = this.resultService.getResultString(this.result, this.exercise);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
         } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
             this.onlyShowSuccessfulCompileStatus = this.getOnlyShowSuccessfulCompileStatus();
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
-            this.resultString = this.resultService.getResultString(this.result, this.exercise);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score

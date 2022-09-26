@@ -28,19 +28,22 @@
         *ngIf="participations?.length && participations.length! > 1"
     ></button>
     <ng-template #popContent style="max-width: 660px">
-        <div *ngFor="let participation of participations; let i = index">
-            <h5 [class.mt-3]="i > 0">{{ codeEditorHeadlines[i] | artemisTranslate }}</h5>
-            <button
-                jhi-exercise-action-button
-                [buttonIcon]="faFolderOpen"
-                class="open-code-editor"
-                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
-                [buttonLoading]="loading"
-                [smallButton]="smallButtons"
-                [hideLabelMobile]="false"
-                [routerLink]="[courseAndExerciseNavigationUrl, participation.id]"
-            ></button>
+        <div class="form-check form-switch" *ngIf="participations && participations.length > 1">
+            <input mdbCheckbox class="form-check-input" type="checkbox" [checked]="activeParticipation.testRun" (click)="switchPracticeMode()" />
+            <label class="form-check-label">
+                {{ 'artemisApp.exerciseActions.' + (activeParticipation.testRun ? 'chosePracticeMode' : 'choseGradedMode') | artemisTranslate }}
+            </label>
         </div>
+        <button
+            jhi-exercise-action-button
+            [buttonIcon]="faFolderOpen"
+            class="open-code-editor"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [buttonLabel]="'artemisApp.exerciseActions.' + (activeParticipation.testRun ? 'openPracticeCodeEditor' : 'openGradedCodeEditor') | artemisTranslate"
+            [buttonLoading]="loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            [routerLink]="[courseAndExerciseNavigationUrl, activeParticipation.id]"
+        ></button>
     </ng-template>
 </ng-container>
