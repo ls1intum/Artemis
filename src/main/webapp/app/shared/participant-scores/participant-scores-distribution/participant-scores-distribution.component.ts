@@ -20,7 +20,10 @@ interface NgxClickEvent {
 })
 export class ParticipantScoresDistributionComponent implements OnInit, OnChanges {
     @Input()
-    scores: number[];
+    scores?: number[];
+
+    @Input()
+    gradeNames?: string[];
 
     @Input()
     gradingScale?: GradingScale;
@@ -152,10 +155,19 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     }
 
     /**
+     * Find the grade step index for the corresponding grade step to the given percentage or gradeName
+     * depending on the value of matchByGradeName
+     * @param percentageOrGradeName the percentage which will be mapped to a grade step.
+     */
+    findGradeStepIndex(percentageOrGradeName: number | string): number {
+        return this.scores ? this.findGradeStepIndexByPercentage(percentageOrGradeName as number) : this.findGradeStepIndexByGradeName(percentageOrGradeName as string);
+    }
+
+    /**
      * Find the grade step index for the corresponding grade step to the given percentage
      * @param percentage the percentage which will be mapped to a grade step.
      */
-    findGradeStepIndex(percentage: number): number {
+    findGradeStepIndexByPercentage(percentage: number): number {
         let index = 0;
         if (this.gradingScaleExists) {
             this.gradingScale!.gradeSteps.forEach((gradeStep, i) => {
@@ -174,13 +186,22 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     }
 
     /**
+     * Find the grade step index for the corresponding grade step by matchin grade names
+     * @param gradeName the grade name corresponding to one of the grade names in the gradingScale.
+     */
+    findGradeStepIndexByGradeName(gradeName: string): number {
+        const index = this.gradingScale?.gradeSteps.findIndex((gradeStep) => gradeStep.gradeName === gradeName)!;
+        return index >= 0 ? index : 0;
+    }
+
+    /**
      * Auxiliary method that increases the represented value of the bar covering the given score by 1
-     * @param percentage the score that should be included in the distribution
+     * @param percentageOrGradeName the score or grade name that should be included in the distribution
      * @private
      */
-    private addToHistogram(percentage: number): void {
+    private addToHistogram(percentageOrGradeName: number | string): void {
         // Update histogram data structure
-        const histogramIndex = this.findGradeStepIndex(percentage);
+        const histogramIndex = this.findGradeStepIndex(percentageOrGradeName);
         this.ngxData[histogramIndex].value++;
     }
 
@@ -192,7 +213,11 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
         this.generateDefaultNgxChartsSetting();
         this.setupChartColoring();
         this.setupAxisLabels();
-        this.scores.forEach((score) => this.addToHistogram(score));
+        const elements = this.scores ?? this.gradeNames;
+        if (!elements) {
+            throw new Error('Either "scores" or "gradeNames" should be given as input.');
+        }
+        elements.forEach((scoreOrGradeName) => this.addToHistogram(scoreOrGradeName));
     }
 
     /**

@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { Language } from 'app/entities/tutor-group.model';
+import { Language } from 'app/entities/course.model';
 
 export class MockTextEditorService {
     get = (participationId: number) => of();
