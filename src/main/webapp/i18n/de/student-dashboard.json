@@ -193,7 +193,7 @@
                 "complaintDue": "Beschwerde bis:",
                 "complaintDueTooltip": "Du kannst eine Beschwerde bis {{date}} einreichen.",
                 "complaintPossible": "Beschwerde möglich:",
-                "complaintPossibleTooltip": "Eine Beschwerde wird später möglich sein."
+                "complaintPossibleTooltip": "Nach Erhalt einer Bewertung wirst du {{days}} Tage zum Einreichen einer Beschwerde haben."
             }
         }
     }
