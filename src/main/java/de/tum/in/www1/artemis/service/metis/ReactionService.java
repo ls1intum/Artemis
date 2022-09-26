@@ -107,6 +107,7 @@ public class ReactionService {
         }
         else {
             AnswerPost updatedAnswerPost = reaction.getAnswerPost();
+            updatedAnswerPost.getPost().setConversation(mayInteractWithConversationIfConversationMessage(user, updatedAnswerPost.getPost()));
             updatedAnswerPost.removeReaction(reaction);
             updatedPost = updatedAnswerPost.getPost();
             // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,

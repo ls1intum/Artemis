@@ -131,6 +131,7 @@ public class AnswerPostService extends PostingService {
         final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         answerPost.addReaction(reaction);
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
+        updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
         this.preparePostAndBroadcast(updatedAnswerPost, course);
     }
 
