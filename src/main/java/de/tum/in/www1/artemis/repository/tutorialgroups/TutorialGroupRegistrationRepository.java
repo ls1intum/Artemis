@@ -6,6 +6,7 @@ import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
@@ -20,5 +21,7 @@ public interface TutorialGroupRegistrationRepository extends JpaRepository<Tutor
     Set<TutorialGroupRegistration> findAllByTutorialGroupAndType(TutorialGroup tutorialGroup, TutorialGroupRegistrationType type);
 
     void deleteAllByStudent(User student);
+
+    void deleteAllByStudentIsInAndTypeAndTutorialGroup_Course(Set<User> students, TutorialGroupRegistrationType type, Course course);
 
 }

@@ -280,8 +280,8 @@ public class TutorialGroupResource {
     /**
      * POST /courses/:courseId/tutorial-groups/import: Import tutorial groups and student registrations
      *
-     * @param courseId the id of the course to which the tutorial groups belong
-     * @param import   the list of students who should be registered to the tutorial group
+     * @param courseId   the id of the course to which the tutorial groups belong
+     * @param importDTOs the list registration import DTOsd
      * @return the list of registrations with information about the success of the import sorted by tutorial group title
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/import")
@@ -292,8 +292,8 @@ public class TutorialGroupResource {
         log.debug("REST request to import registrations {} to course {}", importDTOs, courseId);
         var courseFromDatabase = this.courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseFromDatabase, null);
-        Set<TutorialGroupRegistrationImportDTO> registrations = tutorialGroupService.importRegistrations(courseFromDatabase, importDTOs);
-        List<TutorialGroupRegistrationImportDTO> sortedRegistrations = registrations.stream().sorted(Comparator.comparing(TutorialGroupRegistrationImportDTO::title)).toList();
+        var registrations = tutorialGroupService.importRegistrations(courseFromDatabase, importDTOs);
+        var sortedRegistrations = registrations.stream().sorted(Comparator.comparing(TutorialGroupRegistrationImportDTO::title)).toList();
         return ResponseEntity.ok().body(sortedRegistrations);
     }
 
@@ -340,12 +340,20 @@ public class TutorialGroupResource {
     }
 
     /**
-     * DTO used for the import of tutorial groups and student registrations from csv files
+     * Describes the Errors that can lead to a failed import of a tutorial group registration
      */
-    public record TutorialGroupRegistrationImportDTO(@NotNull String title, @Nullable StudentDTO student, @Nullable Boolean importSuccessful) {
+    public enum TutorialGroupImportErrors {
+        NO_TITLE, NO_LOGIN_OR_REGISTRATION_NUMBER, NO_USER_FOUND, MULTIPLE_REGISTRATIONS
+    }
 
-        public TutorialGroupRegistrationImportDTO withImportResult(boolean importSuccessful) {
-            return new TutorialGroupRegistrationImportDTO(title(), student(), importSuccessful);
+    /**
+     * DTO used for client-server communication in the import of tutorial groups and student registrations from csv files
+     */
+    public record TutorialGroupRegistrationImportDTO(@NotNull String title, @Nullable StudentDTO student, @Nullable Boolean importSuccessful,
+            @Nullable TutorialGroupImportErrors error) {
+
+        public TutorialGroupRegistrationImportDTO withImportResult(boolean importSuccessful, TutorialGroupImportErrors error) {
+            return new TutorialGroupRegistrationImportDTO(title(), student(), importSuccessful, error);
         }
 
         @Override

@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupImportErrors;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
 
 @Service
@@ -38,7 +39,7 @@ public class TutorialGroupService {
      *
      * @param student          The student to deregister.
      * @param tutorialGroup    The tutorial group to deregister from.
-     * @param registrationType The type of registration.
+     * @param registrationType The type of registration that should be removed;
      */
     public void deregisterStudent(User student, TutorialGroup tutorialGroup, TutorialGroupRegistrationType registrationType) {
         Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup,
@@ -47,6 +48,10 @@ public class TutorialGroupService {
             return; // No registration found, nothing to do.
         }
         tutorialGroupRegistrationRepository.delete(existingRegistration.get());
+    }
+
+    public void deregisterMultipleStudentsFromAllTutorialGroupInCourse(Set<User> students, Course course, TutorialGroupRegistrationType registrationType) {
+        tutorialGroupRegistrationRepository.deleteAllByStudentIsInAndTypeAndTutorialGroup_Course(students, registrationType, course);
     }
 
     /**
@@ -94,176 +99,189 @@ public class TutorialGroupService {
     }
 
     /**
-     * Import tutorial groups and their registrations
+     * Import registrations
      * <p>
-     * Important to note: A dto must contain a title of the tutorial group, but it must not contain a student.
-     * - Only title -> Create Tutorial Group if not exists
-     * - Title and student -> Create Tutorial Group if not exists and register student.
+     * Important to note: A registration must contain a title of the tutorial group, but it must not contain a student.
      *
-     * @param course     The course to import the tutorial groups for.
-     * @param importDTOs The tutorial group import DTOs.
-     * @return the set of registrations with information about the success of the import
+     * <ul>
+     *     <li> Only title -> Create Tutorial Group with the given title if it not exists
+     *     <li> Title and student -> Create Tutorial Group with given title if not exists AND register student.
+     *     <ul>
+     *         <li> If student is already registered in a tutorial group of the same course, the student will be deregistered from the old tutorial group.
+     *     </ul>
+     * </ul>
+     *
+     * @param course        The course to import the registrations for.
+     * @param registrations The registrations to import.
+     * @return The set of registrations with information about the success of the import
      */
-    public Set<TutorialGroupRegistrationImportDTO> importRegistrations(Course course, Set<TutorialGroupRegistrationImportDTO> importDTOs) {
-        var failedImports = new HashSet<TutorialGroupRegistrationImportDTO>();
+    public Set<TutorialGroupRegistrationImportDTO> importRegistrations(Course course, Set<TutorialGroupRegistrationImportDTO> registrations) {
+        // container that will be filled with the registrations that could not be imported during the import process
+        var failedRegistrations = new HashSet<TutorialGroupRegistrationImportDTO>();
 
         // === Step 1: Try to find all tutorial groups with the mentioned title. Create them if they do not exist yet ===
-        var titleSplit = splitIntoTitleAndNoTitle(importDTOs);
-        // no title -> fail as title of tutorial is mandatory
-        failedImports.addAll(titleSplit.getSecond());
+        var registrationsWithTitle = filterOutWithoutTitle(registrations, failedRegistrations);
+        var tutorialGroupTitleToTutorialGroup = findOrCreateTutorialGroups(course, registrationsWithTitle).stream().collect(Collectors.groupingBy(TutorialGroup::getTitle));
 
-        var withTutorialGroupTitle = titleSplit.getFirst();
-        // group by title
-        var titleToTutorialGroup = findOrCreateTutorialGroupsMentioned(course, titleSplit.getFirst()).stream().collect(Collectors.groupingBy(TutorialGroup::getTitle));
+        // === Step 2: If the registration contains a student, try to find a user in the database with the mentioned registration number ===
+        var registrationWithUserIdentifier = registrationsWithTitle.stream().filter(registration -> {
+            if (registration.student() == null) {
+                return false;
+            }
+            boolean hasRegistrationNumber = registration.student().getRegistrationNumber() != null && !registration.student().getRegistrationNumber().isBlank();
+            boolean hasLogin = registration.student().getLogin() != null && !registration.student().getLogin().isBlank();
+            return hasRegistrationNumber || hasLogin;
+        }).collect(Collectors.toSet());
 
-        // === Step 2: If the dto contains a student, try to find a user in the database with the mentioned registration number ===
-        var withStudent = withTutorialGroupTitle.stream().filter(dto -> dto.student() != null).collect(Collectors.toSet());
-
-        var userExistsSplit = splitIntoUserExistsAndUserDoesNotExist(course, withStudent);
-        // student in dto but no registration number or no user with registration number could be found-> fail
-        failedImports.addAll(userExistsSplit.getSecond());
-
-        var dtosMatchedWithStudent = userExistsSplit.getFirst();
+        var registrationsWithMatchingUsers = filterOutWithoutMatchingUser(course, registrationWithUserIdentifier, failedRegistrations);
+        var uniqueRegistrationsWithMatchingUsers = filterOutMultipleRegistrationsForSameUser(registrationsWithMatchingUsers, failedRegistrations);
 
         // === Step 3: Register all found users to their respective tutorial groups ===
-        var tutorialGroupToStudentsWhoShouldBeRegistered = new HashMap<TutorialGroup, Set<User>>();
-        for (var dtoToUser : dtosMatchedWithStudent) {
-            var tutorialGroup = titleToTutorialGroup.get(dtoToUser.getFirst().title()).get(0);
-            var student = dtoToUser.getSecond();
-            tutorialGroupToStudentsWhoShouldBeRegistered.computeIfAbsent(tutorialGroup, key -> new HashSet<>()).add(student);
+        var tutorialGroupToRegisteredUsers = new HashMap<TutorialGroup, Set<User>>();
+        for (var registrationUserPair : uniqueRegistrationsWithMatchingUsers) {
+            var tutorialGroup = tutorialGroupTitleToTutorialGroup.get(registrationUserPair.getFirst().title().trim()).get(0);
+            var user = registrationUserPair.getSecond();
+            tutorialGroupToRegisteredUsers.computeIfAbsent(tutorialGroup, key -> new HashSet<>()).add(user);
         }
 
-        for (var entry : tutorialGroupToStudentsWhoShouldBeRegistered.entrySet()) {
-            registerMultipleStudentsToTutorialGroup(entry.getValue(), entry.getKey(), TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION);
+        // deregister all students that should be registered to a new tutorial group from their old tutorial groups
+        deregisterMultipleStudentsFromAllTutorialGroupInCourse(uniqueRegistrationsWithMatchingUsers.stream().map(Pair::getSecond).collect(Collectors.toSet()), course,
+                TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION);
+
+        for (var tutorialGroupAndRegisteredUsers : tutorialGroupToRegisteredUsers.entrySet()) {
+            registerMultipleStudentsToTutorialGroup(tutorialGroupAndRegisteredUsers.getValue(), tutorialGroupAndRegisteredUsers.getKey(),
+                    TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION);
         }
 
-        // === Step 4: Create the result DTOs for the successful and failed imports ===
+        // === Step 4: Create the result for the successful and failed imports ===
         var result = new HashSet<TutorialGroupRegistrationImportDTO>();
 
-        var successfulImports = new HashSet<>(importDTOs);
-        successfulImports.removeAll(failedImports);
+        var successfulImports = new HashSet<>(registrations);
+        successfulImports.removeAll(failedRegistrations);
         for (var successfulImport : successfulImports) {
-            result.add(successfulImport.withImportResult(true));
+            result.add(successfulImport.withImportResult(true, null));
         }
-        for (var failedImport : failedImports) {
-            result.add(failedImport.withImportResult(false));
-        }
+        result.addAll(failedRegistrations);
 
         return result;
     }
 
-    /**
-     * Tries to find tutorial groups with the title mentioned in the import dtos. If a tutorial group does not exist yet with that title, it will be created.
-     *
-     * @param course     The course for which the tutorial groups should be created.
-     * @param importDTOs The import dtos containing the tutorial group titles.
-     * @return A set of all tutorial groups with the titles mentioned in the import dtos.
-     */
-    private Set<TutorialGroup> findOrCreateTutorialGroupsMentioned(Course course, Set<TutorialGroupRegistrationImportDTO> importDTOs) {
-        var titlesMentionedInDTOs = importDTOs.stream().map(TutorialGroupRegistrationImportDTO::title).map(String::trim).collect(Collectors.toSet());
+    private Set<Pair<TutorialGroupRegistrationImportDTO, User>> filterOutMultipleRegistrationsForSameUser(
+            Set<Pair<TutorialGroupRegistrationImportDTO, User>> registrationsWithMatchingUsers, HashSet<TutorialGroupRegistrationImportDTO> failedRegistrations) {
+        var userToRegistrations = registrationsWithMatchingUsers.stream().collect(Collectors.groupingBy(Pair::getSecond));
+        var uniqueRegistrationsWithMatchingUsers = new HashSet<Pair<TutorialGroupRegistrationImportDTO, User>>();
+        for (var registrationAndMatchingUser : registrationsWithMatchingUsers) {
+            var user = registrationAndMatchingUser.getSecond();
+            var registrationsForUser = userToRegistrations.get(user);
+            if (registrationsForUser.size() > 1) {
+                failedRegistrations.add(registrationAndMatchingUser.getFirst().withImportResult(false, TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS));
+            }
+            else {
+                uniqueRegistrationsWithMatchingUsers.add(registrationAndMatchingUser);
+            }
+        }
+        return uniqueRegistrationsWithMatchingUsers;
+    }
 
-        // filter out tutorial groups with titles not mentioned in the import dtos
+    private Set<TutorialGroup> findOrCreateTutorialGroups(Course course, Set<TutorialGroupRegistrationImportDTO> registrations) {
+        var titlesMentionedInRegistrations = registrations.stream().map(TutorialGroupRegistrationImportDTO::title).map(String::trim).collect(Collectors.toSet());
+
         var foundTutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId()).stream()
-                .filter(tutorialGroup -> titlesMentionedInDTOs.contains(tutorialGroup.getTitle())).collect(Collectors.toSet());
+                .filter(tutorialGroup -> titlesMentionedInRegistrations.contains(tutorialGroup.getTitle())).collect(Collectors.toSet());
+        var tutorialGroupsToCreate = titlesMentionedInRegistrations.stream()
+                .filter(title -> foundTutorialGroups.stream().noneMatch(tutorialGroup -> tutorialGroup.getTitle().equals(title))).map(title -> new TutorialGroup(course, title))
+                .collect(Collectors.toSet());
 
-        // create tutorial groups with titles not found in the database
-        var tutorialGroupsToCreate = titlesMentionedInDTOs.stream().filter(title -> foundTutorialGroups.stream().noneMatch(tutorialGroup -> tutorialGroup.getTitle().equals(title)))
-                .map(title -> new TutorialGroup(course, title)).collect(Collectors.toSet());
-
-        var tutorialGroupsMentionedInDTOs = new HashSet<TutorialGroup>(foundTutorialGroups);
-        tutorialGroupsMentionedInDTOs.addAll(tutorialGroupRepository.saveAll(tutorialGroupsToCreate));
-        return tutorialGroupsMentionedInDTOs;
+        var tutorialGroupsMentionedInRegistrations = new HashSet<>(foundTutorialGroups);
+        tutorialGroupsMentionedInRegistrations.addAll(tutorialGroupRepository.saveAll(tutorialGroupsToCreate));
+        return tutorialGroupsMentionedInRegistrations;
     }
 
-    /**
-     * Splits the import dtos into two sets: One containing a tutorial group title and those without
-     *
-     * @param importDTOs The import dtos to split
-     * @return Pair of sets: The first set contains the import dtos with a tutorial group title, the second set contains the import dtos without a tutorial group title.
-     */
-    private Pair<Set<TutorialGroupRegistrationImportDTO>, Set<TutorialGroupRegistrationImportDTO>> splitIntoTitleAndNoTitle(Set<TutorialGroupRegistrationImportDTO> importDTOs) {
-        var importDTOsWithTitle = new HashSet<TutorialGroupRegistrationImportDTO>();
-        var importDTOsWithoutTitle = new HashSet<TutorialGroupRegistrationImportDTO>();
-        for (var importDTO : importDTOs) {
+    private Set<TutorialGroupRegistrationImportDTO> filterOutWithoutTitle(Set<TutorialGroupRegistrationImportDTO> registrations,
+            HashSet<TutorialGroupRegistrationImportDTO> failedRegistrations) {
+        var registrationsWithTitle = new HashSet<TutorialGroupRegistrationImportDTO>();
+        var registrationsWithoutTitle = new HashSet<TutorialGroupRegistrationImportDTO>();
+        for (var importDTO : registrations) {
             if (importDTO.title() == null || importDTO.title().isBlank()) {
-                importDTOsWithoutTitle.add(importDTO);
+                registrationsWithoutTitle.add(importDTO.withImportResult(false, TutorialGroupImportErrors.NO_TITLE));
             }
             else {
-                importDTOsWithTitle.add(importDTO);
+                registrationsWithTitle.add(importDTO);
             }
         }
-        return Pair.of(importDTOsWithTitle, importDTOsWithoutTitle);
+        failedRegistrations.addAll(registrationsWithoutTitle);
+        return registrationsWithTitle;
     }
 
-    /**
-     * Splits the import dtos into ones where the user could be found and ones where the user could not be found.
-     *
-     * @param course     The course for which the users should be found.
-     * @param importDTOs The import dtos to filter
-     * @return Pair of sets: The first set contains the import dtos matched with the found user, the second set contains the import dtos where the user could not be found.
-     */
-    private Pair<Set<Pair<TutorialGroupRegistrationImportDTO, User>>, Set<TutorialGroupRegistrationImportDTO>> splitIntoUserExistsAndUserDoesNotExist(Course course,
-            Set<TutorialGroupRegistrationImportDTO> importDTOs) {
-        var importDTOsWhereNoUserWasFound = new HashSet<TutorialGroupRegistrationImportDTO>();
+    private Set<Pair<TutorialGroupRegistrationImportDTO, User>> filterOutWithoutMatchingUser(Course course, Set<TutorialGroupRegistrationImportDTO> registrations,
+            HashSet<TutorialGroupRegistrationImportDTO> failedRegistrations) {
+        Set<User> matchingUsers = tryToFindMatchingUsers(course, registrations, failedRegistrations);
 
-        var importDTOsWithRegistrationNumber = new HashSet<TutorialGroupRegistrationImportDTO>();
-        for (var importDTO : importDTOs) {
-            if (importDTO.student().getRegistrationNumber() == null || importDTO.student().getRegistrationNumber().isBlank()) {
-                importDTOsWhereNoUserWasFound.add(importDTO);
+        var registrationWithMatchingUser = new HashSet<Pair<TutorialGroupRegistrationImportDTO, User>>();
+        for (var registration : registrations) {
+            // try to find matching user first by registration number and as a fallback by login
+            Optional<User> matchingUser = getMatchingUser(matchingUsers, registration);
+
+            if (matchingUser.isPresent()) {
+                registrationWithMatchingUser.add(Pair.of(registration, matchingUser.get()));
             }
             else {
-                importDTOsWithRegistrationNumber.add(importDTO);
+                failedRegistrations.add(registration.withImportResult(false, TutorialGroupImportErrors.NO_USER_FOUND));
             }
         }
 
-        var registrationNumbersToSearchFor = importDTOsWithRegistrationNumber.stream()
-                .map(tutorialGroupRegistrationImportDTO -> tutorialGroupRegistrationImportDTO.student().getRegistrationNumber().trim()).collect(Collectors.toSet());
+        return registrationWithMatchingUser;
+    }
+
+    private static Optional<User> getMatchingUser(Set<User> users, TutorialGroupRegistrationImportDTO registration) {
+        return users.stream().filter(user -> {
+            assert registration.student() != null; // should be the case as we filtered out all registrations without a student
+            boolean hasRegistrationNumber = registration.student().getRegistrationNumber() != null && !registration.student().getRegistrationNumber().isBlank();
+            boolean hasLogin = registration.student().getLogin() != null && !registration.student().getLogin().isBlank();
+
+            if (hasRegistrationNumber) {
+                return user.getRegistrationNumber().equals(registration.student().getRegistrationNumber().trim());
+            }
+            if (hasLogin) {
+                return user.getLogin().equals(registration.student().getLogin().trim());
+            }
+            return false;
+        }).findFirst();
+    }
+
+    private Set<User> tryToFindMatchingUsers(Course course, Set<TutorialGroupRegistrationImportDTO> registrations,
+            HashSet<TutorialGroupRegistrationImportDTO> failedRegistrations) {
+        var registrationNumbersToSearchFor = new HashSet<String>();
+        var loginsToSearchFor = new HashSet<String>();
+
+        for (var registration : registrations) {
+            assert registration.student() != null; // should be the case as we filtered out all registrations without a student in the calling method
+            boolean hasRegistrationNumber = registration.student().getRegistrationNumber() != null && !registration.student().getRegistrationNumber().isBlank();
+            boolean hasLogin = registration.student().getLogin() != null && !registration.student().getLogin().isBlank();
+
+            if (hasRegistrationNumber) {
+                registrationNumbersToSearchFor.add(registration.student().getRegistrationNumber().trim());
+            }
+            if (hasRegistrationNumber) {
+                loginsToSearchFor.add(registration.student().getLogin().trim());
+            }
+            if (!hasRegistrationNumber && !hasLogin) {
+                failedRegistrations.add(registration.withImportResult(false, TutorialGroupImportErrors.NO_LOGIN_OR_REGISTRATION_NUMBER));
+            }
+        }
 
         // ToDo: Discuss if we should allow to register course members who are not students
-        // ToDo: Implement login fallback
-        var searchResults = getUsersFromRegistrationNumbers(registrationNumbersToSearchFor, course.getStudentGroupName());
-        var foundStudents = searchResults.getFirst();
-        var registrationNumbersWhereNoUserWasFound = searchResults.getSecond();
-
-        var registrationNumberToFoundUser = new HashMap<String, User>();
-        for (var student : foundStudents) {
-            registrationNumberToFoundUser.put(student.getRegistrationNumber(), student);
-        }
-
-        // Step 3: Filter out all importDTOs where no user was found
-        var importDTOsWhereUserWasFound = new HashSet<Pair<TutorialGroupRegistrationImportDTO, User>>();
-        for (var importDTO : importDTOs) {
-            if (registrationNumbersWhereNoUserWasFound.contains(importDTO.student().getRegistrationNumber())) {
-                importDTOsWhereNoUserWasFound.add(importDTO);
-            }
-            else {
-                var foundPair = Pair.of(importDTO, registrationNumberToFoundUser.get(importDTO.student().getRegistrationNumber()));
-                importDTOsWhereUserWasFound.add(foundPair);
-            }
-        }
-
-        return Pair.of(importDTOsWhereUserWasFound, importDTOsWhereNoUserWasFound);
+        var result = findUsersByRegistrationNumbers(registrationNumbersToSearchFor, course.getStudentGroupName());
+        result.addAll(findUsersByLogins(loginsToSearchFor, course.getStudentGroupName()));
+        return result;
     }
 
-    /**
-     * Tries to find users by their registration number
-     *
-     * @param registrationsNumbersToSearchFor registration numbers to find users with
-     * @param groupName                       course group in which users will be searched
-     * @return Pair of found users and not found registration numbers
-     */
-    private Pair<Set<User>, Set<String>> getUsersFromRegistrationNumbers(Set<String> registrationsNumbersToSearchFor, String groupName) {
-        var foundUsers = new HashSet<User>();
-        var registrationNumbersWithoutMatchingUser = new HashSet<String>();
+    private Set<User> findUsersByRegistrationNumbers(Set<String> registrationNumbers, String groupName) {
+        return new HashSet<>(userRepository.findAllByRegistrationNumbersInGroup(groupName, registrationNumbers));
+    }
 
-        if (groupName != null && registrationsNumbersToSearchFor != null && !registrationsNumbersToSearchFor.isEmpty()) {
-            foundUsers = new HashSet<>(userRepository.findAllByRegistrationNumbersInGroup(groupName, registrationsNumbersToSearchFor));
-            var foundRegistrationNumbers = foundUsers.stream().map(User::getRegistrationNumber).collect(Collectors.toSet());
-            registrationNumbersWithoutMatchingUser = new HashSet<>(registrationsNumbersToSearchFor);
-            registrationNumbersWithoutMatchingUser.removeAll(foundRegistrationNumbers);
-        }
-        // Return both found users and not found registration numbers
-        return Pair.of(foundUsers, registrationNumbersWithoutMatchingUser);
+    private Set<User> findUsersByLogins(Set<String> logins, String groupName) {
+        return new HashSet<>(userRepository.findAllByLoginsInGroup(groupName, logins));
     }
 
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {

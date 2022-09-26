@@ -1,37 +1,43 @@
 <div>
     <div class="modal-header">
         <h4 class="modal-title">
-            <span>{{ 'artemisApp.pages.tutorialGroupsManagement.import.dialogTitle' | artemisTranslate }} </span>
+            <span>{{ 'artemisApp.tutorialGroupImportDialog.dialogTitle' | artemisTranslate }} </span>
         </h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <!-- Intro Text-->
+        <!-- Intro-->
         <div class="form-group">
-            <p class="intro-text">{{ 'artemisApp.pages.tutorialGroupsManagement.import.introText' | artemisTranslate }}</p>
-            <p class="intro-text">{{ 'artemisApp.pages.tutorialGroupsManagement.import.dialogText' | artemisTranslate }}</p>
+            <p>{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}</p>
+            <p>{{ 'artemisApp.tutorialGroupImportDialog.explanations.requirements' | artemisTranslate }}</p>
+            <p>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.label' | artemisTranslate }}</p>
+            <ul>
+                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.tutorialGroupTitle' | artemisTranslate: { headers: supportedTitleHeader } }}</li>
+                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.registrationNumber' | artemisTranslate: { headers: supportedRegistrationNumberHeaders } }}</li>
+                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.login' | artemisTranslate: { headers: supportedLoginHeaders } }}</li>
+                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.firstName' | artemisTranslate: { headers: supportedFirstNameHeaders } }}</li>
+                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.lastName' | artemisTranslate: { headers: supportedLastNameHeaders } }}</li>
+            </ul>
         </div>
         <!-- File Upload -->
         <div class="form-group">
             <div class="d-flex align-items-end">
                 <div>
                     <label class="label-narrow font-weight-bold">
-                        {{ 'artemisApp.pages.tutorialGroupsManagement.import.csvLabel' | artemisTranslate }}
+                        {{ 'artemisApp.tutorialGroupImportDialog.csvFile.label' | artemisTranslate }}
                     </label>
-                    <jhi-help-icon placement="top" text="artemisApp.pages.tutorialGroupsManagement.import.csvTooltip" class="me-1"> </jhi-help-icon>
                 </div>
                 <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" *ngIf="isCSVParsing"></fa-icon>
             </div>
             <div class="mt-2">
                 <input #fileInput type="file" accept=".csv" (change)="onCSVFileSelected($event)" />
-                <div *ngIf="validationError" class="mt-4 mb-2 text-danger">
+                <div *ngIf="validationErrors && validationErrors.length > 0" class="mt-4 mb-2 text-danger">
                     <div>
-                        {{ 'artemisApp.pages.tutorialGroupsManagement.import.importFailed' | artemisTranslate }}
+                        {{ 'artemisApp.tutorialGroupImportDialog.csvFile.validationFailed' | artemisTranslate }}
                     </div>
                     <ul class="mt-1">
-                        <li>
-                            <b> {{ 'artemisApp.pages.tutorialGroupsManagement.import.failedRows' | artemisTranslate }}</b>
-                            <b [innerHTML]="validationError"> </b>
+                        <li *ngFor="let validationError of validationErrors">
+                            <b>{{ validationError }}</b>
                         </li>
                     </ul>
                 </div>
@@ -43,39 +49,39 @@
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" value="" id="checkbox" formControlName="specifyFixedPlace" />
                 <label class="form-check-label" for="checkbox">
-                    {{ 'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.checkbox.label' | artemisTranslate }}
+                    {{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.checkbox.label' | artemisTranslate }}
                 </label>
             </div>
             <div [hidden]="specifyFixedPlaceControl?.value === false">
                 <!-- Status Header -->
                 <div class="form-group">
-                    <label for="status-header">{{ 'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.statusHeaderInput.label' | artemisTranslate }}</label>
+                    <label for="status-header">{{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.statusHeaderInput.label' | artemisTranslate }}</label>
                     <input
                         type="text"
                         class="form-control"
                         id="status-header"
                         formControlName="statusHeader"
-                        [placeholder]="'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.statusHeaderInput.placeholder' | artemisTranslate"
+                        [placeholder]="'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.statusHeaderInput.placeholder' | artemisTranslate"
                     />
                     <div *ngIf="statusHeaderControl?.invalid && (statusHeaderControl?.dirty || statusHeaderControl?.touched)" class="alert alert-danger">
                         <div *ngIf="statusHeaderControl?.errors?.maxlength">
-                            {{ 'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.statusHeaderInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
+                            {{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.statusHeaderInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
                         </div>
                     </div>
                 </div>
                 <!-- Fixed Place Value -->
                 <div class="form-group">
-                    <label for="fixed-place">{{ 'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.fixedPlaceValueInput.label' | artemisTranslate }}</label>
+                    <label for="fixed-place">{{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.fixedPlaceValueInput.label' | artemisTranslate }}</label>
                     <input
                         type="text"
                         class="form-control"
                         id="fixed-place"
                         formControlName="fixedPlaceValue"
-                        [placeholder]="'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.fixedPlaceValueInput.placeholder' | artemisTranslate"
+                        [placeholder]="'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.fixedPlaceValueInput.placeholder' | artemisTranslate"
                     />
                     <div *ngIf="fixedPlaceValueControl?.invalid && (fixedPlaceValueControl?.dirty || fixedPlaceValueControl?.touched)" class="alert alert-danger">
                         <div *ngIf="fixedPlaceValueControl?.errors?.maxlength">
-                            {{ 'artemisApp.pages.tutorialGroupsManagement.import.fixedPlaceForm.fixedPlaceValueInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
+                            {{ 'artemisApp.tutorialGroupImportDialog.fixedPlaceForm.fixedPlaceValueInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
                         </div>
                     </div>
                 </div>
@@ -83,12 +89,53 @@
         </form>
         <div>
             <button type="button" class="btn btn-secondary" [disabled]="isParseDisabled" (click)="onParseClicked()">
-                {{ 'artemisApp.pages.tutorialGroupsManagement.import.parseCSVButton' | artemisTranslate }}
+                {{ 'artemisApp.tutorialGroupImportDialog.csvFile.parseCSVButton' | artemisTranslate }}
             </button>
         </div>
-        <hr *ngIf="registrations && registrations.length > 0" />
+        <hr *ngIf="registrationsDisplayedInTable && registrationsDisplayedInTable.length > 0" />
+        <!-- Not Imported Filter -->
+        <div *ngIf="isImportDone && numberOfNotImportedRegistration > 0">
+            Copy
+            <div class="btn-group" role="group">
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="btnradio"
+                    id="only-imported"
+                    autocomplete="off"
+                    [value]="'onlyImported'"
+                    [ngModel]="selectedFilter"
+                    (ngModelChange)="onFilterChange($event)"
+                />
+                <label class="btn btn-outline-success" for="only-imported">{{ 'artemisApp.tutorialGroupImportDialog.table.showImportedButton' | artemisTranslate }}</label>
+
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="btnradio"
+                    id="only-not-imported"
+                    autocomplete="off"
+                    [value]="'onlyNotImported'"
+                    [ngModel]="selectedFilter"
+                    (ngModelChange)="onFilterChange($event)"
+                />
+                <label class="btn btn-outline-danger" for="only-not-imported">{{ 'artemisApp.tutorialGroupImportDialog.table.showNotImportedButton' | artemisTranslate }}</label>
+
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="btnradio"
+                    id="all"
+                    autocomplete="off"
+                    [value]="'all'"
+                    [ngModel]="selectedFilter"
+                    (ngModelChange)="onFilterChange($event)"
+                />
+                <label class="btn btn-outline-secondary" for="all">{{ 'artemisApp.tutorialGroupImportDialog.table.showAllButton' | artemisTranslate }}</label>
+            </div>
+        </div>
         <!-- Overview Table -->
-        <div *ngIf="registrations && registrations.length > 0" class="form-group mt-4">
+        <div *ngIf="registrationsDisplayedInTable && registrationsDisplayedInTable.length > 0" class="form-group mt-4">
             <div>
                 <label class="label-narrow font-weight-bold">{{ 'artemisApp.pages.tutorialGroupsManagement.import.label' | artemisTranslate }}</label>
                 <jhi-help-icon placement="top" text="artemisApp.pages.tutorialGroupsManagement.import.tooltip" class="me-1"></jhi-help-icon>
@@ -96,7 +143,7 @@
             <table class="table table-striped table-sm header-fixed mt-2">
                 <thead>
                     <tr>
-                        <th scope="col">#</th>
+                        <th scope="col" style="width: 50px">#</th>
                         <th scope="col" style="width: 300px">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.title' | artemisTranslate }}</th>
                         <th scope="col" style="width: 300px">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.registrationNumber' | artemisTranslate }}</th>
                         <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.login' | artemisTranslate }}</th>
@@ -106,13 +153,17 @@
                 </thead>
                 <tbody class="table-body--students">
                     <tr
-                        *ngFor="let registration of registrations; let i = index"
+                        *ngFor="let registration of registrationsDisplayedInTable; let i = index"
                         [class.import-success]="wasImported(registration)"
                         [class.import-fail]="wasNotImported(registration)"
                     >
-                        <th scope="row">{{ i + 1 }}</th>
-                        <td style="width: 300px">{{ registration?.title ?? '' }}</td>
-                        <td style="width: 300px">{{ registration?.student?.registrationNumber ?? '' }}</td>
+                        <th scope="row" style="width: 50px">{{ i + 1 }}</th>
+                        <td style="width: 300px">
+                            <span class="d-inline-block text-truncate"> {{ registration?.title ?? '' }} </span>
+                        </td>
+                        <td style="width: 300px">
+                            <span class="d-inline-block text-truncate"> {{ registration?.student?.registrationNumber ?? '' }} </span>
+                        </td>
                         <td>{{ registration?.student?.login ?? '' }}</td>
                         <td>{{ registration?.student?.firstName ?? '' }}</td>
                         <td>{{ registration?.student?.lastName ?? '' }}</td>
@@ -122,10 +173,10 @@
         </div>
     </div>
     <div class="modal-footer justify-content-between">
-        <div *ngIf="registrations && registrations.length > 0" class="flex-shrink-0 me-2 d-flex">
+        <div *ngIf="allRegistrations && allRegistrations.length > 0" class="flex-shrink-0 me-2 d-flex">
             <div *ngIf="!isImportDone; else numbersAfterImport">
                 <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrations' | artemisTranslate }}</strong>
-                <span>&nbsp;{{ registrations.length }}</span>
+                <span>&nbsp;{{ allRegistrations.length }}</span>
             </div>
             <ng-template #numbersAfterImport>
                 <div>
@@ -135,7 +186,7 @@
                 <div class="ms-2">
                     <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrationsNotImported' | artemisTranslate }}</strong>
                     <span
-                        ><b style="color: red">{{ numberOfUnImportedRegistration }}</b></span
+                        ><b style="color: red">{{ numberOfNotImportedRegistration }}</b></span
                     >
                 </div>
             </ng-template>
