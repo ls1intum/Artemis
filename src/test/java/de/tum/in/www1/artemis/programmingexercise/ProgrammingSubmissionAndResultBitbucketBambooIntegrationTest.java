@@ -80,6 +80,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
+    private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
+
+    @Autowired
     private ExamRepository examRepository;
 
     @Autowired
@@ -612,13 +615,13 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Call programming-exercises/new-result which includes build log entries
         final var buildLog = new BambooBuildLogDTO(ZonedDateTime.now().minusMinutes(1), "[ERROR] COMPILATION ERROR missing something",
                 "[ERROR] COMPILATION ERROR missing something");
-        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
+        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
 
         var result = assertBuildError(participation.getId(), userLogin, programmingLanguage);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
 
         // Do another call to new-result again and assert that no new submission is created.
-        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
+        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
         assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
@@ -634,12 +637,12 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which includes build log entries
-        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
+        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
         assertBuildError(participation.getId(), userLogin, programmingLanguage);
 
         // Do another call to new-result again and assert that no new submission is created.
         var submission = submissionRepository.findAll().get(0);
-        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
+        postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
         assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
@@ -647,6 +650,72 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var submissions = submissionRepository.findAll();
         assertThat(submissions).hasSize(1);
         assertThat(submissions.get(0).getId()).isEqualTo(submission.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_noSca() throws Exception {
+        // Precondition: Database has participation and a programming submission but no result.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, false);
+
+        postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        assertThat(statistics.getBuildCount()).isEqualTo(1);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.getTestDuration()).isEqualTo(10);
+        assertThat(statistics.getScaDuration()).isNull();
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(120);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_sca() throws Exception {
+        // Precondition: Database has participation and a programming submission but no result.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(true, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, false);
+
+        postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, true);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        assertThat(statistics.getBuildCount()).isEqualTo(1);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.getTestDuration()).isEqualTo(10);
+        assertThat(statistics.getScaDuration()).isEqualTo(11);
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(120);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_unsupportedProgrammingLanguage() throws Exception {
+        // Precondition: Database has participation and a programming submission but no result.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON); // Python is not supported
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+
+        postResultWithBuildAnalyticsLogs(participation.getBuildPlanId(), HttpStatus.OK, false, true);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        // Should not extract any statistics
+        assertThat(statistics.getBuildCount()).isEqualTo(0);
+        assertThat(statistics.getAgentSetupDuration()).isNull();
+        assertThat(statistics.getTestDuration()).isNull();
+        assertThat(statistics.getScaDuration()).isNull();
+        assertThat(statistics.getTotalJobDuration()).isNull();
+        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
     }
 
     @NotNull
@@ -848,9 +917,15 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         postResult(exercise.getProjectKey().toUpperCase() + "-" + buildPlanStudentId, expectedStatus, additionalCommit);
     }
 
-    private void postResultWithBuildLogs(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
+    private void postResultWithBuildLogs(String participationId, HttpStatus expectedStatus, boolean additionalCommit, boolean successful) throws Exception {
         var bambooBuildResultNotification = ModelFactory.generateBambooBuildResultWithLogs(participationId.toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(), List.of(), null,
-                new ArrayList<>());
+                new ArrayList<>(), successful);
+        postResult(bambooBuildResultNotification, expectedStatus, additionalCommit);
+    }
+
+    private void postResultWithBuildAnalyticsLogs(String participationId, HttpStatus expectedStatus, boolean additionalCommit, boolean sca) throws Exception {
+        var bambooBuildResultNotification = ModelFactory.generateBambooBuildResultWithAnalyticsLogs(participationId.toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(), List.of(), null,
+                new ArrayList<>(), sca);
         postResult(bambooBuildResultNotification, expectedStatus, additionalCommit);
     }
 

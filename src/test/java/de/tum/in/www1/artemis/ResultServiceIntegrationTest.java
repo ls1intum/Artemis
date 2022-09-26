@@ -775,11 +775,13 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetAssessmentCountByCorrectionRound() {
         // exercise
-        TextExercise textExercise = new TextExercise();
-        textExerciseRepository.save(textExercise);
+        var now = ZonedDateTime.now();
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(2), course);
+        textExercise = textExerciseRepository.save(textExercise);
 
         // participation
         StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setParticipant(userRepository.findOneByLogin("student1").get());
         studentParticipation.setExercise(textExercise);
         studentParticipationRepository.save(studentParticipation);
 
@@ -820,10 +822,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         Course course = database.createCourse();
         ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
         programmingExercise.setDueDate(null);
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // participation
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
+        programmingExerciseStudentParticipation.setParticipant(userRepository.findOneByLogin("student1").get());
         programmingExerciseStudentParticipation.setExercise(programmingExercise);
         programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
 

@@ -199,6 +199,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             });
 
             this.loadGitDiffReport();
+
+            this.programmingExerciseService.getBuildLogStatistics(programmingExercise.id).subscribe((buildLogStatisticsDto) => {
+                this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;
+            });
+
             this.setLatestCoveredLineRatio();
         });
     }
