@@ -89,10 +89,9 @@ public abstract class PostingService {
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
         else if (postDTO.getPost().getConversation() != null) {
-            // send websocket message to specific users within threads to prevent blocking due to slow-client issues
             postDTO.getPost().getConversation().getConversationParticipants().forEach(conversationParticipant -> {
-                new Thread(() -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
-                        genericTopicName + "/conversations/" + postDTO.getPost().getConversation().getId(), postDTO)).start();
+                messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
+                        genericTopicName + "/conversations/" + postDTO.getPost().getConversation().getId(), postDTO);
             });
 
             return;

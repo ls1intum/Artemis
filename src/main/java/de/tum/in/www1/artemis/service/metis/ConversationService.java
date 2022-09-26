@@ -143,14 +143,13 @@ public class ConversationService {
         String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + conversationDTO.getConversation().getCourse().getId();
         String conversationParticipantTopicName = courseTopicName + "/conversations/user/";
 
-        // send websocket message to specific users within threads to prevent blocking due to slow-client issues
         if (user == null) {
             conversationDTO.getConversation().getConversationParticipants()
-                    .forEach(conversationParticipant -> new Thread(() -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
-                            conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationDTO)).start());
+                    .forEach(conversationParticipant -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
+                            conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationDTO));
         }
         else {
-            new Thread(() -> messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), conversationDTO)).start();
+            messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), conversationDTO);
         }
     }
 
