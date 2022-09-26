@@ -327,4 +327,14 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.updateWorkingTimeDuration();
         expectDuration(0, 0, 0);
     });
+
+    it.each([
+        [true, undefined, 'artemisApp.studentExams.bonus'],
+        [false, '2.0', 'artemisApp.studentExams.gradeBeforeBonus'],
+        [false, undefined, 'artemisApp.studentExams.grade'],
+    ])('should get the correct grade explanation label', (isBonus: boolean, gradeAfterBonus: string | undefined, gradeExplanation: string) => {
+        studentExamDetailComponent.isBonus = isBonus;
+        studentExamDetailComponent.gradeAfterBonus = gradeAfterBonus;
+        expect(studentExamDetailComponent.getGradeExplanation()).toBe(gradeExplanation);
+    });
 });

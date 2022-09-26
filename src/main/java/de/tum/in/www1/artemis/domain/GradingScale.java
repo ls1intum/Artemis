@@ -114,10 +114,26 @@ public class GradingScale extends DomainObject {
     @JsonIgnore
     public int getMaxPoints() {
         if (this.getCourse() != null) {
-            return this.getCourse().getMaxPoints();
+            Integer maxPoints = this.getCourse().getMaxPoints();
+            return maxPoints != null ? maxPoints : 0;
         }
         else {
             return this.getExam().getMaxPoints();
+        }
+    }
+
+    /**
+     * Gets the title for the given grading scale from the related course or exam
+     *
+     * @return title of the exam or course related to this grading scale
+     */
+    @JsonIgnore
+    public String getTitle() {
+        if (this.getCourse() != null) {
+            return this.getCourse().getTitle();
+        }
+        else {
+            return this.getExam().getTitle();
         }
     }
 

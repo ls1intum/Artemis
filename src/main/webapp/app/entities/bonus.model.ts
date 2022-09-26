@@ -1,5 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { GradingScale } from 'app/entities/grading-scale.model';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 
 export class Bonus implements BaseEntity {
     public id?: number;
@@ -25,4 +26,18 @@ export class BonusExample {
     public exceedsMax = false;
 
     constructor(public studentPointsOfBonusTo: number, public studentPointsOfBonusSource: number | undefined) {}
+}
+
+export class BonusResult {
+    public bonusStrategy?: BonusStrategy;
+    public bonusFromTitle?: string;
+    public studentPointsOfBonusSource?: number | undefined;
+    public bonusGrade?: number | string;
+    public finalPoints?: number;
+    public finalGrade?: number | string;
+    public mostSeverePlagiarismVerdict?: PlagiarismVerdict;
+    public achievedPresentationScore?: number;
+    public presentationScoreThreshold?: number;
+
+    constructor() {}
 }
