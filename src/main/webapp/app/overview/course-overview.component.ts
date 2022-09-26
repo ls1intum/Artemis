@@ -47,9 +47,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     // Using a list query to be able to listen for changes (late mount); need both as this only returns native nodes
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
 
-    // for testing purpose
-    public inDevTestNonProdEnvironment: boolean;
-
     // Icons
     faSync = faSync;
     faCircleNotch = faCircleNotch;
@@ -69,13 +66,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     ) {}
 
     async ngOnInit() {
-        // Checks if the current environment is production
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo && (profileInfo.testServer || !profileInfo.inProduction)) {
-                this.inDevTestNonProdEnvironment = true;
-            }
-        });
-
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
         });
