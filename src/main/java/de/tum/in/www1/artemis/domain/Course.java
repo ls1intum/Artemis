@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 
 import javax.persistence.*;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -104,7 +105,8 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse = false;
 
-    @OneToOne(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
     @Column(name = "max_complaints")
@@ -348,7 +350,7 @@ public class Course extends DomainObject {
     }
 
     public OnlineCourseConfiguration getOnlineCourseConfiguration() {
-        return onlineCourseConfiguration;
+        return Hibernate.isInitialized(onlineCourseConfiguration) ? onlineCourseConfiguration : null;
     }
 
     public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
@@ -682,13 +684,15 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Validates that if the course is an online course there is an OnlineCourseConfiguration
+     * Validates that there is an OnlineCourseConfiguration if the course is an online course
      */
     public void validateOnlineCourseConfiguration() {
         if (isOnlineCourse()) {
-            if (getOnlineCourseConfiguration() == null) {
-                throw new BadRequestAlertException("Configuration must exist for online courses", ENTITY_NAME, "onlineCourseConfigurationMissing", true);
+            OnlineCourseConfiguration ocConfiguration = getOnlineCourseConfiguration();
+            if (ocConfiguration == null) {
+                throw new BadRequestAlertException("Configuration must exist for online courses", ENTITY_NAME, "onlineCourseConfigurationMissing");
             }
+            ocConfiguration.validate();
             getOnlineCourseConfiguration().setCourse(this);
         }
     }

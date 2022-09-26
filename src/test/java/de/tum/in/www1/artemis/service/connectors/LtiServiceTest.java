@@ -36,13 +36,13 @@ class LtiServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private CourseRepository courseRepository;
+
+    @Mock
     private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     @Mock
     private ResultRepository resultRepository;
-
-    @Mock
-    private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
 
     @Mock
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
@@ -55,6 +55,8 @@ class LtiServiceTest {
     private LtiService ltiService;
 
     private LtiLaunchRequestDTO launchRequest;
+
+    private Course course;
 
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
@@ -70,13 +72,15 @@ class LtiServiceTest {
     void init() {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, onlineCourseConfigurationRepository,
-                artemisAuthenticationProvider, ltiUserIdRepository);
-        Course course = new Course();
+        ltiService = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, courseRepository,
+                ltiUserIdRepository);
+        course = new Course();
+        course.setId(100L);
         course.setStudentGroupName(courseStudentGroupName);
         course.setOnlineCourse(true);
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setCourse(course);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         exercise = new TextExercise();
         exercise.setCourse(course);
         launchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
@@ -251,9 +255,11 @@ class LtiServiceTest {
         result.setScore(3D);
         ltiOutcomeUrlRepositorySetup(user);
         when(resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(27L)).thenReturn(Optional.of(result));
-        when(onlineCourseConfigurationRepository.findByCourseIdOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId())).thenReturn(onlineCourseConfiguration);
+        when(courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId())).thenReturn(course);
 
         ltiService.onNewResult(participation);
         verify(resultRepository, times(1)).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
+        verify(courseRepository, times(1)).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+
     }
 }

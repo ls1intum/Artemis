@@ -51,11 +51,11 @@ public class LtiService {
 
     private final UserRepository userRepository;
 
+    private final CourseRepository courseRepository;
+
     private final LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     private final ResultRepository resultRepository;
-
-    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
@@ -64,14 +64,13 @@ public class LtiService {
     private final HttpClient client;
 
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
-            OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            LtiUserIdRepository ltiUserIdRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, LtiUserIdRepository ltiUserIdRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
-        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
         this.resultRepository = resultRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.courseRepository = courseRepository;
         this.ltiUserIdRepository = ltiUserIdRepository;
         this.client = HttpClientBuilder.create().build();
     }
@@ -397,8 +396,12 @@ public class LtiService {
             return;
         }
 
-        OnlineCourseConfiguration onlineCourseConfiguration = onlineCourseConfigurationRepository
-                .findByCourseIdOrElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
+        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
+        OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
+
+        if (onlineCourseConfiguration == null) {
+            throw new IllegalStateException("Online course should have an online course configuration.");
+        }
 
         // Get the LTI outcome URL
         var students = participation.getStudents();
