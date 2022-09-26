@@ -20,7 +20,7 @@ import { ConversationService } from 'app/shared/metis/conversation.service';
 import { MockConversationService } from '../../../helpers/mocks/service/mock-conversation.service';
 import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
 
-import { conversationBetweenUser1User2, conversationsOfUser1, metisCourse, metisTutor, metisUser2 } from '../../../helpers/sample/metis-sample-data';
+import { conversationBetweenUser1User2, conversationsOfUser1, metisCourse, metisUser2, metisUser3 } from '../../../helpers/sample/metis-sample-data';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { MessagingService } from 'app/shared/metis/messaging.service';
 
@@ -148,7 +148,7 @@ describe('ConversationSidebarComponent', () => {
         component.ngOnInit();
         tick();
 
-        const usersConversations = component.findConversationWithUser(metisTutor);
+        const usersConversations = component.findConversationWithUser(metisUser3);
         expect(usersConversations).toBeUndefined();
     }));
 
@@ -168,15 +168,15 @@ describe('ConversationSidebarComponent', () => {
     });
 
     it('should handle selection of a user from the search list without existing conversation', () => {
-        const spy = jest.spyOn(component, 'findConversationWithUser');
+        const findConversationWithUserStub = jest.spyOn(component, 'findConversationWithUser');
         component.conversations = conversationsOfUser1;
 
         // conversation doesn't exist, so it will be created and added to the beginning of the conversations
-        component.onAutocompleteSelect(metisTutor);
+        component.onAutocompleteSelect(metisUser3);
         fixture.detectChanges();
 
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(metisTutor);
+        expect(findConversationWithUserStub).toHaveBeenCalledOnce();
+        expect(findConversationWithUserStub).toHaveBeenCalledWith(metisUser3);
         expect(component.activeConversation).toBe(component.conversations[0]);
         expect(emitActiveConversationSpy).toHaveBeenCalledOnce();
     });

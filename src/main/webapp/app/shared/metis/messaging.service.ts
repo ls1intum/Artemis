@@ -59,11 +59,11 @@ export class MessagingService implements OnDestroy {
         this.conversationService.getConversationsOfUser(courseId).subscribe((res) => {
             this.conversationsOfUser = res.body!;
             this.conversations$.next(this.conversationsOfUser);
-            this.createSubscription(courseId, this.userId);
+            this.createWebSocketSubscription(courseId, this.userId);
         });
     }
 
-    private createSubscription(courseId: number, userId: number) {
+    createWebSocketSubscription(courseId: number, userId: number) {
         const channel = this.channelName(courseId, userId);
 
         this.jhiWebsocketService.unsubscribe(channel);
@@ -80,6 +80,7 @@ export class MessagingService implements OnDestroy {
                 // add created/updated conversation to the beginning of the conversation list
                 this.conversationsOfUser.unshift(conversationDTO.conversation);
             } else if (conversationDTO.crudAction === MetisPostAction.READ_CONVERSATION) {
+                // conversation is updated without being moved to the beginning of the list
                 this.conversationsOfUser[conversationIndexInCache] = conversationDTO.conversation;
                 this.conversations$.next(this.conversationsOfUser);
             }
