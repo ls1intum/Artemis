@@ -809,7 +809,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET programming-exercise/:exerciseId/build-log-statistics
+     * GET programming-exercises/:exerciseId/build-log-statistics
      *
      * Returns the averaged build log statistics for a given programming exercise.
      * @param exerciseId the exercise for which the build log statistics should be retrieved
