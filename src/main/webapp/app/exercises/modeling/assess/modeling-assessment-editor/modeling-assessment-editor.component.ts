@@ -90,7 +90,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         private submissionService: SubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
     ) {
-        translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        translateService.get('artemisApp.modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
     private get feedback(): Feedback[] {
@@ -187,11 +187,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.model = JSON.parse(this.submission.model);
         } else {
             this.alertService.closeAll();
-            this.alertService.warning('modelingAssessmentEditor.messages.noModel');
+            this.alertService.warning('artemisApp.modelingAssessmentEditor.messages.noModel');
         }
         if ((!this.result?.assessor || this.result.assessor.id === this.userId) && !this.result?.completionDate) {
             this.alertService.closeAll();
-            this.alertService.info('modelingAssessmentEditor.messages.lock');
+            this.alertService.info('artemisApp.modelingAssessmentEditor.messages.lock');
         }
         this.checkPermissions();
 
@@ -273,15 +273,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(
-            this.modelingExercise?.isAtLeastInstructor ?? false,
-            this.isTestRun,
-            this.isAssessor,
-            this.hasAssessmentDueDatePassed,
-            this.result,
-            this.complaint,
-            this.modelingExercise,
-        );
+        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.modelingExercise);
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {
@@ -307,12 +299,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.result = undefined;
         this.model = undefined;
         this.alertService.closeAll();
-        this.alertService.error('modelingAssessmentEditor.messages.loadSubmissionFailed');
+        this.alertService.error('artemisApp.modelingAssessmentEditor.messages.loadSubmissionFailed');
     }
 
     onSaveAssessment() {
         if (!this.modelingAssessmentService.isFeedbackTextValid(this.feedback)) {
-            this.alertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
+            this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
 
@@ -321,18 +313,18 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.result = result;
                 this.handleFeedback(this.result.feedbacks);
                 this.alertService.closeAll();
-                this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+                this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
             },
             error: () => {
                 this.alertService.closeAll();
-                this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
+                this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
             },
         });
     }
 
     onSubmitAssessment() {
         if ((this.model && this.referencedFeedback.length < this.model.elements.length) || !this.assessmentsAreValid) {
-            const confirmationMessage = this.translateService.instant('modelingAssessmentEditor.messages.confirmSubmission');
+            const confirmationMessage = this.translateService.instant('artemisApp.modelingAssessmentEditor.messages.confirmSubmission');
 
             // if the assessment is before the assessment due date, don't show the confirm submission button
             const isBeforeAssessmentDueDate = this.modelingExercise && this.modelingExercise.assessmentDueDate && dayjs().isBefore(this.modelingExercise.assessmentDueDate);
@@ -354,7 +346,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private submitAssessment() {
         if (!this.modelingAssessmentService.isFeedbackTextValid(this.feedback)) {
-            this.alertService.error('modelingAssessmentEditor.messages.feedbackTextTooLong');
+            this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
             return;
         }
         this.modelingAssessmentService.saveAssessment(this.result!.id!, this.feedback, this.submission!.id!, true).subscribe({
@@ -363,12 +355,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.result = result;
 
                 this.alertService.closeAll();
-                this.alertService.success('modelingAssessmentEditor.messages.submitSuccessful');
+                this.alertService.success('artemisApp.modelingAssessmentEditor.messages.submitSuccessful');
 
                 this.highlightMissingFeedback = false;
             },
             error: (error: HttpErrorResponse) => {
-                let errorMessage = 'modelingAssessmentEditor.messages.submitFailed';
+                let errorMessage = 'artemisApp.modelingAssessmentEditor.messages.submitFailed';
                 if (error.error && error.error.entityName && error.error.message) {
                     errorMessage = `artemisApp.${error.error.entityName}.${error.error.message}`;
                 }
@@ -392,7 +384,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 // reconnect
                 this.result.participation!.results = [this.result];
                 this.alertService.closeAll();
-                this.alertService.success('modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
+                this.alertService.success('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintSuccessful');
             },
             error: (httpErrorResponse: HttpErrorResponse) => {
                 this.alertService.closeAll();
@@ -400,7 +392,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 if (error && error.errorKey && error.errorKey === 'complaintLock') {
                     this.alertService.error(error.message, error.params);
                 } else {
-                    this.alertService.error('modelingAssessmentEditor.messages.updateAfterComplaintFailed');
+                    this.alertService.error('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
                 }
             },
         });

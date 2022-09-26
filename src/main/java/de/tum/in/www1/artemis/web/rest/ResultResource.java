@@ -140,7 +140,7 @@ public class ResultResource {
      * @return a ResponseEntity to the CI system
      */
     @PostMapping(Constants.NEW_RESULT_RESOURCE_PATH)
-    public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
+    public ResponseEntity<?> processNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         log.debug("Received result notify (NEW)");
         if (token == null || !token.equals(artemisAuthenticationTokenValue)) {
             log.info("Cancelling request with invalid token {}", token);
@@ -418,7 +418,7 @@ public class ResultResource {
     public ResponseEntity<Void> deleteResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
         Result result = getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
-        resultRepository.delete(result);
+        resultService.deleteResult(result.getId());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, resultId.toString())).build();
     }
 

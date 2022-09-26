@@ -135,8 +135,10 @@ $mat-form-field-outline: #ccc;
 
 // Feature Overview
 $fo-wrapper-background: white;
-$fo-container-box-icon-background: #f2f2f2;
+$fo-header-font-color: white;
+$fo-container-box-icon-background: $gray-200;
 $fo-blue-font-color: #3070b3;
+$fo-box-overlay-background: $gray-100;
 
 // Header Participation
 $header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
@@ -167,6 +169,9 @@ $reaction-button-emoji-count-color: black;
 
 $metis-post-tag-selector-tag-option-background: white;
 $metis-post-tag-selector-tag-option-hover-background: $gray-200;
+
+// Component: plagiarism-case-instructor-detail-view.component.scss
+$plagiarism-verdict-disabled-overlay-color: rgba($gray-300, 0.9);
 
 // Component: plagiarism-inspector.component.scss
 $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
@@ -292,6 +297,14 @@ $code-editor-file-browser-input-color: black;
 $code-editor-diff-newline-background: rgba(63, 185, 80, 0.4);
 $code-editor-gutter-newline-background: rgba(63, 185, 80, 0.8);
 
+// Git-Diff Viewer
+$git-diff-viewer-added-line-background: rgba(63, 185, 80, 0.5);
+$git-diff-viewer-added-line-gutter-background: rgba(63, 185, 80, 0.5);
+$git-diff-viewer-removed-line-background: rgba(248, 81, 73, 0.5);
+$git-diff-viewer-removed-line-gutter-background: rgba(248, 81, 73, 0.5);
+$git-diff-viewer-placeholder-line-background: rgba(200, 200, 200, 0.5);
+$git-diff-viewer-placeholder-line-gutter-background: rgba(200, 200, 200, 0.5);
+
 // Overview variables
 $overview-border-color: $border-color;
 $overview-light-border-color: lighten($overview-border-color, 5%);
@@ -307,6 +320,7 @@ $lecture-unit-card-body-background: white;
 $lecture-unit-card-header-background: rgba($overview-light-border-color, 0.3);
 $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
 $lecture-unit-card-hover-shadow: $primary;
+$lecture-unit-create-row-hover-background: $gray-400;
 
 // Lecture Attachments
 $lecture-attachment-edit-overlay-color: rgba($gray-300, 0.9);
@@ -459,6 +473,7 @@ $apollon-background: white;
 $apollon-background-variant: $gray-100;
 $apollon-gray: $gray-200;
 $apollon-gray-variant: $gray-700;
+$apollon-grid: rgba(36, 39, 36, 0.1);
 
 // NGX Graph Colors
 $graph-light-grey: rgba(153, 153, 153, 1);

@@ -65,12 +65,14 @@ public class ExerciseDeletionService {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
+    private final LearningGoalRepository learningGoalRepository;
+
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             ExamRepository examRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService,
             TextExerciseRepository textExerciseRepository, PlagiarismResultRepository plagiarismResultRepository, TextAssessmentKnowledgeService textAssessmentKnowledgeService,
-            ModelingExerciseRepository modelingExerciseRepository, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
+            ModelingExerciseRepository modelingExerciseRepository, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService, LearningGoalRepository learningGoalRepository) {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.participationService = participationService;
@@ -88,6 +90,7 @@ public class ExerciseDeletionService {
         this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
+        this.learningGoalRepository = learningGoalRepository;
     }
 
     /**
@@ -126,7 +129,7 @@ public class ExerciseDeletionService {
      * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
      * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -140,6 +143,14 @@ public class ExerciseDeletionService {
         }
 
         participantScoreRepository.deleteAllByExerciseIdTransactional(exerciseId);
+
+        // Remove the connection to learning goals
+        learningGoalRepository.saveAll(exercise.getLearningGoals().stream().map(learningGoal -> {
+            learningGoal = learningGoalRepository.findByIdWithExercisesElseThrow(learningGoal.getId());
+            learningGoal.removeExercise(exercise);
+            return learningGoal;
+        }).toList());
+
         // delete all exercise units linking to the exercise
         List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
         for (ExerciseUnit exerciseUnit : exerciseUnits) {
@@ -207,7 +218,7 @@ public class ExerciseDeletionService {
     public void reset(Exercise exercise) {
         log.debug("Request reset Exercise : {}", exercise.getId());
 
-        this.deletePlagiarismResultsAndParticipations(exercise);
+        deletePlagiarismResultsAndParticipations(exercise);
 
         // and additional call to the quizExerciseService is only needed for course exercises, not for exam exercises
         if (exercise instanceof QuizExercise && exercise.isCourseExercise()) {
@@ -221,6 +232,9 @@ public class ExerciseDeletionService {
      * @param exercise for which the plagiarism results and participations should be deleted
      */
     public void deletePlagiarismResultsAndParticipations(Exercise exercise) {
+        // delete all participant scores to avoid issues when deleting results later on
+        participantScoreRepository.deleteAllByExerciseIdTransactional(exercise.getId());
+
         // delete all plagiarism results for this exercise
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
 

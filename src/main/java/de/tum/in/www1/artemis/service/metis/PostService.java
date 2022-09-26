@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -91,7 +89,7 @@ public class PostService extends PostingService {
 
         // checks
         if (post.getId() != null) {
-            throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idExists");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
         mayInteractWithPostElseThrow(post, user, course);
@@ -99,6 +97,7 @@ public class PostService extends PostingService {
 
         // set author to current user
         post.setAuthor(user);
+        setAuthorRoleForPosting(post, course);
         // set default value display priority -> NONE
         post.setDisplayPriority(DisplayPriority.NONE);
 
@@ -138,7 +137,7 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         // check
         if (post.getId() == null || !Objects.equals(post.getId(), postId)) {
-            throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idNull");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
         mayInteractWithPostElseThrow(post, user, course);
@@ -251,6 +250,8 @@ public class PostService extends PostingService {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
 
+        setAuthorRoleOfPostings(postsInCourse.getContent());
+
         return postsInCourse;
     }
 
@@ -341,6 +342,7 @@ public class PostService extends PostingService {
      */
     public List<Post> getAllPlagiarismCasePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final Course course = preCheckUserAndCourse(user, postContextFilter.getCourseId());
         final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.getPlagiarismCaseId());
 
         // checks
@@ -352,6 +354,7 @@ public class PostService extends PostingService {
 
             // protect sample solution, grading instructions, etc.
             plagiarismCasePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+            plagiarismCasePosts.stream().forEach(post -> post.setCourse(course));
 
             return plagiarismCasePosts;
         }
@@ -409,7 +412,7 @@ public class PostService extends PostingService {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Exercise", METIS_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Exercise", METIS_POST_ENTITY_NAME, "idNull");
         }
     }
 
@@ -425,7 +428,7 @@ public class PostService extends PostingService {
         Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
         if (!lecture.getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Lecture", METIS_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Lecture", METIS_POST_ENTITY_NAME, "idNull");
         }
     }
 
@@ -513,6 +516,7 @@ public class PostService extends PostingService {
 
         // sort course posts by calculated similarity scores
         coursePosts.sort(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
+        setAuthorRoleOfPostings(coursePosts);
         return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).toList();
     }
 
@@ -528,5 +532,32 @@ public class PostService extends PostingService {
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT || post.getPlagiarismCase() != null) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         }
+    }
+
+    /**
+     * helper method that fetches groups and authorities of all posting authors in a list of Posts
+     * @param postsInCourse list of posts whose authors are populated with their groups, authorities, and authorRole
+     */
+    private void setAuthorRoleOfPostings(List<Post> postsInCourse) {
+        // prepares a unique set of userIds that authored the current list of postings
+        Set<Long> userIds = new HashSet<>();
+        postsInCourse.forEach(post -> {
+            userIds.add(post.getAuthor().getId());
+            post.getAnswers().forEach(answerPost -> userIds.add(answerPost.getAuthor().getId()));
+        });
+
+        // fetches and sets groups and authorities of all posting authors involved, which are used to display author role icon in the posting header
+        // converts fetched set to hashmap type for performant matching of authors
+        Map<Long, User> authors = userRepository.findAllWithGroupsAndAuthoritiesByIdIn(userIds).stream().collect(Collectors.toMap(user -> user.getId(), Function.identity()));
+
+        // sets respective author role to display user authority icon on posting headers
+        postsInCourse.forEach(post -> {
+            post.setAuthor(authors.get(post.getAuthor().getId()));
+            setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
+            post.getAnswers().forEach(answerPost -> {
+                answerPost.setAuthor(authors.get(answerPost.getAuthor().getId()));
+                setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
+            });
+        });
     }
 }

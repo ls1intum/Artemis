@@ -13,7 +13,6 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
-import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
@@ -21,6 +20,7 @@ import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programmi
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -441,15 +441,6 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Gets the full git-diff report of a programming exercise containing the previousCode and current code blocks
-     *
-     * @param exerciseId The id of a programming exercise
-     */
-    getFullDiffReport(exerciseId: number): Observable<ProgrammingExerciseFullGitDiffReport> {
-        return this.http.get<ProgrammingExerciseFullGitDiffReport>(`${this.resourceUrl}/${exerciseId}/full-diff-report`);
-    }
-
-    /**
      * Gets the testwise coverage report of a programming exercise for the latest solution submission with all descending reports
      * @param exerciseId The id of a programming exercise
      */
@@ -478,6 +469,19 @@ export class ProgrammingExerciseService {
         );
     }
 
+    /**
+     * Gets all files from the last commit in the template participation repository
+     */
+    getTemplateRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/template-files-content`).pipe(
+            map((res: HttpResponse<any>) => {
+                // this mapping is required because otherwise the HttpResponse object would be parsed
+                // to an arbitrary object (and not a map)
+                return res && new Map(Object.entries(res));
+            }),
+        );
+    }
+
     getSolutionFileNames(exerciseId: number): Observable<string[]> {
         return this.http.get<string[]>(`${this.resourceUrl}/${exerciseId}/file-names`);
     }
@@ -496,5 +500,9 @@ export class ProgrammingExerciseService {
 
     getAllTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
         return this.http.get<ProgrammingExerciseTestCase[]>(`api/programming-exercises/${exerciseId}/test-cases`);
+    }
+
+    getBuildLogStatistics(exerciseId: number): Observable<BuildLogStatisticsDTO> {
+        return this.http.get<BuildLogStatisticsDTO>(`${this.resourceUrl}/${exerciseId}/build-log-statistics`);
     }
 }

@@ -51,7 +51,7 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should trigger builds for all participants on confirmation', () => {
+    it('should trigger builds for all participants on confirmation', () => {
         const mockReturnValue = {
             result: Promise.resolve(),
             componentInstance: {},

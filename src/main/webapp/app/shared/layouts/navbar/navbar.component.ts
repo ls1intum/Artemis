@@ -228,7 +228,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         docs: 'global.menu.admin.apidocs',
         metrics: 'metrics.title',
         user_statistics: 'statistics.title',
-        user_management: 'userManagement.home.title',
+        user_management: 'artemisApp.userManagement.home.title',
         system_notification_management: 'artemisApp.systemNotification.systemNotifications',
         upcoming_exams_and_exercises: 'artemisApp.upcomingExamsAndExercises.upcomingExamsAndExercises',
         account: 'global.menu.account.main',
@@ -294,7 +294,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         student_exams: 'artemisApp.studentExams.title',
         test_assessment_dashboard: 'artemisApp.examManagement.assessmentDashboard',
         tutor_exam_dashboard: 'artemisApp.examManagement.assessmentDashboard',
-        organization_management: 'organizationManagement.title',
+        organization_management: 'artemisApp.organizationManagement.title',
         participant_scores: 'artemisApp.participantScores.pageTitle',
         course_statistics: 'statistics.course_statistics_title',
         grading_system: 'artemisApp.gradingSystem.title',
@@ -306,6 +306,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         interval: 'artemisApp.gradingSystem.intervalTab.title',
         plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
         code_hint_management: 'artemisApp.codeHint.management.title',
+        tutorial_groups_management: 'artemisApp.pages.tutorialGroupsManagement.title',
+        registered_students: 'artemisApp.pages.registeredStudents.title',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -435,6 +437,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case 'organization-management':
                 this.addResolvedTitleAsCrumb(EntityType.ORGANIZATION, [Number(segment)], currentPath, segment);
+                break;
+            case 'tutorial-groups-management':
+                this.addResolvedTitleAsCrumb(EntityType.TUTORIAL_GROUP, [Number(segment)], currentPath, segment);
                 break;
             case 'import':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)

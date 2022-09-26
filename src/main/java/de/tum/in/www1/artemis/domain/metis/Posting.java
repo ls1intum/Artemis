@@ -3,10 +3,8 @@ package de.tum.in.www1.artemis.domain.metis;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import javax.persistence.Column;
-import javax.persistence.Lob;
-import javax.persistence.ManyToOne;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.*;
+import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -17,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
 
@@ -38,14 +37,19 @@ public abstract class Posting extends DomainObject {
     @Column(name = "creation_date", updatable = false)
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
-    @Lob
-    @Column(name = "content")
+    // TODO: in the future we should allow longer posts with more than 1000 characters
+    @Size(max = 1000)
+    @Column(name = "content", length = 1000)
     private String content;
 
     // To be used as soon as more advanced strategies for post similarity comparisons are developed
-    @Lob
-    @Column(name = "tokenized_content")
+    @Size(max = 1000)
+    @Column(name = "tokenized_content", length = 1000)
     private String tokenizedContent;
+
+    @Transient
+    @JsonProperty
+    private UserRole authorRole;
 
     public String getTokenizedContent() {
         return tokenizedContent;
@@ -80,6 +84,14 @@ public abstract class Posting extends DomainObject {
         this.content = content;
     }
 
+    public UserRole getAuthorRole() {
+        return authorRole;
+    }
+
+    public void setAuthorRole(UserRole authorRole) {
+        this.authorRole = authorRole;
+    }
+
     public abstract Set<Reaction> getReactions();
 
     public abstract void setReactions(Set<Reaction> reactions);
@@ -87,4 +99,7 @@ public abstract class Posting extends DomainObject {
     public abstract void addReaction(Reaction reaction);
 
     public abstract void removeReaction(Reaction reaction);
+
+    @Transient
+    public abstract Course getCoursePostingBelongsTo();
 }

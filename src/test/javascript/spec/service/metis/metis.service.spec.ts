@@ -96,7 +96,7 @@ describe('Metis Service', () => {
             const createdPostSub = metisService.createPost(post).subscribe((createdPost) => {
                 expect(createdPost).toEqual(post);
             });
-            expect(postServiceSpy).toHaveBeenCalled();
+            expect(postServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdPostSub.unsubscribe();
@@ -105,7 +105,7 @@ describe('Metis Service', () => {
         it('should delete a post', fakeAsync(() => {
             const postServiceSpy = jest.spyOn(postService, 'delete');
             metisService.deletePost(post);
-            expect(postServiceSpy).toHaveBeenCalled();
+            expect(postServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
         }));
@@ -115,7 +115,7 @@ describe('Metis Service', () => {
             const updatedPostSub = metisService.updatePost(post).subscribe((updatedPost) => {
                 expect(updatedPost).toEqual(post);
             });
-            expect(postServiceSpy).toHaveBeenCalled();
+            expect(postServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedPostSub.unsubscribe();
@@ -126,7 +126,7 @@ describe('Metis Service', () => {
             const updatedPostSub = metisService.updatePostDisplayPriority(post.id!, DisplayPriority.PINNED).subscribe((updatedPost) => {
                 expect(updatedPost).toEqual({ id: post.id, displayPriority: DisplayPriority.PINNED });
             });
-            expect(postServiceSpy).toHaveBeenCalled();
+            expect(postServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedPostSub.unsubscribe();
@@ -137,7 +137,7 @@ describe('Metis Service', () => {
             const updatedPostSub = metisService.updatePostDisplayPriority(post.id!, DisplayPriority.ARCHIVED).subscribe((updatedPost) => {
                 expect(updatedPost).toEqual({ id: post.id, displayPriority: DisplayPriority.ARCHIVED });
             });
-            expect(postServiceSpy).toHaveBeenCalled();
+            expect(postServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedPostSub.unsubscribe();
@@ -156,17 +156,17 @@ describe('Metis Service', () => {
         it('should update post tags', () => {
             const postServiceSpy = jest.spyOn(postService, 'getAllPostTagsByCourseId');
             metisService.updateCoursePostTags();
-            expect(postServiceSpy).toHaveBeenCalled();
+            expect(postServiceSpy).toHaveBeenCalledOnce();
         });
 
         it('should get posts for lecture filter', () => {
             const postServiceSpy = jest.spyOn(postService, 'getPosts');
             metisService.getFilteredPosts({ lectureId: metisLecture.id }, false);
-            expect(postServiceSpy).toHaveBeenCalledTimes(1);
+            expect(postServiceSpy).toHaveBeenCalledOnce();
 
             // don't change filter
             metisService.getFilteredPosts({ lectureId: metisLecture.id }, false);
-            expect(postServiceSpy).toHaveBeenCalledTimes(1);
+            expect(postServiceSpy).toHaveBeenCalledOnce();
 
             // change filter
             metisService.getFilteredPosts({ lectureId: undefined, exerciseId: metisExercise.id }, false);
@@ -187,11 +187,11 @@ describe('Metis Service', () => {
         it('should get posts for exercise filter', () => {
             const postServiceSpy = jest.spyOn(postService, 'getPosts');
             metisService.getFilteredPosts({ exerciseId: metisExercise.id }, false);
-            expect(postServiceSpy).toHaveBeenCalled();
+            expect(postServiceSpy).toHaveBeenCalledOnce();
 
             // don't change filter
             metisService.getFilteredPosts({ exerciseId: metisExercise.id }, false);
-            expect(postServiceSpy).toHaveBeenCalledTimes(1);
+            expect(postServiceSpy).toHaveBeenCalledOnce();
 
             // change filter
             metisService.getFilteredPosts({ lectureId: metisLecture.id, exerciseId: undefined }, false);
@@ -212,19 +212,19 @@ describe('Metis Service', () => {
         it('should get posts for course-context filter', () => {
             const postServiceSpy = jest.spyOn(postService, 'getPosts');
             metisService.getFilteredPosts({ courseWideContext: CourseWideContext.RANDOM });
-            expect(postServiceSpy).toHaveBeenCalled();
+            expect(postServiceSpy).toHaveBeenCalledOnce();
         });
 
         it('should get posts for course', () => {
             const postServiceSpy = jest.spyOn(postService, 'getPosts');
             metisService.getFilteredPosts({ courseId: course.id });
-            expect(postServiceSpy).toHaveBeenCalled();
+            expect(postServiceSpy).toHaveBeenCalledOnce();
         });
 
         it('should get similar posts within course', () => {
             const postServiceSpy = jest.spyOn(postService, 'computeSimilarityScoresWithCoursePosts');
             metisService.getSimilarPosts(post);
-            expect(postServiceSpy).toHaveBeenCalled();
+            expect(postServiceSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -234,7 +234,7 @@ describe('Metis Service', () => {
             const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe((createdAnswerPost) => {
                 expect(createdAnswerPost).toEqual(answerPost);
             });
-            expect(answerPostServiceSpy).toHaveBeenCalled();
+            expect(answerPostServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdAnswerPostSub.unsubscribe();
@@ -243,7 +243,7 @@ describe('Metis Service', () => {
         it('should delete an answer post', fakeAsync(() => {
             const answerPostServiceSpy = jest.spyOn(answerPostService, 'delete');
             metisService.deleteAnswerPost(answerPost);
-            expect(answerPostServiceSpy).toHaveBeenCalled();
+            expect(answerPostServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
         }));
@@ -253,7 +253,7 @@ describe('Metis Service', () => {
             const updatedAnswerPostSub = metisService.updateAnswerPost(answerPost).subscribe((updatedAnswerPost) => {
                 expect(updatedAnswerPost).toEqual(answerPost);
             });
-            expect(answerPostServiceSpy).toHaveBeenCalled();
+            expect(answerPostServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedAnswerPostSub.unsubscribe();
@@ -266,7 +266,7 @@ describe('Metis Service', () => {
             const createdReactionSub = metisService.createReaction(reaction).subscribe((createdReaction) => {
                 expect(createdReaction).toEqual(reaction);
             });
-            expect(reactionServiceSpy).toHaveBeenCalled();
+            expect(reactionServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdReactionSub.unsubscribe();
@@ -278,7 +278,7 @@ describe('Metis Service', () => {
                 expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             });
             tick();
-            expect(reactionServiceSpy).toHaveBeenCalled();
+            expect(reactionServiceSpy).toHaveBeenCalledOnce();
         }));
     });
 
@@ -299,7 +299,7 @@ describe('Metis Service', () => {
         metisService.setCourse(course);
         const getCourseReturn = metisService.getCourse();
         expect(getCourseReturn).toEqual(course);
-        expect(updateCoursePostTagsSpy).toHaveBeenCalled();
+        expect(updateCoursePostTagsSpy).toHaveBeenCalledOnce();
     });
 
     it('should set course when current course has different id', () => {

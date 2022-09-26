@@ -22,7 +22,7 @@ The following sections describe the supported features and the process of creati
 - Open |course-management|.
 - Navigate into **Exercises** of your preferred course.
 
-    .. figure:: modeling/course-management-course-dashboard.png
+    .. figure:: general/course-management-course-dashboard-exercises.png
               :align: center
 
 Create new modeling exercise
@@ -204,7 +204,7 @@ Once you're done assessing the solution, you can either:
 
 .. |edit| image:: modeling/edit.png
     :scale: 75
-.. |course-management| image:: modeling/course-management.png
+.. |course-management| image:: general/course-management.png
 .. |save| image:: modeling/save.png
 .. |start| image:: modeling/start.png
 .. |open-modeling-editor| image:: modeling/open-modeling-editor.png

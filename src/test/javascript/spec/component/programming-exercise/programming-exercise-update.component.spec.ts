@@ -122,7 +122,7 @@ describe('ProgrammingExercise Management Update Component', () => {
     });
 
     describe('save', () => {
-        it('Should call update service on save for existing entity', fakeAsync(() => {
+        it('should call update service on save for existing entity', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(new Course(), undefined);
             entity.id = 123;
@@ -139,7 +139,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.isSaving).toBeFalse();
         }));
 
-        it('Should call create service on save for new entity', fakeAsync(() => {
+        it('should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
@@ -155,7 +155,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.isSaving).toBeFalse();
         }));
 
-        it('Should trim the exercise title before saving', fakeAsync(() => {
+        it('should trim the exercise title before saving', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
@@ -189,7 +189,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
         });
 
-        it('Should be in exam mode after onInit', fakeAsync(() => {
+        it('should be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
             jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
@@ -217,7 +217,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
         });
 
-        it('Should not be in exam mode after onInit', fakeAsync(() => {
+        it('should not be in exam mode after onInit', fakeAsync(() => {
             // GIVEN
             jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
             jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
@@ -243,7 +243,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
         });
 
-        it('Should set default programming language', fakeAsync(() => {
+        it('should set default programming language', fakeAsync(() => {
             // GIVEN
             const testProgrammingLanguage = ProgrammingLanguage.SWIFT;
             expect(new ProgrammingExercise(undefined, undefined).programmingLanguage).not.toBe(testProgrammingLanguage);
@@ -272,7 +272,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
         });
 
-        it('Should reset sca settings if new programming language does not support sca', fakeAsync(() => {
+        it('should reset sca settings if new programming language does not support sca', fakeAsync(() => {
             comp.ngOnInit();
             fixture.detectChanges();
             tick();
@@ -309,7 +309,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
         }));
 
-        it('Should activate SCA for Swift', fakeAsync(() => {
+        it('should activate SCA for Swift', fakeAsync(() => {
             // WHEN
             fixture.detectChanges();
             tick();
@@ -322,7 +322,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.packageNamePattern).toBe(comp.appNamePatternForSwift);
         }));
 
-        it('Should activate SCA for C', fakeAsync(() => {
+        it('should activate SCA for C', fakeAsync(() => {
             // WHEN
             fixture.detectChanges();
             tick();
@@ -336,7 +336,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.staticCodeAnalysisAllowed).toBeTrue();
         }));
 
-        it('Should activate SCA for Java', fakeAsync(() => {
+        it('should activate SCA for Java', fakeAsync(() => {
             // WHEN
             fixture.detectChanges();
             tick();
@@ -348,7 +348,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.packageNamePattern).toBe(comp.packageNamePatternForJavaKotlin);
         }));
 
-        it('Should deactivate SCA for C (FACT)', fakeAsync(() => {
+        it('should deactivate SCA for C (FACT)', fakeAsync(() => {
             // WHEN
             fixture.detectChanges();
             tick();
@@ -376,14 +376,15 @@ describe('ProgrammingExercise Management Update Component', () => {
         });
 
         it.each([
-            [true, 80],
-            [false, undefined],
+            [true, 80, ProjectType.PLAIN_MAVEN],
+            [false, undefined, ProjectType.PLAIN_GRADLE],
         ])(
-            'Should activate recreate build plans and update template when sca changes',
-            fakeAsync((scaActivatedOriginal: boolean, maxPenalty: number | undefined) => {
+            'should activate recreate build plans and update template when sca changes',
+            fakeAsync((scaActivatedOriginal: boolean, maxPenalty: number | undefined, projectType: ProjectType) => {
                 const newMaxPenalty = 50;
                 const programmingExercise = new ProgrammingExercise(undefined, undefined);
                 programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                programmingExercise.projectType = projectType;
                 programmingExercise.staticCodeAnalysisEnabled = scaActivatedOriginal;
                 programmingExercise.maxStaticCodeAnalysisPenalty = maxPenalty;
                 route.data = of({ programmingExercise });
@@ -403,9 +404,13 @@ describe('ProgrammingExercise Management Update Component', () => {
                 expect(scaCheckbox.checked).toBe(scaActivatedOriginal);
                 expect(!!maxPenaltyInput).toBe(scaActivatedOriginal);
                 expect(recreateBuildPlanCheckbox.checked).toBeFalse();
-                expect(updateTemplateCheckbox.checked).toBeFalse();
                 expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
+
+                // Only available for Maven
+                if (projectType === ProjectType.PLAIN_MAVEN) {
+                    expect(updateTemplateCheckbox.checked).toBeFalse();
+                }
 
                 // Activate SCA and set a max penalty
                 scaCheckbox.click();

@@ -15,9 +15,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
+import org.springframework.boot.info.GitProperties;
 import org.springframework.core.env.Environment;
 
-import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
@@ -62,16 +63,19 @@ public class ArtemisApp {
         var context = app.run(args);
         Environment env = context.getEnvironment();
         var buildProperties = context.getBean(BuildProperties.class);
-        logApplicationStartup(env, buildProperties);
+        var gitProperties = context.getBean(GitProperties.class);
+        logApplicationStartup(env, buildProperties, gitProperties);
     }
 
-    private static void logApplicationStartup(Environment env, BuildProperties buildProperties) {
+    private static void logApplicationStartup(Environment env, BuildProperties buildProperties, GitProperties gitProperties) {
         String protocol = "http";
         if (env.getProperty("server.ssl.key-store") != null) {
             protocol = "https";
         }
         String serverPort = env.getProperty("server.port");
         String version = buildProperties.getVersion();
+        String gitCommitId = gitProperties.getShortCommitId();
+        String gitBranch = gitProperties.getBranch();
         String contextPath = env.getProperty("server.servlet.context-path");
         if (StringUtils.isBlank(contextPath)) {
             contextPath = "/";
@@ -87,13 +91,15 @@ public class ArtemisApp {
 
                 ----------------------------------------------------------
                 \t'{}' is running! Access URLs:
-                \tLocal:     {}://localhost:{}{}
-                \tExternal:  {}://{}:{}{}
-                \tProfiles:  {}
-                \tVersion:   {}
+                \tLocal:      {}://localhost:{}{}
+                \tExternal:   {}://{}:{}{}
+                \tProfiles:   {}
+                \tVersion:    {}
+                \tGit Commit: {}
+                \tGit Branch: {}
                 ----------------------------------------------------------
 
                 """, env.getProperty("spring.application.name"), protocol, serverPort, contextPath, protocol, hostAddress, serverPort, contextPath,
-                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), version);
+                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), version, gitCommitId, gitBranch);
     }
 }

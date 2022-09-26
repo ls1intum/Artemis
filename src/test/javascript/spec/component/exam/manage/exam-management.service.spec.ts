@@ -609,7 +609,7 @@ describe('Exam Management Service Tests', () => {
             { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2' },
         ];
 
-        service.addAllStudentsOfCourseToExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body === null));
+        service.addAllStudentsOfCourseToExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toBeUndefined());
 
         const req = httpMock.expectOne({
             method: 'POST',

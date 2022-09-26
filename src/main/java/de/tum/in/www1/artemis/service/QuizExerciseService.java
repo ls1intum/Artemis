@@ -206,12 +206,13 @@ public class QuizExerciseService {
     private void updateResultsOnQuizChanges(QuizExercise quizExercise) {
         // change existing results if an answer or and question was deleted
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
-        log.debug("Found {} results to update for quiz re-evaluate", results.size());
+        log.info("Found {} results to update for quiz re-evaluate", results.size());
         List<QuizSubmission> submissions = new ArrayList<>();
         for (Result result : results) {
 
             Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
-            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
+            QuizSubmission quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
+            result.setSubmission(quizSubmission);
 
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
                 // Delete all references to question and question-elements if the question was changed
@@ -447,21 +448,38 @@ public class QuizExerciseService {
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
-     * @param search The search query defining the search term and the size of the returned page
-     * @param user The user for whom to fetch all available exercises
+     * @param search         The search query defining the search term and the size of the returned page
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
+     * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<QuizExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+    public SearchResultPageDTO<QuizExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
+            final User user) {
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        final Page<QuizExercise> exercisePage;
+        Page<QuizExercise> exercisePage = Page.empty();
         if (authCheckService.isAdmin(user)) {
-            exercisePage = quizExerciseRepository
-                    .findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContainingOrExerciseGroup_Exam_TitleIgnoreCaseContainingOrExerciseGroup_Exam_Course_TitleIgnoreCaseContaining(
-                            searchTerm, searchTerm, searchTerm, searchTerm, pageable);
+            if (isCourseFilter && isExamFilter) {
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm, pageable);
+            }
+            else if (isCourseFilter) {
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
+            }
+            else if (isExamFilter) {
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllExams(searchTerm, pageable);
+            }
         }
         else {
-            exercisePage = quizExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            if (isCourseFilter && isExamFilter) {
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else if (isCourseFilter) {
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else if (isExamFilter) {
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
         }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }

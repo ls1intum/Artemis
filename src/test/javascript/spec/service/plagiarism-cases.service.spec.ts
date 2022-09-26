@@ -76,7 +76,7 @@ describe('Plagiarism Cases Service', () => {
 
     it('should get plagiarism cases for course for instructor', fakeAsync(() => {
         const returnedFromService = [plagiarismCase1, plagiarismCase2, plagiarismCase3];
-        service.getPlagiarismCasesForInstructor(1).pipe(take(1)).subscribe();
+        service.getCoursePlagiarismCasesForInstructor(1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -104,12 +104,19 @@ describe('Plagiarism Cases Service', () => {
         tick();
     }));
 
-    it('should get plagiarism cases for course for student', fakeAsync(() => {
+    it('should get plagiarism case for course and exercise for student', fakeAsync(() => {
         const returnedFromService = plagiarismCase1;
-        service.getPlagiarismCaseIdForStudent(1, 1).pipe(take(1)).subscribe();
+        service.getPlagiarismCaseInfoForStudent(1, 1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
+        tick();
+    }));
+
+    it('should get plagiarism cases for course and multiple exercises for student', fakeAsync(() => {
+        service.getPlagiarismCaseInfosForStudent(1, [1, 2]).pipe(take(1)).subscribe();
+
+        httpMock.expectOne({ method: 'GET', url: 'api/courses/1/plagiarism-cases?exerciseId=1&exerciseId=2' });
         tick();
     }));
 

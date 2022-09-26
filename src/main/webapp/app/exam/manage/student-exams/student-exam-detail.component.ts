@@ -30,6 +30,7 @@ export class StudentExamDetailComponent implements OnInit {
     student: User;
     isSavingWorkingTime = false;
     isTestRun = false;
+    isTestExam: boolean;
     maxTotalPoints = 0;
     achievedTotalPoints = 0;
     bonusTotalPoints = 0;
@@ -39,6 +40,7 @@ export class StudentExamDetailComponent implements OnInit {
 
     gradingScaleExists = false;
     grade?: string;
+    gradeAfterBonus?: string;
     isBonus = false;
     passed = false;
 
@@ -75,6 +77,7 @@ export class StudentExamDetailComponent implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.route.data.subscribe(({ studentExam }) => this.setStudentExamWithGrade(studentExam));
+        this.isTestExam = this.studentExam.exam!.testExam!;
     }
 
     /**
@@ -84,6 +87,7 @@ export class StudentExamDetailComponent implements OnInit {
         if (studentExamWithGrade?.studentResult?.overallGrade != undefined) {
             this.gradingScaleExists = true;
             this.grade = studentExamWithGrade.studentResult.overallGrade;
+            this.gradeAfterBonus = studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade?.toString();
             this.passed = !!studentExamWithGrade.studentResult.hasPassed;
             this.isBonus = studentExamWithGrade.gradeType === GradeType.BONUS;
         }
@@ -149,6 +153,19 @@ export class StudentExamDetailComponent implements OnInit {
         this.course = this.studentExam.exam!.course!;
 
         studentExam.exercises!.forEach((exercise) => this.initExercise(exercise));
+    }
+
+    /**
+     * Gets the correct explanation label for the grade depending on whether it is a bonus or it has bonus.
+     */
+    getGradeExplanation() {
+        if (this.isBonus) {
+            return 'artemisApp.studentExams.bonus';
+        } else if (this.gradeAfterBonus != undefined) {
+            return 'artemisApp.studentExams.gradeBeforeBonus';
+        } else {
+            return 'artemisApp.studentExams.grade';
+        }
     }
 
     /**

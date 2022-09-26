@@ -19,17 +19,19 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "3.2.1"
+    id "com.google.cloud.tools.jib" version "3.3.0"
     id "com.github.node-gradle.node" version "3.4.0"
-    id "com.diffplug.spotless" version "6.8.0"
+    id "com.diffplug.spotless" version "6.11.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
-    id 'info.solidsoft.pitest' version '1.7.4'
+    id "com.gorylenko.gradle-git-properties" version "2.4.1"
+    id "info.solidsoft.pitest" version "1.9.0"
+    id "org.owasp.dependencycheck" version "7.2.1"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.9.7"
+version = "5.10.3"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -175,25 +177,25 @@ dependencies {
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
     // https://search.maven.org/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2022.6"
+    implementation "net.sourceforge.plantuml:plantuml:1.2022.7"
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
-    implementation "com.atlassian.bamboo:bamboo-specs:8.1.8"
-    implementation "com.thoughtworks.qdox:qdox:2.0.1"
-    implementation "io.sentry:sentry-logback:6.3.0"
-    implementation "io.sentry:sentry-spring-boot-starter:6.3.0"
-    implementation "org.jsoup:jsoup:1.15.2"
+    implementation "com.atlassian.bamboo:bamboo-specs:8.2.5"
+    implementation "com.thoughtworks.qdox:qdox:2.0.2"
+    implementation "io.sentry:sentry-logback:6.4.2"
+    implementation "io.sentry:sentry-spring-boot-starter:6.4.2"
+    implementation "org.jsoup:jsoup:1.15.3"
     implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.6.9"
+    implementation "org.springdoc:springdoc-openapi-ui:1.6.11"
 
     // import JHipster dependencies BOM
     implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.9.2"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.9.4"
     implementation "net.logstash.logback:logstash-logback-encoder:7.2"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -210,7 +212,7 @@ dependencies {
     implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "javax.transaction:javax.transaction-api:1.3"
     implementation "org.hibernate:hibernate-entitymanager:${hibernate_version}"
-    implementation "org.liquibase:liquibase-core:4.14.0"
+    implementation "org.liquibase:liquibase-core:4.16.1"
     implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
@@ -227,15 +229,15 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.4.1"
-    implementation "org.springframework.data:spring-data-ldap:2.7.2"
+    implementation "org.springframework.data:spring-data-ldap:2.7.3"
 
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.3"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.3"
+    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.4"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.4"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.79.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.0.21"
-    implementation "org.springframework:spring-messaging:5.3.22"
+    implementation "io.netty:netty-all:4.1.82.Final"
+    implementation "io.projectreactor.netty:reactor-netty:1.0.23"
+    implementation "org.springframework:spring-messaging:5.3.23"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -243,7 +245,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
     implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
-    implementation "org.xmlbeam:xmlprojector:1.4.23"
+    implementation "org.xmlbeam:xmlprojector:1.4.24"
     implementation "io.jsonwebtoken:jjwt-api:0.11.5"
     implementation "org.bouncycastle:bcprov-jdk15on:1.70"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.5"
@@ -259,7 +261,7 @@ dependencies {
     implementation "com.github.seancfoley:ipaddress:5.3.4"
     implementation "org.apache.maven:maven-model:3.8.6"
     implementation "org.apache.pdfbox:pdfbox:2.0.26"
-    implementation "com.google.protobuf:protobuf-java:3.21.4"
+    implementation "com.google.protobuf:protobuf-java:3.21.6"
     implementation "org.commonmark:commonmark:0.19.0"
     implementation "de.tum.in.ase.athene:client:0.0.2"
 
@@ -287,10 +289,10 @@ dependencies {
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
     testImplementation "org.gradle:gradle-tooling-api:7.3"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M7"
-    testImplementation "com.opencsv:opencsv:5.6"
+    testImplementation "com.opencsv:opencsv:5.7.0"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20220320"
+    testImplementation "org.json:json:20220924"
 }
 
 task cleanResources(type: Delete) {
@@ -328,7 +330,7 @@ tasks.withType(Test) {
 }
 
 wrapper {
-    gradleVersion = "7.5"
+    gradleVersion = "7.5.1"
 }
 
 task stage(dependsOn: "bootWar") {
@@ -383,14 +385,14 @@ tasks.named("dependencyUpdates").configure {
 }
 
 pitest {
-    targetClasses = ['de.tum.in.www1.artemis.service.exam.ExamService']
+    targetClasses = ["de.tum.in.www1.artemis.service.exam.ExamService"]
     targetTests = [
-        'de.tum.in.www1.artemis.StudentExamIntegrationTest',
-        'de.tum.in.www1.artemis.ExamIntegrationTest',
+        "de.tum.in.www1.artemis.StudentExamIntegrationTest",
+        "de.tum.in.www1.artemis.ExamIntegrationTest",
     ]
-    outputFormats = ['XML', 'HTML']
+    outputFormats = ["XML", "HTML"]
     timestampedReports = false
-    junit5PluginVersion = '0.15'
+    junit5PluginVersion = "1.0.0"
     timeoutFactor = 1.5
     timeoutConstInMillis = 10000
     useClasspathFile = true
@@ -411,3 +413,4 @@ pitest {
 // 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
 // 10) Detects uses of legacy code:                 ./gradlew modernizer -x webapp
 // 11) Run PIT Mutation Tests:                      ./gradlew pitest -x webapp
+// 12) Check for vulnerabilities in dependencies    ./gradlew dependencyCheckAnalyze

@@ -283,21 +283,14 @@
                         <hr />
                     </div>
                     <!-- Display started exams-->
-                    <div
-                        *ngIf="
-                            examChecklist &&
-                            examChecklist.numberOfGeneratedStudentExams !== null &&
-                            examChecklist.numberOfGeneratedStudentExams !== 0 &&
-                            examChecklist.numberOfExamsStarted > 0
-                        "
-                    >
+                    <div *ngIf="examChecklist && examChecklist.numberOfGeneratedStudentExams !== null && examChecklist.numberOfGeneratedStudentExams !== 0 && numberOfStarted > 0">
                         <!-- -->
                         <span>{{ 'artemisApp.examManagement.checklist.textitems.startedExam' | artemisTranslate }}:</span>
                         <div class="pt-2">
                             <jhi-progress-bar
                                 [denominator]="examChecklist.numberOfGeneratedStudentExams!"
-                                [numerator]="examChecklist.numberOfExamsStarted!"
-                                [percentage]="(100 * examChecklist.numberOfExamsStarted!) / examChecklist.numberOfGeneratedStudentExams!"
+                                [numerator]="numberOfStarted"
+                                [percentage]="(100 * numberOfStarted) / examChecklist.numberOfGeneratedStudentExams!"
                             >
                             </jhi-progress-bar>
                         </div>
@@ -305,25 +298,16 @@
                     </div>
                     <!-- Display submitted exams-->
                     <div
-                        *ngIf="
-                            examChecklist &&
-                            examChecklist.numberOfGeneratedStudentExams !== null &&
-                            examChecklist.numberOfGeneratedStudentExams !== 0 &&
-                            examChecklist.numberOfExamsSubmitted > 0
-                        "
+                        *ngIf="examChecklist && examChecklist.numberOfGeneratedStudentExams !== null && examChecklist.numberOfGeneratedStudentExams !== 0 && numberOfSubmitted > 0"
                     >
                         <span>{{ 'artemisApp.examManagement.checklist.textitems.submittedExam' | artemisTranslate }}:</span>
                         <div class="pt-2">
-                            <jhi-progress-bar
-                                [denominator]="examChecklist.numberOfExamsStarted"
-                                [numerator]="examChecklist.numberOfExamsSubmitted!"
-                                [percentage]="(100 * examChecklist.numberOfExamsSubmitted!) / examChecklist.numberOfExamsStarted!"
-                            >
+                            <jhi-progress-bar [denominator]="numberOfStarted" [numerator]="numberOfSubmitted!" [percentage]="(100 * numberOfSubmitted!) / numberOfStarted">
                             </jhi-progress-bar>
                         </div>
                         <br />
                     </div>
-                    <div *ngIf="examChecklist && examChecklist.numberOfExamsSubmitted! === 0">
+                    <div *ngIf="examChecklist && numberOfSubmitted! === 0">
                         <span>{{ 'artemisApp.examManagement.checklist.textitems.noSubmissions' | artemisTranslate }}</span>
                     </div>
                 </td>
@@ -343,7 +327,7 @@
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examMonitoring' | artemisTranslate }}</span>
                 </td>
                 <td>
-                    <a [routerLink]="['monitoring']" class="btn btn-info" id="monitoring-button-{{ exam.id }}">
+                    <a [routerLink]="['monitoring']" class="btn btn-info" id="monitoring-button-{{ exam.id }}" [jhiFeatureToggleLink]="FeatureToggle.ExamLiveStatistics">
                         <fa-icon [icon]="faEye"></fa-icon>
                         <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examMonitoring' | artemisTranslate }}</span>
                     </a>
@@ -383,7 +367,7 @@
                         <hr />
                         <!-- Display assessment progress summed up over all exercises, by correction round -->
 
-                        <div *ngIf="examChecklist && examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && examChecklist.numberOfExamsSubmitted !== 0">
+                        <div *ngIf="examChecklist && examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && numberOfSubmitted !== 0">
                             <div *ngFor="let finishedByCorrectionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound; let index = index">
                                 <hr *ngIf="index > 0" />
                                 <span> {{ 'artemisApp.examManagement.checklist.textitems.correctionRound' | artemisTranslate }} {{ index + 1 }} : </span>
@@ -397,7 +381,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div *ngIf="examChecklist && examChecklist.numberOfExamsSubmitted === 0">
+                        <div *ngIf="examChecklist && numberOfSubmitted === 0">
                             <span>{{ 'artemisApp.examManagement.checklist.textitems.noSubmissions' | artemisTranslate }}</span>
                         </div>
                         <br />

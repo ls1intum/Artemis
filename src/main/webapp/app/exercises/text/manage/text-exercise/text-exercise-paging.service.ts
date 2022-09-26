@@ -13,13 +13,15 @@ export class TextExercisePagingService {
 
     constructor(private http: HttpClient) {}
 
-    searchForExercises(pageable: PageableSearch): Observable<EntityResponseType> {
+    searchForExercises(pageable: PageableSearch, isCourseFilter: boolean, isExamFilter: boolean): Observable<EntityResponseType> {
         const params = new HttpParams()
             .set('pageSize', String(pageable.pageSize))
             .set('page', String(pageable.page))
             .set('sortingOrder', pageable.sortingOrder)
             .set('searchTerm', pageable.searchTerm)
-            .set('sortedColumn', pageable.sortedColumn);
+            .set('sortedColumn', pageable.sortedColumn)
+            .set('isCourseFilter', String(isCourseFilter))
+            .set('isExamFilter', String(isExamFilter));
         return this.http.get(`${this.resourceUrl}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }
 }

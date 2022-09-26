@@ -5,6 +5,7 @@ import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialo
 import { CourseGroup } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 @Component({
     selector: 'jhi-user-import-button',
@@ -13,7 +14,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
             [btnType]="ButtonType.PRIMARY"
             [btnSize]="buttonSize"
             [icon]="faPlus"
-            [title]="'importUsers.buttonLabel'"
+            [title]="'artemisApp.importUsers.buttonLabel'"
             (onClick)="openUsersImportDialog($event)"
         ></jhi-button>
     `,
@@ -22,6 +23,7 @@ export class UsersImportButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
+    @Input() tutorialGroup: TutorialGroup | undefined = undefined;
     @Input() courseGroup: CourseGroup;
     @Input() courseId: number;
     @Input() buttonSize: ButtonSize = ButtonSize.MEDIUM;
@@ -44,6 +46,7 @@ export class UsersImportButtonComponent {
         modalRef.componentInstance.courseId = this.courseId;
         modalRef.componentInstance.courseGroup = this.courseGroup;
         modalRef.componentInstance.exam = this.exam;
+        modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
         modalRef.result.then(
             () => this.finish.emit(),
             () => {},

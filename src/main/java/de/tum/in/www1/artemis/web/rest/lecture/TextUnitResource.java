@@ -79,7 +79,7 @@ public class TextUnitResource {
     public ResponseEntity<TextUnit> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) {
         log.debug("REST request to update an text unit : {}", textUnit);
         if (textUnit.getId() == null) {
-            throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idNull");
         }
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
             throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
@@ -103,7 +103,7 @@ public class TextUnitResource {
     public ResponseEntity<TextUnit> createTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) throws URISyntaxException {
         log.debug("REST request to create TextUnit : {}", textUnit);
         if (textUnit.getId() != null) {
-            throw new BadRequestAlertException("A new text unit cannot have an id", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new text unit cannot have an id", ENTITY_NAME, "idExists");
         }
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);

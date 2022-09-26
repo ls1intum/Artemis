@@ -9,6 +9,7 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
@@ -199,6 +200,26 @@ public class Post extends Posting {
             return true;
         }
         return getCourseWideContext() != null && otherPost.getCourseWideContext() != null && getCourseWideContext() == otherPost.getCourseWideContext();
+    }
+
+    /**
+     * Helper method to extract the course a Post belongs to, which is found in different locations based on the Post's context
+     * @return the course Post belongs to
+     */
+    @JsonIgnore
+    @Override
+    public Course getCoursePostingBelongsTo() {
+        if (this.course != null) {
+            return this.course;
+        }
+        else if (this.lecture != null) {
+            return this.lecture.getCourse();
+        }
+        else if (this.exercise != null) {
+            return this.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        }
+
+        return null;
     }
 
     @Override

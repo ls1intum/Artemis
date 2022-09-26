@@ -53,7 +53,7 @@ describe('TextExercise Management Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should call loadExercises on init', () => {
+    it('should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(courseExerciseService, 'findAllTextExercisesForCourse').mockReturnValue(
@@ -73,7 +73,7 @@ describe('TextExercise Management Component', () => {
         expect(courseExerciseService.findAllTextExercisesForCourse).toHaveBeenCalledOnce();
     });
 
-    it('Should open modal', () => {
+    it('should open modal', () => {
         const mockReturnValue = { result: Promise.resolve({ id: 456 } as TextExercise) } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
@@ -82,12 +82,12 @@ describe('TextExercise Management Component', () => {
         expect(modalService.open).toHaveBeenCalledOnce();
     });
 
-    it('Should return exercise id', () => {
+    it('should return exercise id', () => {
         expect(comp.trackId(0, textExercise)).toBe(456);
     });
 
     describe('TextExercise Search Exercises', () => {
-        it('Should show all exercises', () => {
+        it('should show all exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('EXT', '', 'text');
 
@@ -96,7 +96,7 @@ describe('TextExercise Management Component', () => {
             expect(comp.filteredTextExercises).toHaveLength(1);
         });
 
-        it('Should show no exercises', () => {
+        it('should show no exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
 
