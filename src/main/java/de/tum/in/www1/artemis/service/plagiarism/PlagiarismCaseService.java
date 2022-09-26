@@ -1,9 +1,14 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
@@ -51,12 +56,12 @@ public class PlagiarismCaseService {
      */
     public PlagiarismCase updatePlagiarismCaseVerdict(long plagiarismCaseId, PlagiarismVerdictDTO plagiarismVerdictDTO) {
         PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(plagiarismCaseId);
-        plagiarismCase.setVerdict(plagiarismVerdictDTO.getVerdict());
-        if (plagiarismVerdictDTO.getVerdict().equals(PlagiarismVerdict.POINT_DEDUCTION)) {
-            plagiarismCase.setVerdictPointDeduction(plagiarismVerdictDTO.getVerdictPointDeduction());
+        plagiarismCase.setVerdict(plagiarismVerdictDTO.verdict());
+        if (plagiarismVerdictDTO.verdict().equals(PlagiarismVerdict.POINT_DEDUCTION)) {
+            plagiarismCase.setVerdictPointDeduction(plagiarismVerdictDTO.verdictPointDeduction());
         }
-        else if (plagiarismVerdictDTO.getVerdict().equals(PlagiarismVerdict.WARNING)) {
-            plagiarismCase.setVerdictMessage(plagiarismVerdictDTO.getVerdictMessage());
+        else if (plagiarismVerdictDTO.verdict().equals(PlagiarismVerdict.WARNING)) {
+            plagiarismCase.setVerdictMessage(plagiarismVerdictDTO.verdictMessage());
         }
         plagiarismCase.setVerdictDate(ZonedDateTime.now());
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -156,6 +161,41 @@ public class PlagiarismCaseService {
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCaseB.isPresent() && plagiarismCaseB.get().getPlagiarismSubmissions().isEmpty()) {
             plagiarismCaseRepository.delete(plagiarismCaseB.get());
+        }
+    }
+
+    public record PlagiarismMapping(Map<Long, Map<Long, PlagiarismCase>> studentIdToExerciseIdToPlagiarismCaseMap) {
+
+        /**
+         * Factory method to create a PlagiarismMapping from a PlagiarismCase collection.
+         * Useful for creating PlagiarismMapping from a database repository response.
+         *
+         * @param plagiarismCases a collection of relavant plagiarism cases with student/team ids and exercise ids present
+         * @return a populated PlagiarismMapping instance
+         */
+        public static PlagiarismMapping createFromPlagiarismCases(Collection<PlagiarismCase> plagiarismCases) {
+            Map<Long, Map<Long, PlagiarismCase>> outerMap = new HashMap<>();
+            for (PlagiarismCase plagiarismCase : plagiarismCases) {
+                for (User student : plagiarismCase.getStudents()) {
+                    var innerMap = outerMap.computeIfAbsent(student.getId(), studentId -> new HashMap<>());
+                    innerMap.put(plagiarismCase.getExercise().getId(), plagiarismCase);
+                }
+            }
+            return new PlagiarismMapping(outerMap);
+        }
+
+        public PlagiarismCase getPlagiarismCase(Long studentId, Long exerciseId) {
+            var innerMap = studentIdToExerciseIdToPlagiarismCaseMap.get(studentId);
+            return innerMap != null ? innerMap.get(exerciseId) : null;
+        }
+
+        public Map<Long, PlagiarismCase> getPlagiarismCasesForStudent(Long studentId) {
+            return studentIdToExerciseIdToPlagiarismCaseMap.getOrDefault(studentId, Collections.emptyMap());
+        }
+
+        public boolean studentHasVerdict(Long studentId, PlagiarismVerdict plagiarismVerdict) {
+            var innerMap = getPlagiarismCasesForStudent(studentId);
+            return innerMap.values().stream().anyMatch(plagiarismCase -> plagiarismVerdict.equals(plagiarismCase.getVerdict()));
         }
     }
 }

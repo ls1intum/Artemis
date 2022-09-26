@@ -11,6 +11,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
+import { Course } from 'app/entities/course.model';
 
 describe('AssessmentDashboardInformationComponent', () => {
     let component: AssessmentDashboardInformationComponent;
@@ -25,6 +26,7 @@ describe('AssessmentDashboardInformationComponent', () => {
 
         fixture = TestBed.createComponent(AssessmentDashboardInformationComponent);
         component = fixture.componentInstance;
+        component.course = { id: 10 } as Course;
     });
 
     afterEach(() => {
@@ -62,7 +64,6 @@ describe('AssessmentDashboardInformationComponent', () => {
     it('should set up links correctly', () => {
         component.isExamMode = false;
         component.examId = 42;
-        component.courseId = 10;
 
         jest.spyOn(component, 'setupGraph').mockImplementation();
 

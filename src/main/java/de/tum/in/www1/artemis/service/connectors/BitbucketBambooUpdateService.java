@@ -117,9 +117,9 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         parameters.add("repository.stash.branch", branchName);
 
         BitbucketRepositoryDTO bitbucketRepository = getBitbucketRepository(bitbucketProjectKey, bitbucketRepositoryName);
-        parameters.add("repository.stash.repositoryId", bitbucketRepository.getId());
-        parameters.add("repository.stash.repositorySlug", bitbucketRepository.getSlug());
-        parameters.add("repository.stash.projectKey", bitbucketRepository.getProject().getKey());
+        parameters.add("repository.stash.repositoryId", bitbucketRepository.id());
+        parameters.add("repository.stash.repositorySlug", bitbucketRepository.slug());
+        parameters.add("repository.stash.projectKey", bitbucketRepository.project().key());
         parameters.add("repository.stash.repositoryUrl", bitbucketRepository.getCloneSshUrl());
 
         Optional<ApplicationLinksDTO.ApplicationLinkDTO> applicationLink = getApplicationLink(vcsApplicationLinkName);

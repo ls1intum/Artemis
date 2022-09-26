@@ -91,7 +91,7 @@ describe('CourseParticipantScores', () => {
         const findAllOfCourseSpy = jest.spyOn(participantScoreService, 'findAllOfCourse').mockReturnValue(of(findAllOfCourseResponse));
         // Spy find average of course
         const participantScoreAverageDTO = new ParticipantScoreAverageDTO();
-        participantScoreAverageDTO.userName = 'test';
+        participantScoreAverageDTO.name = 'test';
         participantScoreAverageDTO.averageScore = 10;
         const findAverageOfCoursePerParticipantResponse: HttpResponse<ParticipantScoreAverageDTO[]> = new HttpResponse({
             body: [participantScoreAverageDTO],
@@ -119,9 +119,9 @@ describe('CourseParticipantScores', () => {
         expect(component.participantScoresAverage).toEqual([participantScoreAverageDTO]);
         expect(component.avgScore).toBe(99);
         expect(component.avgRatedScore).toBe(99);
-        expect(findAllOfCourseSpy).toHaveBeenCalled();
-        expect(findAverageOfCoursePerParticipantSpy).toHaveBeenCalled();
-        expect(findAverageOfCourseSpy).toHaveBeenCalled();
-        expect(findGradingScaleForCourseSpy).toHaveBeenCalled();
+        expect(findAllOfCourseSpy).toHaveBeenCalledOnce();
+        expect(findAverageOfCoursePerParticipantSpy).toHaveBeenCalledOnce();
+        expect(findAverageOfCourseSpy).toHaveBeenCalledTimes(2);
+        expect(findGradingScaleForCourseSpy).toHaveBeenCalledOnce();
     });
 });

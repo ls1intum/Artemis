@@ -104,7 +104,7 @@ describe('StudentExamDetailComponent', () => {
                 userId: 1,
                 name: 'user1',
                 login: 'user1',
-                eMail: 'user1@tum.de',
+                email: 'user1@tum.de',
                 registrationNumber: '111',
                 overallPointsAchieved: 40,
                 overallScoreAchieved: 40,
@@ -326,5 +326,15 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.workingTimeFormValues.percent = -100;
         studentExamDetailComponent.updateWorkingTimeDuration();
         expectDuration(0, 0, 0);
+    });
+
+    it.each([
+        [true, undefined, 'artemisApp.studentExams.bonus'],
+        [false, '2.0', 'artemisApp.studentExams.gradeBeforeBonus'],
+        [false, undefined, 'artemisApp.studentExams.grade'],
+    ])('should get the correct grade explanation label', (isBonus: boolean, gradeAfterBonus: string | undefined, gradeExplanation: string) => {
+        studentExamDetailComponent.isBonus = isBonus;
+        studentExamDetailComponent.gradeAfterBonus = gradeAfterBonus;
+        expect(studentExamDetailComponent.getGradeExplanation()).toBe(gradeExplanation);
     });
 });

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doReturn;
 
 import javax.mail.internet.MimeMessage;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationServic
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 
@@ -90,13 +92,13 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     @SpyBean
-    protected ScoreService scoreService;
-
-    @SpyBean
     protected UrlService urlService;
 
     @SpyBean
     protected ScheduleService scheduleService;
+
+    @SpyBean
+    protected ParticipantScoreSchedulerService participantScoreSchedulerService;
 
     @SpyBean
     protected TextBlockService textBlockService;
@@ -107,15 +109,23 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Autowired
     protected RequestUtilService request;
 
+    @Autowired
+    protected HibernateQueryInterceptor queryInterceptor;
+
     @BeforeEach
     void mockMailService() {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
+    @AfterEach
+    void stopRunningTasks() {
+        participantScoreSchedulerService.shutdown();
+    }
+
     public void resetSpyBeans() {
         Mockito.reset(ltiService, gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, messagingTemplate, examAccessService, mailService,
-                instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService, scheduleService, javaMailSender,
-                programmingTriggerService);
+                instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scheduleService,
+                participantScoreSchedulerService, javaMailSender, programmingTriggerService);
     }
 
     @Override
@@ -138,5 +148,15 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Override
     public void mockGetProjectKeyFromAnyUrl(String projectKey) {
         doReturn(projectKey).when(urlService).getProjectKeyFromRepositoryUrl(any());
+    }
+
+    /**
+     * Allows to test the number of database queries during a REST call by passing in the REST call and returning a QueryCountAssert object
+     *
+     * @param call the REST call during which the number of database queries will be tracked
+     * @return a QueryCountAssert object allowing to test how many queries were done during the call
+     */
+    protected <T, E extends Exception> QueryCountAssert<T, E> assertThatDb(ThrowingProducer<T, E> call) {
+        return QueryCountAssert.assertThatDb(queryInterceptor, call);
     }
 }

@@ -172,7 +172,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         expect(comp.isLoading).toBeFalse();
         // check if findAllSubmissionsOfParticipationStub() is called and works
-        expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalled();
+        expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
         expect(comp.participation).toEqual(participation);
         expect(comp.submissions).toEqual(submissions);
 
@@ -212,7 +212,7 @@ describe('ParticipationSubmissionComponent', () => {
         tick();
 
         expect(comp.isLoading).toBeFalse();
-        expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalled();
+        expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
         expect(comp.exercise).toEqual(programmingExercise);
         expect(comp.participation).toEqual(templateParticipation);
         expect(comp.submissions).toEqual(templateParticipation.submissions);
@@ -249,7 +249,7 @@ describe('ParticipationSubmissionComponent', () => {
         tick();
 
         expect(comp.isLoading).toBeFalse();
-        expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalled();
+        expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
         expect(comp.participation).toEqual(solutionParticipation);
         expect(comp.submissions).toEqual(solutionParticipation.submissions);
 
@@ -302,7 +302,7 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
             fixture.detectChanges();
             tick();
-            expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalled();
+            expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
             expect(comp.submissions![0].results![0].submission).toEqual(submissionWithTwoResults);
             comp.deleteResult(submissionWithTwoResults, result2);
             tick();
@@ -367,7 +367,7 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
             fixture.detectChanges();
             tick();
-            expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalled();
+            expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
             expect(comp.submissions![0].results![0].submission).toEqual(submissionWithTwoResults2);
             comp.deleteResult(submissionWithTwoResults, result2);
             tick();

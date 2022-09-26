@@ -50,14 +50,14 @@ describe('RatingComponent', () => {
         jest.spyOn(ratingService, 'getRating');
         delete ratingComponent.result;
         ratingComponent.ngOnInit();
-        expect(ratingService.getRating).toHaveBeenCalledTimes(0);
+        expect(ratingService.getRating).not.toHaveBeenCalled();
     });
 
     it('should return due to missing participation', () => {
         jest.spyOn(ratingService, 'getRating');
         delete ratingComponent.result?.participation;
         ratingComponent.ngOnInit();
-        expect(ratingService.getRating).toHaveBeenCalledTimes(0);
+        expect(ratingService.getRating).not.toHaveBeenCalled();
     });
 
     it('should create new local rating', () => {
@@ -87,8 +87,8 @@ describe('RatingComponent', () => {
                 newValue: 2,
                 starRating: new StarRatingComponent(),
             });
-            expect(ratingService.createRating).toHaveBeenCalledTimes(0);
-            expect(ratingService.updateRating).toHaveBeenCalledTimes(0);
+            expect(ratingService.createRating).not.toHaveBeenCalled();
+            expect(ratingService.updateRating).not.toHaveBeenCalled();
         });
 
         it('should create new rating', () => {
@@ -98,7 +98,7 @@ describe('RatingComponent', () => {
                 starRating: new StarRatingComponent(),
             });
             expect(ratingService.createRating).toHaveBeenCalledOnce();
-            expect(ratingService.updateRating).toHaveBeenCalledTimes(0);
+            expect(ratingService.updateRating).not.toHaveBeenCalled();
             expect(ratingComponent.rating.result?.id).toBe(89);
             expect(ratingComponent.rating.rating).toBe(2);
         });
@@ -111,7 +111,7 @@ describe('RatingComponent', () => {
                 starRating: new StarRatingComponent(),
             });
             expect(ratingService.updateRating).toHaveBeenCalledOnce();
-            expect(ratingService.createRating).toHaveBeenCalledTimes(0);
+            expect(ratingService.createRating).not.toHaveBeenCalled();
             expect(ratingComponent.rating.result?.id).toBe(89);
             expect(ratingComponent.rating.rating).toBe(2);
         });

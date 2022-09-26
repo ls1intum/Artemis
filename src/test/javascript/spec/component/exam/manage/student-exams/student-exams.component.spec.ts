@@ -239,9 +239,9 @@ describe('StudentExamsComponent', () => {
         studentExamsComponentFixture.detectChanges();
 
         expect(studentExamsComponentFixture).toBeDefined();
-        expect(findCourseSpy).toHaveBeenCalled();
-        expect(findExamSpy).toHaveBeenCalled();
-        expect(findAllStudentExamsSpy).toHaveBeenCalled();
+        expect(findCourseSpy).toHaveBeenCalledOnce();
+        expect(findExamSpy).toHaveBeenCalledOnce();
+        expect(findAllStudentExamsSpy).toHaveBeenCalledOnce();
         expect(studentExamsComponent.course).toEqual(course);
         expect(studentExamsComponent.studentExams).toEqual(studentExams);
         expect(studentExamsComponent.exam).toEqual(exam);
@@ -271,7 +271,7 @@ describe('StudentExamsComponent', () => {
         expect(generateStudentExamsButton.nativeElement.disabled).toBeFalse();
         expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toBeFalse();
         generateStudentExamsButton.nativeElement.click();
-        expect(generateStudentExamsSpy).toHaveBeenCalled();
+        expect(generateStudentExamsSpy).toHaveBeenCalledOnce();
         expect(studentExamsComponent.studentExams).toHaveLength(2);
     });
 
@@ -299,7 +299,7 @@ describe('StudentExamsComponent', () => {
         expect(generateStudentExamsButton).toBeTruthy();
         expect(generateStudentExamsButton.nativeElement.disabled).toBeFalse();
         generateStudentExamsButton.nativeElement.click();
-        expect(alertServiceSpy).toHaveBeenCalled();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(translationSpy).toHaveBeenCalledWith(errorDetailString);
     });
 
@@ -325,8 +325,8 @@ describe('StudentExamsComponent', () => {
         expect(generateStudentExamsButton.nativeElement.disabled).toBeFalse();
         expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toBeTrue();
         generateStudentExamsButton.nativeElement.click();
-        expect(modalServiceOpenStub).toHaveBeenCalled();
-        expect(generateStudentExamsSpy).toHaveBeenCalled();
+        expect(modalServiceOpenStub).toHaveBeenCalledOnce();
+        expect(generateStudentExamsSpy).toHaveBeenCalledOnce();
         expect(studentExamsComponent.studentExams).toHaveLength(2);
     });
 
@@ -349,7 +349,7 @@ describe('StudentExamsComponent', () => {
         expect(generateMissingStudentExamsButton.nativeElement.disabled).toBeFalse();
         expect(!!studentExamsComponent.studentExams && !!studentExamsComponent.studentExams.length).toBeTrue();
         generateMissingStudentExamsButton.nativeElement.click();
-        expect(generateStudentExamsSpy).toHaveBeenCalled();
+        expect(generateStudentExamsSpy).toHaveBeenCalledOnce();
         expect(studentExamsComponent.studentExams).toHaveLength(2);
     });
 
@@ -370,7 +370,7 @@ describe('StudentExamsComponent', () => {
         expect(generateMissingStudentExamsButton).toBeTruthy();
         expect(generateMissingStudentExamsButton.nativeElement.disabled).toBeFalse();
         generateMissingStudentExamsButton.nativeElement.click();
-        expect(alertServiceSpy).toHaveBeenCalled();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should start the exercises of students', () => {
@@ -389,7 +389,7 @@ describe('StudentExamsComponent', () => {
         expect(startExercisesButton.nativeElement.disabled).toBeFalse();
 
         startExercisesButton.nativeElement.click();
-        expect(startExercisesSpy).toHaveBeenCalled();
+        expect(startExercisesSpy).toHaveBeenCalledOnce();
     });
 
     it('should correctly catch HTTPError when starting the exercises of the students', () => {
@@ -407,7 +407,7 @@ describe('StudentExamsComponent', () => {
         expect(startExercisesButton).toBeTruthy();
         expect(startExercisesButton.nativeElement.disabled).toBeFalse();
         startExercisesButton.nativeElement.click();
-        expect(alertServiceSpy).toHaveBeenCalled();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should unlock all repositories of the students', () => {
@@ -429,8 +429,8 @@ describe('StudentExamsComponent', () => {
         expect(unlockAllRepositoriesButton).toBeTruthy();
         expect(unlockAllRepositoriesButton.nativeElement.disabled).toBeFalse();
         unlockAllRepositoriesButton.nativeElement.click();
-        expect(modalServiceOpenStub).toHaveBeenCalled();
-        expect(unlockAllRepositories).toHaveBeenCalled();
+        expect(modalServiceOpenStub).toHaveBeenCalledOnce();
+        expect(unlockAllRepositories).toHaveBeenCalledOnce();
     });
 
     it('should correctly catch HTTPError when unlocking all repositories', () => {
@@ -457,7 +457,7 @@ describe('StudentExamsComponent', () => {
         expect(unlockAllRepositoriesButton.nativeElement.disabled).toBeFalse();
 
         unlockAllRepositoriesButton.nativeElement.click();
-        expect(alertServiceSpy).toHaveBeenCalled();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should lock all repositories of the students', () => {
@@ -480,8 +480,8 @@ describe('StudentExamsComponent', () => {
         expect(lockAllRepositoriesButton.nativeElement.disabled).toBeFalse();
 
         lockAllRepositoriesButton.nativeElement.click();
-        expect(modalServiceOpenStub).toHaveBeenCalled();
-        expect(lockAllRepositories).toHaveBeenCalled();
+        expect(modalServiceOpenStub).toHaveBeenCalledOnce();
+        expect(lockAllRepositories).toHaveBeenCalledOnce();
     });
 
     it('should correctly catch HTTPError when locking all repositories', () => {
@@ -507,7 +507,7 @@ describe('StudentExamsComponent', () => {
         expect(lockAllRepositoriesButton).toBeTruthy();
         expect(lockAllRepositoriesButton.nativeElement.disabled).toBeFalse();
         lockAllRepositoriesButton.nativeElement.click();
-        expect(alertServiceSpy).toHaveBeenCalled();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it.each([

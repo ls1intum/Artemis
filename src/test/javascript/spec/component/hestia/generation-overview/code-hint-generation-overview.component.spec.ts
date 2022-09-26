@@ -5,9 +5,9 @@ import { CodeHint, CodeHintGenerationStep } from 'app/entities/hestia/code-hint-
 import { CodeHintGenerationOverviewComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.component';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 describe('CodeHintGenerationOverview Component', () => {
     let comp: CodeHintGenerationOverviewComponent;
@@ -91,7 +91,7 @@ describe('CodeHintGenerationOverview Component', () => {
         expect(latestStepSpy).toHaveBeenCalledWith(CodeHintGenerationStep.GIT_DIFF);
         expect(comp.isPerformedByStep.get(CodeHintGenerationStep.GIT_DIFF)).toBeFalse();
 
-        comp.onDiffReportLoaded(new ProgrammingExerciseFullGitDiffReport());
+        comp.onDiffReportLoaded(new ProgrammingExerciseGitDiffReport());
         expect(latestStepSpy).toHaveBeenCalledTimes(2);
         expect(latestStepSpy).toHaveBeenNthCalledWith(2, CodeHintGenerationStep.GIT_DIFF);
         expect(comp.isPerformedByStep.get(CodeHintGenerationStep.GIT_DIFF)).toBeTrue();

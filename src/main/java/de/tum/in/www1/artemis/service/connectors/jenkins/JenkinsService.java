@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
+
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,10 +25,12 @@ import com.offbytwo.jenkins.JenkinsServer;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
@@ -59,9 +64,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             FeedbackRepository feedbackRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
-            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService,
+            JenkinsInternalUrlService jenkinsInternalUrlService, TestwiseCoverageService testwiseCoverageService) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate);
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
@@ -114,7 +119,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories) {
-        jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, ciRepoName, newRepoUrl, existingRepoUrl);
+        jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, newRepoUrl, existingRepoUrl);
     }
 
     @Override
@@ -157,6 +162,61 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
+    public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+            List<BuildLogEntry> buildLogEntries) {
+        if (buildLogEntries.isEmpty()) {
+            // No logs received -> Do nothing
+            return;
+        }
+
+        if (programmingLanguage != ProgrammingLanguage.JAVA) {
+            // Not supported -> Do nothing
+            return;
+        }
+
+        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
+        ZonedDateTime agentSetupCompleted = null;
+        ZonedDateTime testsStarted = null;
+        ZonedDateTime testsFinished = null;
+        ZonedDateTime scaStarted = null;
+        ZonedDateTime scaFinished = null;
+        ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
+        Integer dependenciesDownloadedCount = null;
+
+        if (ProjectType.isMavenProject(projectType)) {
+            agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "docker exec");
+            testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
+            testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
+            scaStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...", 1);
+            scaFinished = getTimestampForLogEntry(buildLogEntries, "Total time:", 1);
+            dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
+        }
+        else if (projectType.isGradle()) {
+            // agentSetupCompleted is not supported
+            testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting a Gradle Daemon");
+            testsFinished = getTimestampForLogEntry(buildLogEntries,
+                    buildLogEntry -> buildLogEntry.getLog().contains("BUILD SUCCESSFUL in") || buildLogEntry.getLog().contains("BUILD FAILED in"));
+            scaStarted = getTimestampForLogEntry(buildLogEntries, "Task :checkstyleMain");
+            scaFinished = getTimestampForLogEntry(buildLogEntries,
+                    buildLogEntry -> buildLogEntry.getLog().contains("BUILD SUCCESSFUL in") || buildLogEntry.getLog().contains("BUILD FAILED in"), 1);
+            // dependenciesDownloadedCount is not supported
+        }
+        else {
+            // A new, unsupported project type was used -> Log it but don't store it since it would only contain null-values
+            log.warn("Received unsupported project type {} for JenkinsService.extractAndPersistBuildLogStatistics, will not store any build log statistics.", projectType);
+            return;
+        }
+
+        var agentSetupDuration = new BuildJobPartDuration(jobStarted, agentSetupCompleted);
+        var testDuration = new BuildJobPartDuration(testsStarted, testsFinished);
+        var scaDuration = new BuildJobPartDuration(scaStarted, scaFinished);
+        var totalJobDuration = new BuildJobPartDuration(jobStarted, jobFinished);
+
+        buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
+                dependenciesDownloadedCount);
+    }
+
+    @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
         if (participation.getBuildPlanId() == null) {
             // The build plan does not exist, the build status cannot be retrieved
@@ -183,14 +243,14 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
         // Extract test case feedback
         for (final var job : jobs) {
-            for (final var testCase : job.getTestCases()) {
+            for (final var testCase : job.testCases()) {
                 var feedbackMessages = extractMessageFromTestCase(testCase).map(List::of).orElse(List.of());
-                var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.getName(), feedbackMessages, testCase.isSuccessful(), programmingLanguage, projectType);
+                var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.name(), feedbackMessages, testCase.isSuccessful(), programmingLanguage, projectType);
                 result.addFeedback(feedback);
             }
 
-            int passedTestCasesAmount = (int) job.getTestCases().stream().filter(TestCaseDTO::isSuccessful).count();
-            result.setTestCaseCount(result.getTestCaseCount() + job.getTests());
+            int passedTestCasesAmount = (int) job.testCases().stream().filter(TestCaseDTO::isSuccessful).count();
+            result.setTestCaseCount(result.getTestCaseCount() + job.tests());
             result.setPassedTestCaseCount(result.getPassedTestCaseCount() + passedTestCasesAmount);
         }
 
@@ -219,25 +279,25 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
      * @return the most helpful message that can be added to an automatic {@link Feedback}.
      */
     private Optional<String> extractMessageFromTestCase(final TestCaseDTO testCase) {
-        var hasErrors = !CollectionUtils.isEmpty(testCase.getErrors());
-        var hasFailures = !CollectionUtils.isEmpty(testCase.getFailures());
-        var hasSuccessInfos = !CollectionUtils.isEmpty(testCase.getSuccessInfos());
+        var hasErrors = !CollectionUtils.isEmpty(testCase.errors());
+        var hasFailures = !CollectionUtils.isEmpty(testCase.failures());
+        var hasSuccessInfos = !CollectionUtils.isEmpty(testCase.successInfos());
         boolean successful = testCase.isSuccessful();
 
-        if (successful && hasSuccessInfos && testCase.getSuccessInfos().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(testCase.getSuccessInfos().get(0).getMostInformativeMessage());
+        if (successful && hasSuccessInfos && testCase.successInfos().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.successInfos().get(0).getMostInformativeMessage());
         }
-        else if (hasErrors && testCase.getErrors().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(testCase.getErrors().get(0).getMostInformativeMessage());
+        else if (hasErrors && testCase.errors().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.errors().get(0).getMostInformativeMessage());
         }
-        else if (hasFailures && testCase.getFailures().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(testCase.getFailures().get(0).getMostInformativeMessage());
+        else if (hasFailures && testCase.failures().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.failures().get(0).getMostInformativeMessage());
         }
-        else if (hasErrors && testCase.getErrors().get(0).getType() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType()));
+        else if (hasErrors && testCase.errors().get(0).type() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.errors().get(0).type()));
         }
-        else if (hasFailures && testCase.getFailures().get(0).getType() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType()));
+        else if (hasFailures && testCase.failures().get(0).type() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.failures().get(0).type()));
         }
         else if (!successful) {
             // this is an edge case which typically does not happen

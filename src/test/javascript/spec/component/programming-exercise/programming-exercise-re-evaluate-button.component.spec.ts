@@ -42,7 +42,7 @@ describe('ProgrammingExercise Re-Evaluate Button Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should reEvaluate exercise', () => {
+    it('should reEvaluate exercise', () => {
         jest.spyOn(gradingService, 'reEvaluate');
 
         const button = fixture.debugElement.nativeElement.querySelector('#re-evaluate-button button');

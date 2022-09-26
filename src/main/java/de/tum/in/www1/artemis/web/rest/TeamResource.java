@@ -106,7 +106,7 @@ public class TeamResource {
     public ResponseEntity<Team> createTeam(@RequestBody Team team, @PathVariable long exerciseId) throws URISyntaxException {
         log.debug("REST request to save Team : {}", team);
         if (team.getId() != null) {
-            throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idExists");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -151,7 +151,7 @@ public class TeamResource {
     public ResponseEntity<Team> updateTeam(@RequestBody Team team, @PathVariable long exerciseId, @PathVariable long teamId) {
         log.debug("REST request to update Team : {}", team);
         if (team.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
         if (!team.getId().equals(teamId)) {
             throw new BadRequestAlertException("The team has an incorrect id.", ENTITY_NAME, "wrongId");

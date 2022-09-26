@@ -24,14 +24,14 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
 
     void deleteAllByTeam(Team team);
 
-    @EntityGraph(type = LOAD, attributePaths = { "team", "exercise", "lastResult", "lastRatedResult" })
-    Optional<TeamScore> findTeamScoreByExerciseAndTeam(Exercise exercise, Team team);
+    @EntityGraph(type = LOAD, attributePaths = { "team", "exercise" })
+    Optional<TeamScore> findByExercise_IdAndTeam_Id(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @EntityGraph(type = LOAD, attributePaths = { "team", "exercise", "lastResult", "lastRatedResult" })
     List<TeamScore> findAllByExerciseIn(Set<Exercise> exercises, Pageable pageable);
 
     @Query("""
-                    SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(t.team, AVG(t.lastScore), AVG(t.lastRatedScore), AVG(t.lastPoints), AVG(t.lastRatedPoints))
+                    SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(t.team.name, AVG(t.lastScore), AVG(t.lastRatedScore), AVG(t.lastPoints), AVG(t.lastRatedPoints))
                     FROM TeamScore t
                     WHERE t.exercise IN :exercises
                     GROUP BY t.team

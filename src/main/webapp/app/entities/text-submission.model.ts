@@ -1,6 +1,6 @@
 import { TextBlock } from 'app/entities/text-block.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
-import { Language } from 'app/entities/tutor-group.model';
+import { Language } from 'app/entities/course.model';
 
 export class TextSubmission extends Submission {
     public text?: string;

@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -114,7 +114,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(HtmlForMarkdownPipe),
-                MockDirective(RouterOutlet),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SubmissionResultStatusComponent),

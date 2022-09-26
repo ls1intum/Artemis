@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.FileResource;
 
 class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -52,9 +51,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private QuizQuestionRepository quizQuestionRepository;
-
-    @Autowired
-    private FileResource fileResource;
 
     @Autowired
     private LectureRepository lectureRepo;
@@ -344,17 +340,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetLectureAttachment_mimeType() throws Exception {
-        // add a new file type to allow to check the mime type detection in FileResource with an exotic extension
-        fileResource.addAllowedFileExtension("exotic");
-
-        Attachment attachment = createLectureWithAttachment("attachment.exotic", HttpStatus.CREATED);
+        Attachment attachment = createLectureWithAttachment("attachment.svg", HttpStatus.CREATED);
         String attachmentPath = attachment.getLink();
         // get access token and then request the file using the access token
         String accessToken = request.get(attachmentPath + "/access-token", HttpStatus.OK, String.class);
         String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
         assertThat(receivedAttachment).isEqualTo("some data");
-
-        fileResource.addRemoveFileExtension("exotic");
     }
 
     private Attachment createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
@@ -531,7 +522,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "student1", roles = "TA")
     void uploadFileUnsupportedFileExtension() throws Exception {
         // create file
-        MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
+        MockMultipartFile file = new MockMultipartFile("file", "something.exotic", "application/json", "some data".getBytes());
         // upload file
         request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
     }

@@ -59,7 +59,7 @@ describe(`AuthInterceptor`, () => {
 
         expect(localStorageSpy).toHaveBeenCalledWith('authenticationToken');
         expect(sessionStorageSpy).toHaveBeenCalledWith('authenticationToken');
-        expect(cloneSpy).toHaveBeenCalledTimes(0);
+        expect(cloneSpy).not.toHaveBeenCalled();
         expect(mockHandler.handle).toHaveBeenCalledOnce();
     });
 
@@ -74,8 +74,8 @@ describe(`AuthInterceptor`, () => {
 
         authInterceptor.intercept(requestMock, mockHandler);
 
-        expect(localStorageSpy).toHaveBeenCalledTimes(0);
-        expect(cloneSpy).toHaveBeenCalledTimes(0);
+        expect(localStorageSpy).not.toHaveBeenCalled();
+        expect(cloneSpy).not.toHaveBeenCalled();
         expect(mockHandler.handle).toHaveBeenCalledOnce();
     });
 });

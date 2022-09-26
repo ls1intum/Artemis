@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -11,10 +12,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
@@ -34,14 +32,18 @@ public class ExampleSubmissionService {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
     public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository,
-            TextExerciseImportService textExerciseImportService, ModelingExerciseImportService modelingExerciseImportService, TextSubmissionRepository textSubmissionRepository) {
+            TextExerciseImportService textExerciseImportService, ModelingExerciseImportService modelingExerciseImportService, TextSubmissionRepository textSubmissionRepository,
+            GradingCriterionRepository gradingCriterionRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.textExerciseImportService = textExerciseImportService;
         this.textSubmissionRepository = textSubmissionRepository;
+        this.gradingCriterionRepository = gradingCriterionRepository;
     }
 
     /**
@@ -67,7 +69,7 @@ public class ExampleSubmissionService {
      * Deletes a ExampleSubmission with the given ID, cleans up the tutor participations, removes the result and the submission
      * @param exampleSubmissionId the ID of the ExampleSubmission which should be deleted
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void deleteById(long exampleSubmissionId) {
         Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(exampleSubmissionId);
 
@@ -101,19 +103,26 @@ public class ExampleSubmissionService {
         ExampleSubmission newExampleSubmission = new ExampleSubmission();
         newExampleSubmission.setExercise(exercise);
 
+        var gradingCriteria = this.gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
+        gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).forEach(gradingInstruction -> {
+            gradingInstructionCopyTracker.put(gradingInstruction.getId(), gradingInstruction);
+        });
+
         if (exercise instanceof ModelingExercise) {
             ModelingSubmission modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
             checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), modelingSubmission.getParticipation().getExercise().getId());
             // example submission does not need participation
             modelingSubmission.setParticipation(null);
-            newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission, new HashMap<>()));
+
+            newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission, gradingInstructionCopyTracker));
         }
         if (exercise instanceof TextExercise) {
             TextSubmission textSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(submissionId);
             checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), textSubmission.getParticipation().getExercise().getId());
             // example submission does not need participation
             textSubmission.setParticipation(null);
-            newExampleSubmission.setSubmission(textExerciseImportService.copySubmission(textSubmission));
+            newExampleSubmission.setSubmission(textExerciseImportService.copySubmission(textSubmission, gradingInstructionCopyTracker));
         }
         return exampleSubmissionRepository.save(newExampleSubmission);
     }

@@ -17,9 +17,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 describe('TutorLeaderboardComponent', () => {
     let comp: TutorLeaderboardComponent;
     let fixture: ComponentFixture<TutorLeaderboardComponent>;
-    let accountService: AccountService;
     let sortService: SortService;
-    let isAtLeastInstructorInCourseStub: jest.SpyInstance;
     let sortByPropertySpy: jest.SpyInstance;
 
     beforeEach(() => {
@@ -36,11 +34,9 @@ describe('TutorLeaderboardComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                accountService = TestBed.inject(AccountService);
                 fixture = TestBed.createComponent(TutorLeaderboardComponent);
                 comp = fixture.componentInstance;
                 sortService = TestBed.inject(SortService);
-                isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
                 sortByPropertySpy = jest.spyOn(sortService, 'sortByProperty').mockImplementation(() => []);
             });
     });
@@ -50,22 +46,20 @@ describe('TutorLeaderboardComponent', () => {
     });
 
     describe('ngOnInit', () => {
-        it('sets isAtLeastInstructor if course is set', () => {
-            const course = {} as Course;
-            testIsAtLeastInstructor((component) => {
-                component.course = course;
-            });
+        it('sets variables correctly if course is set', () => {
+            const course = { isAtLeastInstructor: true } as Course;
+            comp.course = course;
+            comp.ngOnInit();
             expect(comp.isExerciseDashboard).toBeFalse();
             expect(comp.course).toBe(course);
             expect(comp.exercise).toBeUndefined();
         });
 
-        it('sets isAtLeastInstructor if exercise.course is set', () => {
-            const course = {} as Course;
+        it('sets variables correctly if exercise.course is set', () => {
+            const course = { isAtLeastInstructor: true } as Course;
             const exercise = { course } as Exercise;
-            testIsAtLeastInstructor((component) => {
-                component.exercise = exercise;
-            });
+            comp.exercise = exercise;
+            comp.ngOnInit();
             expect(comp.isExerciseDashboard).toBeTrue();
             expect(comp.course).toBe(course);
             expect(comp.exercise).toBe(exercise);
@@ -77,7 +71,7 @@ describe('TutorLeaderboardComponent', () => {
             expect(comp.isExamMode).toBeFalse();
 
             const exam = {} as Exam;
-            const course = { exams: [exam] } as Course;
+            const course = { exams: [exam], isAtLeastInstructor: true } as Course;
             comp.exam = exam;
             comp.course = course;
             comp.ngOnInit();
@@ -88,20 +82,6 @@ describe('TutorLeaderboardComponent', () => {
             comp.ngOnInit();
             expect(sortByPropertySpy).toHaveBeenCalledOnce();
         });
-
-        function testIsAtLeastInstructor(setupComponent: (comp: TutorLeaderboardComponent) => void): void {
-            expect(comp.isAtLeastInstructor).toBeFalse();
-            comp.ngOnInit();
-            expect(comp.isAtLeastInstructor).toBeFalse();
-            expect(comp.isExerciseDashboard).toBeFalse();
-            expect(comp.course).toBeUndefined();
-            expect(isAtLeastInstructorInCourseStub).not.toHaveBeenCalled();
-
-            setupComponent(comp);
-            comp.ngOnInit();
-            expect(comp.isAtLeastInstructor).toBeTrue();
-            expect(isAtLeastInstructorInCourseStub).toHaveBeenCalledOnce();
-        }
     });
 
     describe('tutorData', () => {

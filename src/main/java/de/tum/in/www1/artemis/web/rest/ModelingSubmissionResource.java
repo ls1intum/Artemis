@@ -89,7 +89,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create modeling submission: {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
-            throw new BadRequestAlertException("A new modeling submission cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new modeling submission cannot already have an ID", ENTITY_NAME, "idExists");
         }
         return handleModelingSubmission(exerciseId, modelingSubmission);
     }
