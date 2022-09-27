@@ -9,12 +9,10 @@ import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exerci
 import { isStartExerciseAvailable, isStartPracticeAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { finalize } from 'rxjs/operators';
 import { faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 @Component({
@@ -202,14 +200,6 @@ export class ExerciseDetailsStudentActionsComponent {
     get assignedTeamId(): number | undefined {
         const participations = this.exercise.studentParticipations;
         return participations?.length ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
-    }
-
-    codeEditorButtonLable(participation: StudentParticipation) {
-        if ((this.exercise.studentParticipations?.length ?? 0) > 1 || participation.testRun) {
-            return 'artemisApp.exerciseActions.openCodeEditor' + (participation.testRun ? 'Practice' : 'Graded');
-        } else {
-            return 'artemisApp.exerciseActions.openCodeEditor';
-        }
     }
 
     repositoryUrl(participation: Participation) {

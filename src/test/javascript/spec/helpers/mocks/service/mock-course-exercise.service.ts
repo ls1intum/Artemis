@@ -7,5 +7,7 @@ export class MockCourseExerciseService {
 
     startPractice = () => of({} as StudentParticipation);
 
+    resumeProgrammingExercise = () => of({} as StudentParticipation);
+
     findAllProgrammingExercisesForCourse = () => of([{ id: 456 } as ProgrammingExercise]);
 }

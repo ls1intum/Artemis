@@ -244,8 +244,8 @@ export class ParticipationService {
         }
     }
 
-    public getSpecificStudentParticipation(studentParticipations: StudentParticipation[], testRun: boolean | undefined): StudentParticipation | undefined {
-        return studentParticipations.filter((participation) => participation.testRun === testRun).first();
+    public getSpecificStudentParticipation(studentParticipations: StudentParticipation[], testRun: boolean): StudentParticipation | undefined {
+        return studentParticipations.filter((participation) => !!participation.testRun === testRun).first();
     }
 
     /**

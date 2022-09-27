@@ -26,6 +26,7 @@ import { Router } from '@angular/router';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { HttpClient } from '@angular/common/http';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import dayjs from 'dayjs/esm';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
@@ -36,6 +37,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let profileService: ProfileService;
     let startExerciseStub: jest.SpyInstance;
     let startPracticeStub: jest.SpyInstance;
+    let resumeStub: jest.SpyInstance;
     let getProfileInfoSub: jest.SpyInstance;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
@@ -81,13 +83,12 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
                 startExerciseStub = jest.spyOn(courseExerciseService, 'startExercise');
                 startPracticeStub = jest.spyOn(courseExerciseService, 'startPractice');
+                resumeStub = jest.spyOn(courseExerciseService, 'resumeProgrammingExercise');
             });
     });
 
     afterEach(() => {
-        startExerciseStub.mockRestore();
-        startPracticeStub.mockRestore();
-        getProfileInfoSub.mockRestore();
+        jest.restoreAllMocks();
     });
 
     it('should not show the buttons "Team" and "Start exercise" for a team exercise when not assigned to a team yet', fakeAsync(() => {
@@ -218,6 +219,20 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    it('should correctly resume programming participation', () => {
+        const inactiveParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INACTIVE };
+        const activeParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INITIALIZED };
+        const practiceParticipation: ProgrammingExerciseStudentParticipation = { id: 2, testRun: true, initializationState: InitializationState.INACTIVE };
+        comp.exercise = { id: 3, studentParticipations: [inactiveParticipation, practiceParticipation] } as ProgrammingExercise;
+
+        resumeStub.mockReturnValue(of(activeParticipation));
+
+        comp.resumeProgrammingExercise(false);
+
+        expect(comp.exercise.studentParticipations).toEqual([activeParticipation, practiceParticipation]);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.INITIALIZED);
+    });
 
     it('should not allow to publish a build plan for text exercises', () => {
         comp.exercise = teamExerciseWithoutTeamAssigned;
