@@ -415,7 +415,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         message: 'artemisApp.studentExam.submitSuccessful',
                         timeout: 20000,
                     });
-                    if (this.testRunId) {
+                    if (!!this.testRunId) {
                         // If this is a test run, forward the user directly to the exam summary
                         this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
                     }
