@@ -3,7 +3,7 @@
         <h4 class="modal-title">
             <span>{{ 'artemisApp.tutorialGroupImportDialog.dialogTitle' | artemisTranslate }} </span>
         </h4>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+        <button type="button" class="btn-close" (click)="clear()"></button>
     </div>
     <div class="modal-body">
         <!-- Intro-->
@@ -229,7 +229,7 @@
                 (click)="import()"
             >
                 <fa-icon [icon]="faUpload" class="me-2"></fa-icon>
-                <span jhiTranslate="entity.action.to-import">Import</span>
+                <span>{{ 'entity.action.to-import' | artemisTranslate }}</span>
                 <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch"></fa-icon>
             </button>
             <ng-template #buttonAfterImport>

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsRegistrationImportDialog } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
@@ -7,7 +7,7 @@ import { TutorialGroupsRegistrationImportDialog } from 'app/course/tutorial-grou
     selector: 'jhi-tutorial-groups-import-button',
     templateUrl: './tutorial-groups-import-button.component.html',
 })
-export class TutorialGroupsImportButtonComponent implements OnInit {
+export class TutorialGroupsImportButtonComponent {
     @Input() courseId: number;
 
     @Output() importFinished: EventEmitter<void> = new EventEmitter();
@@ -17,7 +17,6 @@ export class TutorialGroupsImportButtonComponent implements OnInit {
 
     constructor(private modalService: NgbModal) {}
 
-    ngOnInit(): void {}
     openTutorialGroupImportDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(TutorialGroupsRegistrationImportDialog, { size: 'xl', scrollable: false, backdrop: 'static' });
