@@ -196,6 +196,14 @@ public class SubmissionService {
         return submissionsWithoutResult;
     }
 
+    /**
+     * Returns the next submission without result and with individual due date,
+     * in the ordering of their individual due dates.
+     * @param exercise the exercise for which we want to retrieve a submission
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param correctionRound the correction round we want our submission to have results for
+     * @return the next submission, ordered by individual due date (the earliest first), without any manual result
+     */
     public Optional<Submission> getNextAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
         var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
 
