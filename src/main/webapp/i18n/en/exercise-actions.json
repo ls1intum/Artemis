@@ -15,7 +15,7 @@
             "openCodeEditor": "Open code editor",
             "openPracticeCodeEditor": "Open practice code editor",
             "openGradedCodeEditor": "Open graded code editor",
-            "chosePracticeMode": "Practice participation chosen",
+            "practiceMode": "Practice Mode",
             "choseGradedMode": "Graded participation chosen",
             "openModelingEditor": "Open modeling editor",
             "importIntoIntelliJ": "Open in IntelliJ",

@@ -16,9 +16,9 @@
     <ng-template #popContent style="max-width: 660px">
         <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
         <div class="form-check form-switch" *ngIf="participations && participations.length > 1">
-            <input mdbCheckbox class="form-check-input" type="checkbox" [checked]="activeParticipation.testRun" (click)="switchPracticeMode()" />
-            <label class="form-check-label">
-                {{ 'artemisApp.exerciseActions.' + (activeParticipation.testRun ? 'chosePracticeMode' : 'choseGradedMode') | artemisTranslate }}
+            <input mdbCheckbox [id]="'switch-practice-'" class="form-check-input" type="checkbox" [checked]="activeParticipation?.testRun" (click)="switchPracticeMode()" />
+            <label class="form-check-label" [for]="'switch-practice'">
+                {{ 'artemisApp.exerciseActions.practiceMode' | artemisTranslate }}
             </label>
         </div>
         <h5>{{ cloneHeadline | artemisTranslate }}</h5>

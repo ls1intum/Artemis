@@ -31,7 +31,7 @@
         <div class="form-check form-switch" *ngIf="participations && participations.length > 1">
             <input mdbCheckbox class="form-check-input" type="checkbox" [checked]="activeParticipation.testRun" (click)="switchPracticeMode()" />
             <label class="form-check-label">
-                {{ 'artemisApp.exerciseActions.' + (activeParticipation.testRun ? 'chosePracticeMode' : 'choseGradedMode') | artemisTranslate }}
+                {{ 'artemisApp.exerciseActions.practiceMode' | artemisTranslate }}
             </label>
         </div>
         <button

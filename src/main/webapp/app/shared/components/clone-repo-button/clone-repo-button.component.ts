@@ -37,9 +37,9 @@ export class CloneRepoButtonComponent implements OnInit {
     versionControlAccessTokenRequired?: boolean;
     user: User;
     cloneHeadline: string;
-    wasCopied: boolean;
+    wasCopied = false;
     isTeamParticipation: boolean;
-    activeParticipation: ProgrammingExerciseStudentParticipation;
+    activeParticipation?: ProgrammingExerciseStudentParticipation;
 
     // Icons
     faDownload = faDownload;
@@ -75,7 +75,7 @@ export class CloneRepoButtonComponent implements OnInit {
 
         if (this.participations?.length) {
             this.isTeamParticipation = !!this.participations.first()?.team;
-            this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, false) ?? this.participations[0];
+            this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, true) ?? this.participations[0];
             this.cloneHeadline = this.activeParticipation.testRun ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
         } else if (this.repositoryUrl) {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
@@ -88,7 +88,7 @@ export class CloneRepoButtonComponent implements OnInit {
     }
 
     private getRepositoryUrl() {
-        return this.activeParticipation.repositoryUrl ?? this.repositoryUrl!;
+        return this.activeParticipation?.repositoryUrl ?? this.repositoryUrl!;
     }
 
     getHttpOrSshRepositoryUrl(insertPlaceholder = true): string {
@@ -188,6 +188,7 @@ export class CloneRepoButtonComponent implements OnInit {
     }
 
     switchPracticeMode() {
-        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, !this.activeParticipation.testRun)!;
+        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, !this.activeParticipation?.testRun)!;
+        this.cloneHeadline = this.activeParticipation.testRun ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
     }
 }

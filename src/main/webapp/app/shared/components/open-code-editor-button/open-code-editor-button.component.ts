@@ -30,7 +30,7 @@ export class OpenCodeEditorButtonComponent implements OnInit {
 
     ngOnInit() {
         this.courseAndExerciseNavigationUrl = this.courseAndExerciseNavigationUrlSegment.reduce((acc, segment) => acc + '/' + segment);
-        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, false) ?? this.participations[0];
+        this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, true) ?? this.participations[0];
     }
 
     switchPracticeMode() {

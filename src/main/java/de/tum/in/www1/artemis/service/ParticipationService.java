@@ -355,7 +355,7 @@ public class ParticipationService {
         // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUrl() == null) {
             final var projectKey = programmingExercise.getProjectKey();
-            final var participantIdentifier = participation.getParticipantIdentifier() + (participation.isTestRun() ? "practice" : "");
+            final var participantIdentifier = participation.getParticipantIdentifier() + (participation.isTestRun() ? "-practice" : "");
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
             String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
@@ -393,7 +393,7 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED) || participation.getBuildPlanId() == null) {
             final var projectKey = participation.getProgrammingExercise().getProjectKey();
             final var planName = BuildPlanType.TEMPLATE.getName();
-            final var username = participation.getParticipantIdentifier() + (participation.isTestRun() ? "practice" : "");
+            final var username = participation.getParticipantIdentifier() + (participation.isTestRun() ? "-practice" : "");
             final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " "
                     + participation.getExercise().getTitle();
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
