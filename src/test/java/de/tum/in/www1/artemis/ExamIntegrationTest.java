@@ -2408,18 +2408,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(expectedFilenames).contains(Path.of(filename));
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(ints = { 1, 2 })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetStatsForExamAssessmentDashboardOneCorrectionRound() throws Exception {
-        testGetStatsForExamAssessmentDashboard(1);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetStatsForExamAssessmentDashboardTwoCorrectionRounds() throws Exception {
-        testGetStatsForExamAssessmentDashboard(2);
-    }
-
     void testGetStatsForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
