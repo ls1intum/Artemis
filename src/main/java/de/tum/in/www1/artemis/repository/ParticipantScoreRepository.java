@@ -49,10 +49,15 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     // Do not update last modified date
     void clearLastRatedResultByResultId(@Param("lastResultId") Long lastResultId);
 
+    /**
+     * Find all outdated participant scores where the last result was deleted (and therefore set to null).
+     * Note: There are valid scores where the last *rated* result is null because of practice runs.
+     * @see {@link #clearAllByResultId(Long)}
+     * @return A list of outdated participant scores
+     */
     @Query("""
             SELECT p FROM ParticipantScore p
             WHERE p.lastResult IS NULL
-            OR p.lastRatedResult IS NULL
             """)
     List<ParticipantScore> findAllOutdated();
 
