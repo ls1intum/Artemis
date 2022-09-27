@@ -6,7 +6,6 @@ import { TutorialGroupsRegistrationImportDialog } from 'app/course/tutorial-grou
 @Component({
     selector: 'jhi-tutorial-groups-import-button',
     templateUrl: './tutorial-groups-import-button.component.html',
-    styleUrls: ['./tutorial-groups-import-button.component.scss'],
 })
 export class TutorialGroupsImportButtonComponent implements OnInit {
     @Input() courseId: number;
