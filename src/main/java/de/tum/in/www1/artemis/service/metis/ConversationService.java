@@ -208,11 +208,12 @@ public class ConversationService {
         return CONVERSATION_ENTITY_NAME;
     }
 
-    void auditConversationReadTimeOfUser(Conversation conversation, User user) {
+    ZonedDateTime auditConversationReadTimeOfUser(Conversation conversation, User user) {
         // update the last time user has read the conversation
         ConversationParticipant readingParticipant = conversation.getConversationParticipants().stream()
                 .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId())).findAny().get();
         readingParticipant.setLastRead(ZonedDateTime.now());
         conversationParticipantRepository.save(readingParticipant);
+        return readingParticipant.getLastRead();
     }
 }

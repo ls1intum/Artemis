@@ -8,6 +8,7 @@ import { User } from 'app/core/user/user.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation-dto.model';
 import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import dayjs from 'dayjs/esm';
 
 @Injectable()
 export class MessagingService implements OnDestroy {
@@ -71,6 +72,12 @@ export class MessagingService implements OnDestroy {
         this.jhiWebsocketService.subscribe(channel);
 
         this.jhiWebsocketService.receive(channel).subscribe((conversationDTO: ConversationDTO) => {
+            conversationDTO.conversation.creationDate = conversationDTO.conversation.creationDate ? dayjs(conversationDTO.conversation.creationDate) : undefined;
+            conversationDTO.conversation.lastMessageDate = conversationDTO.conversation.lastMessageDate ? dayjs(conversationDTO.conversation.lastMessageDate) : undefined;
+            conversationDTO.conversation.conversationParticipants?.forEach((conversationParticipant) => {
+                conversationParticipant.lastRead = conversationParticipant.lastRead ? dayjs(conversationParticipant.lastRead) : undefined;
+            });
+
             const conversationIndexInCache = this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationDTO.conversation.id);
             if (conversationDTO.crudAction === MetisPostAction.CREATE || conversationDTO.crudAction === MetisPostAction.UPDATE) {
                 if (conversationIndexInCache !== -1) {
@@ -82,7 +89,6 @@ export class MessagingService implements OnDestroy {
             } else if (conversationDTO.crudAction === MetisPostAction.READ_CONVERSATION) {
                 // conversation is updated without being moved to the beginning of the list
                 this.conversationsOfUser[conversationIndexInCache] = conversationDTO.conversation;
-                this.conversations$.next(this.conversationsOfUser);
             }
 
             this.conversations$.next(this.conversationsOfUser);

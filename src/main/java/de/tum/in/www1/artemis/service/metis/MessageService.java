@@ -74,12 +74,11 @@ public class MessageService extends PostingService {
                 messagePost.setConversation(conversationService.createConversation(courseId, messagePost.getConversation()));
             }
             conversation = conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), user);
+            conversation.setLastMessageDate(conversationService.auditConversationReadTimeOfUser(conversation, user));
 
             Post savedMessage = messageRepository.save(messagePost);
             savedMessage.setConversation(conversation);
-            conversationService.auditConversationReadTimeOfUser(conversation, user);
 
-            conversation.setLastMessageDate(savedMessage.getCreationDate());
             conversationService.updateConversation(conversation);
 
             broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);

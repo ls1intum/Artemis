@@ -60,6 +60,9 @@ export class ConversationService {
         if (res.body) {
             res.body.creationDate = res.body.creationDate ? dayjs(res.body.creationDate) : undefined;
             res.body.lastMessageDate = res.body.lastMessageDate ? dayjs(res.body.lastMessageDate) : undefined;
+            res.body.conversationParticipants?.forEach((conversationParticipant) => {
+                conversationParticipant.lastRead = conversationParticipant.lastRead ? dayjs(conversationParticipant.lastRead) : undefined;
+            });
         }
         return res;
     }
@@ -71,9 +74,13 @@ export class ConversationService {
      */
     protected convertDateArrayFromServer(res: HttpResponse<Conversation[]>): HttpResponse<Conversation[]> {
         if (res.body) {
-            res.body.forEach((conversation: Conversation) => {
+            res.body.forEach((conversation) => {
                 conversation.creationDate = conversation.creationDate ? dayjs(conversation.creationDate) : undefined;
                 conversation.lastMessageDate = conversation.lastMessageDate ? dayjs(conversation.lastMessageDate) : undefined;
+
+                conversation.conversationParticipants?.forEach((conversationParticipant) => {
+                    conversationParticipant.lastRead = conversationParticipant.lastRead ? dayjs(conversationParticipant.lastRead) : undefined;
+                });
             });
         }
         return res;
