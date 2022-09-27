@@ -4,12 +4,14 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class AbstractBuildResultNotificationDTO {
 
@@ -19,16 +21,11 @@ public abstract class AbstractBuildResultNotificationDTO {
 
     public abstract Optional<String> getCommitHashFromTestsRepo();
 
+    public abstract Optional<String> getBranchNameFromAssignmentRepo();
+
     public abstract boolean isBuildSuccessful();
 
     public abstract Double getBuildScore();
-
-    /**
-     * Returns a string stating how much tests passed:
-     * Example: "1 of 10 passed"
-     * @return string stating how much tests passes out of a total amount
-     */
-    public abstract String getTestsPassedString();
 
     /**
      * Get the commit hash from the build result, the commit hash will be different for submission types or null.

@@ -33,6 +33,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
 
 class MockBreadcrumb {
     label: string;
@@ -87,6 +88,7 @@ describe('NavbarComponent', () => {
                 MockComponent(LoadingNotificationComponent),
                 MockComponent(JhiConnectionWarningComponent),
                 MockComponent(ThemeSwitchComponent),
+                MockComponent(SystemNotificationComponent),
             ],
             providers: [
                 MockProvider(UrlSerializer),
@@ -144,7 +146,7 @@ describe('NavbarComponent', () => {
         component.changeLanguage('elvish');
 
         expect(useSpy).toHaveBeenCalledWith('elvish');
-        expect(languageChangeSpy).toHaveBeenCalledTimes(0);
+        expect(languageChangeSpy).not.toHaveBeenCalled();
     });
 
     it('should not build breadcrumbs for students', () => {

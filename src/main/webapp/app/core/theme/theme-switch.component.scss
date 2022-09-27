@@ -120,15 +120,6 @@ $ease-out: cubic-bezier(0.9, 0, 0.1, 1);
         }
     }
 
-    .experimental {
-        color: var(--warning);
-        font-weight: bold;
-    }
-
-    .description {
-        margin-top: 10px;
-    }
-
     .switch-box {
         border: 1px solid var(--theme-switch-box-border-color);
         margin: 1em 0.5em 0.5em;

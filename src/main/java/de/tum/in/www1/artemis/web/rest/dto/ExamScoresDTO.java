@@ -4,6 +4,8 @@ import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
+
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamScoresDTO(Long examId, String title, Integer maxPoints, Double averagePointsAchieved, Boolean hasSecondCorrectionAndStarted, List<ExerciseGroup> exerciseGroups,
         List<StudentResult> studentResults) {
@@ -21,7 +23,7 @@ public record ExamScoresDTO(Long examId, String title, Integer maxPoints, Double
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record StudentResult(Long userId, String name, String email, String login, String registrationNumber, Boolean submitted, Double overallPointsAchieved,
             Double overallScoreAchieved, String overallGrade, String overallGradeInFirstCorrection, Boolean hasPassed, Double overallPointsAchievedInFirstCorrection,
-            Map<Long, ExerciseResult> exerciseGroupIdToExerciseResult) {
+            BonusResultDTO gradeWithBonus, Map<Long, ExerciseResult> exerciseGroupIdToExerciseResult, PlagiarismVerdict mostSeverePlagiarismVerdict) {
     }
 
     // Inner DTO

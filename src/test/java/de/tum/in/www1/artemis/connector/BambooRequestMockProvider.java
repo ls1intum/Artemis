@@ -268,9 +268,9 @@ public class BambooRequestMockProvider {
         parameters.add("save", "Save repository");
         parameters.add("bamboo.successReturnMode", "json");
         parameters.add("repository.stash.branch", defaultBranch);
-        parameters.add("repository.stash.repositoryId", bitbucketRepository.getId());
-        parameters.add("repository.stash.repositorySlug", bitbucketRepository.getSlug());
-        parameters.add("repository.stash.projectKey", bitbucketRepository.getProject().getKey());
+        parameters.add("repository.stash.repositoryId", bitbucketRepository.id());
+        parameters.add("repository.stash.repositorySlug", bitbucketRepository.slug());
+        parameters.add("repository.stash.projectKey", bitbucketRepository.project().key());
         parameters.add("repository.stash.repositoryUrl", bitbucketRepository.getCloneSshUrl());
         parameters.add("repository.stash.server", applicationLink.getId());
 
@@ -508,8 +508,7 @@ public class BambooRequestMockProvider {
 
     public void mockDeleteBambooBuildProject(String projectKey) throws URISyntaxException, JsonProcessingException {
 
-        var projectResponse = new BambooProjectDTO(projectKey, projectKey, projectKey);
-        projectResponse.setPlans(new BambooProjectDTO.BambooBuildPlansDTO(List.of()));
+        var projectResponse = new BambooProjectDTO(projectKey, projectKey, projectKey, new BambooProjectDTO.BambooBuildPlansDTO(List.of()));
 
         // 1) get all plans
         var uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/project/" + projectKey).queryParam("expand", "plans").queryParam("max-results", 5000)

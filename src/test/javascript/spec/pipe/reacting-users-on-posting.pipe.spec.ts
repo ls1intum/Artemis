@@ -28,7 +28,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should return string for one user that is not "you"', fakeAsync(() => {
+    it('should return string for one user that is not "you"', fakeAsync(() => {
         const reactingUsers = [metisUser1.name!];
         reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
             transformedStringWithReactingUsers = transformedReactingUsers;
@@ -38,7 +38,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
         expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     }));
 
-    it('Should return string for one user that is "you"', fakeAsync(() => {
+    it('should return string for one user that is "you"', fakeAsync(() => {
         reactingUsersPipe.transform([PLACEHOLDER_USER_REACTED]).subscribe((transformedReactingUsers: string) => {
             transformedStringWithReactingUsers = transformedReactingUsers;
         });
@@ -47,7 +47,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
         expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     }));
 
-    it('Should return string for two users that do not include "you"', fakeAsync(() => {
+    it('should return string for two users that do not include "you"', fakeAsync(() => {
         const reactingUsers = [metisUser1.name!, metisUser2.name!];
         reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
             transformedStringWithReactingUsers = transformedReactingUsers;
@@ -57,7 +57,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
         expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     }));
 
-    it('Should return string for two users that do include "you"', fakeAsync(() => {
+    it('should return string for two users that do include "you"', fakeAsync(() => {
         const reactingUsers = [metisUser1.name!, PLACEHOLDER_USER_REACTED];
         reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
             transformedStringWithReactingUsers = transformedReactingUsers;
@@ -67,7 +67,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
         expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     }));
 
-    it('Should return string for three users that do include "you" and separate the first two users with comma', fakeAsync(() => {
+    it('should return string for three users that do include "you" and separate the first two users with comma', fakeAsync(() => {
         const reactingUsers = [metisUser1.name!, PLACEHOLDER_USER_REACTED, metisTutor.name!];
         reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
             transformedStringWithReactingUsers = transformedReactingUsers;
@@ -79,7 +79,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
         expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     }));
 
-    it('Should trim list of reacting users but always include "you', fakeAsync(() => {
+    it('should trim list of reacting users but always include "you', fakeAsync(() => {
         const reactingUsers = [
             metisUser1.name!,
             metisUser2.name!,
@@ -123,7 +123,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
         expect(updateReactingUsersStringSpy).toHaveBeenCalledOnce();
     }));
 
-    it('Should trigger update of reacting users on language change', fakeAsync(() => {
+    it('should trigger update of reacting users on language change', fakeAsync(() => {
         const reactingUsers = [metisUser1.name!, PLACEHOLDER_USER_REACTED, metisTutor.name!];
         reactingUsersPipe.transform(reactingUsers).subscribe((transformedReactingUsers: string) => {
             transformedStringWithReactingUsers = transformedReactingUsers;
