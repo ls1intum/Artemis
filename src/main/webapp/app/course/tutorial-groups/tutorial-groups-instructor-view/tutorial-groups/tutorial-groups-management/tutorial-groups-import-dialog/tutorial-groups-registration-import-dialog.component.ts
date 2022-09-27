@@ -148,6 +148,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
 
     get isParseDisabled() {
         return (
+            this.selectedFile === undefined ||
             this.isCSVParsing ||
             this.isImporting ||
             (this.specifyFixedPlaceControl?.value && (!this.statusHeaderControl?.value || !this.fixedPlaceValueControl?.value)) ||
@@ -202,6 +203,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
         }
         if (this.validationErrors && this.validationErrors.length > 0) {
             this.fileInput.nativeElement.value = ''; // remove selected file so user can fix the file and select it again
+            this.selectedFile = undefined;
             return [];
         }
         // get the used headers from the first csv row object returned by the parser
@@ -239,6 +241,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
         this.performExtraDTOValidation(registrations);
         if (this.validationErrors && this.validationErrors.length > 0) {
             this.fileInput.nativeElement.value = ''; // remove selected file so user can fix the file and select it again
+            this.selectedFile = undefined;
             return [];
         } else {
             return registrations;
