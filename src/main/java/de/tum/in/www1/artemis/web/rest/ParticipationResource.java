@@ -242,8 +242,13 @@ public class ParticipationResource {
 
         checkAccessPermissionOwner(participation, user);
 
-        var currentDate = now();
+        var studentParticipation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
+        var result = studentParticipation.findLatestLegalResult();
+        if (Objects.isNull(result) || result.getScore() < 100) {
+            throw new IllegalArgumentException("User has not reached the conditions to submit a feedback request");
+        }
 
+        var currentDate = now();
         var participationIndividualDueDate = participation.getIndividualDueDate();
         if (Objects.nonNull(participationIndividualDueDate) && currentDate.isAfter(participationIndividualDueDate)) {
             throw new IllegalArgumentException("Request has already been sent");
