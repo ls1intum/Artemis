@@ -101,7 +101,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             id: 1,
             testName: 'testBubbleSort',
             active: true,
-            weight: 1,
+            weight: 2,
             bonusMultiplier: 1,
             bonusPoints: 0,
             visibility: Visibility.Always,
@@ -111,7 +111,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             testName: 'testMergeSort',
             active: true,
             weight: 1,
-            bonusMultiplier: 1,
+            bonusMultiplier: 1.5,
             bonusPoints: 0,
             visibility: Visibility.AfterDueDate,
         },
@@ -121,7 +121,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             active: false,
             weight: 1,
             bonusMultiplier: 1,
-            bonusPoints: 0,
+            bonusPoints: 1,
             visibility: Visibility.Always,
         },
         {
@@ -839,6 +839,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const detectedIssuesHeader = headerColumns[4];
         sortAndTest(detectedIssuesHeader, 'detectedIssues', 'asc');
         sortAndTest(detectedIssuesHeader, 'detectedIssues', 'desc');
+    });
+
+    it('should calculate the points per test correctly', () => {
+        initGradingComponent({ tab: 'test-cases' });
+
+        fixture.detectChanges();
+
+        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 8.4, otherTest: 9.4, testBubbleSort: 16.8, testMergeSort: 12.6 });
     });
 
     describe('test chart interaction', () => {
