@@ -147,6 +147,8 @@ export class ExerciseDetailsStudentActionsComponent {
         return this.exercise.allowManualFeedbackRequests ?? false;
     }
 
+    private feedbackSent = false;
+
     isFeedbackRequestButtonDisabled(): boolean {
         const participation = this.studentParticipation ?? (this.exercise.studentParticipations && this.exercise.studentParticipations.first());
 
@@ -156,7 +158,7 @@ export class ExerciseDetailsStudentActionsComponent {
 
         const requestAlreadySent = (participation?.individualDueDate && participation.individualDueDate.isBefore(Date.now())) ?? false;
 
-        return !allHiddenTestsPassed || requestAlreadySent;
+        return !allHiddenTestsPassed || requestAlreadySent || this.feedbackSent;
     }
 
     requestFeedback() {
@@ -167,6 +169,7 @@ export class ExerciseDetailsStudentActionsComponent {
             .subscribe({
                 next: (participation: StudentParticipation) => {
                     if (participation) {
+                        this.feedbackSent = true;
                         this.alertService.success('artemisApp.exercise.feedbackRequestSent');
                     }
                 },
