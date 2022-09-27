@@ -111,7 +111,7 @@ public class ParticipantScoreSchedulerService {
      */
     @Scheduled(cron = "0 * * * * *")
     protected void scheduleTasks() {
-        logger.debug("Schedule tasks to process...");
+        logger.info("Schedule tasks to process...");
         SecurityUtils.setAuthorizationObject();
 
         // Find all results that were added after the last run (on startup: last time we modified a participant score)
@@ -185,7 +185,8 @@ public class ParticipantScoreSchedulerService {
      * @param resultIdsToIgnore a list of result ids that should be ignored when updating the participant score
      */
     private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long... resultIdsToIgnore) {
-        logger.debug("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
+        long start = System.currentTimeMillis();
+        logger.info("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
         try {
             SecurityUtils.setAuthorizationObject();
 
@@ -217,6 +218,13 @@ public class ParticipantScoreSchedulerService {
                 }
             }
 
+            if (resultIdsToIgnore != null && resultIdsToIgnore.length > 0 && participantScore.isEmpty()) {
+                // this means we have deleted a result. As we cannot find the participant score anymore, it is very likely that
+                // it has been removed as well, e.g. because of deleteParticipation or deleteExercise
+                logger.info("No participation score available any more during execute tasks for remove result");
+                return;
+            }
+
             var score = participantScore.orElseGet(() -> {
                 if (participant instanceof Team team) {
                     var teamScore = new TeamScore();
@@ -239,11 +247,13 @@ public class ParticipantScoreSchedulerService {
             updateParticipantScore(score, resultIdsToIgnore);
         }
         catch (Exception e) {
-            logger.error("Exception while processing participation {} for participant scores:", exerciseId, e);
+            logger.error("Exception while processing exercise {}  and participant {} for participant scores:", exerciseId, participantId, e);
         }
         finally {
             scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId).hashCode());
         }
+        long end = System.currentTimeMillis();
+        logger.info("Updating the participant score for exercise {} and participant {} took {} ms.", exerciseId, participantId, end - start);
     }
 
     /**

@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -17,7 +20,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.statistics.ScoreDistribution;
@@ -51,8 +53,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
 
     /**
      * Find all outdated participant scores where the last result was deleted (and therefore set to null).
-     * Note: There are valid scores where the last *rated* result is null because of practice runs.
-     * @see {@link #clearAllByResultId(Long)}
+     * Note: There are valid scores where the last *rated* result is null because of practice runs, see {@link #clearAllByResultId(Long)}
      * @return A list of outdated participant scores
      */
     @Query("""
@@ -60,12 +61,6 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             WHERE p.lastResult IS NULL
             """)
     List<ParticipantScore> findAllOutdated();
-
-    @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
-    Optional<ParticipantScore> findParticipantScoreByLastRatedResult(Result result);
-
-    @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
-    Optional<ParticipantScore> findParticipantScoresByLastResult(Result result);
 
     @NotNull
     @Override
@@ -122,11 +117,12 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     Double findAverageScoreForExercise(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Delete all participant scores for a given exercise.
+     * Delete all participant scores for a given exercise, intentionally with a transaction with propagation "requires new" which suspends (i.e. pauses) the outer
+     * transaction.
      * Note: Only call this method when the exercise is about to be deleted. Otherwise, use {@link #clearAllByResultId(Long)}.
      * @param exerciseId the exercise id for which to remove all participant scores
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW) // ok because of delete
+    @Transactional(propagation = Propagation.REQUIRES_NEW) // ***intentional***: delete all scores directly in an inner transaction without waiting for the outer transaction commit
     default void deleteAllByExerciseIdTransactional(Long exerciseId) {
         // When the exercise is deleted, we can safely remove all corresponding participant scores
         this.removeAllByExerciseId(exerciseId);
@@ -150,11 +146,10 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     Optional<Instant> getLatestModifiedDate();
 
     @Query("""
-                    SELECT new de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation(p.exercise.id, AVG(p.lastRatedScore), MAX(p.lastRatedScore))
-                    FROM ParticipantScore p
-                    WHERE p.exercise IN :exercises
-                    GROUP BY p.exercise
-
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation(p.exercise.id, AVG(p.lastRatedScore), MAX(p.lastRatedScore))
+            FROM ParticipantScore p
+            WHERE p.exercise IN :exercises
+            GROUP BY p.exercise
             """)
     List<ExerciseScoresAggregatedInformation> getAggregatedExerciseScoresInformation(@Param("exercises") Set<Exercise> exercises);
 
@@ -170,7 +165,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     /**
      * Sets the average for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
      * using the value provided in averageScoreById
-     *
+     * <p>
      * Quiz Exercises are a special case: They don't have a due date set in the database,
      * therefore it is hard to tell if they are over, so always calculate a score for them
      *
