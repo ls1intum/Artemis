@@ -1,7 +1,7 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
-import { parse } from 'papaparse';
+import { parse, ParseResult } from 'papaparse';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -42,8 +42,6 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
     styleUrls: ['./tutorial-groups-registration-import-dialog.component.scss'],
 })
 export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy {
-    // ToDo: Implement filter for registrations that are not completed
-
     @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
     selectedFile?: File;
 
@@ -61,10 +59,8 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
     numberOfImportedRegistrations = 0;
     numberOfNotImportedRegistration = 0;
 
-    showOnlyNotImported = false;
-
-    private subscriptions: (Subscription | undefined)[] = [];
-    private dialogErrorSource = new Subject<string>();
+    subscriptions: (Subscription | undefined)[] = [];
+    dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     supportedTitleHeader = POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS.join(', ');
@@ -81,7 +77,6 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
     get fixedPlaceValueControl() {
         return this.fixedPlaceForm.get('fixedPlaceValue');
     }
-
     get specifyFixedPlaceControl() {
         return this.fixedPlaceForm.get('specifyFixedPlace');
     }
@@ -123,7 +118,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
         this.subscriptions.push(
             this.statusHeaderControl?.valueChanges.subscribe((selectedStatusColumn) => {
                 if (!selectedStatusColumn) {
-                    this.fixedPlaceValueControl?.reset();
+                    this.fixedPlaceValueControl?.reset({ emitEvent: false });
                     this.fixedPlaceValueControl?.disable();
                 } else {
                     this.fixedPlaceValueControl?.enable();
@@ -135,12 +130,14 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
     onFixedPlaceCheckboxChange() {
         this.subscriptions.push(
             this.specifyFixedPlaceControl?.valueChanges.subscribe((specifyFixedPlace) => {
-                this.fixedPlaceValueControl?.reset();
-                this.statusHeaderControl?.reset();
+                this.fixedPlaceValueControl?.reset({ emitEvent: false });
+                this.statusHeaderControl?.reset({ emitEvent: false });
                 if (specifyFixedPlace) {
                     this.statusHeaderControl?.enable();
+                    this.fixedPlaceValueControl?.enable();
                 } else {
                     this.statusHeaderControl?.disable();
+                    this.fixedPlaceValueControl?.disable();
                 }
             }),
         );
@@ -159,10 +156,12 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
     get isSubmitDisabled(): boolean {
         return this.isImporting || !this.registrationsDisplayedInTable?.length;
     }
-    private resetDialog() {
+
+    resetDialog() {
         this.registrationsDisplayedInTable = [];
         this.allRegistrations = [];
         this.notImportedRegistrations = [];
+        this.importedRegistrations = [];
         this.validationErrors = [];
         this.isImportDone = false;
         this.isImporting = false;
@@ -192,13 +191,21 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
         try {
             this.isCSVParsing = true;
             this.validationErrors = [];
-            csvRows = await this.parseCSVFile(csvFile);
+            const parseResult = await this.parseCSVFile(csvFile);
+
+            if (parseResult.errors.length > 0) {
+                const errorMessagesCombined = parseResult.errors.map((error) => error.message).join('|');
+                this.validationErrors.push(errorMessagesCombined);
+            } else {
+                csvRows = parseResult.data as ParsedCSVRow[];
+            }
         } catch (error) {
             this.validationErrors.push(error.message);
         } finally {
             this.isCSVParsing = false;
         }
-        if (csvRows.length > 0) {
+
+        if (csvRows && csvRows.length > 0) {
             this.performExtraRowValidation(csvRows);
         }
         if (this.validationErrors && this.validationErrors.length > 0) {
@@ -369,15 +376,6 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
         this.activeModal.close();
     }
 
-    onFilterPress() {
-        this.showOnlyNotImported = !this.showOnlyNotImported;
-        if (this.showOnlyNotImported) {
-            this.registrationsDisplayedInTable = this.notImportedRegistrations;
-        } else {
-            this.registrationsDisplayedInTable = this.allRegistrations;
-        }
-    }
-
     onSaveSuccess(registrations: HttpResponse<TutorialGroupRegistrationImportDTO[]>) {
         this.isImporting = false;
         this.isImportDone = true;
@@ -399,21 +397,17 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
         return this.isImportDone && registration.importSuccessful === true;
     }
 
-    wasNotImported(registration: TutorialGroupRegistrationImportDTO): boolean {
-        return this.isImportDone && !this.wasImported(registration);
-    }
-
     /**
      * Parses a csv file and returns a promise with a list of rows
      * @param csvFile File that should be parsed
      */
-    private parseCSVFile(csvFile: File): Promise<ParsedCSVRow[]> {
+    async parseCSVFile(csvFile: File): Promise<ParseResult<unknown>> {
         return new Promise((resolve, reject) => {
             parse(csvFile, {
                 header: true,
                 transformHeader: (header: string) => cleanString(header),
                 skipEmptyLines: true,
-                complete: (results) => resolve(results.data as ParsedCSVRow[]),
+                complete: (results) => resolve(results),
                 error: (error) => reject(error),
             });
         });

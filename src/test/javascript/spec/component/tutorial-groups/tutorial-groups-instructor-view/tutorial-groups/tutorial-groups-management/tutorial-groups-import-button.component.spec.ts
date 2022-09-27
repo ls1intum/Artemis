@@ -25,11 +25,16 @@ describe('TutorialGroupsImportButtonComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
     it('should open the import dialog when the button is clicked', fakeAsync(() => {
+        // given
         const modalService = TestBed.inject(NgbModal);
         const mockModalRef = {
             componentInstance: { courseId: undefined },
@@ -43,8 +48,10 @@ describe('TutorialGroupsImportButtonComponent', () => {
         const importFinishSpy = jest.spyOn(component.importFinished, 'emit');
 
         const cancelButton = fixture.debugElement.nativeElement.querySelector('#importDialogButton');
+        // when
         cancelButton.click();
 
+        // then
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledOnce();
