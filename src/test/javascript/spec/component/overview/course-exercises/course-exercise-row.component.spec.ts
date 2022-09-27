@@ -83,7 +83,7 @@ describe('CourseExerciseRowComponent', () => {
                 comp.course = { id: 123, isAtLeastInstructor: true } as Course;
                 debugElement = fixture.debugElement;
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                getAllParticipationsStub = jest.spyOn(participationWebsocketService, 'getParticipationForExercise');
+                getAllParticipationsStub = jest.spyOn(participationWebsocketService, 'getParticipationsForExercise');
             });
     });
 

@@ -191,7 +191,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     loadExercise() {
         this.exercise = undefined;
-        this.studentParticipations = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
+        this.studentParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exerciseId);
         this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
         this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.gradedStudentParticipation?.results);
@@ -345,9 +345,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 ) {
                     this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                 }
-                this.exercise.studentParticipations = this.studentParticipations?.length
-                    ? this.studentParticipations.map((el) => (el.id === changedParticipation.id ? changedParticipation : el))
-                    : [changedParticipation];
+                if (this.studentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
+                    this.exercise.studentParticipations = this.studentParticipations.map((participation) =>
+                        participation.id === changedParticipation.id ? changedParticipation : participation,
+                    );
+                } else {
+                    this.exercise.studentParticipations = [...this.studentParticipations, changedParticipation];
+                }
                 this.mergeResultsAndSubmissionsForParticipations();
 
                 if (ExerciseType.PROGRAMMING === this.exercise?.type) {
