@@ -398,7 +398,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(testThatWasUpdated.bonusMultiplier).toBe(2);
         expect(testThatWasUpdated.bonusPoints).toBe(1);
         expect(comp.changedTestCaseIds).toHaveLength(0);
-        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(74);
+        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(71);
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
@@ -440,7 +440,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(testThatWasUpdated.bonusMultiplier).toBe(1);
         expect(testThatWasUpdated.bonusPoints).toBe(1);
         expect(comp.changedTestCaseIds).toHaveLength(0);
-        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(37.5);
+        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(36);
     });
 
     const setAllWeightsToZero = () => {
@@ -858,7 +858,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 id: 1,
                 testName: 'testBubbleSort',
                 active: true,
-                weight: 1,
+                weight: 2,
                 bonusMultiplier: 1,
                 bonusPoints: 0,
                 visibility: Visibility.Always,
