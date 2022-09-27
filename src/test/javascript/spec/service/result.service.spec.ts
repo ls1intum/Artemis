@@ -11,7 +11,7 @@ import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-po
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -216,6 +216,29 @@ describe('ResultService', () => {
             expect(resultService.getResultString(undefined, undefined)).toBe('');
             expect(captureExceptionSpy).toHaveBeenCalledOnce();
             expect(captureExceptionSpy).toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
+        });
+    });
+
+    describe('badges', () => {
+        it('should be calculated correctly for practice mode', () => {
+            const participation: StudentParticipation = { testRun: true, type: ParticipationType.STUDENT };
+            const result: Result = {};
+            expect(ResultService.evaluateBadgeClass(participation, result)).toBe('bg-secondary');
+            expect(ResultService.evaluateBadgeText(participation, result)).toBe('artemisApp.result.practice');
+        });
+
+        it('should be calculated correctly for rated submission', () => {
+            const participation: Participation = {};
+            const result: Result = { rated: true };
+            expect(ResultService.evaluateBadgeClass(participation, result)).toBe('bg-success');
+            expect(ResultService.evaluateBadgeText(participation, result)).toBe('artemisApp.result.graded');
+        });
+
+        it('should be calculated correctly for unrated submission', () => {
+            const participation: Participation = {};
+            const result: Result = { rated: false };
+            expect(ResultService.evaluateBadgeClass(participation, result)).toBe('bg-info');
+            expect(ResultService.evaluateBadgeText(participation, result)).toBe('artemisApp.result.notGraded');
         });
     });
 });

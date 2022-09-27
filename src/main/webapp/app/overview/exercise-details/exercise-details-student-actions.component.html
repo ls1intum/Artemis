@@ -10,7 +10,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="isPracticeModeAvailable()"
+                *ngIf="isStartPracticeAvailable()"
                 [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'practice']"
             ></button>
             <button

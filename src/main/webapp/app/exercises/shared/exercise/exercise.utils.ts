@@ -207,12 +207,20 @@ export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean
 };
 
 /**
- * The start practice button should be available for programming exercises when
- * - there is a due date
- * - now is after the due date
+ * The start practice button should be available for programming and quiz exercises
+ * - For quizzes when they are open for practice and the regular work periode is over
+ * - For programming exercises when it's after the due date
  */
-export const isStartPracticeAvailable = (exercise: ProgrammingExercise): boolean => {
-    return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate!);
+export const isStartPracticeAvailable = (exercise: Exercise): boolean => {
+    switch (exercise.type) {
+        case ExerciseType.QUIZ:
+            const quizExercise = exercise as QuizExercise;
+            return !!(quizExercise.isOpenForPractice && quizExercise.quizEnded);
+        case ExerciseType.PROGRAMMING:
+            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode;
+        default:
+            return false;
+    }
 };
 
 /**

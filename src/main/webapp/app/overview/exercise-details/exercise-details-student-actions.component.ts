@@ -59,27 +59,6 @@ export class ExerciseDetailsStudentActionsComponent {
     ) {}
 
     /**
-     * check if practiceMode is available
-     * @return {boolean}
-     */
-    public isPracticeModeAvailable(): boolean {
-        if (!this.examMode && !!this.exercise) {
-            switch (this.exercise.type) {
-                case ExerciseType.QUIZ:
-                    const quizExercise = this.exercise as QuizExercise;
-                    return quizExercise.isOpenForPractice! && quizExercise.quizEnded!;
-                case ExerciseType.PROGRAMMING:
-                    const programmingExercise: ProgrammingExercise = this.exercise as ProgrammingExercise;
-                    return dayjs().isAfter(programmingExercise.dueDate) && !programmingExercise.teamMode;
-                default:
-                    return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    /**
      * see exercise.utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
@@ -87,7 +66,7 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     /**
-     * see exercise.utils -> isStartExerciseAvailable
+     * see exercise.utils -> isStartPracticeAvailable
      */
     isStartPracticeAvailable(): boolean {
         return isStartPracticeAvailable(this.exercise as ProgrammingExercise);
