@@ -160,7 +160,6 @@ describe('ResultService', () => {
                 relativeScore: 0,
                 buildAndTestMessage: 'artemisApp.result.resultStringBuildFailed',
                 points: 0,
-                maxPoints: 200,
             });
         });
 
@@ -172,7 +171,6 @@ describe('ResultService', () => {
                 relativeScore: 20,
                 buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulNoTests',
                 points: 40,
-                maxPoints: 200,
             });
         });
 
@@ -184,7 +182,6 @@ describe('ResultService', () => {
                 relativeScore: 60,
                 buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulTests',
                 points: 120,
-                maxPoints: 200,
             });
         });
 
@@ -197,7 +194,6 @@ describe('ResultService', () => {
                 buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulTests',
                 numberOfIssues: 1,
                 points: 100,
-                maxPoints: 200,
             });
         });
 
@@ -211,7 +207,6 @@ describe('ResultService', () => {
                 relativeScore: 80,
                 buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulNoTests',
                 points: 160,
-                maxPoints: 200,
             });
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.preliminary');
         });

@@ -221,13 +221,13 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.ngOnInit();
 
         expect(component.isTeamParticipation).toBeFalse();
-        expect(component.getHttpOrSshRepositoryUrl()).toEqual('https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git');
-        expect(component.cloneHeadline).toEqual('artemisApp.exerciseActions.clonePracticeRepository');
+        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git');
+        expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.clonePracticeRepository');
 
         component.switchPracticeMode();
 
-        expect(component.getHttpOrSshRepositoryUrl()).toEqual('https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git');
-        expect(component.cloneHeadline).toEqual('artemisApp.exerciseActions.cloneRatedRepository');
+        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git');
+        expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.cloneRatedRepository');
     });
 
     it('should handle no participation', () => {
@@ -237,7 +237,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.ngOnInit();
 
         expect(component.isTeamParticipation).toBeFalsy();
-        expect(component.getHttpOrSshRepositoryUrl()).toEqual('https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
+        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
     });
 
     it('should fetch and store ssh preference', fakeAsync(() => {
