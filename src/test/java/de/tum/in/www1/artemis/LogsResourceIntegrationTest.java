@@ -13,7 +13,7 @@ class LogsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(roles = "ADMIN")
     void testGetList() throws Exception {
-        request.get("/management/logs", HttpStatus.OK, List.class);
+        request.get("/api/admin/management/logs", HttpStatus.OK, List.class);
     }
 
     @Test
@@ -22,6 +22,6 @@ class LogsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         LoggerVM logger = new LoggerVM();
         logger.setLevel("1");
         logger.setName("logger");
-        request.put("/management/logs", logger, HttpStatus.NO_CONTENT);
+        request.put("/api/admin/management/logs", logger, HttpStatus.NO_CONTENT);
     }
 }
