@@ -1,19 +1,19 @@
 <div class="timeline-box">
     <div class="test-schedule">
-        <div class="test-schedule-row">
+        <div class="test-schedule-row d-flex justify-content-around">
             <jhi-programming-exercise-test-schedule-date-picker
                 *ngIf="!isExamMode"
                 [(ngModel)]="exercise.releaseDate"
                 (ngModelChange)="updateReleaseDate($event)"
                 [readOnly]="readOnly"
-                class="test-schedule-date me-2"
+                class="test-schedule-date px-1"
                 label="artemisApp.exercise.releaseDate"
                 tooltipText="artemisApp.programmingExercise.timeline.releaseDateTooltip"
             ></jhi-programming-exercise-test-schedule-date-picker>
-            <div class="test-schedule-date me-2">
-                <div class="mb-2">
-                    <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
-                    <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
+            <div class="test-schedule-date px-1">
+                <div class="mb-2 text-nowrap">
+                    <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
+                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
                 </div>
                 <div class="btn btn-light scheduled-test btn-lifecycle" [class.btn-lifecycle--disabled]="readOnly">
                     <fa-icon [icon]="faCogs" size="lg"></fa-icon>
@@ -27,14 +27,14 @@
                 [startAt]="exercise.releaseDate"
                 [min]="exercise.releaseDate"
                 [readOnly]="readOnly"
-                class="test-schedule-date me-2"
+                class="test-schedule-date px-1"
                 label="artemisApp.exercise.dueDate"
                 tooltipText="artemisApp.programmingExercise.timeline.dueDateTooltip"
             >
             </jhi-programming-exercise-test-schedule-date-picker>
             <div *ngIf="isExamMode || exercise.dueDate">
                 <jhi-programming-exercise-test-schedule-date-picker
-                    class="test-schedule-date me-2"
+                    class="test-schedule-date px-1"
                     [(ngModel)]="exercise.buildAndTestStudentSubmissionsAfterDueDate"
                     [startAt]="exercise.dueDate"
                     [min]="exercise.dueDate"
@@ -43,11 +43,11 @@
                     tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
                 >
                 </jhi-programming-exercise-test-schedule-date-picker>
-                <div class="test-schedule-date me-2">
-                    <div class="mb-2">
-                        <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.assessmentType"> Assessment Type </span>
+                <div class="test-schedule-date px-1">
+                    <div class="mb-2 text-nowrap">
+                        <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.assessmentType"> Assessment Type </span>
                         <jhi-help-icon
-                            placement="top"
+                            placement="auto"
                             [text]="
                                 'artemisApp.programmingExercise.timeline.' +
                                 (exercise.assessmentType === assessmentType.SEMI_AUTOMATIC ? 'assessmentTypeTooltipManualAssessment' : 'assessmentTypeTooltipAutomaticAssessment')
@@ -62,7 +62,7 @@
                     >
                         <fa-icon [icon]="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC ? faUserCheck : faUserSlash" size="lg"></fa-icon>
                     </div>
-                    <div>
+                    <div class="mt-2">
                         {{
                             'artemisApp.programmingExercise.timeline.' + (exercise.assessmentType === assessmentType.SEMI_AUTOMATIC ? 'manualAssessment' : 'automaticAssessment')
                                 | artemisTranslate
@@ -79,11 +79,11 @@
                     label="artemisApp.programmingExercise.timeline.assessmentDueDate"
                     tooltipText="artemisApp.programmingExercise.timeline.assessmentDueDateTooltip"
                 ></jhi-programming-exercise-test-schedule-date-picker>
-                <div *ngIf="exercise.assessmentType === assessmentType.AUTOMATIC && (isExamMode || exercise.course?.complaintsEnabled)" class="test-schedule-date me-2">
-                    <div class="mb-2">
-                        <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"> Complaints </span>
+                <div *ngIf="exercise.assessmentType === assessmentType.AUTOMATIC && (isExamMode || exercise.course?.complaintsEnabled)" class="test-schedule-date px-1">
+                    <div class="mb-2 text-nowrap">
+                        <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"> Complaints </span>
                         <jhi-help-icon
-                            placement="top"
+                            placement="auto"
                             [text]="
                                 'artemisApp.programmingExercise.timeline.' +
                                 (exercise.allowComplaintsForAutomaticAssessments ? 'allowComplaintOnAutomaticAssessmentTooltip' : 'disallowComplaintOnAutomaticAssessmentTooltip')
@@ -98,7 +98,7 @@
                     >
                         <fa-icon [icon]="exercise.allowComplaintsForAutomaticAssessments ? faUserCheck : faUserSlash" size="lg"></fa-icon>
                     </div>
-                    <div>
+                    <div class="mt-2">
                         {{
                             'artemisApp.programmingExercise.timeline.' +
                                 (exercise.allowComplaintsForAutomaticAssessments ? 'complaintOnAutomaticAssessmentEnabled' : 'complaintOnAutomaticAssessmentDisabled')
@@ -113,7 +113,7 @@
                 [readOnly]="readOnly"
                 [startAt]="exercise.dueDate || exercise.releaseDate"
                 [min]="(exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED ? exercise.dueDate : undefined) || exercise.releaseDate"
-                class="test-schedule-date me-2"
+                class="test-schedule-date px-1"
                 label="artemisApp.exercise.exampleSolutionPublicationDate"
                 tooltipText="artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltip"
             >
