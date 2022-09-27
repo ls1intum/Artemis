@@ -50,7 +50,6 @@ describe('Bonus Service', () => {
 
     let service: BonusService;
     let httpMock: HttpTestingController;
-    let elemDefault: GradingScale;
 
     const bonusToGradeStepsDTO: GradeStepsDTO = {
         title: 'Exam Title',
@@ -93,8 +92,6 @@ describe('Bonus Service', () => {
         });
         service = TestBed.inject(BonusService);
         httpMock = TestBed.inject(HttpTestingController);
-
-        elemDefault = new GradingScale();
     });
 
     afterEach(() => {
@@ -123,6 +120,22 @@ describe('Bonus Service', () => {
         expect(httpRequest.request.body).toEqual(filteredBonus);
         tick();
     }));
+
+    it.each([
+        [undefined, null],
+        [false, 'false'],
+        [true, 'true'],
+    ])(
+        'should set includeSourceGradeSteps when calling findBonusForExam',
+        fakeAsync((inputIncludeSourceGradeSteps: boolean, expectedIncludeSourceGradeSteps: boolean) => {
+            service.findBonusForExam(1, 6, inputIncludeSourceGradeSteps).pipe(take(1)).subscribe();
+
+            const httpRequest = httpMock.expectOne({ method: 'GET' });
+
+            expect(httpRequest.request.params.get('includeSourceGradeSteps')).toBe(expectedIncludeSourceGradeSteps);
+            tick();
+        }),
+    );
 
     it.each([
         [5, 10, 1, false],

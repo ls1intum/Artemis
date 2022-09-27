@@ -25,8 +25,10 @@ import {
     faTimes,
     faUserCheck,
     faWrench,
+    faPersonChalkboard,
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -45,6 +47,7 @@ export enum DoughnutChartType {
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
     readonly DoughnutChartType = DoughnutChartType;
+    readonly FeatureToggle = FeatureToggle;
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;
@@ -73,6 +76,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
     faHeartBroken = faHeartBroken;
+    faPersonChalkboard = faPersonChalkboard;
 
     constructor(
         private eventManager: EventManager,
