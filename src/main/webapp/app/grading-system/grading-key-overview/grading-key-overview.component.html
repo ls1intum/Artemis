@@ -1,7 +1,8 @@
 <div class="row justify-content-center">
     <div class="col-6">
         <h1 class="text-center mb-3">
-            {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }} {{ title }}
+            {{ (forBonus ? 'artemisApp.gradingSystem.titleBonus' : isExam ? 'artemisApp.gradingSystem.titleExam' : 'artemisApp.gradingSystem.titleCourse') | artemisTranslate }}
+            {{ title }}
         </h1>
         <h6 *ngIf="!isExam">{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
         <div style="font-size: 1.1em">

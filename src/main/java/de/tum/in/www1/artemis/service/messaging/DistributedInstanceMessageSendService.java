@@ -129,7 +129,13 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
         sendMessageDelayed("exam-monitoring-schedule-cancel", examId);
     }
 
-    private void sendMessageDelayed(String destination, Long exerciseId) {
-        exec.schedule(() -> hazelcastInstance.getTopic(destination).publish(exerciseId), 1, TimeUnit.SECONDS);
+    @Override
+    public void sendParticipantScoreSchedule(Long exerciseId, Long participantId, Long resultId) {
+        log.info("Sending schedule participant score update for exercise {} and participant {}.", exerciseId, participantId);
+        sendMessageDelayed("participant-score-schedule", exerciseId, participantId, resultId);
+    }
+
+    private void sendMessageDelayed(String destination, Long... payload) {
+        exec.schedule(() -> hazelcastInstance.getTopic(destination).publish(payload), 1, TimeUnit.SECONDS);
     }
 }

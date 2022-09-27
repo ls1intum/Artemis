@@ -23,6 +23,7 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -42,6 +43,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
@@ -120,6 +122,9 @@ public class CourseTestService {
 
     @Autowired
     private ParticipationService participationService;
+
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
 
     private final static int numberOfStudents = 8;
 
@@ -1269,6 +1274,26 @@ public class CourseTestService {
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
     }
 
+    /**
+     * Test
+     *
+     * @throws Exception
+     */
+    public void searchStudentsInCourse() throws Exception {
+        var course = database.createCourse();
+
+        MultiValueMap<String, String> params1 = new LinkedMultiValueMap<>();
+        params1.add("loginOrName", "student");
+        List<UserDTO> students = request.getList("/api/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params1);
+        assertThat(students).size().isEqualTo(8);
+
+        MultiValueMap<String, String> params2 = new LinkedMultiValueMap<>();
+        params2.add("loginOrName", "tutor");
+        // should be empty as we only search for students
+        List<UserDTO> tutors = request.getList("/api/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params2);
+        assertThat(tutors).isEmpty();
+    }
+
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
         Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
@@ -1640,6 +1665,8 @@ public class CourseTestService {
 
         courseRepo.save(instructorsCourse);
 
+        await().until(() -> participantScoreRepository.findAll().size() == 2);
+
         // We only added one course, so expect one dto
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
         assertThat(courseDtos).hasSize(1);
@@ -1907,6 +1934,8 @@ public class CourseTestService {
 
         request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
                 + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
+
+        await().until(() -> participantScoreRepository.findAll().size() == 4);
 
         // API call
         var courseDTO = request.get("/api/courses/" + course1.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);

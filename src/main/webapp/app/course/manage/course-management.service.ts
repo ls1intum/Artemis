@@ -291,6 +291,18 @@ export class CourseManagementService {
     }
 
     /**
+     * Search for a student on the server by login or name in the specified course.
+     * @param loginOrName The login or name to search for.
+     * @param courseId The id of the course to search in.
+     * @return Observable<HttpResponse<User[]>> with the list of found users as body.
+     */
+    searchStudents(courseId: number, loginOrName: string): Observable<HttpResponse<User[]>> {
+        // create loginOrName HTTP Param
+        let httpParams = new HttpParams();
+        httpParams = httpParams.append('loginOrName', loginOrName);
+        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/students/search`, { observe: 'response', params: httpParams });
+    }
+    /**
      * Downloads the course archive of the specified courseId. Returns an error
      * if the archive does not exist.
      * @param courseId The id of the course

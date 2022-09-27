@@ -25,7 +25,7 @@ import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.com
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
-import { Language } from 'app/entities/tutor-group.model';
+import { Language } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise } from 'app/entities/exercise.model';
