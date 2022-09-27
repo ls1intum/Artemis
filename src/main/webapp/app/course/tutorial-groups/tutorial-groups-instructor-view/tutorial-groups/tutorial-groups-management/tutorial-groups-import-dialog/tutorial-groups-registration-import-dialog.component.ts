@@ -295,7 +295,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
                 invalidList.push(i + 2);
             }
         }
-        return invalidList.length === 0 ? null : this.translateService.instant('artemisApp.pages.tutorialGroupsManagement.import.withoutTitle') + invalidList.join(', ');
+        return invalidList.length === 0 ? null : this.translateService.instant('artemisApp.tutorialGroupImportDialog.errorMessages.withoutTitle') + invalidList.join(', ');
     }
 
     withoutIdentifierValidation(csvRows: ParsedCSVRow[]): string | null {
@@ -312,7 +312,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
         }
         return invalidList.length === 0
             ? null
-            : this.translateService.instant('artemisApp.pages.tutorialGroupsManagement.import.noIdentificationInformation') + invalidList.join(', ');
+            : this.translateService.instant('artemisApp.tutorialGroupImportDialog.errorMessages.noIdentificationInformation') + invalidList.join(', ');
     }
 
     duplicatedRegistrationNumbers(registrations: TutorialGroupRegistrationImportDTO[]): string | null {
@@ -329,7 +329,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
 
         return duplicatedRegistrationNumbers.length === 0
             ? null
-            : this.translateService.instant('artemisApp.pages.tutorialGroupsManagement.import.duplicatedRegistrationNumbers') + duplicatedRegistrationNumbers.join(', ');
+            : this.translateService.instant('artemisApp.tutorialGroupImportDialog.errorMessages.duplicatedRegistrationNumbers') + duplicatedRegistrationNumbers.join(', ');
     }
 
     duplicatedLogins(registrations: TutorialGroupRegistrationImportDTO[]): string | null {
@@ -346,7 +346,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
 
         return duplicatedLogins.length === 0
             ? null
-            : this.translateService.instant('artemisApp.pages.tutorialGroupsManagement.import.duplicatedLogins') + duplicatedLogins.join(', ');
+            : this.translateService.instant('artemisApp.tutorialGroupImportDialog.errorMessages.duplicatedLogins') + duplicatedLogins.join(', ');
     }
 
     /**
@@ -388,7 +388,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
     }
 
     onSaveError() {
-        this.alertService.error('artemisApp.pages.tutorialGroupsManagement.import.genericErrorMessage');
+        this.alertService.error('artemisApp.tutorialGroupImportDialog.errorMessages.genericErrorMessage');
         this.isImporting = false;
     }
 

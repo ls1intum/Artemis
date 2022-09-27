@@ -12,11 +12,22 @@
             <p>{{ 'artemisApp.tutorialGroupImportDialog.explanations.requirements' | artemisTranslate }}</p>
             <p>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.label' | artemisTranslate }}</p>
             <ul>
-                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.tutorialGroupTitle' | artemisTranslate: { headers: supportedTitleHeader } }}</li>
-                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.registrationNumber' | artemisTranslate: { headers: supportedRegistrationNumberHeaders } }}</li>
-                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.login' | artemisTranslate: { headers: supportedLoginHeaders } }}</li>
-                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.firstName' | artemisTranslate: { headers: supportedFirstNameHeaders } }}</li>
-                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.lastName' | artemisTranslate: { headers: supportedLastNameHeaders } }}</li>
+                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.alwaysRequired' | artemisTranslate }}</li>
+                <ul>
+                    <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.tutorialGroupTitle' | artemisTranslate: { headers: supportedTitleHeader } }}</li>
+                </ul>
+                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.requiredIfStudentRegistration' | artemisTranslate }}</li>
+                <ul>
+                    <li>
+                        {{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.registrationNumber' | artemisTranslate: { headers: supportedRegistrationNumberHeaders } }}
+                    </li>
+                    <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.login' | artemisTranslate: { headers: supportedLoginHeaders } }}</li>
+                </ul>
+                <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.alwaysOptional' | artemisTranslate }}</li>
+                <ul>
+                    <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.firstName' | artemisTranslate: { headers: supportedFirstNameHeaders } }}</li>
+                    <li>{{ 'artemisApp.tutorialGroupImportDialog.supportedHeaderNames.lastName' | artemisTranslate: { headers: supportedLastNameHeaders } }}</li>
+                </ul>
             </ul>
         </div>
         <!-- File Upload -->
@@ -135,20 +146,16 @@
         </div>
         <!-- Overview Table -->
         <div *ngIf="registrationsDisplayedInTable && registrationsDisplayedInTable.length > 0" class="form-group mt-4">
-            <div>
-                <label class="label-narrow font-weight-bold">{{ 'artemisApp.pages.tutorialGroupsManagement.import.label' | artemisTranslate }}</label>
-                <jhi-help-icon placement="top" text="artemisApp.pages.tutorialGroupsManagement.import.tooltip" class="me-1"></jhi-help-icon>
-            </div>
-            <div class="table-wrapper-scroll-y my-custom-scrollbar">
+            <div class="table-wrapper-scroll-y scrollbar">
                 <table class="table table-striped table-bordered table-sm table-responsive mt-2">
                     <thead>
                         <tr>
                             <th scope="col">#</th>
-                            <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.title' | artemisTranslate }}</th>
-                            <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.registrationNumber' | artemisTranslate }}</th>
-                            <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.login' | artemisTranslate }}</th>
-                            <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.firstName' | artemisTranslate }}</th>
-                            <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.lastName' | artemisTranslate }}</th>
+                            <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.title' | artemisTranslate }}</th>
+                            <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.registrationNumber' | artemisTranslate }}</th>
+                            <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.login' | artemisTranslate }}</th>
+                            <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.firstName' | artemisTranslate }}</th>
+                            <th scope="col">{{ 'artemisApp.tutorialGroupImportDialog.table.columns.lastName' | artemisTranslate }}</th>
                             <th *ngIf="isImportDone && numberOfNotImportedRegistration > 0" scope="col">
                                 {{ 'artemisApp.tutorialGroupImportDialog.table.columns.error' | artemisTranslate }}
                             </th>
@@ -197,19 +204,14 @@
     <div class="modal-footer justify-content-between">
         <div *ngIf="allRegistrations && allRegistrations.length > 0" class="flex-shrink-0 me-2 d-flex">
             <div *ngIf="!isImportDone; else numbersAfterImport">
-                <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrations' | artemisTranslate }}</strong>
-                <span>&nbsp;{{ allRegistrations.length }}</span>
+                <strong>{{ 'artemisApp.tutorialGroupImportDialog.table.footer.total' | artemisTranslate: { count: allRegistrations.length } }}</strong>
             </div>
             <ng-template #numbersAfterImport>
                 <div>
-                    <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrationsImported' | artemisTranslate }}</strong>
-                    <span>{{ numberOfImportedRegistrations }}</span>
+                    <strong>{{ 'artemisApp.tutorialGroupImportDialog.table.footer.imported' | artemisTranslate: { count: numberOfImportedRegistrations } }}</strong>
                 </div>
                 <div class="ms-2">
-                    <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrationsNotImported' | artemisTranslate }}</strong>
-                    <span
-                        ><b style="color: red">{{ numberOfNotImportedRegistration }}</b></span
-                    >
+                    <strong>{{ 'artemisApp.tutorialGroupImportDialog.table.footer.imported' | artemisTranslate: { count: numberOfNotImportedRegistration } }}</strong>
                 </div>
             </ng-template>
         </div>
