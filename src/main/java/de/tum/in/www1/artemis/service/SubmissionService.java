@@ -207,10 +207,10 @@ public class SubmissionService {
      * Given an exercise id, find a random submission for that exercise which still doesn't have any manual result.
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
-     * If @param correctionRound is bigger than 0, only submission are shown for which the user has not assessed the first result.
+     * If {@code correctionRound} is bigger than 0, only submissions are shown for which the user has not assessed the first result.
      *
      * @param exercise the exercise for which we want to retrieve a submission without manual result
-     * @param correctionRound - the correction round we want our submission to have results for
+     * @param correctionRound the correction round we want our submission to have results for
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
