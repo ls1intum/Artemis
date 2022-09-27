@@ -195,6 +195,16 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "student1")
+    void practiceProgrammingExercise_featureDisabled() throws Exception {
+        featureToggleService.disableFeature(Feature.ProgrammingExercises);
+        request.post("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
+
+        // Reset
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
     void participateInProgrammingExercise_dueDatePassed() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         exerciseRepo.save(programmingExercise);
@@ -203,10 +213,26 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "student1")
+    void practiceProgrammingExercise_beforeDatePassed() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepo.save(programmingExercise);
+        request.post("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
     void participateInProgrammingTeamExercise_withoutAssignedTeam() throws Exception {
         programmingExercise.setMode(ExerciseMode.TEAM);
         exerciseRepo.save(programmingExercise);
         request.post("/api/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void practiceProgrammingTeamExercise_Forbidden() throws Exception {
+        programmingExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepo.save(programmingExercise);
+        request.post("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test

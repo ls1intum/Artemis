@@ -204,7 +204,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 
-        requestAndExpectDateConversion('POST', SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice-mode`, returnedFromService, participation.exercise, true);
+        requestAndExpectDateConversion('POST', SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice`, returnedFromService, participation.exercise, true);
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));

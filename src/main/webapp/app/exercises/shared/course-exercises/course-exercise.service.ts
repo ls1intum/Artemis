@@ -94,7 +94,7 @@ export class CourseExerciseService {
      * @param exerciseId - the unique identifier of the exercise
      */
     startPractice(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice-mode`, {}).pipe(
+        return this.http.post<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),
