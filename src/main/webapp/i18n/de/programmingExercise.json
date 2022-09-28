@@ -203,7 +203,7 @@
                 "gradingTableHeader": {
                     "testName": "Testname",
                     "weight": "Gewichtung",
-                    "bonusMultiplier": "Bonus Multiplier",
+                    "bonusMultiplier": "Bonusmultiplikator",
                     "bonusPoints": "Bonuspunkte",
                     "visibility": "Sichtbarkeit",
                     "resultingPoints": "Resultierende Punkte",

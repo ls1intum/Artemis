@@ -96,12 +96,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         staticCodeAnalysisEnabled: true,
         maxPoints: 42,
     } as ProgrammingExercise;
-    const testCases1 = [
+    const testCases = [
         {
             id: 1,
             testName: 'testBubbleSort',
             active: true,
-            weight: 2,
+            weight: 1,
             bonusMultiplier: 1,
             bonusPoints: 0,
             visibility: Visibility.Always,
@@ -111,7 +111,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             testName: 'testMergeSort',
             active: true,
             weight: 1,
-            bonusMultiplier: 1.5,
+            bonusMultiplier: 1,
             bonusPoints: 0,
             visibility: Visibility.AfterDueDate,
         },
@@ -121,7 +121,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             active: false,
             weight: 1,
             bonusMultiplier: 1,
-            bonusPoints: 1,
+            bonusPoints: 0,
             visibility: Visibility.Always,
         },
         {
@@ -287,6 +287,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        testCases.forEach((testCase) => {
+            testCase.weight = 1;
+            testCase.bonusMultiplier = 1;
+            testCase.bonusPoints = 0;
+        });
     });
 
     const initGradingComponent = ({
@@ -306,7 +311,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             getExerciseTestCasteStateDTO(released, hasStudentResult, testCasesChanged, hasBuildAndTestAfterDueDate ? buildAndTestAfterDueDate : undefined),
         );
 
-        (gradingService as unknown as MockProgrammingExerciseGradingService).nextTestCases(testCases1);
+        (gradingService as unknown as MockProgrammingExerciseGradingService).nextTestCases(testCases);
         (gradingService as unknown as MockProgrammingExerciseGradingService).nextCategories(codeAnalysisCategories1);
     };
 
@@ -318,8 +323,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const table = debugElement.query(By.css(testCaseTableId));
         const rows = table.queryAll(By.css(rowClass));
 
-        expect(comp.testCases).toEqual(testCases1);
-        expect(rows).toHaveLength(testCases1.filter(({ active }) => active).length);
+        expect(comp.testCases).toEqual(testCases);
+        expect(rows).toHaveLength(testCases.filter(({ active }) => active).length);
 
         const saveButton = debugElement.query(By.css(saveTableButton));
         expect(saveButton).not.toBeNull();
@@ -334,8 +339,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const table = debugElement.query(By.css(testCaseTableId));
         const rows = table.queryAll(By.css(rowClass));
 
-        expect(comp.testCases).toEqual(testCases1);
-        expect(rows).toHaveLength(testCases1.length);
+        expect(comp.testCases).toEqual(testCases);
+        expect(rows).toHaveLength(testCases.length);
 
         const saveButton = debugElement.query(By.css(saveTableButton));
         expect(saveButton).not.toBeNull();
@@ -347,13 +352,13 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        const orderedTests = sortedTestCases(testCases1);
+        const orderedTests = sortedTestCases(testCases);
 
         const table = debugElement.query(By.css(testCaseTableId));
 
         // get first weight input
         const editingInputs = table.queryAll(By.css(tableEditingInput));
-        expect(editingInputs).toHaveLength(testCases1.length * 4);
+        expect(editingInputs).toHaveLength(testCases.length * 3);
 
         const weightInput = editingInputs[0].nativeElement;
         expect(weightInput).not.toBeNull();
@@ -398,7 +403,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(testThatWasUpdated.bonusMultiplier).toBe(2);
         expect(testThatWasUpdated.bonusPoints).toBe(1);
         expect(comp.changedTestCaseIds).toHaveLength(0);
-        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(71);
+        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(74);
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
@@ -440,7 +445,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(testThatWasUpdated.bonusMultiplier).toBe(1);
         expect(testThatWasUpdated.bonusPoints).toBe(1);
         expect(comp.changedTestCaseIds).toHaveLength(0);
-        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(36);
+        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(37.5);
     });
 
     const setAllWeightsToZero = () => {
@@ -448,9 +453,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         // get all input fields
         const editingInputs = table.queryAll(By.css(tableEditingInput));
-        expect(editingInputs).toHaveLength(testCases1.length * 4);
+        expect(editingInputs).toHaveLength(testCases.length * 3);
         // Set only the weight input fields to 0 of all test cases
-        for (let i = 0; i < editingInputs.length; i += 4) {
+        for (let i = 0; i < editingInputs.length; i += 3) {
             const weightInput = editingInputs[i].nativeElement;
             expect(weightInput).not.toBeNull();
             weightInput.focus();
@@ -467,7 +472,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        const orderedTests = sortedTestCases(testCases1);
+        const orderedTests = sortedTestCases(testCases);
         setAllWeightsToZero();
 
         fixture.detectChanges();
@@ -513,11 +518,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        const orderedTests = sortedTestCases(testCases1);
+        const orderedTests = sortedTestCases(testCases);
 
         const table = debugElement.query(By.css(testCaseTableId));
         const dropdowns = table.queryAll(By.all()).filter((elem) => elem.name === 'select');
-        expect(dropdowns).toHaveLength(testCases1.length);
+        expect(dropdowns).toHaveLength(testCases.length);
         dropdowns[0].nativeElement.value = Visibility.AfterDueDate;
         dropdowns[0].nativeElement.dispatchEvent(new Event('change'));
 
@@ -551,7 +556,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         const table = debugElement.query(By.css(testCaseTableId));
         const options = table.queryAll(By.all()).filter((elem) => elem.name === 'option');
         // three options for each test case should still be available
-        expect(options).toHaveLength(testCases1.length * 3);
+        expect(options).toHaveLength(testCases.length * 3);
     });
 
     it('should show the updatedTests badge when the exercise is released and has student results', () => {
@@ -595,19 +600,19 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        comp.updateEditedField(testCases1[0], EditableField.WEIGHT)(3);
-        comp.updateEditedField(testCases1[1], EditableField.WEIGHT)(4);
+        comp.updateEditedField(testCases[0], EditableField.WEIGHT)(3);
+        comp.updateEditedField(testCases[1], EditableField.WEIGHT)(4);
 
-        comp.updateEditedField(testCases1[1], EditableField.BONUS_MULTIPLIER)(2);
-        comp.updateEditedField(testCases1[2], EditableField.BONUS_MULTIPLIER)(3);
+        comp.updateEditedField(testCases[1], EditableField.BONUS_MULTIPLIER)(2);
+        comp.updateEditedField(testCases[2], EditableField.BONUS_MULTIPLIER)(3);
 
-        comp.updateEditedField(testCases1[0], EditableField.BONUS_POINTS)(4);
-        comp.updateEditedField(testCases1[2], EditableField.BONUS_POINTS)(10);
+        comp.updateEditedField(testCases[0], EditableField.BONUS_POINTS)(4);
+        comp.updateEditedField(testCases[2], EditableField.BONUS_POINTS)(10);
 
         const updatedTestCases: ProgrammingExerciseTestCase[] = [
-            { ...testCases1[0], weight: 3, bonusPoints: 4 },
-            { ...testCases1[1], weight: 4, bonusMultiplier: 2 },
-            { ...testCases1[2], bonusMultiplier: 3, bonusPoints: 10 },
+            { ...testCases[0], weight: 3, bonusPoints: 4 },
+            { ...testCases[1], weight: 4, bonusMultiplier: 2 },
+            { ...testCases[2], bonusMultiplier: 3, bonusPoints: 10 },
         ];
         updateTestCasesStub.mockReturnValue(of(updatedTestCases));
 
@@ -626,7 +631,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        resetTestCasesStub.mockReturnValue(of(testCases1));
+        resetTestCasesStub.mockReturnValue(of(testCases));
 
         const resetButton = getResetButton();
         expectElementToBeEnabled(resetButton);
@@ -636,7 +641,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         expect(resetTestCasesStub).toHaveBeenCalledOnce();
         expect(resetTestCasesStub).toHaveBeenCalledWith(exerciseId);
-        expect(comp.testCases).toEqual(testCases1);
+        expect(comp.testCases).toEqual(testCases);
         expect(comp.changedTestCaseIds).toHaveLength(0);
     });
 
@@ -842,11 +847,30 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     });
 
     it('should calculate the points per test correctly', () => {
+        testCases[0].weight = 2;
+        testCases[1].bonusMultiplier = 1.5;
+        testCases[2].bonusPoints = 1;
+
         initGradingComponent({ tab: 'test-cases' });
 
         fixture.detectChanges();
 
-        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 8.4, otherTest: 9.4, testBubbleSort: 16.8, testMergeSort: 12.6 });
+        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 16.8, otherTest: 12.6, testBubbleSort: 9.4, testMergeSort: 8.4 });
+    });
+
+    it('should update points of individual test correctly', () => {
+        initGradingComponent({ tab: 'test-cases' });
+        fixture.detectChanges();
+
+        testCases[0].weight = 5;
+        comp.updateTestPoints(testCases[0], EditableField.WEIGHT);
+
+        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 26.3, otherTest: 5.3, testBubbleSort: 5.3, testMergeSort: 5.3 });
+
+        testCases[2].bonusMultiplier = 3;
+        comp.updateTestPoints(testCases[2], EditableField.BONUS_MULTIPLIER);
+
+        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 26.3, otherTest: 5.3, testBubbleSort: 15.8, testMergeSort: 5.3 });
     });
 
     describe('test chart interaction', () => {
@@ -858,7 +882,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 id: 1,
                 testName: 'testBubbleSort',
                 active: true,
-                weight: 2,
+                weight: 1,
                 bonusMultiplier: 1,
                 bonusPoints: 0,
                 visibility: Visibility.Always,
@@ -878,7 +902,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             fixture.detectChanges();
             const table = debugElement.query(By.css(testCaseTableId));
             const editingInputs = table.queryAll(By.css(tableEditingInput));
-            expect(editingInputs).toHaveLength(4);
+            expect(editingInputs).toHaveLength(3);
 
             const weightInput = editingInputs[0].nativeElement;
             expect(weightInput).not.toBeNull();
@@ -921,7 +945,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
             // we reset the table
             comp.filterByChart(-5, ChartFilterType.TEST_CASES);
-            const expectedTestCases = testCases1.filter((testCase) => testCase.active === true).map((testCase) => (testCase.id !== 1 ? testCase : visibleTestCase));
+            const expectedTestCases = testCases.filter((testCase) => testCase.active === true).map((testCase) => (testCase.id !== 1 ? testCase : visibleTestCase));
 
             expect(comp.filteredTestCasesForTable).toEqual(expectedTestCases);
         });

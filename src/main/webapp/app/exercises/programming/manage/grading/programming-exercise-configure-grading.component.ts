@@ -117,6 +117,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
 
     testCaseColors = {};
     categoryColors = {};
+    totalWeight = 0;
 
     submissionPolicy?: SubmissionPolicy;
     hadPolicyBefore: boolean;
@@ -305,8 +306,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
             if (newValue !== editedTestCase[field]) {
                 this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id!];
                 this.updateAllTestCaseViewsAfterEditing(editedTestCase, field, newValue);
+                this.updateTestPoints(editedTestCase, field, newValue);
             }
-            this.updateTestPoints();
             return newValue;
         };
     }
@@ -606,21 +607,26 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     /**
      * Calculates the rounded points awarded for passing each test
      */
-    updateTestPoints() {
-        this.testCasePoints = {};
-
+    updateTestPoints(editedTestCase?: ProgrammingExerciseTestCase, field?: EditableField, newValue?: any) {
         if (!this.testCases) {
             return;
         }
 
-        const totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
         const maxPoints = this.programmingExercise.maxPoints!;
-        this.testCases.forEach((testCase) => {
-            if (testCase.testName) {
-                const points = (totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / totalWeight : 0) * maxPoints + (testCase.bonusPoints ?? 0);
-                this.testCasePoints[testCase.testName] = roundValueSpecifiedByCourseSettings(points, this.course);
-            }
-        });
+        if (!this.totalWeight || !editedTestCase || !field || field === EditableField.WEIGHT || newValue === undefined) {
+            this.testCasePoints = {};
+            this.totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
+            this.testCases.forEach((testCase) => {
+                const points = (this.totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / this.totalWeight : 0) * maxPoints + (testCase.bonusPoints ?? 0);
+                this.testCasePoints[testCase.testName!] = roundValueSpecifiedByCourseSettings(points, this.course);
+            });
+        } else {
+            const editedTestCaseNewValue = { ...editedTestCase, [field]: newValue };
+            const points =
+                (this.totalWeight > 0 ? (editedTestCaseNewValue.weight! * editedTestCaseNewValue.bonusMultiplier!) / this.totalWeight : 0) * maxPoints +
+                (editedTestCaseNewValue.bonusPoints ?? 0);
+            this.testCasePoints[editedTestCaseNewValue.testName!] = roundValueSpecifiedByCourseSettings(points, this.course);
+        }
     }
 
     /**
@@ -866,19 +872,19 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @private
      */
     private updateTestCases(editedTestCase: ProgrammingExerciseTestCase, field: EditableField, newValue: any, displayType: TestCaseView): void {
-        const filterFunction = (testCase: ProgrammingExerciseTestCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue });
+        const mapFunction = (testCase: ProgrammingExerciseTestCase) => (testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue });
         switch (displayType) {
             case TestCaseView.TABLE:
-                this.filteredTestCasesForTable = this.filteredTestCasesForTable.map(filterFunction);
+                this.filteredTestCasesForTable = this.filteredTestCasesForTable.map(mapFunction);
                 break;
             case TestCaseView.CHART:
-                this.filteredTestCasesForCharts = this.filteredTestCasesForCharts.map(filterFunction);
+                this.filteredTestCasesForCharts = this.filteredTestCasesForCharts.map(mapFunction);
                 break;
             case TestCaseView.BACKUP:
-                this.backupTestCases = this.backupTestCases.map(filterFunction);
+                this.backupTestCases = this.backupTestCases.map(mapFunction);
                 break;
             case TestCaseView.SAVE_VALUES:
-                this.testCasesValue = this.testCases.map(filterFunction);
+                this.testCasesValue = this.testCases.map(mapFunction);
                 break;
         }
     }

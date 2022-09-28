@@ -98,9 +98,9 @@
                             <ngx-datatable-column name="Test Name" prop="testName">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">{{
-                                            'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testName' | artemisTranslate
-                                        }}</span>
+                                        <span class="datatable-header-cell-label bold sortable">
+                                            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testName' | artemisTranslate }}
+                                        </span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'testName')"></fa-icon>
                                     </span>
                                 </ng-template>
@@ -112,9 +112,9 @@
                             <ngx-datatable-column name="Weight" prop="weight">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">{{
-                                            'artemisApp.programmingExercise.configureGrading.gradingTableHeader.weight' | artemisTranslate
-                                        }}</span>
+                                        <span class="datatable-header-cell-label bold sortable">
+                                            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.weight' | artemisTranslate }}
+                                        </span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'weight')"></fa-icon
                                         ><fa-icon
                                             [icon]="faQuestionCircle"
@@ -136,9 +136,9 @@
                             <ngx-datatable-column name="Bonus Multiplier" prop="bonusMultiplier">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">{{
-                                            'artemisApp.programmingExercise.configureGrading.gradingTableHeader.bonusMultiplier' | artemisTranslate
-                                        }}</span>
+                                        <span class="datatable-header-cell-label bold sortable">
+                                            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.bonusMultiplier' | artemisTranslate }}
+                                        </span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'bonusMultiplier')"></fa-icon
                                         ><fa-icon
                                             [icon]="faQuestionCircle"
@@ -160,9 +160,9 @@
                             <ngx-datatable-column name="Bonus Points" prop="bonusPoints">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">{{
-                                            'artemisApp.programmingExercise.configureGrading.gradingTableHeader.bonusPoints' | artemisTranslate
-                                        }}</span>
+                                        <span class="datatable-header-cell-label bold sortable">
+                                            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.bonusPoints' | artemisTranslate }}
+                                        </span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'bonusPoints')"></fa-icon>
                                         <fa-icon
                                             [icon]="faQuestionCircle"
@@ -184,9 +184,9 @@
                             <ngx-datatable-column name="Visibility" prop="visibility" [sortable]="false">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">{{
-                                            'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate
-                                        }}</span>
+                                        <span class="datatable-header-cell-label bold sortable">
+                                            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate }}
+                                        </span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'visibility')"></fa-icon>
                                         <fa-icon
                                             [icon]="faQuestionCircle"
@@ -208,9 +208,9 @@
                             <ngx-datatable-column name="Points" prop="points" [comparator]="comparePoints">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">{{
-                                            'artemisApp.programmingExercise.configureGrading.gradingTableHeader.resultingPoints' | artemisTranslate
-                                        }}</span>
+                                        <span class="datatable-header-cell-label bold sortable">
+                                            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.resultingPoints' | artemisTranslate }}
+                                        </span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'points')"></fa-icon>
                                         <fa-icon
                                             [icon]="faQuestionCircle"
@@ -222,21 +222,15 @@
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-row="row">
-                                    <input
-                                        class="table-editable-field__input form-control me-2"
-                                        [value]="testCasePoints[row.testName]"
-                                        type="text"
-                                        [disabled]="true"
-                                        [readOnly]="true"
-                                    />
+                                    {{ testCasePoints[row.testName] }}
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA" name="Type" prop="type">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">{{
-                                            'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testType' | artemisTranslate
-                                        }}</span>
+                                        <span class="datatable-header-cell-label bold sortable">
+                                            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testType' | artemisTranslate }}
+                                        </span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'programmingExerciseTestCaseType')"></fa-icon
                                         ><fa-icon
                                             [icon]="faQuestionCircle"
@@ -254,9 +248,9 @@
                             <ngx-datatable-column name="Passed %" prop="passedPercent" [comparator]="comparePassedPercent">
                                 <ng-template ngx-datatable-header-template let-sortFn="sortFn">
                                     <span class="datatable-header-cell-wrapper" (click)="sortFn()">
-                                        <span class="datatable-header-cell-label bold sortable">{{
-                                            'artemisApp.programmingExercise.configureGrading.gradingTableHeader.passedPercent' | artemisTranslate
-                                        }}</span>
+                                        <span class="datatable-header-cell-label bold sortable">
+                                            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.passedPercent' | artemisTranslate }}
+                                        </span>
                                         <fa-icon [icon]="iconForSortPropField('testCases', 'passedPercent')"></fa-icon>
                                     </span>
                                 </ng-template>
