@@ -635,16 +635,23 @@ public class ParticipationService {
         var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
         Set<Submission> submissions = participation.getSubmissions();
+
+        // Delete all results for this participation
         ArrayList<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toCollection(ArrayList::new));
         resultsToBeDeleted.addAll(participation.getResults());
-        resultsToBeDeleted.forEach(result -> resultService.deleteResult(result.getId()));
-        // The result of the submissions will be deleted via cascade
+        resultsToBeDeleted.forEach(result -> {
+            // By removing the participation, the ResultListener will ignore this result instead of scheduling a participant score update
+            result.setParticipation(null);
+            resultService.deleteResult(result.getId());
+        });
+
+        // Delete all submissions for this participation
         submissions.forEach(submission -> {
             coverageReportRepository.deleteBySubmissionId(submission.getId());
             buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
             submissionRepository.deleteById(submission.getId());
         });
-        // The results that are only connected to a participation are also deleted
+
         resultsToBeDeleted.forEach(participation::removeResult);
     }
 
