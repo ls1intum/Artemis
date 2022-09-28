@@ -118,7 +118,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
         this.subscriptions.push(
             this.statusHeaderControl?.valueChanges.subscribe((selectedStatusColumn) => {
                 if (!selectedStatusColumn) {
-                    this.fixedPlaceValueControl?.reset({ emitEvent: false });
+                    this.fixedPlaceValueControl?.reset('', { emitEvent: false });
                     this.fixedPlaceValueControl?.disable();
                 } else {
                     this.fixedPlaceValueControl?.enable();
@@ -130,8 +130,8 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
     onFixedPlaceCheckboxChange() {
         this.subscriptions.push(
             this.specifyFixedPlaceControl?.valueChanges.subscribe((specifyFixedPlace) => {
-                this.fixedPlaceValueControl?.reset({ emitEvent: false });
-                this.statusHeaderControl?.reset({ emitEvent: false });
+                this.fixedPlaceValueControl?.reset('', { emitEvent: false });
+                this.statusHeaderControl?.reset('', { emitEvent: false });
                 if (specifyFixedPlace) {
                     this.statusHeaderControl?.enable();
                     this.fixedPlaceValueControl?.enable();
@@ -209,8 +209,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
             this.performExtraRowValidation(csvRows);
         }
         if (this.validationErrors && this.validationErrors.length > 0) {
-            this.fileInput.nativeElement.value = ''; // remove selected file so user can fix the file and select it again
-            this.selectedFile = undefined;
+            this.resetFileUpload();
             return [];
         }
         // get the used headers from the first csv row object returned by the parser
@@ -247,12 +246,16 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
 
         this.performExtraDTOValidation(registrations);
         if (this.validationErrors && this.validationErrors.length > 0) {
-            this.fileInput.nativeElement.value = ''; // remove selected file so user can fix the file and select it again
-            this.selectedFile = undefined;
+            this.resetFileUpload();
             return [];
         } else {
             return registrations;
         }
+    }
+
+    resetFileUpload() {
+        this.fileInput.nativeElement.value = ''; // remove selected file so user can fix the file and select it again
+        this.selectedFile = undefined;
     }
 
     import() {
@@ -395,6 +398,10 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
 
     wasImported(registration: TutorialGroupRegistrationImportDTO): boolean {
         return this.isImportDone && registration.importSuccessful === true;
+    }
+
+    wasNotImported(registration: TutorialGroupRegistrationImportDTO): boolean {
+        return this.isImportDone && registration.importSuccessful !== true;
     }
 
     /**

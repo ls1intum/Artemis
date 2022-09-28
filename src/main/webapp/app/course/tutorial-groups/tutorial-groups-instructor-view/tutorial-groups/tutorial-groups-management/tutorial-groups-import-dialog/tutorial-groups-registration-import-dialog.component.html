@@ -165,7 +165,7 @@
                         <tr
                             *ngFor="let registration of registrationsDisplayedInTable; let i = index"
                             [class.table-success]="wasImported(registration)"
-                            [class.table-danger]="!wasImported(registration)"
+                            [class.table-danger]="wasNotImported(registration)"
                         >
                             <td>
                                 <span class="d-inline-block text-truncate" style="max-width: 200px">{{ i + 1 }} </span>

@@ -23,7 +23,7 @@ jest.mock('papaparse', () => {
 });
 const mockedParse = parse as jest.MockedFunction<typeof parse>;
 
-describe('TutorialGroupsImportDialogComponent', () => {
+describe('TutorialGroupsRegistrationImportDialog', () => {
     let component: TutorialGroupsRegistrationImportDialog;
     let fixture: ComponentFixture<TutorialGroupsRegistrationImportDialog>;
 
@@ -229,7 +229,7 @@ describe('TutorialGroupsImportDialogComponent', () => {
         const statusHeaderResetSpy = jest.spyOn(component.statusHeaderControl!, 'reset');
 
         component.specifyFixedPlaceControl?.setValue(false);
-        expect(fixedPlaceResetSpy).toHaveBeenCalledOnce();
+        expect(fixedPlaceResetSpy).toHaveBeenCalledTimes(2);
         expect(statusHeaderResetSpy).toHaveBeenCalledOnce();
         expect(component.fixedPlaceValueControl?.disabled).toBeTrue();
         expect(component.statusHeaderControl?.disabled).toBeTrue();
@@ -237,7 +237,7 @@ describe('TutorialGroupsImportDialogComponent', () => {
         fixedPlaceResetSpy.mockClear();
         statusHeaderResetSpy.mockClear();
         component.specifyFixedPlaceControl?.setValue(true);
-        expect(fixedPlaceResetSpy).toHaveBeenCalledOnce();
+        expect(fixedPlaceResetSpy).toHaveBeenCalledTimes(2);
         expect(statusHeaderResetSpy).toHaveBeenCalledOnce();
         expect(component.fixedPlaceValueControl?.disabled).toBeFalse();
         expect(component.statusHeaderControl?.disabled).toBeFalse();
