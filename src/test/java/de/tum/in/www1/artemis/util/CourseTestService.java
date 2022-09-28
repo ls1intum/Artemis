@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -38,10 +40,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.CourseExamExportService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -2054,5 +2053,28 @@ public class CourseTestService {
     public void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+    }
+
+    // Test
+    public void testEditCourseRemoveExistingIcon() throws Exception {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        byte[] iconBytes = "icon".getBytes();
+        MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
+        String iconPath = fileService.handleSaveFile(iconFile, false, false);
+        iconPath = fileService.manageFilesForUpdatedFilePath(null, iconPath, FilePathService.getCourseIconFilePath(), course.getId());
+        course.setCourseIcon(iconPath);
+        course = courseRepo.save(course);
+        iconPath = iconPath.replace(Constants.FILEPATH_ID_PLACEHOLDER, course.getId().toString());
+        assertThat(course.getCourseIcon()).as("course icon was set correctly").isEqualTo(iconPath);
+
+        course.setCourseIcon(null);
+        request.put("/api/courses", course, HttpStatus.OK);
+
+        course = courseRepo.findByIdElseThrow(course.getId());
+        assertThat(course.getCourseIcon()).as("course icon was deleted correctly").isNull();
+        assertThat(fileService.getFileForPath(fileService.actualPathForPublicPath(iconPath))).as("course icon file was deleted correctly").isNull();
     }
 }

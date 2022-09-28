@@ -692,4 +692,10 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
         courseTestService.testCreateCourseWithInvalidStartAndEndDate();
     }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testEditCourseRemoveExistingIcon() throws Exception {
+        courseTestService.testEditCourseRemoveExistingIcon();
+    }
 }

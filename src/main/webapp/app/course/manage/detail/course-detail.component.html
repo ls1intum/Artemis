@@ -55,7 +55,7 @@
                 <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
             </a>
             <div class="ms-auto">
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">
+                <a *ngIf="course.isAtLeastInstructor" id="edit-course" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">
                     <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
                 </a>
                 <jhi-course-exam-archive-button

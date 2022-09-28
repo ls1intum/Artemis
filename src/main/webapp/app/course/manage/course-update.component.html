@@ -7,6 +7,18 @@
                 <h4 *ngIf="!course.id" id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel">Create new Course</h4>
                 <h4 *ngIf="course.id" id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel">Edit Course</h4>
             </div>
+            <button
+                *ngIf="croppedImage && course.courseIcon"
+                id="delete-course-icon"
+                class="btn"
+                [buttonSize]="ButtonSize.SMALL"
+                jhiDeleteButton
+                [actionType]="ActionType.Remove"
+                (delete)="deleteCourseIcon(course.id!)"
+                [dialogError]="dialogError$"
+            >
+                <fa-icon [icon]="faTimes"></fa-icon>
+            </button>
             <hr />
             <div>
                 <div class="form-group" [hidden]="!course.id">

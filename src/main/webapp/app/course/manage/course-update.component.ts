@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
@@ -23,6 +23,8 @@ import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from 
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-course-update',
@@ -30,8 +32,13 @@ import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
     styleUrls: ['./course-update.component.scss'],
 })
 export class CourseUpdateComponent implements OnInit {
+    ActionType = ActionType;
+    ButtonSize = ButtonSize;
     CachingStrategy = CachingStrategy;
     ProgrammingLanguage = ProgrammingLanguage;
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -481,6 +488,19 @@ export class CourseUpdateComponent implements OnInit {
 
     get isValidConfiguration(): boolean {
         return this.isValidDate;
+    }
+
+    /**
+     * Deletes the course icon
+     * @param courseId id the course that will be deleted
+     */
+    deleteCourseIcon(courseId: number) {
+        this.course.courseIcon = undefined;
+        this.courseImageFile = undefined;
+        this.courseImageFileName = this.course.courseIcon!;
+        this.croppedImage = '';
+        this.courseForm.controls['courseIcon'].setValue(undefined);
+        this.dialogErrorSource.next('');
     }
 }
 

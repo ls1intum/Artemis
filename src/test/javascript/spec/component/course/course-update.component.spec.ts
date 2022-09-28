@@ -476,4 +476,37 @@ describe('Course Management Update Component', () => {
             expect(comp.courseOrganizations).toEqual([secondOrganization]);
         });
     });
+
+    describe('deleteIcon', () => {
+        it('should remove icon image and delete icon button from component', () => {
+            setIcon();
+            let deleteIconButton = getDeleteIconButton();
+            deleteIconButton.dispatchEvent(new Event('delete'));
+            fixture.detectChanges();
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            deleteIconButton = getDeleteIconButton();
+            expect(iconImage).toBeNull();
+            expect(deleteIconButton).toBeNull();
+        });
+
+        it('should not be able to delete icon if icon does not exist', () => {
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            let deleteIconButton = getDeleteIconButton();
+            expect(iconImage).toBeNull();
+            expect(deleteIconButton).toBeNull();
+        });
+
+        function setIcon(): void {
+            let croppedImage = 'testCroppedImage';
+            comp.croppedImage = 'data:image/png;base64,' + croppedImage;
+            comp.courseImageFileName = 'testFilename';
+            comp.showCropper = true;
+            comp.ngOnInit();
+            fixture.detectChanges();
+        }
+
+        function getDeleteIconButton() {
+            return fixture.debugElement.nativeElement.querySelector('#delete-course-icon');
+        }
+    });
 });
