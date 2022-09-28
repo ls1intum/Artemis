@@ -329,6 +329,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         tutorialGroupRegistrations.add(regNullStudent);
         tutorialGroupRegistrations.add(regBlankStudent);
         tutorialGroupRegistrations.add(regExistingTutorialGroup);
+        tutorialGroupRegistrations.add(regStudentPropertiesNull);
         // when
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
