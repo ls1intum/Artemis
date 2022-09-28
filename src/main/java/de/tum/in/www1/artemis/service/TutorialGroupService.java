@@ -215,7 +215,7 @@ public class TutorialGroupService {
 
     private Set<Pair<TutorialGroupRegistrationImportDTO, User>> filterOutWithoutMatchingUser(Course course, Set<TutorialGroupRegistrationImportDTO> registrations,
             HashSet<TutorialGroupRegistrationImportDTO> failedRegistrations) {
-        Set<User> matchingUsers = tryToFindMatchingUsers(course, registrations, failedRegistrations);
+        Set<User> matchingUsers = tryToFindMatchingUsers(course, registrations);
 
         var registrationWithMatchingUser = new HashSet<Pair<TutorialGroupRegistrationImportDTO, User>>();
         for (var registration : registrations) {
@@ -239,18 +239,17 @@ public class TutorialGroupService {
             boolean hasRegistrationNumber = registration.student().getRegistrationNumber() != null && !registration.student().getRegistrationNumber().isBlank();
             boolean hasLogin = registration.student().getLogin() != null && !registration.student().getLogin().isBlank();
 
-            if (hasRegistrationNumber) {
+            if (hasRegistrationNumber && user.getRegistrationNumber() != null) {
                 return user.getRegistrationNumber().equals(registration.student().getRegistrationNumber().trim());
             }
-            if (hasLogin) {
+            if (hasLogin && user.getLogin() != null) {
                 return user.getLogin().equals(registration.student().getLogin().trim());
             }
             return false;
         }).findFirst();
     }
 
-    private Set<User> tryToFindMatchingUsers(Course course, Set<TutorialGroupRegistrationImportDTO> registrations,
-            HashSet<TutorialGroupRegistrationImportDTO> failedRegistrations) {
+    private Set<User> tryToFindMatchingUsers(Course course, Set<TutorialGroupRegistrationImportDTO> registrations) {
         var registrationNumbersToSearchFor = new HashSet<String>();
         var loginsToSearchFor = new HashSet<String>();
 
@@ -262,11 +261,8 @@ public class TutorialGroupService {
             if (hasRegistrationNumber) {
                 registrationNumbersToSearchFor.add(registration.student().getRegistrationNumber().trim());
             }
-            if (hasRegistrationNumber) {
+            if (hasLogin) {
                 loginsToSearchFor.add(registration.student().getLogin().trim());
-            }
-            if (!hasRegistrationNumber && !hasLogin) {
-                failedRegistrations.add(registration.withImportResult(false, TutorialGroupImportErrors.NO_LOGIN_OR_REGISTRATION_NUMBER));
             }
         }
 

@@ -6,7 +6,6 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -14,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -343,17 +344,22 @@ public class TutorialGroupResource {
      * Describes the Errors that can lead to a failed import of a tutorial group registration
      */
     public enum TutorialGroupImportErrors {
-        NO_TITLE, NO_LOGIN_OR_REGISTRATION_NUMBER, NO_USER_FOUND, MULTIPLE_REGISTRATIONS
+        NO_TITLE, NO_USER_FOUND, MULTIPLE_REGISTRATIONS
     }
 
     /**
      * DTO used for client-server communication in the import of tutorial groups and student registrations from csv files
      */
-    public record TutorialGroupRegistrationImportDTO(@NotNull String title, @Nullable StudentDTO student, @Nullable Boolean importSuccessful,
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record TutorialGroupRegistrationImportDTO(@Nullable String title, @Nullable StudentDTO student, @Nullable Boolean importSuccessful,
             @Nullable TutorialGroupImportErrors error) {
 
         public TutorialGroupRegistrationImportDTO withImportResult(boolean importSuccessful, TutorialGroupImportErrors error) {
             return new TutorialGroupRegistrationImportDTO(title(), student(), importSuccessful, error);
+        }
+
+        public TutorialGroupRegistrationImportDTO(@Nullable String title, @Nullable StudentDTO student) {
+            this(title, student, null, null);
         }
 
         @Override
@@ -365,17 +371,21 @@ public class TutorialGroupResource {
 
             TutorialGroupRegistrationImportDTO that = (TutorialGroupRegistrationImportDTO) o;
 
-            if (!title.equals(that.title))
+            if (!Objects.equals(title, that.title))
                 return false;
             return Objects.equals(student, that.student);
         }
 
         @Override
         public int hashCode() {
-            int result = title.hashCode();
+            int result = title != null ? title.hashCode() : 0;
             result = 31 * result + (student != null ? student.hashCode() : 0);
             return result;
         }
-    }
 
+        @Override
+        public String toString() {
+            return "TutorialGroupRegistrationImportDTO{" + "title='" + title + '\'' + ", student=" + student + ", importSuccessful=" + importSuccessful + ", error=" + error + '}';
+        }
+    }
 }

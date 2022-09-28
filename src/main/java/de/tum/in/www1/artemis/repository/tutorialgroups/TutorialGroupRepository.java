@@ -5,9 +5,11 @@ import java.util.Set;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -58,8 +60,22 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             """)
     Optional<TutorialGroup> findByIdWithTeachingAssistantAndRegistrations(@Param("tutorialGroupId") long tutorialGroupId);
 
+    @Query("""
+            SELECT tutorialGroup
+            FROM TutorialGroup tutorialGroup
+            LEFT JOIN FETCH tutorialGroup.teachingAssistant
+            LEFT JOIN FETCH tutorialGroup.registrations
+            WHERE tutorialGroup.title = :#{#title}
+            AND tutorialGroup.course.id = :#{#courseId}
+            """)
+    Optional<TutorialGroup> findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(String title, Long courseId);
+
+    boolean existsByTitleAndCourse_Id(String Title, Long courseId);
+
     Set<TutorialGroup> findAllByTeachingAssistant(User teachingAssistant);
 
+    @Modifying
+    @Transactional
     void deleteAllByCourse(Course course);
 
     default TutorialGroup findByIdElseThrow(long tutorialGroupId) {
