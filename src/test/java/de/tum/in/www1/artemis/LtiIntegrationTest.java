@@ -79,7 +79,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         database.addUsers(1, 1, 0, 1);
 
         course = database.addCourseWithOneProgrammingExercise();
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        programmingExercise = programmingExerciseRepository.findByIdElseThrow(course.getExercises().stream().findFirst().get().getId());
     }
 
     @AfterEach

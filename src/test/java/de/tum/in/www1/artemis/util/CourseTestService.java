@@ -159,13 +159,11 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
 
-        request.post("/api/courses", course, HttpStatus.CREATED);
-        List<Course> repoContent = courseRepo.findAll();
-        assertThat(repoContent).as("Course got stored").hasSize(1);
+        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+        courseRepo.findByIdElseThrow(course.getId());
 
-        course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
+        course = ModelFactory.generateCourse(course.getId(), null, null, new HashSet<>());
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        assertThat(courseRepo.findAll()).as("Course has not been stored").contains(repoContent.toArray(new Course[0]));
     }
 
     // Test
@@ -177,13 +175,13 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultInstructorGroupName());
 
-        request.post("/api/courses", course1, HttpStatus.CREATED);
-        assertThat(courseRepo.findAll()).as("Course got stored").hasSize(1);
+        course1 = request.postWithResponseBody("/api/courses", course1, Course.class, HttpStatus.CREATED);
+        assertThat(courseRepo.findByIdElseThrow(course1.getId())).isNotNull();
 
         Course course2 = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course2.setShortName("shortName");
         request.post("/api/courses", course2, HttpStatus.BAD_REQUEST);
-        assertThat(courseRepo.findAll()).as("Course has not been stored").hasSize(1);
+        assertThat(courseRepo.findAllByShortName(course1.getShortName())).as("Course has not been stored").hasSize(1);
     }
 
     // Test
@@ -193,7 +191,7 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        List<Course> repoContent = courseRepo.findAll();
+        List<Course> repoContent = courseRepo.findAllByShortName(course.getShortName());
         assertThat(repoContent).as("Course has not been stored").isEmpty();
     }
 
@@ -245,21 +243,22 @@ public class CourseTestService {
         course.setMaxTeamComplaints(0);
         course.setMaxRequestMoreFeedbackTimeDays(0);
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        List<Course> repoContent = courseRepo.findAll();
+
+        List<Course> repoContent = courseRepo.findAllByShortName(course.getShortName());
         assertThat(repoContent).as("Course has not been stored").isEmpty();
 
         // change configuration
         course.setMaxComplaintTimeDays(1);
         course.setMaxComplaints(0);
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        repoContent = courseRepo.findAll();
+        repoContent = courseRepo.findAllByShortName(course.getShortName());
         assertThat(repoContent).as("Course has not been stored").isEmpty();
 
         // change configuration again
         course.setMaxComplaintTimeDays(0);
         course.setMaxRequestMoreFeedbackTimeDays(-1);
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-        repoContent = courseRepo.findAll();
+        repoContent = courseRepo.findAllByShortName(course.getShortName());
         assertThat(repoContent).as("Course has not been stored").isEmpty();
     }
 
@@ -270,9 +269,8 @@ public class CourseTestService {
         course.setTeachingAssistantGroupName("TeachingAssistantGroupName");
         course.setEditorGroupName("EditorGroupName");
         course.setInstructorGroupName("InstructorGroupName");
-        request.post("/api/courses", course, HttpStatus.CREATED);
-        List<Course> repoContent = courseRepo.findAll();
-        assertThat(repoContent).as("Course got stored").hasSize(1);
+        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+        courseRepo.findByIdElseThrow(course.getId());
     }
 
     // Test
@@ -286,7 +284,7 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
         // Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
-        Course getFromRepo = courseRepo.findAll().get(0);
+        Course getFromRepo = courseRepo.findByIdElseThrow(course.getId());
         assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
         assertThat(getFromRepo.getMaxComplaintTimeDays()).as("Course has right maxComplaintTimeDays Value").isEqualTo(14);
         assertThat(getFromRepo.getPostsEnabled()).as("Course has right postsEnabled Value").isFalse();
@@ -356,15 +354,19 @@ public class CourseTestService {
             }
             request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
         }
-        assertThat(courseRepo.findAll()).as("All courses deleted").isEmpty();
-        assertThat(notificationRepo.findAll()).as("All notifications are deleted").isEmpty();
-        assertThat(examRepo.findAll()).as("All exams are deleted").isEmpty();
-        assertThat(exerciseRepo.findAll()).as("All Exercises are deleted").isEmpty();
-        assertThat(lectureRepo.findAll()).as("All Lectures are deleted").isEmpty();
+
+        for (Course course : courses) {
+            assertThat(courseRepo.findById(course.getId())).as("All courses deleted").isEmpty();
+            assertThat(notificationRepo.findAll()).as("All notifications are deleted").isEmpty();
+            assertThat(examRepo.findByCourseId(course.getId())).as("All exams are deleted").isEmpty();
+            assertThat(exerciseRepo.findAllExercisesByCourseId(course.getId())).as("All Exercises are deleted").isEmpty();
+            assertThat(lectureRepo.findAllByCourseIdWithAttachments(course.getId())).as("All Lectures are deleted").isEmpty();
+        }
     }
 
     // Test
     public void testDeleteNotExistingCourse() throws Exception {
+        courseRepo.deleteById(1L);
         request.delete("/api/courses/1", HttpStatus.NOT_FOUND);
     }
 
@@ -372,7 +374,7 @@ public class CourseTestService {
     public void testCreateCourseWithoutPermission() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         request.post("/api/courses", course, HttpStatus.FORBIDDEN);
-        assertThat(courseRepo.findAll()).as("Course got stored").isEmpty();
+        assertThat(courseRepo.findAllByShortName(course.getShortName())).as("Course got stored").isEmpty();
     }
 
     // Test
@@ -398,9 +400,8 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
-        request.put("/api/courses", course, HttpStatus.CREATED);
-        List<Course> repoContent = courseRepo.findAll();
-        assertThat(repoContent).as("Course got stored").hasSize(1);
+        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+        courseRepo.findByIdElseThrow(course.getId());
     }
 
     // Test
@@ -411,7 +412,7 @@ public class CourseTestService {
 
     // Test
     public void testUpdateCourseIsEmpty() throws Exception {
-        Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
+        Course course = ModelFactory.generateCourse(UUID.randomUUID().getLeastSignificantBits(), null, null, new HashSet<>());
         request.put("/api/courses", course, HttpStatus.NOT_FOUND);
     }
 
@@ -532,23 +533,37 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesWithPermission() throws Exception {
-        database.createCoursesWithExercisesAndLectures(true);
+        List<Course> coursesCreated = database.createCoursesWithExercisesAndLectures(true);
         List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
-        assertThat(courses).as("All courses are available").hasSize(2);
-        for (Exercise exercise : courses.get(0).getExercises()) {
-            assertThat(exercise.getGradingInstructions()).as("Grading instructions are not filtered out").isNotNull();
-            assertThat(exercise.getProblemStatement()).as("Problem statements are not filtered out").isNotNull();
+
+        for (Course course : coursesCreated) {
+            Optional<Course> found = courses.stream().filter(c -> Objects.equals(c.getId(), course.getId())).findFirst();
+            assertThat(found).as("Course is available").isPresent();
+            Course courseFound = found.get();
+            for (Exercise exercise : courseFound.getExercises()) {
+                assertThat(exercise.getGradingInstructions()).as("Grading instructions are not filtered out").isNotNull();
+                assertThat(exercise.getProblemStatement()).as("Problem statements are not filtered out").isNotNull();
+            }
         }
     }
 
     // Test
     public void testGetCoursesWithQuizExercises() throws Exception {
-        database.createCoursesWithExercisesAndLectures(true);
+        List<Course> coursesCreated = database.createCoursesWithExercisesAndLectures(true);
+        Course activeCourse = coursesCreated.get(0);
+        Course inactiveCourse = coursesCreated.get(1);
+
         List<Course> courses = request.getList("/api/courses/courses-with-quiz", HttpStatus.OK, Course.class);
-        assertThat(courses).as("All courses are available").hasSize(1);
-        for (Exercise exercise : courses.get(0).getExercises()) {
-            assertThat(exercise.getGradingInstructions()).as("Grading instructions are filtered out").isNull();
-            assertThat(exercise.getProblemStatement()).as("Problem statements are filtered out").isNull();
+
+        assertThat(courses.stream().filter(c -> c.getId() == inactiveCourse.getId()).toList()).as("Inactive course was filtered out").isEmpty();
+
+        Optional<Course> optionalCourse = courses.stream().filter(c -> c.getId() == activeCourse.getId()).findFirst();
+        assertThat(optionalCourse).as("Active course was not filtered").isPresent();
+        Course activeCourseNotFiltered = optionalCourse.get();
+
+        for (Exercise exercise : activeCourseNotFiltered.getExercises()) {
+            assertThat(exercise.getGradingInstructions()).as("Grading instructions are not filtered out").isNotNull();
+            assertThat(exercise.getProblemStatement()).as("Problem statements are not filtered out").isNotNull();
         }
     }
 
@@ -590,19 +605,26 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForDashboard() throws Exception {
-        database.createCoursesWithExercisesAndLecturesAndLectureUnits(true, false);
+        List<Course> coursesCreated = database.createCoursesWithExercisesAndLecturesAndLectureUnits(true, false);
 
         // Perform the request that is being tested here
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
 
+        Course activeCourse = coursesCreated.get(0);
+        Course inactiveCourse = coursesCreated.get(1);
+
         // Test that the prepared inactive course was filtered out
-        assertThat(courses).as("Inactive course was filtered out").hasSize(1);
+        assertThat(courses.stream().filter(c -> c.getId() == inactiveCourse.getId()).toList()).as("Inactive course was filtered out").isEmpty();
+
+        Optional<Course> optionalCourse = courses.stream().filter(c -> c.getId() == activeCourse.getId()).findFirst();
+        assertThat(optionalCourse).as("Active course was not filtered").isPresent();
+        Course activeCourseNotFiltered = optionalCourse.get();
 
         // Test that the remaining course has five exercises
-        assertThat(courses.get(0).getExercises()).as("Five exercises are returned").hasSize(5);
+        assertThat(activeCourseNotFiltered.getExercises()).as("Five exercises are returned").hasSize(5);
 
         // Iterate over all exercises of the remaining course
-        for (Exercise exercise : courses.get(0).getExercises()) {
+        for (Exercise exercise : activeCourseNotFiltered.getExercises()) {
             // Test that the exercise does not have more than one participation.
             assertThat(exercise.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
             if (!exercise.getStudentParticipations().isEmpty()) {
@@ -630,10 +652,16 @@ public class CourseTestService {
     // Test
     public void testGetCoursesWithoutActiveExercises() throws Exception {
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        courseRepo.save(course);
+        course = courseRepo.save(course);
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-        assertThat(courses).as("Only one course is returned").hasSize(1);
-        assertThat(courses.stream().findFirst().get().getExercises()).as("Course doesn't have any exercises").isEmpty();
+        Course courseInList = null;
+        for (Course c : courses) {
+            if (c.getId() == course.getId()) {
+                courseInList = c;
+            }
+        }
+        assertThat(courseInList).isNotNull();
+        assertThat(courseInList.getExercises()).as("Course doesn't have any exercises").isEmpty();
     }
 
     // Test
@@ -648,11 +676,21 @@ public class CourseTestService {
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-        assertThat(courses).as("Exactly one course is returned").hasSize(1);
-        assertThat(courses.get(0)).as("Active course is returned").isEqualTo(courseActive);
+
+        assertThat(courses.stream().filter(c -> c.getId() == courseNotActivePast.getId()).toList()).as("Past inactive course was filtered out").isEmpty();
+        assertThat(courses.stream().filter(c -> c.getId() == courseNotActiveFuture.getId()).toList()).as("Future inactive course was filtered out").isEmpty();
+
+        Course finalCourseActive = courseActive;
+        Optional<Course> optionalCourse = courses.stream().filter(c -> c.getId() == finalCourseActive.getId()).findFirst();
+        assertThat(optionalCourse).as("Active course was not filtered").isPresent();
+
         List<Course> coursesForNotifications = request.getList("/api/courses/for-notifications", HttpStatus.OK, Course.class);
-        assertThat(coursesForNotifications).as("Exactly one course is returned").hasSize(1);
-        assertThat(coursesForNotifications.get(0)).as("Active course is returned").isEqualTo(courseActive);
+
+        assertThat(coursesForNotifications.stream().filter(c -> c.getId() == courseNotActivePast.getId()).toList()).as("Past inactive course was filtered out").isEmpty();
+        assertThat(coursesForNotifications.stream().filter(c -> c.getId() == courseNotActiveFuture.getId()).toList()).as("Future inactive course was filtered out").isEmpty();
+
+        optionalCourse = coursesForNotifications.stream().filter(c -> c.getId() == finalCourseActive.getId()).findFirst();
+        assertThat(optionalCourse).as("Active course was not filtered").isPresent();
     }
 
     // Test
@@ -666,11 +704,17 @@ public class CourseTestService {
     // Test
     public void testGetAllCoursesWithUserStats() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
-        List<Course> receivedCourse = request.getList("/api/courses/with-user-stats", HttpStatus.OK, Course.class);
-        assertThat(testCourses).isEqualTo(receivedCourse);
-        assertThat(receivedCourse.get(0).getNumberOfStudents()).isEqualTo(numberOfStudents);
-        assertThat(receivedCourse.get(0).getNumberOfTeachingAssistants()).isEqualTo(numberOfTutors);
-        assertThat(receivedCourse.get(0).getNumberOfInstructors()).isEqualTo(numberOfInstructors);
+        Course course = testCourses.get(0);
+
+        List<Course> receivedCourses = request.getList("/api/courses/with-user-stats", HttpStatus.OK, Course.class);
+
+        Optional<Course> optionalCourse = receivedCourses.stream().filter(c -> c.getId() == course.getId()).findFirst();
+        assertThat(optionalCourse).as("Course is returned").isPresent();
+        Course returnedCourse = optionalCourse.get();
+
+        assertThat(returnedCourse.getNumberOfStudents()).isEqualTo(numberOfStudents);
+        assertThat(returnedCourse.getNumberOfTeachingAssistants()).isEqualTo(numberOfTutors);
+        assertThat(returnedCourse.getNumberOfInstructors()).isEqualTo(numberOfInstructors);
     }
 
     // Test
@@ -698,6 +742,8 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForAssessmentDashboardWithStats() throws Exception {
+        courseRepo.deleteAll();
+
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
@@ -1278,12 +1324,13 @@ public class CourseTestService {
     }
 
     // Test
-    public void testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
+    public Course testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
         var course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
         await().until(() -> courseRepo.findById(course.getId()).get().getCourseArchivePath() != null);
         var updatedCourse = courseRepo.findById(course.getId()).get();
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
+        return updatedCourse;
     }
 
     // Test
@@ -1425,17 +1472,11 @@ public class CourseTestService {
 
     // Test
     public void testDownloadCourseArchiveAsInstructor() throws Exception {
-        submissionRepository.deleteAll();
-
         // Archive the course and wait until it's complete
-        testArchiveCourseWithTestModelingAndFileUploadExercises();
-
-        var optCourse = courseRepo.findAll().stream().findFirst();
-        assertThat(optCourse).isPresent();
-        var course = optCourse.get();
+        Course updatedCourse = testArchiveCourseWithTestModelingAndFileUploadExercises();
 
         // Download the archive
-        var archive = request.getFile("/api/courses/" + course.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
+        var archive = request.getFile("/api/courses/" + updatedCourse.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
         assertThat(archive).isNotNull();
         assertThat(archive).exists();
         assertThat(archive.getPath().length()).isGreaterThanOrEqualTo(4);
@@ -1532,6 +1573,7 @@ public class CourseTestService {
         var instructorsCourse = testCourses.get(0);
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepo.save(instructorsCourse);
+        var nonInstructorsCourse = testCourses.get(1);
 
         var instructor = database.getUserByLogin("instructor1");
         var groups = new HashSet<String>();
@@ -1540,19 +1582,25 @@ public class CourseTestService {
         userRepo.save(instructor);
 
         var courses = request.getList("/api/courses/course-management-overview", HttpStatus.OK, Course.class);
-        assertThat(courses).hasSize(1);
 
-        var course = courses.get(0);
-        assertThat(course.getId()).isEqualTo(instructorsCourse.getId());
+        assertThat(courses.stream().filter(c -> c.getId() == nonInstructorsCourse.getId()).toList()).as("Non instructors course was filtered out").isEmpty();
+
+        Optional<Course> optionalCourse = courses.stream().filter(c -> c.getId() == instructorsCourse.getId()).findFirst();
+        assertThat(optionalCourse).as("Instructors course is returned").isPresent();
+        Course returnedCourse = optionalCourse.get();
+
+        assertThat(returnedCourse.getId()).isEqualTo(instructorsCourse.getId());
     }
 
     // Test
     public void testGetExercisesForCourseOverview() throws Exception {
+
         // Add two courses, containing one not belonging to the instructor
         var testCourses = database.createCoursesWithExercisesAndLectures(true);
         var instructorsCourse = testCourses.get(0);
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepo.save(instructorsCourse);
+        var nonInstructorsCourse = testCourses.get(1);
 
         var instructor = database.getUserByLogin("instructor1");
         var groups = new HashSet<String>();
@@ -1561,19 +1609,21 @@ public class CourseTestService {
         userRepo.save(instructor);
 
         var courses = request.getList("/api/courses/exercises-for-management-overview", HttpStatus.OK, Course.class);
-        assertThat(courses).hasSize(1);
 
-        var course = courses.get(0);
-        assertThat(course.getId()).isEqualTo(instructorsCourse.getId());
+        assertThat(courses.stream().filter(c -> c.getId() == nonInstructorsCourse.getId()).toList()).as("Non instructors course was filtered out").isEmpty();
 
-        var exerciseDetails = course.getExercises();
+        Optional<Course> optionalCourse = courses.stream().filter(c -> c.getId() == instructorsCourse.getId()).findFirst();
+        assertThat(optionalCourse).as("Instructors course is returned").isPresent();
+        Course returnedCourse = optionalCourse.get();
+
+        var exerciseDetails = returnedCourse.getExercises();
         assertThat(exerciseDetails).isNotNull();
         assertThat(exerciseDetails).hasSize(5);
 
         var quizDetailsOptional = exerciseDetails.stream().filter(e -> e instanceof QuizExercise).findFirst();
         assertThat(quizDetailsOptional).isPresent();
 
-        var quizExercise = database.getFirstExerciseWithType(course, QuizExercise.class);
+        var quizExercise = database.getFirstExerciseWithType(returnedCourse, QuizExercise.class);
 
         var quizDetails = quizDetailsOptional.get();
         assertThat(quizDetails.getCategories()).hasSize(quizExercise.getCategories().size());
@@ -1655,8 +1705,11 @@ public class CourseTestService {
 
         // We only added one course, so expect one dto
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
-        assertThat(courseDtos).hasSize(1);
-        var dto = courseDtos.get(0);
+
+        Optional<CourseManagementOverviewStatisticsDTO> optionalCourseDTO = courseDtos.stream().filter(dto -> dto.getCourseId() == instructorsCourse.getId()).findFirst();
+        assertThat(optionalCourseDTO).as("Active course was not filtered").isPresent();
+        CourseManagementOverviewStatisticsDTO dto = optionalCourseDTO.get();
+
         assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
         assertThat(dto.getActiveStudents()).as("course was only active for 3 days").hasSize(1);
 
@@ -1713,6 +1766,7 @@ public class CourseTestService {
 
     // Test
     public void testGetExerciseStatsForCourseOverviewWithPastExercises() throws Exception {
+
         // Add a single course with six past exercises, from which only five are returned
         var instructorsCourse = database.createCourse();
         var releaseDate = ZonedDateTime.now().minusDays(7);
@@ -1738,8 +1792,11 @@ public class CourseTestService {
 
         // We only added one course, so expect one dto
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
-        assertThat(courseDtos).hasSize(1);
-        var dto = courseDtos.get(0);
+
+        Optional<CourseManagementOverviewStatisticsDTO> optionalCourseDTO = courseDtos.stream().filter(dto -> dto.getCourseId() == instructorsCourse.getId()).findFirst();
+        assertThat(optionalCourseDTO).as("Active course was not filtered").isPresent();
+        CourseManagementOverviewStatisticsDTO dto = optionalCourseDTO.get();
+
         assertThat(dto.getCourseId()).isEqualTo(instructorsCourse.getId());
 
         // Only five exercises should be returned
