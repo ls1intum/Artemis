@@ -127,6 +127,7 @@ public class ParticipantScoreSchedulerService {
             }
         });
 
+        // Find all outdated participant scores where the last result is null (because it was deleted)
         var participantScoresToProcess = participantScoreRepository.findAllOutdated();
         participantScoresToProcess.forEach(participantScore -> {
             if (participantScore instanceof TeamScore teamScore) {
@@ -136,6 +137,8 @@ public class ParticipantScoreSchedulerService {
                 scheduleTask(studentScore.getExercise().getId(), studentScore.getUser().getId(), Instant.now());
             }
         });
+
+        logger.info("Scheduled processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
     }
 
     /**
@@ -171,7 +174,7 @@ public class ParticipantScoreSchedulerService {
         var schedulingTime = ZonedDateTime.now().plus(500, ChronoUnit.MILLIS);
         var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdsToIgnore), schedulingTime.toInstant());
         scheduledTasks.put(participantScoreId.hashCode(), future);
-        logger.debug("Schedule task for participation {} at {}.", exerciseId, schedulingTime);
+        logger.debug("Scheduled task for exercise {} and participant {} at {}.", exerciseId, participantId, schedulingTime);
     }
 
     /**
@@ -214,7 +217,6 @@ public class ParticipantScoreSchedulerService {
                 }
             }
 
-            // The result was updated or created, we need to create or update the associated participant score
             var score = participantScore.orElseGet(() -> {
                 if (participant instanceof Team team) {
                     var teamScore = new TeamScore();
