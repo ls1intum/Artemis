@@ -132,6 +132,7 @@
             "resumeProgrammingExercise": "The exercise has been resumed. You can now continue working on the exercise!",
             "feedbackRequestSent": "Your feedback request has been sent",
             "feedbackRequestAlreadySent": "Your feedback request has already been sent",
+            "lockRepositoryWarning": "Your repository will be locked. You can continue working after a feedback has been added to your submission",
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
             "studentName": "Student Name",
             "studentId": "Login",

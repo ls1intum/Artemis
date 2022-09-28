@@ -14,6 +14,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { finalize } from 'rxjs/operators';
 import { faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers, faExternalLinkAlt, faComment } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -52,7 +53,13 @@ export class ExerciseDetailsStudentActionsComponent {
     faRedo = faRedo;
     faExternalLinkAlt = faExternalLinkAlt;
 
-    constructor(private alertService: AlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}
+    constructor(
+        private alertService: AlertService,
+        private courseExerciseService: CourseExerciseService,
+        private httpClient: HttpClient,
+        private router: Router,
+        private translateService: TranslateService,
+    ) {}
 
     /**
      * check if practiceMode is available
@@ -162,6 +169,11 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     requestFeedback() {
+        const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
+        if (!window.confirm(confirmLockRepository)) {
+            return;
+        }
+
         this.exercise.loading = true;
         this.courseExerciseService
             .requestFeedback(this.exercise.id!)
