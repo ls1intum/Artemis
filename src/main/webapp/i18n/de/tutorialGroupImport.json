@@ -8,10 +8,10 @@
                 "requirements": "Jede Zeile muss immer einen Wert für den Übungsgruppen Titel enthalten. Wenn nicht nur Übungsgruppen erstellt werden sollen, sondern auch die Registrierungen von Studierenden, muss die Zeile einen Wert für die Immatrikulationsnummer oder für den Benutzernamen enthalten. Dies ist erforderlich, um den Studierenden zu identifizieren. Werte für den Nachnamen und Vornamen sind optional. Die erste Zeile muss die Spaltennamen angeben!"
             },
             "supportedHeaderNames": {
-                "label": "Unterstützte Spaltennamen (Versionen mit Leerzeichen, Unterstrichen, Bindestrichen und Grossbuchstaben werden ebenfalls unterstützt):",
-                "alwaysRequired": "Immer erforderlich (um die Übungsgruppe zu identifizieren):",
-                "requiredIfStudentRegistration": "Eines davon ist erforderlich, wenn Studierende registriert werden sollen (um Studierende zu identifizieren):",
-                "alwaysOptional": "Immer optional (nur für Anzeigzwecke):",
+                "label": "Unterstützte Spaltennamen (Versionen mit Leerzeichen, Unterstrichen, Bindestrichen und Grossbuchstaben werden ebenfalls unterstützt): ",
+                "alwaysRequired": "Immer erforderlich (um die Übungsgruppe zu identifizieren): ",
+                "requiredIfStudentRegistration": "Eines davon ist erforderlich, wenn Studierende registriert werden sollen (um Studierende zu identifizieren): ",
+                "alwaysOptional": "Immer optional (nur für Anzeigzwecke): ",
                 "tutorialGroupTitle": "Für den Tiel der Übungsgruppe: {{ headers }}",
                 "registrationNumber": "Für die Immatrikulationsnummer: {{ headers }}",
                 "login": "Für den Benutznermane: {{ headers }}",
@@ -20,10 +20,10 @@
             },
             "errorMessages": {
                 "genericErrorMessage": "Import von Übungsgruppen sind fehlgeschlagen!",
-                "withoutTitle": "Die folgenden Zeilen enthalten keinen Übungsgruppen Titel:",
-                "noIdentificationInformation": "Die folgenden Zeilen geben einen Benutzer an, enthalten jedoch keinen Benutzernamen oder Immatrikulationsnummer:",
-                "duplicatedLogins": "Die folgenden Benutzernamen werden mehreren Übungsgruppen zugeordnet:",
-                "duplicatedRegistrationNumbers": "Die folgenden Immatrikulationsnummern werden mehreren Übungsgruppen zugeordnet:"
+                "withoutTitle": "Die folgenden Zeilen enthalten keinen Übungsgruppen Titel: ",
+                "noIdentificationInformation": "Die folgenden Zeilen geben einen Benutzer an, enthalten jedoch keinen Benutzernamen oder Immatrikulationsnummer: ",
+                "duplicatedLogins": "Die folgenden Benutzernamen werden mehreren Übungsgruppen zugeordnet: ",
+                "duplicatedRegistrationNumbers": "Die folgenden Immatrikulationsnummern werden mehreren Übungsgruppen zugeordnet: "
             },
             "serverErrors": {
                 "notitle": "Kein Übungsgruppen Titel",
@@ -33,7 +33,7 @@
             },
             "csvFile": {
                 "label": "Wählen Sie eine .csv-Datei aus",
-                "validationFailed": "Bitte reparieren Sie die Datei, sie wird aufgrund des folgenden Fehlers nicht als gültig angesehen:",
+                "validationFailed": "Bitte reparieren Sie die Datei, sie wird aufgrund des folgenden Fehlers nicht als gültig angesehen: ",
                 "parseCSVButton": "CSV einlesen"
             },
             "fixedPlaceForm": {
