@@ -11,6 +11,7 @@
             "startExercise": "Start exercise",
             "resumeExercise": "Resume exercise",
             "requestFeedback": "Request feedback",
+            "requestFeedbackTooltip": "Send a manual feedback request before the deadline for review",
             "resumeExerciseError": "Error trying to resume the exercise",
             "openCodeEditor": "Open code editor",
             "openModelingEditor": "Open modeling editor",

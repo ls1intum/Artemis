@@ -11,6 +11,7 @@
             "startExercise": "Aufgabe starten",
             "resumeExercise": "Aufgabe fortführen",
             "requestFeedback": "Feedback anfragen",
+            "requestFeedbackTooltip": "Sendet eine Feedbackanfrage vor der deadline",
             "resumeExerciseError": "Fehler beim Versuch die Aufgabe fortzuführen",
             "openCodeEditor": "Programmiereditor öffnen",
             "openModelingEditor": "Modellierungseditor öffnen",

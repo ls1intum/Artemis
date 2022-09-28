@@ -226,6 +226,7 @@
 
                 <button
                     class="btn btn-primary"
+                    [ngbTooltip]="'artemisApp.exerciseActions.requestFeedbackTooltip' | artemisTranslate"
                     [class.btn-sm]="smallButtons"
                     *ngIf="isManualFeedbackRequestsAllowed()"
                     [disabled]="isFeedbackRequestButtonDisabled()"
