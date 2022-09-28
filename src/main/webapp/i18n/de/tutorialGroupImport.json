@@ -38,7 +38,7 @@
             },
             "fixedPlaceForm": {
                 "checkbox": {
-                    "label": "Einen Spaltennamen angeben, der Zeilen als bestätigte Registrierungen markiert?",
+                    "label": "Möchtest du einen Spaltennamen und Wert eingeben, um die Zeilen zu filtern?",
                     "explanation": "Nur die Zeilen, die den angegebenen Wert in der angegebenen Spalte enthalten werden aus der CSV ausgelesen."
                 },
                 "statusHeaderInput": {

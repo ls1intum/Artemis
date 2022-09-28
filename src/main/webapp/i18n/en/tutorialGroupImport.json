@@ -38,7 +38,7 @@
             },
             "fixedPlaceForm": {
                 "checkbox": {
-                    "label": "Do you want to specify a header that marks registrations as confirmed?",
+                    "label": "Do you want to specify a header and column to filter the rows?",
                     "explanation": "Only those rows that have the specified value in the specified column, will be parsed from the CSV file."
                 },
                 "statusHeaderInput": {
