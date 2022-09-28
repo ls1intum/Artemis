@@ -163,8 +163,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         },
     } as ProgrammingExerciseGradingStatistics;
 
-    const sortedTestCases = (testCases: ProgrammingExerciseTestCase[]) => {
-        return testCases.sort((a, b) => {
+    const sortedTestCases = (tests: ProgrammingExerciseTestCase[]) => {
+        return tests.sort((a, b) => {
             if (a.testName! < b.testName!) {
                 return -1;
             } else if (a.testName! > b.testName!) {
