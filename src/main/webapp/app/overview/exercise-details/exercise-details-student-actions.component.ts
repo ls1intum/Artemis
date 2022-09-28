@@ -174,21 +174,17 @@ export class ExerciseDetailsStudentActionsComponent {
             return;
         }
 
-        this.exercise.loading = true;
-        this.courseExerciseService
-            .requestFeedback(this.exercise.id!)
-            .pipe(finalize(() => (this.exercise.loading = false)))
-            .subscribe({
-                next: (participation: StudentParticipation) => {
-                    if (participation) {
-                        this.feedbackSent = true;
-                        this.alertService.success('artemisApp.exercise.feedbackRequestSent');
-                    }
-                },
-                error: (error) => {
-                    this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
-                },
-            });
+        this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
+            next: (participation: StudentParticipation) => {
+                if (participation) {
+                    this.feedbackSent = true;
+                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+                }
+            },
+            error: (error) => {
+                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+            },
+        });
     }
 
     /**
