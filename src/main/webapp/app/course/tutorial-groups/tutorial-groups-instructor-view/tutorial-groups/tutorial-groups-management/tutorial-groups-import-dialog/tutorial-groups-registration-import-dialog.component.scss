@@ -1,7 +1,7 @@
 .tutorial-group-import-dialog {
     .scrollbar {
         position: relative;
-        height: 1000px;
+        max-height: 1000px;
         overflow: auto;
     }
     .table-wrapper-scroll-y {

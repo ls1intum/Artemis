@@ -32,22 +32,23 @@
                 "multipleregistrations": "Mehrere Registrierungen in CSV für Studierenden"
             },
             "csvFile": {
-                "label": "Wählen Sie eine .csv-Datei aus",
-                "validationFailed": "Bitte reparieren Sie die Datei, sie wird aufgrund des folgenden Fehlers nicht als gültig angesehen: ",
+                "label": "Wähle eine .csv-Datei aus",
+                "validationFailed": "Bitte die Datei reparieren, sie wird aufgrund des folgenden Fehlers nicht als gültig angesehen: ",
                 "parseCSVButton": "CSV einlesen"
             },
             "fixedPlaceForm": {
                 "checkbox": {
-                    "label": "Möchten Sie einen Spaltennamen angeben, der Zeilen als bestätigte Registrierungen markiert?"
+                    "label": "Einen Spaltennamen angeben, der Zeilen als bestätigte Registrierungen markiert?",
+                    "explanation": "Nur die Zeilen, die den angegebenen Wert in der angegebenen Spalte enthalten werden aus der CSV ausgelesen."
                 },
                 "statusHeaderInput": {
                     "label": "Spaltenname für Registrierungsstatus",
-                    "placeholder": "Geben Sie den Spaltennamen ein, der den Status der Registrierung enthält. Z.B. 'Platz'",
+                    "placeholder": "Gib den Spaltennamen ein, der den Status der Registrierung enthält. Z.B. 'Platz'",
                     "maxLengthValidationError": "Der Spaltenname ist auf {{ max }} Zeichen beschränkt!"
                 },
                 "fixedPlaceValueInput": {
                     "label": "Wert für Fixplatz-Markierung",
-                    "placeholder": "Geben Sie den Wert ein, der eine Registrierung als fix markiert. Z.B. 'Fixplatz'",
+                    "placeholder": "Gib den Wert ein, der eine Registrierung als fix markiert. Z.B. 'Fixplatz'",
                     "maxLengthValidationError": "Der Wert ist auf {{ max }} Zeichen beschränkt!"
                 }
             },
