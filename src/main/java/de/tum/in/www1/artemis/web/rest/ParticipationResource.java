@@ -245,13 +245,13 @@ public class ParticipationResource {
         var studentParticipation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
         var result = studentParticipation.findLatestLegalResult();
         if (Objects.isNull(result) || result.getScore() < 100) {
-            throw new IllegalArgumentException("User has not reached the conditions to submit a feedback request");
+            throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
         }
 
         var currentDate = now();
         var participationIndividualDueDate = participation.getIndividualDueDate();
         if (Objects.nonNull(participationIndividualDueDate) && currentDate.isAfter(participationIndividualDueDate)) {
-            throw new IllegalArgumentException("Request has already been sent");
+            throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
         }
 
         participation.setIndividualDueDate(currentDate);
