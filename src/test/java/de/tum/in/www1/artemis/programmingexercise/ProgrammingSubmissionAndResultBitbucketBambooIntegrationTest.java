@@ -946,7 +946,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api/programming-exercises/new-result", alteredObj, expectedStatus, httpHeaders);
+        request.postWithoutLocation("/api/public/programming-exercises/new-result", alteredObj, expectedStatus, httpHeaders);
     }
 
     private BambooBuildResultNotificationDTO createBambooBuildResultNotificationDTO(String buildPlanKey) throws Exception {

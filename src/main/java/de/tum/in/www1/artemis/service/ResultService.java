@@ -284,6 +284,7 @@ public class ResultService {
      * Get the successful results for an exercise, ordered ascending by build completion date.
      *
      * @param exercise which the results belong to.
+     * @param participations the participations for which the results should be returned
      * @param withSubmissions true, if each result should also contain the submissions.
      * @return a list of results as described above for the given exercise.
      */
