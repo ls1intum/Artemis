@@ -83,7 +83,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         if (this.submissionPolicy) {
             this.countSubmissions();
         }
-        if (this.studentParticipation?.results?.[0]) {
+        if (this.studentParticipation?.results?.[0].rated) {
             this.achievedPoints = roundValueSpecifiedByCourseSettings((this.studentParticipation?.results?.[0].score! * this.exercise.maxPoints!) / 100, this.course);
         }
     }
