@@ -137,6 +137,7 @@
                                             class="badge w-100"
                                             [ngClass]="evaluateBadge(result.participation, result).badgeClass"
                                             ngbTooltip="{{ evaluateBadge(result.participation, result).tooltip | artemisTranslate }}"
+                                            placement="right"
                                         >
                                             {{ evaluateBadge(result.participation, result).text | artemisTranslate | uppercase }}
                                         </span>

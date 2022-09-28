@@ -32,7 +32,7 @@
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-graded" ngbTooltip="{{ badgeTooltip | artemisTranslate }}">
+            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-graded" ngbTooltip="{{ badgeTooltip | artemisTranslate }}" placement="right">
                 {{ badgeText | artemisTranslate | uppercase }}
             </span>
         </ng-container>
