@@ -54,6 +54,9 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
 
     toggleManualFeedbackRequests() {
         this.exercise.allowManualFeedbackRequests = !this.exercise.allowManualFeedbackRequests;
+        if (this.exercise.allowManualFeedbackRequests) {
+            this.exercise.assessmentDueDate = undefined;
+        }
     }
 
     /**
