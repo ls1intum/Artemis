@@ -12,6 +12,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { parse, ParseError, ParseResult, ParseWorkerConfig } from 'papaparse';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 jest.mock('papaparse', () => {
     const original = jest.requireActual('papaparse');
     return {
@@ -95,14 +97,37 @@ describe('TutorialGroupsImportDialogComponent', () => {
     });
 
     it('should read registrations from csv string', async () => {
+        // given
         const exampleDTO = generateImportDTO();
-
         mockParserWithDTOs([exampleDTO], []);
 
         // when
         await component.onParseClicked();
         // then
         expect(component.registrationsDisplayedInTable).toEqual([exampleDTO]);
+        expect(component.validationErrors).toEqual([]);
+        expect(component.isCSVParsing).toBeFalse();
+    });
+
+    it('should read registrations without student from csv string', async () => {
+        // given
+        const rawRow = {
+            group: 'group',
+            registrationnumber: '',
+            firstname: '',
+            lastname: '',
+            login: '',
+        } as ExampleRawCSVRow;
+
+        mockParserWithRawCSVRows([rawRow], []);
+        // when
+        await component.onParseClicked();
+
+        // then
+        expect(component.registrationsDisplayedInTable).toHaveLength(1);
+        const registration = component.registrationsDisplayedInTable[0];
+        expect(registration.student).toEqual(generateStudentDTO('', '', '', ''));
+        expect(registration.title).toBe('group');
         expect(component.validationErrors).toEqual([]);
         expect(component.isCSVParsing).toBeFalse();
     });
@@ -229,6 +254,33 @@ describe('TutorialGroupsImportDialogComponent', () => {
         component.statusHeaderControl?.setValue('status');
         expect(fixedPlaceResetSpy).not.toHaveBeenCalled();
         expect(component.fixedPlaceValueControl?.disabled).toBeFalse();
+    });
+
+    it('should call the import service when the import button is clicked', async () => {
+        const exampleOne = generateImportDTO('Tutorial Group 1');
+        const exampleTwo = generateImportDTO('Tutorial Group 2');
+        component.registrationsDisplayedInTable = [exampleOne, exampleTwo];
+        component.isImportDone = false;
+        component.courseId = 1;
+
+        const tutorialGroupService = TestBed.inject(TutorialGroupsService);
+
+        const returnedDTOOne = { ...exampleOne, importSuccessful: true };
+        const returnedDTOTwo = { ...exampleTwo, importSuccessful: false, errorMessage: 'error' };
+
+        const importSpy = jest.spyOn(tutorialGroupService, 'import').mockReturnValue(of(new HttpResponse({ body: [returnedDTOOne, returnedDTOTwo], status: 200 })));
+
+        component.import();
+
+        expect(importSpy).toHaveBeenCalledOnce();
+        expect(importSpy).toHaveBeenCalledWith(1, [exampleOne, exampleTwo]);
+        expect(component.isImporting).toBeFalse();
+        expect(component.isImportDone).toBeTrue();
+        expect(component.importedRegistrations).toEqual([returnedDTOOne]);
+        expect(component.notImportedRegistrations).toEqual([returnedDTOTwo]);
+        expect(component.allRegistrations).toEqual([returnedDTOOne, returnedDTOTwo]);
+        expect(component.numberOfImportedRegistrations).toBe(1);
+        expect(component.numberOfNotImportedRegistration).toBe(1);
     });
 
     async function validationTest(data: TutorialGroupRegistrationImportDTO[], translationKey: string, errorAddition?: string) {
