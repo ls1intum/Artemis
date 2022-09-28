@@ -117,6 +117,7 @@ export class ResultComponent implements OnInit, OnChanges {
     onlyShowSuccessfulCompileStatus: boolean;
     badgeClass: string;
     badgeText: string;
+    badgeTooltip: string;
 
     resultTooltip: string;
 
@@ -195,8 +196,10 @@ export class ResultComponent implements OnInit, OnChanges {
         });
 
         if (this.showBadge && this.result) {
-            this.badgeClass = ResultService.evaluateBadgeClass(this.participation, this.result);
-            this.badgeText = ResultService.evaluateBadgeText(this.participation, this.result);
+            const badgeData = ResultService.evaluateBadge(this.participation, this.result);
+            this.badgeClass = badgeData.badgeClass;
+            this.badgeText = badgeData.text;
+            this.badgeTooltip = badgeData.tooltip;
         }
     }
 

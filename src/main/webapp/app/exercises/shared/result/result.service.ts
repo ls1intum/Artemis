@@ -290,23 +290,15 @@ export class ResultService implements IResultService {
         link.click();
     }
 
-    public static evaluateBadgeClass(participation: Participation, result: Result): string {
+    public static evaluateBadge(participation: Participation, result: Result): { badgeClass: string; text: string; tooltip: string } {
         if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
             const studentParticipation = participation as StudentParticipation;
             if (studentParticipation.testRun) {
-                return 'bg-secondary';
+                return { badgeClass: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
             }
         }
-        return result.rated ? 'bg-success' : 'bg-info';
-    }
-
-    public static evaluateBadgeText(participation: Participation, result: Result): string {
-        if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
-            const studentParticipation = participation as StudentParticipation;
-            if (studentParticipation.testRun) {
-                return 'artemisApp.result.practice';
-            }
-        }
-        return result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded';
+        return result.rated
+            ? { badgeClass: 'bg-success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' }
+            : { badgeClass: 'bg-info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' };
     }
 }

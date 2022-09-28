@@ -117,32 +117,23 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     startPractice(): void {
-        this.exercise.loading = true;
-        this.courseExerciseService
-            .startPractice(this.exercise.id!)
-            .pipe(finalize(() => (this.exercise.loading = false)))
-            .subscribe({
-                next: (participation) => {
-                    if (participation) {
-                        const gradedParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations ?? [], false);
-                        if (gradedParticipation) {
-                            this.exercise.studentParticipations = [gradedParticipation, participation];
-                        } else {
-                            this.exercise.studentParticipations = [participation];
-                        }
+        this.courseExerciseService.startPractice(this.exercise.id!).subscribe({
+            next: (participation) => {
+                if (participation) {
+                    this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
+                }
+                if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                    if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+                        this.alertService.success('artemisApp.exercise.personalRepositoryClone');
+                    } else {
+                        this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
                     }
-                    if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
-                            this.alertService.success('artemisApp.exercise.personalRepositoryClone');
-                        } else {
-                            this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
-                        }
-                    }
-                },
-                error: () => {
-                    this.alertService.warning('artemisApp.exercise.startError');
-                },
-            });
+                }
+            },
+            error: () => {
+                this.alertService.warning('artemisApp.exercise.startError');
+            },
+        });
     }
 
     /**

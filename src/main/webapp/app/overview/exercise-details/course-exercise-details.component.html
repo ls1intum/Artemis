@@ -133,8 +133,12 @@
                             <div *ngIf="result.participation" class="row justify-content-between">
                                 <div class="col">
                                     <h4>
-                                        <span class="badge w-100" [ngClass]="evaluateBadgeClass(result.participation, result)">
-                                            {{ evaluateBadgeText(result.participation, result) | artemisTranslate | uppercase }}
+                                        <span
+                                            class="badge w-100"
+                                            [ngClass]="evaluateBadge(result.participation, result).badgeClass"
+                                            ngbTooltip="{{ evaluateBadge(result.participation, result).tooltip | artemisTranslate }}"
+                                        >
+                                            {{ evaluateBadge(result.participation, result).text | artemisTranslate | uppercase }}
                                         </span>
                                     </h4>
                                 </div>
