@@ -16,26 +16,29 @@
                 </div>
             </div>
         </div>
-        <div class="points-row" *ngIf="exercise.maxPoints">
-            <span class="me-2">
-                {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
-                {{ exercise.maxPoints }}
-                <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
+        <div class="points-assessment-row" *ngIf="exercise.maxPoints || (exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING)">
+            <span *ngIf="exercise.maxPoints" [style.margin-right]="exercise.maxPoints ? '30px' : null">
+                <span class="me-2">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
+                    <ng-container *ngIf="achievedPoints">
+                        {{ achievedPoints + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
+                    </ng-container>
+                    {{ exercise.maxPoints }}
+                    <span *ngIf="exercise.bonusPoints">({{ 'artemisApp.courseOverview.exerciseDetails.bonus' | artemisTranslate }} {{ exercise.bonusPoints }})</span>
+                </span>
+                <jhi-included-in-score-badge
+                    *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                    [includedInOverallScore]="exercise.includedInOverallScore"
+                    class="me-2"
+                ></jhi-included-in-score-badge>
             </span>
-            <jhi-included-in-score-badge
-                *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                [includedInOverallScore]="exercise.includedInOverallScore"
-                class="me-2"
-            ></jhi-included-in-score-badge>
-        </div>
-        <div class="assessment-row" *ngIf="exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING">
-            <div>
-                {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}
-            </div>
-            <div>
-                {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise.assessmentType | artemisTranslate }}
-                <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise.assessmentType | artemisTranslate }}"></fa-icon>
-            </div>
+            <span *ngIf="exercise.assessmentType && exercise.type === ExerciseType.PROGRAMMING">
+                <div>
+                    {{ 'artemisApp.courseOverview.exerciseDetails.assessmentType' | artemisTranslate }}
+                    {{ 'artemisApp.AssessmentType.forExerciseHeader.' + exercise.assessmentType | artemisTranslate }}
+                    <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.AssessmentType.tooltip.' + exercise.assessmentType | artemisTranslate }}"></fa-icon>
+                </div>
+            </span>
         </div>
         <div class="submission-row" *ngIf="submissionPolicy">
             <div>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle' | artemisTranslate }}:</div>

@@ -165,6 +165,7 @@
                 "exerciseStatus": "Aufgabenstatus:",
                 "points": "Punkte:",
                 "bonus": "Bonus:",
+                "of": " von ",
                 "problemStatement": "Problemstellung:",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {

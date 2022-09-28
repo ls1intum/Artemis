@@ -167,6 +167,7 @@
                 "exerciseStatus": "Exercise status:",
                 "points": "Points:",
                 "bonus": "Bonus:",
+                "of": " of ",
                 "problemStatement": "Problem statement:",
                 "noResults": "You have no results yet",
                 "instructorActions": {
