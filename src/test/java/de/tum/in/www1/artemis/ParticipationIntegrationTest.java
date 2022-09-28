@@ -5,10 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -308,15 +305,37 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void resumeProgrammingExerciseParticipation() throws Exception {
+    void requestFeedbackScoreNotFull() throws Exception {
         var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
+
         var localRepo = new LocalRepository(defaultBranch);
         localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
         participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
         participationRepo.save(participation);
+
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
+
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void resumeProgrammingExerciseParticipation() throws Exception {
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
+
         var updatedParticipation = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/resume-programming-participation", null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
+
         assertThat(updatedParticipation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 
@@ -344,7 +363,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void getAllParticipationsForExercise() throws Exception {
         database.createAndSaveParticipationForExercise(textExercise, "student1");
         database.createAndSaveParticipationForExercise(textExercise, "student2");
+
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
+
         assertThat(participations).as("Exactly 2 participations are returned").hasSize(2).as("Only participation that has student are returned")
                 .allMatch(participation -> participation.getStudent().isPresent()).as("No submissions should exist for participations")
                 .allMatch(participation -> participation.getSubmissionCount() == 0);
@@ -355,12 +376,16 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void getAllParticipationsForExercise_withLatestResult() throws Exception {
         database.createAndSaveParticipationForExercise(textExercise, "student1");
         var participation = database.createAndSaveParticipationForExercise(textExercise, "student2");
+
         database.addResultToParticipation(null, null, participation);
         var result = ModelFactory.generateResult(true, 70D).participation(participation);
         resultRepository.save(result);
+
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("withLatestResult", "true");
+
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
+
         assertThat(participations).as("Exactly 2 participations are returned").hasSize(2).as("Only participation that has student are returned")
                 .allMatch(p -> p.getStudent().isPresent()).as("No submissions should exist for participations").allMatch(p -> p.getSubmissionCount() == 0);
         var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin("student2"))).findFirst().get();
@@ -655,9 +680,11 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void getParticipationWithLatestResult() throws Exception {
         var participation = database.createAndSaveParticipationForExercise(textExercise, "student1");
         database.addResultToParticipation(null, null, participation);
+
         var result = ModelFactory.generateResult(true, 70D);
         result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
         resultRepository.save(result);
+
         var actualParticipation = request.get("/api/participations/" + participation.getId() + "/withLatestResult", HttpStatus.OK, StudentParticipation.class);
 
         assertThat(actualParticipation).isNotNull();
