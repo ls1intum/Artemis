@@ -201,6 +201,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.UNINITIALIZED);
         expect(startPracticeStub).toHaveBeenCalledOnce();
+
+        comp.exercise.studentParticipations = [];
         participationSubject.next(initPart);
 
         fixture.detectChanges();

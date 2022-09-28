@@ -219,26 +219,35 @@ describe('ResultService', () => {
         });
     });
 
-    describe('badges', () => {
+    describe('evaluateBadge', () => {
         it('should be calculated correctly for practice mode', () => {
             const participation: StudentParticipation = { testRun: true, type: ParticipationType.STUDENT };
             const result: Result = {};
-            expect(ResultService.evaluateBadgeClass(participation, result)).toBe('bg-secondary');
-            expect(ResultService.evaluateBadgeText(participation, result)).toBe('artemisApp.result.practice');
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                badgeClass: 'bg-secondary',
+                text: 'artemisApp.result.practice',
+                tooltip: 'artemisApp.result.practiceTooltip',
+            });
         });
 
         it('should be calculated correctly for rated submission', () => {
             const participation: Participation = {};
             const result: Result = { rated: true };
-            expect(ResultService.evaluateBadgeClass(participation, result)).toBe('bg-success');
-            expect(ResultService.evaluateBadgeText(participation, result)).toBe('artemisApp.result.graded');
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                badgeClass: 'bg-success',
+                text: 'artemisApp.result.graded',
+                tooltip: 'artemisApp.result.gradedTooltip',
+            });
         });
 
         it('should be calculated correctly for unrated submission', () => {
             const participation: Participation = {};
             const result: Result = { rated: false };
-            expect(ResultService.evaluateBadgeClass(participation, result)).toBe('bg-info');
-            expect(ResultService.evaluateBadgeText(participation, result)).toBe('artemisApp.result.notGraded');
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                badgeClass: 'bg-info',
+                text: 'artemisApp.result.notGraded',
+                tooltip: 'artemisApp.result.notGradedTooltip',
+            });
         });
     });
 });
