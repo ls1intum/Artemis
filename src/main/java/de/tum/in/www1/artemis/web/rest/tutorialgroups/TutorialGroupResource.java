@@ -363,16 +363,19 @@ public class TutorialGroupResource {
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o)
+        public boolean equals(Object object) {
+            if (this == object) {
                 return true;
-            if (o == null || getClass() != o.getClass())
+            }
+            if (object == null || getClass() != object.getClass()) {
                 return false;
+            }
 
-            TutorialGroupRegistrationImportDTO that = (TutorialGroupRegistrationImportDTO) o;
+            TutorialGroupRegistrationImportDTO that = (TutorialGroupRegistrationImportDTO) object;
 
-            if (!Objects.equals(title, that.title))
+            if (!Objects.equals(title, that.title)) {
                 return false;
+            }
             return Objects.equals(student, that.student);
         }
 

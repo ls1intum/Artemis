@@ -167,7 +167,7 @@ public class TutorialGroupService {
     }
 
     private Set<Pair<TutorialGroupRegistrationImportDTO, User>> filterOutMultipleRegistrationsForSameUser(
-            Set<Pair<TutorialGroupRegistrationImportDTO, User>> registrationsWithMatchingUsers, HashSet<TutorialGroupRegistrationImportDTO> failedRegistrations) {
+            Set<Pair<TutorialGroupRegistrationImportDTO, User>> registrationsWithMatchingUsers, Set<TutorialGroupRegistrationImportDTO> failedRegistrations) {
         var userToRegistrations = registrationsWithMatchingUsers.stream().collect(Collectors.groupingBy(Pair::getSecond));
         var uniqueRegistrationsWithMatchingUsers = new HashSet<Pair<TutorialGroupRegistrationImportDTO, User>>();
         for (var registrationAndMatchingUser : registrationsWithMatchingUsers) {
@@ -198,7 +198,7 @@ public class TutorialGroupService {
     }
 
     private Set<TutorialGroupRegistrationImportDTO> filterOutWithoutTitle(Set<TutorialGroupRegistrationImportDTO> registrations,
-            HashSet<TutorialGroupRegistrationImportDTO> failedRegistrations) {
+            Set<TutorialGroupRegistrationImportDTO> failedRegistrations) {
         var registrationsWithTitle = new HashSet<TutorialGroupRegistrationImportDTO>();
         var registrationsWithoutTitle = new HashSet<TutorialGroupRegistrationImportDTO>();
         for (var importDTO : registrations) {

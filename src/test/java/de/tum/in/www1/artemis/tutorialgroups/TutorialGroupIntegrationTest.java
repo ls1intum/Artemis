@@ -484,7 +484,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertUserIsNotRegisteredInATutorialGroup(student8);
     }
 
-    private List<TutorialGroupRegistrationImportDTO> sendImportRequest(ArrayList<TutorialGroupRegistrationImportDTO> tutorialGroupRegistrations) throws Exception {
+    private List<TutorialGroupRegistrationImportDTO> sendImportRequest(List<TutorialGroupRegistrationImportDTO> tutorialGroupRegistrations) throws Exception {
         return request.postListWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/import", tutorialGroupRegistrations, TutorialGroupRegistrationImportDTO.class,
                 HttpStatus.OK);
     }

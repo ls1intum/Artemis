@@ -24,6 +24,7 @@ public class StudentDTO {
     }
 
     public StudentDTO() {
+        // for jackson
     }
 
     @Size(max = 50)
