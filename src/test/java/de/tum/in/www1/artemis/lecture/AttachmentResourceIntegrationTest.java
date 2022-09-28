@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,8 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "attachmentresourceintegrationtest";
 
     @Autowired
     private CourseRepository courseRepo;
@@ -35,7 +36,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(0, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 0, 1, 0, 1);
 
         attachment = ModelFactory.generateAttachment(null);
         attachment.setLink("files/temp/example.txt");
@@ -50,13 +51,8 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         attachment.setLecture(lecture);
     }
 
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
-    }
-
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachment() throws Exception {
         var actualAttachment = request.postWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.CREATED);
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).get();
@@ -64,14 +60,14 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachment_idExists() throws Exception {
         attachment.setId(1L);
         request.postWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachment() throws Exception {
         attachment = attachmentRepository.save(attachment);
         attachment.setName("new name");
@@ -88,14 +84,14 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachment_noId() throws Exception {
         attachment.setName("new name");
         request.putWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAttachment() throws Exception {
         attachment = attachmentRepository.save(attachment);
         attachment.setName("new name");
@@ -104,7 +100,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAttachmentsForLecture() throws Exception {
         attachment = attachmentRepository.save(attachment);
         var actualAttachments = request.getList("/api/lectures/" + lecture.getId() + "/attachments", HttpStatus.OK, Attachment.class);
@@ -113,7 +109,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteAttachment() throws Exception {
         attachment = attachmentRepository.save(attachment);
         request.delete("/api/attachments/" + attachment.getId(), HttpStatus.OK);
@@ -121,7 +117,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteAttachment_connectedToExercise() throws Exception {
         attachment.setLecture(null);
         attachment.setExercise(textExercise);
@@ -130,13 +126,13 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteAttachment_noAttachment() throws Exception {
         request.delete("/api/attachments/-1", HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteAttachment_noCourse() throws Exception {
         attachment = attachmentRepository.save(attachment);
         lecture.setCourse(null);
@@ -145,7 +141,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteAttachment_notInstructorInACourse() throws Exception {
         var course = courseRepo.save(new Course());
         attachment = attachmentRepository.save(attachment);

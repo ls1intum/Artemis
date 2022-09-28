@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "attachmentunitintegrationtest"; // only lower case is supported
+    private static final String TEST_PREFIX = "assessmentteamcomplaintintegrationtest"; // only lower case is supported
 
     @Autowired
     private ExerciseRepository exerciseRepo;

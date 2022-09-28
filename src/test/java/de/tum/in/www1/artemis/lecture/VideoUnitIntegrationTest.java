@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +20,8 @@ import de.tum.in.www1.artemis.repository.VideoUnitRepository;
 
 class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "videounitintegrationtest";
+
     @Autowired
     private UserRepository userRepository;
 
@@ -36,7 +37,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @BeforeEach
     void initTestCase() throws Exception {
-        this.database.addUsers(1, 1, 0, 1);
+        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.videoUnit = new VideoUnit();
         this.videoUnit.setDescription("LoremIpsum");
@@ -44,9 +45,9 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         this.videoUnit.setSource("oHg5SJYRHA0");
 
         // Add users that are not in the course
-        database.createAndSaveUser("student42");
-        database.createAndSaveUser("tutor42");
-        database.createAndSaveUser("instructor42");
+        database.createAndSaveUser(TEST_PREFIX + "student42");
+        database.createAndSaveUser(TEST_PREFIX + "tutor42");
+        database.createAndSaveUser(TEST_PREFIX + "instructor42");
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -55,25 +56,20 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         request.get("/api/lectures/" + lecture1.getId() + "/video-units/0", HttpStatus.FORBIDDEN, VideoUnit.class);
     }
 
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
-    }
-
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createVideoUnit_asInstructor_shouldCreateVideoUnit() throws Exception {
         videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);
@@ -81,14 +77,14 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateVideoUnit_asInstructor_shouldUpdateVideoUnit() throws Exception {
         persistVideoUnitWithLecture();
 
@@ -100,7 +96,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateVideoUnit_asInstructor_shouldKeepOrdering() throws Exception {
         persistVideoUnitWithLecture();
 
@@ -126,7 +122,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void updateVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         persistVideoUnitWithLecture();
 
@@ -137,7 +133,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateVideoUnit_noId_shouldReturnBadRequest() throws Exception {
         persistVideoUnitWithLecture();
 
@@ -147,7 +143,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getVideoUnit_correctId_shouldReturnVideoUnit() throws Exception {
         persistVideoUnitWithLecture();
 
@@ -157,7 +153,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteVideoUnit_correctId_shouldDeleteVideoUnit() throws Exception {
         persistVideoUnitWithLecture();
 
@@ -168,7 +164,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void removeLeadingAndTrailingWhitespaces() throws Exception {
         String source = "     https://www.youtube.com/embed/8iU8LPEa4o0     ";
         videoUnit.setSource(source);

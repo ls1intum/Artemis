@@ -856,6 +856,10 @@ public class DatabaseUtilService {
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations, boolean withFiles) throws Exception {
+        return createCoursesWithExercisesAndLectures("", withParticipations, withFiles);
+    }
+
+    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, boolean withFiles) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -929,7 +933,7 @@ public class DatabaseUtilService {
             // create 5 tutor participations and 5 example submissions and connect all of them (to test the many-to-many relationship)
             var tutorParticipations = new ArrayList<TutorParticipation>();
             for (int i = 1; i < 6; i++) {
-                var tutorParticipation = new TutorParticipation().tutor(getUserByLogin("tutor" + i)).assessedExercise(modelingExercise);
+                var tutorParticipation = new TutorParticipation().tutor(getUserByLogin(prefix + "tutor" + i)).assessedExercise(modelingExercise);
                 tutorParticipationRepo.save(tutorParticipation);
                 tutorParticipations.add(tutorParticipation);
             }
@@ -944,7 +948,7 @@ public class DatabaseUtilService {
                 exampleSubmissionRepo.save(exampleSubmission);
             }
 
-            User user = (userRepo.findOneByLogin("student1")).get();
+            User user = (userRepo.findOneByLogin(prefix + "student1")).get();
             StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
             StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
             StudentParticipation participation3 = ModelFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);

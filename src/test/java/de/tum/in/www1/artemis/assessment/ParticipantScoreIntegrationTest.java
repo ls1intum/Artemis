@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +25,8 @@ import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
 class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "participantscoreintegrationtest";
 
     private Long idOfExam;
 
@@ -73,16 +74,11 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Autowired
     private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
-    }
-
     @BeforeEach
     void setupTestScenario() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(5, 10, 0, 10);
+        this.database.addUsers(TEST_PREFIX, 5, 10, 0, 10);
         // creating course
         Course course = this.database.createCourse();
         Lecture lecture = new Lecture();
@@ -104,9 +100,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
-        User student1 = userRepository.findOneByLogin("student1").get();
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         idOfStudent1 = student1.getId();
-        User tutor1 = userRepository.findOneByLogin("tutor1").get();
+        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
         idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();
 
         // Creating result for student1
@@ -137,19 +133,19 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation_asInstructorOfCourse_shouldDeleteParticipation() throws Exception {
         List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1);
         assertThat(participations).isNotEmpty();
@@ -166,7 +162,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteExercise_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
         request.delete("/api/text-exercises/" + idOfIndividualTextExercise, HttpStatus.OK);
         assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
@@ -181,31 +177,31 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getCourseScores_asInstructorOfCourse_shouldReturnCourseScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(25);
         ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
-        assertThat(scoreOfStudent1.studentLogin).isEqualTo("student1");
+        assertThat(scoreOfStudent1.studentLogin).isEqualTo(TEST_PREFIX + "student1");
         assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(10.0);
         assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(50.0);
         assertThat(scoreOfStudent1.regularPointsAchievable).isEqualTo(20.0);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getExamScores_asInstructorOfCourse_shouldReturnExamScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/exams/" + idOfExam + "/exam-scores", HttpStatus.OK, ScoreDTO.class);
         assertThat(courseScores).hasSize(1);
         ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
-        assertThat(scoreOfStudent1.studentLogin).isEqualTo("student1");
+        assertThat(scoreOfStudent1.studentLogin).isEqualTo(TEST_PREFIX + "student1");
         assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(5.0);
         assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(5.6);
         assertThat(scoreOfStudent1.regularPointsAchievable).isEqualTo(90.0);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getParticipantScoresOfCourse_asInstructorOfCourse_shouldReturnParticipantScores() throws Exception {
         List<ParticipantScoreDTO> participantScoresOfCourse = request.getList("/api/courses/" + courseId + "/participant-scores", HttpStatus.OK, ParticipantScoreDTO.class);
         assertThat(participantScoresOfCourse).hasSize(2);
@@ -216,7 +212,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAverageScoreOfParticipantInCourse_asInstructorOfCourse_shouldReturnAverageParticipantScores() throws Exception {
         var scoreAverageDTOS = request.getList("/api/courses/" + courseId + "/participant-scores/average-participant", HttpStatus.OK, ParticipantScoreAverageDTO.class);
         assertThat(scoreAverageDTOS).hasSize(2);
@@ -227,7 +223,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAverageScoreOfCourses_asInstructorOfCourse_shouldReturnAverageScore() throws Exception {
         Double averageRated = request.get("/api/courses/" + courseId + "/participant-scores/average?onlyConsiderRatedScores=true", HttpStatus.OK, Double.class);
         assertThat(averageRated).isEqualTo(50D);
@@ -236,7 +232,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getParticipantScoresOfExam_asInstructorOfCourse_shouldReturnParticipantScores() throws Exception {
         List<ParticipantScoreDTO> participantScoresOfExam = request.getList("/api/exams/" + idOfExam + "/participant-scores", HttpStatus.OK, ParticipantScoreDTO.class);
         assertThat(participantScoresOfExam).hasSize(1);
@@ -245,7 +241,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAverageScoreOfParticipantInExam_asInstructorOfCourse_shouldReturnAverageParticipantScores() throws Exception {
         List<ParticipantScoreAverageDTO> participantScoreAverageDTOS = request.getList("/api/exams/" + idOfExam + "/participant-scores/average-participant", HttpStatus.OK,
                 ParticipantScoreAverageDTO.class);
@@ -256,7 +252,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAverageScoreOfExam_asInstructorOfCourse_shouldReturnAverageScore() throws Exception {
         Double averageRated = request.get("/api/exams/" + idOfExam + "/participant-scores/average?onlyConsiderRatedScores=true", HttpStatus.OK, Double.class);
         assertThat(averageRated).isEqualTo(50D);
