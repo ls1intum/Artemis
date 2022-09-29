@@ -280,7 +280,7 @@ export class GitDiffFileComponent implements OnInit {
             getWidth(session2: any, lastLineNumber: number, config: any) {
                 return Math.max(
                     ...Array.from({ length: copyActualEndLine - copyActualStartLine }, (_, index) => index + 1).map((lineNumber) => {
-                        return this.getText(session, lineNumber + copyActualStartLine - 1).toString().length * config.characterWidth;
+                        return this.getText(session, lineNumber - 1).toString().length * config.characterWidth;
                     }),
                 );
             },
@@ -345,7 +345,7 @@ export class GitDiffFileComponent implements OnInit {
             getWidth(session2: any, lastLineNumber: number, config: any) {
                 return Math.max(
                     ...Array.from({ length: copyActualEndLine - copyActualStartLine }, (_, index) => index + 1).map((lineNumber) => {
-                        return this.getText(session, lineNumber + copyActualStartLine - 1).toString().length * config.characterWidth;
+                        return this.getText(session, lineNumber - 1).toString().length * config.characterWidth;
                     }),
                 );
             },
