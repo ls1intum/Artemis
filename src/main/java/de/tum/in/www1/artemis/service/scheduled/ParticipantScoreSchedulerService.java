@@ -123,7 +123,7 @@ public class ParticipantScoreSchedulerService {
         resultsToProcess.forEach(result -> {
             if (result.getParticipation() instanceof StudentParticipation studentParticipation) {
                 var lastModified = result.getLastModifiedDate() == null ? Instant.now() : result.getLastModifiedDate();
-                scheduleTask(studentParticipation.getExercise().getId(), studentParticipation.getParticipant().getId(), lastModified);
+                scheduleTask(studentParticipation.getExercise().getId(), studentParticipation.getParticipant().getId(), lastModified, null);
             }
         });
 
@@ -131,10 +131,10 @@ public class ParticipantScoreSchedulerService {
         var participantScoresToProcess = participantScoreRepository.findAllOutdated();
         participantScoresToProcess.forEach(participantScore -> {
             if (participantScore instanceof TeamScore teamScore) {
-                scheduleTask(teamScore.getExercise().getId(), teamScore.getTeam().getId(), Instant.now());
+                scheduleTask(teamScore.getExercise().getId(), teamScore.getTeam().getId(), Instant.now(), null);
             }
             else if (participantScore instanceof StudentScore studentScore) {
-                scheduleTask(studentScore.getExercise().getId(), studentScore.getUser().getId(), Instant.now());
+                scheduleTask(studentScore.getExercise().getId(), studentScore.getUser().getId(), Instant.now(), null);
             }
         });
 
@@ -145,16 +145,10 @@ public class ParticipantScoreSchedulerService {
      * Schedule a task to update the participant score for the given combination of exercise and participant.
      * @param exerciseId the id of the exercise
      * @param participantId the id of the participant (user or team, determined by the exercise)
-     * @param resultIdToIgnore the id of a result that should be ignored (e.g., as it is about to be deleted)
-     * @see de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService#processScheduleParticipantScore(Long, Long, Long)
+     * @param resultIdToBeDeleted the id of the result that is about to be deleted (or null, if result is created/updated)
      */
-    public void scheduleTask(@NotNull Long exerciseId, @NotNull Long participantId, Long resultIdToIgnore) {
-        if (resultIdToIgnore == null) {
-            scheduleTask(exerciseId, participantId, Instant.now());
-        }
-        else {
-            scheduleTask(exerciseId, participantId, Instant.now(), resultIdToIgnore);
-        }
+    public void scheduleTask(@NotNull Long exerciseId, @NotNull Long participantId, Long resultIdToBeDeleted) {
+        scheduleTask(exerciseId, participantId, Instant.now(), resultIdToBeDeleted);
     }
 
     /**
@@ -162,9 +156,9 @@ public class ParticipantScoreSchedulerService {
      * @param exerciseId the id of the exercise
      * @param participantId the id of the participant (user or team, determined by the exercise)
      * @param resultLastModified the last modified date of the result that triggered the update
-     * @param resultIdsToIgnore a list of result ids that should be ignored (e.g., as they are about to be deleted)
+     * @param resultIdToBeDeleted the id of the result that is about to be deleted (or null, if result is created/updated)
      */
-    private void scheduleTask(Long exerciseId, Long participantId, Instant resultLastModified, Long... resultIdsToIgnore) {
+    private void scheduleTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
         var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
         if (scheduledTasks.containsKey(participantScoreId.hashCode())) {
             // We already have a scheduled task for this result
@@ -172,7 +166,7 @@ public class ParticipantScoreSchedulerService {
         }
 
         var schedulingTime = ZonedDateTime.now().plus(500, ChronoUnit.MILLIS);
-        var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdsToIgnore), schedulingTime.toInstant());
+        var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted), schedulingTime.toInstant());
         scheduledTasks.put(participantScoreId.hashCode(), future);
         logger.debug("Scheduled task for exercise {} and participant {} at {}.", exerciseId, participantId, schedulingTime);
     }
@@ -182,29 +176,31 @@ public class ParticipantScoreSchedulerService {
      * @param exerciseId the id of the exercise
      * @param participantId the id of the participant (user or team, determined by the exercise)
      * @param resultLastModified the last modified date of the result that triggered the update
-     * @param resultIdsToIgnore a list of result ids that should be ignored when updating the participant score
+     * @param resultIdToBeDeleted the id of the result that is about to be deleted (optional)
      */
-    private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long... resultIdsToIgnore) {
+    private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
         long start = System.currentTimeMillis();
         logger.info("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
         try {
             SecurityUtils.setAuthorizationObject();
 
             var exercise = exerciseRepository.findById(exerciseId).orElse(null);
-
             if (exercise == null) {
+                // If the exercise was deleted, we can delete all participant scores for it as well
                 logger.debug("Exercise {} no longer exists, deleting participant score.", exerciseId);
-                participantScoreRepository.deleteAllByExerciseIdTransactional(exerciseId);
+                participantScoreRepository.deleteAllByExerciseId(exerciseId);
                 return;
             }
 
             Participant participant;
             Optional<ParticipantScore> participantScore;
             if (exercise.isTeamMode()) {
+                // Fetch the team and its score for the given exercise
                 participant = teamRepository.findByIdElseThrow(participantId);
                 participantScore = teamScoreRepository.findByExercise_IdAndTeam_Id(exerciseId, participantId).map(score -> score);
             }
             else {
+                // Fetch the student and its score for the given exercise
                 participant = userRepository.findByIdElseThrow(participantId);
                 participantScore = studentScoreRepository.findByExercise_IdAndUser_Id(exerciseId, participantId).map(score -> score);
             }
@@ -212,19 +208,23 @@ public class ParticipantScoreSchedulerService {
             if (participantScore.isPresent()) {
                 var lastModified = participantScore.get().getLastModifiedDate();
                 if (lastModified != null && lastModified.isAfter(resultLastModified)) {
-                    // The participant score was already updated after the result was modified
+                    // The participant score was already updated after the last modified date of the result that this task
+                    // We assume we already processed the result with the last task that ran and therefore skip the processing
                     logger.debug("Participant score {} is already up-to-date, skipping.", participantScore.get().getId());
                     return;
                 }
             }
-
-            if (resultIdsToIgnore != null && resultIdsToIgnore.length > 0 && participantScore.isEmpty()) {
-                // this means we have deleted a result. As we cannot find the participant score anymore, it is very likely that
-                // it has been removed as well, e.g. because of deleteParticipation or deleteExercise
-                logger.info("No participation score available any more during execute tasks for remove result");
-                return;
+            else {
+                if (resultIdToBeDeleted != null) {
+                    // A participant score for this exercise/participant combination does not exist and this task was triggered because a result will be deleted
+                    // It is very likely that the whole participation or exercise is about to be deleted and their participant scores were already removed
+                    // We do not need to do anything in that case
+                    logger.debug("Result {} will be deleted and participant score for its participation is already gone, skipping.", resultIdToBeDeleted);
+                    return;
+                }
             }
 
+            // Either use the existing participant score or create a new one
             var score = participantScore.orElseGet(() -> {
                 if (participant instanceof Team team) {
                     var teamScore = new TeamScore();
@@ -244,10 +244,11 @@ public class ParticipantScoreSchedulerService {
             });
 
             // Now do the heavy lifting and calculate the latest score based on all results for this exercise
-            updateParticipantScore(score, resultIdsToIgnore);
+            // The result that is about to be deleted is excluded from the calculation
+            updateParticipantScore(score, resultIdToBeDeleted);
         }
         catch (Exception e) {
-            logger.error("Exception while processing exercise {}  and participant {} for participant scores:", exerciseId, participantId, e);
+            logger.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);
         }
         finally {
             scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId).hashCode());
@@ -262,7 +263,7 @@ public class ParticipantScoreSchedulerService {
      * @param participantScore The participant score to update (with the exercise eager loaded)
      * @param resultIdsToIgnore A list of result ids to ignore when calculating the score
      */
-    private void updateParticipantScore(ParticipantScore participantScore, Long[] resultIdsToIgnore) {
+    private void updateParticipantScore(ParticipantScore participantScore, Long... resultIdsToIgnore) {
         var lastRatedResult = getLastRatedResultForParticipantScore(participantScore, resultIdsToIgnore).orElse(null);
         setLastRatedAttributes(participantScore, lastRatedResult, participantScore.getExercise());
 

@@ -235,8 +235,8 @@ public class InstanceMessageReceiveService {
         examMonitoringScheduleService.cancelExamMonitoringTask(examId);
     }
 
-    public void processScheduleParticipantScore(Long exerciseId, Long participantId, Long resultId) {
-        log.info("Received schedule participant score update for exercise {} and participant {}", exerciseId, participantId);
-        participantScoreSchedulerService.scheduleTask(exerciseId, participantId, resultId);
+    public void processScheduleParticipantScore(Long exerciseId, Long participantId, Long resultIdToBeDeleted) {
+        log.info("Received schedule participant score for exercise {} and participant {} (result to be deleted: {})", exerciseId, participantId, resultIdToBeDeleted);
+        participantScoreSchedulerService.scheduleTask(exerciseId, participantId, resultIdToBeDeleted);
     }
 }

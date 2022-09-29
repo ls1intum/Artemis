@@ -16,7 +16,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -29,7 +28,14 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
 @Repository
 public interface ParticipantScoreRepository extends JpaRepository<ParticipantScore, Long> {
 
-    void removeAllByExerciseId(Long exerciseId);
+    /**
+     * Delete all participant scores for a given exercise
+     * Note: Only call this method when the exercise is about to be deleted. Otherwise, use {@link #clearAllByResultId(Long)}.
+     * @param exerciseId the exercise id for which to remove all participant scores
+     */
+    @Transactional // required! ok because of delete
+    @Modifying
+    void deleteAllByExerciseId(Long exerciseId);
 
     @Transactional // ok because of modifying query
     @Modifying
@@ -115,18 +121,6 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             WHERE p.exercise.id = :exerciseId
             """)
     Double findAverageScoreForExercise(@Param("exerciseId") Long exerciseId);
-
-    /**
-     * Delete all participant scores for a given exercise, intentionally with a transaction with propagation "requires new" which suspends (i.e. pauses) the outer
-     * transaction.
-     * Note: Only call this method when the exercise is about to be deleted. Otherwise, use {@link #clearAllByResultId(Long)}.
-     * @param exerciseId the exercise id for which to remove all participant scores
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW) // ***intentional***: delete all scores directly in an inner transaction without waiting for the outer transaction commit
-    default void deleteAllByExerciseIdTransactional(Long exerciseId) {
-        // When the exercise is deleted, we can safely remove all corresponding participant scores
-        this.removeAllByExerciseId(exerciseId);
-    }
 
     /**
      * Safely removes the result from all participant scores by setting it to null.

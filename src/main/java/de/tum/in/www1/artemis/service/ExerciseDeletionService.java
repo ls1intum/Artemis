@@ -142,7 +142,7 @@ public class ExerciseDeletionService {
             modelingExerciseService.cancelScheduledOperations(exerciseId);
         }
 
-        participantScoreRepository.deleteAllByExerciseIdTransactional(exerciseId);
+        participantScoreRepository.deleteAllByExerciseId(exerciseId);
 
         // Remove the connection to learning goals
         learningGoalRepository.saveAll(exercise.getLearningGoals().stream().map(learningGoal -> {
@@ -233,7 +233,7 @@ public class ExerciseDeletionService {
      */
     public void deletePlagiarismResultsAndParticipations(Exercise exercise) {
         // delete all participant scores to avoid issues when deleting results later on
-        participantScoreRepository.deleteAllByExerciseIdTransactional(exercise.getId());
+        participantScoreRepository.deleteAllByExerciseId(exercise.getId());
 
         // delete all plagiarism results for this exercise
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
