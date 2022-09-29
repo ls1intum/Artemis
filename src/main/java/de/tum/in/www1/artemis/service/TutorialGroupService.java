@@ -50,7 +50,7 @@ public class TutorialGroupService {
         tutorialGroupRegistrationRepository.delete(existingRegistration.get());
     }
 
-    public void deregisterMultipleStudentsFromAllTutorialGroupInCourse(Set<User> students, Course course, TutorialGroupRegistrationType registrationType) {
+    public void deregisterStudentsFromAllTutorialGroupInCourse(Set<User> students, Course course, TutorialGroupRegistrationType registrationType) {
         tutorialGroupRegistrationRepository.deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(students, registrationType, course);
     }
 
@@ -145,7 +145,7 @@ public class TutorialGroupService {
         }
 
         // deregister all students that should be registered to a new tutorial group from their old tutorial groups
-        deregisterMultipleStudentsFromAllTutorialGroupInCourse(uniqueRegistrationsWithMatchingUsers.stream().map(Pair::getSecond).collect(Collectors.toSet()), course,
+        deregisterStudentsFromAllTutorialGroupInCourse(uniqueRegistrationsWithMatchingUsers.stream().map(Pair::getSecond).collect(Collectors.toSet()), course,
                 TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION);
 
         for (var tutorialGroupAndRegisteredUsers : tutorialGroupToRegisteredUsers.entrySet()) {
