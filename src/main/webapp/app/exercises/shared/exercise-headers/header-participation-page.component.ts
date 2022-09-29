@@ -56,7 +56,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
             this.exerciseStatusBadge = hasExerciseDueDatePassed(this.exercise, this.participation) ? 'bg-danger' : 'bg-success';
             this.exerciseCategories = this.exercise.categories || [];
             this.dueDate = getExerciseDueDate(this.exercise, this.participation);
-            if (this.participation.results?.[0].rated) {
+            if (this.participation?.results?.[0]?.rated) {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings(
                     (this.participation.results?.[0].score! * this.exercise.maxPoints!) / 100,
                     getCourseFromExercise(this.exercise),
