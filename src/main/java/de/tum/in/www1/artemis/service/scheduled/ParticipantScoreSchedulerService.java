@@ -245,7 +245,12 @@ public class ParticipantScoreSchedulerService {
 
             // Now do the heavy lifting and calculate the latest score based on all results for this exercise
             // The result that is about to be deleted is excluded from the calculation
-            updateParticipantScore(score, resultIdToBeDeleted);
+            if (resultIdToBeDeleted != null) {
+                updateParticipantScore(score, resultIdToBeDeleted);
+            }
+            else {
+                updateParticipantScore(score);
+            }
         }
         catch (Exception e) {
             logger.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);
