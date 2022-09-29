@@ -13,7 +13,7 @@
                 }
             },
             "startExercise": "<strong>Herzlich Willkommen bei Artemis!</strong> Klicke auf den Button <i>Aufgabe starten</i>!",
-            "ltiSuccessLoginRequired": "LTI Übung erfolgreich gestartet. Bitte login als User {{user}}.",
+            "ltiSuccessLoginRequired": "LTI Übung erfolgreich gestartet. Bitte melde dich als Nutzer {{user}} an.",
             "lti": "LTI",
             "configurationForExercise": "LTI Konfiguration der Übung {{ title }}",
             "ltiKey": "LTI Key",

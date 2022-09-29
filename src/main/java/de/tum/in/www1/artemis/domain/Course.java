@@ -693,7 +693,6 @@ public class Course extends DomainObject {
                 throw new BadRequestAlertException("Configuration must exist for online courses", ENTITY_NAME, "onlineCourseConfigurationMissing");
             }
             ocConfiguration.validate();
-            getOnlineCourseConfiguration().setCourse(this);
         }
     }
 
