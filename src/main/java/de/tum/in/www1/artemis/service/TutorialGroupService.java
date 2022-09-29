@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -128,8 +129,8 @@ public class TutorialGroupService {
             if (registration.student() == null) {
                 return false;
             }
-            boolean hasRegistrationNumber = registration.student().getRegistrationNumber() != null && !registration.student().getRegistrationNumber().isBlank();
-            boolean hasLogin = registration.student().getLogin() != null && !registration.student().getLogin().isBlank();
+            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().getRegistrationNumber());
+            boolean hasLogin = StringUtils.hasText(registration.student().getLogin());
             return hasRegistrationNumber || hasLogin;
         }).collect(Collectors.toSet());
 
@@ -202,7 +203,7 @@ public class TutorialGroupService {
         var registrationsWithTitle = new HashSet<TutorialGroupRegistrationImportDTO>();
         var registrationsWithoutTitle = new HashSet<TutorialGroupRegistrationImportDTO>();
         for (var importDTO : registrations) {
-            if (importDTO.title() == null || importDTO.title().isBlank()) {
+            if (!StringUtils.hasText(importDTO.title())) {
                 registrationsWithoutTitle.add(importDTO.withImportResult(false, TutorialGroupImportErrors.NO_TITLE));
             }
             else {
@@ -236,13 +237,13 @@ public class TutorialGroupService {
     private static Optional<User> getMatchingUser(Set<User> users, TutorialGroupRegistrationImportDTO registration) {
         return users.stream().filter(user -> {
             assert registration.student() != null; // should be the case as we filtered out all registrations without a student
-            boolean hasRegistrationNumber = registration.student().getRegistrationNumber() != null && !registration.student().getRegistrationNumber().isBlank();
-            boolean hasLogin = registration.student().getLogin() != null && !registration.student().getLogin().isBlank();
+            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().getRegistrationNumber());
+            boolean hasLogin = StringUtils.hasText(registration.student().getLogin());
 
-            if (hasRegistrationNumber && user.getRegistrationNumber() != null) {
+            if (hasRegistrationNumber && StringUtils.hasText(user.getRegistrationNumber())) {
                 return user.getRegistrationNumber().equals(registration.student().getRegistrationNumber().trim());
             }
-            if (hasLogin && user.getLogin() != null) {
+            if (hasLogin && StringUtils.hasText(user.getLogin())) {
                 return user.getLogin().equals(registration.student().getLogin().trim());
             }
             return false;
@@ -255,8 +256,8 @@ public class TutorialGroupService {
 
         for (var registration : registrations) {
             assert registration.student() != null; // should be the case as we filtered out all registrations without a student in the calling method
-            boolean hasRegistrationNumber = registration.student().getRegistrationNumber() != null && !registration.student().getRegistrationNumber().isBlank();
-            boolean hasLogin = registration.student().getLogin() != null && !registration.student().getLogin().isBlank();
+            boolean hasRegistrationNumber = StringUtils.hasText(registration.student().getRegistrationNumber());
+            boolean hasLogin = StringUtils.hasText(registration.student().getLogin());
 
             if (hasRegistrationNumber) {
                 registrationNumbersToSearchFor.add(registration.student().getRegistrationNumber().trim());
