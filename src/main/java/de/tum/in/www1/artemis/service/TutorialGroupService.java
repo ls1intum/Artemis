@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS;
+
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -118,14 +120,15 @@ public class TutorialGroupService {
      */
     public Set<TutorialGroupRegistrationImportDTO> importRegistrations(Course course, Set<TutorialGroupRegistrationImportDTO> registrations) {
         // container that will be filled with the registrations that could not be imported during the import process
-        var failedRegistrations = new HashSet<TutorialGroupRegistrationImportDTO>();
+        Set<TutorialGroupRegistrationImportDTO> failedRegistrations = new HashSet<>();
 
         // === Step 1: Try to find all tutorial groups with the mentioned title. Create them if they do not exist yet ===
-        var registrationsWithTitle = filterOutWithoutTitle(registrations, failedRegistrations);
-        var tutorialGroupTitleToTutorialGroup = findOrCreateTutorialGroups(course, registrationsWithTitle).stream().collect(Collectors.groupingBy(TutorialGroup::getTitle));
+        Set<TutorialGroupRegistrationImportDTO> registrationsWithTitle = filterOutWithoutTitle(registrations, failedRegistrations);
+        Map<String, TutorialGroup> tutorialGroupTitleToTutorialGroup = findOrCreateTutorialGroups(course, registrationsWithTitle).stream()
+                .collect(Collectors.toMap(TutorialGroup::getTitle, Function.identity()));
 
         // === Step 2: If the registration contains a student, try to find a user in the database with the mentioned registration number ===
-        var registrationWithUserIdentifier = registrationsWithTitle.stream().filter(registration -> {
+        Set<TutorialGroupRegistrationImportDTO> registrationWithUserIdentifier = registrationsWithTitle.stream().filter(registration -> {
             if (registration.student() == null) {
                 return false;
             }
@@ -134,20 +137,21 @@ public class TutorialGroupService {
             return hasRegistrationNumber || hasLogin;
         }).collect(Collectors.toSet());
 
-        var registrationsWithMatchingUsers = filterOutWithoutMatchingUser(course, registrationWithUserIdentifier, failedRegistrations);
-        var uniqueRegistrationsWithMatchingUsers = filterOutMultipleRegistrationsForSameUser(registrationsWithMatchingUsers, failedRegistrations);
+        Map<TutorialGroupRegistrationImportDTO, User> registrationsWithMatchingUsers = filterOutWithoutMatchingUser(course, registrationWithUserIdentifier, failedRegistrations);
+        Map<TutorialGroupRegistrationImportDTO, User> uniqueRegistrationsWithMatchingUsers = filterOutMultipleRegistrationsForSameUser(registrationsWithMatchingUsers,
+                failedRegistrations);
 
         // === Step 3: Register all found users to their respective tutorial groups ===
-        var tutorialGroupToRegisteredUsers = new HashMap<TutorialGroup, Set<User>>();
-        for (var registrationUserPair : uniqueRegistrationsWithMatchingUsers) {
-            var tutorialGroup = tutorialGroupTitleToTutorialGroup.get(registrationUserPair.getFirst().title().trim()).get(0);
-            var user = registrationUserPair.getSecond();
+        Map<TutorialGroup, Set<User>> tutorialGroupToRegisteredUsers = new HashMap<>();
+        for (var registrationUserPair : uniqueRegistrationsWithMatchingUsers.entrySet()) {
+            assert registrationUserPair.getKey().title() != null;
+            var tutorialGroup = tutorialGroupTitleToTutorialGroup.get(registrationUserPair.getKey().title().trim());
+            var user = registrationUserPair.getValue();
             tutorialGroupToRegisteredUsers.computeIfAbsent(tutorialGroup, key -> new HashSet<>()).add(user);
         }
 
         // deregister all students that should be registered to a new tutorial group from their old tutorial groups
-        deregisterStudentsFromAllTutorialGroupInCourse(uniqueRegistrationsWithMatchingUsers.stream().map(Pair::getSecond).collect(Collectors.toSet()), course,
-                TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION);
+        deregisterStudentsFromAllTutorialGroupInCourse(new HashSet<>(uniqueRegistrationsWithMatchingUsers.values()), course, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION);
 
         for (var tutorialGroupAndRegisteredUsers : tutorialGroupToRegisteredUsers.entrySet()) {
             registerMultipleStudentsToTutorialGroup(tutorialGroupAndRegisteredUsers.getValue(), tutorialGroupAndRegisteredUsers.getKey(),
@@ -157,7 +161,7 @@ public class TutorialGroupService {
         // === Step 4: Create the result for the successful and failed imports ===
         HashSet<TutorialGroupRegistrationImportDTO> registrationsWithImportResults = new HashSet<>();
 
-        var successfulImports = new HashSet<>(registrations);
+        Set<TutorialGroupRegistrationImportDTO> successfulImports = new HashSet<>(registrations);
         successfulImports.removeAll(failedRegistrations);
         for (var successfulImport : successfulImports) {
             registrationsWithImportResults.add(successfulImport.withImportResult(true, null));
@@ -167,18 +171,25 @@ public class TutorialGroupService {
         return registrationsWithImportResults;
     }
 
-    private Set<Pair<TutorialGroupRegistrationImportDTO, User>> filterOutMultipleRegistrationsForSameUser(
-            Set<Pair<TutorialGroupRegistrationImportDTO, User>> registrationsWithMatchingUsers, Set<TutorialGroupRegistrationImportDTO> failedRegistrations) {
-        var userToRegistrations = registrationsWithMatchingUsers.stream().collect(Collectors.groupingBy(Pair::getSecond));
-        var uniqueRegistrationsWithMatchingUsers = new HashSet<Pair<TutorialGroupRegistrationImportDTO, User>>();
-        for (var registrationAndMatchingUser : registrationsWithMatchingUsers) {
-            var user = registrationAndMatchingUser.getSecond();
-            var registrationsForUser = userToRegistrations.get(user);
-            if (registrationsForUser.size() > 1) {
-                failedRegistrations.add(registrationAndMatchingUser.getFirst().withImportResult(false, TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS));
+    private Map<TutorialGroupRegistrationImportDTO, User> filterOutMultipleRegistrationsForSameUser(Map<TutorialGroupRegistrationImportDTO, User> registrationToUser,
+            Set<TutorialGroupRegistrationImportDTO> failedRegistrations) {
+
+        // reverse the map
+        Map<User, Set<TutorialGroupRegistrationImportDTO>> userToRegistrations = new HashMap<>();
+        for (var registrationUserPair : registrationToUser.entrySet()) {
+            userToRegistrations.computeIfAbsent(registrationUserPair.getValue(), key -> new HashSet<>()).add(registrationUserPair.getKey());
+        }
+
+        // filter out all users that are registered multiple times
+        Map<TutorialGroupRegistrationImportDTO, User> uniqueRegistrationsWithMatchingUsers = new HashMap<>();
+
+        for (var userToRegistration : userToRegistrations.entrySet()) {
+            if (userToRegistration.getValue().size() > 1) {
+                failedRegistrations.addAll(
+                        userToRegistration.getValue().stream().map(registration -> registration.withImportResult(false, MULTIPLE_REGISTRATIONS)).collect(Collectors.toSet()));
             }
             else {
-                uniqueRegistrationsWithMatchingUsers.add(registrationAndMatchingUser);
+                uniqueRegistrationsWithMatchingUsers.put(userToRegistration.getValue().iterator().next(), userToRegistration.getKey());
             }
         }
         return uniqueRegistrationsWithMatchingUsers;
@@ -214,24 +225,25 @@ public class TutorialGroupService {
         return registrationsWithTitle;
     }
 
-    private Set<Pair<TutorialGroupRegistrationImportDTO, User>> filterOutWithoutMatchingUser(Course course, Set<TutorialGroupRegistrationImportDTO> registrations,
+    private Map<TutorialGroupRegistrationImportDTO, User> filterOutWithoutMatchingUser(Course course, Set<TutorialGroupRegistrationImportDTO> registrations,
             Set<TutorialGroupRegistrationImportDTO> failedRegistrations) {
         Set<User> matchingUsers = tryToFindMatchingUsers(course, registrations);
 
-        var registrationWithMatchingUser = new HashSet<Pair<TutorialGroupRegistrationImportDTO, User>>();
+        HashMap<TutorialGroupRegistrationImportDTO, User> registrationToUser = new HashMap<>();
+
         for (var registration : registrations) {
             // try to find matching user first by registration number and as a fallback by login
             Optional<User> matchingUser = getMatchingUser(matchingUsers, registration);
 
             if (matchingUser.isPresent()) {
-                registrationWithMatchingUser.add(Pair.of(registration, matchingUser.get()));
+                registrationToUser.put(registration, matchingUser.get());
             }
             else {
                 failedRegistrations.add(registration.withImportResult(false, TutorialGroupImportErrors.NO_USER_FOUND));
             }
         }
 
-        return registrationWithMatchingUser;
+        return registrationToUser;
     }
 
     private static Optional<User> getMatchingUser(Set<User> users, TutorialGroupRegistrationImportDTO registration) {
