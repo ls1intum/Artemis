@@ -21,10 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -316,8 +313,64 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
 
+        var result = ModelFactory.generateResult(true, 90).participation(participation);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result);
+
         request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void requestFeedbackExerciseOptionsFail() throws Exception {
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        exerciseRepo.save(programmingExercise);
+
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        participationRepo.save(participation);
+
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void requestFeedbackAlreadySent() throws Exception {
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        participation.setIndividualDueDate(ZonedDateTime.now().minusMinutes(20));
+        participationRepo.save(participation);
+
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void requestFeedbackSuccess() throws Exception {
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
+
+        var result = ModelFactory.generateResult(true, 100).participation(participation);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result);
+
+        doNothing().when(programmingExerciseParticipationService).lockStudentRepository(programmingExercise, participation);
+
+        var response = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.OK);
+
+        assertThat(response.getIndividualDueDate()).isNotNull();
+        assertThat(response.getIndividualDueDate().isBefore(ZonedDateTime.now())).isTrue();
+
+        verify(programmingExerciseParticipationService, times(1)).lockStudentRepository(programmingExercise, participation);
     }
 
     @Test
