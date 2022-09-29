@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface StudentParticipationRepository extends JpaRepository<StudentParticipation, Long> {
 
-    List<StudentParticipation> findByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<StudentParticipation> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
     boolean existsByExerciseId(@Param("exerciseId") Long exerciseId);
 
@@ -196,7 +196,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     SELECT max(id) FROM p.results)
                     OR r IS NULL)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -222,7 +222,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     SELECT max(id) FROM p.results)
                     OR r IS NULL)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get all participations for an exercise with each latest {@link AssessmentType#AUTOMATIC} result and feedbacks (determined by id).

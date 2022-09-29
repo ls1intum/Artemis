@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -591,8 +590,8 @@ public class ParticipationService {
      * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
      * @param deleteRepository determines whether the corresponding repository should be deleted as well
      */
-    @Transactional // ok because of delete
-    public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
+    // @Transactional // ok because of delete
+    public void delete(long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         log.info("Request to delete Participation : {}", participation);
 
@@ -617,10 +616,6 @@ public class ParticipationService {
         }
 
         deleteResultsAndSubmissionsOfParticipation(participationId);
-
-        Exercise exercise = participation.getExercise();
-        exercise.removeParticipation(participation);
-        exerciseRepository.save(exercise);
         studentParticipationRepository.delete(participation);
     }
 
@@ -629,21 +624,19 @@ public class ParticipationService {
      *
      * @param participationId the id of the participation to delete results/submissions from.
      */
-    @Transactional // ok because of delete
+    // @Transactional // ok because of delete
     public void deleteResultsAndSubmissionsOfParticipation(Long participationId) {
-        log.info("Request to delete all results and submissions of participation with id : {}", participationId);
+        log.debug("Request to delete all results and submissions of participation with id : {}", participationId);
         var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
         Set<Submission> submissions = participation.getSubmissions();
-
         // Delete all results for this participation
-        ArrayList<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toCollection(ArrayList::new));
+        Set<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toSet());
         resultsToBeDeleted.addAll(participation.getResults());
         // By removing the participation, the ResultListener will ignore this result instead of scheduling a participant score update
         // This is okay here, because we delete the whole participation (no older results will exist for the score)
         resultsToBeDeleted.forEach(participation::removeResult);
         resultsToBeDeleted.forEach(result -> resultService.deleteResult(result.getId()));
-
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
             coverageReportRepository.deleteBySubmissionId(submission.getId());
@@ -659,10 +652,10 @@ public class ParticipationService {
      * @param deleteBuildPlan  specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
-    @Transactional // ok because of delete
-    public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
-        log.info("Request to delete all participations of Exercise with id : {}", exerciseId);
-        List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByExerciseId(exerciseId);
+    // @Transactional // ok because of delete
+    public void deleteAllByExerciseId(long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
+        var participationsToDelete = studentParticipationRepository.findByExerciseId(exerciseId);
+        log.info("Request to delete all {} participations of exercise with id : {}", participationsToDelete.size(), exerciseId);
         for (StudentParticipation participation : participationsToDelete) {
             delete(participation.getId(), deleteBuildPlan, deleteRepository);
         }
@@ -675,7 +668,7 @@ public class ParticipationService {
      * @param deleteBuildPlan  specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
-    @Transactional // ok because of delete
+    // @Transactional // ok because of delete
     public void deleteAllByTeamId(Long teamId, boolean deleteBuildPlan, boolean deleteRepository) {
         log.info("Request to delete all participations of Team with id : {}", teamId);
         List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByTeamId(teamId);

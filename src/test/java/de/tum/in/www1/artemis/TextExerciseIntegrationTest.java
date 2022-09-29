@@ -338,7 +338,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             final TextSubmission submission2 = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
             databaseUtilService.saveTextSubmission(textExercise, submission2, "student2");
 
-            final var participations = studentParticipationRepository.findByExerciseId(textExercise.getId());
+            final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(textExercise.getId()));
             assertThat(participations).hasSize(2);
             participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
             participations.get(1).setIndividualDueDate(individualDueDate);

@@ -9,7 +9,6 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -119,12 +118,13 @@ public class ResultService {
      * Deletes result with corresponding complaint and complaint response
      * @param resultId the id of the result
      */
-    @Transactional // ok because of delete
+    // @Transactional // ok because of delete
     public void deleteResult(long resultId) {
         complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
         complaintRepository.deleteByResult_Id(resultId);
         ratingRepository.deleteByResult_Id(resultId);
-        participantScoreRepository.clearAllByResultId(resultId);
+        // TODO: the following line should be deactivated when the whole exercise is deleted
+        // participantScoreRepository.clearAllByResultId(resultId);
         resultRepository.deleteById(resultId);
     }
 

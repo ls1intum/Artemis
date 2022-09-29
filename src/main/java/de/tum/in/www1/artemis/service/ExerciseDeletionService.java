@@ -6,12 +6,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
@@ -22,6 +18,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for managing Exercise.
@@ -129,10 +126,9 @@ public class ExerciseDeletionService {
      * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
      * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for all other exercise types)
      */
-    @Transactional // ok because of delete
+    // @Transactional // ok because of delete
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
-        // Delete has a transactional mechanism. Therefore, all lazy objects that are deleted below, should be fetched when needed.
-        final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        var exercise = exerciseRepository.findByIdWithLearningGoalsElseThrow(exerciseId);
 
         log.info("Checking if exercise {} is modeling exercise", exercise.getId());
         if (exercise instanceof ModelingExercise) {
@@ -145,11 +141,13 @@ public class ExerciseDeletionService {
         participantScoreRepository.deleteAllByExerciseId(exerciseId);
 
         // Remove the connection to learning goals
-        learningGoalRepository.saveAll(exercise.getLearningGoals().stream().map(learningGoal -> {
+        var updatedLearningGoals = new HashSet<LearningGoal>();
+        for (LearningGoal learningGoal : exercise.getLearningGoals()) {
             learningGoal = learningGoalRepository.findByIdWithExercisesElseThrow(learningGoal.getId());
             learningGoal.removeExercise(exercise);
-            return learningGoal;
-        }).toList());
+            updatedLearningGoals.add(learningGoal);
+        }
+        learningGoalRepository.saveAll(updatedLearningGoals);
 
         // delete all exercise units linking to the exercise
         List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
@@ -164,6 +162,7 @@ public class ExerciseDeletionService {
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
         // to avoid a ConcurrentModificationException, we need to use a copy of the set
+        exercise = exerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
         var exampleSubmissions = new HashSet<>(exercise.getExampleSubmissions());
         for (ExampleSubmission exampleSubmission : exampleSubmissions) {
             exampleSubmissionService.deleteById(exampleSubmission.getId());

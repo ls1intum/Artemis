@@ -33,9 +33,9 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
      * Note: Only call this method when the exercise is about to be deleted. Otherwise, use {@link #clearAllByResultId(Long)}.
      * @param exerciseId the exercise id for which to remove all participant scores
      */
-    @Transactional // required! ok because of delete
+    @Transactional
     @Modifying
-    void deleteAllByExerciseId(Long exerciseId);
+    void deleteAllByExerciseId(long exerciseId);
 
     @Transactional // ok because of modifying query
     @Modifying
