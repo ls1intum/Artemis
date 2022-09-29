@@ -51,7 +51,7 @@ public class TutorialGroupService {
     }
 
     public void deregisterMultipleStudentsFromAllTutorialGroupInCourse(Set<User> students, Course course, TutorialGroupRegistrationType registrationType) {
-        tutorialGroupRegistrationRepository.deleteAllByStudentIsInAndTypeAndTutorialGroup_Course(students, registrationType, course);
+        tutorialGroupRegistrationRepository.deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(students, registrationType, course);
     }
 
     /**

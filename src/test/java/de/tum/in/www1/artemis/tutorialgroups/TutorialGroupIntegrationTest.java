@@ -490,22 +490,22 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private void assertTutorialWithTitleDoesNotExistInDb(String title) {
-        assertThat(tutorialGroupRepository.existsByTitleAndCourse_Id(title, exampleCourseId)).isFalse();
+        assertThat(tutorialGroupRepository.existsByTitleAndCourseId(title, exampleCourseId)).isFalse();
     }
 
     private void assertTutorialGroupWithTitleExistsInDb(String title) {
-        assertThat(tutorialGroupRepository.existsByTitleAndCourse_Id(title, exampleCourseId)).isTrue();
+        assertThat(tutorialGroupRepository.existsByTitleAndCourseId(title, exampleCourseId)).isTrue();
     }
 
     private void assertUserIsRegisteredInTutorialWithTitle(String expectedTitle, User expectedStudent) {
-        assertThat(tutorialGroupRegistrationRepository.countByStudentAndTutorialGroup_Course_IdAndType(expectedStudent, exampleCourseId,
+        assertThat(tutorialGroupRegistrationRepository.countByStudentAndTutorialGroupCourseIdAndType(expectedStudent, exampleCourseId,
                 TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)).isEqualTo(1);
-        assertThat(tutorialGroupRegistrationRepository.existsByTutorialGroup_TitleAndStudentAndType(expectedTitle, expectedStudent,
+        assertThat(tutorialGroupRegistrationRepository.existsByTutorialGroupTitleAndStudentAndType(expectedTitle, expectedStudent,
                 TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)).isTrue();
     }
 
     private void assertUserIsNotRegisteredInATutorialGroup(User expectedStudent) {
-        assertThat(tutorialGroupRegistrationRepository.countByStudentAndTutorialGroup_Course_IdAndType(expectedStudent, exampleCourseId,
+        assertThat(tutorialGroupRegistrationRepository.countByStudentAndTutorialGroupCourseIdAndType(expectedStudent, exampleCourseId,
                 TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)).isEqualTo(0);
     }
 

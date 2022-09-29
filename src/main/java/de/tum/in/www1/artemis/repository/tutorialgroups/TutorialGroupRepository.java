@@ -70,7 +70,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             """)
     Optional<TutorialGroup> findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(String title, Long courseId);
 
-    boolean existsByTitleAndCourse_Id(String title, Long courseId);
+    boolean existsByTitleAndCourseId(String title, Long courseId);
 
     Set<TutorialGroup> findAllByTeachingAssistant(User teachingAssistant);
 
