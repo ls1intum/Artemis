@@ -59,11 +59,14 @@ public class ParticipationService {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
+    private final ParticipantScoreRepository participantScoreRepository;
+
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService,
-            ResultService resultService, CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            ResultService resultService, CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            ParticipantScoreRepository participantScoreRepository) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -78,6 +81,7 @@ public class ParticipationService {
         this.resultService = resultService;
         this.coverageReportRepository = coverageReportRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
+        this.participantScoreRepository = participantScoreRepository;
     }
 
     /**
@@ -654,6 +658,9 @@ public class ParticipationService {
      */
     // @Transactional // ok because of delete
     public void deleteAllByExerciseId(long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
+        // First remove all participant scores, as we are deleting all participations
+        participantScoreRepository.deleteAllByExerciseId(exerciseId);
+
         var participationsToDelete = studentParticipationRepository.findByExerciseId(exerciseId);
         log.info("Request to delete all {} participations of exercise with id : {}", participationsToDelete.size(), exerciseId);
         for (StudentParticipation participation : participationsToDelete) {

@@ -138,8 +138,6 @@ public class ExerciseDeletionService {
             modelingExerciseService.cancelScheduledOperations(exerciseId);
         }
 
-        participantScoreRepository.deleteAllByExerciseId(exerciseId);
-
         // Remove the connection to learning goals
         var updatedLearningGoals = new HashSet<LearningGoal>();
         for (LearningGoal learningGoal : exercise.getLearningGoals()) {
