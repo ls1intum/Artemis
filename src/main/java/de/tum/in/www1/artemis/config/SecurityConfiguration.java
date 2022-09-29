@@ -7,8 +7,13 @@ import java.util.Optional;
 import javax.annotation.PostConstruct;
 
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
+import de.tum.in.www1.artemis.security.OAuth2JWKSFilter;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
@@ -24,6 +29,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
@@ -177,12 +183,29 @@ public class SecurityConfiguration {
             .antMatchers("/api-docs/**").permitAll()
         .and()
             .apply(securityConfigurerAdapter());
+
+        http.apply(lti13Configurer(http));
+
+        configureOAuth2JWKSFilter(http, "/.well-known/jwks.json");
         // @formatter:on
 
         return http.build();
     }
 
+    private CustomLti13Configurer lti13Configurer(HttpSecurity http) {
+        return http.getSharedObject(ApplicationContext.class).getBean(CustomLti13Configurer.class);
+    }
+
     private JWTConfigurer securityConfigurerAdapter() {
         return new JWTConfigurer(tokenProvider);
+    }
+
+    private void configureOAuth2JWKSFilter(HttpSecurity http, String path) {
+        // Public jwkSet endpoint
+        http.addFilterAfter(new OAuth2JWKSFilter(path, oAuth2JWKSService(http)), LogoutFilter.class);
+    }
+
+    private OAuth2JWKSService oAuth2JWKSService(HttpSecurity http) {
+        return http.getSharedObject(ApplicationContext.class).getBean(OAuth2JWKSService.class);
     }
 }

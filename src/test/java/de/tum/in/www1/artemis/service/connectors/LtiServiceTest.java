@@ -53,6 +53,9 @@ class LtiServiceTest {
     @Mock
     private HttpServletResponse response;
 
+    @Mock
+    private Lti13Service lti13Service;
+
     private Exercise exercise;
 
     private LtiService ltiService;
@@ -71,7 +74,8 @@ class LtiServiceTest {
     void init() {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository, response);
+        ltiService = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository,
+                lti13Service, response);
         Course course = new Course();
         course.setStudentGroupName(courseStudentGroupName);
         exercise = new TextExercise();

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security;
+package de.tum.in.www1.artemis.security.lti;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

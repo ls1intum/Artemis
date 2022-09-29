@@ -87,6 +87,8 @@ public class LtiService {
 
     private final LtiUserIdRepository ltiUserIdRepository;
 
+    private final Lti13Service lti13Service;
+
     private final HttpClient client;
 
     // Ok, Spring actually injects the response for the current context using a proxy
@@ -96,13 +98,14 @@ public class LtiService {
     public final Map<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, Lti13Service lti13Service, HttpServletResponse response) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
         this.resultRepository = resultRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.ltiUserIdRepository = ltiUserIdRepository;
+        this.lti13Service = lti13Service;
         this.response = response;
         this.client = HttpClientBuilder.create().build();
     }
@@ -475,6 +478,8 @@ public class LtiService {
                 }));
             }
         }
+
+        lti13Service.onNewResult(participation);
     }
 
     /**
