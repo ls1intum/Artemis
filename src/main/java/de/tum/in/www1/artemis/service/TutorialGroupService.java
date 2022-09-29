@@ -214,7 +214,7 @@ public class TutorialGroupService {
     }
 
     private Set<Pair<TutorialGroupRegistrationImportDTO, User>> filterOutWithoutMatchingUser(Course course, Set<TutorialGroupRegistrationImportDTO> registrations,
-            HashSet<TutorialGroupRegistrationImportDTO> failedRegistrations) {
+            Set<TutorialGroupRegistrationImportDTO> failedRegistrations) {
         Set<User> matchingUsers = tryToFindMatchingUsers(course, registrations);
 
         var registrationWithMatchingUser = new HashSet<Pair<TutorialGroupRegistrationImportDTO, User>>();
