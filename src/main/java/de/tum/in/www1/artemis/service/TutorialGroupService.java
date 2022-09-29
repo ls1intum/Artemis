@@ -154,16 +154,16 @@ public class TutorialGroupService {
         }
 
         // === Step 4: Create the result for the successful and failed imports ===
-        var result = new HashSet<TutorialGroupRegistrationImportDTO>();
+        HashSet<TutorialGroupRegistrationImportDTO> registrationsWithImportResults = new HashSet<>();
 
         var successfulImports = new HashSet<>(registrations);
         successfulImports.removeAll(failedRegistrations);
         for (var successfulImport : successfulImports) {
-            result.add(successfulImport.withImportResult(true, null));
+            registrationsWithImportResults.add(successfulImport.withImportResult(true, null));
         }
-        result.addAll(failedRegistrations);
+        registrationsWithImportResults.addAll(failedRegistrations);
 
-        return result;
+        return registrationsWithImportResults;
     }
 
     private Set<Pair<TutorialGroupRegistrationImportDTO, User>> filterOutMultipleRegistrationsForSameUser(
