@@ -224,18 +224,19 @@
                 >
                 </jhi-clone-repo-button>
 
-                <button
-                    class="btn btn-primary"
-                    [ngbTooltip]="'artemisApp.exerciseActions.requestFeedbackTooltip' | artemisTranslate"
-                    [class.btn-sm]="smallButtons"
-                    *ngIf="isManualFeedbackRequestsAllowed()"
-                    [disabled]="isFeedbackRequestButtonDisabled()"
-                    [id]="'request-feedback-' + exercise.id"
-                    (click)="requestFeedback()"
-                >
-                    <fa-icon [icon]="faComment"></fa-icon>
-                    <span class="d-none d-md-inline">{{ 'artemisApp.exerciseActions.requestFeedback' | artemisTranslate }}</span>
-                </button>
+                <span tabindex="0" [ngbTooltip]="'artemisApp.exerciseActions.requestFeedbackTooltip' | artemisTranslate">
+                    <button
+                        class="btn btn-primary"
+                        [class.btn-sm]="smallButtons"
+                        *ngIf="isManualFeedbackRequestsAllowed()"
+                        [disabled]="isFeedbackRequestButtonDisabled()"
+                        [id]="'request-feedback-' + exercise.id"
+                        (click)="requestFeedback()"
+                    >
+                        <fa-icon [icon]="faComment"></fa-icon>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.exerciseActions.requestFeedback' | artemisTranslate }}</span>
+                    </button>
+                </span>
             </ng-container>
         </ng-container>
         <!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->

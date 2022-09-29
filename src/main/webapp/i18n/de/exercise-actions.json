@@ -11,7 +11,7 @@
             "startExercise": "Aufgabe starten",
             "resumeExercise": "Aufgabe fortführen",
             "requestFeedback": "Feedback anfragen",
-            "requestFeedbackTooltip": "Sendet eine Feedbackanfrage vor der deadline",
+            "requestFeedbackTooltip": "Sendet eine Feedbackanfrage vor der deadline. Diese Option ist erst möglich wenn 100% in den öffentlichen Tests erreicht wurden.",
             "resumeExerciseError": "Fehler beim Versuch die Aufgabe fortzuführen",
             "openCodeEditor": "Programmiereditor öffnen",
             "openModelingEditor": "Modellierungseditor öffnen",

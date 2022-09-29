@@ -11,7 +11,7 @@
             "startExercise": "Start exercise",
             "resumeExercise": "Resume exercise",
             "requestFeedback": "Request feedback",
-            "requestFeedbackTooltip": "Send a manual feedback request before the deadline for review",
+            "requestFeedbackTooltip": "Send a manual feedback request before the deadline for review. This option is only possible if you reached 100% in the public tests",
             "resumeExerciseError": "Error trying to resume the exercise",
             "openCodeEditor": "Open code editor",
             "openModelingEditor": "Open modeling editor",
