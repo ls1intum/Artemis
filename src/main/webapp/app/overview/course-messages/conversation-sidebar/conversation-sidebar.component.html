@@ -1,0 +1,72 @@
+<div *ngIf="course" class="h-100">
+    <div *ngIf="!collapsed; else collapsedConversations" class="expanded-conversations">
+        <div class="card">
+            <!-- header -->
+            <div class="card-header d-flex bg-primary text-white" [ngbTooltip]="'artemisApp.messages.conversation.hide' | artemisTranslate" (click)="collapsed = true">
+                <h3 class="card-title">
+                    <fa-icon [icon]="faConversation"></fa-icon>
+                    <span class="ms-2" jhiTranslate="artemisApp.messages.conversation.header">Conversations</span>
+                </h3>
+                <div class="col-auto">
+                    <fa-icon [icon]="faChevronLeft"></fa-icon>
+                </div>
+            </div>
+            <!-- body -->
+            <div class="card-body">
+                <div class="user-searchbar">
+                    <jhi-data-table
+                        [showPageSizeDropdown]="false"
+                        entityType="user"
+                        [searchFields]="['name']"
+                        [isLoading]="isLoading"
+                        [isSearching]="isSearching"
+                        [searchFailed]="searchFailed"
+                        [searchNoResults]="searchNoResults"
+                        [isTransitioning]="isTransitioning"
+                        [onSearchWrapper]="searchUsersWithinCourse"
+                        [searchResultFormatter]="searchResultFormatter"
+                        [onAutocompleteSelectWrapper]="onAutocompleteSelect"
+                        [searchTextFromEntity]="clearUserSearchBar"
+                        searchPlaceholderTranslation="artemisApp.messages.conversation.searchForUsers"
+                        minQueryLengthHintTranslation="artemisApp.messages.conversation.minQueryLengthHint"
+                    ></jhi-data-table>
+                </div>
+                <div>
+                    <ul class="conversation-list" *ngIf="conversations && conversations.length">
+                        <li
+                            *ngFor="let conversation of conversations; trackBy: conversationsTrackByFn"
+                            class="conversation-list-item"
+                            [class.selected]="activeConversation.id === conversation.id"
+                            (click)="activeConversation = conversation; selectConversation.emit(conversation)"
+                        >
+                            <span class="conversation-list-item-user">
+                                {{ getNameOfConversationParticipant(conversation) }}
+                            </span>
+                            <span *ngIf="isConversationUnread(conversation)">
+                                <fa-icon [icon]="faMessage"></fa-icon>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+                <!-- no conversations -->
+                <div class="conversation-empty" *ngIf="!isLoading && (conversations === undefined || conversations.length === 0)">
+                    <fa-icon size="3x" [icon]="faConversation"></fa-icon>
+                    <h5 class="mb-3 font-weight-bold">{{ 'artemisApp.messages.conversation.notFound' | artemisTranslate }}</h5>
+                    <span jhiTranslate="artemisApp.messages.conversation.instructionForNewConversation"></span>
+                </div>
+            </div>
+        </div>
+        <div class="draggable-right">
+            <fa-icon [icon]="faGripLinesVertical"></fa-icon>
+        </div>
+    </div>
+    <!-- collapsed conversations -->
+    <ng-template #collapsedConversations>
+        <div class="collapsed-conversations bg-primary text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.messages.conversation.show' | artemisTranslate">
+            <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
+            <span jhiTranslate="artemisApp.messages.conversation.header">Conversation</span>
+            <fa-icon class="fa-rotate-270" [icon]="faConversation"></fa-icon>
+            <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
+        </div>
+    </ng-template>
+</div>

@@ -17,6 +17,7 @@ import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -61,6 +62,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private serverDateService: ArtemisServerDateService,
         private alertService: AlertService,
         private changeDetectorRef: ChangeDetectorRef,
+        private profileService: ProfileService,
     ) {}
 
     async ngOnInit() {
