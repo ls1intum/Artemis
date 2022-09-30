@@ -486,7 +486,8 @@ public class TeamResource {
      */
     private void sendTeamAssignmentUpdates(Exercise exercise, List<Team> teams) {
         // Get participation to given exercise into a map which participation identifiers as key and a lists of all participation with that identifier as value
-        Map<String, List<StudentParticipation>> participationsMap = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId()).stream()
+        Map<String, List<StudentParticipation>> participationsMap = studentParticipationRepository
+                .findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false).stream()
                 .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).toList()));
 
         // Send out team assignment update via websockets to each team

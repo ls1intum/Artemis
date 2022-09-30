@@ -264,12 +264,13 @@ public class Result extends DomainObject {
      * - the submission type is INSTRUCTOR / TEST
      * @param exerciseDueDate date after which no normal submission is considered rated.
      * @param submission to which the result belongs.
+     * @param participation to wich the submission belongs
      */
-    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission) {
+    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission, Participation participation) {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
-        else if (submission.getType() == SubmissionType.ILLEGAL) {
+        else if (submission.getType() == SubmissionType.ILLEGAL || participation.isTestRun()) {
             this.rated = false;
         }
         else {

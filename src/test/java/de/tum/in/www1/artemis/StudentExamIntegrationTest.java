@@ -1700,7 +1700,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         bonusRepository.save(bonus);
 
         StudentParticipation participationWithLatestResult = studentParticipationRepository
-                .findByExerciseIdAndStudentIdWithLatestResult(finalStudentExam.getExercises().get(0).getId(), finalStudentExam.getUser().getId()).orElseThrow();
+                .findByExerciseIdAndStudentIdAndTestRunWithLatestResult(finalStudentExam.getExercises().get(0).getId(), finalStudentExam.getUser().getId(), false).orElseThrow();
         Result result = participationWithLatestResult.getResults().iterator().next();
         result.setScore(0.0); // To reduce grade to a grade lower than the max grade.
         resultRepository.save(result);
