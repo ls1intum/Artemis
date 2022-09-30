@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface StudentParticipationRepository extends JpaRepository<StudentParticipation, Long> {
 
-    List<StudentParticipation> findByExerciseId(@Param("exerciseId") Long exerciseId);
+    Set<StudentParticipation> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
     boolean existsByExerciseId(@Param("exerciseId") Long exerciseId);
 
@@ -183,7 +183,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     SELECT max(id) FROM p.results)
                     OR r IS NULL)
             """)
-    List<StudentParticipation> findByExerciseIdAndTestRunWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("testRun") boolean testRun);
+    Set<StudentParticipation> findByExerciseIdAndTestRunWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("testRun") boolean testRun);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -198,7 +198,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     WHERE completionDate IS NOT NULL
                     )
             """)
-    List<StudentParticipation> findByExerciseIdAndTestRunWithEagerLegalSubmissionsAndLatestResultWithCompletionDate(@Param("exerciseId") Long exerciseId,
+    Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerLegalSubmissionsAndLatestResultWithCompletionDate(@Param("exerciseId") Long exerciseId,
             @Param("testRun") boolean testRun);
 
     /**

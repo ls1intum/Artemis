@@ -387,13 +387,13 @@ public class ParticipationResource {
      */
     @GetMapping("exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
+    public ResponseEntity<Set<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
             @RequestParam(defaultValue = "false") boolean withLatestResult) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         boolean examMode = exercise.isExamExercise();
-        List<StudentParticipation> participations;
+        Set<StudentParticipation> participations;
         if (withLatestResult) {
             participations = studentParticipationRepository.findByExerciseIdAndTestRunWithLatestResult(exerciseId, false);
         }
@@ -403,7 +403,7 @@ public class ParticipationResource {
         participations = participations.stream().filter(participation -> participation.getParticipant() != null).peek(participation -> {
             // remove unnecessary data to reduce response size
             participation.setExercise(null);
-        }).toList();
+        }).collect(Collectors.toSet());
 
         Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
         participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
@@ -691,7 +691,7 @@ public class ParticipationResource {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
         log.info(logMessage);
-        participationService.delete(participation.getId(), deleteBuildPlan, deleteRepository);
+        participationService.delete(participation.getId(), deleteBuildPlan, deleteRepository, true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 

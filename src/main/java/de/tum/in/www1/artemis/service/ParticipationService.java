@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -44,8 +43,6 @@ public class ParticipationService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final ExerciseRepository exerciseRepository;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final SubmissionRepository submissionRepository;
@@ -60,18 +57,24 @@ public class ParticipationService {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
+    private final ParticipantScoreRepository participantScoreRepository;
+
+    private final StudentScoreRepository studentScoreRepository;
+
+    private final TeamScoreRepository teamScoreRepository;
+
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ExerciseRepository exerciseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService,
-            ResultService resultService, CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService, ResultService resultService,
+            CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionRepository = submissionRepository;
         this.teamRepository = teamRepository;
@@ -79,6 +82,9 @@ public class ParticipationService {
         this.resultService = resultService;
         this.coverageReportRepository = coverageReportRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
+        this.participantScoreRepository = participantScoreRepository;
+        this.studentScoreRepository = studentScoreRepository;
+        this.teamScoreRepository = teamScoreRepository;
     }
 
     /**
@@ -642,9 +648,9 @@ public class ParticipationService {
      * @param participationId  the participationId of the entity
      * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
      * @param deleteRepository determines whether the corresponding repository should be deleted as well
+     * @param deleteParticipantScores false if the participant scores have already been bulk deleted, true by default otherwise
      */
-    @Transactional // ok because of delete
-    public void delete(Long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
+    public void delete(long participationId, boolean deleteBuildPlan, boolean deleteRepository, boolean deleteParticipantScores) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         log.info("Request to delete Participation : {}", participation);
 
@@ -668,11 +674,7 @@ public class ParticipationService {
             gitService.deleteLocalRepository(repositoryUrl);
         }
 
-        deleteResultsAndSubmissionsOfParticipation(participationId);
-
-        Exercise exercise = participation.getExercise();
-        exercise.removeParticipation(participation);
-        exerciseRepository.save(exercise);
+        deleteResultsAndSubmissionsOfParticipation(participationId, deleteParticipantScores);
         studentParticipationRepository.delete(participation);
     }
 
@@ -680,24 +682,39 @@ public class ParticipationService {
      * Remove all results and submissions of the given participation. Will do nothing if invoked with a participation without results/submissions.
      *
      * @param participationId the id of the participation to delete results/submissions from.
+     * @param deleteParticipantScores false if the participant scores have already been bulk deleted, true by default otherwise
      */
-    @Transactional // ok because of delete
-    public void deleteResultsAndSubmissionsOfParticipation(Long participationId) {
-        log.info("Request to delete all results and submissions of participation with id : {}", participationId);
+    public void deleteResultsAndSubmissionsOfParticipation(Long participationId, boolean deleteParticipantScores) {
+        log.debug("Request to delete all results and submissions of participation with id : {}", participationId);
         var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+
+        // delete the participant score with the combination (exerciseId, studentId) or (exerciseId, teamId)
+        if (deleteParticipantScores && participation instanceof StudentParticipation studentParticipation) {
+            if (studentParticipation.getStudent().isPresent()) {
+                studentScoreRepository.deleteByExerciseAndUser(participation.getExercise(), studentParticipation.getStudent().get());
+            }
+            if (studentParticipation.getTeam().isPresent()) {
+                teamScoreRepository.deleteByExerciseAndTeam(participation.getExercise(), studentParticipation.getTeam().get());
+            }
+        }
+
         Set<Submission> submissions = participation.getSubmissions();
-        ArrayList<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toCollection(ArrayList::new));
+        // Delete all results for this participation
+        Set<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toSet());
         resultsToBeDeleted.addAll(participation.getResults());
-        resultsToBeDeleted.forEach(result -> resultService.deleteResult(result.getId()));
-        // The result of the submissions will be deleted via cascade
+        // By removing the participation, the ResultListener will ignore this result instead of scheduling a participant score update
+        // This is okay here, because we delete the whole participation (no older results will exist for the score)
+        resultsToBeDeleted.forEach(participation::removeResult);
+        resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
+        // Delete all submissions for this participation
         submissions.forEach(submission -> {
-            coverageReportRepository.deleteBySubmissionId(submission.getId());
-            buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
+            if (submission instanceof ProgrammingSubmission) {
+                coverageReportRepository.deleteBySubmissionId(submission.getId());
+                buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
+            }
             submissionRepository.deleteById(submission.getId());
         });
-        // The results that are only connected to a participation are also deleted
-        resultsToBeDeleted.forEach(participation::removeResult);
     }
 
     /**
@@ -707,12 +724,15 @@ public class ParticipationService {
      * @param deleteBuildPlan  specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
-    @Transactional // ok because of delete
-    public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
-        log.info("Request to delete all participations of Exercise with id : {}", exerciseId);
-        List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByExerciseId(exerciseId);
+    public void deleteAllByExerciseId(long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
+        var participationsToDelete = studentParticipationRepository.findByExerciseId(exerciseId);
+        log.info("Request to delete all {} participations of exercise with id : {}", participationsToDelete.size(), exerciseId);
+
+        // First remove all participant scores, as we are deleting all participations for the exercise
+        participantScoreRepository.deleteAllByExerciseId(exerciseId);
+
         for (StudentParticipation participation : participationsToDelete) {
-            delete(participation.getId(), deleteBuildPlan, deleteRepository);
+            delete(participation.getId(), deleteBuildPlan, deleteRepository, false);
         }
     }
 
@@ -723,12 +743,15 @@ public class ParticipationService {
      * @param deleteBuildPlan  specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
-    @Transactional // ok because of delete
     public void deleteAllByTeamId(Long teamId, boolean deleteBuildPlan, boolean deleteRepository) {
         log.info("Request to delete all participations of Team with id : {}", teamId);
+
+        // First remove all participant scores, as we are deleting all participations for the team
+        teamScoreRepository.deleteAllByTeamId(teamId);
+
         List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByTeamId(teamId);
         for (StudentParticipation participation : participationsToDelete) {
-            delete(participation.getId(), deleteBuildPlan, deleteRepository);
+            delete(participation.getId(), deleteBuildPlan, deleteRepository, false);
         }
     }
 }

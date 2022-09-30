@@ -281,7 +281,7 @@ public class TeamResource {
         // Delete all participations of the team first and then the team itself
         participationService.deleteAllByTeamId(teamId, false, false);
         // delete all team scores associated with the team
-        teamScoreRepository.deleteAllByTeam(team);
+        teamScoreRepository.deleteAllByTeamId(team.getId());
 
         teamRepository.delete(team);
 

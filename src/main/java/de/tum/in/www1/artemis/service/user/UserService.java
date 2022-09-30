@@ -446,7 +446,7 @@ public class UserService {
         // 11) All tutorial group registrations of the student
         // 12) Set teaching assistant to null for all tutorial groups taught by the user
 
-        studentScoreRepository.deleteAllByUser(user);
+        studentScoreRepository.deleteAllByUserId(user.getId());
         exerciseHintActivationRepository.deleteAllByUser(user);
 
         tutorialGroupRegistrationRepository.deleteAllByStudent(user);
