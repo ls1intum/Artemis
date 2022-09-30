@@ -88,7 +88,7 @@ export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: any, c
     if (!course) {
         captureException(new Error('The course object used for determining the rounding of scores was undefined'));
     }
-    return round(relativeScore * 100, course ? course.accuracyOfScores : 1);
+    return round(relativeScore * 100, course?.accuracyOfScores ?? 1);
 };
 
 /**
@@ -101,7 +101,7 @@ export const roundValueSpecifiedByCourseSettings = (value: any, course?: Course)
     if (!course) {
         captureException(new Error('The course object used for determining the rounding of scores was undefined'));
     }
-    return round(value, course ? course.accuracyOfScores : 1);
+    return round(value, course?.accuracyOfScores ?? 1);
 };
 
 /**
