@@ -132,7 +132,14 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     // The problem is that 2000 student Exams with 10 exercises and 2000 existing participations would load 2000*10*2000 = 40 mio objects
     // @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises", "studentExams.exercises.participations" })
 
-    @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch exam.exerciseGroups exerciseGroups left join fetch exerciseGroups.exercises where (exam.id = :#{#examId})")
+    @Query("""
+              select distinct exam
+              from Exam exam
+                  left join fetch exam.studentExams studentExams
+                  left join fetch exam.exerciseGroups exerciseGroups
+                  left join fetch exerciseGroups.exercises
+              where (exam.id = :#{#examId})
+            """)
     Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
     @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch studentExams.exercises where (exam.id = :#{#examId})")

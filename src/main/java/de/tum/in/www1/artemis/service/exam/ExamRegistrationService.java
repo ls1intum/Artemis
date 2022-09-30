@@ -248,7 +248,7 @@ public class ExamRegistrationService {
         examRepository.save(exam);
 
         // remove all students exams
-        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exam.getId());
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
         studentExams.forEach(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();

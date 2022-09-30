@@ -2,13 +2,13 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -38,8 +38,6 @@ public class ExerciseDeletionService {
 
     private final ExampleSubmissionService exampleSubmissionService;
 
-    private final ExamRepository examRepository;
-
     private final StudentExamRepository studentExamRepository;
 
     private final ExerciseUnitRepository exerciseUnitRepository;
@@ -47,8 +45,6 @@ public class ExerciseDeletionService {
     private final ExerciseRepository exerciseRepository;
 
     private final TutorParticipationRepository tutorParticipationRepository;
-
-    private final ParticipantScoreRepository participantScoreRepository;
 
     private final LectureUnitService lectureUnitService;
 
@@ -67,11 +63,10 @@ public class ExerciseDeletionService {
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
-            ExamRepository examRepository, ParticipantScoreRepository participantScoreRepository, LectureUnitService lectureUnitService,
-            TextExerciseRepository textExerciseRepository, PlagiarismResultRepository plagiarismResultRepository, TextAssessmentKnowledgeService textAssessmentKnowledgeService,
-            ModelingExerciseRepository modelingExerciseRepository, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService, LearningGoalRepository learningGoalRepository) {
+            LectureUnitService lectureUnitService, TextExerciseRepository textExerciseRepository, PlagiarismResultRepository plagiarismResultRepository,
+            TextAssessmentKnowledgeService textAssessmentKnowledgeService, ModelingExerciseRepository modelingExerciseRepository,
+            ModelAssessmentKnowledgeService modelAssessmentKnowledgeService, LearningGoalRepository learningGoalRepository) {
         this.exerciseRepository = exerciseRepository;
-        this.examRepository = examRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -80,7 +75,6 @@ public class ExerciseDeletionService {
         this.quizExerciseService = quizExerciseService;
         this.studentExamRepository = studentExamRepository;
         this.exerciseUnitRepository = exerciseUnitRepository;
-        this.participantScoreRepository = participantScoreRepository;
         this.lectureUnitService = lectureUnitService;
         this.plagiarismResultRepository = plagiarismResultRepository;
         this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
@@ -129,7 +123,7 @@ public class ExerciseDeletionService {
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findByIdWithLearningGoalsElseThrow(exerciseId);
 
-        log.info("Checking if exercise {} is modeling exercise", exercise.getId());
+        log.debug("Checking if exercise {} is modeling exercise", exercise.getId());
         if (exercise instanceof ModelingExercise) {
             log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());
 
@@ -167,13 +161,11 @@ public class ExerciseDeletionService {
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
         if (exercise.isExamExercise()) {
-            Exam exam = examRepository.findOneWithEagerStudentExamsAndExercises(exercise.getExerciseGroup().getExam().getId());
-            for (StudentExam studentExam : exam.getStudentExams()) {
+            Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exercise.getExerciseGroup().getExam().getId());
+            for (StudentExam studentExam : studentExams) {
                 if (studentExam.getExercises().contains(exercise)) {
                     // remove exercise reference from student exam
-                    List<Exercise> exerciseList = studentExam.getExercises();
-                    exerciseList.remove(exercise);
-                    studentExam.setExercises(exerciseList);
+                    studentExam.removeExercise(exercise);
                     studentExamRepository.save(studentExam);
                 }
             }
