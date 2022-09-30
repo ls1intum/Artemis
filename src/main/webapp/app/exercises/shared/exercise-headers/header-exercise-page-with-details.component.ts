@@ -14,6 +14,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -43,6 +44,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     public isNextDueDate: boolean[];
     public statusBadges: string[];
     public canComplainLaterOn: boolean;
+    public achievedPoints?: number;
     public numberOfSubmissions: number;
 
     icon: IconProp;
@@ -68,8 +70,10 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
             // The student can either still submit or there is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
-                (dayjs().isBefore(this.exercise.dueDate) || (!!this.studentParticipation?.submissionCount && !this.individualComplaintDeadline)) &&
-                (this.exercise.allowComplaintsForAutomaticAssessments || (!!this.exercise.assessmentType && this.exercise.assessmentType !== AssessmentType.AUTOMATIC));
+                (dayjs().isBefore(this.exercise.dueDate) ||
+                    (this.studentParticipation?.individualDueDate && dayjs().isBefore(this.studentParticipation.individualDueDate)) ||
+                    (!!this.studentParticipation?.submissionCount && !this.individualComplaintDeadline)) &&
+                (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
 
             this.setIsNextDueDateCourseMode();
         }
@@ -79,11 +83,14 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         if (this.submissionPolicy) {
             this.countSubmissions();
         }
+        if (this.studentParticipation?.results?.[0].rated) {
+            this.achievedPoints = roundValueSpecifiedByCourseSettings((this.studentParticipation?.results?.[0].score! * this.exercise.maxPoints!) / 100, this.course);
+        }
     }
 
     private setIcon(exerciseType?: ExerciseType) {
         if (exerciseType) {
-            this.icon = getIcon(exerciseType) as IconProp;
+            this.icon = getIcon(exerciseType);
         }
     }
 

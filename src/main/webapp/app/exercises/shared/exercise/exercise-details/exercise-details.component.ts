@@ -1,9 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -14,11 +12,11 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
     styleUrls: ['./exercise-details.component.scss'],
 })
 export class ExerciseDetailsComponent implements OnInit {
+    readonly ExerciseType = ExerciseType;
+
     @Input() exercise: Exercise;
 
     programmingExercise?: ProgrammingExercise;
-    AssessmentType = AssessmentType;
-    ExerciseType = ExerciseType;
     formattedProblemStatement: SafeHtml;
     formattedGradingInstructions: SafeHtml;
     isExamExercise: boolean;

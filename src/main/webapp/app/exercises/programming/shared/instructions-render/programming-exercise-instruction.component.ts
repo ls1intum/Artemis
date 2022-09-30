@@ -214,7 +214,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
     loadInitialResult(): Observable<Result | undefined> {
-        if (this.participation && this.participation.id && this.participation.results && this.participation.results.length) {
+        if (this.participation?.id && this.participation?.results?.length) {
             // Get the result with the highest id (most recent result)
             const latestResult = findLatestResult(this.participation.results);
             if (!latestResult) {
