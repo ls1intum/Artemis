@@ -214,7 +214,7 @@ public class LocalGitService extends AbstractVersionControlService {
     private LocalGitProjectDTO getLocalGitProject(String projectKey, String projectName) throws LocalGitException {
 
         // Try to find the folder in the file system. If it is not found, throw an exception.
-        if (new File(localGitPath + projectKey).exists()) {
+        if (new File(localGitPath + "/" + projectKey).exists()) {
             return new LocalGitProjectDTO(projectKey, projectName);
         }
         else {
@@ -611,18 +611,15 @@ public class LocalGitService extends AbstractVersionControlService {
             // https://spring.io/guides/gs/uploading-files/
             // Nachschauen wie langfristig die Dateien damit gespeichert sind!
             File localPath = new File(localGitPath + "/" + projectKey);
-            if(!localPath.delete()) {
-                throw new IOException("Could not delete file " + localPath);
-            }
 
             if(!localPath.mkdirs()) {
                 throw new IOException("Could not create directory " + localPath);
             }
 
+            // nur für Bitbucket implementiert
+           // grantGroupPermissionToProject(projectKey, adminGroupName, BitbucketPermission.PROJECT_ADMIN); // admins get administrative permissions
 
-            // grantGroupPermissionToProject(projectKey, adminGroupName, BitbucketPermission.PROJECT_ADMIN); // admins get administrative permissions
-
-            // Get course over exerciseGroup in exam mode
+            // Get course via exerciseGroup in exam mode
             Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
 
             if (StringUtils.hasText(course.getInstructorGroupName())) {
@@ -676,9 +673,6 @@ public class LocalGitService extends AbstractVersionControlService {
         try {
 
             File remoteDir = new File(localGitPath + "/" + projectKey + "/" + repoName + ".git");
-            if(!remoteDir.delete()) {
-                throw new IOException("Could not delete file " + remoteDir);
-            }
 
             if(!remoteDir.mkdirs()) {
                 throw new IOException("Could not create directory " + remoteDir);
