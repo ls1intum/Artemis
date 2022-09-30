@@ -1890,7 +1890,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExercises().get(0).getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
-        participationService.delete(participations.get(0).getId(), false, false);
+        participationService.delete(participations.get(0).getId(), false, false, true);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
     }
 

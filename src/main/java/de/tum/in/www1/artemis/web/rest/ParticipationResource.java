@@ -652,7 +652,7 @@ public class ParticipationResource {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
         log.info(logMessage);
-        participationService.delete(participation.getId(), deleteBuildPlan, deleteRepository);
+        participationService.delete(participation.getId(), deleteBuildPlan, deleteRepository, true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 

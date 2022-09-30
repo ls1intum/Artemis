@@ -611,7 +611,7 @@ public class StudentExamService {
         for (final Exercise exercise : exercisesToBeDeleted) {
             // Only delete participations that exist (and were not deleted in some other way)
             if (!exercise.getStudentParticipations().isEmpty()) {
-                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
+                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true, true);
             }
         }
 

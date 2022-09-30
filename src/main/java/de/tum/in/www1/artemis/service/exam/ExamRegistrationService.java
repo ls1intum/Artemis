@@ -224,7 +224,7 @@ public class ExamRegistrationService {
         if (deleteParticipationsAndSubmission) {
             List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam);
             for (var participation : participations) {
-                participationService.delete(participation.getId(), true, true);
+                participationService.delete(participation.getId(), true, true, true);
             }
         }
 
