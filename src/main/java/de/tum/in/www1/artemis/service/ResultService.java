@@ -117,17 +117,17 @@ public class ResultService {
      * NOTE: As we use delete methods with underscores, we need a transactional context here!
      * Deletes result with corresponding complaint and complaint response
      *
-     * @param resultId              the id of the result
+     * @param result                      the result to delete
      * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value should be false
      */
-    public void deleteResult(long resultId, boolean shouldClearParticipantScore) {
-        complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
-        complaintRepository.deleteByResult_Id(resultId);
-        ratingRepository.deleteByResult_Id(resultId);
+    public void deleteResult(Result result, boolean shouldClearParticipantScore) {
+        complaintResponseRepository.deleteByComplaint_Result_Id(result.getId());
+        complaintRepository.deleteByResult_Id(result.getId());
+        ratingRepository.deleteByResult_Id(result.getId());
         if (shouldClearParticipantScore) {
-            participantScoreRepository.clearAllByResultId(resultId);
+            participantScoreRepository.clearAllByResultId(result.getId());
         }
-        resultRepository.deleteById(resultId);
+        resultRepository.delete(result);
     }
 
     /**

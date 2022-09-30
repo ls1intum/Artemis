@@ -654,7 +654,7 @@ public class ParticipationService {
         // By removing the participation, the ResultListener will ignore this result instead of scheduling a participant score update
         // This is okay here, because we delete the whole participation (no older results will exist for the score)
         resultsToBeDeleted.forEach(participation::removeResult);
-        resultsToBeDeleted.forEach(result -> resultService.deleteResult(result.getId(), false));
+        resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
             coverageReportRepository.deleteBySubmissionId(submission.getId());
