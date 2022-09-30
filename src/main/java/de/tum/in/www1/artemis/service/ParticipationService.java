@@ -596,8 +596,9 @@ public class ParticipationService {
      * @param participationId  the participationId of the entity
      * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
      * @param deleteRepository determines whether the corresponding repository should be deleted as well
+     * @param deleteParticipantScores false if the participant scores have already been bulk deleted, true by default otherwise
      */
-    public void delete(long participationId, boolean deleteBuildPlan, boolean deleteRepository) {
+    public void delete(long participationId, boolean deleteBuildPlan, boolean deleteRepository, boolean deleteParticipantScores) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         log.info("Request to delete Participation : {}", participation);
 
@@ -621,7 +622,7 @@ public class ParticipationService {
             gitService.deleteLocalRepository(repositoryUrl);
         }
 
-        deleteResultsAndSubmissionsOfParticipation(participationId);
+        deleteResultsAndSubmissionsOfParticipation(participationId, deleteParticipantScores);
         studentParticipationRepository.delete(participation);
     }
 
@@ -629,14 +630,15 @@ public class ParticipationService {
      * Remove all results and submissions of the given participation. Will do nothing if invoked with a participation without results/submissions.
      *
      * @param participationId the id of the participation to delete results/submissions from.
+     * @param deleteParticipantScores false if the participant scores have already been bulk deleted, true by default otherwise
      */
-    public void deleteResultsAndSubmissionsOfParticipation(Long participationId) {
+    public void deleteResultsAndSubmissionsOfParticipation(Long participationId, boolean deleteParticipantScores) {
         log.debug("Request to delete all results and submissions of participation with id : {}", participationId);
         var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
         // delete the participant score with the combination (exerciseId, studentId) or (exerciseId, teamId)
-        if (participation instanceof StudentParticipation studentParticipation) {
+        if (deleteParticipantScores && participation instanceof StudentParticipation studentParticipation) {
             if (studentParticipation.getStudent().isPresent()) {
                 studentScoreRepository.deleteByExerciseAndUser(participation.getExercise(), studentParticipation.getStudent().get());
             }
@@ -669,13 +671,14 @@ public class ParticipationService {
      * @param deleteRepository specify if repository should be deleted
      */
     public void deleteAllByExerciseId(long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
-        // First remove all participant scores, as we are deleting all participations
-        participantScoreRepository.deleteAllByExerciseId(exerciseId);
-
         var participationsToDelete = studentParticipationRepository.findByExerciseId(exerciseId);
         log.info("Request to delete all {} participations of exercise with id : {}", participationsToDelete.size(), exerciseId);
+
+        // First remove all participant scores, as we are deleting all participations for the exercise
+        participantScoreRepository.deleteAllByExerciseId(exerciseId);
+
         for (StudentParticipation participation : participationsToDelete) {
-            delete(participation.getId(), deleteBuildPlan, deleteRepository);
+            delete(participation.getId(), deleteBuildPlan, deleteRepository, false);
         }
     }
 
@@ -688,9 +691,13 @@ public class ParticipationService {
      */
     public void deleteAllByTeamId(Long teamId, boolean deleteBuildPlan, boolean deleteRepository) {
         log.info("Request to delete all participations of Team with id : {}", teamId);
+
+        // First remove all participant scores, as we are deleting all participations for the team
+        teamScoreRepository.deleteAllByTeamId(teamId);
+
         List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByTeamId(teamId);
         for (StudentParticipation participation : participationsToDelete) {
-            delete(participation.getId(), deleteBuildPlan, deleteRepository);
+            delete(participation.getId(), deleteBuildPlan, deleteRepository, false);
         }
     }
 }

@@ -24,7 +24,9 @@ import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 @Repository
 public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
 
-    void deleteAllByTeam(Team team);
+    @Transactional
+    @Modifying
+    void deleteAllByTeamId(long teamId);
 
     @EntityGraph(type = LOAD, attributePaths = { "team", "exercise" })
     Optional<TeamScore> findByExercise_IdAndTeam_Id(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
