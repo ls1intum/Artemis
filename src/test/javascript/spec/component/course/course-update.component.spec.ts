@@ -491,13 +491,13 @@ describe('Course Management Update Component', () => {
 
         it('should not be able to delete icon if icon does not exist', () => {
             const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
-            let deleteIconButton = getDeleteIconButton();
+            const deleteIconButton = getDeleteIconButton();
             expect(iconImage).toBeNull();
             expect(deleteIconButton).toBeNull();
         });
 
         function setIcon(): void {
-            let croppedImage = 'testCroppedImage';
+            const croppedImage = 'testCroppedImage';
             comp.croppedImage = 'data:image/png;base64,' + croppedImage;
             comp.courseImageFileName = 'testFilename';
             comp.showCropper = true;

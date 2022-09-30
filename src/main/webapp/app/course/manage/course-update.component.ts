@@ -494,7 +494,7 @@ export class CourseUpdateComponent implements OnInit {
      * Deletes the course icon
      * @param courseId id the course that will be deleted
      */
-    deleteCourseIcon(courseId: number) {
+    deleteCourseIcon() {
         this.course.courseIcon = undefined;
         this.courseImageFile = undefined;
         this.courseImageFileName = this.course.courseIcon!;

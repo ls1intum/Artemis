@@ -143,12 +143,11 @@ Cypress.Commands.add('reloadUntilFound', (selector: string, interval = 2000, tim
 
 Cypress.Commands.add('formRequest', (url: string, method: string, formData: FormData) => {
     return cy
-        .server()
-        .route(method, url)
+        .intercept(method, url)
         .as('formRequest')
         .window()
         .then((win) => {
-            var xhr = new win.XMLHttpRequest();
+            const xhr = new win.XMLHttpRequest();
             xhr.open(method, url);
             const token = localStorage.getItem(authTokenKey)?.replace(/"/g, '');
             if (!!token) {
