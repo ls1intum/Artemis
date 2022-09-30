@@ -173,7 +173,7 @@ public class AssessmentService {
         if (result != null && result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC) {
             participation.removeResult(result);
             feedbackRepository.deleteByResult_Id(result.getId());
-            resultService.deleteResult(result.getId());
+            resultService.deleteResult(result.getId(), true);
         }
     }
 
@@ -292,7 +292,7 @@ public class AssessmentService {
         }
         submission.getResults().remove(result);
         feedbackRepository.deleteByResult_Id(result.getId());
-        resultService.deleteResult(result.getId());
+        resultService.deleteResult(result.getId(), true);
         // this keeps the result order intact
         submissionRepository.save(submission);
     }

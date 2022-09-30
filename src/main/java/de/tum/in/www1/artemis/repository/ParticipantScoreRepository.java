@@ -29,35 +29,6 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
 public interface ParticipantScoreRepository extends JpaRepository<ParticipantScore, Long> {
 
     /**
-     * Delete all participant scores for a given exercise
-     * Note: Only call this method when the exercise is about to be deleted. Otherwise, use {@link #clearAllByResultId(Long)}.
-     * @param exerciseId the exercise id for which to remove all participant scores
-     */
-    @Transactional
-    @Modifying
-    void deleteAllByExerciseId(long exerciseId);
-
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE ParticipantScore p
-            SET p.lastResult = NULL, p.lastPoints = NULL, p.lastScore = NULL
-            WHERE p.lastResult.id = :lastResultId
-            """)
-    // Do not update last modified date
-    void clearLastResultByResultId(@Param("lastResultId") Long lastResultId);
-
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE ParticipantScore p
-            SET p.lastRatedResult = NULL, p.lastRatedPoints = NULL, p.lastRatedScore = NULL
-            WHERE p.lastRatedResult.id = :lastResultId
-            """)
-    // Do not update last modified date
-    void clearLastRatedResultByResultId(@Param("lastResultId") Long lastResultId);
-
-    /**
      * Find all outdated participant scores where the last result was deleted (and therefore set to null).
      * Note: There are valid scores where the last *rated* result is null because of practice runs, see {@link #clearAllByResultId(Long)}
      * @return A list of outdated participant scores
@@ -155,6 +126,35 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             ORDER BY p.lastRatedScore ASC
             """)
     List<ScoreDistribution> getScoreDistributionForExercise(@Param("exerciseId") Long exerciseId);
+
+    /**
+     * Delete all participant scores for a given exercise
+     * Note: Only call this method when the exercise is about to be deleted. Otherwise, use {@link #clearAllByResultId(Long)}.
+     * @param exerciseId the exercise id for which to remove all participant scores
+     */
+    @Transactional
+    @Modifying
+    void deleteAllByExerciseId(long exerciseId);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ParticipantScore p
+            SET p.lastResult = NULL, p.lastPoints = NULL, p.lastScore = NULL
+            WHERE p.lastResult.id = :lastResultId
+            """)
+    // Do not update last modified date
+    void clearLastResultByResultId(@Param("lastResultId") Long lastResultId);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ParticipantScore p
+            SET p.lastRatedResult = NULL, p.lastRatedPoints = NULL, p.lastRatedScore = NULL
+            WHERE p.lastRatedResult.id = :lastResultId
+            """)
+    // Do not update last modified date
+    void clearLastRatedResultByResultId(@Param("lastResultId") Long lastResultId);
 
     /**
      * Sets the average for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>

@@ -175,7 +175,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
         Result newResult = createNewResult(isTeamTest, false);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), null, null);
-        resultService.deleteResult(newResult.getId());
+        resultService.deleteResult(newResult.getId(), true);
         List<Result> savedResults = resultRepository.findAll();
         assertThat(savedResults).hasSize(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), null, null);
@@ -190,7 +190,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
         Result newResult = createNewResult(isTeamTest, true);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
-        resultService.deleteResult(newResult.getId());
+        resultService.deleteResult(newResult.getId(), true);
         List<Result> savedResults = resultRepository.findAll();
         assertThat(savedResults).hasSize(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), null, null);
@@ -205,7 +205,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
         Result newResult = createNewResult(isTeamTest, false);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
-        resultService.deleteResult(newResult.getId());
+        resultService.deleteResult(newResult.getId(), true);
         List<Result> savedResults = resultRepository.findAll();
         assertThat(savedResults).hasSize(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
@@ -220,7 +220,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
         Result newResult = createNewResult(isTeamTest, true);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
-        resultService.deleteResult(newResult.getId());
+        resultService.deleteResult(newResult.getId(), true);
         List<Result> savedResults = resultRepository.findAll();
         assertThat(savedResults).hasSize(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
@@ -281,7 +281,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result persistedResult = originalParticipantScore.getLastResult();
         // removing the result should trigger the entity listener and remove the associated student score
-        resultService.deleteResult(persistedResult.getId());
+        resultService.deleteResult(persistedResult.getId(), true);
 
         // Wait for the scheduler to execute its task
         await().until(() -> participantScoreSchedulerService.getScheduledTasks().isEmpty());
@@ -299,7 +299,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
         Result persistedResult = originalParticipantScore.getLastResult();
         // removing the result should trigger the entity listener and remove the associated student score
-        resultService.deleteResult(persistedResult.getId());
+        resultService.deleteResult(persistedResult.getId(), true);
 
         // Wait for the scheduler to execute its task
         await().until(() -> participantScoreSchedulerService.getScheduledTasks().isEmpty());
@@ -319,7 +319,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
         Result newResult = createNewResult(isTeamTest, false);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
-        resultService.deleteResult(originalResult.getId());
+        resultService.deleteResult(originalResult.getId(), true);
         List<Result> savedResults = resultRepository.findAll();
         assertThat(savedResults).hasSize(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), null, null);
@@ -334,7 +334,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
         Result newResult = createNewResult(isTeamTest, false);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
-        resultService.deleteResult(newResult.getId());
+        resultService.deleteResult(newResult.getId(), true);
         List<Result> savedResults = resultRepository.findAll();
         assertThat(savedResults).hasSize(1);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
