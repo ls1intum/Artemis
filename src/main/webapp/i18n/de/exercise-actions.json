@@ -18,7 +18,7 @@
             "practiceMode": "Übungsmodus",
             "openModelingEditor": "Modellierungseditor öffnen",
             "importIntoIntelliJ": "In IntelliJ öffnen",
-            "practiceModeTooltip": "Der Übungsmodus ermöglicht es dir nach der Abgabefrist weiter an der Aufgabe zu arbeiten und zu üben. Dies wird deine Bewertung nicht beeinflussen! Dafür wird ein separates Repository aufgesetzt, das du erneut clonen musst.",
+            "practiceModeTooltip": "Der Übungsmodus ermöglicht es dir nach der Abgabefrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies wird deine Bewertung nicht beeinflussen! Artemis wird dafür ein separates Repository aufsetzen, das du erneut clonen musst.",
             "cloneRepository": "Repository klonen",
             "cloneRatedRepository": "Klone dein bewertetes Repository für diese Übung:",
             "clonePracticeRepository": "Klone dein Übungs-Repository für diese Übung:",

@@ -19,7 +19,7 @@
             "choseGradedMode": "Graded participation chosen",
             "openModelingEditor": "Open modeling editor",
             "importIntoIntelliJ": "Open in IntelliJ",
-            "practiceModeTooltip": "The practice mode allows you to keep working on the exercise after the submission due date and keep practicing. This will not affect your grading! It will setup a separate repository for you that you need to clone separately.",
+            "practiceModeTooltip": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will setup a separate repository for you to clone.",
             "cloneRepository": "Clone Repository",
             "cloneRatedRepository": "Clone your rated repository for this exercise:",
             "clonePracticeRepository": "Clone your practice repository for this exercise:",

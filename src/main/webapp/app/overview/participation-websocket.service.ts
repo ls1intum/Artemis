@@ -8,6 +8,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
+import { cloneDeep } from 'lodash-es';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 const PERSONAL_PARTICIPATION_TOPIC = `/user/topic/newResults`;
@@ -107,7 +108,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     public addParticipation = (newParticipation: StudentParticipation, exercise?: Exercise) => {
         // The participation needs to be cloned so that the original object is not modified
-        const participation = { ...newParticipation } as StudentParticipation;
+        const participation = cloneDeep(newParticipation);
         if (!participation.exercise && !exercise) {
             throw new Error('a link from the participation to the exercise is required. Please attach it manually or add exercise as function input');
         }

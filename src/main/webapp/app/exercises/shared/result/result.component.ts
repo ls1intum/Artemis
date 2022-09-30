@@ -26,6 +26,7 @@ import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOr
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -329,7 +330,12 @@ export class ResultComponent implements OnInit, OnChanges {
     buildResultTooltip() {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         const programmingExercise = this.exercise as ProgrammingExercise;
-        if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, programmingExercise)) {
+        if (
+            this.participation &&
+            isProgrammingExerciseStudentParticipation(this.participation) &&
+            !(this.participation as ProgrammingExerciseStudentParticipation).testRun &&
+            isResultPreliminary(this.result!, programmingExercise)
+        ) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
                 return this.translate.instant('artemisApp.result.preliminaryTooltipSemiAutomatic');
             }
