@@ -84,7 +84,7 @@ export const round = (value: any, exp?: number) => {
  * @param course The course in which the score is displayed. The attribute accuracyOfScores determines the accuracy
  * @returns The rounded percent of the score in the range [0;100]
  */
-export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: any, course?: Course) => {
+export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: any, course: Course | undefined) => {
     if (!course) {
         captureException(new Error('The course object used for determining the rounding of scores was undefined'));
     }
@@ -97,7 +97,7 @@ export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: any, c
  * @param course The course which defines the accuracy to which the value should be rounded.
  * @returns The rounded value.
  */
-export const roundValueSpecifiedByCourseSettings = (value: any, course?: Course) => {
+export const roundValueSpecifiedByCourseSettings = (value: any, course: Course | undefined) => {
     if (!course) {
         captureException(new Error('The course object used for determining the rounding of scores was undefined'));
     }
@@ -121,8 +121,8 @@ export const average = (values: Array<number>): number => {
  * finds the latest result based on the max id
  * @param results
  */
-export const findLatestResult = (results?: Result[]) => {
-    return results && results.length > 0 ? results.reduce((current, result) => (current.id! > result.id! ? current : result)) : undefined;
+export const findLatestResult = (results: Result[] | undefined) => {
+    return results?.length ? results.reduce((current, result) => (current.id! > result.id! ? current : result)) : undefined;
 };
 
 /**

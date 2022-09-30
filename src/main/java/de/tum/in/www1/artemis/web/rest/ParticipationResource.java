@@ -51,7 +51,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing Participation.
  */
 @RestController
-@RequestMapping(ParticipationResource.Endpoints.ROOT)
+@RequestMapping("/api")
 @PreAuthorize("hasRole('ADMIN')")
 public class ParticipationResource {
 
@@ -145,7 +145,7 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
      */
-    @PostMapping(Endpoints.START_PARTICIPATION)
+    @PostMapping("/exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
@@ -194,19 +194,63 @@ public class ParticipationResource {
     }
 
     /**
+     * POST /exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
+     *
+     * @param exerciseId the participationId of the exercise for which to init a participation
+     * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
+     * @throws URISyntaxException If the URI for the created participation could not be created
+     */
+    @PostMapping("/exercises/{exerciseId}/participations/practice")
+    @PreAuthorize("hasRole('USER')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
+        log.debug("REST request to start Exercise : {}", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, user, false);
+
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("The practice mode cannot be used in an exam", ENTITY_NAME, "noPracticeModeInExam");
+        }
+        if (exercise.isTeamMode()) {
+            throw new BadRequestAlertException("The practice mode is not yet supported for team exercises", ENTITY_NAME, "noPracticeModeForTeams");
+        }
+        if (!(exercise instanceof ProgrammingExercise)) {
+            throw new BadRequestAlertException("The practice can only be used for programming exercises", ENTITY_NAME, "practiceModeOnlyForProgramming");
+        }
+        if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate()) || (optionalGradedStudentParticipation.isPresent()
+                && optionalGradedStudentParticipation.get().getIndividualDueDate() != null && now().isBefore(optionalGradedStudentParticipation.get().getIndividualDueDate()))) {
+            throw new AccessForbiddenException("The practice mode can only be started after the due date");
+        }
+
+        StudentParticipation participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation);
+
+        // remove sensitive information before sending participation to the client
+        participation.getExercise().filterSensitiveInformation();
+        return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
+    }
+
+    /**
      * PUT exercises/:exerciseId/resume-programming-participation: resume the participation of the current user in the given programming exercise
      *
      * @param exerciseId of the exercise for which to resume participation
+     * @param participationId of the participation that should be resumed
      * @param principal  current user principal
      * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */
-    @PutMapping("exercises/{exerciseId}/resume-programming-participation")
+    @PutMapping("exercises/{exerciseId}/resume-programming-participation/{participationId}")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long exerciseId, @PathVariable Long participationId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, principal.getName());
+        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+
+        if (!participation.isOwnedBy(principal.getName())) {
+            throw new AccessForbiddenException("You are not the user of this participation");
+        }
+
         // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
 
@@ -351,12 +395,7 @@ public class ParticipationResource {
         boolean examMode = exercise.isExamExercise();
         List<StudentParticipation> participations;
         if (withLatestResult) {
-            if (examMode) {
-                participations = studentParticipationRepository.findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(exerciseId);
-            }
-            else {
-                participations = studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
-            }
+            participations = studentParticipationRepository.findByExerciseIdAndTestRunWithLatestResult(exerciseId, false);
         }
         else {
             participations = studentParticipationRepository.findByExerciseId(exerciseId);
@@ -772,15 +811,5 @@ public class ParticipationResource {
         participation.setExercise(quizExercise);
         participation.addResult(result);
         return participation;
-    }
-
-    public static final class Endpoints {
-
-        public static final String ROOT = "/api";
-
-        public static final String START_PARTICIPATION = "/exercises/{exerciseId}/participations";
-
-        private Endpoints() {
-        }
     }
 }

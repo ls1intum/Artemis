@@ -231,13 +231,7 @@ public class ResultResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
-        final List<StudentParticipation> participations;
-        if (exercise.isExamExercise()) {
-            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
-        }
-        else {
-            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
-        }
+        final List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exerciseId, false);
 
         List<Result> results = resultsForExercise(exercise, participations, withSubmissions);
         log.info("getResultsForExercise took {}ms for {} results.", System.currentTimeMillis() - start, results.size());
@@ -260,13 +254,7 @@ public class ResultResource {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
-        final List<StudentParticipation> participations;
-        if (exercise.isExamExercise()) {
-            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacksIgnoreTestRuns(exerciseId);
-        }
-        else {
-            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacks(exerciseId);
-        }
+        final List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacks(exerciseId, false);
 
         final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         final List<Result> results = resultsForExercise(exercise, participations, withSubmissions);

@@ -1,0 +1,49 @@
+<ng-container>
+    <button
+        jhi-exercise-action-button
+        [buttonIcon]="faFolderOpen"
+        class="open-code-editor"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
+        [buttonLoading]="loading"
+        [smallButton]="smallButtons"
+        [hideLabelMobile]="false"
+        *ngIf="participations?.length && participations?.length === 1"
+        [routerLink]="[courseAndExerciseNavigationUrl, participations[0].id]"
+    ></button>
+
+    <button
+        jhi-exercise-action-button
+        [buttonIcon]="faFolderOpen"
+        class="open-code-editor"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
+        [buttonLoading]="loading"
+        [smallButton]="smallButtons"
+        [hideLabelMobile]="false"
+        [ngbPopover]="popContent"
+        [autoClose]="'outside'"
+        placement="right"
+        container="body"
+        *ngIf="participations?.length && participations.length! > 1"
+    ></button>
+    <ng-template #popContent style="max-width: 660px">
+        <div class="form-check form-switch" *ngIf="participations && participations.length > 1">
+            <input mdbCheckbox class="form-check-input" type="checkbox" [checked]="activeParticipation.testRun" (click)="switchPracticeMode()" />
+            <label class="form-check-label">
+                {{ 'artemisApp.exerciseActions.practiceMode' | artemisTranslate }}
+            </label>
+        </div>
+        <button
+            jhi-exercise-action-button
+            [buttonIcon]="faFolderOpen"
+            class="open-code-editor"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [buttonLabel]="'artemisApp.exerciseActions.' + (activeParticipation.testRun ? 'openPracticeCodeEditor' : 'openGradedCodeEditor') | artemisTranslate"
+            [buttonLoading]="loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            [routerLink]="[courseAndExerciseNavigationUrl, activeParticipation.id]"
+        ></button>
+    </ng-template>
+</ng-container>

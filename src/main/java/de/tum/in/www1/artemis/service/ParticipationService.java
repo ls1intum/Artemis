@@ -187,7 +187,7 @@ public class ParticipationService {
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
         // Step 1a) create the student repository (based on the template repository)
-        participation = copyRepository(participation);
+        participation = copyRepository(exercise, participation);
         // Step 1b) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(exercise, participation);
         // Step 2a) create the build plan (based on the BASE build plan)
@@ -209,6 +209,47 @@ public class ParticipationService {
         }
         // after saving, we need to make sure the object that is used after the if statement is the right one
         return participation;
+    }
+
+    /**
+     * This method is triggered when a student starts the practice mode of a programming exercise. It creates a Participation which connects the corresponding student and exercise. Additionally, it configures
+     * repository / build plan related stuff.
+     *
+     * @param exercise the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
+     * @param participant the user or team who starts the exercise
+     * @param optionalGradedStudentParticipation the optional graded participation before the deadline
+     * @return the participation connecting the given exercise and user
+     */
+    public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation) {
+        if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
+            throw new IllegalStateException("Only programming exercises support the practice mode at the moment");
+        }
+
+        optionalGradedStudentParticipation.ifPresent(participation -> {
+            participation.setInitializationState(FINISHED);
+            participationRepository.save(participation);
+        });
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, true);
+        StudentParticipation participation;
+        if (optionalStudentParticipation.isEmpty()) {
+            // create a new participation only if no participation can be found
+            participation = new ProgrammingExerciseStudentParticipation(versionControlService.get().getDefaultBranchOfArtemis());
+            participation.setInitializationState(UNINITIALIZED);
+            participation.setExercise(exercise);
+            participation.setParticipant(participant);
+            participation.setTestRun(true);
+            participation = studentParticipationRepository.saveAndFlush(participation);
+        }
+        else {
+            // make sure participation and exercise are connected
+            participation = optionalStudentParticipation.get();
+            participation.setExercise(exercise);
+        }
+
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+        participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, true);
+
+        return studentParticipationRepository.saveAndFlush(participation);
     }
 
     /**
@@ -251,7 +292,7 @@ public class ParticipationService {
             // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
             programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the deadline)
-            programmingParticipation = copyRepository(programmingParticipation);
+            programmingParticipation = copyRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
@@ -310,12 +351,11 @@ public class ParticipationService {
         return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
     }
 
-    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUrl() == null) {
-            final var programmingExercise = participation.getProgrammingExercise();
             final var projectKey = programmingExercise.getProjectKey();
-            final var participantIdentifier = participation.getParticipantIdentifier();
+            final var participantIdentifier = participation.getParticipantIdentifier() + (participation.isTestRun() ? "-practice" : "");
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
             String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
@@ -353,7 +393,7 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED) || participation.getBuildPlanId() == null) {
             final var projectKey = participation.getProgrammingExercise().getProjectKey();
             final var planName = BuildPlanType.TEMPLATE.getName();
-            final var username = participation.getParticipantIdentifier();
+            final var username = participation.getParticipantIdentifier() + (participation.isTestRun() ? "-practice" : "");
             final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " "
                     + participation.getExercise().getTitle();
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
@@ -420,11 +460,23 @@ public class ParticipationService {
      * @return the participation of the given team and exercise in any state
      */
     public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyState(Exercise exercise, Participant participant) {
-        if (participant instanceof User) {
-            return findOneByExerciseAndStudentLoginAnyState(exercise, ((User) participant).getLogin());
+        return findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
+    }
+
+    /**
+     * Get one participation (in any state) by its participant and exercise.
+     *
+     * @param exercise the exercise for which to find a participation
+     * @param participant the short name of the team
+     * @param testRun the indicator if it should be a testRun participation
+     * @return the participation of the given team and exercise in any state
+     */
+    public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyStateAndTestRun(Exercise exercise, Participant participant, boolean testRun) {
+        if (participant instanceof User user) {
+            return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), testRun);
         }
-        else if (participant instanceof Team) {
-            return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), ((Team) participant).getId());
+        else if (participant instanceof Team team) {
+            return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
         }
         else {
             throw new Error("Unknown Participant type");
@@ -443,7 +495,7 @@ public class ParticipationService {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
             return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerResultsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        return studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, false);
     }
 
     public StudentParticipation findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(Exercise exercise, String username) {
@@ -463,7 +515,7 @@ public class ParticipationService {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
             return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, false);
     }
 
     /**

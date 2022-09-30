@@ -12,6 +12,7 @@ import { Exercise, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { getExerciseDueDate, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-course-exercise-row',
@@ -52,31 +53,36 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     ) {}
 
     ngOnInit() {
+        if (this.exercise.id) {
+            this.exerciseService.getExerciseDetails(this.exercise.id).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+                if (exerciseResponse.body) {
+                    this.exercise = exerciseResponse.body!;
+                }
+            });
+        }
+
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
-            if (changedParticipation && this.exercise && changedParticipation.exercise!.id === this.exercise.id) {
-                this.exercise.studentParticipations =
-                    this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
-                        ? this.exercise.studentParticipations.map((el) => {
-                              return el.id === changedParticipation.id ? changedParticipation : el;
-                          })
-                        : [changedParticipation];
+            if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
+                this.exercise.studentParticipations = this.exercise.studentParticipations?.length
+                    ? this.exercise.studentParticipations.map((el) => {
+                          return el.id === changedParticipation.id ? changedParticipation : el;
+                      })
+                    : [changedParticipation];
                 this.exercise.participationStatus = participationStatus(this.exercise);
-                this.dueDate = getExerciseDueDate(this.exercise, changedParticipation);
+                const ratedParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
+                this.dueDate = getExerciseDueDate(this.exercise, ratedParticipation);
             }
         });
     }
 
     ngOnChanges(): void {
-        const cachedParticipation = this.participationWebsocketService.getParticipationForExercise(this.exercise.id!);
-        if (cachedParticipation) {
-            this.exercise.studentParticipations = [cachedParticipation];
+        const cachedParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exercise.id!);
+        const ratedParticipation = this.participationService.getSpecificStudentParticipation(cachedParticipations, false);
+        if (cachedParticipations) {
+            this.exercise.studentParticipations = cachedParticipations;
         }
-        this.dueDate = getExerciseDueDate(this.exercise, cachedParticipation);
-        this.exercise.participationStatus = participationStatus(this.exercise);
-        if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
-            this.exercise.studentParticipations[0].exercise = this.exercise;
-            this.dueDate = getExerciseDueDate(this.exercise, this.exercise.studentParticipations[0]);
-        }
+        this.dueDate = getExerciseDueDate(this.exercise, ratedParticipation);
+        this.exercise.participationStatus = participationStatus(this.exercise, false);
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
