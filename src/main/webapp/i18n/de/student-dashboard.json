@@ -166,6 +166,7 @@
                 "exerciseStatus": "Aufgabenstatus:",
                 "points": "Punkte:",
                 "bonus": "Bonus:",
+                "of": " von ",
                 "problemStatement": "Problemstellung:",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
@@ -194,7 +195,7 @@
                 "complaintDue": "Beschwerde bis:",
                 "complaintDueTooltip": "Du kannst eine Beschwerde bis {{date}} einreichen.",
                 "complaintPossible": "Beschwerde möglich:",
-                "complaintPossibleTooltip": "Eine Beschwerde wird später möglich sein."
+                "complaintPossibleTooltip": "Nach Erhalt einer Bewertung wirst du {{days}} Tage zum Einreichen einer Beschwerde haben."
             }
         }
     }
