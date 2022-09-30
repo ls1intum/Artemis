@@ -368,7 +368,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 HttpStatus.OK);
 
         assertThat(response.getIndividualDueDate()).isNotNull();
-        assertThat(response.getIndividualDueDate().isBefore(ZonedDateTime.now())).isTrue();
+        assertThat(response.getIndividualDueDate()).isBefore(ZonedDateTime.now());
 
         verify(programmingExerciseParticipationService, times(1)).lockStudentRepository(programmingExercise, participation);
     }
