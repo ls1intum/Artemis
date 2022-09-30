@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.Language;
-import de.jplag.LanguageLoader;
 import de.jplag.exceptions.BasecodeException;
 import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
@@ -331,16 +330,15 @@ public class ProgrammingPlagiarismDetectionService {
     }
 
     private Language getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
-        var languageIdentifier = switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA -> de.jplag.java.Language.IDENTIFIER;
-            case C -> de.jplag.cpp.Language.IDENTIFIER;
-            case PYTHON -> de.jplag.python3.Language.IDENTIFIER;
-            case SWIFT -> new de.jplag.swift.Language().getIdentifier();
-            case KOTLIN -> de.jplag.kotlin.Language.IDENTIFIER;
+        return switch (programmingExercise.getProgrammingLanguage()) {
+            case JAVA -> new de.jplag.java.Language();
+            case C -> new de.jplag.cpp.Language();
+            case PYTHON -> new de.jplag.python3.Language();
+            case SWIFT -> new de.jplag.swift.Language();
+            case KOTLIN -> new de.jplag.kotlin.Language();
             default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
                     "ProgrammingExercise", "notSupported");
         };
-        return LanguageLoader.getLanguage(languageIdentifier).orElseThrow();
     }
 
     /**
