@@ -670,6 +670,9 @@ public class StudentExamResource {
         List<StudentParticipation> participations = studentParticipationRepository
                 .findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(studentExam);
 
+        // fetch all submitted answers for quizzes
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
+
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), user);
 
         // 2nd: connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
