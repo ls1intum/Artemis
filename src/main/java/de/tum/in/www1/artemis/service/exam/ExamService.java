@@ -470,7 +470,7 @@ public class ExamService {
         }
 
         // fetch participations, submissions and results and connect them to the studentExam
-        fetchParticipationsSubmissionsAndResultsForRealExam(studentExam, targetUser);
+        fetchParticipationsSubmissionsAndResultsForExam(studentExam, targetUser);
 
         List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).toList();
         // fetch all submitted answers for quizzes
@@ -506,7 +506,7 @@ public class ExamService {
      * @param studentExam the student exam in question
      * @param currentUser logged-in user with groups and authorities
      */
-    public void fetchParticipationsSubmissionsAndResultsForRealExam(StudentExam studentExam, User currentUser) {
+    public void fetchParticipationsSubmissionsAndResultsForExam(StudentExam studentExam, User currentUser) {
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
