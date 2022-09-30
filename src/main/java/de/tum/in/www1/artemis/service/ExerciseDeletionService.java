@@ -157,18 +157,17 @@ public class ExerciseDeletionService {
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
+
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
-        // to avoid a ConcurrentModificationException, we need to use a copy of the set
         exercise = exerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
-        var exampleSubmissions = new HashSet<>(exercise.getExampleSubmissions());
-        for (ExampleSubmission exampleSubmission : exampleSubmissions) {
-            exampleSubmissionService.deleteById(exampleSubmission.getId());
-        }
+        exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmissionService.deleteById(exampleSubmission.getId()));
+        exercise.setExampleSubmissions(new HashSet<>());
+
         // make sure tutor participations are deleted before the exercise is deleted
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
         if (exercise.isExamExercise()) {
-            Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(exercise.getExerciseGroup().getExam().getId());
+            Exam exam = examRepository.findOneWithEagerStudentExamsAndExercises(exercise.getExerciseGroup().getExam().getId());
             for (StudentExam studentExam : exam.getStudentExams()) {
                 if (studentExam.getExercises().contains(exercise)) {
                     // remove exercise reference from student exam
@@ -191,7 +190,12 @@ public class ExerciseDeletionService {
                 // explicitly load the text exercise as such so that the knowledge is eagerly loaded as well
                 TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exercise.getId());
                 if (textExercise.getKnowledge() != null) {
-                    textAssessmentKnowledgeService.deleteKnowledge(textExercise.getKnowledge().getId(), textExercise.getId());
+                    long knowledgeId = textExercise.getKnowledge().getId();
+                    // Remove knowledge to avoid foreign key constraint exception
+                    textExercise.setKnowledge(null);
+                    ((TextExercise) exercise).setKnowledge(null);
+                    textExerciseRepository.save(textExercise);
+                    textAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
                 }
             }
             // delete model assessment knowledge if exercise is of type ModelExercise and if no other exercise uses same knowledge
@@ -199,7 +203,12 @@ public class ExerciseDeletionService {
                 // explicitly load the modeling exercise as such so that the knowledge is eagerly loaded as well
                 ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exercise.getId());
                 if (modelingExercise.getKnowledge() != null) {
-                    modelAssessmentKnowledgeService.deleteKnowledge(modelingExercise.getKnowledge().getId(), modelingExercise.getId());
+                    long knowledgeId = modelingExercise.getKnowledge().getId();
+                    // Remove knowledge to avoid foreign key constraint exception
+                    modelingExercise.setKnowledge(null);
+                    ((ModelingExercise) exercise).setKnowledge(null);
+                    modelingExerciseRepository.save(modelingExercise);
+                    modelAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
                 }
             }
             exerciseRepository.delete(exercise);

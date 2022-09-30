@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
 import javax.annotation.PostConstruct;
@@ -49,7 +50,7 @@ public class ParticipantScoreSchedulerService {
 
     private final TaskScheduler scheduler;
 
-    private final Map<Integer, ScheduledFuture<?>> scheduledTasks = new HashMap<>();
+    private final Map<Integer, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
     private Optional<Instant> lastScheduledRun = Optional.empty();
 
@@ -80,8 +81,12 @@ public class ParticipantScoreSchedulerService {
         this.teamRepository = teamRepository;
     }
 
-    public Map<Integer, ScheduledFuture<?>> getScheduledTasks() {
-        return scheduledTasks;
+    /**
+     * Check if the scheduler has tasks to be executed or is idle.
+     * @return true if the scheduler is idle, false otherwise
+     */
+    public boolean isIdle() {
+        return scheduledTasks.isEmpty();
     }
 
     /**
