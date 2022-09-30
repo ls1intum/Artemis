@@ -8,9 +8,11 @@ import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Complaint;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
@@ -172,15 +174,11 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     long countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
 
     /**
-     * Delete all complaints that belong to the results of a given participation
-     * @param participationId the id of the participation where the complaints should be deleted
-     */
-    void deleteByResult_Participation_Id(Long participationId);
-
-    /**
      * Delete all complaints that belong to the given result
      * @param resultId the id of the result where the complaints should be deleted
      */
+    @Transactional
+    @Modifying
     void deleteByResult_Id(long resultId);
 
     /**

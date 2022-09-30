@@ -4,9 +4,11 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Rating;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseRatingCount;
@@ -20,15 +22,11 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
     Optional<Rating> findRatingByResultId(Long resultId);
 
     /**
-     * Delete all ratings that belong to the result of a given participation
-     * @param participationId the id of the participation where the ratings should be deleted
-     */
-    void deleteByResult_Participation_Id(Long participationId);
-
-    /**
      * Delete all ratings that belong to the given result
      * @param resultId the id of the result where the rating should be deleted
      */
+    @Transactional
+    @Modifying
     void deleteByResult_Id(long resultId);
 
     List<Rating> findAllByResult_Participation_Exercise_Course_Id(Long courseId);
