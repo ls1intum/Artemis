@@ -83,9 +83,9 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     public static PlagiarismComparison<TextSubmissionElement> fromJPlagComparison(JPlagComparison jplagComparison) {
         PlagiarismComparison<TextSubmissionElement> comparison = new PlagiarismComparison<>();
 
-        comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.getFirstSubmission()));
-        comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.getSecondSubmission()));
-        comparison.setMatches(jplagComparison.getMatches().stream().map(PlagiarismMatch::fromJPlagMatch).collect(Collectors.toSet()));
+        comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.firstSubmission()));
+        comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.secondSubmission()));
+        comparison.setMatches(jplagComparison.matches().stream().map(PlagiarismMatch::fromJPlagMatch).collect(Collectors.toSet()));
         comparison.setSimilarity(jplagComparison.similarity());
         comparison.setStatus(PlagiarismStatus.NONE);
 

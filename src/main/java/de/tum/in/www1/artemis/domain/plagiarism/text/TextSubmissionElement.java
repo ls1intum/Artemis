@@ -18,6 +18,7 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
 
     private String file;
 
+    // TODO: remove this column, we don't really need it
     @Column(name = "token_type")
     private int type;
 
@@ -35,8 +36,7 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
 
         textSubmissionElement.setColumn(token.getColumn());
         textSubmissionElement.setLine(token.getLine());
-        textSubmissionElement.setFile(token.file);
-        textSubmissionElement.setType(token.type);
+        textSubmissionElement.setFile(token.getFile().getPath());
         textSubmissionElement.setLength(token.getLength());
         textSubmissionElement.setPlagiarismSubmission(plagiarismSubmission);
 

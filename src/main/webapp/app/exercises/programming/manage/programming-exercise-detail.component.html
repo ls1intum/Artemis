@@ -75,7 +75,7 @@
                         <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
                     </a>
                     <a
-                        *ngIf="programmingExercise.isAtLeastEditor"
+                        *ngIf="programmingExercise.isAtLeastEditor && plagiarismCheckSupported"
                         [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                         class="btn btn-outline-primary btn-sm me-1"
                         routerLink="plagiarism"

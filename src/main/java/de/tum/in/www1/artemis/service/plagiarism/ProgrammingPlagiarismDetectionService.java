@@ -6,6 +6,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -18,11 +19,12 @@ import org.springframework.stereotype.Service;
 
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
+import de.jplag.Language;
+import de.jplag.LanguageLoader;
 import de.jplag.exceptions.BasecodeException;
 import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
-import de.jplag.options.LanguageOption;
-import de.jplag.reporting.Report;
+import de.jplag.reporting.reportobject.ReportObjectFactory;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
@@ -127,7 +129,7 @@ public class ProgrammingPlagiarismDetectionService {
                 return textPlagiarismResult;
             }
 
-            log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", result.getComparisons().size(), programmingExerciseId);
+            log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", result.getAllComparisons().size(), programmingExerciseId);
             TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
             textPlagiarismResult.convertJPlagResult(result);
             textPlagiarismResult.setExercise(programmingExercise);
@@ -161,7 +163,7 @@ public class ProgrammingPlagiarismDetectionService {
             return null;
         }
 
-        log.info("JPlag programming comparison finished with {} comparisons in {}", result.getComparisons().size(), TimeLogUtil.formatDurationFrom(start));
+        log.info("JPlag programming comparison finished with {} comparisons in {}", result.getAllComparisons().size(), TimeLogUtil.formatDurationFrom(start));
         return generateJPlagReportZip(result, programmingExercise);
     }
 
@@ -191,17 +193,15 @@ public class ProgrammingPlagiarismDetectionService {
         log.info("Downloading repositories done for programming exercise {}", programmingExerciseId);
 
         final var projectKey = programmingExercise.getProjectKey();
-        final var repoFolder = Path.of(targetPath, projectKey).toString();
-        final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
+        final var repoFolder = Path.of(targetPath, projectKey).toFile();
+        final var programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
 
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
-        JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
+        JPlagOptions options = new JPlagOptions(programmingLanguage, Set.of(repoFolder), Set.of()).withSimilarityThreshold(similarityThreshold);
         if (templateRepoName != null) {
-            options.setBaseCodeSubmissionName(templateRepoName);
+            options = options.withBaseCodeSubmissionDirectory(new File(templateRepoName));
         }
-
-        options.setSimilarityThreshold(similarityThreshold);
 
         log.info("Start JPlag programming comparison for programming exercise {}", programmingExerciseId);
         String topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
@@ -216,7 +216,7 @@ public class ProgrammingPlagiarismDetectionService {
             // Handling small or invalid base codes
             log.error(e.getMessage(), e);
             log.info("Retrying JPlag Plagiarism Check without BaseCode");
-            options.setBaseCodeSubmissionName(null);
+            options = options.withBaseCodeSubmissionDirectory(null);
             jplag = new JPlag(options);
             result = jplag.run();
         }
@@ -260,8 +260,8 @@ public class ProgrammingPlagiarismDetectionService {
 
         // Write JPlag report result to the file.
         log.info("Write JPlag report to file system");
-        Report jplagReport = new Report(outputFolderFile, jPlagResult.getOptions());
-        jplagReport.writeResult(jPlagResult);
+        ReportObjectFactory reportObjectFactory = new ReportObjectFactory();
+        reportObjectFactory.createAndSaveReport(jPlagResult, outputFolder);
 
         // Zip the file
         var zipFile = zipJPlagReport(programmingExercise, targetPath, Path.of(outputFolder));
@@ -330,14 +330,17 @@ public class ProgrammingPlagiarismDetectionService {
         }
     }
 
-    private LanguageOption getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
-        return switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA -> LanguageOption.JAVA;
-            case C -> LanguageOption.C_CPP;
-            case PYTHON -> LanguageOption.PYTHON_3;
+    private Language getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
+        var languageIdentifier = switch (programmingExercise.getProgrammingLanguage()) {
+            case JAVA -> de.jplag.java.Language.IDENTIFIER;
+            case C -> de.jplag.cpp.Language.IDENTIFIER;
+            case PYTHON -> de.jplag.python3.Language.IDENTIFIER;
+            case SWIFT -> new de.jplag.swift.Language().getIdentifier();
+            case KOTLIN -> de.jplag.kotlin.Language.IDENTIFIER;
             default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
                     "ProgrammingExercise", "notSupported");
         };
+        return LanguageLoader.getLanguage(languageIdentifier).orElseThrow();
     }
 
     /**

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -14,9 +15,10 @@ import org.springframework.util.FileSystemUtils;
 
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
+import de.jplag.Language;
+import de.jplag.LanguageLoader;
 import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
-import de.jplag.options.LanguageOption;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
@@ -135,17 +137,16 @@ public class TextPlagiarismDetectionService {
 
             log.info("Saving text submissions done");
 
-            JPlagOptions options = new JPlagOptions(submissionsFolderName, LanguageOption.TEXT);
-            options.setMinimumTokenMatch(minimumSize);
-
             // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
             // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
-            options.setSimilarityThreshold(similarityThreshold);
+            Language language = LanguageLoader.getLanguage(de.jplag.text.Language.IDENTIFIER).orElseThrow();
+            JPlagOptions options = new JPlagOptions(language, Set.of(submissionFolderFile), Set.of()).withMinimumTokenMatch(minimumSize)
+                    .withSimilarityThreshold(similarityThreshold);
 
             log.info("Start JPlag Text comparison");
             JPlag jplag = new JPlag(options);
             JPlagResult jPlagResult = jplag.run();
-            log.info("JPlag Text comparison finished with {} comparisons. Will limit the number of comparisons to 500", jPlagResult.getComparisons().size());
+            log.info("JPlag Text comparison finished with {} comparisons. Will limit the number of comparisons to 500", jPlagResult.getAllComparisons().size());
 
             log.info("Delete submission folder");
             if (submissionFolderFile.exists()) {

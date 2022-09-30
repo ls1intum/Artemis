@@ -47,6 +47,7 @@ import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { ButtonSize } from 'app/shared/components/button.component';
+import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -79,6 +80,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     addedLineCount: number;
     removedLineCount: number;
     isLoadingDiffReport: boolean;
+
+    plagiarismCheckSupported = false; // default value
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -116,6 +119,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
         private codeHintService: CodeHintService,
         private router: Router,
+        private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
     ) {}
 
     ngOnInit() {
@@ -205,6 +209,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             });
 
             this.setLatestCoveredLineRatio();
+
+            this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).plagiarismCheckSupported;
         });
     }
 

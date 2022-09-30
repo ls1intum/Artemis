@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.domain.plagiarism.text;
 
-import java.util.Comparator;
-
 import javax.persistence.Entity;
 
-import de.jplag.JPlagComparison;
 import de.jplag.JPlagResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
@@ -21,7 +18,7 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
      */
     public void convertJPlagResult(JPlagResult result) {
         // sort and limit the number of comparisons to 500
-        var comparisons = result.getComparisons().stream().sorted(Comparator.comparingDouble(JPlagComparison::similarity).reversed()).limit(500).toList();
+        var comparisons = result.getComparisons(500);
         // only convert those 500 comparisons to save memory and cpu power
         for (var jPlagComparison : comparisons) {
             var comparison = PlagiarismComparison.fromJPlagComparison(jPlagComparison);
