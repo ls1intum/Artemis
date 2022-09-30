@@ -171,7 +171,6 @@ dependencies {
     implementation "org.gitlab4j:gitlab4j-api:5.0.1"
 
     implementation "de.jplag:jplag:${jplag_version}"
-    implementation "de.jplag:languages:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:kotlin:${jplag_version}"
     implementation "de.jplag:cpp:${jplag_version}"
