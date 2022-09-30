@@ -142,9 +142,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
-    @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch studentExams.exercises where (exam.id = :#{#examId})")
-    Exam findOneWithEagerStudentExamsAndExercises(@Param("examId") long examId);
-
     /**
      * Checks if the user is registered for the exam.
      *
@@ -152,13 +149,28 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @param userId the id of the user
      * @return true if the user is registered for the exam
      */
-    @Query("SELECT CASE WHEN COUNT(exam) > 0 THEN true ELSE false END FROM Exam exam LEFT JOIN exam.registeredUsers registeredUsers WHERE exam.id = :#{#examId} AND registeredUsers.id = :#{#userId}")
+    @Query("""
+            SELECT CASE WHEN COUNT(exam) > 0 THEN true ELSE false END
+            FROM Exam exam
+            LEFT JOIN exam.registeredUsers registeredUsers
+            WHERE exam.id = :#{#examId} AND registeredUsers.id = :#{#userId}
+            """)
     boolean isUserRegisteredForExam(@Param("examId") long examId, @Param("userId") long userId);
 
-    @Query("select exam.id, count(registeredUsers) from Exam exam left join exam.registeredUsers registeredUsers where exam.id in :#{#examIds} group by exam.id")
+    @Query("""
+                select exam.id, count(registeredUsers)
+                from Exam exam
+                left join exam.registeredUsers registeredUsers
+                where exam.id in :#{#examIds}
+                group by exam.id
+            """)
     List<long[]> countRegisteredUsersByExamIds(@Param("examIds") List<Long> examIds);
 
-    @Query("select count(studentExam) from StudentExam studentExam where studentExam.testRun = FALSE AND studentExam.exam.id = :#{#examId}")
+    @Query("""
+                select count(studentExam)
+                from StudentExam studentExam
+                where studentExam.testRun = FALSE AND studentExam.exam.id = :#{#examId}
+            """)
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
 
     /**

@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.*;
 import static de.tum.in.www1.artemis.util.TestConstants.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
@@ -1795,6 +1796,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // evaluate quizzes
         request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
                 new HttpHeaders());
+
+        // Wait for the scheduler to execute its tasks
+        await().until(() -> participantScoreSchedulerService.isIdle());
 
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
