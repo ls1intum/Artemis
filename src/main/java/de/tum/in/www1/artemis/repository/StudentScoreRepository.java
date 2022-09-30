@@ -23,7 +23,9 @@ import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 @Repository
 public interface StudentScoreRepository extends JpaRepository<StudentScore, Long> {
 
-    void deleteAllByUser(User user);
+    @Transactional
+    @Modifying
+    void deleteAllByUserId(long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "user", "exercise" })
     Optional<StudentScore> findByExercise_IdAndUser_Id(Long exerciseId, Long userId);

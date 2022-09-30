@@ -164,15 +164,17 @@ public class ParticipantScoreSchedulerService {
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (or null, if result is created/updated)
      */
     private void scheduleTask(Long exerciseId, Long participantId, Instant resultLastModified, Long resultIdToBeDeleted) {
-        var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
-        if (scheduledTasks.containsKey(participantScoreId.hashCode())) {
-            // We already have a scheduled task for this result
-            return;
+        final int participantScoreHash = new ParticipantScoreId(exerciseId, participantId).hashCode();
+        var task = scheduledTasks.get(participantScoreHash);
+        if (task != null) {
+            // If a task is already scheduled, cancel it and reschedule it with the latest result
+            task.cancel(true);
+            scheduledTasks.remove(participantScoreHash);
         }
 
         var schedulingTime = ZonedDateTime.now().plus(500, ChronoUnit.MILLIS);
         var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted), schedulingTime.toInstant());
-        scheduledTasks.put(participantScoreId.hashCode(), future);
+        scheduledTasks.put(participantScoreHash, future);
         logger.debug("Scheduled task for exercise {} and participant {} at {}.", exerciseId, participantId, schedulingTime);
     }
 
@@ -191,8 +193,8 @@ public class ParticipantScoreSchedulerService {
 
             var exercise = exerciseRepository.findById(exerciseId).orElse(null);
             if (exercise == null) {
-                // If the exercise was deleted, we can delete all participant scores for it as well
-                logger.debug("Exercise {} no longer exists, deleting participant score.", exerciseId);
+                // If the exercise was deleted, we can delete all participant scores for it as well and skip
+                logger.debug("Exercise {} no longer exists, deleting all participant scores for it.", exerciseId);
                 participantScoreRepository.deleteAllByExerciseId(exerciseId);
                 return;
             }
@@ -201,12 +203,24 @@ public class ParticipantScoreSchedulerService {
             Optional<ParticipantScore> participantScore;
             if (exercise.isTeamMode()) {
                 // Fetch the team and its score for the given exercise
-                participant = teamRepository.findByIdElseThrow(participantId);
+                participant = teamRepository.findById(participantId).orElse(null);
+                if (participant == null) {
+                    // If the team was deleted, we can delete all participant scores for it as well and skip
+                    logger.debug("Team {} no longer exists, deleting all participant scores for it.", participantId);
+                    teamScoreRepository.deleteAllByTeamId(participantId);
+                    return;
+                }
                 participantScore = teamScoreRepository.findByExercise_IdAndTeam_Id(exerciseId, participantId).map(score -> score);
             }
             else {
                 // Fetch the student and its score for the given exercise
-                participant = userRepository.findByIdElseThrow(participantId);
+                participant = userRepository.findById(participantId).orElse(null);
+                if (participant == null) {
+                    // If the user was deleted, we can delete all participant scores for it as well and skip
+                    logger.debug("User {} no longer exists, deleting all participant scores for them.", participantId);
+                    studentScoreRepository.deleteAllByUserId(participantId);
+                    return;
+                }
                 participantScore = studentScoreRepository.findByExercise_IdAndUser_Id(exerciseId, participantId).map(score -> score);
             }
 
