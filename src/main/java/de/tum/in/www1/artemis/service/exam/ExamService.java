@@ -507,15 +507,26 @@ public class ExamService {
      * @param currentUser logged-in user with groups and authorities
      */
     public void fetchParticipationsSubmissionsAndResultsForExam(StudentExam studentExam, User currentUser) {
-        // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
-        // fetching all participations at once is more effective
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
+
+        List<StudentParticipation> participations;
+        // 1st: fetch participations, submissions and results.
+        if (studentExam.getExam().isTestExam()) {
+            // TODO: this repository call is exactly the same as in the else statement below except for the dates (which are not even used at the moment), we should try to avoid
+            // code duplication!
+            participations = studentParticipationRepository.findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(studentExam);
+        }
+        else {
+            // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
+            // fetching all participations at once is more effective
+            participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
+        }
+
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
 
-        // connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
+        // 2nd: connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
         // available
         for (Exercise exercise : studentExam.getExercises()) {
             filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);

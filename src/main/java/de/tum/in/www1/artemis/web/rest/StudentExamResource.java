@@ -392,12 +392,7 @@ public class StudentExamResource {
         examService.loadQuizExercisesForStudentExam(studentExam);
 
         // 5th fetch participations, submissions and results and connect them to the studentExam
-        if (studentExam.getExam().isTestExam()) {
-            fetchParticipationsSubmissionsAndResultsForTestExam(studentExam, user);
-        }
-        else {
-            examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);
-        }
+        examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);
 
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
         return ResponseEntity.ok(studentExam);
@@ -655,31 +650,6 @@ public class StudentExamResource {
         examSession.hideDetails();
         examSession.setInitialSession(this.examSessionService.checkExamSessionIsInitial(studentExam.getId()));
         studentExam.setExamSessions(Set.of(examSession));
-    }
-
-    /**
-     * For all exercises from the test exam, fetch participation, submissions & result for the current user.
-     * (Different way, as studentExam <-> participations are linked with the startedDate <-> initializationDate
-     *
-     * @param studentExam the student exam in question
-     * @param user logged-in user with groups and authorities
-     */
-    private void fetchParticipationsSubmissionsAndResultsForTestExam(StudentExam studentExam, User user) {
-
-        // 1st: fetch participations, submissions and results.
-        List<StudentParticipation> participations = studentParticipationRepository
-                .findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(studentExam);
-
-        // fetch all submitted answers for quizzes
-        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
-
-        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), user);
-
-        // 2nd: connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
-        // available
-        for (Exercise exercise : studentExam.getExercises()) {
-            examService.filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);
-        }
     }
 
     /**
