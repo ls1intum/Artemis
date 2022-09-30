@@ -25,7 +25,7 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
      * Delete all ratings that belong to the given result
      * @param resultId the id of the result where the rating should be deleted
      */
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteByResult_Id(long resultId);
 

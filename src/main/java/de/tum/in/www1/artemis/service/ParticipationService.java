@@ -657,8 +657,10 @@ public class ParticipationService {
         resultsToBeDeleted.forEach(result -> resultService.deleteResult(result, false));
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
-            coverageReportRepository.deleteBySubmissionId(submission.getId());
-            buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
+            if (submission instanceof ProgrammingSubmission) {
+                coverageReportRepository.deleteBySubmissionId(submission.getId());
+                buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
+            }
             submissionRepository.deleteById(submission.getId());
         });
     }

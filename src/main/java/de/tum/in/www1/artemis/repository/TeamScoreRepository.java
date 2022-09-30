@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 @Repository
 public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByTeamId(long teamId);
 
@@ -65,7 +65,7 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
             """)
     List<TeamScore> findAllByExerciseAndUserWithEagerExercise(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteByExerciseAndTeam(Exercise exercise, Team team);
 }
