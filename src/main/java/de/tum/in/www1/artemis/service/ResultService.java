@@ -121,6 +121,7 @@ public class ResultService {
      * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value should be false
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
+        log.debug("Delete result {}", result.getId());
         complaintResponseRepository.deleteByComplaint_Result_Id(result.getId());
         complaintRepository.deleteByResult_Id(result.getId());
         ratingRepository.deleteByResult_Id(result.getId());
