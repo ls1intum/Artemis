@@ -428,7 +428,7 @@ public class StudentExamService {
     public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam, ZonedDateTime startedDate) {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         setUpExerciseParticipationsAndSubmissionsWithInitializationDate(studentExam, generatedParticipations, startedDate);
-        // TODO: Michael Allgaier: schedule an unlock operation for all involved student repositories of this student exam (test exam) at the end of the individual working
+        // TODO: Michael Allgaier: schedule a lock operation for all involved student repositories of this student exam (test exam) at the end of the individual working time
         studentParticipationRepository.saveAll(generatedParticipations);
     }
 
