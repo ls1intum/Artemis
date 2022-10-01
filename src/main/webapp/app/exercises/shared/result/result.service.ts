@@ -82,7 +82,7 @@ export class ResultService implements IResultService {
                 points,
             });
         } else {
-            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points);
+            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
         }
     }
 

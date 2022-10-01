@@ -71,7 +71,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             // The student can either still submit or there is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
                 (dayjs().isBefore(this.exercise.dueDate) ||
-                    (this.studentParticipation?.individualDueDate && dayjs().isBefore(this.studentParticipation?.individualDueDate)) ||
+                    (this.studentParticipation?.individualDueDate && dayjs().isBefore(this.studentParticipation.individualDueDate)) ||
                     (!!this.studentParticipation?.submissionCount && !this.individualComplaintDeadline)) &&
                 (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
 
