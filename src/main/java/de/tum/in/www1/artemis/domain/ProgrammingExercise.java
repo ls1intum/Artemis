@@ -790,10 +790,9 @@ public class ProgrammingExercise extends Exercise {
             throw new BadRequestAlertException("Exercise due date is not set", "Exercise", "invalidManualFeedbackSettings");
         }
 
-        // TODO: disallow tests after due date
-        // if (Objects.nonNull(this.buildAndTestStudentSubmissionsAfterDueDate)) {
-        // throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
-        // }
+        if (Objects.nonNull(this.buildAndTestStudentSubmissionsAfterDueDate)) {
+            throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
+        }
     }
 
     public Set<ExerciseHint> getExerciseHints() {

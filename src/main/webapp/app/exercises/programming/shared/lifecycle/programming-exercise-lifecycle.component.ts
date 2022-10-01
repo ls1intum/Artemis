@@ -56,6 +56,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
         this.exercise.allowManualFeedbackRequests = !this.exercise.allowManualFeedbackRequests;
         if (this.exercise.allowManualFeedbackRequests) {
             this.exercise.assessmentDueDate = undefined;
+            this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         }
     }
 
