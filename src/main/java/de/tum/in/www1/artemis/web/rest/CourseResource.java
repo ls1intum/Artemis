@@ -787,6 +787,27 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/:courseId/search-users : search users for a given course within all groups.
+     *
+     * @param courseId    the id of the course for which to search users
+     * @param nameOfUser  the name by which to search users
+     * @return the ResponseEntity with status 200 (OK) and with body all users
+     */
+    @GetMapping("/courses/{courseId}/search-other-users")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<User>> searchOtherUsersInCourse(@PathVariable long courseId, @RequestParam("nameOfUser") String nameOfUser) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        // restrict result size by only allowing reasonable searches
+        if (nameOfUser.length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'name' must be three characters or longer.");
+        }
+
+        return ResponseEntity.ok().body(courseService.searchOtherUsersNameInCourse(course, nameOfUser));
+    }
+
+    /**
      * GET /courses/:courseId/title : Returns the title of the course with the given id
      *
      * @param courseId the id of the course

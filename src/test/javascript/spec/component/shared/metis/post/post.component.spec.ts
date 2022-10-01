@@ -145,6 +145,9 @@ describe('PostComponent', () => {
     });
 
     it('should contain the posting content', () => {
+        component.posting = metisPostExerciseUser1;
+        fixture.detectChanges();
+
         const header = getElement(debugElement, 'jhi-posting-content');
         expect(header).not.toBeNull();
     });

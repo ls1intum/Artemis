@@ -1,5 +1,5 @@
 import { Posting } from 'app/entities/metis/posting.model';
-import { Directive, Input, OnInit } from '@angular/core';
+import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -9,6 +9,8 @@ import { UserRole } from 'app/shared/metis/metis.util';
 @Directive()
 export abstract class PostingHeaderDirective<T extends Posting> implements OnInit {
     @Input() posting: T;
+    @Input() isCourseMessagesPage: boolean;
+    @Output() isModalOpen = new EventEmitter<void>();
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;

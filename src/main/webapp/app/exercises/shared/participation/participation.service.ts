@@ -149,17 +149,36 @@ export class ParticipationService {
         return convertedParticipations;
     }
 
-    public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation | undefined {
+    public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation[] {
+        const mergedParticipations: StudentParticipation[] = [];
+
         if (participations?.length) {
+            const nonTestRunParticipations = participations.filter((participation: StudentParticipation) => !participation.testRun);
+            const testRunParticipations = participations.filter((participation: StudentParticipation) => participation.testRun);
+
             if (participations[0].type === ParticipationType.STUDENT) {
-                const combinedParticipation = new StudentParticipation();
-                this.mergeResultsAndSubmissions(combinedParticipation, participations);
-                return combinedParticipation;
+                if (nonTestRunParticipations.length) {
+                    const combinedParticipation = new StudentParticipation();
+                    this.mergeResultsAndSubmissions(combinedParticipation, nonTestRunParticipations);
+                    mergedParticipations.push(combinedParticipation);
+                }
+                if (testRunParticipations.length) {
+                    const combinedParticipationTestRun = new StudentParticipation();
+                    this.mergeResultsAndSubmissions(combinedParticipationTestRun, testRunParticipations);
+                    mergedParticipations.push(combinedParticipationTestRun);
+                }
             } else if (participations[0].type === ParticipationType.PROGRAMMING) {
-                return this.mergeProgrammingParticipations(participations as ProgrammingExerciseStudentParticipation[]);
+                if (nonTestRunParticipations.length) {
+                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations as ProgrammingExerciseStudentParticipation[]);
+                    mergedParticipations.push(combinedParticipation);
+                }
+                if (testRunParticipations.length) {
+                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations as ProgrammingExerciseStudentParticipation[]);
+                    mergedParticipations.push(combinedParticipationTestRun);
+                }
             }
         }
-        return undefined;
+        return mergedParticipations;
     }
 
     private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
@@ -217,6 +236,10 @@ export class ParticipationService {
                 submission.participation = combinedParticipation;
             });
         }
+    }
+
+    public getSpecificStudentParticipation(studentParticipations: StudentParticipation[], testRun: boolean): StudentParticipation | undefined {
+        return studentParticipations.filter((participation) => !!participation.testRun === testRun).first();
     }
 
     /**

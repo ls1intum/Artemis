@@ -421,7 +421,7 @@ public class ExerciseService {
             QuizSubmission submission = quizScheduleService.getQuizSubmission(exercise.getId(), username);
             if (submission.getSubmissionDate() != null) {
                 participation = new StudentParticipation().exercise(exercise);
-                participation.initializationState(InitializationState.INITIALIZED);
+                participation.setInitializationState(InitializationState.INITIALIZED);
             }
         }
 

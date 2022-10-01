@@ -13,17 +13,30 @@
             </span>
         </span>
         <fa-icon
-            *ngIf="!previewMode && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT) || isAuthorOfPosting)"
+            *ngIf="
+                !previewMode &&
+                ((!isCourseMessagesPage && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT))) ||
+                    isAuthorOfPosting)
+            "
             size="xs"
             class="ms-1 editIcon clickable icon"
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
             container="body"
             [icon]="faPencilAlt"
-            (click)="createEditModal.open()"
+            (click)="!isCourseMessagesPage ? createEditModal.open() : isModalOpen.emit()"
         ></fa-icon>
-        <jhi-post-create-edit-modal #createEditModal [posting]="posting"></jhi-post-create-edit-modal>
+        <jhi-post-create-edit-modal
+            #createEditModal
+            [posting]="posting"
+            [isCourseMessagesPage]="isCourseMessagesPage"
+            (isModalOpen)="isModalOpen.emit()"
+        ></jhi-post-create-edit-modal>
         <jhi-confirm-icon
-            *ngIf="!previewMode && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT) || isAuthorOfPosting)"
+            *ngIf="
+                !previewMode &&
+                ((!isCourseMessagesPage && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT))) ||
+                    isAuthorOfPosting)
+            "
             iconSize="xs"
             (confirmEvent)="deletePosting()"
             [ngClass]="'deleteIcon clickable icon'"
