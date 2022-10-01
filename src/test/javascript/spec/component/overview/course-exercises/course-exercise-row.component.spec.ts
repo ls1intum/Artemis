@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -207,6 +208,27 @@ describe('CourseExerciseRowComponent', () => {
         comp.ngOnInit();
 
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.EXERCISE_MISSED);
+    });
+
+    it('should display the score', () => {
+        setupExercise(ExerciseType.PROGRAMMING, dayjs());
+
+        const studentParticipation = {
+            id: 1,
+            initializationState: InitializationState.INITIALIZED,
+            testRun: false,
+            results: [{ rated: true, score: 42 } as Result],
+        } as StudentParticipation;
+        comp.exercise.studentParticipations = [studentParticipation];
+
+        getAllParticipationsStub.mockReturnValue([studentParticipation]);
+        comp.ngOnChanges();
+        comp.ngOnInit();
+
+        fixture.detectChanges();
+
+        const result = fixture.debugElement.query(By.css('jhi-submission-result-status'));
+        expect(result).not.toBeNull();
     });
 
     const setupForTestingParticipationStatusExerciseTypeQuiz = (
