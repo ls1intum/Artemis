@@ -105,7 +105,7 @@ describe('Exam assessment', () => {
             examAssessment.addNewFeedback(2, 'Good job');
             examAssessment.submit();
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-            editorPage.getResultScore().should('contain.text', '6.6 of 10 points').and('be.visible');
+            editorPage.getResultScore().should('contain.text', '66.2%, 6 of 13 passed, 6.6 points').and('be.visible');
         });
     });
 
@@ -145,7 +145,7 @@ describe('Exam assessment', () => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                editorPage.getResultScore().should('contain.text', '4 of 10 points').should('be.visible');
+                editorPage.getResultScore().should('contain.text', '40%, 4 points').should('be.visible');
             });
         });
 
@@ -175,7 +175,7 @@ describe('Exam assessment', () => {
                     expect(assessmentResponse.response!.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                editorPage.getResultScore().should('contain.text', '7 of 10 points').should('be.visible');
+                editorPage.getResultScore().should('contain.text', '70%, 7 points').should('be.visible');
             });
         });
     });
@@ -216,7 +216,7 @@ describe('Exam assessment', () => {
             // Sometimes the feedback fails to load properly on the first load...
             const resultSelector = '#result-score';
             cy.reloadUntilFound(resultSelector);
-            editorPage.getResultScore().should('contain.text', '5 of 10 points').and('be.visible');
+            editorPage.getResultScore().should('contain.text', '50%, 5 points').and('be.visible');
         });
     });
 

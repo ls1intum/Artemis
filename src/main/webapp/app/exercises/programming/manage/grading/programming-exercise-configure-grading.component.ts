@@ -87,6 +87,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     backupTestCases: ProgrammingExerciseTestCase[] = [];
 
     testCasePoints: { [testCase: string]: number } = {};
+    testCasePointsRelative: { [testCase: string]: number } = {};
 
     // The event emitters emit this value in order to indicate this component to reset the corresponding table view
     readonly RESET_TABLE = ProgrammingGradingChartsDirective.RESET_TABLE;
@@ -131,6 +132,10 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     get testCases() {
         return this.testCasesValue;
+    }
+
+    get activeTestCases() {
+        return this.testCases.filter(({ active }) => active);
     }
 
     /**
@@ -615,10 +620,13 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         const maxPoints = this.programmingExercise.maxPoints!;
         if (!this.totalWeight || !editedTestCase || !field || field === EditableField.WEIGHT || newValue === undefined) {
             this.testCasePoints = {};
-            this.totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
-            this.testCases.forEach((testCase) => {
+            this.testCasePointsRelative = {};
+            this.totalWeight = this.activeTestCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
+            this.activeTestCases.forEach((testCase) => {
                 const points = (this.totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / this.totalWeight : 0) * maxPoints + (testCase.bonusPoints ?? 0);
                 this.testCasePoints[testCase.testName!] = roundValueSpecifiedByCourseSettings(points, this.course);
+                const relativePoints = (points / maxPoints) * 100;
+                this.testCasePointsRelative[testCase.testName!] = roundValueSpecifiedByCourseSettings(relativePoints, this.course);
             });
         } else {
             const editedTestCaseNewValue = { ...editedTestCase, [field]: newValue };
@@ -626,6 +634,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 (this.totalWeight > 0 ? (editedTestCaseNewValue.weight! * editedTestCaseNewValue.bonusMultiplier!) / this.totalWeight : 0) * maxPoints +
                 (editedTestCaseNewValue.bonusPoints ?? 0);
             this.testCasePoints[editedTestCaseNewValue.testName!] = roundValueSpecifiedByCourseSettings(points, this.course);
+            const relativePoints = (points / maxPoints) * 100;
+            this.testCasePointsRelative[editedTestCaseNewValue.testName!] = roundValueSpecifiedByCourseSettings(relativePoints, this.course);
         }
     }
 

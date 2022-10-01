@@ -220,7 +220,7 @@
                         class="me-1"
                         [loading]="!!exercise.loading"
                         [smallButtons]="smallButtons"
-                        [participations]="exercise.studentParticipations!"
+                        [exercise]="exercise"
                         [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor']"
                         *ngIf="!examMode && isOnlineEditorAllowed()"
                     >

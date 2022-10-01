@@ -164,6 +164,7 @@
                     "couldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
                     "weightSumError": "Die Summe aller Testfall-Gewichte beträgt 0 oder weniger. Bitte stelle mindestens ein Testfall-Gewicht größer als 0 ein.",
                     "showInactive": "Inaktive Testfälle anzeigen",
+                    "exercisePoints": "Aufgaben Punkte:",
                     "settingNull": "Der Testfall {{testCase}} darf keine leeren Einstellungen haben.",
                     "settingNegative": "Der Testfall {{testCase}} darf keine Einstellungen mit negativen Werten haben."
                 },
