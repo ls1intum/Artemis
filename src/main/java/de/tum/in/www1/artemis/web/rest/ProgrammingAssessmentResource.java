@@ -207,7 +207,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
         var isManualFeedbackRequest = programmingExercise.getAllowManualFeedbackRequests() && Objects.nonNull(participation.getIndividualDueDate())
                 && participation.getIndividualDueDate().isBefore(ZonedDateTime.now());
-        var isBeforeDueDate = Objects.nonNull(programmingExercise.getDueDate()) && programmingExercise.getDueDate().isBefore(ZonedDateTime.now());
+        var isBeforeDueDate = Objects.nonNull(programmingExercise.getDueDate()) && programmingExercise.getDueDate().isAfter(ZonedDateTime.now());
         if (isManualFeedbackRequest && isBeforeDueDate) {
             participation.setIndividualDueDate(null);
             studentParticipationRepository.save(participation);
