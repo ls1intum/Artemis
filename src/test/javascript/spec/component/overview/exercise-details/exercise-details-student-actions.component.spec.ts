@@ -26,6 +26,8 @@ import { Router } from '@angular/router';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { HttpClient } from '@angular/common/http';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import dayjs from 'dayjs/esm';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -34,6 +36,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let courseExerciseService: CourseExerciseService;
     let profileService: ProfileService;
     let startExerciseStub: jest.SpyInstance;
+    let startPracticeStub: jest.SpyInstance;
+    let resumeStub: jest.SpyInstance;
     let getProfileInfoSub: jest.SpyInstance;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
@@ -78,12 +82,13 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
                 getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
                 startExerciseStub = jest.spyOn(courseExerciseService, 'startExercise');
+                startPracticeStub = jest.spyOn(courseExerciseService, 'startPractice');
+                resumeStub = jest.spyOn(courseExerciseService, 'resumeProgrammingExercise');
             });
     });
 
     afterEach(() => {
-        startExerciseStub.mockRestore();
-        getProfileInfoSub.mockRestore();
+        jest.restoreAllMocks();
     });
 
     it('should not show the buttons "Team" and "Start exercise" for a team exercise when not assigned to a team yet', fakeAsync(() => {
@@ -166,6 +171,70 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    it('should reflect the correct participation state for practice mode', fakeAsync(() => {
+        const exercise = {
+            id: 43,
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs().subtract(5, 'minutes'),
+            allowOfflineIde: true,
+            studentParticipations: [] as StudentParticipation[],
+        } as ProgrammingExercise;
+        const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED, testRun: true } as StudentParticipation;
+        const initPart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
+        const participationSubject = new Subject<StudentParticipation>();
+
+        comp.exercise = exercise;
+
+        fixture.detectChanges();
+        tick();
+
+        let startExerciseButton = fixture.debugElement.query(By.css('.start-practice'));
+        expect(startExerciseButton).not.toBeNull();
+
+        startPracticeStub.mockReturnValue(participationSubject);
+        comp.startPractice();
+        participationSubject.next(inactivePart);
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.UNINITIALIZED);
+        expect(startPracticeStub).toHaveBeenCalledOnce();
+
+        comp.exercise.studentParticipations = [];
+        participationSubject.next(initPart);
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.INITIALIZED);
+
+        // Check that button "Start practice" is no longer shown
+        startExerciseButton = fixture.debugElement.query(By.css('.start-practice'));
+        expect(startExerciseButton).toBeNull();
+
+        // Check that button "Clone repository" is shown
+        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepositoryButton).not.toBeNull();
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should correctly resume programming participation', () => {
+        const inactiveParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INACTIVE };
+        const activeParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INITIALIZED };
+        const practiceParticipation: ProgrammingExerciseStudentParticipation = { id: 2, testRun: true, initializationState: InitializationState.INACTIVE };
+        comp.exercise = { id: 3, studentParticipations: [inactiveParticipation, practiceParticipation] } as ProgrammingExercise;
+
+        resumeStub.mockReturnValue(of(activeParticipation));
+
+        comp.resumeProgrammingExercise(false);
+
+        expect(comp.exercise.studentParticipations).toEqual([activeParticipation, practiceParticipation]);
+        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.INITIALIZED);
+    });
 
     it('should not allow to publish a build plan for text exercises', () => {
         comp.exercise = teamExerciseWithoutTeamAssigned;

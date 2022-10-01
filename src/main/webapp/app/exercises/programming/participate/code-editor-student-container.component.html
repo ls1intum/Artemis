@@ -42,8 +42,8 @@
     </div>
     <!-- prettier-ignore -->
     <div editorToolbar class="d-inline-flex align-items-center">
-        <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked"
-                                              class="me-3"></jhi-code-editor-repository-is-locked>
+        <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked" class="me-3">
+        </jhi-code-editor-repository-is-locked>
         <jhi-exercise-hint-button-overlay
             [availableExerciseHints]="availableExerciseHints"
             [activatedExerciseHints]="activatedExerciseHints"
@@ -53,7 +53,7 @@
             *ngIf="participation"
             [exercise]="exercise"
             [showUngradedResults]="true"
-            [showGradedBadge]="true"
+            [showBadge]="true"
             [participation]="participation"
             [short]="true"
             [personalParticipation]="true"

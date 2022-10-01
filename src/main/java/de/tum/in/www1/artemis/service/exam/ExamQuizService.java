@@ -200,7 +200,7 @@ public class ExamQuizService {
                     if (!resultExisting) {
                         // delete result from quizSubmission, to be able to set a new one
                         if (quizSubmission.getLatestResult() != null) {
-                            resultService.deleteResult(quizSubmission.getLatestResult().getId());
+                            resultService.deleteResult(quizSubmission.getLatestResult(), true);
                         }
                         result.setRated(true);
                         result.setAssessmentType(AssessmentType.AUTOMATIC);

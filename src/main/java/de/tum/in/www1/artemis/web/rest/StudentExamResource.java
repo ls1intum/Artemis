@@ -289,13 +289,7 @@ public class StudentExamResource {
             messagingService.sendMessage("/topic/exam/" + examId + "/started", "");
         }
 
-        // In case the studentExam is not yet started, a new participation wit a specific initialization date should be created - isStarted uses Boolean
-        if (studentExam.getExam().isTestExam()) {
-            prepareStudentExamForConductionWithInitializationDateSet(request, user, studentExam, (studentExam.isStarted() == null || !studentExam.isStarted()));
-        }
-        else {
-            prepareStudentExamForConduction(request, user, studentExam);
-        }
+        prepareStudentExamForConduction(request, user, studentExam);
 
         log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
         return ResponseEntity.ok(studentExam);
@@ -313,6 +307,7 @@ public class StudentExamResource {
      * @param testRunId the id of the student exam of the test run
      * @return the ResponseEntity with status 200 (OK) and with the found test run as body
      */
+    // TODO: use the same REST call as for real exams and test exams
     @GetMapping("/courses/{courseId}/exams/{examId}/test-run/{testRunId}/conduction")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<StudentExam> getTestRunForConduction(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long testRunId, HttpServletRequest request) {
@@ -397,12 +392,7 @@ public class StudentExamResource {
         examService.loadQuizExercisesForStudentExam(studentExam);
 
         // 5th fetch participations, submissions and results and connect them to the studentExam
-        if (studentExam.getExam().isTestExam()) {
-            fetchParticipationsSubmissionsAndResultsForTestExam(studentExam, user);
-        }
-        else {
-            examService.fetchParticipationsSubmissionsAndResultsForRealExam(studentExam, user);
-        }
+        examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);
 
         log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
         return ResponseEntity.ok(studentExam);
@@ -590,7 +580,7 @@ public class StudentExamResource {
 
     /**
      * Sets the started flag and initial started date.
-     * Calls {@link ExamService#fetchParticipationsSubmissionsAndResultsForRealExam} to set up the exercises.
+     * Calls {@link ExamService#fetchParticipationsSubmissionsAndResultsForExam} to set up the exercises.
      * Starts an exam session for the request
      * Filters out unnecessary attributes.
      *
@@ -599,66 +589,49 @@ public class StudentExamResource {
      * @param studentExam the student exam to be prepared
      */
     private void prepareStudentExamForConduction(HttpServletRequest request, User currentUser, StudentExam studentExam) {
+
+        // In case the studentExam is not yet started, a new participation with a specific initialization date should be created - isStarted uses Boolean
+        if (studentExam.getExam().isTestExam()) {
+            boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
+            if (setupTestExamNeeded) {
+                // Fix startedDate. As the studentExam.startedDate is used to link the participation.initializationDate, we need to drop the ms
+                // (initializationDate is stored with ms)
+                ZonedDateTime startedDate = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+
+                // Set up new participations for the Exercises and set initialisationDate to the startedDate
+                studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
+
+                // Mark the student exam as started and save it
+                studentExam.setStarted(true);
+                studentExam.setStartedDate(startedDate);
+                studentExamRepository.save(studentExam);
+            }
+        }
+        else {
+            // Mark the student exam as started and save it
+            studentExam.setStarted(true);
+            if (studentExam.getStartedDate() == null) {
+                studentExam.setStartedDate(ZonedDateTime.now());
+            }
+            studentExamRepository.save(studentExam);
+        }
+
+        // Load quizzes
         examService.loadQuizExercisesForStudentExam(studentExam);
 
-        // 2nd: mark the student exam as started
-        studentExam.setStarted(true);
-        if (studentExam.getStartedDate() == null) {
-            studentExam.setStartedDate(ZonedDateTime.now());
-        }
-        studentExamRepository.save(studentExam);
-
-        // 3rd fetch participations, submissions and results and connect them to the studentExam
-        examService.fetchParticipationsSubmissionsAndResultsForRealExam(studentExam, currentUser);
+        // Fetch participations, submissions and results and connect them to the studentExam
+        examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, currentUser);
         for (var exercise : studentExam.getExercises()) {
             for (var participation : exercise.getStudentParticipations()) {
                 // remove inner exercise from participation
                 participation.setExercise(null);
             }
         }
-        // 4th create new exam session
+
+        // Create new exam session
         createNewExamSession(request, studentExam);
 
-        // not needed
-        studentExam.getExam().setCourse(null);
-    }
-
-    /**
-     * Prepares a Student Exam for conduction with the studentParticipations as argument, instead of fetching them from the database.
-     *
-     * @param request                the http request for the conduction
-     * @param currentUser            the current user
-     * @param studentExam            the student exam to be prepared
-     * @param createNewParticipation if a new participation should be created or an existing participation should be fetched from the database
-     */
-    private void prepareStudentExamForConductionWithInitializationDateSet(HttpServletRequest request, User currentUser, StudentExam studentExam, boolean createNewParticipation) {
-
-        if (createNewParticipation) {
-            // 1st: Fix startedDate. As the studentExam.startedDate is used to link the participation.initializationDate, we need to drop the ms
-            // (initializationDate is stored with ms)
-            ZonedDateTime startedDate = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
-
-            // 2nd: Set up new participations for the Exercises and set initialisationDate to the startedDate
-            studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
-
-            // 3rd: mark the student exam as started
-            studentExam.setStarted(true);
-            studentExam.setStartedDate(startedDate);
-
-        }
-        // 4th: Fetch the relevant data from the database
-        examService.fetchParticipationsSubmissionsAndResultsForRealExam(studentExam, currentUser);
-
-        // 5th: Reload the Quiz-Exercises
-        examService.loadQuizExercisesForStudentExam(studentExam);
-
-        // 6th: Save StudentExam
-        studentExamRepository.save(studentExam);
-
-        // 7th create new exam session
-        createNewExamSession(request, studentExam);
-
-        // not needed
+        // Remove not needed objects
         studentExam.getExam().setCourse(null);
     }
 
@@ -677,28 +650,6 @@ public class StudentExamResource {
         examSession.hideDetails();
         examSession.setInitialSession(this.examSessionService.checkExamSessionIsInitial(studentExam.getId()));
         studentExam.setExamSessions(Set.of(examSession));
-    }
-
-    /**
-     * For all exercises from the test exam, fetch participation, submissions & result for the current user.
-     * (Different way, as studentExam <-> participations are linked with the startedDate <-> initializationDate
-     *
-     * @param studentExam the student exam in question
-     * @param user logged-in user with groups and authorities
-     */
-    private void fetchParticipationsSubmissionsAndResultsForTestExam(StudentExam studentExam, User user) {
-
-        // 1st: fetch participations, submissions and results.
-        List<StudentParticipation> participations = studentParticipationRepository
-                .findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(studentExam);
-
-        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), user);
-
-        // 2nd: connect & filter the exercises and student participations including the latest submission and results where necessary, to make sure all relevant associations are
-        // available
-        for (Exercise exercise : studentExam.getExercises()) {
-            examService.filterParticipationForExercise(studentExam, exercise, participations, isAtLeastInstructor);
-        }
     }
 
     /**

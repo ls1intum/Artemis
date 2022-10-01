@@ -168,6 +168,7 @@
                 "exerciseStatus": "Exercise status:",
                 "points": "Points:",
                 "bonus": "Bonus:",
+                "of": " of ",
                 "problemStatement": "Problem statement:",
                 "noResults": "You have no results yet",
                 "instructorActions": {
@@ -196,7 +197,7 @@
                 "complaintDue": "Complaint due:",
                 "complaintDueTooltip": "You can write a complain until {{date}}.",
                 "complaintPossible": "Complaint possible:",
-                "complaintPossibleTooltip": "A complaint will be possible later on."
+                "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint."
             }
         }
     }

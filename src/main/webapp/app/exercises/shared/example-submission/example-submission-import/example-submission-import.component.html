@@ -73,7 +73,8 @@
         </div>
 
         <ng-template #emptyTable>
-            <p jhiTranslate="artemisApp.assessment.dashboard.empty">No Submissions for this exercise!</p>
+            <p *ngIf="searchTermEntered">{{ 'artemisApp.assessment.dashboard.empty' | artemisTranslate }}</p>
+            <p *ngIf="!searchTermEntered">{{ 'artemisApp.assessment.dashboard.emptySearch' | artemisTranslate }}</p>
         </ng-template>
 
         <div class="d-flex justify-content-between p-2">
