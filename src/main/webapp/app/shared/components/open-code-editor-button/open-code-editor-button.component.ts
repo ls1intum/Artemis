@@ -3,6 +3,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-open-code-editor-button',
@@ -16,10 +17,11 @@ export class OpenCodeEditorButtonComponent implements OnInit {
     @Input()
     smallButtons: boolean;
     @Input()
-    participations: ProgrammingExerciseStudentParticipation[];
+    exercise: ProgrammingExercise;
     @Input()
     courseAndExerciseNavigationUrlSegment: any[];
 
+    participations: ProgrammingExerciseStudentParticipation[];
     courseAndExerciseNavigationUrl: string;
     activeParticipation: ProgrammingExerciseStudentParticipation;
 
@@ -29,6 +31,7 @@ export class OpenCodeEditorButtonComponent implements OnInit {
     constructor(private participationService: ParticipationService) {}
 
     ngOnInit() {
+        this.participations = this.exercise.studentParticipations!;
         this.courseAndExerciseNavigationUrl = this.courseAndExerciseNavigationUrlSegment.reduce((acc, segment) => acc + '/' + segment);
         this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, true) ?? this.participations[0];
     }
