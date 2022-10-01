@@ -778,6 +778,24 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
+    public void validateManualFeedbackSettings() {
+        if (!this.getAllowManualFeedbackRequests())
+            return;
+
+        if (this.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            throw new BadRequestAlertException("Assessment type is not manual", "Exercise", "invalidManualFeedbackSettings");
+        }
+
+        if (Objects.isNull(this.getDueDate())) {
+            throw new BadRequestAlertException("Exercise due date is not set", "Exercise", "invalidManualFeedbackSettings");
+        }
+
+        // TODO: disallow tests after due date
+        // if (Objects.nonNull(this.buildAndTestStudentSubmissionsAfterDueDate)) {
+        // throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
+        // }
+    }
+
     public Set<ExerciseHint> getExerciseHints() {
         return exerciseHints;
     }

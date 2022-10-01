@@ -241,10 +241,7 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         checkAccessPermissionOwner(participation, user);
-
-        if (programmingExercise.getAssessmentType() == AssessmentType.AUTOMATIC || Objects.isNull(programmingExercise.getDueDate())) {
-            throw new BadRequestAlertException("Exercise assessment type not automatic or due date not set", "participation", "exercise options invalid");
-        }
+        programmingExercise.validateManualFeedbackSettings();
 
         var studentParticipation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
         var result = studentParticipation.findLatestLegalResult();

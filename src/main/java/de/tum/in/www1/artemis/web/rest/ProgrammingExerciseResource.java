@@ -214,6 +214,7 @@ public class ProgrammingExerciseResource {
 
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
+        programmingExercise.validateManualFeedbackSettings();
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
