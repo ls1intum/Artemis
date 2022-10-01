@@ -130,7 +130,7 @@
             "personalRepositoryClone": "Your personal repository has been set up. Click the button <i>Clone repository</i>!",
             "personalRepositoryOnline": "Your personal repository has been set up. Click the button <i>Open code editor</i>!",
             "resumeProgrammingExercise": "The exercise has been resumed. You can now continue working on the exercise!",
-            "feedbackRequestSent": "Your feedback request has been sent.,
+            "feedbackRequestSent": "Your feedback request has been sent.",
             "feedbackRequestAlreadySent": "Your feedback request has already been sent.",
             "lockRepositoryWarning": "Your repository will be locked. You can only continue working after a tutor has answered your feedback request.",
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
