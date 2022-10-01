@@ -71,7 +71,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             // The student can either still submit or there is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
                 (dayjs().isBefore(this.exercise.dueDate) ||
-                    (this.studentParticipation?.individualDueDate && dayjs().isBefore(this.studentParticipation.individualDueDate)) ||
+                    dayjs().isBefore(this.studentParticipation?.individualDueDate) ||
                     (!!this.studentParticipation?.submissionCount && !this.individualComplaintDeadline)) &&
                 (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
 
@@ -128,10 +128,10 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         if (this.dueDate && now.isBefore(this.dueDate)) {
             this.isNextDueDate[0] = true;
             this.statusBadges = ['bg-success', 'bg-success', 'bg-success'];
-        } else if (this.exercise.assessmentDueDate && now.isBefore(this.exercise.assessmentDueDate)) {
+        } else if (now.isBefore(this.exercise.assessmentDueDate)) {
             this.isNextDueDate[1] = true;
             this.statusBadges = ['bg-danger', 'bg-success', 'bg-success'];
-        } else if (this.individualComplaintDeadline && now.isBefore(this.individualComplaintDeadline)) {
+        } else if (now.isBefore(this.individualComplaintDeadline)) {
             this.isNextDueDate[2] = true;
             this.statusBadges = ['bg-danger', 'bg-danger', 'bg-success'];
         } else if (this.canComplainLaterOn) {
