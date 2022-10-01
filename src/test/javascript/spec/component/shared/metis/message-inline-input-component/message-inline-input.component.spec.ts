@@ -7,7 +7,7 @@ import { MessageInlineInputComponent } from 'app/shared/metis/message/message-in
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { throwError } from 'rxjs';
+import { throwError } from 'rxjs/internal/observable/throwError';
 
 describe('MessageInlineInputComponent', () => {
     let component: MessageInlineInputComponent;
@@ -60,7 +60,7 @@ describe('MessageInlineInputComponent', () => {
     }));
 
     it('should stop loading when metis service throws error during message creation', fakeAsync(() => {
-        metisServiceCreateStub.mockImplementation(throwError);
+        metisServiceCreateStub.mockImplementation(() => throwError(() => new Error('error')));
         const onCreateSpy = jest.spyOn(component.onCreate, 'emit');
 
         component.posting = metisPostToCreateUser1;
@@ -105,7 +105,7 @@ describe('MessageInlineInputComponent', () => {
     }));
 
     it('should stop loading when metis service throws error during message updating', fakeAsync(() => {
-        metisServiceUpdateStub.mockImplementation(throwError);
+        metisServiceUpdateStub.mockImplementation(() => throwError(() => new Error('error')));
 
         component.posting = directMessageUser1;
         component.ngOnChanges();

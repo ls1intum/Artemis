@@ -16,7 +16,7 @@ import { EmojiData, EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
-import { DisplayPriority, UserRole } from 'app/shared/metis/metis.util';
+import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { MockTranslateService, TranslatePipeMock } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -37,11 +37,6 @@ describe('PostReactionsBarComponent', () => {
     let post: Post;
     let reactionToCreate: Reaction;
     let reactionToDelete: Reaction;
-
-    const PIN_EMOJI_ID = 'pushpin';
-    const ARCHIVE_EMOJI_ID = 'open_file_folder';
-    const SPEECH_BALLOON_ID = 'speech_balloon';
-    const HEAVY_MULTIPLICATION_ID = 'heavy_multiplication_x';
 
     const SPEECH_BALLOON_UNICODE = '1F4AC';
     const ARCHIVE_EMOJI_UNICODE = '1F4C2';
