@@ -128,10 +128,10 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         if (this.dueDate && now.isBefore(this.dueDate)) {
             this.isNextDueDate[0] = true;
             this.statusBadges = ['bg-success', 'bg-success', 'bg-success'];
-        } else if (now.isBefore(this.exercise.assessmentDueDate)) {
+        } else if (this.exercise.assessmentDueDate && now.isBefore(this.exercise.assessmentDueDate)) {
             this.isNextDueDate[1] = true;
             this.statusBadges = ['bg-danger', 'bg-success', 'bg-success'];
-        } else if (now.isBefore(this.individualComplaintDeadline)) {
+        } else if (this.individualComplaintDeadline && now.isBefore(this.individualComplaintDeadline)) {
             this.isNextDueDate[2] = true;
             this.statusBadges = ['bg-danger', 'bg-danger', 'bg-success'];
         } else if (this.canComplainLaterOn) {
