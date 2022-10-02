@@ -81,15 +81,15 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() {
-        User student = database.addUsers(2, 1, 0, 1).get(0);
+        database.addUsers(2, 1, 0, 1).get(0);
         Course course1 = database.addCourseWithOneReleasedTextExercise();
         Course course2 = database.addCourseWithOneFinishedTextExercise();
         releasedTextExercise = database.findTextExerciseWithTitle(course1.getExercises(), "Text");
         finishedTextExercise = database.findTextExerciseWithTitle(course2.getExercises(), "Finished");
-        lateParticipation = database.createAndSaveParticipationForExercise(finishedTextExercise, student.getLogin());
+        lateParticipation = database.createAndSaveParticipationForExercise(finishedTextExercise, "student1");
         lateParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
         participationRepository.save(lateParticipation);
-        database.createAndSaveParticipationForExercise(releasedTextExercise, student.getLogin());
+        database.createAndSaveParticipationForExercise(releasedTextExercise, "student1");
 
         textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         lateTextSubmission = ModelFactory.generateLateTextSubmission("example text 2", Language.ENGLISH);

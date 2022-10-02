@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.LinkedHashMap;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -164,7 +166,6 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testInstructorSearchTermMatchesId() throws Exception {
-        database.resetDatabase();
         database.addUsers(1, 1, 0, 1);
         testSearchTermMatchesId();
     }
@@ -172,7 +173,6 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminSearchTermMatchesId() throws Exception {
-        database.resetDatabase();
         database.addUsers(1, 1, 0, 1);
         testSearchTermMatchesId();
     }
@@ -183,28 +183,29 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         ProgrammingExercise exercise = ModelFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
         exercise.setTitle("LoremIpsum");
         exercise = programmingExerciseRepository.save(exercise);
+        var exerciseId = exercise.getId();
 
-        final var searchTerm = database.configureSearch(exercise.getId().toString());
+        final var searchTerm = database.configureSearch(exerciseId.toString());
         final var searchResult = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
-        assertThat(searchResult.getResultsOnPage()).hasSize(1);
+        assertThat(searchResult.getResultsOnPage().stream().filter(result -> ((int) ((LinkedHashMap<String, ?>) result).get("id")) == exerciseId.intValue())).hasSize(1);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
-        database.addCourseWithNamedProgrammingExerciseAndTestCases("Ankh");
-        database.addCourseExamExerciseGroupWithOneProgrammingExercise("Ankh-Morpork", "AnkhMorpork");
-
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/");
+        String randomString = UUID.randomUUID().toString();
+        database.addCourseWithNamedProgrammingExerciseAndTestCases(randomString);
+        database.addCourseExamExerciseGroupWithOneProgrammingExercise(randomString + "-Morpork", randomString + "Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", randomString);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
-        database.addCourseWithNamedProgrammingExerciseAndTestCases("Ankh");
-        database.addCourseExamExerciseGroupWithOneProgrammingExercise("Ankh-Morpork", "AnkhMorpork");
-
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/");
+        String randomString = UUID.randomUUID().toString();
+        database.addCourseWithNamedProgrammingExerciseAndTestCases(randomString);
+        database.addCourseExamExerciseGroupWithOneProgrammingExercise(randomString + "-Morpork", randomString + "Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", randomString);
     }
 
     @Test

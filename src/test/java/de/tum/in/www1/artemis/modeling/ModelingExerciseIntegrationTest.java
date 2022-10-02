@@ -601,17 +601,19 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
-        database.addCourseWithOneReleasedModelExerciseWithKnowledge("Ankh");
-        database.addCourseExamExerciseGroupWithOneModelingExercise("Ankh-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/");
+        String randomString = UUID.randomUUID().toString();
+        database.addCourseWithOneReleasedModelExerciseWithKnowledge(randomString);
+        database.addCourseExamExerciseGroupWithOneModelingExercise(randomString + "-Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/", randomString);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
-        database.addCourseWithOneReleasedModelExerciseWithKnowledge("Ankh");
-        database.addCourseExamExerciseGroupWithOneModelingExercise("Ankh-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/");
+        String randomString = UUID.randomUUID().toString();
+        database.addCourseWithOneReleasedModelExerciseWithKnowledge(randomString);
+        database.addCourseExamExerciseGroupWithOneModelingExercise(randomString + "-Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/", randomString);
     }
 
     @Test

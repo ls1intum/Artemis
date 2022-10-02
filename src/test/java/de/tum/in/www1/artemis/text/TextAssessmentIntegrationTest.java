@@ -232,7 +232,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.delete("/api/exercises/" + exampleSubmission.getExercise().getId() + "/example-submissions/" + exampleSubmission.getId() + "/example-text-assessment/feedback",
                 HttpStatus.NO_CONTENT);
         assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult()).isNull();
-        assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(exampleSubmission.getId())).isEmpty();
+        assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(exampleSubmission.getSubmission().getId())).isEmpty();
     }
 
     @Test
@@ -246,8 +246,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         long randomId = 4532;
         request.delete("/api/exercises/" + randomId + "/example-submissions/" + exampleSubmission.getId() + "/example-text-assessment/feedback", HttpStatus.BAD_REQUEST);
         assertThat(exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmission.getId()).getSubmission().getLatestResult().getFeedbacks()).isEmpty();
-        assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(exampleSubmission.getId())).isEmpty();
-
+        assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(exampleSubmission.getSubmission().getId())).isEmpty();
     }
 
     @Test
@@ -703,7 +702,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void cancelAssessment_wrongSubmissionId() throws Exception {
-        request.post("/api/participations/1/submissions/100/cancel-assessment", null, HttpStatus.NOT_FOUND);
+        request.post("/api/participations/1/submissions/" + 1000000000 + "/cancel-assessment", null, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -1150,7 +1149,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void retrieveConflictingTextSubmissions() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflict();
         List<TextSubmission> conflictingTextSubmissions = request.getList("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/"
                 + textSubmissions.get(0).getId() + "/feedbacks/" + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.OK,
                 TextSubmission.class);
@@ -1168,7 +1167,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void retrieveConflictingTextSubmissions_wrongParticipationId() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflict();
         long randomId = 54234;
         List<TextSubmission> conflictingTextSubmissions = request.getList("/api/participations/" + randomId + "/submissions/" + textSubmissions.get(0).getId() + "/feedbacks/"
                 + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.BAD_REQUEST, TextSubmission.class);
@@ -1179,7 +1178,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void retrieveConflictingTextSubmissions_automaticAssessmentDisabled() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflict();
         textExercise.setAssessmentType(AssessmentType.MANUAL);
         exerciseRepo.save(textExercise);
         List<TextSubmission> conflictingTextSubmissions = request.getList("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/"
@@ -1191,7 +1190,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
     void retrieveConflictingTextSubmissions_otherTutorForbidden() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflict();
         request.getList("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/" + textSubmissions.get(0).getId() + "/feedbacks/"
                 + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.FORBIDDEN, TextSubmission.class);
     }
@@ -1199,7 +1198,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void retrieveConflictingTextSubmissions_forNonExistingSubmission() throws Exception {
-        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflict();
         List<TextSubmission> conflictingTextSubmissions = request.getList("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/123/feedbacks/"
                 + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.BAD_REQUEST, TextSubmission.class);
         assertThat(conflictingTextSubmissions).as("passed submission should not be found").isNull();
@@ -1236,7 +1235,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void solveFeedbackConflict_forNonExistingConflict() throws Exception {
-        prepareTextSubmissionsWithFeedbackAndConflicts();
+        prepareTextSubmissionsWithFeedbackAndConflict();
 
         FeedbackConflict feedbackConflict = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/feedback-conflicts/2/solve", null, FeedbackConflict.class,
                 HttpStatus.BAD_REQUEST);
@@ -1246,7 +1245,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void solveFeedbackConflict_wrongExerciseId() throws Exception {
-        prepareTextSubmissionsWithFeedbackAndConflicts();
+        prepareTextSubmissionsWithFeedbackAndConflict();
         long randomId = 57456;
         FeedbackConflict feedbackConflict = request.postWithResponseBody(
                 "/api/exercises/" + randomId + "/feedback-conflicts/" + feedbackConflictRepository.findAll().get(0).getId() + "/solve", null, FeedbackConflict.class,
@@ -1255,9 +1254,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     private FeedbackConflict solveFeedbackConflict(HttpStatus expectedStatus) throws Exception {
-        prepareTextSubmissionsWithFeedbackAndConflicts();
-        return request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/feedback-conflicts/" + feedbackConflictRepository.findAll().get(0).getId() + "/solve",
-                null, FeedbackConflict.class, expectedStatus);
+        FeedbackConflict feedbackConflict = prepareTextSubmissionsWithFeedbackAndConflictGetConflict();
+        return request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/feedback-conflicts/" + feedbackConflict.getId() + "/solve", null, FeedbackConflict.class,
+                expectedStatus);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -1449,7 +1448,24 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @NotNull
-    private List<TextSubmission> prepareTextSubmissionsWithFeedbackAndConflicts() {
+    private List<TextSubmission> prepareTextSubmissionsWithFeedbackAndConflict() {
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedback();
+        TextSubmission textSubmission1 = textSubmissions.get(0);
+        TextSubmission textSubmission2 = textSubmissions.get(1);
+        prepareFeedbackConflict(textSubmission1, textSubmission2);
+        return asList(textSubmission1, textSubmission2);
+    }
+
+    @NotNull
+    private FeedbackConflict prepareTextSubmissionsWithFeedbackAndConflictGetConflict() {
+        List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedback();
+        TextSubmission textSubmission1 = textSubmissions.get(0);
+        TextSubmission textSubmission2 = textSubmissions.get(1);
+        return prepareFeedbackConflict(textSubmission1, textSubmission2);
+    }
+
+    @NotNull
+    private List<TextSubmission> prepareTextSubmissionsWithFeedback() {
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("This is first submission's first sentence.", Language.ENGLISH, true);
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("This is second submission's first sentence.", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission1, "student1");
@@ -1465,12 +1481,15 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         textSubmission1 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, "student1", "tutor1", List.of(feedback1));
         textSubmission2 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, "student2", "tutor2", List.of(feedback2));
 
-        // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
+        return asList(textSubmission1, textSubmission2);
+    }
+
+    @NotNull
+    private FeedbackConflict prepareFeedbackConflict(TextSubmission textSubmission1, TextSubmission textSubmission2) {
         FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(textSubmission1.getLatestResult().getFeedbacks().get(0),
                 textSubmission2.getLatestResult().getFeedbacks().get(0));
         feedbackConflictRepository.save(feedbackConflict);
-
-        return asList(textSubmission1, textSubmission2);
+        return feedbackConflict;
     }
 
     private void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,
@@ -1525,10 +1544,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
                 .forEach(textBlock -> feedbacks.add(new Feedback().type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1").reference(textBlock.getId())));
         textAssessmentDTO.setFeedbacks(feedbacks);
 
-        Result result = request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
+        request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
                 + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
 
-        textBlockRepository.findAll().forEach(textBlock -> {
+        textBlockRepository.findAllBySubmissionId(submissionWithoutAssessment.getId()).forEach(textBlock -> {
             assertThat(textBlock.getFeedback().getId()).isNotNull();
         });
     }

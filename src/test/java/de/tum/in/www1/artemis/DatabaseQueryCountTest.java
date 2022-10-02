@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis;
 
-import java.util.List;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,6 +13,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.CourseService;
 
+@Disabled("Relies on a database reset since the query count must assume the database is empty. Disabled until we have a performant reset.")
 class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
@@ -43,12 +43,6 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
-        List<Course> courses = courseRepository.findAll();
-        courses.forEach(c -> {
-            Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(c.getId());
-            courseService.delete(course);
-        }); // Need to delete all courses so the expected query count is accurate
-
         // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
         database.createMultipleCoursesWithAllExercisesAndLectures(10, 10);
 

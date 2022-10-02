@@ -933,7 +933,8 @@ public class DatabaseUtilService {
             // create 5 tutor participations and 5 example submissions and connect all of them (to test the many-to-many relationship)
             var tutorParticipations = new ArrayList<TutorParticipation>();
             for (int i = 1; i < 6; i++) {
-                var tutorParticipation = new TutorParticipation().tutor(getUserByLogin(prefix + "tutor" + i)).assessedExercise(modelingExercise);
+                var tutorParticipation = new TutorParticipation().tutor(getUserByLogin(prefix + "tutor" + i)).status(TutorParticipationStatus.NOT_PARTICIPATED)
+                        .assessedExercise(modelingExercise);
                 tutorParticipationRepo.save(tutorParticipation);
                 tutorParticipations.add(tutorParticipation);
             }
