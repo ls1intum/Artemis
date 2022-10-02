@@ -3,9 +3,11 @@ package de.tum.in.www1.artemis.repository;
 import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -31,6 +33,8 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
             """)
     BuildLogStatisticsDTO findAverageBuildLogStatisticsEntryForExercise(@Param("exercise") ProgrammingExercise exercise);
 
+    @Transactional // ok because of delete
+    @Modifying
     void deleteByProgrammingSubmissionId(long programmingSubmissionId);
 
     /**

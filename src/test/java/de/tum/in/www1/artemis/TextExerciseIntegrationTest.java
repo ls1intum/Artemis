@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -338,7 +339,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             final TextSubmission submission2 = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
             databaseUtilService.saveTextSubmission(textExercise, submission2, "student2");
 
-            final var participations = studentParticipationRepository.findByExerciseId(textExercise.getId());
+            final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(textExercise.getId()));
             assertThat(participations).hasSize(2);
             participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
             participations.get(1).setIndividualDueDate(individualDueDate);

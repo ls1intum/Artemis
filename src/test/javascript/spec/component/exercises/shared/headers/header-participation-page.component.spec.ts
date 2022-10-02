@@ -14,6 +14,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import dayjs from 'dayjs/esm';
+import { Result } from 'app/entities/result.model';
 
 describe('HeaderParticipationPage', () => {
     let component: HeaderParticipationPageComponent;
@@ -95,5 +96,20 @@ describe('HeaderParticipationPage', () => {
         expect(component.exerciseStatusBadge).toBe('bg-success');
         expect(component.exerciseCategories).toBeUndefined();
         expect(component.dueDate).toBeUndefined();
+    });
+
+    it('should display achieved points accordingly', () => {
+        component.exercise.maxPoints = 100;
+        component.participation = { results: [] } as StudentParticipation;
+        component.ngOnChanges();
+        expect(component.achievedPoints).toBeUndefined();
+
+        component.participation = { results: [{ score: 42 } as Result] } as StudentParticipation;
+        component.ngOnChanges();
+        expect(component.achievedPoints).toBeUndefined();
+
+        component.participation = { results: [{ score: 42, rated: true } as Result] } as StudentParticipation;
+        component.ngOnChanges();
+        expect(component.achievedPoints).toBe(42);
     });
 });

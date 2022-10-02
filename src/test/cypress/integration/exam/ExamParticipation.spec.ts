@@ -122,7 +122,6 @@ describe('Exam participation', () => {
         onlineEditor.typeSubmission(submission, 'de.test');
         onlineEditor.submit();
         onlineEditor.getResultScore().contains('100%').should('be.visible');
-        onlineEditor.getResultScore().contains('13 of 13 passed').should('be.visible');
     }
 
     function makeModelingExerciseSubmission() {

@@ -49,6 +49,7 @@ describe('CourseDiscussionComponent', () => {
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
     let metisServiceGetUserStub: jest.SpyInstance;
+    let fetchNextPageSpy: jest.SpyInstance;
 
     const id = metisCourse.id;
     const parentRoute = {
@@ -94,6 +95,7 @@ describe('CourseDiscussionComponent', () => {
                 metisService = fixture.debugElement.injector.get(MetisService);
                 metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
                 metisServiceGetUserStub = jest.spyOn(metisService, 'getUser');
+                fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
             });
     });
 
@@ -368,6 +370,20 @@ describe('CourseDiscussionComponent', () => {
             },
             false,
         );
+    }));
+
+    it('should call fetchNextPage at course discussions when scrolled to bottom and do nothing when scrolled to top', fakeAsync(() => {
+        component.itemsPerPage = 5;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+
+        const scrollableDiv = getElement(fixture.debugElement, 'div[id=scrollableDiv]');
+        scrollableDiv.dispatchEvent(new Event('scrolledUp'));
+        expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
+
+        scrollableDiv.dispatchEvent(new Event('scrolled'));
+        expect(fetchNextPageSpy).toHaveBeenCalledOnce();
     }));
 
     function expectGetFilteredPostsToBeCalled() {

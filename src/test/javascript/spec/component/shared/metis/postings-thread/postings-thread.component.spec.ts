@@ -13,6 +13,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { post } from '../../../../helpers/sample/metis-sample-data';
+import { getElement } from '../../../../helpers/utils/general.utils';
 
 describe('PostingThreadComponent', () => {
     let component: PostingThreadComponent;
@@ -47,7 +48,10 @@ describe('PostingThreadComponent', () => {
 
     it('should contain a post', () => {
         component.post = post;
-        const postComponent = fixture.debugElement.nativeElement.querySelector('jhi-post');
+
+        fixture.detectChanges();
+
+        const postComponent = getElement(fixture.debugElement, 'jhi-post');
         expect(postComponent).not.toBeNull();
     });
 });

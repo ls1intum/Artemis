@@ -158,6 +158,8 @@ describe('CourseExerciseDetailsComponent', () => {
                 fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
                 comp = fixture.componentInstance;
 
+                comp.studentParticipations = [];
+
                 // mock profileService
                 profileService = fixture.debugElement.injector.get(ProfileService);
                 getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
@@ -202,6 +204,7 @@ describe('CourseExerciseDetailsComponent', () => {
         studentParticipation.student = new User(99);
         studentParticipation.submissions = [new TextSubmission()];
         studentParticipation.type = ParticipationType.STUDENT;
+        studentParticipation.id = 42;
         const result = new Result();
         result.id = 1;
         result.completionDate = dayjs();
@@ -212,13 +215,13 @@ describe('CourseExerciseDetailsComponent', () => {
         const exerciseDetailResponse = of({ body: exerciseDetail });
 
         // return initial participation for websocketService
-        jest.spyOn(participationWebsocketService, 'getParticipationForExercise').mockReturnValue(studentParticipation);
+        jest.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([studentParticipation]);
         jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({} as EntityResponseType));
 
         // mock participationService, needed for team assignment
         participationService = TestBed.inject(ParticipationService);
         mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
-        mergeStudentParticipationMock.mockReturnValue(studentParticipation);
+        mergeStudentParticipationMock.mockReturnValue([studentParticipation]);
         const changedParticipation = cloneDeep(studentParticipation);
         const changedResult = { ...result, id: 2 };
         changedParticipation.results = [changedResult];
@@ -229,10 +232,11 @@ describe('CourseExerciseDetailsComponent', () => {
 
         // override mock to return exercise with participation
         getExerciseDetailsMock.mockReturnValue(exerciseDetailResponse);
+        mergeStudentParticipationMock.mockReturnValue([changedParticipation]);
         comp.loadExercise();
         fixture.detectChanges();
         expect(comp.courseId).toBe(1);
-        expect(comp.studentParticipation?.exercise?.id).toBe(exerciseDetail.id);
+        expect(comp.studentParticipations?.[0].exercise?.id).toBe(exerciseDetail.id);
         expect(comp.exercise!.studentParticipations![0].results![0]).toStrictEqual(changedResult);
         expect(comp.hasMoreResults).toBeFalse();
         expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
