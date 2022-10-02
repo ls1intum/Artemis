@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -104,7 +104,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         for (var job : getBuild().jobs()) {
             for (var bambooLog : job.logs()) {
                 // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
-                buildLogEntries.add(new BuildLogEntry(bambooLog.date(), StringEscapeUtils.unescapeHtml(bambooLog.log())));
+                buildLogEntries.add(new BuildLogEntry(bambooLog.date(), StringEscapeUtils.unescapeHtml4(bambooLog.log())));
             }
         }
 
