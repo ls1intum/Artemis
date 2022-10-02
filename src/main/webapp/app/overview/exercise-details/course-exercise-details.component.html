@@ -1,6 +1,6 @@
 <div *ngIf="exercise">
     <!-- HEADER INFORMATION START -->
-    <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" [submissionPolicy]="submissionPolicy">
+    <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" [submissionPolicy]="submissionPolicy" [course]="course">
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
@@ -113,7 +113,7 @@
         <div class="col pe-0 flex-grow-1">
             <!-- EXERCISE ACTIONS END -->
             <!-- RESULTS START -->
-            <div class="row" *ngIf="this.sortedHistoryResults?.length && this.sortedHistoryResults.length > 1">
+            <div class="row" *ngIf="(this.sortedHistoryResults?.length && this.sortedHistoryResults.length > 1) || this.practiceStudentParticipation?.results?.length">
                 <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex">
                     <div class="col-auto">
                         <h3>{{ 'artemisApp.courseOverview.exerciseDetails.recentResults' | artemisTranslate }}</h3>

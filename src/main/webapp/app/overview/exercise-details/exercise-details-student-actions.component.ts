@@ -39,6 +39,8 @@ export class ExerciseDetailsStudentActionsComponent {
     // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
+    startingPracticeMode = false;
+
     // Icons
     faFolderOpen = faFolderOpen;
     faUsers = faUsers;
@@ -117,23 +119,24 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     startPractice(): void {
-        this.courseExerciseService.startPractice(this.exercise.id!).subscribe({
-            next: (participation) => {
-                if (participation) {
-                    this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
-                }
-                if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                    if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
-                        this.alertService.success('artemisApp.exercise.personalRepositoryClone');
-                    } else {
-                        this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
+        this.startingPracticeMode = true;
+        this.courseExerciseService
+            .startPractice(this.exercise.id!)
+            .pipe(finalize(() => (this.startingPracticeMode = false)))
+            .subscribe({
+                next: () => {
+                    if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+                            this.alertService.success('artemisApp.exercise.personalRepositoryClone');
+                        } else {
+                            this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
+                        }
                     }
-                }
-            },
-            error: () => {
-                this.alertService.warning('artemisApp.exercise.startError');
-            },
-        });
+                },
+                error: () => {
+                    this.alertService.warning('artemisApp.exercise.startError');
+                },
+            });
     }
 
     /**
