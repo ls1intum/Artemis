@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.domain.plagiarism.text;
 
 import javax.persistence.Entity;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import de.jplag.JPlagResult;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
@@ -28,7 +30,11 @@ public class TextPlagiarismResult extends PlagiarismResult<TextSubmissionElement
             this.comparisons.add(comparison);
         }
         this.duration = result.getDuration();
-        this.setSimilarityDistribution(result.getSimilarityDistribution());
+        // NOTE: there seems to be an issue in JPlag 4.0 that the similarity distribution is reversed, either in the implementation or in the documentation.
+        // we use it like this: 0: [0% - 10%), 1: [10% - 20%), 2: [20% - 30%), ..., 9: [90% - 100%] so we reverse it
+        var similarityDistribution = result.getSimilarityDistribution();
+        ArrayUtils.reverse(similarityDistribution);
+        this.setSimilarityDistribution(similarityDistribution);
         this.setExercise(exercise);
     }
 }
