@@ -196,7 +196,7 @@ The following universities are actively using Artemis or are currently evaluatin
 
 ##### TU Dresden
 
-* Main contact person: [Martin Morgenstern](martin.morgenstern1@tu-dresden.de)
+* Main contact person: [Martin Morgenstern](mailto:martin.morgenstern1@tu-dresden.de)
 
 ##### Hochschule Heilbronn
 
