@@ -114,7 +114,7 @@ public class ProgrammingPlagiarismDetectionService {
             }
             plagiarismCacheService.setActivePlagiarismCheck(courseId);
 
-            JPlagResult result = getJPlagResult(programmingExercise, similarityThreshold, minimumScore);
+            JPlagResult result = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore);
             if (result == null) {
                 log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
                 TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
@@ -157,7 +157,7 @@ public class ProgrammingPlagiarismDetectionService {
         long start = System.nanoTime();
 
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
-        JPlagResult result = getJPlagResult(programmingExercise, similarityThreshold, minimumScore);
+        JPlagResult result = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore);
         if (result == null) {
             return null;
         }
@@ -175,7 +175,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @return the JPlag result or null if there are not enough participations
      * @throws ExitException in case JPlag fails
      */
-    private JPlagResult getJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) throws ExitException {
+    private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) throws ExitException {
         long programmingExerciseId = programmingExercise.getId();
 
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
@@ -207,7 +207,7 @@ public class ProgrammingPlagiarismDetectionService {
         plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of("Running JPlag..."));
 
         JPlag jplag = new JPlag(options);
-        JPlagResult result = null;
+        JPlagResult result;
         try {
             result = jplag.run();
         }

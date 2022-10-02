@@ -63,7 +63,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     protected Set<PlagiarismMatch> matches;
 
     /**
-     * Similarity of the compared submissions (between 0 and 1).
+     * Similarity of the compared submissions in percentage (between 0 and 100).
      */
     @Column(name = "similarity")
     private double similarity;
@@ -86,7 +86,8 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.firstSubmission()));
         comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.secondSubmission()));
         comparison.setMatches(jplagComparison.matches().stream().map(PlagiarismMatch::fromJPlagMatch).collect(Collectors.toSet()));
-        comparison.setSimilarity(jplagComparison.similarity());
+        // Note: JPlag returns a value between 0 and 1, we assume and store a value between 0 and 100 (percentage) in the database
+        comparison.setSimilarity(jplagComparison.similarity() * 100);
         comparison.setStatus(PlagiarismStatus.NONE);
 
         return comparison;
