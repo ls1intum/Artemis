@@ -45,16 +45,14 @@ describe('TutorialGroupDetailComponent', () => {
                             },
                         }),
                         parent: {
-                            parent: {
-                                paramMap: of({
-                                    get: (key: string) => {
-                                        switch (key) {
-                                            case 'courseId':
-                                                return 2;
-                                        }
-                                    },
-                                }),
-                            },
+                            paramMap: of({
+                                get: (key: string) => {
+                                    switch (key) {
+                                        case 'courseId':
+                                            return 2;
+                                    }
+                                },
+                            }),
                         },
                     },
                 },

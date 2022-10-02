@@ -38,16 +38,14 @@ describe('EditTutorialGroupComponent', () => {
                             },
                         }),
                         parent: {
-                            parent: {
-                                paramMap: of({
-                                    get: (key: string) => {
-                                        switch (key) {
-                                            case 'courseId':
-                                                return 1;
-                                        }
-                                    },
-                                }),
-                            },
+                            paramMap: of({
+                                get: (key: string) => {
+                                    switch (key) {
+                                        case 'courseId':
+                                            return 1;
+                                    }
+                                },
+                            }),
                         },
                     },
                 },

@@ -70,11 +70,7 @@ describe('Registered Students Component', () => {
                                 }
                             },
                         }),
-                        parent: {
-                            parent: {
-                                data: of({ course }),
-                            },
-                        },
+                        data: of({ course }),
                     },
                 },
             ],

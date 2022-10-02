@@ -57,7 +57,7 @@ export class RegisteredStudentsComponent implements OnInit {
     loadAll = () => {
         this.isLoading = true;
         this.isAdmin = this.accountService.isAdmin();
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.data])
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
                 switchMap(([params, data]) => {
