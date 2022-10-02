@@ -33,7 +33,6 @@ describe('Messaging Service', () => {
     let websocketService: JhiWebsocketService;
     let websocketServiceSubscribeSpy: jest.SpyInstance;
     let websocketServiceReceiveStub: jest.SpyInstance;
-    let messageServiceWebsocketSubscriptionSpy: jest.SpyInstance;
 
     let course: Course;
 
@@ -63,7 +62,6 @@ describe('Messaging Service', () => {
 
     describe('Invoke conversation service methods', () => {
         beforeEach(() => {
-            messageServiceWebsocketSubscriptionSpy = jest.spyOn(messagingService, 'createWebSocketSubscription');
             websocketServiceReceiveStub = jest.spyOn(websocketService, 'receive');
             websocketServiceSubscribeSpy = jest.spyOn(websocketService, 'subscribe');
         });

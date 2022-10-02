@@ -76,13 +76,13 @@ export class ResultService implements IResultService {
     private getResultStringDefinedParameters(result: Result, exercise: Exercise, short?: boolean): string {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
-        if (exercise.type !== ExerciseType.PROGRAMMING || short) {
+        if (exercise.type !== ExerciseType.PROGRAMMING) {
             return this.translateService.instant(`artemisApp.result.resultStringNonProgramming`, {
                 relativeScore,
                 points,
             });
         } else {
-            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points);
+            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
         }
     }
 
@@ -94,12 +94,17 @@ export class ResultService implements IResultService {
      * @param relativeScore the achieved score in percent
      * @param points the amount of achieved points
      */
-    private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number): string {
+    private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, short?: boolean): string {
         let buildAndTestMessage: string;
         if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildFailed');
         } else if (!result.testCaseCount) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulNoTests');
+        } else if (short) {
+            return this.translateService.instant(`artemisApp.result.resultStringNonProgramming`, {
+                relativeScore,
+                points,
+            });
         } else {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulTests', {
                 numberOfTestsPassed: result.passedTestCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.passedTestCaseCount,

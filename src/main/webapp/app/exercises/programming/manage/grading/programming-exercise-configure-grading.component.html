@@ -20,7 +20,7 @@
                     <b>Submission Policy</b>
                 </div>
             </div>
-            <ng-template #tabPlaceholder><div></div></ng-template>
+            <ng-template><div></div></ng-template>
             <div class="d-flex align-items-center">
                 <jhi-programming-exercise-configure-grading-status
                     *ngIf="activeTab != 'submission-policy'"
@@ -68,9 +68,13 @@
                         <div class="d-flex justify-content-between mb-3">
                             <div>
                                 <h2 class="mb-1 fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.title">Test Cases</h2>
-                                <div class="form-check">
+                                <div class="form-check mb-2">
                                     <input class="form-check-input" type="checkbox" [checked]="showInactive" (change)="showInactive = !showInactive" />
                                     <label class="form-check-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive">Show inactive</label>
+                                </div>
+                                <div>
+                                    <label class="form-check-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.exercisePoints">Exercise Points:</label>
+                                    {{ programmingExercise.maxPoints }} P
                                 </div>
                             </div>
                             <jhi-programming-exercise-grading-table-actions
@@ -86,7 +90,7 @@
                             class="bootstrap"
                             trackByProp="id"
                             [headerHeight]="50"
-                            [limit]="20"
+                            [limit]="100"
                             [columnMode]="'force'"
                             [footerHeight]="50"
                             [rowHeight]="'auto'"
@@ -222,7 +226,7 @@
                                     </span>
                                 </ng-template>
                                 <ng-template ngx-datatable-cell-template let-row="row">
-                                    {{ testCasePoints[row.testName] }}
+                                    <div *ngIf="testCasePoints[row.testName]">{{ testCasePoints[row.testName] }} P ({{ testCasePointsRelative[row.testName] }} %)</div>
                                 </ng-template>
                             </ngx-datatable-column>
                             <ngx-datatable-column *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA" name="Type" prop="type">

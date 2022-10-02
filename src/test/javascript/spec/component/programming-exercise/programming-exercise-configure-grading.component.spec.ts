@@ -403,7 +403,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(testThatWasUpdated.bonusMultiplier).toBe(2);
         expect(testThatWasUpdated.bonusPoints).toBe(1);
         expect(comp.changedTestCaseIds).toHaveLength(0);
-        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(74);
+        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(77.4);
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
@@ -445,7 +445,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(testThatWasUpdated.bonusMultiplier).toBe(1);
         expect(testThatWasUpdated.bonusPoints).toBe(1);
         expect(comp.changedTestCaseIds).toHaveLength(0);
-        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(37.5);
+        expect(comp.testCasePoints[testThatWasUpdated.testName!]).toBe(39.2);
     });
 
     const setAllWeightsToZero = () => {
@@ -855,7 +855,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 16.8, otherTest: 12.6, testBubbleSort: 9.4, testMergeSort: 8.4 });
+        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 21, testBubbleSort: 11.5, testMergeSort: 10.5 });
     });
 
     it('should update points of individual test correctly', () => {
@@ -865,12 +865,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         testCases[0].weight = 5;
         comp.updateTestPoints(testCases[0], EditableField.WEIGHT);
 
-        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 26.3, otherTest: 5.3, testBubbleSort: 5.3, testMergeSort: 5.3 });
+        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 30, testBubbleSort: 6, testMergeSort: 6 });
 
         testCases[2].bonusMultiplier = 3;
         comp.updateTestPoints(testCases[2], EditableField.BONUS_MULTIPLIER);
 
-        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 26.3, otherTest: 5.3, testBubbleSort: 15.8, testMergeSort: 5.3 });
+        expect(comp.testCasePoints).toEqual({ invisibleTestToStudents: 30, testBubbleSort: 18, testMergeSort: 6 });
     });
 
     describe('test chart interaction', () => {

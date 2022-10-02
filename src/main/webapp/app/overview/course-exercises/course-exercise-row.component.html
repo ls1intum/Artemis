@@ -18,10 +18,12 @@
             <jhi-submission-result-status
                 *ngIf="!isPresentationMode"
                 [exercise]="exercise"
-                [short]="true"
+                [studentParticipation]="gradedStudentParticipation"
                 [triggerLastGraded]="false"
+                [short]="true"
                 class="result"
-            ></jhi-submission-result-status>
+            >
+            </jhi-submission-result-status>
         </div>
         <div class="row" style="justify-content: space-between">
             <jhi-exercise-details-student-actions
