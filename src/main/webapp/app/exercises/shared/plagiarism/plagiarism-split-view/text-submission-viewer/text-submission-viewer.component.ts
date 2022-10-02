@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from '@
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { FromToElement, TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -21,7 +21,7 @@ type FilesWithType = { [p: string]: FileType };
 })
 export class TextSubmissionViewerComponent implements OnChanges {
     @Input() exercise: ProgrammingExercise | TextExercise;
-    @Input() matches: Map<string, { from: TextSubmissionElement; to: TextSubmissionElement }[]>;
+    @Input() matches: Map<string, FromToElement[]>;
     @Input() plagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>;
 
     /**
@@ -209,27 +209,27 @@ export class TextSubmissionViewerComponent implements OnChanges {
         const matches = this.getMatchesForCurrentFile();
         const offsets = new Array(rows.length).fill(0);
 
-        matches.forEach(({ from, to }) => {
-            if (!from) {
+        matches.forEach((match) => {
+            if (!match.from) {
                 captureException(new Error('"from" is not defined in insertMatchTokens'));
                 return;
             }
-            if (!to) {
+            if (!match.to) {
                 captureException(new Error('"to" is not defined in insertMatchTokens'));
                 return;
             }
 
-            const idxLineFrom = from.line - 1;
-            const idxLineTo = to.line - 1;
+            const idxLineFrom = match.from.line - 1;
+            const idxLineTo = match.to.line - 1;
 
-            const idxColumnFrom = from.column - 1 + offsets[idxLineFrom];
+            const idxColumnFrom = match.from.column - 1 + offsets[idxLineFrom];
 
             if (rows[idxLineFrom]) {
                 rows[idxLineFrom] = this.insertToken(rows[idxLineFrom], this.tokenStart, idxColumnFrom);
                 offsets[idxLineFrom] += this.tokenStart.length;
             }
 
-            const idxColumnTo = to.column + to.length - 1 + offsets[idxLineTo];
+            const idxColumnTo = match.to.column + match.to.length - 1 + offsets[idxLineTo];
 
             if (rows[idxLineTo]) {
                 rows[idxLineTo] = this.insertToken(rows[idxLineTo], this.tokenEnd, idxColumnTo);

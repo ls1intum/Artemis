@@ -73,7 +73,7 @@ public class TextPlagiarismDetectionService {
      * Download all submissions of the exercise, run JPlag, and return the result
      *
      * @param textExercise        to detect plagiarism for
-     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return a zip file that can be returned to the client
@@ -106,7 +106,6 @@ public class TextPlagiarismDetectionService {
                 TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
                 textPlagiarismResult.setExercise(textExercise);
                 textPlagiarismResult.setSimilarityDistribution(new int[0]);
-
                 return textPlagiarismResult;
             }
 
@@ -140,8 +139,9 @@ public class TextPlagiarismDetectionService {
             // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
             // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
             Language language = LanguageLoader.getLanguage(de.jplag.text.Language.IDENTIFIER).orElseThrow();
-            JPlagOptions options = new JPlagOptions(language, Set.of(submissionFolderFile), Set.of()).withMinimumTokenMatch(minimumSize)
-                    .withSimilarityThreshold(similarityThreshold);
+            JPlagOptions options = new JPlagOptions(language, Set.of(submissionFolderFile), Set.of())
+                    // JPlag expects a value between 0.0 and 1.0
+                    .withSimilarityThreshold(similarityThreshold / 100.0);
 
             log.info("Start JPlag Text comparison");
             JPlag jplag = new JPlag(options);
@@ -154,11 +154,17 @@ public class TextPlagiarismDetectionService {
             }
 
             TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-            textPlagiarismResult.convertJPlagResult(jPlagResult);
-            textPlagiarismResult.setExercise(textExercise);
+            textPlagiarismResult.convertJPlagResult(jPlagResult, textExercise);
 
             log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
+            return textPlagiarismResult;
+        }
+        catch (Exception ex) {
+            log.warn("Text plagiarism detection NOT successful", ex);
+            TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+            textPlagiarismResult.setExercise(textExercise);
+            textPlagiarismResult.setSimilarityDistribution(new int[0]);
             return textPlagiarismResult;
         }
         finally {

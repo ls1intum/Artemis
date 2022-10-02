@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.jplag.Submission;
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
@@ -83,9 +85,11 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
      * Create a new PlagiarismSubmission instance from an existing JPlag Submission
      *
      * @param jplagSubmission the JPlag Submission to create the PlagiarismSubmission from
+     * @param exercise the exercise to which the comparison belongs, either Text or Programming
+     * @param submissionDirectory the directory to which all student submissions have been downloaded / stored
      * @return a new PlagiarismSubmission instance
      */
-    public static PlagiarismSubmission<TextSubmissionElement> fromJPlagSubmission(Submission jplagSubmission) {
+    public static PlagiarismSubmission<TextSubmissionElement> fromJPlagSubmission(Submission jplagSubmission, Exercise exercise, File submissionDirectory) {
         PlagiarismSubmission<TextSubmissionElement> submission = new PlagiarismSubmission<>();
 
         String[] submissionIdAndStudentLogin = jplagSubmission.getName().split("[-.]");
@@ -105,8 +109,8 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
         }
 
         submission.setStudentLogin(studentLogin);
-        submission.setElements(jplagSubmission.getTokenList().stream().filter(Objects::nonNull).map(token -> TextSubmissionElement.fromJPlagToken(token, submission))
-                .collect(Collectors.toCollection(ArrayList::new)));
+        submission.setElements(jplagSubmission.getTokenList().stream().filter(Objects::nonNull)
+                .map(token -> TextSubmissionElement.fromJPlagToken(token, submission, exercise, submissionDirectory)).collect(Collectors.toCollection(ArrayList::new)));
         submission.setSubmissionId(submissionId);
         submission.setSize(jplagSubmission.getNumberOfTokens());
         submission.setScore(null); // TODO

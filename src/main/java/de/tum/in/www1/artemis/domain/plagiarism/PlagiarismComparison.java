@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import java.io.File;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.jplag.JPlagComparison;
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 
 /**
@@ -79,12 +81,14 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      *
      * @param jplagComparison JPlag comparison to map to the new PlagiarismComparison instance
      * @return a new instance with the content of the JPlagComparison
+     * @param exercise the exercise to which the comparison belongs, either Text or Programming
+     * @param submissionDirectory the directory to which all student submissions have been downloaded / stored
      */
-    public static PlagiarismComparison<TextSubmissionElement> fromJPlagComparison(JPlagComparison jplagComparison) {
+    public static PlagiarismComparison<TextSubmissionElement> fromJPlagComparison(JPlagComparison jplagComparison, Exercise exercise, File submissionDirectory) {
         PlagiarismComparison<TextSubmissionElement> comparison = new PlagiarismComparison<>();
 
-        comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.firstSubmission()));
-        comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.secondSubmission()));
+        comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.firstSubmission(), exercise, submissionDirectory));
+        comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.secondSubmission(), exercise, submissionDirectory));
         comparison.setMatches(jplagComparison.matches().stream().map(PlagiarismMatch::fromJPlagMatch).collect(Collectors.toSet()));
         // Note: JPlag returns a value between 0 and 1, we assume and store a value between 0 and 100 (percentage) in the database
         comparison.setSimilarity(jplagComparison.similarity() * 100);

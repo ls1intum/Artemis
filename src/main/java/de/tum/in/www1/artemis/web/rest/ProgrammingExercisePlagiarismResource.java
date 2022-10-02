@@ -89,7 +89,7 @@ public class ProgrammingExercisePlagiarismResource {
      * GET /programming-exercises/{exerciseId}/check-plagiarism : Start the automated plagiarism detection for the given exercise and return its result.
      *
      * @param exerciseId          The ID of the programming exercise for which the plagiarism check should be executed
-     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      * @throws ExitException is thrown if JPlag exits unexpectedly
@@ -123,7 +123,7 @@ public class ProgrammingExercisePlagiarismResource {
      * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism and returns the generated output as zip file
      *
      * @param exerciseId          The ID of the programming exercise for which the plagiarism check should be executed
-     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      * @throws ExitException is thrown if JPlag exits unexpectedly
