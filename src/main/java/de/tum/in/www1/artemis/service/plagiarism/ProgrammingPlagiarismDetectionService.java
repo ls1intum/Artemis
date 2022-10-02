@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.Language;
+import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
@@ -35,7 +36,6 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
@@ -54,8 +54,6 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ZipFileService zipFileService;
-
     private final GitService gitService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -72,13 +70,12 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final UrlService urlService;
 
-    public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, ZipFileService zipFileService,
-            GitService gitService, StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
+    public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
+            StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
             ProgrammingExerciseExportService programmingExerciseExportService, PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService,
             UrlService urlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
-        this.zipFileService = zipFileService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
@@ -148,10 +145,8 @@ public class ProgrammingPlagiarismDetectionService {
      * @param similarityThreshold   ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
      * @return a zip file that can be returned to the client
-     * @throws ExitException is thrown if JPlag exits unexpectedly
-     * @throws IOException   is created the zip failed
      */
-    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, IOException {
+    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) {
         long start = System.nanoTime();
 
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
@@ -171,9 +166,8 @@ public class ProgrammingPlagiarismDetectionService {
      * @param similarityThreshold the similarity threshold (in % between 0 and 100)
      * @param minimumScore        the minimum score
      * @return the JPlag result or null if there are not enough participations
-     * @throws ExitException in case JPlag fails
      */
-    private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) throws ExitException {
+    private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) {
         long programmingExerciseId = programmingExercise.getId();
 
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
@@ -197,7 +191,7 @@ public class ProgrammingPlagiarismDetectionService {
 
         JPlagOptions options = new JPlagOptions(programmingLanguage, Set.of(repoFolder), Set.of())
                 // JPlag expects a value between 0.0 and 1.0
-                .withSimilarityThreshold(similarityThreshold / 100.0);
+                .withSimilarityThreshold(similarityThreshold / 100.0).withClusteringOptions(new ClusteringOptions().withEnabled(false));
         if (templateRepoName != null) {
             var templateFolder = Path.of(targetPath, projectKey, templateRepoName).toFile();
             options = options.withBaseCodeSubmissionDirectory(templateFolder);
@@ -251,50 +245,28 @@ public class ProgrammingPlagiarismDetectionService {
      * @param jPlagResult         The JPlag result
      * @param programmingExercise the programming exercise
      * @return the zip file
-     * @throws ExitException if JPlag fails
-     * @throws IOException   if the zip file cannot be created
      */
-    public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) throws ExitException, IOException {
+    public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) {
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        final var outputFolder = Path.of(targetPath, programmingExercise.getProjectKey() + "-output").toString();
-        final var outputFolderFile = new File(outputFolder);
+        final var reportFolder = Path.of(targetPath, programmingExercise.getProjectKey() + " JPlag Report").toString();
+        final var reportFolderFile = new File(reportFolder);
 
         // Create directories.
-        if (!outputFolderFile.mkdirs()) {
-            log.error("Cannot generate JPlag report because directories couldn't be created: {}", outputFolder);
+        if (!reportFolderFile.mkdirs()) {
+            log.error("Cannot generate JPlag report because directories couldn't be created: {}", reportFolder);
             return null;
         }
 
         // Write JPlag report result to the file.
-        log.info("Write JPlag report to file system");
+        log.info("Write JPlag report to file system and zip it");
         ReportObjectFactory reportObjectFactory = new ReportObjectFactory();
-        reportObjectFactory.createAndSaveReport(jPlagResult, outputFolder);
+        reportObjectFactory.createAndSaveReport(jPlagResult, reportFolder);
+        // JPlag automatically zips the report
 
-        // Zip the file
-        var zipFile = zipJPlagReport(programmingExercise, targetPath, Path.of(outputFolder));
-
+        var zipFile = new File(reportFolder + ".zip");
+        fileService.scheduleForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
         fileService.scheduleForDirectoryDeletion(Path.of(targetPath), 2);
         return zipFile;
-    }
-
-    /**
-     * Zips a JPlag report.
-     *
-     * @param programmingExercise the programming exercise
-     * @param targetPath          the path where the zip file will be created
-     * @param outputFolderPath    the path of the Jplag report
-     * @return the zip file
-     * @throws IOException if the zip file cannot be created
-     */
-    private File zipJPlagReport(ProgrammingExercise programmingExercise, String targetPath, Path outputFolderPath) throws IOException {
-        log.info("JPlag report zipping to {}", targetPath);
-        final var courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        final var filename = courseShortName + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip";
-        final var zipFilePath = Path.of(targetPath, filename);
-        zipFileService.createZipFileWithFolderContent(zipFilePath, outputFolderPath, null);
-        log.info("JPlag report zipped. Schedule deletion of zip file in 1 minute");
-        fileService.scheduleForDeletion(zipFilePath, 1);
-        return new File(zipFilePath.toString());
     }
 
     private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final String targetPath) {

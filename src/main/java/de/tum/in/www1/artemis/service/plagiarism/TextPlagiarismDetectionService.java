@@ -17,6 +17,7 @@ import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.Language;
 import de.jplag.LanguageLoader;
+import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
@@ -141,7 +142,7 @@ public class TextPlagiarismDetectionService {
             Language language = LanguageLoader.getLanguage(de.jplag.text.Language.IDENTIFIER).orElseThrow();
             JPlagOptions options = new JPlagOptions(language, Set.of(submissionFolderFile), Set.of())
                     // JPlag expects a value between 0.0 and 1.0
-                    .withSimilarityThreshold(similarityThreshold / 100.0);
+                    .withSimilarityThreshold(similarityThreshold / 100.0).withClusteringOptions(new ClusteringOptions().withEnabled(false));
 
             log.info("Start JPlag Text comparison");
             JPlag jplag = new JPlag(options);
