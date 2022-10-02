@@ -378,9 +378,8 @@ public class ProgrammingPlagiarismDetectionService {
         // Used for sending progress notifications
         var topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExercise.getId());
 
-        // TODO: we should download the repositories in parallel, otherwise this is really slow
         List<Repository> downloadedRepositories = new ArrayList<>();
-        participations.forEach(participation -> {
+        participations.parallelStream().forEach(participation -> {
             try {
                 var progressMessage = "Downloading repositories: " + (downloadedRepositories.size() + 1) + "/" + participations.size();
                 plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));
