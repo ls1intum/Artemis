@@ -112,6 +112,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     deleteAllPlagiarismComparisons = false;
 
     readonly FeatureToggle = FeatureToggle;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -142,7 +143,7 @@ export class PlagiarismInspectorComponent implements OnInit {
 
     /**
      * Registers to the websocket topic of the plagiarism check
-     * to get feedback abount the progress
+     * to get feedback about the progress
      */
     registerToPlagarismDetectionTopic() {
         const topic = this.getPlagarismDetectionTopic();

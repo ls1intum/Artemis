@@ -201,6 +201,10 @@ export class TextSubmissionViewerComponent implements OnChanges {
     }
 
     insertToken(text: string, token: string, position: number) {
+        // prevent negative values because slice does not handle them as we would wish
+        if (position < 0) {
+            position = 0;
+        }
         return [text.slice(0, position), token, text.slice(position)].join('');
     }
 
