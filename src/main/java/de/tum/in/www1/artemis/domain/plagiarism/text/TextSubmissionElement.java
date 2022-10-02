@@ -45,10 +45,14 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
         if (exercise instanceof ProgrammingExercise) {
             // Note: for text submissions 'file' must be null
             // Note: we want to get the relative path within the repository and not the absolute path
-            var absolutePath = token.getFile();
-            var filePath = submissionDirectory.getAbsoluteFile().toPath().relativize(absolutePath.getAbsoluteFile().toPath());
+            var submissionDirectoryAbsoluteFile = submissionDirectory.getAbsoluteFile();
+            var tokenAbsoluteFile = token.getFile().getAbsoluteFile();
+            var filePath = submissionDirectoryAbsoluteFile.toPath().relativize(tokenAbsoluteFile.toPath());
             // remove the first element, because it is the parent folder in which the whole repo was saved
-            var fileStringWithinRepository = filePath.subpath(1, filePath.getNameCount()).toString();
+            var fileStringWithinRepository = filePath.toString();
+            if (filePath.getNameCount() > 1) {
+                fileStringWithinRepository = filePath.subpath(1, filePath.getNameCount()).toString();
+            }
             textSubmissionElement.setFile(fileStringWithinRepository);
         }
         textSubmissionElement.setLength(token.getLength());
