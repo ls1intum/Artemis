@@ -18,6 +18,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -50,6 +51,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     // Icons
     faSync = faSync;
     faCircleNotch = faCircleNotch;
+    FeatureToggle = FeatureToggle;
 
     constructor(
         private courseService: CourseManagementService,
