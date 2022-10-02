@@ -101,7 +101,6 @@ export class ExerciseDetailsStudentActionsComponent {
                 next: (participation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
-                        this.exercise.participationStatus = participationStatus(this.exercise);
                         this.exercise.participationStatus = this.participationStatusWrapper();
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -124,7 +123,16 @@ export class ExerciseDetailsStudentActionsComponent {
             .startPractice(this.exercise.id!)
             .pipe(finalize(() => (this.startingPracticeMode = false)))
             .subscribe({
-                next: () => {
+                next: (participation) => {
+                    if (participation) {
+                        if (this.exercise.studentParticipations?.some((studentParticipation) => studentParticipation.id === participation.id)) {
+                            this.exercise.studentParticipations = this.exercise.studentParticipations?.map((studentParticipation) =>
+                                studentParticipation.id === participation.id ? participation : studentParticipation,
+                            );
+                        } else {
+                            this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
+                        }
+                    }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
                             this.alertService.success('artemisApp.exercise.personalRepositoryClone');

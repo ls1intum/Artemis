@@ -58,6 +58,8 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Course } from 'app/entities/course.model';
+import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -72,7 +74,7 @@ describe('CourseExerciseDetailsComponent', () => {
     let mergeStudentParticipationMock: jest.SpyInstance;
     let subscribeForParticipationChangesMock: jest.SpyInstance;
     let complaintService: ComplaintService;
-    const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [] } as unknown as Exercise;
+    const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [], course: {} } as unknown as Exercise;
 
     const modelingExercise = {
         id: 23,
@@ -139,18 +141,14 @@ describe('CourseExerciseDetailsComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
                 MockProvider(ExerciseService),
-                MockProvider(CourseManagementService),
-                MockProvider(JhiWebsocketService),
-                MockProvider(CourseScoreCalculationService),
                 MockProvider(ParticipationService),
-                MockProvider(SourceTreeService),
                 MockProvider(GuidedTourService),
                 MockProvider(TeamService),
                 MockProvider(QuizExerciseService),
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(ComplaintService),
-                MockProvider(ArtemisNavigationUtilService),
             ],
         })
             .compileComponents()
