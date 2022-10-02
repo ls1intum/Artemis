@@ -121,6 +121,22 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
 
     /**
+     * Searches for users in groups by their full name.
+     *
+     * @param groupNames   List of names of groups in which to search for users
+     * @param nameOfUser        Name (e.g. Max Mustermann) by which to search
+     * @return list of found users that match the search criteria
+     */
+    @Query("""
+             SELECT user FROM User user
+             LEFT JOIN user.groups userGroup
+             WHERE userGroup IN :#{#groupNames}
+             AND concat_ws(' ', user.firstName, user.lastName) LIKE %:#{#nameOfUser}%
+             ORDER BY concat_ws(' ', user.firstName, user.lastName)
+            """)
+    List<User> searchByNameInGroups(@Param("groupNames") Set<String> groupNames, @Param("nameOfUser") String nameOfUser);
+
+    /**
      * Search for all users by login or name in a group
      *
      * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
@@ -518,5 +534,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             return false;
         }
         return currentUserLogin.get().equals(login);
+    }
+
+    default User findByIdElseThrow(long userId) throws EntityNotFoundException {
+        return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 }

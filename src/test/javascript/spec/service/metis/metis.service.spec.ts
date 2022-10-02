@@ -422,7 +422,7 @@ describe('Metis Service', () => {
         it('should create websocket subscription when posts with lecture context are initially retrieved from DB', fakeAsync(() => {
             const lecturePostWithTags = metisLecturePosts[0];
             lecturePostWithTags.tags = ['tag1', 'tag2'];
-            websocketServiceReceiveStub.mockReturnValue(of({ post: lecturePostWithTags, action: MetisPostAction.CREATE_POST } as MetisPostDTO));
+            websocketServiceReceiveStub.mockReturnValue(of({ post: lecturePostWithTags, action: MetisPostAction.CREATE } as MetisPostDTO));
             // setup subscription
             metisService.getFilteredPosts({ lectureId: metisLecture.id! });
             expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `lectures/${metisLecture.id}`);
@@ -433,7 +433,7 @@ describe('Metis Service', () => {
         }));
 
         it('should create websocket subscription when posts with exercise context are initially retrieved from DB', fakeAsync(() => {
-            websocketServiceReceiveStub.mockReturnValue(of({ post: metisExercisePosts[0], action: MetisPostAction.DELETE_POST } as MetisPostDTO));
+            websocketServiceReceiveStub.mockReturnValue(of({ post: metisExercisePosts[0], action: MetisPostAction.DELETE } as MetisPostDTO));
             metisService.setPageType(PageType.OVERVIEW);
             // setup subscription
             metisService.getFilteredPosts({ exerciseId: metisExercise.id!, page: 0, pageSize: ITEMS_PER_PAGE });
@@ -447,7 +447,7 @@ describe('Metis Service', () => {
         it('should create websocket subscription when posts with course-wide context are initially retrieved from DB', fakeAsync(() => {
             const courseWidePostWithTags = metisCoursePostsWithCourseWideContext[0];
             courseWidePostWithTags.tags = ['tag1', 'tag2'];
-            websocketServiceReceiveStub.mockReturnValue(of({ post: courseWidePostWithTags, action: MetisPostAction.UPDATE_POST } as MetisPostDTO));
+            websocketServiceReceiveStub.mockReturnValue(of({ post: courseWidePostWithTags, action: MetisPostAction.UPDATE } as MetisPostDTO));
             // setup subscription
             metisService.getFilteredPosts({ courseWideContext: courseWidePostWithTags.courseWideContext });
             expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
@@ -458,7 +458,7 @@ describe('Metis Service', () => {
         }));
 
         it('should not create new subscription if already exists', fakeAsync(() => {
-            websocketServiceReceiveStub.mockReturnValue(of({ post: metisExercisePosts[0], action: MetisPostAction.DELETE_POST } as MetisPostDTO));
+            websocketServiceReceiveStub.mockReturnValue(of({ post: metisExercisePosts[0], action: MetisPostAction.DELETE } as MetisPostDTO));
             // setup subscription for the first time
             metisService.getFilteredPosts({ exerciseId: metisExercise.id! });
             expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `exercises/${metisExercise.id}`);

@@ -61,7 +61,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
     private String gradingInstructions;
 
     @ManyToMany(mappedBy = "exercises")
-    public Set<LearningGoal> learningGoals = new HashSet<>();
+    private Set<LearningGoal> learningGoals = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))

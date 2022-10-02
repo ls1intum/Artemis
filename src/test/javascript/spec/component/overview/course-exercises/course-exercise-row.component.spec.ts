@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
@@ -44,7 +45,7 @@ describe('CourseExerciseRowComponent', () => {
     let getAllParticipationsStub: jest.SpyInstance;
     let participationWebsocketService: ParticipationWebsocketService;
 
-    beforeAll(() => {
+    beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
@@ -83,7 +84,7 @@ describe('CourseExerciseRowComponent', () => {
                 comp.course = { id: 123, isAtLeastInstructor: true } as Course;
                 debugElement = fixture.debugElement;
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                getAllParticipationsStub = jest.spyOn(participationWebsocketService, 'getParticipationForExercise');
+                getAllParticipationsStub = jest.spyOn(participationWebsocketService, 'getParticipationsForExercise');
             });
     });
 
@@ -161,6 +162,8 @@ describe('CourseExerciseRowComponent', () => {
 
     it('Participation status of programming exercise should evaluate to EXERCISE_MISSED', () => {
         setupExercise(ExerciseType.PROGRAMMING, dayjs().subtract(1, 'day'));
+        getAllParticipationsStub.mockReturnValue([]);
+
         comp.ngOnChanges();
         comp.ngOnInit();
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.EXERCISE_MISSED);
@@ -168,6 +171,8 @@ describe('CourseExerciseRowComponent', () => {
 
     it('Participation status of programming exercise should evaluate to UNINITIALIZED', () => {
         setupExercise(ExerciseType.PROGRAMMING, dayjs().add(1, 'day'));
+        getAllParticipationsStub.mockReturnValue([]);
+
         comp.ngOnChanges();
         comp.ngOnInit();
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.UNINITIALIZED);
@@ -182,7 +187,7 @@ describe('CourseExerciseRowComponent', () => {
         } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.mockReturnValue(studentParticipation);
+        getAllParticipationsStub.mockReturnValue([studentParticipation]);
         comp.ngOnChanges();
         comp.ngOnInit();
 
@@ -198,11 +203,32 @@ describe('CourseExerciseRowComponent', () => {
         } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.mockReturnValue(studentParticipation);
+        getAllParticipationsStub.mockReturnValue([studentParticipation]);
         comp.ngOnChanges();
         comp.ngOnInit();
 
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.EXERCISE_MISSED);
+    });
+
+    it('should display the score', () => {
+        setupExercise(ExerciseType.PROGRAMMING, dayjs());
+
+        const studentParticipation = {
+            id: 1,
+            initializationState: InitializationState.INITIALIZED,
+            testRun: false,
+            results: [{ rated: true, score: 42 } as Result],
+        } as StudentParticipation;
+        comp.exercise.studentParticipations = [studentParticipation];
+
+        getAllParticipationsStub.mockReturnValue([studentParticipation]);
+        comp.ngOnChanges();
+        comp.ngOnInit();
+
+        fixture.detectChanges();
+
+        const result = fixture.debugElement.query(By.css('jhi-submission-result-status'));
+        expect(result).not.toBeNull();
     });
 
     const setupForTestingParticipationStatusExerciseTypeQuiz = (
@@ -241,7 +267,9 @@ describe('CourseExerciseRowComponent', () => {
 
             comp.exercise.studentParticipations = [studentParticipation];
 
-            getAllParticipationsStub.mockReturnValue(studentParticipation);
+            getAllParticipationsStub.mockReturnValue([studentParticipation]);
+        } else {
+            getAllParticipationsStub.mockReturnValue([]);
         }
 
         comp.ngOnChanges();
@@ -258,7 +286,7 @@ describe('CourseExerciseRowComponent', () => {
         } as StudentParticipation;
         comp.exercise.studentParticipations = [studentParticipation];
 
-        getAllParticipationsStub.mockReturnValue(studentParticipation);
+        getAllParticipationsStub.mockReturnValue([studentParticipation]);
         comp.ngOnChanges();
         comp.ngOnInit();
     };

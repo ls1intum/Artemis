@@ -221,6 +221,7 @@ public class ProgrammingExerciseParticipationService {
      */
     public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
+            // TODO: this calls protect branches which might not be necessary if the branches have already been protected during "start exercise" which is typically the case
             versionControlService.get().configureRepository(programmingExercise, participation, true);
         }
         else {

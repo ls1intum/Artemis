@@ -49,8 +49,6 @@ describe('Registered Students Component', () => {
     let fixture: ComponentFixture<RegisteredStudentsComponent>;
     let tutorialGroup: TutorialGroup;
     let tutorialGroupService: TutorialGroupsService;
-    let courseService: CourseManagementService;
-    let findCourseSpy: jest.SpyInstance;
     let getTutorialGroupSpy: jest.SpyInstance;
     const course = { id: 123, title: 'Example', isAtLeastInstructor: true };
     const tutorialGroupUserOne = new User(1, 'user1');
@@ -63,7 +61,7 @@ describe('Registered Students Component', () => {
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(CourseManagementService),
-                simpleTwoLayerActivatedRouteProvider(new Map([['tutorialGroupId', 123]]), new Map([['courseId', 123]])),
+                simpleTwoLayerActivatedRouteProvider(new Map([['tutorialGroupId', 123]]), new Map(), { course }),
             ],
         })
             .compileComponents()
@@ -71,7 +69,6 @@ describe('Registered Students Component', () => {
                 fixture = TestBed.createComponent(RegisteredStudentsComponent);
                 comp = fixture.componentInstance;
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
-                courseService = TestBed.inject(CourseManagementService);
                 tutorialGroup = new TutorialGroup();
                 tutorialGroup.title = 'Group';
                 tutorialGroup.id = 123;
@@ -89,7 +86,6 @@ describe('Registered Students Component', () => {
 
                 tutorialGroup.registrations = [registrationOne, registrationTwo];
                 getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
-                findCourseSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
             });
     });
 
@@ -108,8 +104,6 @@ describe('Registered Students Component', () => {
             expect(comp.course).toEqual(course);
             expect(comp.tutorialGroup).toEqual(tutorialGroup);
             expect(comp.courseGroup).toEqual(CourseGroup.STUDENTS);
-            expect(findCourseSpy).toHaveBeenCalledOnce();
-            expect(findCourseSpy).toHaveBeenCalledWith(123);
             expect(getTutorialGroupSpy).toHaveBeenCalledOnce();
             expect(getTutorialGroupSpy).toHaveBeenCalledWith(course.id, tutorialGroup.id);
             expect(comp.registeredStudents).toEqual(tutorialGroup.registrations?.map((registration) => registration.student));

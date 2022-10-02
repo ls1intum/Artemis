@@ -58,7 +58,7 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
         // when
         request.postWithResponseBody(getTutorialGroupsConfigurationPath(), buildExampleConfiguration(), TutorialGroupsConfiguration.class, HttpStatus.BAD_REQUEST);
         // then
-        assertThat(tutorialGroupsConfigurationRepository.findAll()).hasSize(1);
+        assertThat(tutorialGroupsConfigurationRepository.findByCourse_Id(exampleCourseId)).isNotEmpty();
     }
 
     @Test
@@ -79,7 +79,7 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
         this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, firstAugustMonday, tutorialGroupWithSchedule.getId(), persistedSchedule);
         this.assertScheduledSessionIsActiveOnDate(secondAugustMondaySession, secondAugustMonday, tutorialGroupWithSchedule.getId(), persistedSchedule);
         this.assertIndividualSessionIsActiveOnDate(firstSeptemberMondaySession, firstSeptemberMonday, tutorialGroupWithSchedule.getId());
-        assertThat(tutorialGroupFreePeriodRepository.findAll()).hasSize(1);
+        assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId)).hasSize(1);
 
         // when
         // change time zone to berlin and change end period
@@ -101,7 +101,8 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
         this.assertTutorialGroupSessionProperties(secondAugustMondaySession, Optional.of(persistedSchedule.getId()), tutorialGroupWithSchedule.getId(),
                 getDateTimeInBerlinTimeZone(secondAugustMonday, defaultSessionStartHour), getDateTimeInBerlinTimeZone(secondAugustMonday, defaultSessionEndHour),
                 persistedSchedule.getLocation(), TutorialGroupSessionStatus.ACTIVE, null);
-        assertThat(tutorialGroupFreePeriodRepository.findAll()).hasSize(0);
+        assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId)).hasSize(0);
+
     }
 
 }

@@ -9,7 +9,6 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -44,13 +43,16 @@ public class ResultService {
 
     private final ComplaintRepository complaintRepository;
 
+    private final ParticipantScoreRepository participantScoreRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final ExerciseDateService exerciseDateService;
 
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiService ltiService, FeedbackRepository feedbackRepository,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
-            ComplaintRepository complaintRepository, RatingRepository ratingRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService) {
+            ComplaintRepository complaintRepository, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository,
+            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
@@ -60,6 +62,7 @@ public class ResultService {
         this.submissionRepository = submissionRepository;
         this.complaintRepository = complaintRepository;
         this.ratingRepository = ratingRepository;
+        this.participantScoreRepository = participantScoreRepository;
         this.authCheckService = authCheckService;
         this.exerciseDateService = exerciseDateService;
     }
@@ -113,14 +116,19 @@ public class ResultService {
     /**
      * NOTE: As we use delete methods with underscores, we need a transactional context here!
      * Deletes result with corresponding complaint and complaint response
-     * @param resultId the id of the result
+     *
+     * @param result                      the result to delete
+     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value should be false
      */
-    @Transactional // ok
-    public void deleteResultWithComplaint(long resultId) {
-        complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
-        complaintRepository.deleteByResult_Id(resultId);
-        ratingRepository.deleteByResult_Id(resultId);
-        resultRepository.deleteById(resultId);
+    public void deleteResult(Result result, boolean shouldClearParticipantScore) {
+        log.debug("Delete result {}", result.getId());
+        complaintResponseRepository.deleteByComplaint_Result_Id(result.getId());
+        complaintRepository.deleteByResult_Id(result.getId());
+        ratingRepository.deleteByResult_Id(result.getId());
+        if (shouldClearParticipantScore) {
+            participantScoreRepository.clearAllByResultId(result.getId());
+        }
+        resultRepository.delete(result);
     }
 
     /**

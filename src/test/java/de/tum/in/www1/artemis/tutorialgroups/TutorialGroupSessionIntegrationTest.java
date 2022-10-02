@@ -63,7 +63,7 @@ public class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIn
         // when
         request.postWithResponseBody(getSessionsPathOfDefaultTutorialGroup(), dto, TutorialGroupSession.class, HttpStatus.BAD_REQUEST);
         // then
-        assertThat(tutorialGroupSessionRepository.findAll()).containsExactly(session);
+        assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(exampleOneTutorialGroupId)).containsExactly(session);
     }
 
     @Test

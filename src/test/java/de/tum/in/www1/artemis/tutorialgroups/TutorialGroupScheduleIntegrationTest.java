@@ -131,8 +131,8 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         request.putWithResponseBody(getTutorialGroupsPath() + tutorialGroup.getId(), tutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
 
         // then
-        assertThat(tutorialGroupSessionRepository.findAll()).hasSize(1);
-        assertThat(tutorialGroupScheduleRepository.findAll()).isEmpty();
+        assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId())).hasSize(1);
+        assertThat(tutorialGroupScheduleRepository.findByTutorialGroup_Id(tutorialGroup.getId())).isEmpty();
     }
 
     @Test
@@ -198,9 +198,9 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         request.delete(getTutorialGroupsPath() + tutorialGroup.getId(), HttpStatus.NO_CONTENT);
 
         // then
-        assertThat(tutorialGroupSessionRepository.findAll()).isEmpty();
-        assertThat(tutorialGroupScheduleRepository.findAll()).isEmpty();
-        assertThat(tutorialGroupRepository.findAll()).isEmpty();
+        assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId())).isEmpty();
+        assertThat(tutorialGroupScheduleRepository.findByTutorialGroup_Id(tutorialGroup.getId())).isEmpty();
+        assertThat(tutorialGroupRepository.findById(tutorialGroup.getId())).isEmpty();
     }
 
 }

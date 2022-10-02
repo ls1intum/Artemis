@@ -12,7 +12,7 @@ export class ExerciseResultPage {
     }
 
     shouldShowScore(percentage: number) {
-        cy.contains(`Score ${percentage}`).should('be.visible');
+        cy.contains(`${percentage}%`).should('be.visible');
     }
 
     clickViewSubmission() {

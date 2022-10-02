@@ -95,7 +95,7 @@ public class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGrou
         // when
         request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.BAD_REQUEST);
         // then
-        assertThat(tutorialGroupFreePeriodRepository.findAll()).hasSize(1);
+        assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleConfigurationId)).hasSize(1);
     }
 
     @Test
@@ -136,8 +136,9 @@ public class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGrou
         request.putWithResponseBody(getTutorialGroupFreePeriodsPath() + firstMondayOfAugustFreeDay.getId(), dto, TutorialGroupFreePeriod.class, HttpStatus.BAD_REQUEST);
 
         // then
-        assertThat(tutorialGroupFreePeriodRepository.findAll()).hasSize(2);
-        assertThat(tutorialGroupFreePeriodRepository.findAll()).containsExactlyInAnyOrder(firstMondayOfAugustFreeDay, secondMondayOfAugustFreeDay);
+        assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId)).hasSize(2);
+        assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId)).containsExactlyInAnyOrder(firstMondayOfAugustFreeDay,
+                secondMondayOfAugustFreeDay);
     }
 
     @Test
@@ -151,7 +152,7 @@ public class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGrou
         request.putWithResponseBody(getTutorialGroupFreePeriodsPath() + firstMondayOfAugustFreeDay.getId(), dto, TutorialGroupFreePeriod.class, HttpStatus.OK);
 
         // then
-        assertThat(tutorialGroupFreePeriodRepository.findAll()).hasSize(1);
+        assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId)).hasSize(1);
         var updatedFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(firstMondayOfAugustFreeDay.getId());
         assertTutorialGroupFreePeriodCreatedCorrectlyFromDTO(updatedFreePeriod, dto);
 

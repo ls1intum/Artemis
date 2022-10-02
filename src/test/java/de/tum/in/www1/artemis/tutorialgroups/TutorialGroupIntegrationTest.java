@@ -90,7 +90,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // when
         request.postWithResponseBody(getTutorialGroupsPath(), tutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
         // then
-        assertThat(tutorialGroupRepository.findAll()).hasSize(2);
+        assertThat(tutorialGroupRepository.findAllByCourseId(exampleCourseId)).hasSize(2);
     }
 
     @Test
@@ -102,7 +102,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // when
         request.postWithResponseBody(getTutorialGroupsPath(), tutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
         // then
-        assertThat(tutorialGroupRepository.findAll()).hasSize(2);
+        assertThat(tutorialGroupRepository.findAllByCourseId(exampleCourseId)).hasSize(2);
     }
 
     @Test

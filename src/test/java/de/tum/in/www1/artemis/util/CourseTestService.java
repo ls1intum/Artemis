@@ -123,6 +123,9 @@ public class CourseTestService {
     @Autowired
     private ParticipationService participationService;
 
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
     private final static int numberOfStudents = 8;
 
     private final static int numberOfTutors = 5;
@@ -1075,6 +1078,52 @@ public class CourseTestService {
         assertThat(instructors).as("All instructors in course found").hasSize(numberOfInstructors);
     }
 
+    /** Searches for others users of a course in multiple roles
+     *
+     * @throws Exception
+     */
+    public void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("nameOfUser", "student1");
+
+        // users must not be able to find themselves
+        List<User> student1 = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        assertThat(student1).as("User could not find themself").hasSize(0);
+
+        // find another student for course
+        parameters.set("nameOfUser", "student2");
+        List<User> student2 = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        assertThat(student2).as("Another student in course found").hasSize(1);
+
+        // find a tutor for course
+        parameters.set("nameOfUser", "tutor1");
+        List<User> tutor = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        assertThat(tutor).as("A tutors in course found").hasSize(1);
+
+        // find an instructors for course
+        parameters.set("nameOfUser", "instructor");
+        List<User> instructor = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        assertThat(instructor).as("An instructors in course found").hasSize(1);
+    }
+
+    /** Tries to search for users of another course and expects to be forbidden
+     *
+     * @throws Exception
+     */
+    public void testSearchStudentsAndTutorsAndInstructorsInOtherCourseForbidden() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
+        course = courseRepo.save(course);
+
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("nameOfUser", "student2");
+
+        // find a user in another course
+        request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.FORBIDDEN, User.class, parameters);
+    }
+
     // Test
     public void testGetAllEditorsInCourse() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -1681,6 +1730,8 @@ public class CourseTestService {
 
         courseRepo.save(instructorsCourse);
 
+        await().until(() -> participantScoreRepository.findAll().size() == 2);
+
         // We only added one course, so expect one dto
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
         assertThat(courseDtos).hasSize(1);
@@ -1948,6 +1999,8 @@ public class CourseTestService {
 
         request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
                 + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
+
+        await().until(() -> participantScoreRepository.findAll().size() == 4);
 
         // API call
         var courseDTO = request.get("/api/courses/" + course1.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
