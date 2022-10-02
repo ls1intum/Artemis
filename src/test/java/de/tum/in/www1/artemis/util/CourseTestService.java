@@ -562,8 +562,8 @@ public class CourseTestService {
         Course activeCourseNotFiltered = optionalCourse.get();
 
         for (Exercise exercise : activeCourseNotFiltered.getExercises()) {
-            assertThat(exercise.getGradingInstructions()).as("Grading instructions are not filtered out").isNotNull();
-            assertThat(exercise.getProblemStatement()).as("Problem statements are not filtered out").isNotNull();
+            assertThat(exercise.getGradingInstructions()).as("Grading instructions are filtered out").isNull();
+            assertThat(exercise.getProblemStatement()).as("Problem statements are filtered out").isNull();
         }
     }
 
@@ -742,8 +742,6 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForAssessmentDashboardWithStats() throws Exception {
-        courseRepo.deleteAll();
-
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
@@ -1494,14 +1492,20 @@ public class CourseTestService {
 
         var submissions = submissionRepository.findAll();
 
-        var fileUploadSubmissionId = submissions.stream().filter(submission -> submission instanceof FileUploadSubmission).findFirst().get().getId();
-        assertThat(filenames).contains(Path.of("FileUpload-student1-" + fileUploadSubmissionId + ".png"));
-
-        var textSubmissionId = submissions.stream().filter(submission -> submission instanceof TextSubmission).findFirst().get().getId();
-        assertThat(filenames).contains(Path.of("Text-student1-" + textSubmissionId + ".txt"));
-
-        var modelingSubmission = submissions.stream().filter(submission -> submission instanceof ModelingSubmission).findFirst().get().getId();
-        assertThat(filenames).contains(Path.of("Modeling-student1-" + modelingSubmission + ".json"));
+        for (Submission submission : submissions) {
+            Participation participation = submission.getParticipation();
+            if (participation != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId() == updatedCourse.getId()) {
+                if (submission instanceof FileUploadSubmission) {
+                    assertThat(filenames).contains(Path.of("FileUpload-student1-" + submission.getId() + ".png"));
+                }
+                if (submission instanceof TextSubmission) {
+                    assertThat(filenames).contains(Path.of("Text-student1-" + submission.getId() + ".txt"));
+                }
+                if (submission instanceof ModelingSubmission) {
+                    assertThat(filenames).contains(Path.of("Modeling-student1-" + submission.getId() + ".json"));
+                }
+            }
+        }
     }
 
     // Test
