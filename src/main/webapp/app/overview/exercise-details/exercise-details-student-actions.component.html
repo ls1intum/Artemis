@@ -215,6 +215,7 @@
                         [smallButtons]="smallButtons"
                         [participations]="exercise.studentParticipations!"
                         [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor']"
+                        [courseId]="courseId"
                         *ngIf="!examMode && isOnlineEditorAllowed()"
                     >
                     </jhi-open-code-editor-button>

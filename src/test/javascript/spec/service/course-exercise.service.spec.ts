@@ -200,7 +200,7 @@ describe('Course Management Service', () => {
             participation,
         );
         service
-            .startPractice(exerciseId)
+            .startPractice(exerciseId, false)
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 

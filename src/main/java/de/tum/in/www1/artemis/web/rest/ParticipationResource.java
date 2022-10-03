@@ -196,6 +196,7 @@ public class ParticipationResource {
      * POST /exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
      *
      * @param exerciseId the participationId of the exercise for which to init a participation
+     * @param useGradedParticipation a flag that indicates that the student wants to use their graded participation as baseline for the new repo
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
      */
@@ -273,10 +274,8 @@ public class ParticipationResource {
     }
 
     private boolean isNotAllowedToStartProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable StudentParticipation participation) {
-        boolean isAfterDueDate = participation != null ? exerciseDateService.isAfterDueDate(participation)
+        return participation != null ? exerciseDateService.isAfterDueDate(participation)
                 : (programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate()));
-        // users cannot start/resume programming exercises after the due date has passed
-        return isAfterDueDate;
     }
 
     /**

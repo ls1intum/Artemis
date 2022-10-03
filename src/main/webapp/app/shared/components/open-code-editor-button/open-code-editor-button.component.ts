@@ -19,6 +19,8 @@ export class OpenCodeEditorButtonComponent implements OnChanges {
     participations: ProgrammingExerciseStudentParticipation[];
     @Input()
     courseAndExerciseNavigationUrlSegment: any[];
+    @Input()
+    courseId: number;
 
     courseAndExerciseNavigationUrl: string;
     activeParticipation: ProgrammingExerciseStudentParticipation;
