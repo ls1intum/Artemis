@@ -820,6 +820,12 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
+        courseTestService.testOnlineCourseConfigurationIsLazyLoaded();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateOnlineCourseConfiguration() throws Exception {
         courseTestService.testUpdateOnlineCourseConfiguration();
     }
@@ -828,5 +834,11 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourseRemoveOnlineCourseConfiguration() throws Exception {
         courseTestService.testUpdateCourseRemoveOnlineCourseConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
+        courseTestService.testDeleteCourseDeletesOnlineConfiguration();
     }
 }
