@@ -1,7 +1,7 @@
 <div class="row">
     <jhi-doughnut-chart
         class="col-md-4"
-        [course]="course"
+        [course]="exercise.course!"
         [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
         [exerciseId]="exercise.id!"
         [exerciseType]="exerciseType"
@@ -12,7 +12,7 @@
     </jhi-doughnut-chart>
     <jhi-doughnut-chart
         class="col-md-4"
-        [course]="course"
+        [course]="exercise.course!"
         [contentType]="DoughnutChartType.PARTICIPATIONS"
         [exerciseId]="exercise.id!"
         [exerciseType]="exerciseType"
@@ -23,7 +23,7 @@
     </jhi-doughnut-chart>
     <jhi-doughnut-chart
         class="col-md-4"
-        [course]="course"
+        [course]="exercise.course!"
         [contentType]="DoughnutChartType.QUESTIONS"
         [exerciseId]="exercise.id!"
         [exerciseType]="exerciseType"
