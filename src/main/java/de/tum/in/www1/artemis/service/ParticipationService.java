@@ -205,6 +205,8 @@ public class ParticipationService {
      * @param exercise              the programming exercise that the currently active user (student) wants to start
      * @param participation         inactive participation
      * @param setInitializationDate flag if the InitializationDate should be set to the current time
+     * @param optionalGradedStudentParticipation the graded participation of that student, if present
+     * @param useGradedParticipation flag if the graded student participation should be used as baseline for the new repository
      * @return started participation
      */
     private StudentParticipation startPracticeMode(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate,
@@ -397,6 +399,7 @@ public class ParticipationService {
             final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(sourceURL);
             String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
+            System.out.println(templateRepoName);
             var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, templateBranch, projectKey, participantIdentifier);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
