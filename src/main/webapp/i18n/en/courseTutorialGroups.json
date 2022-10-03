@@ -1,0 +1,13 @@
+{
+    "artemisApp": {
+        "pages": {
+            "courseTutorialGroups": {
+                "title": "Your Tutorial Group Registrations",
+                "noRegistrations": "You are not registered to any tutorial group in this course"
+            }
+        },
+        "tutorialGroupCard": {
+            "teachingAssistant": "Tutor: {{ name }}"
+        }
+    }
+}

@@ -1,1 +1,15 @@
-<p>course-tutorial-groups works!</p>
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <h2 class="m-2">{{ 'artemisApp.pages.courseTutorialGroups.title' | artemisTranslate }}</h2>
+    <div>
+        <ng-container *ngIf="registrationsOfLoggedInUser && registrationsOfLoggedInUser.length > 0; else noRegistrations">
+            <div class="d-flex flex-wrap">
+                <ng-container *ngFor="let registration of registrationsOfLoggedInUser">
+                    <jhi-course-tutorial-group-card [tutorialGroupRegistration]="registration"></jhi-course-tutorial-group-card>
+                </ng-container>
+            </div>
+        </ng-container>
+        <ng-template #noRegistrations>
+            <span>{{ 'artemisApp.pages.courseTutorialGroups.noRegistrations' | artemisTranslate }}</span>
+        </ng-template>
+    </div>
+</jhi-loading-indicator-container>
