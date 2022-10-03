@@ -128,7 +128,7 @@ public class ProgrammingExercisePlagiarismResource {
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      * @throws IOException   is thrown for file handling errors
      */
-    @GetMapping(value = CHECK_PLAGIARISM_JPLAG_REPORT, produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(value = CHECK_PLAGIARISM_JPLAG_REPORT)
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)

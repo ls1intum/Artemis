@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -23,6 +23,7 @@ import { Range } from 'app/shared/util/utils';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 
 export type PlagiarismCheckState = {
     state: 'COMPLETED' | 'RUNNING';
@@ -130,6 +131,7 @@ export class PlagiarismInspectorComponent implements OnInit {
         private inspectorService: PlagiarismInspectorService,
         private plagiarismCasesService: PlagiarismCasesService,
         private modalService: NgbModal,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -200,21 +202,21 @@ export class PlagiarismInspectorComponent implements OnInit {
             case ExerciseType.MODELING: {
                 this.modelingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
                     next: (result) => this.handlePlagiarismResult(result),
-                    error: () => (this.detectionInProgress = false),
+                    error: () => this.handleError(),
                 });
                 return;
             }
             case ExerciseType.PROGRAMMING: {
                 this.programmingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
                     next: (result) => this.handlePlagiarismResult(result),
-                    error: () => (this.detectionInProgress = false),
+                    error: () => this.handleError(),
                 });
                 return;
             }
             case ExerciseType.TEXT: {
                 this.textExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
                     next: (result) => this.handlePlagiarismResult(result),
-                    error: () => (this.detectionInProgress = false),
+                    error: () => this.handleError(),
                 });
                 return;
             }
@@ -255,8 +257,17 @@ export class PlagiarismInspectorComponent implements OnInit {
                 this.detectionInProgress = false;
                 downloadZipFileFromResponse(response);
             },
-            error: () => {
-                this.detectionInProgress = false;
+            error: (error: HttpErrorResponse) => {
+                // Note: for some reason the alert is not shown, we do it manually with a workaround, because the message (part of the body) is not accessible in the error
+                const errorMessage = error.headers.get('x-artemisapp-error');
+                if (errorMessage === 'error.notEnoughSubmissions') {
+                    this.alertService.addAlert({
+                        type: AlertType.DANGER,
+                        message: 'Insufficient amount of valid and long enough submissions available for comparison',
+                        disableTranslation: true,
+                    });
+                }
+                this.handleError();
             },
         });
     }
