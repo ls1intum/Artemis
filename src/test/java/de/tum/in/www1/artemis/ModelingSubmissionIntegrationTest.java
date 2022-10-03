@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -704,10 +703,10 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     void getModelingResult_BeforeExamPublishDate_Forbidden() throws Exception {
         // create exam
         Exam exam = database.addExamWithExerciseGroup(course, true);
-        exam.setStartDate(now().minusHours(2));
-        exam.setEndDate(now().minusHours(1));
-        exam.setVisibleDate(now().minusHours(3));
-        exam.setPublishResultsDate(now().plusHours(3));
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
+        exam.setPublishResultsDate(ZonedDateTime.now().plusHours(3));
 
         // creating exercise
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
