@@ -140,7 +140,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
             templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise1.getVcsTemplateRepositoryUrl());
         }
         var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
-        System.out.println(templateRepoName);
         doReturn(someURL).when(versionControlService).copyRepository(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class));
         doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
         doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
