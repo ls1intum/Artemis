@@ -254,6 +254,7 @@ public class ParticipationService {
      * @param exercise the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
      * @param participant the user or team who starts the exercise
      * @param optionalGradedStudentParticipation the optional graded participation before the deadline
+     * @param useGradedParticipation flag if the graded student participation should be used as baseline for the new repository
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
