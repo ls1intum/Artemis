@@ -11,6 +11,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import javax.validation.constraints.NotNull;
+
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -151,9 +153,6 @@ public class ProgrammingPlagiarismDetectionService {
 
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
         JPlagResult result = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore);
-        if (result == null) {
-            return null;
-        }
 
         log.info("JPlag programming comparison finished with {} comparisons in {}", result.getAllComparisons().size(), TimeLogUtil.formatDurationFrom(start));
         return generateJPlagReportZip(result, programmingExercise);
@@ -167,6 +166,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @param minimumScore        the minimum score
      * @return the JPlag result or null if there are not enough participations
      */
+    @NotNull
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) {
         long programmingExerciseId = programmingExercise.getId();
 
@@ -177,7 +177,7 @@ public class ProgrammingPlagiarismDetectionService {
         List<ProgrammingExerciseParticipation> participations = filterStudentParticipationsForComparison(programmingExercise, minimumScore);
 
         if (participations.size() < 2) {
-            return null;
+            throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
         }
 
         List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath);
@@ -186,7 +186,6 @@ public class ProgrammingPlagiarismDetectionService {
         final var projectKey = programmingExercise.getProjectKey();
         final var repoFolder = Path.of(targetPath, projectKey).toFile();
         final var programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
-
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
         JPlagOptions options = new JPlagOptions(programmingLanguage, Set.of(repoFolder), Set.of())
@@ -218,7 +217,7 @@ public class ProgrammingPlagiarismDetectionService {
             catch (Exception ex) {
                 log.info("FAILED: Retrying JPlag Plagiarism Check without BaseCode");
                 log.error(ex.getMessage(), ex);
-                result = null;
+                throw new BadRequestAlertException(ex.getMessage(), "Plagiarism Check", "jplagException");
             }
         }
 

@@ -274,14 +274,18 @@ export class PlagiarismInspectorComponent implements OnInit {
         if (this.exercise.type === ExerciseType.TEXT) {
             this.textExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
                 next: (result) => this.handlePlagiarismResult(result),
-                error: () => (this.detectionInProgress = false),
+                error: () => this.handleError(),
             });
         } else {
             this.programmingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
                 next: (result) => this.handlePlagiarismResult(result),
-                error: () => (this.detectionInProgress = false),
+                error: () => this.handleError(),
             });
         }
+    }
+
+    handleError() {
+        this.detectionInProgress = false;
     }
 
     /**
@@ -292,7 +296,7 @@ export class PlagiarismInspectorComponent implements OnInit {
 
         this.modelingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
             next: (result: ModelingPlagiarismResult) => this.handlePlagiarismResult(result),
-            error: () => (this.detectionInProgress = false),
+            error: () => this.handleError(),
         });
     }
 

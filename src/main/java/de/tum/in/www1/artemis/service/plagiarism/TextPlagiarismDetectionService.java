@@ -16,7 +16,6 @@ import org.springframework.util.FileSystemUtils;
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
 import de.jplag.Language;
-import de.jplag.LanguageLoader;
 import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
@@ -104,10 +103,7 @@ public class TextPlagiarismDetectionService {
 
             if (textSubmissions.size() < 2) {
                 log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
-                TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-                textPlagiarismResult.setExercise(textExercise);
-                textPlagiarismResult.setSimilarityDistribution(new int[0]);
-                return textPlagiarismResult;
+                throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
             }
 
             AtomicInteger processedSubmissionCount = new AtomicInteger(1);
@@ -139,7 +135,7 @@ public class TextPlagiarismDetectionService {
 
             // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
             // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
-            Language language = LanguageLoader.getLanguage(de.jplag.text.Language.IDENTIFIER).orElseThrow();
+            Language language = new de.jplag.text.Language();
             JPlagOptions options = new JPlagOptions(language, Set.of(submissionFolderFile), Set.of())
                     // JPlag expects a value between 0.0 and 1.0
                     .withSimilarityThreshold(similarityThreshold / 100.0).withClusteringOptions(new ClusteringOptions().withEnabled(false));
@@ -163,10 +159,7 @@ public class TextPlagiarismDetectionService {
         }
         catch (Exception ex) {
             log.warn("Text plagiarism detection NOT successful", ex);
-            TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-            textPlagiarismResult.setExercise(textExercise);
-            textPlagiarismResult.setSimilarityDistribution(new int[0]);
-            return textPlagiarismResult;
+            throw new BadRequestAlertException(ex.getMessage(), "Plagiarism Check", "jplagException");
         }
         finally {
             plagiarismCacheService.setInactivePlagiarismCheck(courseId);

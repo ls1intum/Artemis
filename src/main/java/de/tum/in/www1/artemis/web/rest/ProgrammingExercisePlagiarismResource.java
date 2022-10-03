@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.service.plagiarism.ProgrammingPlagiarismDetectionS
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * REST controller for managing ProgrammingExercise.
@@ -106,8 +106,8 @@ public class ProgrammingExercisePlagiarismResource {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get().getProgrammingLanguageFeatures(language);
 
         if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingLanguageNotSupported",
-                    "Artemis does not support plagiarism checks for the programming language " + language)).body(null);
+            throw new BadRequestAlertException("Artemis does not support plagiarism checks for the programming language " + programmingExercise.getProgrammingLanguage(),
+                    ENTITY_NAME, "programmingLanguageNotSupported");
         }
 
         long start = System.nanoTime();
@@ -136,18 +136,15 @@ public class ProgrammingExercisePlagiarismResource {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
-                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        var programmingLanguageFeature = programmingLanguageFeatureService.get().getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
         if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingLanguageNotSupported",
-                    "Artemis does not support plagiarism checks for the programming language " + programmingExercise.getProgrammingLanguage())).body(null);
+            throw new BadRequestAlertException("Artemis does not support plagiarism checks for the programming language " + programmingExercise.getProgrammingLanguage(),
+                    "Plagiarism Check", "programmingLanguageNotSupported");
         }
 
         File zipFile = programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(exerciseId, similarityThreshold, minimumScore);
         if (zipFile == null) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError", "Insufficient amount of comparisons available for comparison."))
-                    .body(null);
+            throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison.", "Plagiarism Check", "notEnoughSubmissions");
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
