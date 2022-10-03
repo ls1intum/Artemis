@@ -134,7 +134,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
         doNothing().when(versionControlService).addWebHookForParticipation(any());
 
-        StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise1, participant, Optional.empty());
+        StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise1, participant, Optional.empty(), false);
 
         assertTrue(studentParticipationReceived.isTestRun());
         assertEquals(programmingExercise1, studentParticipationReceived.getExercise());

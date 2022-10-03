@@ -116,26 +116,6 @@ export class ExerciseDetailsStudentActionsComponent {
             });
     }
 
-    startPractice(): void {
-        this.courseExerciseService.startPractice(this.exercise.id!).subscribe({
-            next: (participation) => {
-                if (participation) {
-                    this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
-                }
-                if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                    if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
-                        this.alertService.success('artemisApp.exercise.personalRepositoryClone');
-                    } else {
-                        this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
-                    }
-                }
-            },
-            error: () => {
-                this.alertService.warning('artemisApp.exercise.startError');
-            },
-        });
-    }
-
     /**
      * resume the programming exercise
      */

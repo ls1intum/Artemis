@@ -92,18 +92,22 @@ export class CourseExerciseService {
     /**
      * starts the exercise with the identifier exerciseId
      * @param exerciseId - the unique identifier of the exercise
+     * @param useGradedParticipation - flag indicating if the student wants to continue from their graded participation
      */
-    startPractice(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.post<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice`, {}).pipe(
-            map((participation: StudentParticipation) => {
-                return this.handleParticipation(participation);
-            }),
-        );
+    startPractice(exerciseId: number, useGradedParticipation: boolean): Observable<StudentParticipation> {
+        return this.http
+            .post<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`, {})
+            .pipe(
+                map((participation: StudentParticipation) => {
+                    return this.handleParticipation(participation);
+                }),
+            );
     }
 
     /**
      * resumes the programming exercise with the identifier exerciseId
      * @param exerciseId - the unique identifier of the exercise
+     * @param participationId - the unique identifier of the participation to continue
      */
     resumeProgrammingExercise(exerciseId: number, participationId: number): Observable<StudentParticipation> {
         return this.http.put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation/${participationId}`, {}).pipe(

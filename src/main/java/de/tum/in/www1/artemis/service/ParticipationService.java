@@ -193,7 +193,35 @@ public class ParticipationService {
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
         // Step 1a) create the student repository (based on the template repository)
-        participation = copyRepository(exercise, participation);
+        participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUrl(), participation);
+
+        return startProgrammingParticipation(exercise, participation, setInitializationDate);
+    }
+
+    /**
+     * Start a programming exercise participation (which does not exist yet) by creating and configuring a student git repository (step 1) and a student build plan (step 2)
+     * based on the templates in the given programming exercise
+     *
+     * @param exercise              the programming exercise that the currently active user (student) wants to start
+     * @param participation         inactive participation
+     * @param setInitializationDate flag if the InitializationDate should be set to the current time
+     * @return started participation
+     */
+    private StudentParticipation startPracticeMode(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate,
+            Optional<StudentParticipation> optionalGradedStudentParticipation, boolean useGradedParticipation) {
+        // Step 1a) create the student repository (based on the template repository or graded participation)
+        if (useGradedParticipation && optionalGradedStudentParticipation.isPresent()
+                && optionalGradedStudentParticipation.get() instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
+            participation = copyRepository(exercise, programmingExerciseStudentParticipation.getVcsRepositoryUrl(), participation);
+        }
+        else {
+            participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUrl(), participation);
+        }
+
+        return startProgrammingParticipation(exercise, participation, setInitializationDate);
+    }
+
+    private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
         // Step 1b) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(exercise, participation);
         // Step 2a) create the build plan (based on the BASE build plan)
@@ -226,7 +254,8 @@ public class ParticipationService {
      * @param optionalGradedStudentParticipation the optional graded participation before the deadline
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation) {
+    public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
+            boolean useGradedParticipation) {
         if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
             throw new IllegalStateException("Only programming exercises support the practice mode at the moment");
         }
@@ -253,7 +282,8 @@ public class ParticipationService {
         }
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-        participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, true);
+        participation = startPracticeMode(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, true, optionalGradedStudentParticipation,
+                useGradedParticipation);
 
         return studentParticipationRepository.saveAndFlush(participation);
     }
@@ -298,7 +328,7 @@ public class ParticipationService {
             // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
             programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the deadline)
-            programmingParticipation = copyRepository(programmingExercise, programmingParticipation);
+            programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUrl(), programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
@@ -357,13 +387,14 @@ public class ParticipationService {
         return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
     }
 
-    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, VcsRepositoryUrl sourceURL,
+            ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUrl() == null) {
             final var projectKey = programmingExercise.getProjectKey();
             final var participantIdentifier = participation.getParticipantIdentifier() + (participation.isTestRun() ? "-practice" : "");
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
-            final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
+            final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(sourceURL);
             String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
             var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, templateBranch, projectKey, participantIdentifier);

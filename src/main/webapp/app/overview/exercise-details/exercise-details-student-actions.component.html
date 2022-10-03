@@ -197,20 +197,13 @@
                 *ngIf="participationStatusWrapper(false) === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
                 (click)="startExercise()"
             ></button>
-            <button
+            <jhi-start-practice-mode-button
                 [id]="'start-practice-' + exercise.id"
                 class="start-practice me-1"
-                jhi-exercise-action-button
-                [buttonIcon]="faRedo"
-                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                [buttonLabel]="'artemisApp.exerciseActions.practice' | artemisTranslate"
-                [buttonLoading]="!!exercise.loading"
-                [smallButton]="smallButtons"
-                [hideLabelMobile]="false"
-                [ngbTooltip]="'artemisApp.exerciseActions.practiceModeTooltip' | artemisTranslate"
+                [smallButtons]="smallButtons"
+                [exercise]="exercise"
                 *ngIf="participationStatusWrapper(true) === ParticipationStatus.UNINITIALIZED && isStartPracticeAvailable()"
-                (click)="startPractice()"
-            ></button>
+            ></jhi-start-practice-mode-button>
 
             <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
             code editor button. We should think about refactoring the clone repo button into an own component -->
@@ -220,7 +213,7 @@
                         class="me-1"
                         [loading]="!!exercise.loading"
                         [smallButtons]="smallButtons"
-                        [exercise]="exercise"
+                        [participations]="exercise.studentParticipations!"
                         [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor']"
                         *ngIf="!examMode && isOnlineEditorAllowed()"
                     >

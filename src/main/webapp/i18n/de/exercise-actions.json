@@ -15,10 +15,15 @@
             "openCodeEditor": "Programmiereditor öffnen",
             "openPracticeCodeEditor": "Übungs-Programmiereditor öffnen",
             "openGradedCodeEditor": "Bewerteten Programmiereditor öffnen",
-            "practiceMode": "Übungsmodus",
             "openModelingEditor": "Modellierungseditor öffnen",
             "importIntoIntelliJ": "In IntelliJ öffnen",
-            "practiceModeTooltip": "Der Übungsmodus ermöglicht es dir nach der Abgabefrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies wird deine Bewertung nicht beeinflussen! Artemis wird dafür ein separates Repository aufsetzen, das du erneut clonen musst.",
+            "practiceMode": {
+                "title": "Übungsmodus",
+                "explanation": "Der Übungsmodus ermöglicht es dir nach der Abgabefrist zu Übungszwecken weiter an der Aufgabe zu arbeiten. Dies wird deine Bewertung nicht beeinflussen! Artemis wird dafür ein separates Repository aufsetzen, das du erneut clonen musst.",
+                "repositoryChoice": "Du hast bereits vor der Deadline eine bewertete Abgabe gemacht. Daher hast du die Wahl, ob der Code im neu aufgesetzten Repository der aus dem Template-Repository der Aufgabe oder deiner bewerteten Abgabe sein soll.",
+                "practiceWithTemplate": "Üben mit Template-Repository",
+                "practiceWithGradedParticipation": "Üben mit bewerteter Abgabe"
+            },
             "cloneRepository": "Repository klonen",
             "cloneRatedRepository": "Klone dein bewertetes Repository für diese Übung:",
             "clonePracticeRepository": "Klone dein Übungs-Repository für diese Übung:",

@@ -27,7 +27,6 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -203,8 +202,9 @@ public class ParticipationResource {
     @PostMapping("/exercises/{exerciseId}/participations/practice")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
-        log.debug("REST request to start Exercise : {}", exerciseId);
+    public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId,
+            @RequestParam(value = "useGradedParticipation", defaultValue = "false") boolean useGradedParticipation) throws URISyntaxException {
+        log.debug("REST request to practice Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, user, false);
@@ -223,8 +223,12 @@ public class ParticipationResource {
                 && optionalGradedStudentParticipation.get().getIndividualDueDate() != null && now().isBefore(optionalGradedStudentParticipation.get().getIndividualDueDate()))) {
             throw new AccessForbiddenException("The practice mode can only be started after the due date");
         }
+        if (useGradedParticipation && optionalGradedStudentParticipation.isEmpty()) {
+            throw new BadRequestAlertException("Tried to start the practice mode based on the graded participation, but there is no graded participation", ENTITY_NAME,
+                    "practiceModeNoGradedParticipation");
+        }
 
-        StudentParticipation participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation);
+        StudentParticipation participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation, useGradedParticipation);
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
@@ -271,9 +275,8 @@ public class ParticipationResource {
     private boolean isNotAllowedToStartProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable StudentParticipation participation) {
         boolean isAfterDueDate = participation != null ? exerciseDateService.isAfterDueDate(participation)
                 : (programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate()));
-        // users cannot start/resume the programming exercises if test run after due date or semi-automatic grading is active and the due date has passed
-        return (isAfterDueDate && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC || programmingExercise.getAllowComplaintsForAutomaticAssessments()));
+        // users cannot start/resume programming exercises after the due date has passed
+        return isAfterDueDate;
     }
 
     /**
