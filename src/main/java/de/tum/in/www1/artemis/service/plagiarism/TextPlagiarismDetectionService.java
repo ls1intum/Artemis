@@ -102,7 +102,7 @@ public class TextPlagiarismDetectionService {
             log.info("Save text submissions for JPlag text comparison with {} submissions", submissionsSize);
 
             if (textSubmissions.size() < 2) {
-                log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
+                log.info("Insufficient amount of submissions for plagiarism detection. Inform the client with a bad request response.");
                 throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
             }
 
