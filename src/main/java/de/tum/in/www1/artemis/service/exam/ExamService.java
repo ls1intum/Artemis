@@ -508,18 +508,8 @@ public class ExamService {
      */
     public void fetchParticipationsSubmissionsAndResultsForExam(StudentExam studentExam, User currentUser) {
 
-        List<StudentParticipation> participations;
-        // 1st: fetch participations, submissions and results.
-        if (studentExam.getExam().isTestExam()) {
-            // TODO: this repository call is exactly the same as in the else statement below except for the dates (which are not even used at the moment), we should try to avoid
-            // code duplication!
-            participations = studentParticipationRepository.findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(studentExam);
-        }
-        else {
-            // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
-            // fetching all participations at once is more effective
-            participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
-        }
+        // 1st: fetch participations, submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
+        var participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
 
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
