@@ -3,6 +3,7 @@
 pipeline {
         options {
             timeout(time: #jenkinsTimeout, unit: 'MINUTES')
+            timestamps()
         }
         agent {
             docker {
@@ -13,23 +14,21 @@ pipeline {
         stages {
             stage('Checkout') {
                 steps {
-                    checkout([$class: 'GitSCM', branches: [[name: '**']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'tests', url: '#testRepository']]])
+                    checkout([$class: 'GitSCM', branches: [[name: '#defaultBranch']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'tests', url: '#testRepository']]])
                     dir('#assignmentCheckoutPath') {
-                        checkout([$class: 'GitSCM', branches: [[name: '**']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'assignment', url: '#assignmentRepository']]])
+                        checkout([$class: 'GitSCM', branches: [[name: '#defaultBranch']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'assignment', url: '#assignmentRepository']]])
                     }
                 }
             }
             stage('Build') {
                 steps {
-                    timestamps {
-                        withMaven {
-                            dir("structural") {
-                                sh 'mvn clean test -B'
-                            }
+                    withMaven {
+                        dir("structural") {
+                            sh 'mvn clean test -B'
+                        }
 
-                            dir("behavior") {
-                                sh 'mvn clean test -B'
-                            }
+                        dir("behavior") {
+                            sh 'mvn clean test -B'
                         }
                     }
                 }

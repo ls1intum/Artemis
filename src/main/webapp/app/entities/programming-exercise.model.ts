@@ -8,6 +8,7 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
 
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
@@ -53,6 +54,7 @@ export class ProgrammingExercise extends Exercise {
     public submissionPolicy?: SubmissionPolicy;
     public exerciseHints?: ExerciseHint[];
     public gitDiffReport?: ProgrammingExerciseGitDiffReport;
+    public buildLogStatistics?: BuildLogStatisticsDTO;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     public testCasesChanged?: boolean;
@@ -86,7 +88,7 @@ export class ProgrammingExercise extends Exercise {
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value
         this.checkoutSolutionRepository = false; // default value
-        this.projectType = ProjectType.PLAIN_MAVEN; // default value
+        this.projectType = ProjectType.PLAIN_GRADLE; // default value
         this.showTestNamesToStudents = false; // default value
         this.testwiseCoverageEnabled = false; // default value
     }

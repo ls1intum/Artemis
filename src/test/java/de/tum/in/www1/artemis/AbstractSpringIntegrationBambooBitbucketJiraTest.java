@@ -368,7 +368,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String buildPlanId = participation.getBuildPlanId();
-        bambooRequestMockProvider.mockGetBuildPlan(buildPlanId, buildPlanId != null ? new BambooBuildPlanDTO() : null, false);
+        bambooRequestMockProvider.mockGetBuildPlan(buildPlanId, buildPlanId != null ? new BambooBuildPlanDTO(null) : null, false);
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
         bambooRequestMockProvider.mockTriggerBuild(participation);

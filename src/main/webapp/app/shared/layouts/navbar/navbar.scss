@@ -205,13 +205,8 @@ a:not(.btn):hover {
         }
     }
 
-    .breadcrumb-item::before {
+    .breadcrumb-item:not(:first-of-type)::before {
         content: '>';
-    }
-
-    // Hide the first divider
-    .breadcrumb-item:first-of-type::before {
-        content: '';
     }
 }
 

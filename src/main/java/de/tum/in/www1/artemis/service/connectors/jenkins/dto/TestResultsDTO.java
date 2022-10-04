@@ -1,14 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -22,33 +19,55 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// Note: due to limitations with inheritance, we cannot declare this as record, but we can use it in a similar way with final fields
 public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
-    private int successful;
+    private final int successful;
 
-    private int skipped;
+    private final int skipped;
 
-    private int errors;
+    private final int errors;
 
-    private int failures;
+    private final int failures;
 
-    private String fullName;
+    private final String fullName;
 
-    private List<CommitDTO> commits = new ArrayList<>();
+    private final List<CommitDTO> commits;
 
-    private List<TestsuiteDTO> results = new ArrayList<>();
+    private final List<TestSuiteDTO> results;
 
-    private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
+    private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
 
     // For an unknown reason, the deserialization only works with this annotation
-    @JsonProperty("testwiseCoverageReport")
-    private List<TestwiseCoverageReportDTO> testwiseCoverageReport = new ArrayList<>();
+    private final List<TestwiseCoverageReportDTO> testwiseCoverageReport;
 
-    private ZonedDateTime runDate;
+    private final ZonedDateTime runDate;
 
-    private boolean isBuildSuccessful;
+    private final boolean isBuildSuccessful;
 
-    private List<String> logs;
+    private final List<String> logs;
+
+    @JsonCreator
+    public TestResultsDTO(@JsonProperty("successful") int successful, @JsonProperty("skipped") int skipped, @JsonProperty("errors") int errors,
+            @JsonProperty("failures") int failures, @JsonProperty("fullName") String fullName, @JsonProperty("commits") @JsonSetter(nulls = Nulls.AS_EMPTY) List<CommitDTO> commits,
+            @JsonProperty("results") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestSuiteDTO> results,
+            @JsonProperty("staticCodeAnalysisReports") @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
+            @JsonProperty("testwiseCoverageReport") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestwiseCoverageReportDTO> testwiseCoverageReport,
+            @JsonProperty("runDate") ZonedDateTime runDate, @JsonProperty("isBuildSuccessful") boolean isBuildSuccessful,
+            @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> logs) {
+        this.successful = successful;
+        this.skipped = skipped;
+        this.errors = errors;
+        this.failures = failures;
+        this.fullName = fullName;
+        this.commits = commits;
+        this.results = results;
+        this.staticCodeAnalysisReports = staticCodeAnalysisReports;
+        this.testwiseCoverageReport = testwiseCoverageReport;
+        this.runDate = runDate;
+        this.isBuildSuccessful = isBuildSuccessful;
+        this.logs = logs;
+    }
 
     public static TestResultsDTO convert(Object someResult) {
         return new ObjectMapper().registerModule(new JavaTimeModule()).convertValue(someResult, TestResultsDTO.class);
@@ -58,56 +77,28 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return successful;
     }
 
-    public void setSuccessful(int successful) {
-        this.successful = successful;
-    }
-
     public int getSkipped() {
         return skipped;
-    }
-
-    public void setSkipped(int skipped) {
-        this.skipped = skipped;
     }
 
     public int getErrors() {
         return errors;
     }
 
-    public void setErrors(int errors) {
-        this.errors = errors;
-    }
-
     public int getFailures() {
         return failures;
-    }
-
-    public void setFailures(int failures) {
-        this.failures = failures;
     }
 
     public String getFullName() {
         return fullName;
     }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
     public ZonedDateTime getRunDate() {
         return runDate;
     }
 
-    public void setIsBuildSuccessful(boolean isBuildSuccessful) {
-        this.isBuildSuccessful = isBuildSuccessful;
-    }
-
     public List<String> getLogs() {
         return this.logs;
-    }
-
-    public void setLogs(List<String> logs) {
-        this.logs = logs;
     }
 
     @Override
@@ -118,15 +109,22 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     @Override
     public Optional<String> getCommitHashFromAssignmentRepo() {
         final var testRepoNameSuffix = RepositoryType.TESTS.getName();
-        final var firstCommit = getCommits().stream().filter(commit -> !commit.getRepositorySlug().endsWith(testRepoNameSuffix)).findFirst();
-        return firstCommit.map(CommitDTO::getHash);
+        final var firstCommit = getCommits().stream().filter(commit -> !commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
+        return firstCommit.map(CommitDTO::hash);
     }
 
     @Override
     public Optional<String> getCommitHashFromTestsRepo() {
         final var testRepoNameSuffix = RepositoryType.TESTS.getName();
-        final var firstCommit = getCommits().stream().filter(commit -> commit.getRepositorySlug().endsWith(testRepoNameSuffix)).findFirst();
-        return firstCommit.map(CommitDTO::getHash);
+        final var firstCommit = getCommits().stream().filter(commit -> commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
+        return firstCommit.map(CommitDTO::hash);
+    }
+
+    @Override
+    public Optional<String> getBranchNameFromAssignmentRepo() {
+        final var testRepoNameSuffix = RepositoryType.TESTS.getName();
+        final var firstCommit = getCommits().stream().filter(commit -> !commit.repositorySlug().endsWith(testRepoNameSuffix)).findFirst();
+        return firstCommit.map(CommitDTO::branchName);
     }
 
     private int getSum() {
@@ -144,45 +142,20 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return testSum == 0 ? 0D : ((double) getSuccessful() / testSum) * 100D;
     }
 
-    @Override
-    public String getTestsPassedString() {
-        return String.format("%d of %d passed", getSuccessful(), getSum());
-    }
-
-    public void setRunDate(ZonedDateTime runDate) {
-        this.runDate = runDate;
-    }
-
     public List<CommitDTO> getCommits() {
         return commits;
     }
 
-    public void setCommits(List<CommitDTO> commits) {
-        this.commits = commits;
-    }
-
-    public List<TestsuiteDTO> getResults() {
+    public List<TestSuiteDTO> getResults() {
         return results;
-    }
-
-    public void setResults(List<TestsuiteDTO> results) {
-        this.results = results;
     }
 
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
         return staticCodeAnalysisReports;
     }
 
-    public void setStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
-        this.staticCodeAnalysisReports = staticCodeAnalysisReports;
-    }
-
     public List<TestwiseCoverageReportDTO> getTestwiseCoverageReport() {
         return testwiseCoverageReport;
-    }
-
-    public void setTestwiseCoverageReport(List<TestwiseCoverageReportDTO> testwiseCoverageReport) {
-        this.testwiseCoverageReport = testwiseCoverageReport;
     }
 
     @Override

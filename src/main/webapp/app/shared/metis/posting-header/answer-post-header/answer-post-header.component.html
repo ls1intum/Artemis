@@ -13,7 +13,7 @@
             </span>
         </span>
         <fa-icon
-            *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
+            *ngIf="isAuthorOfPosting || (!isCourseMessagesPage && isAtLeastTutorInCourse)"
             size="xs"
             class="ms-1 editIcon clickable icon"
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
@@ -22,7 +22,7 @@
             (click)="openPostingCreateEditModal.emit()"
         ></fa-icon>
         <jhi-confirm-icon
-            *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
+            *ngIf="isAuthorOfPosting || (!isCourseMessagesPage && isAtLeastTutorInCourse)"
             iconSize="xs"
             (confirmEvent)="deletePosting()"
             [ngClass]="'deleteIcon clickable icon'"
@@ -35,7 +35,7 @@
             <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
         </div>
     </ng-template>
-    <div *ngIf="!isAnswerOfAnnouncement" class="col-auto ps-0">
+    <div *ngIf="!isCourseMessagesPage && !isAnswerOfAnnouncement" class="col-auto ps-0">
         <div id="toggleElement" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
             <div *ngIf="posting.resolvesPost; else notResolved">
                 <fa-icon

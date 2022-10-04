@@ -113,7 +113,7 @@ describe('ModelingSubmission Management Component', () => {
         console.error = originalConsoleError;
     });
 
-    it('Should call load getDataForModelingEditor on init', () => {
+    it('should call load getDataForModelingEditor on init', () => {
         // GIVEN
         const getLatestSubmissionForModelingEditorStub = jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
 

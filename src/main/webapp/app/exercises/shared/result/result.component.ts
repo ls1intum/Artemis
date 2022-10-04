@@ -26,6 +26,7 @@ import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOr
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -103,7 +104,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() short = false;
     @Input() result?: Result;
     @Input() showUngradedResults: boolean;
-    @Input() showGradedBadge = false;
+    @Input() showBadge = false;
     @Input() showTestDetails = false;
     @Input() missingResultInfo = MissingResultInfo.NONE;
     @Input() exercise?: Exercise;
@@ -115,6 +116,9 @@ export class ResultComponent implements OnInit, OnChanges {
     templateStatus: ResultTemplateStatus;
     submission?: Submission;
     onlyShowSuccessfulCompileStatus: boolean;
+    badgeClass: string;
+    badgeText: string;
+    badgeTooltip: string;
 
     resultTooltip: string;
 
@@ -188,9 +192,16 @@ export class ResultComponent implements OnInit, OnChanges {
 
         this.translate.onLangChange.subscribe(() => {
             if (!!this.resultString) {
-                this.resultString = this.resultService.getResultString(this.result, this.exercise);
+                this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             }
         });
+
+        if (this.showBadge && this.result) {
+            const badgeData = ResultService.evaluateBadge(this.participation, this.result);
+            this.badgeClass = badgeData.badgeClass;
+            this.badgeText = badgeData.text;
+            this.badgeTooltip = badgeData.tooltip;
+        }
     }
 
     /**
@@ -220,13 +231,13 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = this.getTextColorClass();
             this.resultIconClass = this.getResultIconClass();
-            this.resultString = this.resultService.getResultString(this.result, this.exercise);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
         } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
             this.onlyShowSuccessfulCompileStatus = this.getOnlyShowSuccessfulCompileStatus();
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
-            this.resultString = this.resultService.getResultString(this.result, this.exercise);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
@@ -319,7 +330,12 @@ export class ResultComponent implements OnInit, OnChanges {
     buildResultTooltip() {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         const programmingExercise = this.exercise as ProgrammingExercise;
-        if (this.participation && isProgrammingExerciseStudentParticipation(this.participation) && isResultPreliminary(this.result!, programmingExercise)) {
+        if (
+            this.participation &&
+            isProgrammingExerciseStudentParticipation(this.participation) &&
+            !(this.participation as ProgrammingExerciseStudentParticipation).testRun &&
+            isResultPreliminary(this.result!, programmingExercise)
+        ) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
                 return this.translate.instant('artemisApp.result.preliminaryTooltipSemiAutomatic');
             }

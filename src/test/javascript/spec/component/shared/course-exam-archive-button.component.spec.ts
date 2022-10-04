@@ -60,7 +60,7 @@ describe('Course Exam Archive Button Component', () => {
         accountService = TestBed.inject(AccountService);
     });
 
-    describe('OnInit without required properties', () => {
+    describe('onInit without required properties', () => {
         beforeEach(() => {
             comp.archiveMode = 'Course';
         });
@@ -77,7 +77,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
     });
 
-    describe('OnInit for not instructor', () => {
+    describe('onInit for not instructor', () => {
         const course = { id: 123, isAtLeastInstructor: false };
 
         beforeEach(() => {
@@ -95,7 +95,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
     });
 
-    describe('OnInit for course that is not over', () => {
+    describe('onInit for course that is not over', () => {
         const course = { id: 123, endDate: dayjs().subtract(5, 'minutes') };
 
         beforeEach(() => {
@@ -115,7 +115,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
     });
 
-    describe('OnInit for course that has no archive', () => {
+    describe('onInit for course that has no archive', () => {
         const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes') };
 
         beforeEach(() => {
@@ -133,7 +133,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
     });
 
-    describe('OnInit for course that has an archive', () => {
+    describe('onInit for course that has an archive', () => {
         const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
 
         beforeEach(fakeAsync(() => {
@@ -163,8 +163,8 @@ describe('Course Exam Archive Button Component', () => {
 
             comp.cleanupCourse();
 
-            expect(cleanupStub).toHaveBeenCalled();
-            expect(alertServiceSpy).toHaveBeenCalled();
+            expect(cleanupStub).toHaveBeenCalledOnce();
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
         }));
 
         it('should download archive for course', fakeAsync(() => {
@@ -173,7 +173,7 @@ describe('Course Exam Archive Button Component', () => {
 
             comp.downloadArchive();
 
-            expect(downloadStub).toHaveBeenCalled();
+            expect(downloadStub).toHaveBeenCalledOnce();
         }));
 
         it('should archive course', fakeAsync(() => {
@@ -182,7 +182,7 @@ describe('Course Exam Archive Button Component', () => {
 
             comp.archive();
 
-            expect(downloadStub).toHaveBeenCalled();
+            expect(downloadStub).toHaveBeenCalledOnce();
         }));
 
         it('should reload course on archive complete', fakeAsync(() => {
@@ -196,7 +196,7 @@ describe('Course Exam Archive Button Component', () => {
 
             expect(comp.isBeingArchived).toBeFalse();
             expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
-            expect(alertServiceSpy).toHaveBeenCalled();
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(comp.course).toBeDefined();
         }));
 
@@ -217,7 +217,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
     });
 
-    describe('OnInit for exam that has an archive', () => {
+    describe('onInit for exam that has an archive', () => {
         const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes') };
         const exam: Exam = { id: 123, endDate: dayjs().subtract(5, 'minutes'), examArchivePath: 'some-path', course };
 
@@ -247,7 +247,7 @@ describe('Course Exam Archive Button Component', () => {
             comp.archiveMode = 'Exam';
             comp.cleanupCourse();
 
-            expect(cleanupStub).toHaveBeenCalledTimes(0);
+            expect(cleanupStub).not.toHaveBeenCalled();
             expect(comp.canCleanupCourse()).toBeFalse();
         }));
 
@@ -257,7 +257,7 @@ describe('Course Exam Archive Button Component', () => {
 
             comp.downloadArchive();
 
-            expect(downloadStub).toHaveBeenCalled();
+            expect(downloadStub).toHaveBeenCalledOnce();
         }));
 
         it('should archive course', fakeAsync(() => {
@@ -266,7 +266,7 @@ describe('Course Exam Archive Button Component', () => {
 
             comp.archive();
 
-            expect(downloadStub).toHaveBeenCalled();
+            expect(downloadStub).toHaveBeenCalledOnce();
         }));
 
         it('should reload exam on archive complete', fakeAsync(() => {
@@ -280,7 +280,7 @@ describe('Course Exam Archive Button Component', () => {
 
             expect(comp.isBeingArchived).toBeFalse();
             expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
-            expect(alertServiceSpy).toHaveBeenCalled();
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(comp.exam).toBeDefined();
         }));
     });
