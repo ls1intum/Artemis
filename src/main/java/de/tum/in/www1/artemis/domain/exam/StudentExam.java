@@ -217,7 +217,7 @@ public class StudentExam extends AbstractAuditingEntity {
     @JsonIgnore
     public boolean areResultsPublishedYet() {
         if (this.exam.isTestExam()) {
-            return this.submitted;
+            return (this.submitted != null && this.submitted);
         }
         else {
             return exam.resultsPublished();
