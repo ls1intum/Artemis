@@ -39,7 +39,15 @@ export class TutorialGroupManagementDetailComponent implements OnInit {
             });
     }
 
-    onTutorialGroupDeleted() {
+    onCourseClicked = () => {
+        this.router.navigate(['/course-management', this.courseId]);
+    };
+
+    onRegistrationsClicked = () => {
+        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', this.tutorialGroupId, 'registered-students']);
+    };
+
+    onTutorialGroupDeleted = () => {
         this.router.navigate(['..'], { relativeTo: this.activatedRoute });
-    }
+    };
 }

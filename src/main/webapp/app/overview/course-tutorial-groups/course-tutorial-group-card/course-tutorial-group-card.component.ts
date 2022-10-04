@@ -1,8 +1,8 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { TutorialGroupRegistration } from 'app/entities/tutorial-group/tutorial-group-registration.model';
+import { Component, HostListener, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { User } from 'app/core/user/user.model';
 import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-course-tutorial-group-card',
@@ -12,8 +12,9 @@ import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
 })
 export class CourseTutorialGroupCardComponent implements OnChanges {
     @Input()
-    tutorialGroupRegistration: TutorialGroupRegistration;
-    tutorialGroup: TutorialGroup;
+    courseId: number;
+    @Input()
+    registeredTutorialGroup: TutorialGroup;
     teachingAssistant: User;
     // ToDo: Determine upcoming tutorial group sessions
     upcomingSession: undefined;
@@ -21,16 +22,23 @@ export class CourseTutorialGroupCardComponent implements OnChanges {
     // icons
     faPersonChalkboard = faPersonChalkboard;
 
+    @HostListener('click', ['$event'])
+    onCardClicked() {
+        this.router.navigate(['/courses', this.courseId, 'tutorial-groups', this.registeredTutorialGroup.id]);
+    }
+
+    constructor(private router: Router) {}
+
     ngOnChanges(changes: SimpleChanges) {
         for (const propName in changes) {
             if (changes.hasOwnProperty(propName)) {
                 const change = changes[propName];
                 switch (propName) {
-                    case 'tutorialGroupRegistration': {
-                        if (change.currentValue && change.currentValue.tutorialGroup) {
-                            this.tutorialGroup = change.currentValue.tutorialGroup;
-                            if (this.tutorialGroup && this.tutorialGroup.teachingAssistant) {
-                                this.teachingAssistant = this.tutorialGroup.teachingAssistant;
+                    case 'registeredTutorialGroup': {
+                        if (change.currentValue) {
+                            this.registeredTutorialGroup = change.currentValue;
+                            if (this.registeredTutorialGroup && this.registeredTutorialGroup.teachingAssistant) {
+                                this.teachingAssistant = this.registeredTutorialGroup.teachingAssistant;
                             }
                         }
                     }

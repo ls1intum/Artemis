@@ -39,4 +39,8 @@ export class CourseTutorialGroupDetailComponent implements OnInit {
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
+
+    onCourseClicked = () => {
+        this.router.navigate(['/courses', this.courseId]);
+    };
 }

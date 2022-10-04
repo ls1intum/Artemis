@@ -1,13 +1,10 @@
-<jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="row">
-        <div class="col-12">
-            <div>
-                <h2>{{ 'artemisApp.pages.courseTutorialGroupOverview.title' | artemisTranslate }}</h2>
-            </div>
-            <ng-container *ngIf="tutorialGroups && tutorialGroups.length > 0">
-                <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [courseId]="courseId" (tutorialGroupSelected)="onTutorialGroupSelected($event)">
-                </jhi-tutorial-groups-table>
-            </ng-container>
+<div class="row">
+    <div class="col-12">
+        <div>
+            <h2>{{ 'artemisApp.pages.courseTutorialGroupOverview.title' | artemisTranslate }}</h2>
         </div>
+        <ng-container *ngIf="tutorialGroups && tutorialGroups.length > 0">
+            <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [courseId]="courseId" [tutorialGroupClickHandler]="onTutorialGroupSelected"> </jhi-tutorial-groups-table>
+        </ng-container>
     </div>
-</jhi-loading-indicator-container>
+</div>

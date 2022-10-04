@@ -1,4 +1,4 @@
-import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef } from '@angular/core';
+import { Component, ContentChild, Input, OnInit, TemplateRef } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Language } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -11,14 +11,16 @@ import { SortService } from 'app/shared/service/sort.service';
 })
 export class TutorialGroupsTableComponent implements OnInit {
     @Input()
+    showIdColumn = false;
+
+    @Input()
     tutorialGroups: TutorialGroup[] = [];
 
     @Input()
     courseId: number;
 
-    // emits the id of the selected tutorial group
-    @Output()
-    tutorialGroupSelected = new EventEmitter<number>();
+    @Input()
+    tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;
 
     @ContentChild(TemplateRef) extraColumn: TemplateRef<any>;
 

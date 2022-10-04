@@ -1,4 +1,4 @@
-import { Component, ContentChild, Input, OnChanges, OnInit, SimpleChanges, TemplateRef } from '@angular/core';
+import { Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Language } from 'app/entities/course.model';
 import { SafeHtml } from '@angular/platform-browser';
@@ -14,6 +14,12 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
     @Input()
     tutorialGroup: TutorialGroup;
+
+    @Input()
+    courseClickHandler: () => void;
+
+    @Input()
+    registrationClickHandler: () => void;
 
     GERMAN = Language.GERMAN;
     ENGLISH = Language.ENGLISH;

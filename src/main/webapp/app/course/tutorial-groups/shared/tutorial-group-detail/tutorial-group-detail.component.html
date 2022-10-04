@@ -2,7 +2,7 @@
     <h2>{{ tutorialGroup.title }}</h2>
     <hr />
     <ng-container *ngIf="header">
-        <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"> </ng-template>
+        <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
         <hr />
     </ng-container>
     <h3>{{ 'artemisApp.pages.tutorialGroupDetail.title' | artemisTranslate }}:</h3>
@@ -12,9 +12,14 @@
             <span>{{ 'artemisApp.entities.tutorialGroup.course' | artemisTranslate }}</span>
         </dt>
         <dd>
-            <div *ngIf="tutorialGroup.course">
-                <a [routerLink]="['/course-management', tutorialGroup.course.id]">{{ tutorialGroup.course.title }}</a>
-            </div>
+            <ng-container *ngIf="tutorialGroup.course">
+                <ng-container *ngIf="courseClickHandler; else noCourseClickHandler">
+                    <a [routerLink]="" class="link-primary" (click)="courseClickHandler()">{{ tutorialGroup.course.title }}</a>
+                </ng-container>
+                <ng-template #noCourseClickHandler>
+                    <span>{{ tutorialGroup.course.title }}</span>
+                </ng-template>
+            </ng-container>
         </dd>
         <!-- Title -->
         <dt>
@@ -30,8 +35,8 @@
         <dd>
             <span *ngIf="tutorialGroup.teachingAssistant; else teachingAssistantNotSet">{{ tutorialGroup.teachingAssistant.name }}</span>
             <ng-template #teachingAssistantNotSet>
-                <span>{{ 'artemisApp.pages.tutorialGroupDetail.teachingAssistantNotSet' | artemisTranslate }}</span></ng-template
-            >
+                <span>{{ 'artemisApp.pages.tutorialGroupDetail.teachingAssistantNotSet' | artemisTranslate }}</span>
+            </ng-template>
         </dd>
         <!-- Capacity -->
         <dt>
@@ -48,11 +53,14 @@
             <span>{{ 'artemisApp.entities.tutorialGroup.registrations' | artemisTranslate }}</span>
         </dt>
         <dd>
-            <div *ngIf="tutorialGroup.registrations">
-                <a [routerLink]="['/course-management', tutorialGroup.course!.id!, 'tutorial-groups-management', tutorialGroup.id!, 'registered-students']">{{
-                    tutorialGroup.registrations.length
-                }}</a>
-            </div>
+            <ng-container *ngIf="tutorialGroup.numberOfRegisteredUsers !== undefined">
+                <ng-container *ngIf="registrationClickHandler; else noRegistrationClickHandler">
+                    <a [routerLink]="" class="link-primary" (click)="registrationClickHandler()">{{ tutorialGroup.numberOfRegisteredUsers }}</a>
+                </ng-container>
+                <ng-template #noRegistrationClickHandler>
+                    <span>{{ tutorialGroup.numberOfRegisteredUsers }}</span>
+                </ng-template>
+            </ng-container>
         </dd>
         <!-- Online/Offline -->
         <dt>
@@ -88,7 +96,7 @@
         </dt>
         <dd *ngIf="formattedAdditionalInformation; else additionalInformationNotSet" class="editor-outline-background" [innerHTML]="formattedAdditionalInformation"></dd>
         <ng-template #additionalInformationNotSet
-            ><span>{{ 'artemisApp.pages.tutorialGroupDetail.additionalInformationNotSet' | artemisTranslate }}</span></ng-template
-        >
+            ><span>{{ 'artemisApp.pages.tutorialGroupDetail.additionalInformationNotSet' | artemisTranslate }}</span>
+        </ng-template>
     </dl>
 </div>

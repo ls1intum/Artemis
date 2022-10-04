@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import javax.validation.Valid;
 import javax.ws.rs.BadRequestException;
@@ -105,18 +102,17 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing the tutorial groups of the course
      */
     @GetMapping("/courses/{courseId}/tutorial-groups")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<List<TutorialGroup>> getAllOfCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutorial groups of course with id: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
-        var tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(courseId);
-
+        var tutorialGroups = tutorialGroupService.findAllForCourse(course, user);
         return ResponseEntity.ok(new ArrayList<>(tutorialGroups));
     }
 
@@ -128,13 +124,16 @@ public class TutorialGroupResource {
      * @return ResponseEntity with status 200 (OK) and with body the tutorial group
      */
     @GetMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         checkEntityIdMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroup.getCourse(), null);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, tutorialGroup.getCourse(), user);
+        tutorialGroup.setTransientPropertiesForUser(user);
+        tutorialGroup.hidePrivacySensitiveInformation();
         return ResponseEntity.ok().body(tutorialGroup);
     }
 

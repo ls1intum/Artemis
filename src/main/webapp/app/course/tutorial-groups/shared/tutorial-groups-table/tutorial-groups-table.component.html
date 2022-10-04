@@ -1,8 +1,8 @@
 <div class="table-responsive tutorial-groups-table">
-    <table class="table table-sm table-striped table-hover">
+    <table class="table table-sm table-hover">
         <thead>
             <tr jhiSort [(predicate)]="sortingPredicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                <th jhiSortBy="id">
+                <th jhiSortBy="id" *ngIf="showIdColumn">
                     <a class="th-link">{{ 'global.field.id' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
@@ -38,12 +38,28 @@
             </tr>
         </thead>
         <tbody>
-            <tr *ngFor="let tutorialGroup of tutorialGroups; trackBy: trackId" id="tutorial-group-row-{{ tutorialGroup.id }}">
-                <td>
-                    <a [routerLink]="" class="link-primary" (click)="tutorialGroupSelected.emit(tutorialGroup.id)">{{ tutorialGroup.id }}</a>
+            <tr
+                *ngFor="let tutorialGroup of tutorialGroups; trackBy: trackId"
+                id="tutorial-group-row-{{ tutorialGroup.id }}"
+                [ngClass]="{ 'table-primary': tutorialGroup.isUserRegistered }"
+            >
+                <td *ngIf="showIdColumn">
+                    <ng-container *ngIf="tutorialGroupClickHandler; else noTutorialGroupClickHandler">
+                        <a [routerLink]="" class="link-primary" (click)="tutorialGroupClickHandler(tutorialGroup)">{{ tutorialGroup.id }}</a>
+                    </ng-container>
+                    <ng-template #noTutorialGroupClickHandler>
+                        <span>{{ tutorialGroup.id }}</span>
+                    </ng-template>
                 </td>
                 <td>
-                    <span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span>
+                    <ng-container *ngIf="tutorialGroupClickHandler; else noTutorialGroupClickHandler">
+                        <a [routerLink]="" class="link-primary" (click)="tutorialGroupClickHandler(tutorialGroup)"
+                            ><span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span></a
+                        >
+                    </ng-container>
+                    <ng-template #noTutorialGroupClickHandler>
+                        <span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span>
+                    </ng-template>
                 </td>
                 <td>{{ tutorialGroup.teachingAssistant?.name }}</td>
                 <td>{{ tutorialGroup.capacity }}</td>
@@ -57,7 +73,7 @@
                 <td>
                     <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.campus }} </span>
                 </td>
-                <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"> </ng-template>
+                <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
             </tr>
         </tbody>
     </table>

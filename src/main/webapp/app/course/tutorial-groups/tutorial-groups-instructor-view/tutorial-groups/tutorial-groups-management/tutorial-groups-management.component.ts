@@ -29,11 +29,11 @@ export class TutorialGroupsManagementComponent implements OnInit {
         });
     }
 
-    public onTutorialGroupSelected(tutorialGroupId: number) {
-        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', tutorialGroupId]);
-    }
+    onTutorialGroupSelected = (tutorialGroup: TutorialGroup) => {
+        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', tutorialGroup.id]);
+    };
 
-    public loadTutorialGroups() {
+    loadTutorialGroups() {
         this.isLoading = true;
         this.tutorialGroupService
             .getAllOfCourse(this.courseId)

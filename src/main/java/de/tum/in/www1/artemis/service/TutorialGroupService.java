@@ -3,14 +3,18 @@ package de.tum.in.www1.artemis.service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 
 @Service
@@ -18,10 +22,14 @@ public class TutorialGroupService {
 
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
+    private final TutorialGroupRepository tutorialGroupRepository;
+
     private final UserRepository userRepository;
 
-    public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, UserRepository userRepository) {
+    public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
+            UserRepository userRepository) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
+        this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
     }
 
@@ -83,6 +91,22 @@ public class TutorialGroupService {
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup, registrationType);
         return notFoundStudentDTOs;
+    }
+
+    /**
+     * Get all tutorial groups for a course, including setting the transient properties for the given user
+     *
+     * @param course The course for which the tutorial groups should be retrieved.
+     * @param user   The user for whom to set the transient properties of the tutorial groups.
+     * @return A list of tutorial groups for the given course with the transient properties set for the given user.
+     */
+    public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user) {
+        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(course.getId());
+        tutorialGroups.forEach(tutorialGroup -> {
+            tutorialGroup.setTransientPropertiesForUser(user);
+        });
+
+        return tutorialGroups;
     }
 
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {

@@ -1,11 +1,11 @@
-<ng-container *ngIf="tutorialGroupRegistration && tutorialGroup">
+<ng-container *ngIf="registeredTutorialGroup">
     <div class="card-header bg-primary">
-        <h5 class="text-center text-white">{{ tutorialGroup?.title ?? '' }}</h5>
+        <h5 class="text-center text-white">{{ registeredTutorialGroup?.title ?? '' }}</h5>
     </div>
     <div class="card-body">
         <div class="d-flex justify-content-center align-items-center">
             <fa-icon [icon]="faPersonChalkboard" size="2x"></fa-icon>
-            <!-- ToDo: Show Date of next session in the card body -->
+            <!-- ToDo: Show Date of next session in the card body when session managment is merged-->
             <p *ngIf="upcomingSession" class="card-text"></p>
         </div>
     </div>

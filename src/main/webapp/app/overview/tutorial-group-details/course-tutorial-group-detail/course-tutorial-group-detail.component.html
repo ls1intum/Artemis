@@ -1,7 +1,7 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
     <div class="row justify-content-center">
         <div *ngIf="tutorialGroup" class="col-12">
-            <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup"> </jhi-tutorial-group-detail>
+            <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup" [courseClickHandler]="onCourseClicked"> </jhi-tutorial-group-detail>
         </div>
     </div>
 </jhi-loading-indicator-container>
