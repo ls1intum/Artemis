@@ -2101,7 +2101,7 @@ public class CourseTestService {
 
         List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
 
-        Course receivedCourse = courses.stream().filter(c -> c.getId() == courseId).findFirst().get();
+        Course receivedCourse = courses.stream().filter(c -> courseId.equals(c.getId())).findFirst().get();
         assertThat(receivedCourse.getOnlineCourseConfiguration()).as("Online course configuration is lazily loaded").isNull();
     }
 
