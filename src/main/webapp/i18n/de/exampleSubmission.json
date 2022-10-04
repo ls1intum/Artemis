@@ -33,6 +33,8 @@
             "pageHeader": "Beispiel für eine Textvorlage zur Übung",
             "usedForTutorial": "In Bewertungstraining verwenden",
             "assessmentTraining": "Bewertungstraining",
+            "selectModel": "Wähle eine Bewertungstraining-Modus aus",
+            "selectModelExplanation": "Wähle eine Bewertungstraining-Modus aus. Dieser bestimmt wie die Tutor:innen nachweisen, dass sie die Beispielbewertung verstanden haben.",
             "readAndConfirm": "Lesen und bestätigen",
             "assessCorrectly": "Richtig bewerten",
             "createNewSubmission": "Neue Beispielabgabe erstellen",

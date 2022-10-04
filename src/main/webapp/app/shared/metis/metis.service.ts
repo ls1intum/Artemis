@@ -30,6 +30,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -170,6 +171,7 @@ export class MetisService implements OnDestroy {
         if (
             forceUpdate ||
             postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
+            postContextFilter?.conversationId !== this.currentPostContextFilter?.conversationId ||
             postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
             postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
             postContextFilter?.exerciseId !== this.currentPostContextFilter?.exerciseId ||
@@ -309,7 +311,7 @@ export class MetisService implements OnDestroy {
      * @param {Lecture | undefined} lecture optional lecture as default context
      * @return {Post} created default object
      */
-    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture, plagiarismCase?: PlagiarismCase): Post {
+    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture, plagiarismCase?: PlagiarismCase, conversation?: Conversation): Post {
         const emptyPost: Post = new Post();
         if (courseWideContext) {
             emptyPost.courseWideContext = courseWideContext;
@@ -321,6 +323,8 @@ export class MetisService implements OnDestroy {
             emptyPost.lecture = { id: lecture.id, title: lecture.title } as Lecture;
         } else if (plagiarismCase) {
             emptyPost.plagiarismCase = { id: plagiarismCase.id } as PlagiarismCase;
+        } else if (conversation) {
+            emptyPost.conversation = conversation;
         } else {
             // set default
             emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;
@@ -442,7 +446,7 @@ export class MetisService implements OnDestroy {
                 answer.creationDate = dayjs(answer.creationDate);
             });
             switch (postDTO.action) {
-                case MetisPostAction.CREATE_POST:
+                case MetisPostAction.CREATE:
                     // determine if either the current post context filter is not set to a specific course-wide topic
                     // or the sent post has a different context,
                     // or the sent post has a course-wide context which matches the current filter
@@ -456,7 +460,7 @@ export class MetisService implements OnDestroy {
                     }
                     this.addTags(postDTO.post.tags);
                     break;
-                case MetisPostAction.UPDATE_POST:
+                case MetisPostAction.UPDATE:
                     const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                     if (indexToUpdate > -1) {
                         this.cachedPosts[indexToUpdate] = postDTO.post;
@@ -465,7 +469,7 @@ export class MetisService implements OnDestroy {
                     }
                     this.addTags(postDTO.post.tags);
                     break;
-                case MetisPostAction.DELETE_POST:
+                case MetisPostAction.DELETE:
                     const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
                     if (indexToDelete > -1) {
                         this.cachedPosts.splice(indexToDelete, 1);
@@ -504,6 +508,8 @@ export class MetisService implements OnDestroy {
             channel += `exercises/${this.currentPostContextFilter.exerciseId}`;
         } else if (this.currentPostContextFilter.lectureId) {
             channel += `lectures/${this.currentPostContextFilter.lectureId}`;
+        } else if (this.currentPostContextFilter.conversationId) {
+            channel = `/user${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
         } else {
             // subscribe to course as this is topic that is emitted on in every case
             channel += `courses/${this.courseId}`;

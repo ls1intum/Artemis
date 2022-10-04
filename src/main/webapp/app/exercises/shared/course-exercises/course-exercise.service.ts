@@ -90,11 +90,23 @@ export class CourseExerciseService {
     }
 
     /**
+     * starts the exercise with the identifier exerciseId
+     * @param exerciseId - the unique identifier of the exercise
+     */
+    startPractice(exerciseId: number): Observable<StudentParticipation> {
+        return this.http.post<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice`, {}).pipe(
+            map((participation: StudentParticipation) => {
+                return this.handleParticipation(participation);
+            }),
+        );
+    }
+
+    /**
      * resumes the programming exercise with the identifier exerciseId
      * @param exerciseId - the unique identifier of the exercise
      */
-    resumeProgrammingExercise(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation`, {}).pipe(
+    resumeProgrammingExercise(exerciseId: number, participationId: number): Observable<StudentParticipation> {
+        return this.http.put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation/${participationId}`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),

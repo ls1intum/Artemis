@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -269,7 +270,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
             final ModelingSubmission submission2 = ModelFactory.generateModelingSubmission("model2", false);
             database.addModelingSubmission(classExercise, submission2, "student2");
 
-            final var participations = studentParticipationRepository.findByExerciseId(classExercise.getId());
+            final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(classExercise.getId()));
             assertThat(participations).hasSize(2);
             participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
             participations.get(1).setIndividualDueDate(individualDueDate);

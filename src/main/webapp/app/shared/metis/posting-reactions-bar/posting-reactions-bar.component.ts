@@ -47,9 +47,10 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     speechBalloonId: string = SPEECH_BALLOON_ID;
     closeCrossId: string = HEAVY_MULTIPLICATION_ID;
 
+    @Input() posting: T;
+    @Input() isThreadSidebar: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
 
-    @Input() posting: T;
     showReactionSelector = false;
     currentUserIsAtLeastTutor: boolean;
 

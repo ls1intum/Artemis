@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static java.util.Arrays.asList;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -287,7 +288,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("""
             SELECT r
-            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            FROM Exercise e
+            JOIN e.studentParticipations p
+            JOIN p.submissions s
+            JOIN s.results r
             WHERE e.id = :exerciseId
                 AND p.student.id = :studentId
                 AND r.score IS NOT NULL
@@ -300,7 +304,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("""
             SELECT r
-            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            FROM Exercise e
+            JOIN e.studentParticipations p
+            JOIN p.submissions s
+            JOIN s.results r
             WHERE e.id = :exerciseId
                 AND p.team.id = :teamId
                 AND r.score IS NOT NULL
@@ -310,6 +317,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+
+    List<Result> findAllByLastModifiedDateAfter(Instant lastModifiedDate);
 
     /**
      * Checks if a result for the given participation exists.

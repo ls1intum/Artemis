@@ -54,6 +54,7 @@ describe('HeaderExercisePageWithDetails', () => {
 
                 exercise = new ProgrammingExercise(undefined, undefined);
                 exercise.dueDate = undefined;
+                exercise.assessmentType = AssessmentType.AUTOMATIC;
                 component.exercise = exercise;
 
                 exam = new Exam();
@@ -87,6 +88,7 @@ describe('HeaderExercisePageWithDetails', () => {
 
     it('should set the icon according to the exercise due date', () => {
         exercise.dueDate = dayjs().subtract(2, 'days');
+        exercise.assessmentType = AssessmentType.MANUAL;
         const dueDate1 = dayjs().add(1, 'day');
         participation.individualDueDate = dueDate1;
         component.studentParticipation = participation;

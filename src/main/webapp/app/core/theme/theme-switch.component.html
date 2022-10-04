@@ -1,26 +1,12 @@
 <ng-template #popContent>
     <div class="popover-content" (mouseenter)="openPopover()" id="theme-switch-popover-content">
         <div class="head">☾ <span jhiTranslate="artemisApp.theme.darkMode">Dark Mode</span> ☾</div>
-        <div class="experimental" jhiTranslate="artemisApp.theme.experimental">EXPERIMENTAL</div>
         <div class="switch-box">
             <div><fa-icon [icon]="faSync"></fa-icon> {{ 'artemisApp.theme.sync' | artemisTranslate }}</div>
             <div class="form-switch">
                 <input class="form-check-input" type="checkbox" (click)="toggleSynced()" [checked]="isSynced" />
             </div>
         </div>
-        <div *ngIf="!isDark" class="description" jhiTranslate="artemisApp.theme.tryDarkMode">Try the dark mode and relieve your eyes.</div>
-        <div *ngIf="isDark && showInitialHints" class="description" jhiTranslate="artemisApp.theme.darkModeAutoEnabled">
-            The dark mode has been automatically enabled based on your operating system preferences.
-        </div>
-        <div *ngIf="isDark" class="description">
-            <span jhiTranslate="artemisApp.theme.clickAnyTime.partA">You can click this icon at any time to disable</span>
-            <span [jhiTranslate]="showInitialHints ? 'artemisApp.theme.clickAnyTime.partB.autoDetected' : 'artemisApp.theme.clickAnyTime.partB.manual'">the dark mode</span>
-            <span jhiTranslate="artemisApp.theme.clickAnyTime.partC">if you experience problems.</span>
-        </div>
-        <button class="btn btn-primary mt-2" (click)="enableNow()" *ngIf="!isDark && showInitialHints" jhiTranslate="artemisApp.theme.enableNow">Enable now</button>
-        <a *ngIf="showInitialHints" class="description" (click)="closePopover()" [jhiTranslate]="isDark ? 'artemisApp.theme.gotIt' : 'artemisApp.theme.noThanks'">{{
-            isDark ? 'Got it!' : 'No, thanks'
-        }}</a>
     </div>
 </ng-template>
 <div (mouseenter)="openPopover()" (mouseleave)="mouseLeave()" class="wrapper">

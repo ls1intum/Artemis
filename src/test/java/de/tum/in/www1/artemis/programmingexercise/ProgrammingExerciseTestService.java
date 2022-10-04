@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
@@ -69,7 +70,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
-import de.tum.in.www1.artemis.web.rest.ParticipationResource;
+import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
@@ -117,6 +118,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     @Autowired
     @Qualifier("staticCodeAnalysisConfiguration")
@@ -862,8 +866,8 @@ public class ProgrammingExerciseTestService {
             participant = setupTeam(user);
         }
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
-        final var path = ParticipationResource.Endpoints.ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId()))
-                .replace("{exerciseId}", String.valueOf(exercise.getId()));
+        final var path = "/api/exercises/{exerciseId}/participations".replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
+                String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
@@ -880,8 +884,8 @@ public class ProgrammingExerciseTestService {
 
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
 
-        final var path = ParticipationResource.Endpoints.ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId()))
-                .replace("{exerciseId}", String.valueOf(exercise.getId()));
+        final var path = "/api/exercises/{exerciseId}/participations".replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
+                String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
@@ -898,7 +902,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
         final Course course = setupCourseWithProgrammingExercise(exerciseMode);
-        request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
+        request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation/" + 42, null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.NOT_FOUND);
     }
 
@@ -914,8 +918,8 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
 
-        participation = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
-                HttpStatus.OK);
+        participation = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
+                ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(participation.getBuildPlanId()).as("Build Plan Id should be set")
@@ -995,7 +999,7 @@ public class ProgrammingExerciseTestService {
 
         if (!buildPlanExists) {
             mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
-            participation = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null,
+            participation = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
                     ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         }
 
@@ -1706,7 +1710,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private ProgrammingExerciseStudentParticipation createUserParticipation(Course course) throws Exception {
-        final var path = ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
+        final var path = "/api/exercises/{exerciseId}/participations".replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
                 String.valueOf(exercise.getId()));
         return request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
     }
@@ -1854,5 +1858,42 @@ public class ProgrammingExerciseTestService {
 
         exportSolutionRepository(exerciseRepo, HttpStatus.FORBIDDEN);
 
+    }
+
+    // TEST
+    void buildLogStatistics_unauthorized() throws Exception {
+        exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
+        request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.FORBIDDEN, BuildLogStatisticsDTO.class);
+    }
+
+    // TEST
+    void buildLogStatistics_noStatistics() throws Exception {
+        exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
+        var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
+        assertThat(statistics.getBuildCount()).isEqualTo(0);
+        assertThat(statistics.getAgentSetupDuration()).isNull();
+        assertThat(statistics.getTestDuration()).isNull();
+        assertThat(statistics.getScaDuration()).isNull();
+        assertThat(statistics.getTotalJobDuration()).isNull();
+        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+    }
+
+    // TEST
+    void buildLogStatistics() throws Exception {
+        exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
+        var participation = createStudentParticipationWithSubmission(INDIVIDUAL);
+        var submission1 = database.createProgrammingSubmission(participation, false);
+        var submission2 = database.createProgrammingSubmission(participation, false);
+
+        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission1, 10, 20, 30, 60, 5));
+        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission2, 8, 15, null, 30, 0));
+
+        var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
+        assertThat(statistics.getBuildCount()).isEqualTo(2);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(9);
+        assertThat(statistics.getTestDuration()).isEqualTo(17.5);
+        assertThat(statistics.getScaDuration()).isEqualTo(30);
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(45);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2.5);
     }
 }

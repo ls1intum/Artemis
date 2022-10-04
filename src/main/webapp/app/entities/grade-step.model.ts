@@ -4,6 +4,7 @@ import { GradeType } from 'app/entities/grading-scale.model';
 export class GradeStep implements BaseEntity {
     public id?: number;
     public gradeName: string;
+    public numericValue?: number;
     public lowerBoundPercentage: number;
     public lowerBoundPoints?: number;
     public upperBoundPercentage: number;

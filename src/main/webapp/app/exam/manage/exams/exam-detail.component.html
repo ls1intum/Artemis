@@ -32,6 +32,10 @@
                     <fa-icon [icon]="faClipboard"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.gradingSystem' | artemisTranslate }}</span>
                 </a>
+                <a *ngIf="canHaveBonus" [routerLink]="getExamRoutesByIdentifier('bonus')" class="btn btn-info mt-1">
+                    <fa-icon [icon]="faAward"></fa-icon>
+                    <span>{{ 'artemisApp.examManagement.bonus' | artemisTranslate }}</span>
+                </a>
                 <a id="scores-button" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info mt-1">
                     <fa-icon [icon]="faEye"></fa-icon>
                     <span>{{ 'entity.action.scores' | artemisTranslate }}</span>

@@ -54,7 +54,7 @@ describe('MetricsComponent', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(service.getMetrics).toHaveBeenCalled();
+            expect(service.getMetrics).toHaveBeenCalledOnce();
         });
     });
 });

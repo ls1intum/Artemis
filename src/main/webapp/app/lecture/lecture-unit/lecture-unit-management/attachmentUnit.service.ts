@@ -21,15 +21,20 @@ export class AttachmentUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    create(attachmentUnit: AttachmentUnit, lectureId: number): Observable<EntityResponseType> {
+    create(formData: FormData, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
-            .post<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units`, attachmentUnit, { observe: 'response' })
+            .post<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units?keepFilename=true`, formData, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    update(attachmentUnit: AttachmentUnit, lectureId: number): Observable<EntityResponseType> {
+    update(lectureId: number, attachmentUnitId: number, formData: FormData, notificationText?: string): Observable<EntityResponseType> {
         return this.httpClient
-            .put<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units`, attachmentUnit, { observe: 'response' })
+            .put<AttachmentUnit>(
+                `${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}?keepFilename=true` +
+                    (notificationText ? `&notificationText=${notificationText}` : ''),
+                formData,
+                { observe: 'response' },
+            )
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 }

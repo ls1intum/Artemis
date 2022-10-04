@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -72,6 +73,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Autowired
     private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
     @AfterEach
     void resetDatabase() {
         database.resetDatabase();
@@ -98,7 +102,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         LearningGoal learningGoal = new LearningGoal();
         learningGoal.setTitle("ExampleLearningGoal");
         learningGoal.setCourse(course);
-        learningGoal.addLectureUnit(exerciseUnit);
+        learningGoal.addExercise(textExercise);
         learningGoalRepository.saveAndFlush(learningGoal);
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
@@ -122,6 +126,8 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         idOfExam = exam.getId();
         createIndividualTextExerciseForExam();
         database.createParticipationSubmissionAndResult(getIdOfIndividualTextExerciseOfExam, student1, 10.0, 10.0, 50, true);
+
+        await().until(() -> participantScoreRepository.findAll().size() == 3);
     }
 
     private void testAllPreAuthorize() throws Exception {
