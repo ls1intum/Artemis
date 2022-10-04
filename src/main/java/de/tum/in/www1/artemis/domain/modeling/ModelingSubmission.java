@@ -32,7 +32,7 @@ public class ModelingSubmission extends Submission {
     private String model;
 
     @Column(name = "explanation_text")
-    @Size(max = MAX_SUBMISSION_TEXT_LENGTH)
+    @Size(max = MAX_SUBMISSION_TEXT_LENGTH, message = "The explanation of the modeling submission is too large.")
     @Lob
     private String explanationText;
 
