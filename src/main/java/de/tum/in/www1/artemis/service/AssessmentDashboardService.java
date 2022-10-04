@@ -104,7 +104,11 @@ public class AssessmentDashboardService {
             }
 
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
-            exercise.setTotalNumberOfAssessments(numberOfAssessmentsOfCorrectionRounds[0]);
+            // numberOfAssessmentsOfCorrectionRounds can be length 0 for test exams
+            if (numberOfAssessmentsOfCorrectionRounds.length > 0) {
+                exercise.setTotalNumberOfAssessments(numberOfAssessmentsOfCorrectionRounds[0]);
+            }
+
             start = System.nanoTime();
             Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
 

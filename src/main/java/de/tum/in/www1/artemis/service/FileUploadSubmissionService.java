@@ -121,6 +121,11 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.setType(SubmissionType.MANUAL);
         participation.addSubmission(fileUploadSubmission);
 
+        if (participation.getInitializationState() != InitializationState.FINISHED) {
+            participation.setInitializationState(InitializationState.FINISHED);
+            studentParticipationRepository.save(participation);
+        }
+
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         fileUploadSubmission.setResults(new ArrayList<>());
 
@@ -129,11 +134,6 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.setFilePath(newFilePath);
         // Note: we save again so that the new file is stored on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-
-        if (participation.getInitializationState() != InitializationState.FINISHED) {
-            participation.setInitializationState(InitializationState.FINISHED);
-            studentParticipationRepository.save(participation);
-        }
 
         return fileUploadSubmission;
     }
