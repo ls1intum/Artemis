@@ -158,8 +158,8 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
             title: [undefined, [Validators.required, Validators.maxLength(255), Validators.pattern(nonWhitespaceRegExp)]],
             teachingAssistant: [undefined, [Validators.required]],
             capacity: [undefined, [Validators.min(1)]],
-            isOnline: [false],
-            language: [this.GERMAN],
+            isOnline: [false, [Validators.required]],
+            language: [this.GERMAN, [Validators.required]],
             campus: [undefined, Validators.maxLength(255)],
         });
     }

@@ -54,11 +54,6 @@ export class EditTutorialGroupComponent implements OnInit {
     }
 
     updateTutorialGroup(formData: TutorialGroupFormData) {
-        // required fields
-        if (!formData?.title || !formData?.teachingAssistant) {
-            return;
-        }
-
         const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, campus } = formData;
         this.tutorialGroup.title = title;
         this.tutorialGroup.teachingAssistant = teachingAssistant;
@@ -74,8 +69,7 @@ export class EditTutorialGroupComponent implements OnInit {
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
-                    // navigate back to unit-management from :courseId/tutorial-groups-management/:tutorialGroupId/edit
-                    this.router.navigate(['../..'], { relativeTo: this.activatedRoute });
+                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management']);
                 }),
             )
             .subscribe({

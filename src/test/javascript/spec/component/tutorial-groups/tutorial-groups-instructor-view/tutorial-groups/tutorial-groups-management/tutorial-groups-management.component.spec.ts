@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -9,56 +9,60 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortService } from 'app/shared/service/sort.service';
 import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-group-row-buttons-stub.component';
+import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
+import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
+import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route.providers';
+import { TutorialGroupsTableStubComponent } from '../../../stubs/tutorial-groups-table-stub.component';
 
 describe('TutorialGroupsManagementComponent', () => {
-    let tutorialGroupsManagementComponentFixture: ComponentFixture<TutorialGroupsManagementComponent>;
-    let tutorialGroupsManagementComponent: TutorialGroupsManagementComponent;
+    let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
+    let component: TutorialGroupsManagementComponent;
+
+    let tutorialGroupTwo: TutorialGroup;
+    let tutorialGroupOne: TutorialGroup;
+
+    let tutorialGroupsService: TutorialGroupsService;
+    let getAllOfCourseSpy: jest.SpyInstance;
+
+    const router = new MockRouter();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
                 TutorialGroupsManagementComponent,
                 LoadingIndicatorContainerStubComponent,
+                TutorialGroupsTableStubComponent,
                 TutorialGroupRowButtonsStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
-                MockDirective(SortDirective),
-                MockDirective(SortByDirective),
             ],
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
-                MockProvider(SortService),
-                { provide: Router, useClass: MockRouter },
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        parent: {
-                            paramMap: of({
-                                get: (key: string) => {
-                                    switch (key) {
-                                        case 'courseId':
-                                            return 1;
-                                    }
-                                },
-                            }),
-                        },
-                    },
-                },
+                { provide: Router, useValue: router },
+                simpleTwoLayerActivatedRouteProvider(new Map(), new Map([['courseId', 1]])),
             ],
         })
             .compileComponents()
             .then(() => {
-                tutorialGroupsManagementComponentFixture = TestBed.createComponent(TutorialGroupsManagementComponent);
-                tutorialGroupsManagementComponent = tutorialGroupsManagementComponentFixture.componentInstance;
+                fixture = TestBed.createComponent(TutorialGroupsManagementComponent);
+                component = fixture.componentInstance;
+                tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
+                tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
+
+                tutorialGroupsService = TestBed.inject(TutorialGroupsService);
+                getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllOfCourse').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: [tutorialGroupOne, tutorialGroupTwo],
+                            status: 200,
+                        }),
+                    ),
+                );
             });
     });
 
@@ -67,45 +71,24 @@ describe('TutorialGroupsManagementComponent', () => {
     });
 
     it('should initialize', () => {
-        tutorialGroupsManagementComponentFixture.detectChanges();
-        expect(tutorialGroupsManagementComponent).not.toBeNull();
+        fixture.detectChanges();
+        expect(component).not.toBeNull();
+        expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should get all tutorial groups for course', () => {
-        const exampleTutorialGroup = new TutorialGroup();
-        exampleTutorialGroup.id = 1;
-
-        const tutorialGroupsService = TestBed.inject(TutorialGroupsService);
-        const getAllForCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllOfCourse').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: [exampleTutorialGroup],
-                    status: 200,
-                }),
-            ),
-        );
-
-        tutorialGroupsManagementComponentFixture.detectChanges();
-        expect(tutorialGroupsManagementComponent.tutorialGroups).toEqual([exampleTutorialGroup]);
-        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(getAllForCourseSpy).toHaveBeenCalledWith(1);
+        fixture.detectChanges();
+        expect(component.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
+        expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
     });
 
-    it('should call sort service', () => {
-        const group1 = new TutorialGroup();
-        group1.id = 1;
-        const group2 = new TutorialGroup();
-        group2.id = 2;
-
-        tutorialGroupsManagementComponent.tutorialGroups = [group1, group2];
-        tutorialGroupsManagementComponent.sortingPredicate = 'id';
-        tutorialGroupsManagementComponent.ascending = false;
-
-        const sortService = TestBed.inject(SortService);
-        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
-
-        tutorialGroupsManagementComponent.sortRows();
-        expect(sortServiceSpy).toHaveBeenCalledWith([group1, group2], 'id', false);
-        expect(sortServiceSpy).toHaveBeenCalledOnce();
+    it('should navigate to tutorial group detail page tutorial group click callback is called', () => {
+        fixture.detectChanges();
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        component.onTutorialGroupSelected(tutorialGroupOne);
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-management', tutorialGroupOne.id]);
     });
 });

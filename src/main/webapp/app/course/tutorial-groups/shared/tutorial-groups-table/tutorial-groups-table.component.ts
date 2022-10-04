@@ -1,4 +1,4 @@
-import { Component, ContentChild, Input, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Language } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -9,7 +9,7 @@ import { SortService } from 'app/shared/service/sort.service';
     templateUrl: './tutorial-groups-table.component.html',
     styleUrls: ['./tutorial-groups-table.component.scss'],
 })
-export class TutorialGroupsTableComponent implements OnInit {
+export class TutorialGroupsTableComponent {
     @Input()
     showIdColumn = false;
 
@@ -32,7 +32,6 @@ export class TutorialGroupsTableComponent implements OnInit {
 
     constructor(private sortService: SortService) {}
 
-    ngOnInit(): void {}
     trackId(index: number, item: TutorialGroup) {
         return item.id;
     }

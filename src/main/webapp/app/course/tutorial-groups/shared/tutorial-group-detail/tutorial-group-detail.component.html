@@ -14,7 +14,7 @@
         <dd>
             <ng-container *ngIf="tutorialGroup.course">
                 <ng-container *ngIf="courseClickHandler; else noCourseClickHandler">
-                    <a [routerLink]="" class="link-primary" (click)="courseClickHandler()">{{ tutorialGroup.course.title }}</a>
+                    <a id="courseLink" [routerLink]="" class="link-primary" (click)="courseClickHandler()">{{ tutorialGroup.course.title }}</a>
                 </ng-container>
                 <ng-template #noCourseClickHandler>
                     <span>{{ tutorialGroup.course.title }}</span>
@@ -55,7 +55,7 @@
         <dd>
             <ng-container *ngIf="tutorialGroup.numberOfRegisteredUsers !== undefined">
                 <ng-container *ngIf="registrationClickHandler; else noRegistrationClickHandler">
-                    <a [routerLink]="" class="link-primary" (click)="registrationClickHandler()">{{ tutorialGroup.numberOfRegisteredUsers }}</a>
+                    <a id="registrationLink" [routerLink]="" class="link-primary" (click)="registrationClickHandler()">{{ tutorialGroup.numberOfRegisteredUsers }}</a>
                 </ng-container>
                 <ng-template #noRegistrationClickHandler>
                     <span>{{ tutorialGroup.numberOfRegisteredUsers }}</span>

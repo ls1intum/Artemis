@@ -45,7 +45,7 @@
             >
                 <td *ngIf="showIdColumn">
                     <ng-container *ngIf="tutorialGroupClickHandler; else noTutorialGroupClickHandler">
-                        <a [routerLink]="" class="link-primary" (click)="tutorialGroupClickHandler(tutorialGroup)">{{ tutorialGroup.id }}</a>
+                        <a [id]="'id-' + tutorialGroup.id" [routerLink]="" class="link-primary" (click)="tutorialGroupClickHandler(tutorialGroup)">{{ tutorialGroup.id }}</a>
                     </ng-container>
                     <ng-template #noTutorialGroupClickHandler>
                         <span>{{ tutorialGroup.id }}</span>
@@ -73,7 +73,9 @@
                 <td>
                     <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.campus }} </span>
                 </td>
-                <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
+                <td *ngIf="extraColumn">
+                    <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
+                </td>
             </tr>
         </tbody>
     </table>

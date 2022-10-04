@@ -13,10 +13,8 @@
             <ng-container *ngIf="tutorialGroups && tutorialGroups.length > 0">
                 <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [courseId]="courseId" [tutorialGroupClickHandler]="onTutorialGroupSelected" [showIdColumn]="true">
                     <ng-template let-tutorialGroup>
-                        <td>
-                            <jhi-tutorial-group-row-buttons [courseId]="courseId" [tutorialGroup]="tutorialGroup" (tutorialGroupDeleted)="loadTutorialGroups()">
-                            </jhi-tutorial-group-row-buttons>
-                        </td>
+                        <jhi-tutorial-group-row-buttons [courseId]="courseId" [tutorialGroup]="tutorialGroup" (tutorialGroupDeleted)="loadTutorialGroups()">
+                        </jhi-tutorial-group-row-buttons>
                     </ng-template>
                 </jhi-tutorial-groups-table>
             </ng-container>

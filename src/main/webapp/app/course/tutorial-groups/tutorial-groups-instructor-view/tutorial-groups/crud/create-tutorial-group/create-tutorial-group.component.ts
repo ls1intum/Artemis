@@ -27,11 +27,6 @@ export class CreateTutorialGroupComponent implements OnInit {
     }
 
     createTutorialGroup(formData: TutorialGroupFormData) {
-        // required fields
-        if (!formData?.title || !formData?.teachingAssistant) {
-            return;
-        }
-
         const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, campus } = formData;
 
         this.tutorialGroupToCreate.title = title;
@@ -53,7 +48,7 @@ export class CreateTutorialGroupComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['../'], { relativeTo: this.activatedRoute });
+                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
