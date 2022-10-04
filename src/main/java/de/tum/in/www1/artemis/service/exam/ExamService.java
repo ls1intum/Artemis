@@ -983,7 +983,7 @@ public class ExamService {
             }
 
             // get number of all generated participations
-            numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
+            numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(exercise.getId(), false));
 
             log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
             if (!(exercise instanceof QuizExercise || AssessmentType.AUTOMATIC == exercise.getAssessmentType())) {

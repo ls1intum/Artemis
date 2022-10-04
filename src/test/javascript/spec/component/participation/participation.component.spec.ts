@@ -136,17 +136,6 @@ describe('ParticipationComponent', () => {
         expect(submissionGetStateStub).toHaveBeenCalledWith(participation.id);
     }));
 
-    it('should format a dates correctly', () => {
-        expect(component.formatDate(undefined)).toBe('');
-
-        const dayjsDate = dayjs();
-        expect(component.formatDate(dayjsDate)).toEqual(dayjsDate.format(defaultLongDateTimeFormat));
-
-        const date = new Date();
-        const dayjsFromDate = dayjs(date);
-        expect(component.formatDate(date)).toEqual(dayjsFromDate.format(defaultLongDateTimeFormat));
-    });
-
     it('should format student login or team name from participation', () => {
         const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max', internal: true };
         const participation: StudentParticipation = { id: 123, student };

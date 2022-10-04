@@ -22,6 +22,13 @@
                     />
                     <span class="ms-1">{{ 'artemisApp.exercise.showNoSubmissions' | artemisTranslate }}</span>
                 </label>
+                <label
+                    class="radio-inline ms-2 mb-0 d-flex align-items-center"
+                    *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.dueDate && dayjs().isAfter(exercise.dueDate)"
+                >
+                    <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.NO_PRACTICE)" [value]="FilterProp.NO_PRACTICE" />
+                    <span class="ms-1">{{ 'artemisApp.exercise.showNoPracticeMode' | artemisTranslate }}</span>
+                </label>
             </div>
         </div>
         <div *ngIf="exercise?.type !== ExerciseType.QUIZ && exercise?.isAtLeastInstructor" class="p-2">
@@ -134,7 +141,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ formatDate(value) }}
+                        {{ value | artemisDate }}
                     </ng-template>
                 </ngx-datatable-column>
 
@@ -199,6 +206,23 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <jhi-team-students-list [students]="value"></jhi-team-students-list>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column
+                    *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.dueDate && dayjs().isAfter(exercise.dueDate)"
+                    prop="student"
+                    [minWidth]="80"
+                    [width]="80"
+                >
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('testRun')">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.practiceMode"> Practice Mode </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('testRun')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-row="row">
+                        {{ row.testRun }}
                     </ng-template>
                 </ngx-datatable-column>
 

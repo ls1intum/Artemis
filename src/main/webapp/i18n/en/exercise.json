@@ -147,6 +147,7 @@
             "showSuccessful": "Show Successful",
             "showManual": "Show Manual",
             "showAutomatic": "Show Automatic",
+            "showNoPracticeMode": "Show only graded participations",
             "showAll": "Show All",
             "showingOnlyInRange": "Showing only results in range: {{ range }}",
             "tagPlaceholder": "+ Category",

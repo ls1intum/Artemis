@@ -170,7 +170,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
      *
      * @param exerciseId Exercise id.
-     * @param testRun flag that determines if the found participations should be testRuns or not
+     * @param includeTestRuns flag that determines if testRuns should be included
      * @return participations for exercise.
      */
     @Query("""
@@ -178,12 +178,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.results r
             LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :#{#exerciseId}
-                AND p.testRun = :#{#testRun}
+                AND (p.testRun = false OR :#{#includeTestRuns} = true)
                 AND (r.id = (
                     SELECT max(id) FROM p.results)
                     OR r IS NULL)
             """)
-    Set<StudentParticipation> findByExerciseIdAndTestRunWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("testRun") boolean testRun);
+    Set<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("includeTestRuns") boolean includeTestRuns);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -857,18 +857,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT COUNT(p) FROM StudentParticipation p
                 LEFT JOIN p.exercise exercise WHERE exercise.id = :#{#exerciseId}
-            AND p.testRun = false
+            AND p.testRun = :#{#testRun}
             GROUP BY exercise.id
             """)
-    Long countParticipationsIgnoreTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
-
-    @Query("""
-            SELECT COUNT(p) FROM StudentParticipation p
-                LEFT JOIN p.exercise exercise WHERE exercise.id = :#{#exerciseId}
-            AND p.testRun = true
-            GROUP BY exercise.id
-            """)
-    Long countParticipationsOnlyTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
+    Long countParticipationsByExerciseIdAndTestRun(@Param("exerciseId") Long exerciseId, @Param("testRun") boolean testRun);
 
     /**
      * Adds the transient property numberOfParticipations for each exercise to
@@ -878,7 +870,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      */
     default void addNumberOfExamExerciseParticipations(ExerciseGroup exerciseGroup) {
         exerciseGroup.getExercises().forEach(exercise -> {
-            Long numberOfParticipations = countParticipationsIgnoreTestRunsByExerciseId(exercise.getId());
+            Long numberOfParticipations = countParticipationsByExerciseIdAndTestRun(exercise.getId(), false);
             // avoid setting to null in case not participations exist
             exercise.setNumberOfParticipations((numberOfParticipations != null) ? numberOfParticipations : 0);
         });
@@ -919,7 +911,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exercise - the exercise for which we check if test runs exist
      */
     default void checkTestRunsExist(Exercise exercise) {
-        Long containsTestRunParticipations = countParticipationsOnlyTestRunsByExerciseId(exercise.getId());
+        Long containsTestRunParticipations = countParticipationsByExerciseIdAndTestRun(exercise.getId(), true);
         if (containsTestRunParticipations != null && containsTestRunParticipations > 0) {
             exercise.setTestRunParticipationsExist(Boolean.TRUE);
         }

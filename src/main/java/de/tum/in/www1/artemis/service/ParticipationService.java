@@ -348,7 +348,14 @@ public class ParticipationService {
         participation = configureBuildPlan(participation);
         // Note: the repository webhook (step 1c) already exists, so we don't need to set it up again, the empty commit hook (step 2c) is also not necessary here
         // and must be handled by the calling method in case it would be necessary
-        participation.setInitializationState(INITIALIZED);
+
+        // If the instructor retests a participation after the deadline set the state back to finished. Otherwise, the participation is initialized
+        if (participation.getExercise().getDueDate() != null && (ZonedDateTime.now().isAfter(participation.getExercise().getDueDate())) && !participation.isTestRun()) {
+            participation.setInitializationState(FINISHED);
+        }
+        else {
+            participation.setInitializationState(INITIALIZED);
+        }
         participation = programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         if (participation.getInitializationDate() == null) {
             // only set the date if it was not set before (which should NOT be the case)

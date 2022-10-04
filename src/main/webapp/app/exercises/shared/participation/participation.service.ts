@@ -67,8 +67,8 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
-    findAllParticipationsByExercise(exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> {
-        const options = createRequestOption({ withLatestResult });
+    findAllParticipationsByExercise(exerciseId: number, withLatestResult = false, includeTestRuns = false): Observable<EntityArrayResponseType> {
+        const options = createRequestOption({ withLatestResult, includeTestRuns });
         return this.http
             .get<StudentParticipation[]>(SERVER_API_URL + `api/exercises/${exerciseId}/participations`, {
                 params: options,
