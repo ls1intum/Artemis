@@ -7,9 +7,10 @@ import { CourseTutorialGroupCardComponent } from './course-tutorial-group-card/c
 import { CourseTutorialGroupsOverviewComponent } from './course-tutorial-groups-overview/course-tutorial-groups-overview.component';
 import { ArtemisTutorialGroupsSharedModule } from 'app/course/tutorial-groups/shared/tutorial-groups-shared.module';
 import { CourseTutorialGroupsRegisteredComponent } from './course-tutorial-groups-registered/course-tutorial-groups-registered.component';
+import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 
 @NgModule({
-    imports: [RouterModule.forChild(routes), ArtemisSharedModule, ArtemisTutorialGroupsSharedModule],
+    imports: [RouterModule.forChild(routes), ArtemisSharedModule, ArtemisTutorialGroupsSharedModule, ArtemisSidePanelModule],
     declarations: [CourseTutorialGroupsComponent, CourseTutorialGroupCardComponent, CourseTutorialGroupsOverviewComponent, CourseTutorialGroupsRegisteredComponent],
 })
 export class CourseTutorialGroupsModule {}

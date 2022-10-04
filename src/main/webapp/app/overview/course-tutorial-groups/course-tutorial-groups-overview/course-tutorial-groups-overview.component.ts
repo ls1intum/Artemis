@@ -13,6 +13,10 @@ export class CourseTutorialGroupsOverviewComponent {
     @Input()
     tutorialGroups: TutorialGroup[] = [];
 
+    get totalNumberOfRegistrations(): number {
+        return this.tutorialGroups.reduce((acc, tutorialGroup) => acc + (tutorialGroup.numberOfRegisteredUsers ?? 0), 0);
+    }
+
     constructor(private router: Router) {}
 
     onTutorialGroupSelected = (tutorialGroup: TutorialGroup) => {

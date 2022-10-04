@@ -1,10 +1,22 @@
 <div class="row">
-    <div class="col-12">
+    <div class="col-12 col-xl-8">
         <div>
             <h2>{{ 'artemisApp.pages.courseTutorialGroupOverview.title' | artemisTranslate }}</h2>
         </div>
         <ng-container *ngIf="tutorialGroups && tutorialGroups.length > 0">
             <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [courseId]="courseId" [tutorialGroupClickHandler]="onTutorialGroupSelected"> </jhi-tutorial-groups-table>
         </ng-container>
+    </div>
+    <div class="col-12 col-xl-4">
+        <jhi-side-panel [panelHeader]="'artemisApp.pages.courseTutorialGroupOverview.sidePanel.header' | artemisTranslate">
+            <div class="row mb-1">
+                <div class="col-8">{{ 'artemisApp.pages.courseTutorialGroupOverview.sidePanel.numberOfGroups' | artemisTranslate }}</div>
+                <div class="col-4">{{ tutorialGroups ? tutorialGroups.length : 0 }}</div>
+            </div>
+            <div class="row mb-1">
+                <div class="col-8">{{ 'artemisApp.pages.courseTutorialGroupOverview.sidePanel.numberOfRegistrations' | artemisTranslate }}</div>
+                <div class="col-4">{{ totalNumberOfRegistrations }}</div>
+            </div>
+        </jhi-side-panel>
     </div>
 </div>

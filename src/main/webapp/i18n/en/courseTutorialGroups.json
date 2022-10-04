@@ -14,7 +14,12 @@
                 "title": "Tutorial Group Detail"
             },
             "courseTutorialGroupOverview": {
-                "title": "Tutorial Groups Overview"
+                "title": "Tutorial Groups Overview",
+                "sidePanel": {
+                    "header": "Course Information",
+                    "numberOfGroups": "Number of Tutorial Groups: ",
+                    "numberOfRegistrations": "Number of Registrations: "
+                }
             }
         },
         "tutorialGroupCard": {
