@@ -470,7 +470,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @ParameterizedTest
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     @ValueSource(booleans = { true, false })
-    void testGetTestRunForConduction(boolean testExam) throws Exception {
+    void testGetTestRunForConduction(boolean isTestExam) throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
@@ -480,8 +480,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
 
-        exam2.setTestExam(testExam);
-        examRepository.save(exam2);
+        exam2.setTestExam(isTestExam);
+        exam2 = examRepository.save(exam2);
 
         var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true, false);
         final var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
