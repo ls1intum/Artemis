@@ -22,6 +22,6 @@ export class ExerciseResultPage {
     }
 
     clickOpenCodeEditor(exerciseId: number) {
-        cy.get('#open-codeEditor-' + exerciseId).click();
+        cy.get('#open-exercise-' + exerciseId).click();
     }
 }

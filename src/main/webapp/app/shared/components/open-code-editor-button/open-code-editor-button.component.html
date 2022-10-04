@@ -1,7 +1,7 @@
 <ng-container>
     <button
         jhi-exercise-action-button
-        [id]="'open-codeEditor-' + courseId"
+        [id]="'open-exercise-' + exerciseId"
         [buttonIcon]="faFolderOpen"
         class="open-code-editor"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -37,7 +37,7 @@
         </div>
         <button
             jhi-exercise-action-button
-            [id]="'open-codeEditor-popover-' + courseId"
+            [id]="'open-exercise-popover-' + exerciseId"
             [buttonIcon]="faFolderOpen"
             class="open-code-editor"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"

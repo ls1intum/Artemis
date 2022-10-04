@@ -20,7 +20,7 @@ export class OpenCodeEditorButtonComponent implements OnChanges {
     @Input()
     courseAndExerciseNavigationUrlSegment: any[];
     @Input()
-    courseId: number;
+    exerciseId: number;
 
     courseAndExerciseNavigationUrl: string;
     activeParticipation: ProgrammingExerciseStudentParticipation;
