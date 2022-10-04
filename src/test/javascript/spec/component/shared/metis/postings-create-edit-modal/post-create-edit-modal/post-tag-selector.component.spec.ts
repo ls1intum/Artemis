@@ -44,7 +44,7 @@ describe('PostTagSelectorComponent', () => {
 
     it('should be initialized with existing list of tags', fakeAsync(() => {
         tick();
-        expect(metisServiceGetTagSpy).toHaveBeenCalled();
+        expect(metisServiceGetTagSpy).toHaveBeenCalledOnce();
         component.existingPostTags.subscribe((tags) => {
             expect(tags).toEqual(metisTags);
         });

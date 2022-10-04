@@ -101,7 +101,7 @@ describe('LectureImportComponent', () => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForLecturesStub).toHaveBeenCalledTimes(0);
+            expect(searchForLecturesStub).not.toHaveBeenCalled();
             tick(290);
             expect(searchForLecturesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
             expect(comp.searchTerm).toEqual(givenSearchTerm);

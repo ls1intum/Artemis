@@ -9,6 +9,7 @@ import dayjs from 'dayjs/esm';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 
 describe('AttachmentUnitService', () => {
     let service: AttachmentUnitService;
@@ -64,8 +65,12 @@ describe('AttachmentUnitService', () => {
     it('should create an AttachmentUnit', async () => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
+        const formData = new FormData();
+        formData.append('file', new Blob(), 'filename.pdf');
+        formData.append('attachment', objectToJsonBlob(elemDefault.attachment!));
+        formData.append('attachmentUnit', objectToJsonBlob(elemDefault));
         service
-            .create(new AttachmentUnit(), 1)
+            .create(formData, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'POST' });
@@ -76,8 +81,12 @@ describe('AttachmentUnitService', () => {
     it('should update a AttachmentUnit', async () => {
         const returnedFromService = { ...elemDefault, name: 'Test' };
         const expected = { ...returnedFromService };
+        elemDefault.id = 42;
+        const formData = new FormData();
+        formData.append('attachment', objectToJsonBlob(elemDefault.attachment!));
+        formData.append('attachmentUnit', objectToJsonBlob(elemDefault));
         service
-            .update(expected, 1)
+            .update(1, 42, formData)
             .pipe(take(1))
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'PUT' });

@@ -40,7 +40,6 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     // The list of file extensions for the "accept" attribute of the file input field
     readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
-    fileUploadErrorMessage?: string;
     faQuestionCircle = faQuestionCircle;
 
     @Output()
@@ -82,7 +81,6 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
 
     onFileChange(event: any): void {
         if (event.target.files.length) {
-            this.fileUploadErrorMessage = undefined; // removes the file size error message when the user selects a new file
             const fileList = event.target.files;
             this.file = fileList[0];
             this.fileName = this.file['name'];
@@ -110,14 +108,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !(this.form.invalid || this.fileUploadErrorMessage || !this.fileName);
-    }
-
-    // will be called from parent component to set the form error when the file upload failed
-    setFileUploadError(errorMessage: string) {
-        this.fileUploadErrorMessage = errorMessage;
-        this.fileInput.nativeElement.value = '';
-        this.fileName = undefined;
+        return !(this.form.invalid || !this.fileName);
     }
 
     submitForm() {

@@ -105,7 +105,7 @@ describe('User Settings Directive', () => {
 
                 expect(loadSettingsSuccessAsSettingsStructureSpy).toHaveBeenCalledOnce();
                 expect(extractIndividualSettingsFromSettingsStructureSpy).toHaveBeenCalledOnce();
-                expect(changeDetectorDetectChangesSpy).toHaveBeenCalled();
+                expect(changeDetectorDetectChangesSpy).toHaveBeenCalledOnce();
             });
 
             it('should handle error correctly when loading fails', () => {
@@ -115,7 +115,7 @@ describe('User Settings Directive', () => {
 
                 comp.ngOnInit();
 
-                expect(alertServiceSpy).toHaveBeenCalled();
+                expect(alertServiceSpy).toHaveBeenCalledOnce();
             });
         });
 
@@ -132,7 +132,7 @@ describe('User Settings Directive', () => {
                 expect(saveSettingsSuccessSpy).toHaveBeenCalledOnce();
                 expect(extractIndividualSettingsFromSettingsStructureSpy).toHaveBeenCalledOnce();
                 expect(createApplyChangesEventSpy).toHaveBeenCalledOnce();
-                expect(alertServiceSuccessSpy).toHaveBeenCalled();
+                expect(alertServiceSuccessSpy).toHaveBeenCalledOnce();
             });
         });
     });

@@ -53,7 +53,7 @@ describe('Directive: SortByDirective', () => {
         expect(sortByDirective.jhiSortBy).toBe('name');
         expect(component.predicate).toBe('_score');
         expect(sortByDirective.iconComponent?.icon).toBe(faSort);
-        expect(component.transition).toHaveBeenCalledTimes(0);
+        expect(component.transition).not.toHaveBeenCalled();
     });
 
     it('should initialize predicate, order, icon when initial component predicate differs from column predicate', () => {
@@ -68,7 +68,7 @@ describe('Directive: SortByDirective', () => {
         expect(sortByDirective.jhiSortBy).toBe('name');
         expect(component.predicate).toBe('id');
         expect(sortByDirective.iconComponent?.icon).toBe(faSort);
-        expect(component.transition).toHaveBeenCalledTimes(0);
+        expect(component.transition).not.toHaveBeenCalled();
     });
 
     it('should initialize predicate, order, icon when initial component predicate is same as column predicate', () => {
@@ -85,7 +85,7 @@ describe('Directive: SortByDirective', () => {
         expect(component.predicate).toBe('name');
         expect(component.ascending).toBeTrue();
         expect(sortByDirective.iconComponent?.icon).toBe(faSortUp);
-        expect(component.transition).toHaveBeenCalledTimes(0);
+        expect(component.transition).not.toHaveBeenCalled();
     });
 
     it('should initialize predicate, order, icon when initial component predicate is _score and user clicks on column header', () => {

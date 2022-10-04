@@ -41,7 +41,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
     });
 
     describe('saveAll', () => {
-        it('Should update each selected exercise', fakeAsync(() => {
+        it('should update each selected exercise', fakeAsync(() => {
             // GIVEN
             // the exercise containing the values to update the selected ones
             const newProgrammingExercise = new ProgrammingExercise(new Course(), undefined);
@@ -76,7 +76,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             expect(comp.isSaving).toBeFalse();
         }));
 
-        it('Should display error and not close modal', fakeAsync(() => {
+        it('should display error and not close modal', fakeAsync(() => {
             // GIVEN
             const newProgrammingExercise = new ProgrammingExercise(new Course(), undefined);
             newProgrammingExercise.releaseDate = dayjs();
@@ -99,7 +99,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             expect(programmingExerciseService.updateTimeline).toHaveBeenCalledWith(entityOne, {});
             expect(comp.failureOccurred).toBeTrue();
             expect(comp.isSaving).toBeFalse();
-            expect(comp.closeModal).toHaveBeenCalledTimes(0);
+            expect(comp.closeModal).not.toHaveBeenCalled();
         }));
     });
 });

@@ -453,15 +453,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(
-            this.exercise?.isAtLeastInstructor ?? false,
-            this.isTestRun,
-            this.isAssessor,
-            this.hasAssessmentDueDatePassed,
-            this.result,
-            this.complaint,
-            this.exercise,
-        );
+        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.exercise);
     }
 
     protected handleError(error: HttpErrorResponse): void {

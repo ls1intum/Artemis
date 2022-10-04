@@ -154,7 +154,7 @@ describe('ExamAssessmentButtons', () => {
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
         expect(assessButton).not.toBeNull();
         assessButton.nativeElement.click();
-        expect(assessSpy).toHaveBeenCalled();
+        expect(assessSpy).toHaveBeenCalledOnce();
     });
 
     it('should correctly catch HTTPError when assessing unsubmitted exams', () => {
@@ -175,7 +175,7 @@ describe('ExamAssessmentButtons', () => {
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
         expect(assessButton).toBeTruthy();
         assessButton.nativeElement.click();
-        expect(alertServiceSpy).toHaveBeenCalled();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should evaluate Quiz exercises', () => {
@@ -195,7 +195,7 @@ describe('ExamAssessmentButtons', () => {
         expect(evaluateQuizExercisesButton.nativeElement.disabled).toBeFalse();
 
         evaluateQuizExercisesButton.nativeElement.click();
-        expect(evaluateQuizExercises).toHaveBeenCalled();
+        expect(evaluateQuizExercises).toHaveBeenCalledOnce();
     });
 
     it('should correctly catch HTTPError when evaluating quiz exercises', () => {
@@ -219,7 +219,7 @@ describe('ExamAssessmentButtons', () => {
         expect(evaluateQuizExercisesButton).toBeTruthy();
         expect(evaluateQuizExercisesButton.nativeElement.disabled).toBeFalse();
         evaluateQuizExercisesButton.nativeElement.click();
-        expect(alertServiceSpy).toHaveBeenCalled();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should not show assess unsubmitted student exam modeling and text participations', () => {

@@ -270,6 +270,8 @@ public class LectureResource {
                 Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
                 // we replace the exercise with one that contains all the information needed for correct display
                 exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
+                // re-add the learning goals already loaded with the exercise unit
+                ((ExerciseUnit) lectureUnit).getExercise().setLearningGoals(exercise.getLearningGoals());
             }
         }).collect(Collectors.toCollection(ArrayList::new));
 
@@ -288,11 +290,13 @@ public class LectureResource {
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         Lecture lecture = lectureRepository.findByIdElseThrow(id);
 
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lecture.getCourse(), null);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
+
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
         log.debug("REST request to delete Lecture : {}", id);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();

@@ -17,15 +17,18 @@ import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
+import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { HttpResponse } from '@angular/common/http';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -36,6 +39,18 @@ describe('ProgrammingExercise Management Detail Component', () => {
     let alertService: AlertService;
     let statisticsServiceStub: jest.SpyInstance;
     let gitDiffReportStub: jest.SpyInstance;
+    let buildLogStatisticsStub: jest.SpyInstance;
+    let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
+
+    const mockProgrammingExercise = {
+        id: 1,
+        templateParticipation: {
+            id: 1,
+        } as TemplateProgrammingExerciseParticipation,
+        solutionParticipation: {
+            id: 2,
+        } as SolutionProgrammingExerciseParticipation,
+    } as ProgrammingExercise;
 
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
@@ -58,13 +73,22 @@ describe('ProgrammingExercise Management Detail Component', () => {
             {
                 previousFilePath: '/src/test.java',
                 filePath: '/src/test.java',
-                previousLine: 1,
-                line: 1,
+                previousStartLine: 1,
+                startLine: 1,
                 previousLineCount: 2,
                 lineCount: 2,
             },
         ],
     } as ProgrammingExerciseGitDiffReport;
+
+    const buildLogStatistics = {
+        buildCount: 5,
+        agentSetupDuration: 2.5,
+        testDuration: 3,
+        scaDuration: 2,
+        totalJobDuration: 7.5,
+        dependenciesDownloadedCount: 6,
+    } as BuildLogStatisticsDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -87,7 +111,11 @@ describe('ProgrammingExercise Management Detail Component', () => {
         statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
         alertService = fixture.debugElement.injector.get(AlertService);
         exerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        findWithTemplateAndSolutionParticipationStub = jest
+            .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipation')
+            .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
         gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
+        buildLogStatisticsStub = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
         modalService = fixture.debugElement.injector.get(NgbModal);
     });
 
@@ -95,21 +123,20 @@ describe('ProgrammingExercise Management Detail Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should fetch and open git-diff', () => {
+    it('should open git-diff', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
         comp.programmingExercise = programmingExercise;
 
-        jest.spyOn(exerciseService, 'getFullDiffReport').mockReturnValue(of({} as ProgrammingExerciseFullGitDiffReport));
         jest.spyOn(modalService, 'open');
 
-        comp.getAndShowFullDiff();
+        comp.showGitDiff();
 
         expect(modalService.open).toHaveBeenCalledOnce();
-        expect(modalService.open).toHaveBeenCalledWith(FullGitDiffReportModalComponent, { size: 'xl' });
+        expect(modalService.open).toHaveBeenCalledWith(GitDiffReportModalComponent, { size: 'xl' });
     });
 
-    describe('OnInit for course exercise', () => {
+    describe('onInit for course exercise', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
 
@@ -118,14 +145,16 @@ describe('ProgrammingExercise Management Detail Component', () => {
             route.data = of({ programmingExercise });
         });
 
-        it('Should not be in exam mode', () => {
+        it('should not be in exam mode', () => {
             // WHEN
             comp.ngOnInit();
 
             // THEN
+            expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
-            expect(comp.programmingExercise).toEqual(programmingExercise);
+            expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
+            expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
             expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
@@ -135,7 +164,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         });
     });
 
-    describe('OnInit for exam exercise', () => {
+    describe('onInit for exam exercise', () => {
         const exam = { id: 4, course: { id: 6 } as Course } as Exam;
         const exerciseGroup = { id: 9, exam };
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
@@ -147,21 +176,23 @@ describe('ProgrammingExercise Management Detail Component', () => {
             route.data = of({ programmingExercise });
         });
 
-        it('Should be in exam mode', () => {
+        it('should be in exam mode', () => {
             // WHEN
             comp.ngOnInit();
 
             // THEN
+            expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
-            expect(comp.programmingExercise).toEqual(programmingExercise);
+            expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
+            expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.programmingExercise.gitDiffReport).toBeDefined();
             expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
         });
     });
 
-    it('Should create structural solution entries', () => {
+    it('should create structural solution entries', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
         comp.programmingExercise = programmingExercise;
@@ -179,7 +210,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         });
     });
 
-    it('Should create behavioral solution entries', () => {
+    it('should create behavioral solution entries', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
         comp.programmingExercise = programmingExercise;

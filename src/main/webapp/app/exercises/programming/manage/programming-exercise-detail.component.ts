@@ -42,7 +42,7 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
+import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
@@ -121,17 +121,27 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            const exerciseId = this.programmingExercise.id!;
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
             this.isAdmin = this.accountService.isAdmin();
 
+            if (!this.isExamExercise) {
+                this.baseResource = `/course-management/${this.courseId}/programming-exercises/${exerciseId}/`;
+                this.shortBaseResource = `/course-management/${this.courseId}/`;
+                this.teamBaseResource = `/course-management/${this.courseId}/exercises/${exerciseId}/`;
+            } else {
+                this.baseResource =
+                    `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
+                    `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${exerciseId}/`;
+                this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
+                this.teamBaseResource =
+                    `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
+                    `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
+            }
+
             this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
-                // Copy over previous information
-                const previousExercise = this.programmingExercise;
                 this.programmingExercise = updatedProgrammingExercise.body!;
-                this.programmingExercise.gitDiffReport = previousExercise.gitDiffReport;
-                this.programmingExercise.auxiliaryRepositories = previousExercise.auxiliaryRepositories;
-                this.programmingExercise.submissionPolicy = previousExercise.submissionPolicy;
 
                 // get the latest results for further processing
                 if (this.programmingExercise.templateParticipation) {
@@ -173,53 +183,35 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
                     }
                 });
+
+                this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!).subscribe((submissionPolicy) => {
+                    if (submissionPolicy) {
+                        this.programmingExercise.submissionPolicy = submissionPolicy;
+                    }
+                });
+
+                this.loadGitDiffReport();
+
+                this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatisticsDto) => {
+                    this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;
+                });
+
+                this.setLatestCoveredLineRatio();
             });
 
-            this.statisticsService.getExerciseStatistics(programmingExercise.id).subscribe((statistics: ExerciseManagementStatisticsDto) => {
+            this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
-            if (!this.isExamExercise) {
-                this.baseResource = `/course-management/${this.courseId}/programming-exercises/${programmingExercise.id}/`;
-                this.shortBaseResource = `/course-management/${this.courseId}/`;
-                this.teamBaseResource = `/course-management/${this.courseId}/exercises/${programmingExercise.id}/`;
-            } else {
-                this.baseResource =
-                    `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
-                    `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/programming-exercises/${this.programmingExercise.id}/`;
-                this.shortBaseResource = `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
-                this.teamBaseResource =
-                    `/course-management/${this.courseId}/exams/${this.programmingExercise.exerciseGroup?.exam?.id}` +
-                    `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
-            }
-
-            this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(programmingExercise.id).subscribe((submissionPolicy) => {
-                if (submissionPolicy) {
-                    this.programmingExercise.submissionPolicy = submissionPolicy;
-                }
-            });
-
-            this.programmingExerciseService.getDiffReport(programmingExercise.id).subscribe((gitDiffReport) => {
-                this.programmingExercise.gitDiffReport = gitDiffReport;
-                if (gitDiffReport) {
-                    this.addedLineCount = gitDiffReport.entries
-                        .map((entry) => entry.lineCount)
-                        .filter((lineCount) => lineCount)
-                        .map((lineCount) => lineCount!)
-                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
-                    this.removedLineCount = gitDiffReport.entries
-                        .map((entry) => entry.previousLineCount)
-                        .filter((lineCount) => lineCount)
-                        .map((lineCount) => lineCount!)
-                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
-                }
-            });
-
-            this.setLatestCoveredLineRatio();
         });
     }
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+    }
+
+    onParticipationChange(): void {
+        this.loadGitDiffReport();
+        this.setLatestCoveredLineRatio();
     }
 
     /**
@@ -415,28 +407,31 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
-    /**
-     * Gets the full git-diff from the server and displays it in a modal.
-     */
-    getAndShowFullDiff() {
-        this.isLoadingDiffReport = true;
-        this.programmingExerciseService.getFullDiffReport(this.programmingExercise.id!).subscribe({
-            next: (gitDiffReport) => {
-                this.isLoadingDiffReport = false;
-                const modalRef = this.modalService.open(FullGitDiffReportModalComponent, {
-                    size: 'xl',
-                });
-                modalRef.componentInstance.report = gitDiffReport;
-            },
-            error: (err: HttpErrorResponse) => {
-                this.isLoadingDiffReport = false;
-                if (err.status === 404) {
-                    this.alertService.error('artemisApp.programmingExercise.diffReport.404');
-                } else {
-                    this.onError(err);
-                }
-            },
+    loadGitDiffReport(): void {
+        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
+            if (gitDiffReport) {
+                this.programmingExercise.gitDiffReport = gitDiffReport;
+                gitDiffReport.programmingExercise = this.programmingExercise;
+                this.addedLineCount = gitDiffReport.entries
+                    .map((entry) => entry.lineCount)
+                    .filter((lineCount) => lineCount)
+                    .map((lineCount) => lineCount!)
+                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
+                this.removedLineCount = gitDiffReport.entries
+                    .map((entry) => entry.previousLineCount)
+                    .filter((lineCount) => lineCount)
+                    .map((lineCount) => lineCount!)
+                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
+            }
         });
+    }
+
+    /**
+     * Shows the git-diff in a modal.
+     */
+    showGitDiff(): void {
+        const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
+        modalRef.componentInstance.report = this.programmingExercise.gitDiffReport;
     }
 
     createStructuralSolutionEntries() {

@@ -100,6 +100,7 @@ public class GitLabService extends AbstractVersionControlService {
             gitLabUserManagementService.generateVersionControlAccessTokenIfNecessary(user);
         }
 
+        // TODO: we should separate access (above) from protecting branches
         String branch = getOrRetrieveBranchOfStudentParticipation(participation);
         protectBranch(participation.getVcsRepositoryUrl(), branch);
     }
@@ -250,7 +251,7 @@ public class GitLabService extends AbstractVersionControlService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             super.addWebHookForParticipation(participation);
 
-            // Optional webhook from the version control system to the continuous integration system
+            // Webhook from the version control system to the continuous integration system
             // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regularly)
             getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
                     .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getVcsRepositoryUrl(), hookUrl, "Artemis trigger to CI", ciToken));
@@ -265,7 +266,9 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     protected void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
-        final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false);
+        final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false)
+                // Note: Trigger hook on push events for matching branches only (this avoids unnecessary Jenkins builds for pushes to other branches)
+                .withPushEventsBranchFilter(defaultBranch);
 
         try {
             gitlab.getProjectApi().addHook(repositoryPath, notificationUrl, hook, false, secretToken);

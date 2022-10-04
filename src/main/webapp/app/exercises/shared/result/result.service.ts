@@ -18,6 +18,7 @@ import { isResultPreliminary } from 'app/exercises/programming/shared/utils/prog
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { captureException } from '@sentry/browser';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -54,10 +55,11 @@ export class ResultService implements IResultService {
      * If either of the arguments is undefined the error is forwarded to sentry and an empty string is returned
      * @param result the result containing all necessary information like the achieved points
      * @param exercise the exercise where the result belongs to
+     * @param short flag that indicates if the resultString should use the short format
      */
-    getResultString(result?: Result, exercise?: Exercise): string {
+    getResultString(result: Result | undefined, exercise: Exercise | undefined, short?: boolean): string {
         if (result && exercise) {
-            return this.getResultStringDefinedParameters(result, exercise);
+            return this.getResultStringDefinedParameters(result, exercise, short);
         } else {
             captureException('Tried to generate a result string, but either the result or exercise was undefined');
             return '';
@@ -69,18 +71,18 @@ export class ResultService implements IResultService {
      * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
      * @param result the result containing all necessary information like the achieved points
      * @param exercise the exercise where the result belongs to
+     * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringDefinedParameters(result: Result, exercise: Exercise): string {
+    private getResultStringDefinedParameters(result: Result, exercise: Exercise, short?: boolean): string {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
-        if (exercise.type === ExerciseType.PROGRAMMING) {
-            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points);
-        } else {
+        if (exercise.type !== ExerciseType.PROGRAMMING) {
             return this.translateService.instant(`artemisApp.result.resultStringNonProgramming`, {
                 relativeScore,
                 points,
-                maxPoints: exercise.maxPoints,
             });
+        } else {
+            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
         }
     }
 
@@ -92,12 +94,17 @@ export class ResultService implements IResultService {
      * @param relativeScore the achieved score in percent
      * @param points the amount of achieved points
      */
-    private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number): string {
+    private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, short?: boolean): string {
         let buildAndTestMessage: string;
         if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildFailed');
         } else if (!result.testCaseCount) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulNoTests');
+        } else if (short) {
+            return this.translateService.instant(`artemisApp.result.resultStringNonProgramming`, {
+                relativeScore,
+                points,
+            });
         } else {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulTests', {
                 numberOfTestsPassed: result.passedTestCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.passedTestCaseCount,
@@ -130,14 +137,12 @@ export class ResultService implements IResultService {
                 buildAndTestMessage,
                 numberOfIssues: result.codeIssueCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.codeIssueCount,
                 points,
-                maxPoints: exercise.maxPoints,
             });
         } else {
             return this.translateService.instant(`artemisApp.result.resultStringProgramming`, {
                 relativeScore,
                 buildAndTestMessage,
                 points,
-                maxPoints: exercise.maxPoints,
             });
         }
     }
@@ -288,5 +293,17 @@ export class ResultService implements IResultService {
         link.setAttribute('download', `${csvFileName}`);
         document.body.appendChild(link); // Required for FF
         link.click();
+    }
+
+    public static evaluateBadge(participation: Participation, result: Result): { badgeClass: string; text: string; tooltip: string } {
+        if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
+            const studentParticipation = participation as StudentParticipation;
+            if (studentParticipation.testRun) {
+                return { badgeClass: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
+            }
+        }
+        return result.rated
+            ? { badgeClass: 'bg-success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' }
+            : { badgeClass: 'bg-info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' };
     }
 }

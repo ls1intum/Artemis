@@ -31,7 +31,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() participation: StudentParticipation;
     @Input() short = false;
     @Input() showUngradedResults: boolean;
-    @Input() showGradedBadge: boolean;
+    @Input() showBadge: boolean;
     @Input() showTestNames = false;
     /**
      * @property personalParticipation Whether the participation belongs to the user (by being a student) or not (by being an instructor)

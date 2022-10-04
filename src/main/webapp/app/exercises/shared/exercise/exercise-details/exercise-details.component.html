@@ -120,7 +120,7 @@
     </dd>
 </ng-container>
 <ng-container *ngIf="isExamExercise === false && exercise.course?.onlineCourse === true && exercise.isAtLeastEditor === true">
-    <dt><span jhiTranslate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
+    <dt><span jhiTranslate="artemisApp.lti.lti">LTI</span></dt>
     <dd>
         <a [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id, 'lti-configuration']">LTI Configuration</a>
     </dd>

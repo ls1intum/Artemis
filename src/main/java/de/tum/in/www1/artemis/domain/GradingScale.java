@@ -8,6 +8,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -26,6 +27,10 @@ public class GradingScale extends DomainObject {
     @Column(name = "grade_type")
     private GradeType gradeType = GradeType.NONE; // default
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "bonus_strategy")
+    private BonusStrategy bonusStrategy;
+
     @OneToOne
     @JoinColumn(name = "course_id")
     private Course course;
@@ -34,10 +39,19 @@ public class GradingScale extends DomainObject {
     @JoinColumn(name = "exam_id")
     private Exam exam;
 
+    /**
+     * Current implementation works with one Bonus instance as GradingScale.bonusFrom per Bonus.bonusTo instance (OneToOne) but
+     * the relation is defined as OneToMany in order to allow applying multiple bonuses.
+     */
     @OneToMany(mappedBy = "gradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "gradingScale", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<GradeStep> gradeSteps = new HashSet<>();
+
+    @OneToMany(mappedBy = "bonusToGradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties(value = "bonusFrom", allowSetters = true)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<Bonus> bonusFrom = new HashSet<>();
 
     public GradeType getGradeType() {
         return gradeType;
@@ -45,6 +59,14 @@ public class GradingScale extends DomainObject {
 
     public void setGradeType(GradeType gradeType) {
         this.gradeType = gradeType;
+    }
+
+    public BonusStrategy getBonusStrategy() {
+        return bonusStrategy;
+    }
+
+    public void setBonusStrategy(BonusStrategy bonusStrategy) {
+        this.bonusStrategy = bonusStrategy;
     }
 
     public Course getCourse() {
@@ -69,5 +91,86 @@ public class GradingScale extends DomainObject {
 
     public void setGradeSteps(Set<GradeStep> gradeSteps) {
         this.gradeSteps = gradeSteps;
+    }
+
+    public Set<Bonus> getBonusFrom() {
+        return bonusFrom;
+    }
+
+    public void setBonusFrom(Set<Bonus> bonusFrom) {
+        this.bonusFrom = bonusFrom;
+    }
+
+    public void addBonusFrom(Bonus bonusFrom) {
+        this.bonusFrom.add(bonusFrom);
+        bonusFrom.setBonusToGradingScale(this);
+    }
+
+    /**
+     * Gets the max points of the given grading scale from the related course or exam
+     *
+     * @return max points defined in the exam or course related to this grading scale
+     */
+    @JsonIgnore
+    public int getMaxPoints() {
+        if (this.getCourse() != null) {
+            Integer maxPoints = this.getCourse().getMaxPoints();
+            return maxPoints != null ? maxPoints : 0;
+        }
+        else {
+            return this.getExam().getMaxPoints();
+        }
+    }
+
+    /**
+     * Gets the title for the given grading scale from the related course or exam
+     *
+     * @return title of the exam or course related to this grading scale
+     */
+    @JsonIgnore
+    public String getTitle() {
+        if (this.getCourse() != null) {
+            return this.getCourse().getTitle();
+        }
+        else {
+            return this.getExam().getTitle();
+        }
+    }
+
+    /**
+     * Gets the course of the grading scale either via the exam or directly.
+     *
+     * @return a Course related to this grading scale
+     */
+    @JsonIgnore
+    public Course getCourseViaExamOrDirectly() {
+        return this.getExam() != null ? this.getExam().getCourse() : this.getCourse();
+    }
+
+    /**
+     * Returns the max grade from grade step set of the grading scale
+     * @return the max grade step
+     */
+    GradeStep maxGrade() {
+        return getGradeSteps().stream().filter(gradeStep -> gradeStep.isUpperBoundInclusive() && gradeStep.getUpperBoundPercentage() == 100.0).findAny().orElse(null);
+    }
+
+    /**
+     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
+     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
+     */
+    public enum GradingScaleSearchColumn {
+
+        ID("id"), COURSE_TITLE("course.title"), EXAM_TITLE("exam.title");
+
+        private final String mappedColumnName;
+
+        GradingScaleSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
     }
 }

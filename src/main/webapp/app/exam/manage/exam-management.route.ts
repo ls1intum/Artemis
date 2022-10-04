@@ -58,6 +58,7 @@ import { isOrion } from 'app/shared/orion/orion';
 import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
 import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
+import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -209,6 +210,15 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
         loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
+    },
+    {
+        path: ':examId/bonus',
+        component: BonusComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.bonus.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         path: ':examId/test-runs',
