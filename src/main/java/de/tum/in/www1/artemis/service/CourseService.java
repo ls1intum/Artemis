@@ -130,6 +130,8 @@ public class CourseService {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
+    private final TutorialGroupService tutorialGroupService;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -138,7 +140,8 @@ public class CourseService {
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository) {
+            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository,
+            TutorialGroupService tutorialGroupService) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -171,6 +174,7 @@ public class CourseService {
         this.exerciseRepository = exerciseRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
+        this.tutorialGroupService = tutorialGroupService;
     }
 
     /**
@@ -220,6 +224,8 @@ public class CourseService {
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         course.setLearningGoals(learningGoalService.findAllForCourse(course, user));
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
+        course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
+
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }

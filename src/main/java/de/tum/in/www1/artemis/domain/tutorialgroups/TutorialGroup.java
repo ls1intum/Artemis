@@ -8,15 +8,15 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 
 @Entity
@@ -61,6 +61,16 @@ public class TutorialGroup extends DomainObject {
     @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
     private Set<TutorialGroupRegistration> registrations = new HashSet<>();
+
+    // ==== Transient fields ====
+
+    @Transient
+    @JsonSerialize
+    private Boolean isUserRegistered;
+
+    @Transient
+    @JsonSerialize
+    private Integer numberOfRegisteredUsers;
 
     public TutorialGroup() {
         // Empty constructor needed for Jackson.
@@ -150,4 +160,36 @@ public class TutorialGroup extends DomainObject {
     public void setCampus(String campus) {
         this.campus = campus;
     }
+
+    public Boolean getIsUserRegistered() {
+        return isUserRegistered;
+    }
+
+    public void setIsUserRegistered(Boolean userRegistered) {
+        isUserRegistered = userRegistered;
+    }
+
+    public Integer getNumberOfRegisteredUsers() {
+        return numberOfRegisteredUsers;
+    }
+
+    public void setNumberOfRegisteredUsers(Integer numberOfRegisteredUsers) {
+        this.numberOfRegisteredUsers = numberOfRegisteredUsers;
+    }
+
+    public void setTransientPropertiesForUser(User user) {
+        if (Hibernate.isInitialized(registrations) && registrations != null) {
+            numberOfRegisteredUsers = registrations.size();
+            isUserRegistered = registrations.stream().anyMatch(registration -> registration.getStudent().equals(user));
+        }
+        else {
+            isUserRegistered = null;
+            numberOfRegisteredUsers = null;
+        }
+    }
+
+    public void hidePrivacySensitiveInformation() {
+        this.setRegistrations(null);
+    }
+
 }
