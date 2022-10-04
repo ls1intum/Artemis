@@ -170,7 +170,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
      *
      * @param exerciseId Exercise id.
-     * @param includeTestRuns flag that determines if testRuns should be included
      * @return participations for exercise.
      */
     @Query("""
