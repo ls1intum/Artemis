@@ -178,12 +178,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.results r
             LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :#{#exerciseId}
-                AND (p.testRun = false OR :#{#includeTestRuns} = true)
-                AND (r.id = (
-                    SELECT max(id) FROM p.results)
+                AND (r.id = (SELECT max(id) FROM p.results)
                     OR r IS NULL)
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("includeTestRuns") boolean includeTestRuns);
+    Set<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p

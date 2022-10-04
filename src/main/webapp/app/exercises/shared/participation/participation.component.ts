@@ -123,7 +123,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     private loadParticipations(exerciseId: number) {
-        this.participationService.findAllParticipationsByExercise(exerciseId, true, true).subscribe((participationsResponse) => {
+        this.participationService.findAllParticipationsByExercise(exerciseId, true).subscribe((participationsResponse) => {
             this.participations = participationsResponse.body!;
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
                 const programmingExercise = this.exercise as ProgrammingExercise;

@@ -387,14 +387,14 @@ public class ParticipationResource {
      */
     @GetMapping("exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Set<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withLatestResult,
-            @RequestParam(defaultValue = "false") boolean includeTestRuns) {
+    public ResponseEntity<Set<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
+            @RequestParam(defaultValue = "false") boolean withLatestResult) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         Set<StudentParticipation> participations;
         if (withLatestResult) {
-            participations = studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId, includeTestRuns);
+            participations = studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
         }
         else {
             participations = studentParticipationRepository.findByExerciseId(exerciseId);
