@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CourseTutorialGroupsOverviewComponent } from './course-tutorial-groups-overview.component';
+import { CourseTutorialGroupsOverviewComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups-overview/course-tutorial-groups-overview.component';
 
 describe('CourseTutorialGroupsOverviewComponent', () => {
     let component: CourseTutorialGroupsOverviewComponent;
