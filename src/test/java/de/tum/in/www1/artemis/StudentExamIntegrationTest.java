@@ -467,9 +467,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(optionalExamSession.get().getIpAddress().toNormalizedString()).isEqualTo("10.0.28.1");
     }
 
-    @Test
+    @ParameterizedTest
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetTestRunForConduction() throws Exception {
+    @ValueSource(booleans = { true, false })
+    void testGetTestRunForConduction(boolean testExam) throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
@@ -478,6 +479,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+
+        exam2.setTestExam(testExam);
+        examRepository.save(exam2);
+
         var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true, false);
         final var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         assertThat(testRun.isTestRun()).isTrue();
@@ -488,6 +493,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(response.isStarted()).isTrue();
         assertThat(response.isTestRun()).isTrue();
         assertThat(response.getExercises()).hasSize(exam.getNumberOfExercisesInExam());
+        for (Exercise exercise : response.getExercises()) {
+            assertThat(exercise.getStudentParticipations()).hasSize(1);
+        }
         // Ensure that student exam was marked as started
         assertThat(studentExamRepository.findById(testRun.getId()).get().isStarted()).isTrue();
     }
