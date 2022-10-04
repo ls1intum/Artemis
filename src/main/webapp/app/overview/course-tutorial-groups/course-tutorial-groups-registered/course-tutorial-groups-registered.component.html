@@ -1,0 +1,19 @@
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <div class="row">
+        <div class="col-12">
+            <h2>{{ 'artemisApp.pages.courseTutorialGroups.title' | artemisTranslate }}</h2>
+            <div>
+                <ng-container *ngIf="registrationsOfLoggedInUser && registrationsOfLoggedInUser.length > 0; else noRegistrations">
+                    <div class="d-flex flex-wrap">
+                        <ng-container *ngFor="let registration of registrationsOfLoggedInUser">
+                            <jhi-course-tutorial-group-card [tutorialGroupRegistration]="registration"></jhi-course-tutorial-group-card>
+                        </ng-container>
+                    </div>
+                </ng-container>
+                <ng-template #noRegistrations>
+                    <span>{{ 'artemisApp.pages.courseTutorialGroups.noRegistrations' | artemisTranslate }}</span>
+                </ng-template>
+            </div>
+        </div>
+    </div>
+</jhi-loading-indicator-container>

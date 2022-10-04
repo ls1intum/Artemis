@@ -5,7 +5,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/registered-students/registered-students.component';
 import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
-import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/detail/tutorial-group-detail.component';
+import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/detail/tutorial-group-management-detail.component';
 import { Routes } from '@angular/router';
 
 /**
@@ -50,7 +50,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
     },
     {
         path: ':tutorialGroupId',
-        component: TutorialGroupDetailComponent,
+        component: TutorialGroupManagementDetailComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.pages.tutorialGroupDetail.title',

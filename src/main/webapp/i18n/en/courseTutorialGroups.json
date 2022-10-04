@@ -1,9 +1,20 @@
 {
     "artemisApp": {
+        "breadcrumb": {
+            "title": "Tutorial Groups"
+        },
         "pages": {
             "courseTutorialGroups": {
                 "title": "Your Tutorial Group Registrations",
-                "noRegistrations": "You are not registered to any tutorial group in this course"
+                "noRegistrations": "You are not registered to any tutorial group in this course.",
+                "allFilter": "Show All Groups",
+                "registeredFilter": "Show Your Registered Groups"
+            },
+            "courseTutorialGroupDetail": {
+                "title": "Tutorial Group Detail"
+            },
+            "courseTutorialGroupOverview": {
+                "title": "Tutorial Groups Overview"
             }
         },
         "tutorialGroupCard": {

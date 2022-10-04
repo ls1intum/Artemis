@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/detail/tutorial-group-detail.component';
+import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/detail/tutorial-group-management-detail.component';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
@@ -16,13 +16,13 @@ import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-gr
 import { Course } from 'app/entities/course.model';
 
 describe('TutorialGroupDetailComponent', () => {
-    let tutorialGroupDetailComponentFixture: ComponentFixture<TutorialGroupDetailComponent>;
-    let tutorialGroupDetailComponent: TutorialGroupDetailComponent;
+    let tutorialGroupDetailComponentFixture: ComponentFixture<TutorialGroupManagementDetailComponent>;
+    let tutorialGroupDetailComponent: TutorialGroupManagementDetailComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
-                TutorialGroupDetailComponent,
+                TutorialGroupManagementDetailComponent,
                 TutorialGroupRowButtonsStubComponent,
                 LoadingIndicatorContainerStubComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -60,7 +60,7 @@ describe('TutorialGroupDetailComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                tutorialGroupDetailComponentFixture = TestBed.createComponent(TutorialGroupDetailComponent);
+                tutorialGroupDetailComponentFixture = TestBed.createComponent(TutorialGroupManagementDetailComponent);
                 tutorialGroupDetailComponent = tutorialGroupDetailComponentFixture.componentInstance;
             });
     });

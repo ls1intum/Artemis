@@ -1,15 +1,16 @@
-<jhi-loading-indicator-container [isLoading]="isLoading">
-    <h2 class="m-2">{{ 'artemisApp.pages.courseTutorialGroups.title' | artemisTranslate }}</h2>
-    <div>
-        <ng-container *ngIf="registrationsOfLoggedInUser && registrationsOfLoggedInUser.length > 0; else noRegistrations">
-            <div class="d-flex flex-wrap">
-                <ng-container *ngFor="let registration of registrationsOfLoggedInUser">
-                    <jhi-course-tutorial-group-card [tutorialGroupRegistration]="registration"></jhi-course-tutorial-group-card>
-                </ng-container>
-            </div>
-        </ng-container>
-        <ng-template #noRegistrations>
-            <span>{{ 'artemisApp.pages.courseTutorialGroups.noRegistrations' | artemisTranslate }}</span>
-        </ng-template>
+<ng-template #controls>
+    <div class="btn-group" role="group">
+        <input type="radio" class="btn-check" name="filter" id="registered-filter" autocomplete="off" [value]="'registered'" [(ngModel)]="selectedFilter" />
+        <label class="btn btn-outline-secondary" for="registered-filter">{{ 'artemisApp.pages.courseTutorialGroups.registeredFilter' | artemisTranslate }}</label>
+
+        <input type="radio" class="btn-check" name="filter" id="all-filter" autocomplete="off" [value]="'all'" [(ngModel)]="selectedFilter" />
+        <label class="btn btn-outline-secondary" for="all-filter">{{ 'artemisApp.pages.courseTutorialGroups.allFilter' | artemisTranslate }}</label>
     </div>
-</jhi-loading-indicator-container>
+</ng-template>
+
+<div class="my-2">
+    <ng-container [ngSwitch]="selectedFilter">
+        <jhi-course-tutorial-groups-overview *ngSwitchCase="'all'"></jhi-course-tutorial-groups-overview>
+        <jhi-course-tutorial-groups-registered *ngSwitchCase="'registered'"></jhi-course-tutorial-groups-registered>
+    </ng-container>
+</div>

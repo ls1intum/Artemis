@@ -6,30 +6,18 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutor
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Language } from 'app/entities/course.model';
-import { SafeHtml } from '@angular/platform-browser';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
-    selector: 'jhi-tutorial-group-detail',
-    templateUrl: './tutorial-group-detail.component.html',
+    selector: 'jhi-tutorial-group-management-detail',
+    templateUrl: './tutorial-group-management-detail.component.html',
 })
-export class TutorialGroupDetailComponent implements OnInit {
+export class TutorialGroupManagementDetailComponent implements OnInit {
     isLoading = false;
     tutorialGroup: TutorialGroup;
     courseId: number;
     tutorialGroupId: number;
-    GERMAN = Language.GERMAN;
-    ENGLISH = Language.ENGLISH;
-    formattedAdditionalInformation?: SafeHtml;
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-        private artemisMarkdownService: ArtemisMarkdownService,
-    ) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private tutorialGroupService: TutorialGroupsService, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -46,9 +34,6 @@ export class TutorialGroupDetailComponent implements OnInit {
             .subscribe({
                 next: (tutorialGroupResult) => {
                     this.tutorialGroup = tutorialGroupResult.body!;
-                    if (this.tutorialGroup.additionalInformation) {
-                        this.formattedAdditionalInformation = this.artemisMarkdownService.safeHtmlForMarkdown(this.tutorialGroup.additionalInformation);
-                    }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

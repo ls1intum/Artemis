@@ -1,36 +1,31 @@
 import { Component, OnInit } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { onError } from 'app/shared/util/global.utils';
-import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { map, finalize } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { finalize, map } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
-    selector: 'jhi-tutorial-groups-management',
-    templateUrl: './tutorial-groups-management.component.html',
+    selector: 'jhi-course-tutorial-groups-overview',
+    templateUrl: './course-tutorial-groups-overview.component.html',
+    styleUrls: ['./course-tutorial-groups-overview.component.scss'],
 })
-export class TutorialGroupsManagementComponent implements OnInit {
+export class CourseTutorialGroupsOverviewComponent implements OnInit {
     courseId: number;
     isLoading = false;
     tutorialGroups: TutorialGroup[] = [];
-    faPlus = faPlus;
 
     constructor(private tutorialGroupService: TutorialGroupsService, private router: Router, private activatedRoute: ActivatedRoute, private alertService: AlertService) {}
 
     ngOnInit(): void {
-        this.activatedRoute.parent!.paramMap.subscribe((parentParams) => {
+        this.activatedRoute.parent?.parent?.paramMap.subscribe((parentParams) => {
             this.courseId = Number(parentParams.get('courseId'));
             if (this.courseId) {
                 this.loadTutorialGroups();
             }
         });
-    }
-
-    public onTutorialGroupSelected(tutorialGroupId: number) {
-        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', tutorialGroupId]);
     }
 
     public loadTutorialGroups() {
@@ -54,5 +49,9 @@ export class TutorialGroupsManagementComponent implements OnInit {
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
+    }
+
+    public onTutorialGroupSelected(tutorialGroupId: number) {
+        this.router.navigate(['/courses', this.courseId, 'tutorial-groups', tutorialGroupId]);
     }
 }
