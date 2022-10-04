@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import static de.tum.in.www1.artemis.config.Constants.MAX_QUIZ_ANSWER_TEXT_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
 import java.util.Objects;
 
@@ -28,7 +28,7 @@ import me.xdrop.fuzzywuzzy.FuzzySearch;
 public class ShortAnswerSubmittedText extends DomainObject {
 
     @Column(name = "text")
-    @Size(max = MAX_QUIZ_ANSWER_TEXT_LENGTH)
+    @Size(max = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH, message = "The submitted answer text is too long.")
     @JsonView(QuizView.Before.class)
     private String text;
 

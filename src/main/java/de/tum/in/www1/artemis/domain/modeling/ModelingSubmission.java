@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.domain.Submission;
 public class ModelingSubmission extends Submission {
 
     @Column(name = "model")
-    @Size(max = MAX_SUBMISSION_MODEL_LENGTH)
+    @Size(max = MAX_SUBMISSION_MODEL_LENGTH, message = "The modeling submission is too large.")
     @Lob
     private String model;
 

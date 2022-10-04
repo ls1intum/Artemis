@@ -7,7 +7,7 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
-import { MAX_QUIZ_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-short-answer-question',
@@ -54,7 +54,7 @@ export class ShortAnswerQuestionComponent {
     @Output()
     submittedTextsChange = new EventEmitter<ShortAnswerSubmittedText[]>();
 
-    readonly maxCharacterCount = MAX_QUIZ_ANSWER_TEXT_LENGTH;
+    readonly maxCharacterCount = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;

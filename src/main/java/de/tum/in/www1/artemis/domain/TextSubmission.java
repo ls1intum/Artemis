@@ -25,7 +25,7 @@ public class TextSubmission extends Submission {
     private static final int MAX_EXCERPT_LENGTH = 100;
 
     @Column(name = "text")
-    @Size(max = MAX_SUBMISSION_TEXT_LENGTH)
+    @Size(max = MAX_SUBMISSION_TEXT_LENGTH, message = "The text submission is too large.")
     @Lob
     private String text;
 

@@ -28,7 +28,7 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
-import { MAX_QUIZ_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -64,7 +64,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     @Output()
     questionMoveDown = new EventEmitter();
 
-    readonly maxCharacterCount = MAX_QUIZ_ANSWER_TEXT_LENGTH;
+    readonly maxCharacterCount = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
     /** Ace Editor configuration constants **/
     questionEditorText: any = '';
