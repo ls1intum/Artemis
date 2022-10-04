@@ -460,6 +460,13 @@ public class ParticipationService {
         return studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
+    /**
+     * Get one participation (in any state) by its participant and exercise.
+     *
+     * @param exercise the exercise for which to find a participation
+     * @param participant the participant for which to find a participation
+     * @return the participation of the given participant and exercise in any state
+     */
     public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyState(Exercise exercise, Participant participant) {
         if (participant instanceof User user) {
             return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
