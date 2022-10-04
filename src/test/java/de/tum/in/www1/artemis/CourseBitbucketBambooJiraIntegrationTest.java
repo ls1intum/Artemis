@@ -192,12 +192,6 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
-    void testGetCourseWithExercisesAndRelevantParticipationsWithoutPermissions() throws Exception {
-        courseTestService.testGetCourseWithExercisesAndRelevantParticipationsWithoutPermissions();
-    }
-
-    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetCoursesWithPermission() throws Exception {
         courseTestService.testGetCoursesWithPermission();
@@ -405,6 +399,12 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void searchForStudentsInCourse() throws Exception {
+        courseTestService.searchStudentsInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetAllEditorsInCourse() throws Exception {
         courseTestService.testGetAllEditorsInCourse();
     }
@@ -419,6 +419,18 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "tutor1", roles = "TA")
     void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsTutor_forbidden() throws Exception {
         courseTestService.testGetAllStudentsOrTutorsOrInstructorsInCourse_AsTutor_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
+        courseTestService.testSearchStudentsAndTutorsAndInstructorsInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSearchStudentsAndTutorsAndInstructorsInOtherCourse_forbidden() throws Exception {
+        courseTestService.testSearchStudentsAndTutorsAndInstructorsInOtherCourseForbidden();
     }
 
     @Test

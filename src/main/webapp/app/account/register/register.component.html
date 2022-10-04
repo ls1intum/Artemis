@@ -16,11 +16,11 @@
 
             <div class="alert alert-danger" *ngIf="error" jhiTranslate="register.messages.error.fail"><strong>Registration failed!</strong> Please try again later.</div>
 
-            <div class="alert alert-danger" *ngIf="errorUserExists" jhiTranslate="register.messages.error.userexists">
+            <div class="alert alert-danger" *ngIf="errorUserExists" jhiTranslate="register.messages.error.userExists">
                 <strong>Login name already registered!</strong> Please choose another one.
             </div>
 
-            <div class="alert alert-danger" *ngIf="errorEmailExists" jhiTranslate="register.messages.error.emailexists">
+            <div class="alert alert-danger" *ngIf="errorEmailExists" jhiTranslate="register.messages.error.emailExists">
                 <strong>Email is already in use!</strong> Please choose another one.
             </div>
 
@@ -54,7 +54,7 @@
                         class="form-control"
                         id="lastName"
                         name="lastName"
-                        autocomplete="last-name"
+                        autocomplete="family-name"
                         placeholder="{{ 'global.form.lastname.placeholder' | artemisTranslate }}"
                         formControlName="lastName"
                     />

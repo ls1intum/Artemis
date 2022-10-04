@@ -76,6 +76,6 @@ describe('CoursePrerequisitesModal', () => {
     it('should close modal when cleared', () => {
         const dismissActiveModal = jest.spyOn(activeModalStub, 'dismiss');
         coursePrerequisitesModalComponent.clear();
-        expect(dismissActiveModal).toHaveBeenCalled();
+        expect(dismissActiveModal).toHaveBeenCalledOnce();
     });
 });

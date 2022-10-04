@@ -155,7 +155,7 @@ describe('Test Run Management Component', () => {
             expect(createTestRunButton).toBeTruthy();
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
             createTestRunButton.nativeElement.click();
-            expect(alertService.error).toHaveBeenCalled();
+            expect(alertService.error).toHaveBeenCalledOnce();
         });
     });
 
@@ -182,7 +182,7 @@ describe('Test Run Management Component', () => {
 
             component.sortRows();
             tick();
-            expect(sortService.sortByProperty).toHaveBeenCalled();
+            expect(sortService.sortByProperty).toHaveBeenCalledOnce();
         }));
     });
 });

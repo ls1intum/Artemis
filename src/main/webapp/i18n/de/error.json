@@ -33,7 +33,7 @@
         "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte überprüfe die Datei und versuche es erneut.",
         "externalSubmissionBeforeDueDate": "Externe Einreichungen können nur nach der Abgabefrist erstellt werden.",
         "externalSubmissionForQuizExercise": "Externe Einreichungen können nicht für Quiz Übungen erstellt werden.",
-        "nosubmissions": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
+        "noSubmissions": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
         "feedbackCreditsNull": "Fehler! Wenn Feedback vorhanden ist, muss das Feedback eine Punktzahl haben.",
         "invalidGradeStepFormat": "Eine oder mehrere Notenstufen folgen nicht dem richtigen Format. Klicke auf das \"?\" für mehr Informationen.",
         "invalidGradeStepAdjacency": "Die Notenstufen bilden keinen gültigen Notenschlüssel ab. Klicke auf das \"?\" für mehr Informationen.",
@@ -48,7 +48,41 @@
         "submissionPolicyActiveNull": "Abgaberichtlinien müssen aktiviert oder deaktiviert sein. Dieser Status darf nicht null sein.",
         "submissionPolicyUpdateFailedPolicyNotExist": "Die Abgaberichtlinie konnte nicht gespeichert werden, da die Programmieraufgabe keine Abgaberichtlinie hat!",
         "oneActivePlagiarismCheck": "Bitte warte bis die aktuelle Plagiatskontrolle in diesem Kurs abgeschlossen ist, bevor du eine weitere startest.",
+        "internalServerError": "Interner Serverfehler",
+        "server.not.reachable": "Server ist nicht erreichbar",
+        "url.not.found": "Nicht gefunden",
+        "NotNull": "Feld {{fieldName}} darf nicht leer sein!",
+        "size": "Feld {{fieldName}} erfüllt nicht die minimalen/maximalen Längenanforderungen!",
+        "userExists": "Login bereits vergeben!",
+        "emailExists": "E-Mail wird bereits verwendet!",
+        "idExists": "Ein neuer {{entityName}} kann noch keine ID haben",
+        "ambiguousContext": "Ein neuer {{entityName}} muss einen eindeutigen Kontext haben",
+        "invalid": {
+            "template": {
+                "build.plan.id": "Die Vorlagen-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
+                "repository.url": "Die Vorlagen-Repository-URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist."
+            },
+            "solution": {
+                "build.plan.id": "Die Lösungs-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
+                "repository.url": "Die Lösungs-Repository-URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist."
+            },
+            "auxiliary.repository": {
+                "id": "Die ID eines Hilfs-Repositories scheint gesetzt zu sein. Stelle bitte sicher, dass die ID nicht gesetzt ist.",
+                "name": "Der Name von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jeder Name gültig ist und es keine Duplikate gibt.",
+                "checkout.directory": "Das Checkout-Verzeichnis von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jedes Checkout-Verzeichnis gültig ist und es keine Duplikate gibt.",
+                "description": "Die Beschreibung von mindestens einem Hilfs-Repository ist zu lang! Es sind maximal {{maxLength}} Zeichen erlaubt."
+            },
+            "testcases.weights": "Vor Deaktivierung der manuellen Bewertung muss für mindestens einen Testfall die Bewertungsgewichtung größer Null gesetzt werden.",
+            "page.request": "Die Seitenanforderung scheint ungültig zu sein. Stelle bitte sicher, dass genügend {{entityName}}-Entitäten vorhanden sind, damit die Anforderungsseite erstellt werden kann."
+        },
+        "idNull": "Ungültige ID",
+        "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten: {{error}}",
+        "manualCodeHintOperation": "Dieser Endpunkt erlaubt keine manuelle Bearbeitung von Codehinweisen.",
+        "exerciseNotDefined": "Die Aufgabe ist nicht definiert.",
+        "exerciseIdMismatch": "Die Aufgaben-IDs stimmen nicht überein.",
+        "solutionEntryError": "Fehler beim Laden der extrahierten Aufgaben aus der Aufgabenstellung.",
         "systemNotificationNeedsBothDates": "Sowohl das Mitteilungsdatum als auch das Ablaufdatum müssen gesetzt sein.",
-        "systemNotificationNeedsNotificationBeforeExpiration": "Das Ablaufdatum muss nach dem Mitteilungsdatum liegen."
+        "systemNotificationNeedsNotificationBeforeExpiration": "Das Ablaufdatum muss nach dem Mitteilungsdatum liegen.",
+        "ltiNotSupported": "LTI wird auf dieser Artemis-Instanz nicht unterstützt"
     }
 }

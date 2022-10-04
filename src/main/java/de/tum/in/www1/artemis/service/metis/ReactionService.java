@@ -4,17 +4,14 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.Posting;
-import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
-import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
 public class ReactionService {
@@ -31,13 +28,16 @@ public class ReactionService {
 
     private final AnswerPostService answerPostService;
 
+    private final ConversationService conversationService;
+
     public ReactionService(UserRepository userRepository, CourseRepository courseRepository, ReactionRepository reactionRepository, PostService postService,
-            AnswerPostService answerPostService) {
+            AnswerPostService answerPostService, ConversationService conversationService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.reactionRepository = reactionRepository;
         this.postService = postService;
         this.answerPostService = answerPostService;
+        this.conversationService = conversationService;
     }
 
     /**
@@ -54,7 +54,7 @@ public class ReactionService {
         // checks
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (reaction.getId() != null) {
-            throw new BadRequestAlertException("A new reaction cannot already have an ID", METIS_REACTION_ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new reaction cannot already have an ID", METIS_REACTION_ENTITY_NAME, "idExists");
         }
 
         // set user to current user
@@ -63,7 +63,8 @@ public class ReactionService {
         // we query the repository dependent on the type of posting and update this posting
         Reaction savedReaction;
         if (posting instanceof Post) {
-            Post post = postService.findById(posting.getId());
+            Post post = postService.findPostOrMessagePostById(posting.getId());
+            post.setConversation(mayInteractWithConversationIfConversationMessage(user, post));
             reaction.setPost(post);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
@@ -71,7 +72,8 @@ public class ReactionService {
             postService.updateWithReaction(post, reaction, courseId);
         }
         else {
-            AnswerPost answerPost = answerPostService.findById(posting.getId());
+            AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
+            answerPost.getPost().setConversation(mayInteractWithConversationIfConversationMessage(user, answerPost.getPost()));
             reaction.setAnswerPost(answerPost);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
@@ -84,8 +86,8 @@ public class ReactionService {
     /**
      * Determines authority to delete reaction and deletes the reaction
      *
-     * @param reactionId    id of the reaction to delete
-     * @param courseId      id of the course the according posting belongs to
+     * @param reactionId id of the reaction to delete
+     * @param courseId   id of the course the according posting belongs to
      */
     public void deleteReactionById(Long reactionId, Long courseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -101,10 +103,12 @@ public class ReactionService {
         Post updatedPost;
         if (reaction.getPost() != null) {
             updatedPost = reaction.getPost();
+            updatedPost.setConversation(mayInteractWithConversationIfConversationMessage(user, updatedPost));
             updatedPost.removeReaction(reaction);
         }
         else {
             AnswerPost updatedAnswerPost = reaction.getAnswerPost();
+            updatedAnswerPost.getPost().setConversation(mayInteractWithConversationIfConversationMessage(user, updatedAnswerPost.getPost()));
             updatedAnswerPost.removeReaction(reaction);
             updatedPost = updatedAnswerPost.getPost();
             // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
@@ -112,7 +116,16 @@ public class ReactionService {
             updatedPost.removeAnswerPost(updatedAnswerPost);
             updatedPost.addAnswerPost(updatedAnswerPost);
         }
-        postService.broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+        postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
         reactionRepository.deleteById(reactionId);
+    }
+
+    private Conversation mayInteractWithConversationIfConversationMessage(User user, Post post) {
+        if (post.getConversation() != null) {
+            return conversationService.mayInteractWithConversationElseThrow(post.getConversation().getId(), user);
+        }
+        else {
+            return null;
+        }
     }
 }

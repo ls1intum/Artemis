@@ -219,10 +219,6 @@
             },
             "isUsedForTutorial": "Tutor:in muss überprüfen",
             "action": "Aktion"
-        },
-        "exerciseLtiConfiguration": {
-            "lti": "LTI",
-            "configurationForExercise": "LTI Konfiguration der Übung {{ title }}"
         }
     }
 }

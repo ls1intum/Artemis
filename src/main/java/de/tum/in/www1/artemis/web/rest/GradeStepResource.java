@@ -98,10 +98,7 @@ public class GradeStepResource {
         for (GradeStep gradeStep : gradeSteps) {
             gradeStep.setGradingScale(null);
         }
-        if (maxPoints != null && maxPoints > 0) {
-            return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps, maxPoints);
-        }
-        return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps);
+        return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps, maxPoints);
     }
 
     /**

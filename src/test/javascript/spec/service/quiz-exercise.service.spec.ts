@@ -114,7 +114,6 @@ describe('QuizExercise Service', () => {
     const quizEx = makeQuiz();
     it.each([
         ['delete', [123], {}, 'DELETE', ''],
-        ['reset', [123], {}, 'DELETE', '/reset'],
         ['join', [123, '12345678'], batch, 'POST', '/join'],
         ['addBatch', [123], batch, 'PUT', '/add-batch'],
         ['startBatch', [123], batch, 'PUT', '/start-batch'],
@@ -202,7 +201,7 @@ describe('QuizExercise Service', () => {
         service.exportQuiz(questions, exportAll, filename);
 
         if (count === 0) {
-            expect(spy).toHaveBeenCalledTimes(0);
+            expect(spy).not.toHaveBeenCalled();
         } else {
             expect(spy).toHaveBeenCalledOnce();
             const [blob, file] = spy.mock.calls[0];

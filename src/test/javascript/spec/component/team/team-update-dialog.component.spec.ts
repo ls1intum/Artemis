@@ -133,7 +133,7 @@ describe('TeamUpdateDialogComponent', () => {
             // Check that saving worked and that modal was closed
             expect(comp.team).toEqual(comp.pendingTeam);
             expect(comp.isSaving).toBeFalse();
-            expect(closeSpy).toHaveBeenCalled();
+            expect(closeSpy).toHaveBeenCalledOnce();
             fixture.destroy();
         });
         discardPeriodicTasks();
@@ -195,7 +195,7 @@ describe('TeamUpdateDialogComponent', () => {
         // Check that saving worked and that modal was closed
         expect(comp.team).toEqual(comp.pendingTeam);
         expect(comp.isSaving).toBeFalse();
-        expect(closeSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalledOnce();
 
         fixture.destroy();
         flush();

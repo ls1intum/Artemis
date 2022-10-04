@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
@@ -23,7 +23,7 @@ import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-asse
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { filter, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -57,6 +57,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     SubmissionButtonStates = SubmissionButtonStates;
     AssessButtonStates = AssessButtonStates;
     UIStates = UIStates;
+    selectedMode: 'readConfirm' | 'assessCorrectly';
 
     // Icons
     faSave = faSave;
@@ -68,6 +69,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         accountService: AccountService,
         assessmentsService: TextAssessmentService,
         structuredGradingCriterionService: StructuredGradingCriterionService,
+        private cdr: ChangeDetectorRef,
         private exerciseService: ExerciseService,
         private textSubmissionService: TextSubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
@@ -142,6 +144,11 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             }
             // do this here to make sure everything is loaded before the guided tour step is loaded
             this.guidedTourService.componentPageLoaded();
+            if (this.exampleSubmission.usedForTutorial) {
+                this.selectedMode = 'assessCorrectly';
+            } else {
+                this.selectedMode = 'readConfirm';
+            }
         });
     }
 
@@ -174,6 +181,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         const newExampleSubmission = new ExampleSubmission();
         newExampleSubmission.submission = this.submission!;
         newExampleSubmission.exercise = this.exercise;
+        newExampleSubmission.usedForTutorial = this.selectedMode === 'assessCorrectly';
 
         this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe({
             next: (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
@@ -222,13 +230,25 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     public async startAssessment(): Promise<void> {
-        this.result = new Result();
-        this.result.submission = this.submission;
-        this.submission!.results = [this.result];
-        this.prepareTextBlocksAndFeedbacks();
-        this.areNewAssessments = this.assessments.length <= 0;
-        this.validateFeedback();
-        this.state.assess();
+        this.exampleSubmissionService
+            .prepareForAssessment(this.exerciseId, this.exampleSubmissionId)
+            .pipe(
+                mergeMap(() => {
+                    return this.exampleSubmissionService.get(this.exampleSubmissionId);
+                }),
+            )
+            .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                this.exampleSubmission = exampleSubmissionResponse.body!;
+                this.submission = this.exampleSubmission.submission as TextSubmission;
+
+                this.result = new Result();
+                this.result.submission = this.submission;
+                this.submission!.results = [this.result];
+                this.prepareTextBlocksAndFeedbacks();
+                this.areNewAssessments = this.assessments.length <= 0;
+                this.validateFeedback();
+                this.state.assess();
+            });
     }
 
     /**
@@ -391,5 +411,11 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             this.unusedTextBlockRefs = [];
             this.state.edit();
         });
+    }
+
+    onModeChange(mode: 'readConfirm' | 'assessCorrectly') {
+        this.selectedMode = mode;
+        this.unsavedSubmissionChanges = true;
+        this.exampleSubmission.usedForTutorial = mode === 'assessCorrectly';
     }
 }

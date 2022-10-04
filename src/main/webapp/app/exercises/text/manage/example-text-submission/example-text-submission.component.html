@@ -9,16 +9,38 @@
         </div>
 
         <div class="col-4 text-end d-flex align-items-center gap-2 justify-content-end" *ngIf="(exercise?.isAtLeastEditor || false) && !readOnly && !toComplete && exercise">
-            <div class="form-check align-baseline">
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    name="usedForTutorial"
-                    id="field_usedForTutorial"
-                    [(ngModel)]="exampleSubmission.usedForTutorial"
-                    (ngModelChange)="unsavedSubmissionChanges = true"
-                />
-                <label class="form-check-label" for="field_usedForTutorial">{{ 'artemisApp.exampleSubmission.usedForTutorial' | artemisTranslate }}</label>
+            <div>
+                <div class="text-start">
+                    <span>{{ 'artemisApp.exampleSubmission.assessmentTraining' | artemisTranslate }}</span>
+                    <jhi-help-icon placement="auto" [text]="'artemisApp.exampleSubmission.selectModelExplanation'"></jhi-help-icon>
+                </div>
+                <div class="btn-group" role="group">
+                    <input
+                        [disabled]="state.submissionEditButton === 3"
+                        type="radio"
+                        class="btn-check"
+                        name="mode"
+                        id="read-and-confirm-button"
+                        autocomplete="off"
+                        [value]="'readConfirm'"
+                        [ngModel]="selectedMode"
+                        (ngModelChange)="onModeChange($event)"
+                    />
+                    <label class="btn btn-outline-secondary" for="read-and-confirm-button">{{ 'artemisApp.exampleSubmission.readAndConfirm' | artemisTranslate }}</label>
+
+                    <input
+                        [disabled]="state.submissionEditButton === 3"
+                        type="radio"
+                        class="btn-check"
+                        name="mode"
+                        id="only-not-imported"
+                        autocomplete="off"
+                        [value]="'assessCorrectly'"
+                        [ngModel]="selectedMode"
+                        (ngModelChange)="onModeChange($event)"
+                    />
+                    <label class="btn btn-outline-secondary" for="only-not-imported">{{ 'artemisApp.exampleSubmission.assessCorrectly' | artemisTranslate }}</label>
+                </div>
             </div>
             <ng-container [ngSwitch]="state.submissionEditButton">
                 <button id="create-example-submission" *ngSwitchCase="SubmissionButtonStates.NEW" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
@@ -34,10 +56,18 @@
                     <fa-icon [icon]="faSave"></fa-icon>
                     {{ 'artemisApp.exampleSubmission.updateExampleSubmission' | artemisTranslate }}
                 </button>
-                <button *ngSwitchCase="SubmissionButtonStates.EDIT" (click)="editSubmission()" class="btn btn-danger col-auto" id="editSampleSolution">
-                    <fa-icon [icon]="faEdit"></fa-icon>
-                    {{ 'artemisApp.exampleSubmission.editExampleSubmission' | artemisTranslate }}
-                </button>
+
+                <jhi-confirm-button
+                    *ngSwitchCase="SubmissionButtonStates.EDIT"
+                    class="col-auto"
+                    [icon]="faEdit"
+                    id="editSampleSolution"
+                    title="artemisApp.exampleSubmission.editExampleSubmission"
+                    confirmationText="artemisApp.exampleSubmission.editExampleSubmissionConfirmationQuestion"
+                    confirmationTitle="artemisApp.exampleSubmission.editExampleSubmission"
+                    [translateText]="true"
+                    (onConfirm)="editSubmission()"
+                ></jhi-confirm-button>
             </ng-container>
 
             <ng-container [ngSwitch]="state.assessButton">
@@ -97,7 +127,7 @@
         *ngIf="state.ui === UIStates.ASSESSMENT"
         [submission]="submission!"
         [(textBlockRefs)]="textBlockRefs"
-        [readOnly]="readOnly || (!exercise?.isAtLeastEditor && !toComplete)"
+        [readOnly]="readOnly || (!!exercise && !exercise.isAtLeastEditor && !toComplete)"
         (textBlockRefsChange)="validateFeedback()"
         (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
     ></jhi-text-assessment-area>

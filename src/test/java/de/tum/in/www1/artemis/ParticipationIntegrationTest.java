@@ -134,7 +134,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(modelingExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo("student1");
-        Participation storedParticipation = participationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(modelingExercise.getId(), "student1").get();
+        Participation storedParticipation = participationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(modelingExercise.getId(), "student1", false).get();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type modeling submission").isEqualTo(ModelingSubmission.class);
     }
@@ -148,7 +148,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(participation.getExercise()).as("participated in correct exercise").isEqualTo(textExercise);
         assertThat(participation.getStudent()).as("Student got set").isNotNull();
         assertThat(participation.getParticipantIdentifier()).as("Correct student got set").isEqualTo("student2");
-        Participation storedParticipation = participationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(textExercise.getId(), "student2").get();
+        Participation storedParticipation = participationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(textExercise.getId(), "student2", false).get();
         assertThat(storedParticipation.getSubmissions()).as("submission was initialized").hasSize(1);
         assertThat(storedParticipation.getSubmissions().iterator().next().getClass()).as("submission is of type text submission").isEqualTo(TextSubmission.class);
     }
@@ -195,6 +195,16 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "student1")
+    void practiceProgrammingExercise_featureDisabled() throws Exception {
+        featureToggleService.disableFeature(Feature.ProgrammingExercises);
+        request.post("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
+
+        // Reset
+        featureToggleService.enableFeature(Feature.ProgrammingExercises);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
     void participateInProgrammingExercise_dueDatePassed() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         exerciseRepo.save(programmingExercise);
@@ -203,10 +213,26 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "student1")
+    void practiceProgrammingExercise_beforeDatePassed() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepo.save(programmingExercise);
+        request.post("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
     void participateInProgrammingTeamExercise_withoutAssignedTeam() throws Exception {
         programmingExercise.setMode(ExerciseMode.TEAM);
         exerciseRepo.save(programmingExercise);
         request.post("/api/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void practiceProgrammingTeamExercise_Forbidden() throws Exception {
+        programmingExercise.setMode(ExerciseMode.TEAM);
+        exerciseRepo.save(programmingExercise);
+        request.post("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -315,7 +341,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
         participationRepo.save(participation);
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
-        var updatedParticipation = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/resume-programming-participation", null,
+        var updatedParticipation = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         assertThat(updatedParticipation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
@@ -325,7 +351,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void resumeProgrammingExerciseParticipation_wrongExerciseId() throws Exception {
         var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
         participationRepo.save(participation);
-        request.putWithResponseBody("/api/exercises/10000/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class, HttpStatus.NOT_FOUND);
+        request.putWithResponseBody("/api/exercises/10000/resume-programming-participation/" + participation.getId(), null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -335,8 +362,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         exercise = exerciseRepo.save(exercise);
         var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, exercise, database.getUserByLogin("student1"));
         participationRepo.save(participation);
-        request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
-                HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
+                ProgrammingExerciseStudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test

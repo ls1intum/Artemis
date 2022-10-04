@@ -22,8 +22,11 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     farSmile = faSmile;
     @Input() showAnswers: boolean;
     @Input() sortedAnswerPosts: AnswerPost[];
+    @Input() isCourseMessagesPage: boolean;
+
     @Output() showAnswersChange = new EventEmitter<boolean>();
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
+    @Output() openThread = new EventEmitter<void>();
 
     constructor(metisService: MetisService) {
         super(metisService);

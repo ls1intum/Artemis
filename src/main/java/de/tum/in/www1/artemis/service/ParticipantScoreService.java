@@ -111,7 +111,7 @@ public class ParticipantScoreService {
         Course course = exercises.stream().findAny().get().getCourseViaExerciseGroupOrCourseMember();
 
         // For every student we want to calculate the score
-        Map<Long, ScoreDTO> userIdToScores = users.stream().collect(Collectors.toMap(User::getId, ScoreDTO::new));
+        Map<Long, ScoreDTO> userIdToScores = users.stream().collect(Collectors.toMap(User::getId, user -> new ScoreDTO(user.getId(), user.getLogin(), 0.0, 0.0, 0.0)));
 
         // individual exercises
         // [0] -> User

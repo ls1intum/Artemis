@@ -133,8 +133,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
         // Error case 6: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         // This must be a student participation as hasPermissions would have been false and an error already thrown
+        // But the student should still be able to access if they are notified for a related plagiarism case.
         boolean isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
-        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)) {
+        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)
+                && !plagiarismService.wasUserNotifiedByInstructor(participationId, userRepository.getUser().getLogin())) {
             // TODO: change to AccessForbiddenException
             throw new IllegalAccessException();
         }

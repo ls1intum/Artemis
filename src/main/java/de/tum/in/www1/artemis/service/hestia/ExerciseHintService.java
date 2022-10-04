@@ -221,8 +221,19 @@ public class ExerciseHintService {
     }
 
     private List<Submission> getSubmissionsForStudent(ProgrammingExercise exercise, User student) {
-        var studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissionsResultsFeedbacksElseThrow(exercise.getId(), student.getId());
-        return studentParticipation.getSubmissions().stream().sorted(Comparator.reverseOrder()).toList();
+        List<Submission> submissions = new ArrayList<>();
+
+        var ratedStudentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacks(exercise.getId(), student.getId(),
+                false);
+        ratedStudentParticipation.ifPresent(participation -> submissions.addAll(participation.getSubmissions()));
+
+        var practiceStudentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacks(exercise.getId(),
+                student.getId(), true);
+        practiceStudentParticipation.ifPresent(participation -> submissions.addAll(participation.getSubmissions()));
+
+        Collections.sort(submissions, Comparator.reverseOrder());
+
+        return submissions;
     }
 
     private int subsequentNumberOfSubmissionsForTaskWithStatus(List<Submission> submissions, ProgrammingExerciseTask task, boolean successful) {

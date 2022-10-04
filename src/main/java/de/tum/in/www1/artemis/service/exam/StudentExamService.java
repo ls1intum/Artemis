@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
-import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
@@ -48,8 +47,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class StudentExamService {
 
     private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
-
-    private static final String ENTITY_NAME = "studentExam";
 
     private final Logger log = LoggerFactory.getLogger(StudentExamService.class);
 
@@ -81,8 +78,6 @@ public class StudentExamService {
 
     private final ExamRepository examRepository;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
     private final CacheManager cacheManager;
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -91,8 +86,7 @@ public class StudentExamService {
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, InstanceMessageSendService instanceMessageSendService,
-            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -107,7 +101,6 @@ public class StudentExamService {
         this.submissionService = submissionService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examRepository = examRepository;
-        this.instanceMessageSendService = instanceMessageSendService;
         this.cacheManager = cacheManager;
         this.messagingTemplate = messagingTemplate;
     }
@@ -300,7 +293,7 @@ public class StudentExamService {
      * @return returns the set of StudentExams of which the empty submissions were assessed
      */
     public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
-        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exam.getId());
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
         // remove student exams which should be excluded
         studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());
         Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(studentExams);
@@ -435,7 +428,7 @@ public class StudentExamService {
     public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam, ZonedDateTime startedDate) {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         setUpExerciseParticipationsAndSubmissionsWithInitializationDate(studentExam, generatedParticipations, startedDate);
-        // TODO: Michael Allgaier: schedule an unlock operation for all involved student repositories of this student exam (test exam) at the end of the individual working
+        // TODO: Michael Allgaier: schedule a lock operation for all involved student repositories of this student exam (test exam) at the end of the individual working time
         studentParticipationRepository.saveAll(generatedParticipations);
     }
 
@@ -618,7 +611,7 @@ public class StudentExamService {
         for (final Exercise exercise : exercisesToBeDeleted) {
             // Only delete participations that exist (and were not deleted in some other way)
             if (!exercise.getStudentParticipations().isEmpty()) {
-                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
+                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true, true);
             }
         }
 

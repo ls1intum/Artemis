@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -21,8 +22,12 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
 class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
@@ -77,7 +82,11 @@ class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     @Test
     void testGetOrRetrieveDefaultBranch() throws IOException {
         Course course = database.addCourseWithOneProgrammingExercise();
+
         ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
+        programmingExercise.setBranch(null);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, programmingExercise.getProjectKey(), 1);

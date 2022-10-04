@@ -78,10 +78,10 @@ describe('Course Management Service', () => {
         expect(convertDatesForLecturesFromServerSpy).toHaveBeenCalledWith(courseForConversion.lectures);
     };
 
-    const expectAccessRightsToBeCalled = () => {
-        expect(isAtLeastTutorInCourseSpy).toHaveBeenCalled();
-        expect(isAtLeastEditorInCourseSpy).toHaveBeenCalled();
-        expect(isAtLeastInstructorInCourseSpy).toHaveBeenCalled();
+    const expectAccessRightsToBeCalled = (tutorTimes: number, editorTimes: number, instructorTimes: number) => {
+        expect(isAtLeastTutorInCourseSpy).toHaveBeenCalledTimes(tutorTimes);
+        expect(isAtLeastEditorInCourseSpy).toHaveBeenCalledTimes(editorTimes);
+        expect(isAtLeastInstructorInCourseSpy).toHaveBeenCalledTimes(instructorTimes);
     };
 
     const requestAndExpectDateConversion = (method: string, url: string, flushedObject: any = returnedFromService, courseToCheck: Course, checkAccessRights?: boolean) => {
@@ -89,7 +89,7 @@ describe('Course Management Service', () => {
         req.flush(flushedObject);
         expectDateConversionToBeCalled(courseToCheck);
         if (checkAccessRights) {
-            expectAccessRightsToBeCalled();
+            expectAccessRightsToBeCalled(3, 3, 3);
         }
     };
 
@@ -141,15 +141,6 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises`, returnedFromService, course);
-        tick();
-    }));
-
-    it('should find course with exercises and participations', fakeAsync(() => {
-        courseManagementService
-            .findWithExercisesAndParticipations(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises-and-relevant-participations`, returnedFromService, course);
         tick();
     }));
 
@@ -291,7 +282,7 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/course-management-overview?testParam=testParamValue` });
         req.flush(returnedFromService);
-        expectAccessRightsToBeCalled();
+        expectAccessRightsToBeCalled(1, 1, 1);
         tick();
     }));
 
@@ -418,6 +409,18 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res).toEqual(stats));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/statistics-lifetime-overview` });
         req.flush(stats);
+        tick();
+    }));
+
+    it('should search other users within course', fakeAsync(() => {
+        const users = [new User(1, 'user1')];
+        returnedFromService = [...users];
+        courseManagementService
+            .searchOtherUsersInCourse(course.id!, 'user1')
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(users));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users?nameOfUser=user1` });
+        req.flush(returnedFromService);
         tick();
     }));
 

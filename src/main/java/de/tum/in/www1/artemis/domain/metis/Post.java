@@ -9,6 +9,7 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
@@ -61,6 +62,9 @@ public class Post extends Posting {
     @Enumerated(EnumType.STRING)
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
+
+    @ManyToOne
+    private Conversation conversation;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "display_priority")
@@ -167,6 +171,14 @@ public class Post extends Posting {
         this.courseWideContext = courseWideContext;
     }
 
+    public Conversation getConversation() {
+        return conversation;
+    }
+
+    public void setConversation(Conversation conversation) {
+        this.conversation = conversation;
+    }
+
     public DisplayPriority getDisplayPriority() {
         return displayPriority;
     }
@@ -205,6 +217,7 @@ public class Post extends Posting {
      * Helper method to extract the course a Post belongs to, which is found in different locations based on the Post's context
      * @return the course Post belongs to
      */
+    @JsonIgnore
     @Override
     public Course getCoursePostingBelongsTo() {
         if (this.course != null) {
@@ -218,6 +231,9 @@ public class Post extends Posting {
         }
         else if (this.plagiarismCase != null) {
             return this.plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        }
+        else if (this.conversation != null) {
+            return this.conversation.getCourse();
         }
 
         return null;

@@ -11,7 +11,7 @@ import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-po
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -148,8 +148,8 @@ describe('ResultService', () => {
 
         it('should return correct string for non programming exercise', () => {
             expect(resultService.getResultString(modelingResult, modelingExercise)).toBe('artemisApp.result.resultStringNonProgramming');
-            expect(translateServiceSpy).toHaveBeenCalledTimes(1);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringNonProgramming', { relativeScore: 42, points: 21, maxPoints: 50 });
+            expect(translateServiceSpy).toHaveBeenCalledOnce();
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringNonProgramming', { relativeScore: 42, points: 21 });
         });
 
         it('should return correct string for programming exercise with build failure', () => {
@@ -160,7 +160,6 @@ describe('ResultService', () => {
                 relativeScore: 0,
                 buildAndTestMessage: 'artemisApp.result.resultStringBuildFailed',
                 points: 0,
-                maxPoints: 200,
             });
         });
 
@@ -172,7 +171,6 @@ describe('ResultService', () => {
                 relativeScore: 20,
                 buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulNoTests',
                 points: 40,
-                maxPoints: 200,
             });
         });
 
@@ -184,7 +182,6 @@ describe('ResultService', () => {
                 relativeScore: 60,
                 buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulTests',
                 points: 120,
-                maxPoints: 200,
             });
         });
 
@@ -197,7 +194,6 @@ describe('ResultService', () => {
                 buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulTests',
                 numberOfIssues: 1,
                 points: 100,
-                maxPoints: 200,
             });
         });
 
@@ -211,7 +207,6 @@ describe('ResultService', () => {
                 relativeScore: 80,
                 buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulNoTests',
                 points: 160,
-                maxPoints: 200,
             });
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.preliminary');
         });
@@ -221,6 +216,38 @@ describe('ResultService', () => {
             expect(resultService.getResultString(undefined, undefined)).toBe('');
             expect(captureExceptionSpy).toHaveBeenCalledOnce();
             expect(captureExceptionSpy).toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
+        });
+    });
+
+    describe('evaluateBadge', () => {
+        it('should be calculated correctly for practice mode', () => {
+            const participation: StudentParticipation = { testRun: true, type: ParticipationType.STUDENT };
+            const result: Result = {};
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                badgeClass: 'bg-secondary',
+                text: 'artemisApp.result.practice',
+                tooltip: 'artemisApp.result.practiceTooltip',
+            });
+        });
+
+        it('should be calculated correctly for rated submission', () => {
+            const participation: Participation = {};
+            const result: Result = { rated: true };
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                badgeClass: 'bg-success',
+                text: 'artemisApp.result.graded',
+                tooltip: 'artemisApp.result.gradedTooltip',
+            });
+        });
+
+        it('should be calculated correctly for unrated submission', () => {
+            const participation: Participation = {};
+            const result: Result = { rated: false };
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                badgeClass: 'bg-info',
+                text: 'artemisApp.result.notGraded',
+                tooltip: 'artemisApp.result.notGradedTooltip',
+            });
         });
     });
 });

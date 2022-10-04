@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
+import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -96,6 +97,10 @@ public class ProgrammingExerciseResource {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
+
     /**
      * Java package name Regex according to Java 14 JLS (<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1">https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1</a>),
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -119,7 +124,9 @@ public class ProgrammingExerciseResource {
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
@@ -139,6 +146,8 @@ public class ProgrammingExerciseResource {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.submissionPolicyService = submissionPolicyService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
     }
 
     /**
@@ -195,7 +204,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new programmingExercise cannot already have an ID", "idexists")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new programmingExercise cannot already have an ID", "idExists")).body(null);
         }
 
         // Valid exercises have set either a course or an exerciseGroup
@@ -458,7 +467,7 @@ public class ProgrammingExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(), user.getId());
+        var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithLatestResult(programmingExercise.getId(), user.getId(), false);
         Set<StudentParticipation> participations = new HashSet<>();
         assignmentParticipation.ifPresent(participations::add);
         programmingExercise.setStudentParticipations(participations);
@@ -756,6 +765,28 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * GET programming-exercise/:exerciseId/template-files-content
+     *
+     * Returns the template repository files with content for a given programming exercise.
+     * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
+     * the template participation id is not known for the client.
+     * @param exerciseId the exercise for which the template repository files should be retrieved
+     * @return a redirect to the endpoint returning the files with content
+     */
+    @GetMapping(TEMPLATE_REPOSITORY_FILES_WITH_CONTENT)
+    @PreAuthorize("hasRole('TA')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ModelAndView redirectGetTemplateRepositoryFiles(@PathVariable Long exerciseId) {
+        log.debug("REST request to get latest Template Repository Files for ProgrammingExercise with id : {}", exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+
+        var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
+
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
+    }
+
+    /**
      * GET programming-exercise/:exerciseId/solution-file-names
      *
      * Returns the solution repository file names for a given programming exercise.
@@ -775,5 +806,24 @@ public class ProgrammingExerciseResource {
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/file-names");
+    }
+
+    /**
+     * GET programming-exercise/:exerciseId/build-log-statistics
+     *
+     * Returns the averaged build log statistics for a given programming exercise.
+     * @param exerciseId the exercise for which the build log statistics should be retrieved
+     * @return a DTO containing the average build log statistics
+     */
+    @GetMapping(BUILD_LOG_STATISTICS)
+    @PreAuthorize("hasRole('EDITOR')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<BuildLogStatisticsDTO> getBuildLogStatistics(@PathVariable Long exerciseId) {
+        log.debug("REST request to get build log statistics for ProgrammingExercise with id : {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId).get();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
+
+        var buildLogStatistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(programmingExercise);
+        return ResponseEntity.ok(buildLogStatistics);
     }
 }
