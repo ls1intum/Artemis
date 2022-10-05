@@ -1,6 +1,9 @@
 {
     "artemisApp": {
         "lti": {
+            "home": {
+                "title": "LTI configuration"
+            },
             "initializationError": "Your user initialization process was started but your LTI account was possible created with issues. Please ask your instructor for help if you didn't receive your Artemis password yet.",
             "initialization": {
                 "header": "LTI User Initialization",

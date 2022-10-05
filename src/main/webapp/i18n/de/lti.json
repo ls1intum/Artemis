@@ -1,6 +1,9 @@
 {
     "artemisApp": {
         "lti": {
+            "home": {
+                "title": "LTI-Konfiguration"
+            },
             "initializationError": "Die Initialisierung deines Benutzers wurde gestartet aber dein LTI-Konto wurde möglicherweise nicht korrekt erstellt. Bitte benachrichtige deine Übungsleitung falls du dein Artemis-Passwort bisher nicht erhalten hast.",
             "initialization": {
                 "header": "LTI Benutzer Initialisierung",
