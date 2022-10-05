@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.service.plagiarism.ProgrammingPlagiarismDetectionS
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * REST controller for managing ProgrammingExercise.
@@ -89,7 +89,7 @@ public class ProgrammingExercisePlagiarismResource {
      * GET /programming-exercises/{exerciseId}/check-plagiarism : Start the automated plagiarism detection for the given exercise and return its result.
      *
      * @param exerciseId          The ID of the programming exercise for which the plagiarism check should be executed
-     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      * @throws ExitException is thrown if JPlag exits unexpectedly
@@ -106,8 +106,8 @@ public class ProgrammingExercisePlagiarismResource {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get().getProgrammingLanguageFeatures(language);
 
         if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingLanguageNotSupported",
-                    "Artemis does not support plagiarism checks for the programming language " + language)).body(null);
+            throw new BadRequestAlertException("Artemis does not support plagiarism checks for the programming language " + programmingExercise.getProgrammingLanguage(),
+                    ENTITY_NAME, "programmingLanguageNotSupported");
         }
 
         long start = System.nanoTime();
@@ -123,32 +123,28 @@ public class ProgrammingExercisePlagiarismResource {
      * GET /programming-exercises/{exerciseId}/plagiarism-check : Uses JPlag to check for plagiarism and returns the generated output as zip file
      *
      * @param exerciseId          The ID of the programming exercise for which the plagiarism check should be executed
-     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
-     * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
      */
-    @GetMapping(value = CHECK_PLAGIARISM_JPLAG_REPORT, produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(value = CHECK_PLAGIARISM_JPLAG_REPORT)
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore)
-            throws ExitException, IOException {
+            throws IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
-                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
+        var programmingLanguageFeature = programmingLanguageFeatureService.get().getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
         if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "programmingLanguageNotSupported",
-                    "Artemis does not support plagiarism checks for the programming language " + programmingExercise.getProgrammingLanguage())).body(null);
+            throw new BadRequestAlertException("Artemis does not support plagiarism checks for the programming language " + programmingExercise.getProgrammingLanguage(),
+                    "Plagiarism Check", "programmingLanguageNotSupported");
         }
 
         File zipFile = programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(exerciseId, similarityThreshold, minimumScore);
         if (zipFile == null) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError", "Insufficient amount of comparisons available for comparison."))
-                    .body(null);
+            throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison.", "Plagiarism Check", "notEnoughSubmissions");
         }
 
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));

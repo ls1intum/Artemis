@@ -1,0 +1,25 @@
+{
+    "artemisApp": {
+        "messages": {
+            "label": "Nachrichten",
+            "conversation": {
+                "header": "Konversation",
+                "created": "Gespräch erstellt",
+                "show": "Gespräch anzeigen",
+                "hide": "Gespräch ausblenden",
+                "notFound": "Keine Konversation gefunden",
+                "instructionForNewConversation": "Sie können über die Suchleiste oben nach anderen Benutzern suchen und eine neue Konversation beginnen",
+                "searchForUsers": "Benutzer des Kurses suchen",
+                "minQueryLengthHint": "Mind. {{ length }} Buchstaben"
+            },
+            "searchBarPlaceholder": "Suchen Sie in der aktuellen Konversation nach einer Nachricht",
+            "submit": "Senden",
+            "thread": {
+                "label": "Thread",
+                "show": "Thread anzeigen",
+                "close": "Thread schließen",
+                "reply": "Antwort im Thread"
+            }
+        }
+    }
+}

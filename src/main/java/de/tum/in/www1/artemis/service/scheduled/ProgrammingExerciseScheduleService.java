@@ -119,7 +119,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             log.info("Scheduled {} programming exercises.", exercisesToBeScheduled.size());
             log.info("Scheduled {} programming exercises for a score update after due date.", programmingExercisesWithTestsAfterDueDateButNoRebuild.size());
             log.info("Scheduled {} exam programming exercises.", programmingExercisesWithExam.size());
-
         }
         catch (Exception e) {
             log.error("Failed to start ProgrammingExerciseScheduleService", e);

@@ -26,6 +26,9 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { HttpResponse } from '@angular/common/http';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -37,6 +40,17 @@ describe('ProgrammingExercise Management Detail Component', () => {
     let statisticsServiceStub: jest.SpyInstance;
     let gitDiffReportStub: jest.SpyInstance;
     let buildLogStatisticsStub: jest.SpyInstance;
+    let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
+
+    const mockProgrammingExercise = {
+        id: 1,
+        templateParticipation: {
+            id: 1,
+        } as TemplateProgrammingExerciseParticipation,
+        solutionParticipation: {
+            id: 2,
+        } as SolutionProgrammingExerciseParticipation,
+    } as ProgrammingExercise;
 
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
@@ -97,6 +111,9 @@ describe('ProgrammingExercise Management Detail Component', () => {
         statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
         alertService = fixture.debugElement.injector.get(AlertService);
         exerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        findWithTemplateAndSolutionParticipationStub = jest
+            .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipation')
+            .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
         gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
         buildLogStatisticsStub = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
         modalService = fixture.debugElement.injector.get(NgbModal);
@@ -133,10 +150,11 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
+            expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
-            expect(comp.programmingExercise).toEqual(programmingExercise);
+            expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
             expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
@@ -163,10 +181,11 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
+            expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
-            expect(comp.programmingExercise).toEqual(programmingExercise);
+            expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.programmingExercise.gitDiffReport).toBeDefined();
             expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);

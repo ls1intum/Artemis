@@ -164,6 +164,7 @@
                     "couldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
                     "weightSumError": "Die Summe aller Testfall-Gewichte beträgt 0 oder weniger. Bitte stelle mindestens ein Testfall-Gewicht größer als 0 ein.",
                     "showInactive": "Inaktive Testfälle anzeigen",
+                    "exercisePoints": "Aufgaben Punkte:",
                     "settingNull": "Der Testfall {{testCase}} darf keine leeren Einstellungen haben.",
                     "settingNegative": "Der Testfall {{testCase}} darf keine Einstellungen mit negativen Werten haben."
                 },
@@ -181,7 +182,8 @@
                     "preview": "Vorschau",
                     "resetFilter": "Filter zurücksetzen",
                     "testCaseWeights": {
-                        "title": "Gewichtungs-Verteilung",
+                        "title": "Testgewichtungen",
+                        "sumOfTestWeights": "Summe der Testgewichtungen:",
                         "description": "Die Verteilung der Gewichtungen der Testfälle auf die Aufgabe. Dies zeigt den Einfluss eines Testfalls auf das Ergebnis einer/s Studierenden. Der erste Balken betrachtet nur die Gewichtung eines Testfalls, während der zweite Balken auch die jeweiligen Bonuspunkte einbezieht.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",
                         "weight": "Gewichtung",
                         "weightTooltip": "Gewichtung: {{ percentage }}% aller Gewichtungen.",
@@ -199,6 +201,16 @@
                         "description": "Die Verteilung der Kategorien in Bezug auf 'Penalty', 'Issues' und 'Punkte'.<br/>Der <b>Penalty</b> Balken zeigt die Verteilung von Penalties in den Kategorien.<br/>Der <b>Issues</b> Balken zeigt wie viele Issues in der entsprechenden Kategorie erkannt wurden.<br/>Der <b>Punkte</b> Balken gibt an wie viele Punkte tatsächlich von den Ergebnissen abgezogen wurden durch eine Kategorie, was sich auch den vorherigen Balken ergibt.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen."
                     }
                 },
+                "gradingTableHeader": {
+                    "testName": "Testname",
+                    "weight": "Gewichtung",
+                    "bonusMultiplier": "Bonusmultiplikator",
+                    "bonusPoints": "Bonuspunkte",
+                    "visibility": "Sichtbarkeit",
+                    "resultingPoints": "Resultierende Punkte",
+                    "testType": "Type",
+                    "passedPercent": "Bestanden %"
+                },
                 "help": {
                     "state": "Gibt an, ob Issues in dieser Kategorie den Studierenden angezeigt und bewertet werden sollen.",
                     "penalty": "Punktabzüge werden auf jedes erkannte Issue in dieser Kategorie angewendet.",
@@ -208,6 +220,7 @@
                     "bonusMultiplier": "Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100% führen.",
                     "bonusPoints": "Bonuspunkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen.",
                     "visibility": "Feedback und Punkte für Testfälle, die mit „Nach Einreichungsfrist“ markiert sind, werden erst danach für Studierende angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
+                    "points": "Die Menge an Punkten, die die Studierenden für das Bestehen dieses Tests bekommen. Dieser Wert wird wie in den Kurseinstellungen festgelegt gerundet.",
                     "type": "Der Typ des Tests gibt an, ob dieser aus der test.json-Datei generiert wurde (STRUCTURAL), oder manuell geschrieben wurde (BEHAVIORAL)."
                 },
                 "updatedGradingConfigShort": "Veränderte Bewertung",

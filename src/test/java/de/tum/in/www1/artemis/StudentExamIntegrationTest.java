@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.*;
 import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.*;
 import static de.tum.in.www1.artemis.util.TestConstants.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
@@ -221,11 +222,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamRepository.findMaxWorkingTimeByExamIdElseThrow(exam1.getId())).isEqualTo(studentExam1.getWorkingTime());
     }
 
-    private void deleteExam1WithInstructor() throws Exception {
+    private void deleteExamWithInstructor(Exam exam) throws Exception {
         // change back to instructor user
         database.changeUser("instructor1");
         // Clean up to prevent exceptions during reset database
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -351,81 +352,125 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         for (var studentExam : studentExams) {
             var user = studentExam.getUser();
             database.changeUser(user.getLogin());
-            final HttpHeaders headers = new HttpHeaders();
-            headers.set("User-Agent", "foo");
-            headers.set("X-Artemis-Client-Fingerprint", "bar");
-            headers.set("X-Forwarded-For", "10.0.28.1");
+            final HttpHeaders headers = getHttpHeadersForExamSession();
             var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
                     StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
-            var textExercise = (TextExercise) response.getExercises().get(0);
-            var quizExercise = (QuizExercise) response.getExercises().get(1);
-            assertThat(textExercise.getStudentParticipations()).hasSize(1);
-            var participation1 = textExercise.getStudentParticipations().iterator().next();
-            assertThat(participation1.getParticipant()).isEqualTo(user);
-            assertThat(participation1.getSubmissions()).hasSize(1);
-            assertThat(quizExercise.getStudentParticipations()).hasSize(1);
-            var participation2 = quizExercise.getStudentParticipations().iterator().next();
-            assertThat(participation2.getParticipant()).isEqualTo(user);
-            assertThat(participation2.getSubmissions()).hasSize(1);
 
-            // Ensure that student exam was marked as started
             assertThat(studentExamRepository.findById(studentExam.getId()).get().isStarted()).isTrue();
-
-            // Check that sensitive information has been removed
-            assertThat(textExercise.getGradingCriteria()).isEmpty();
-            assertThat(textExercise.getGradingInstructions()).isNull();
-            assertThat(textExercise.getExampleSolution()).isNull();
-
-            // Check that sensitive information has been removed
-            assertThat(quizExercise.getGradingCriteria()).isEmpty();
-            assertThat(quizExercise.getGradingInstructions()).isNull();
-            assertThat(quizExercise.getQuizQuestions()).hasSize(3);
-
-            for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-                if (question instanceof MultipleChoiceQuestion) {
-                    assertThat(((MultipleChoiceQuestion) question).getAnswerOptions()).hasSize(2);
-                    for (AnswerOption answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
-                        assertThat(answerOption.getExplanation()).isNull();
-                        assertThat(answerOption.isIsCorrect()).isNull();
-                    }
-                }
-                else if (question instanceof DragAndDropQuestion) {
-                    assertThat(((DragAndDropQuestion) question).getCorrectMappings()).isEmpty();
-                }
-                else if (question instanceof ShortAnswerQuestion) {
-                    assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isEmpty();
-                }
-            }
-
-            assertThat(response.getExamSessions()).hasSize(1);
-            var examSession = response.getExamSessions().iterator().next();
-            final var optionalExamSession = examSessionRepository.findById(examSession.getId());
-            assertThat(optionalExamSession).isPresent();
-
-            assertThat(examSession.getSessionToken()).isNotNull();
-            assertThat(examSession.getUserAgent()).isNull();
-            assertThat(examSession.getBrowserFingerprintHash()).isNull();
-            assertThat(examSession.getIpAddress()).isNull();
-            assertThat(optionalExamSession.get().getUserAgent()).isEqualTo("foo");
-            assertThat(optionalExamSession.get().getBrowserFingerprintHash()).isEqualTo("bar");
-            assertThat(optionalExamSession.get().getIpAddress().toNormalizedString()).isEqualTo("10.0.28.1");
+            assertParticipationAndSubmissions(response, user);
         }
 
-        deleteExam1WithInstructor();
+        deleteExamWithInstructor(exam1);
+    }
+
+    private static HttpHeaders getHttpHeadersForExamSession() {
+        final HttpHeaders headers = new HttpHeaders();
+        headers.set("User-Agent", "foo");
+        headers.set("X-Artemis-Client-Fingerprint", "bar");
+        headers.set("X-Forwarded-For", "10.0.28.1");
+        return headers;
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetStudentExamForConduction_testExam() throws Exception {
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam1.getId() + "/conduction", HttpStatus.OK, StudentExam.class);
+        var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
+        var examStartDate = ZonedDateTime.now().plusMinutes(4);
+        var examEndDate = ZonedDateTime.now().plusMinutes(3);
+        var exam = database.addExam(course1, examVisibleDate, examStartDate, examEndDate);
+        exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
+        exam.setTestExam(true);
+        exam = examRepository.save(exam);
+
+        var student1 = database.getUserByLogin("student1");
+
+        bitbucketRequestMockProvider.mockUserExists(student1.getLogin());
+        var programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
+        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+        var repo = new LocalRepository(defaultBranch);
+        repo.configureRepos("studentRepo", "studentOriginRepo");
+        programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, student1.getLogin(), repo);
+        mockConnectorRequestsForStartParticipation(programmingExercise, student1.getLogin(), Set.of(student1), true, HttpStatus.CREATED);
+
+        // the programming exercise in the test exam is automatically unlocked so we need to mock again protect branches
+        final var projectKey = programmingExercise.getProjectKey();
+        final var repoName = projectKey.toLowerCase() + "-" + student1.getLogin().toLowerCase();
+        bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, repoName);
+
+        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/start", HttpStatus.OK, StudentExam.class);
+
+        final HttpHeaders headers = getHttpHeadersForExamSession();
+        var response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class, headers);
+        assertThat(response).isEqualTo(studentExamForStart);
+        assertThat(studentExamRepository.findById(studentExamForStart.getId()).get().isStarted()).isTrue();
+        assertParticipationAndSubmissions(response, student1);
+
+        // TODO: test the conduction / submission of the test exams, in particular that the summary includes all submissions
+
+        deleteExamWithInstructor(testExam1);
     }
 
-    @Test
+    private void assertParticipationAndSubmissions(StudentExam response, User user) {
+        for (var exercise : response.getExercises()) {
+            assertThat(exercise.getStudentParticipations()).as(exercise.getClass().getName() + " should have 1 participation").hasSize(1);
+            var participation = exercise.getStudentParticipations().iterator().next();
+            if (!(exercise instanceof ProgrammingExercise)) {
+                assertThat(participation.getSubmissions()).as(exercise.getClass().getName() + " should have 1 submission").hasSize(1);
+                var submission = participation.getSubmissions().iterator().next();
+                assertThat(participation.getParticipant()).isEqualTo(user);
+                assertThat(submission.isSubmitted()).isFalse();
+                assertThat(participation.getResults()).as(exercise.getClass().getName() + " should have no results").isNullOrEmpty();
+                assertThat(submission.getResults()).as(exercise.getClass().getName() + " should have no results").isNullOrEmpty();
+            }
+            assertThat(exercise.getGradingCriteria()).isNullOrEmpty();
+            assertThat(exercise.getGradingInstructions()).isNullOrEmpty();
+        }
+        var textExercise = (TextExercise) response.getExercises().get(0);
+        var quizExercise = (QuizExercise) response.getExercises().get(1);
+
+        // Check that sensitive information has been removed
+        assertThat(textExercise.getExampleSolution()).isNull();
+
+        assertThat(quizExercise.getQuizQuestions()).hasSize(3);
+
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            if (question instanceof MultipleChoiceQuestion) {
+                assertThat(((MultipleChoiceQuestion) question).getAnswerOptions()).hasSize(2);
+                for (AnswerOption answerOption : ((MultipleChoiceQuestion) question).getAnswerOptions()) {
+                    assertThat(answerOption.getExplanation()).isNull();
+                    assertThat(answerOption.isIsCorrect()).isNull();
+                }
+            }
+            else if (question instanceof DragAndDropQuestion) {
+                assertThat(((DragAndDropQuestion) question).getCorrectMappings()).isEmpty();
+            }
+            else if (question instanceof ShortAnswerQuestion) {
+                assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isEmpty();
+            }
+        }
+
+        assertThat(response.getExamSessions()).hasSize(1);
+        var examSession = response.getExamSessions().iterator().next();
+        final var optionalExamSession = examSessionRepository.findById(examSession.getId());
+        assertThat(optionalExamSession).isPresent();
+
+        assertThat(examSession.getSessionToken()).isNotNull();
+        assertThat(examSession.getUserAgent()).isNull();
+        assertThat(examSession.getBrowserFingerprintHash()).isNull();
+        assertThat(examSession.getIpAddress()).isNull();
+        assertThat(optionalExamSession.get().getUserAgent()).isEqualTo("foo");
+        assertThat(optionalExamSession.get().getBrowserFingerprintHash()).isEqualTo("bar");
+        assertThat(optionalExamSession.get().getIpAddress().toNormalizedString()).isEqualTo("10.0.28.1");
+    }
+
+    @ParameterizedTest
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetTestRunForConduction() throws Exception {
+    @ValueSource(booleans = { true, false })
+    void testGetTestRunForConduction(boolean isTestExam) throws Exception {
         var instructor = database.getUserByLogin("instructor1");
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(4);
@@ -434,6 +479,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         course2 = database.addEmptyCourse();
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
+
+        exam2.setTestExam(isTestExam);
+        exam2 = examRepository.save(exam2);
+
         var exam = database.addTextModelingProgrammingExercisesToExam(exam2, true, false);
         final var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         assertThat(testRun.isTestRun()).isTrue();
@@ -444,6 +493,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(response.isStarted()).isTrue();
         assertThat(response.isTestRun()).isTrue();
         assertThat(response.getExercises()).hasSize(exam.getNumberOfExercisesInExam());
+        for (Exercise exercise : response.getExercises()) {
+            assertThat(exercise.getStudentParticipations()).hasSize(1);
+        }
         // Ensure that student exam was marked as started
         assertThat(studentExamRepository.findById(testRun.getId()).get().isStarted()).isTrue();
     }
@@ -700,7 +752,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // use a different user
         database.changeUser("student2");
         request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.FORBIDDEN);
-        deleteExam1WithInstructor();
+        deleteExamWithInstructor(exam1);
     }
 
     @Test
@@ -945,7 +997,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(submission.getLatestResult()).isNull();
             }
         }
-        deleteExam1WithInstructor();
+        deleteExamWithInstructor(exam1);
     }
 
     @Test
@@ -983,7 +1035,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         for (int i = 0; i < exercisesToBeLocked.size(); i++) {
             verify(programmingExerciseParticipationService, atLeastOnce()).lockStudentRepository(exercisesToBeLocked.get(i), studentProgrammingParticipations.get(i));
         }
-        deleteExam1WithInstructor();
+        deleteExamWithInstructor(exam1);
     }
 
     @Test
@@ -1152,7 +1204,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         verify(programmingExerciseParticipationService, never()).lockStudentRepository(any(), any());
         assertThat(studentExamsAfterFinish).hasSize(studentExamsAfterStart.size());
 
-        deleteExam1WithInstructor();
+        deleteExamWithInstructor(exam1);
     }
 
     private void submitQuizInExam(QuizExercise quizExercise, QuizSubmission quizSubmission) throws Exception {
@@ -1324,7 +1376,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 });
             }
         }
-        deleteExam1WithInstructor();
+        deleteExamWithInstructor(exam1);
     }
 
     @Test
@@ -1378,7 +1430,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 });
             }
         }
-        deleteExam1WithInstructor();
+        deleteExamWithInstructor(exam1);
     }
 
     @Test
@@ -1415,7 +1467,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(studentExamGradeInfoFromServer.achievedPointsPerExercise().get(exercise.getId())).isEqualTo(5.0);
             }
         }
-        deleteExam1WithInstructor();
+        deleteExamWithInstructor(exam1);
     }
 
     @NotNull
@@ -1509,7 +1561,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(studentExamGradeInfoFromServer.achievedPointsPerExercise().get(exercise.getId())).isEqualTo(5.0);
             }
         }
-        deleteExam1WithInstructor();
+        deleteExamWithInstructor(exam1);
     }
 
     private StudentExam addExamExerciseSubmissionsForUser(Exam exam, String userLogin, StudentExam studentExam) throws Exception {
@@ -1699,7 +1751,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         bonusRepository.save(bonus);
 
         StudentParticipation participationWithLatestResult = studentParticipationRepository
-                .findByExerciseIdAndStudentIdWithLatestResult(finalStudentExam.getExercises().get(0).getId(), finalStudentExam.getUser().getId()).orElseThrow();
+                .findByExerciseIdAndStudentIdAndTestRunWithLatestResult(finalStudentExam.getExercises().get(0).getId(), finalStudentExam.getUser().getId(), false).orElseThrow();
         Result result = participationWithLatestResult.getResults().iterator().next();
         result.setScore(0.0); // To reduce grade to a grade lower than the max grade.
         resultRepository.save(result);
@@ -1796,6 +1848,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.postWithoutLocation("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId() + "/student-exams/evaluate-quiz-exercises", null, HttpStatus.OK,
                 new HttpHeaders());
 
+        // Wait for the scheduler to execute its tasks
+        await().until(() -> participantScoreSchedulerService.isIdle());
+
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam2.getExerciseGroups().get(6).getExercises().iterator().next();
@@ -1828,7 +1883,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam2.getId())).as("Exam was deleted").isEmpty();
 
-        deleteExam1WithInstructor();
+        deleteExamWithInstructor(exam1);
     }
 
     @Test
@@ -1890,7 +1945,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExercises().get(0).getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
-        participationService.delete(participations.get(0).getId(), false, false);
+        participationService.delete(participations.get(0).getId(), false, false, true);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
     }
 

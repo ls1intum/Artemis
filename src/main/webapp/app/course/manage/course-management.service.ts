@@ -306,6 +306,17 @@ export class CourseManagementService {
     }
 
     /**
+     * finds users of the course corresponding to the name
+     * @param courseId  the id of the course
+     * @param name      the term to search users
+     */
+    searchOtherUsersInCourse(courseId: number, name: string): Observable<HttpResponse<User[]>> {
+        let httpParams = new HttpParams();
+        httpParams = httpParams.append('nameOfUser', name);
+        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/search-other-users`, { params: httpParams, observe: 'response' });
+    }
+
+    /**
      * Search for a student on the server by login or name in the specified course.
      * @param loginOrName The login or name to search for.
      * @param courseId The id of the course to search in.
@@ -317,6 +328,7 @@ export class CourseManagementService {
         httpParams = httpParams.append('loginOrName', loginOrName);
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/students/search`, { observe: 'response', params: httpParams });
     }
+
     /**
      * Downloads the course archive of the specified courseId. Returns an error
      * if the archive does not exist.

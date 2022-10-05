@@ -712,7 +712,32 @@ public class CourseService {
             user.setCreatedBy(null);
             user.setCreatedDate(null);
         });
+        removeUserVariables(usersInGroup);
         return ResponseEntity.ok().body(usersInGroup);
+    }
+
+    /**
+     * Search for users of all user groups by login or name in course
+     *
+     * @param course        Course in which to search students
+     * @param nameOfUser    Login or name by which to search students
+     * @return users whose login matched
+     */
+    public List<User> searchOtherUsersNameInCourse(Course course, String nameOfUser) {
+        Set<String> groupNames = new HashSet<>();
+        groupNames.add(course.getStudentGroupName());
+        groupNames.add(course.getTeachingAssistantGroupName());
+        groupNames.add(course.getEditorGroupName());
+        groupNames.add(course.getInstructorGroupName());
+
+        List<User> searchResult = userRepository.searchByNameInGroups(groupNames, nameOfUser);
+        removeUserVariables(searchResult);
+
+        // users should not find themselves
+        User searchingUser = userRepository.getUser();
+        searchResult = searchResult.stream().distinct().filter(user -> !user.getId().equals(searchingUser.getId())).toList();
+
+        return (searchResult);
     }
 
     public void addUserToGroup(User user, String group, Role role) {
@@ -864,5 +889,23 @@ public class CourseService {
         var mondayInWeekOfStart = startDate.with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
         var mondayInWeekOfEnd = endDate.plusWeeks(1).with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
         return mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);
+    }
+
+    /**
+     * Helper method which removes some values from the user entity which are not needed in the client
+     *
+     * @param usersInGroup  user whose variables are removed
+     */
+    private void removeUserVariables(List<User> usersInGroup) {
+        usersInGroup.forEach(user -> {
+            user.setLastNotificationRead(null);
+            user.setActivationKey(null);
+            user.setLangKey(null);
+            user.setLastNotificationRead(null);
+            user.setLastModifiedBy(null);
+            user.setLastModifiedDate(null);
+            user.setCreatedBy(null);
+            user.setCreatedDate(null);
+        });
     }
 }
