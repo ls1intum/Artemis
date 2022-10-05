@@ -77,7 +77,6 @@ describe('Programming exercise participations', () => {
     function makePartiallySuccessfulSubmission() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, partiallySuccessful, () => {
             editorPage.getResultScore().contains('46.2%').and('be.visible');
-            editorPage.getResultScore().contains('4.6 points').should('be.visible');
         });
     }
 
@@ -87,7 +86,6 @@ describe('Programming exercise participations', () => {
     function makeSuccessfulSubmission() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, allSuccessful, () => {
             editorPage.getResultScore().contains('100%').should('be.visible');
-            editorPage.getResultScore().contains('10 points').should('be.visible');
         });
     }
 });

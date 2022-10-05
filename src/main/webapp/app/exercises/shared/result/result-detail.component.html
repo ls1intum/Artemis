@@ -25,8 +25,10 @@
             <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
                 <span class="result-score-chart-title">
                     <span jhiTranslate="artemisApp.result.score">Score</span>: {{ roundValueSpecifiedByCourseSettings(result.score, course) }}%
-                    <ng-container *ngIf="result.score && exercise && exercise.maxPoints">
-                        {{ roundValueSpecifiedByCourseSettings(result.score * exercise.maxPoints, course) }}&nbsp;{{ 'artemisApp.result.chart.points' | artemisTranslate }}
+                    <ng-container *ngIf="result.score !== undefined && exercise && exercise.maxPoints">
+                        , {{ roundValueSpecifiedByCourseSettings((result.score * exercise.maxPoints) / 100, course) }}&nbsp;{{
+                            'artemisApp.result.chart.points' | artemisTranslate
+                        }}
                     </ng-container>
                 </span>
                 <div id="feedback-chart" #containerRef class="chart-space">

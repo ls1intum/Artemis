@@ -19,6 +19,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
@@ -46,7 +47,7 @@ describe('ResultComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ResultComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe)],
+            declarations: [ResultComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe), MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -89,7 +90,7 @@ describe('ResultComponent', () => {
         expect(component.resultString).toBe('artemisApp.result.resultStringProgramming (artemisApp.result.preliminary)');
     });
 
-    it('should set results foo for modeling exercise', () => {
+    it('should set results for modeling exercise', () => {
         const submission1: Submission = { id: 1 };
         const result1: Result = { id: 1, submission: submission1, score: 1 };
         const result2: Result = { id: 2 };
