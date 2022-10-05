@@ -92,7 +92,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
         }
     }
 
-    updatedCachedTutorialGroups() {
+    updateCachedTutorialGroups() {
         const course = this.courseCalculationService.getCourse(this.courseId);
         if (course) {
             course.tutorialGroups = this.tutorialGroups;
@@ -113,7 +113,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
             .subscribe({
                 next: (tutorialGroups: TutorialGroup[]) => {
                     this.tutorialGroups = tutorialGroups ?? [];
-                    this.updatedCachedTutorialGroups();
+                    this.updateCachedTutorialGroups();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });

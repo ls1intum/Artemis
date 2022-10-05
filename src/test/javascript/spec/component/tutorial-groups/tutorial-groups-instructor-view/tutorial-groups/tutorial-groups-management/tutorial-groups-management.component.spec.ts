@@ -84,7 +84,7 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
     });
 
-    it('should navigate to tutorial group detail page tutorial group click callback is called', () => {
+    it('should navigate to tutorial group detail page when tutorial group click callback is called', () => {
         fixture.detectChanges();
         const navigateSpy = jest.spyOn(router, 'navigate');
         component.onTutorialGroupSelected(tutorialGroupOne);
