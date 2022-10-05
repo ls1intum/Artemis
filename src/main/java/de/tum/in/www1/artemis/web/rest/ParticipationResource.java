@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -106,6 +107,8 @@ public class ParticipationResource {
 
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
+    private final GroupNotificationService groupNotificationService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
@@ -113,7 +116,7 @@ public class ParticipationResource {
             AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
-            QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository) {
+            QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -136,6 +139,7 @@ public class ParticipationResource {
         this.quizBatchService = quizBatchService;
         this.quizScheduleService = quizScheduleService;
         this.submittedAnswerRepository = submittedAnswerRepository;
+        this.groupNotificationService = groupNotificationService;
     }
 
     /**
@@ -279,7 +283,7 @@ public class ParticipationResource {
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExerciseStudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
-        log.debug("REST request for feeback request: {}", exerciseId);
+        log.debug("REST request for feedback request: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, principal.getName());
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -303,6 +307,8 @@ public class ParticipationResource {
 
         participation = programmingExerciseStudentParticipationRepository.save(participation);
         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+
+        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewFeedbackRequest(programmingExercise);
 
         return ResponseEntity.ok().body(participation);
     }
@@ -826,7 +832,7 @@ public class ParticipationResource {
             // add the appropriate result
             Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
             if (result != null) {
-                // find the submitted answers (they are NOT loaded eagerly any more)
+                // find the submitted answers (they are NOT loaded eagerly anymore)
                 var quizSubmission = (QuizSubmission) result.getSubmission();
                 var submittedAnswers = submittedAnswerRepository.findBySubmission(quizSubmission);
                 quizSubmission.setSubmittedAnswers(submittedAnswers);
