@@ -98,7 +98,7 @@
     <jhi-data-table
         [isLoading]="isLoading"
         entityType="result"
-        [allEntities]="filteredResults"
+        [allEntities]="filteredResults ?? []"
         entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
         showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
         [searchPlaceholderTranslation]="exercise.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents'"
