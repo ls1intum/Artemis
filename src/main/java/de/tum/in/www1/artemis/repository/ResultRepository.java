@@ -364,6 +364,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     default DueDateStat[] countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(Exercise exercise, int numberOfCorrectionRounds, User tutor) {
         if (exercise.isExamExercise()) {
             DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
+
+            // numberOfCorrectionRounds can be 0 for test exams
+            if (numberOfCorrectionRounds == 0) {
+                return correctionRoundsDataStats;
+            }
+
             var resultsLockedByOtherTutors = countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(exercise.getId(), tutor.getId());
 
             correctionRoundsDataStats[0] = new DueDateStat(resultsLockedByOtherTutors.stream().filter(result -> result.isRated() == null).count(), 0L);
@@ -402,13 +408,18 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     default DueDateStat[] convertDatabaseResponseToDueDateStats(List<Long> countList, int numberOfCorrectionRounds) {
         DueDateStat[] correctionRoundsDataStats = new DueDateStat[numberOfCorrectionRounds];
 
+        // numberOfCorrectionRounds can be 0 for test exams
+        if (numberOfCorrectionRounds == 0) {
+            return correctionRoundsDataStats;
+        }
+
         // depending on the number of correctionRounds we create 1 or 2 DueDateStats that contain the sum of all participations:
         // with either 1 or more manual results, OR 2 or more manual results
         correctionRoundsDataStats[0] = new DueDateStat(countList.stream().filter(x -> x >= 1L).count(), 0L);
-        // so far the number of correctionRounds is limited to 2
         if (numberOfCorrectionRounds == 2) {
             correctionRoundsDataStats[1] = new DueDateStat(countList.stream().filter(x -> x >= 2L).count(), 0L);
         }
+        // so far the number of correctionRounds is limited to 2
         return correctionRoundsDataStats;
     }
 

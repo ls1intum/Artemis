@@ -91,6 +91,11 @@ public class TextSubmissionService extends SubmissionService {
         textSubmission.setType(SubmissionType.MANUAL);
         participation.addSubmission(textSubmission);
 
+        if (participation.getInitializationState() != InitializationState.FINISHED) {
+            participation.setInitializationState(InitializationState.FINISHED);
+            studentParticipationRepository.save(participation);
+        }
+
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         textSubmission.setResults(new ArrayList<>());
         textSubmission = textSubmissionRepository.save(textSubmission);
@@ -106,11 +111,6 @@ public class TextSubmissionService extends SubmissionService {
         }
         catch (Exception ex) {
             log.error("Text submission version could not be saved", ex);
-        }
-
-        if (participation.getInitializationState() != InitializationState.FINISHED) {
-            participation.setInitializationState(InitializationState.FINISHED);
-            studentParticipationRepository.save(participation);
         }
 
         return textSubmission;

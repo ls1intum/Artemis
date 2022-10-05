@@ -98,7 +98,7 @@ export function setLatestSubmissionResult(submission: Submission | undefined, re
         return;
     }
 
-    if (submission.results && submission.results.length > 0) {
+    if (submission.results?.length) {
         submission.results[submission.results.length - 1] = result;
     } else {
         submission.results = [result];
