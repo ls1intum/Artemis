@@ -103,8 +103,6 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private void testJustForInstructorEndpoints() throws Exception {
-        request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.FORBIDDEN, TutorialGroup.class);
-        request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.FORBIDDEN, TutorialGroup.class);
         request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", createNewTutorialGroup(), TutorialGroup.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId,
                 tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrations(exampleOneTutorialGroupId).get(), TutorialGroup.class, HttpStatus.FORBIDDEN);
@@ -151,19 +149,23 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void getAllOfCourse_asInstructor_shouldReturnTutorialGroups() throws Exception {
+    @WithMockUser(username = "student1", roles = "USER")
+    void getAllOfCourse_asStudent_shouldReturnTutorialGroups() throws Exception {
         var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
+        for (var tutorialGroup : tutorialGroupsOfCourse) {
+            assertThat(tutorialGroup.getRegistrations()).isEqualTo(Set.of()); // private information hidden
+        }
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "student1", roles = "USER")
     void getOneOfCourse_asInstructor_shouldReturnTutorialGroup() throws Exception {
         var tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
+        assertThat(tutorialGroup.getRegistrations()).isEqualTo(Set.of()); // private information hidden
     }
 
     @Test

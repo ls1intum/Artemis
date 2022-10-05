@@ -102,10 +102,7 @@ public class TutorialGroupService {
      */
     public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user) {
         Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(course.getId());
-        tutorialGroups.forEach(tutorialGroup -> {
-            tutorialGroup.setTransientPropertiesForUser(user);
-        });
-
+        tutorialGroups.forEach(tutorialGroup -> tutorialGroup.setTransientPropertiesForUser(user));
         return tutorialGroups;
     }
 

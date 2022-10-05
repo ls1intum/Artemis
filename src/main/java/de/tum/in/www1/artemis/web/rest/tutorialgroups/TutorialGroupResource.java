@@ -113,6 +113,7 @@ public class TutorialGroupResource {
 
         // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
         var tutorialGroups = tutorialGroupService.findAllForCourse(course, user);
+        tutorialGroups.forEach(TutorialGroup::hidePrivacySensitiveInformation);
         return ResponseEntity.ok(new ArrayList<>(tutorialGroups));
     }
 
