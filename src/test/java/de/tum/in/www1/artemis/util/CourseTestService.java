@@ -2101,7 +2101,11 @@ public class CourseTestService {
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
     }
 
-    // Test
+    /**
+     * Test courseIcon of Course and the file is deleted when updating courseIcon of a Course to null
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
+     */
     public void testEditCourseRemoveExistingIcon() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
