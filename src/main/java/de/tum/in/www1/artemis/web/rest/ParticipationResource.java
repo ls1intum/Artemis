@@ -310,7 +310,11 @@ public class ParticipationResource {
 
         // Set all past results to automatic to reset earlier feedback request assessments
         var participationResults = studentParticipation.getResults();
-        participationResults.forEach(participationResult -> participationResult.setAssessmentType(AssessmentType.AUTOMATIC));
+        participationResults.forEach(participationResult -> {
+            participationResult.setAssessmentType(AssessmentType.AUTOMATIC);
+            participationResult.setAssessor(null);
+            participationResult.setRated(false);
+        });
         resultRepository.saveAll(participationResults);
 
         groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewFeedbackRequest(programmingExercise);
