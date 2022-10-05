@@ -308,6 +308,11 @@ public class ParticipationResource {
         participation = programmingExerciseStudentParticipationRepository.save(participation);
         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
 
+        // Set all past results to automatic to reset earlier feedback request assessments
+        var participationResults = studentParticipation.getResults();
+        participationResults.forEach(participationResult -> participationResult.setAssessmentType(AssessmentType.AUTOMATIC));
+        resultRepository.saveAll(participationResults);
+
         groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewFeedbackRequest(programmingExercise);
 
         return ResponseEntity.ok().body(participation);

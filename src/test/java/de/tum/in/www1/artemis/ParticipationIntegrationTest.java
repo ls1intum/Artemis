@@ -393,6 +393,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var response = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.OK);
 
+        assertThat(response.getResults()).allMatch(result1 -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC);
         assertThat(response.getIndividualDueDate()).isNotNull();
         assertThat(response.getIndividualDueDate()).isBefore(ZonedDateTime.now());
 
