@@ -69,7 +69,7 @@ export class ResultDetailComponent implements OnInit {
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
     readonly FeedbackItemType = FeedbackItemType;
-    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
@@ -105,6 +105,11 @@ export class ResultDetailComponent implements OnInit {
     commitHashURLTemplate?: string;
     commitHash?: string;
     commitUrl?: string;
+
+    testCount: number;
+    passedTestCount: number;
+    scaIssueCount: number;
+    manualFeedbackCount: number;
 
     ngxData: NgxChartsMultiSeriesDataEntry[] = [];
     labels: string[];
@@ -201,6 +206,8 @@ export class ResultDetailComponent implements OnInit {
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
                         this.backupFilteredFeedbackList = this.filteredFeedbackList;
 
+                        this.countFeedbacks();
+
                         if (this.showScoreChart) {
                             this.updateChart(this.feedbackList);
                         }
@@ -225,6 +232,13 @@ export class ResultDetailComponent implements OnInit {
             .subscribe(() => {
                 this.isLoading = false;
             });
+    }
+
+    private countFeedbacks() {
+        this.testCount = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Test).length;
+        this.passedTestCount = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Test && feedback.positive).length;
+        this.scaIssueCount = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Issue).length;
+        this.manualFeedbackCount = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Feedback).length;
     }
 
     /**

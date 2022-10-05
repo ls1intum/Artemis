@@ -28,6 +28,7 @@
             "resultStringNonProgramming": "{{ relativeScore }}%, {{ points }} points",
             "resultStringProgramming": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ points }} points",
             "resultStringProgrammingCodeIssues": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ numberOfIssues }} issues, {{ points }} points",
+            "resultStringShort": "{{ relativeScore }}%",
             "completionDate": "Completion Date",
             "successful": "Successful",
             "buildArtifact": "Build Artifact",
@@ -85,7 +86,10 @@
             "notLatestSubmission": "Note: This result and feedback is <strong>not</strong> based on the latest submission.",
             "seeMore": "See more",
             "noFeedback": "No feedback available",
-            "afterDueDateFeedbackHidden": "Even after the due date not for all test cases a detailed feedback is shown. This could be the case if other students are still working on the exercise (e.g. to allow for the compensation of sick days). Those feedbacks will automatically become visible after {{date}}."
+            "afterDueDateFeedbackHidden": "Even after the due date not for all test cases a detailed feedback is shown. This could be the case if other students are still working on the exercise (e.g. to allow for the compensation of sick days). Those feedbacks will automatically become visible after {{date}}.",
+            "testCount": "You passed {{passed}} tests of {{total}} tests",
+            "scaIssueCount": "You have {{issues}} code issues",
+            "manualFeedbackCount": "You received {{feedbacks}} manual feedbacks"
         }
     }
 }

@@ -77,12 +77,28 @@ export class ResultService implements IResultService {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type !== ExerciseType.PROGRAMMING) {
+            return this.getResultStringNonProgrammingExercise(relativeScore, points, short);
+        } else {
+            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
+        }
+    }
+
+    /**
+     * Generates the result string for a programming exercise. Contains the score and points
+     * @param relativeScore the achieved score in percent
+     * @param points the amount of achieved points
+     * @param short flag that indicates if the resultString should use the short format
+     */
+    private getResultStringNonProgrammingExercise(relativeScore: number, points: number, short?: boolean): string {
+        if (short) {
+            return this.translateService.instant(`artemisApp.result.resultStringShort`, {
+                relativeScore,
+            });
+        } else {
             return this.translateService.instant(`artemisApp.result.resultStringNonProgramming`, {
                 relativeScore,
                 points,
             });
-        } else {
-            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
         }
     }
 
@@ -93,6 +109,7 @@ export class ResultService implements IResultService {
      * @param exercise the exercise where the result belongs to
      * @param relativeScore the achieved score in percent
      * @param points the amount of achieved points
+     * @param short flag that indicates if the resultString should use the short format
      */
     private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, short?: boolean): string {
         let buildAndTestMessage: string;
@@ -101,9 +118,8 @@ export class ResultService implements IResultService {
         } else if (!result.testCaseCount) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulNoTests');
         } else if (short) {
-            return this.translateService.instant(`artemisApp.result.resultStringNonProgramming`, {
+            return this.translateService.instant(`artemisApp.result.resultStringShort`, {
                 relativeScore,
-                points,
             });
         } else {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulTests', {

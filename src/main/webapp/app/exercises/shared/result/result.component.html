@@ -11,20 +11,19 @@
     </ng-container>
     <ng-container *ngSwitchCase="ResultTemplateStatus.HAS_RESULT">
         <ng-container *ngIf="result">
-            <span [ngClass]="textColorClass" class="guided-tour" id="result-score">
+            <span [ngClass]="textColorClass" class="guided-tour result" id="result-score" (click)="showDetails(result)">
                 <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
                 <ng-container *ngIf="resultIsPreliminary(result) || hasFeedback; else notPreliminaryAndNoFeedback">
-                    <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">
+                    <span class="guided-tour result" [ngbTooltip]="resultTooltip | artemisTranslate" container="body">
                         {{ resultString }}
                     </span>
                 </ng-container>
                 <ng-template #notPreliminaryAndNoFeedback>
-                    <span [ngbTooltip]="resultTooltip" container="body">
+                    <span [ngbTooltip]="resultTooltip | artemisTranslate" container="body">
                         {{ resultString }}
                     </span>
                 </ng-template>
-                <span *ngIf="!short"> ({{ result.completionDate! | artemisTimeAgo }}) </span>
-                <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
+                <span class="result" [ngbTooltip]="result.submission?.submissionDate | artemisDate"> ({{ result.submission?.submissionDate! | artemisTimeAgo }}) </span>
             </span>
             <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">
                 <a (click)="downloadBuildResult(participation.id)">

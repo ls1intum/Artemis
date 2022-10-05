@@ -20,7 +20,7 @@
             <span *ngIf="exercise.maxPoints" [style.margin-right]="exercise.maxPoints ? '30px' : null">
                 <span class="me-2">
                     {{ 'artemisApp.courseOverview.exerciseDetails.points' | artemisTranslate }}
-                    <ng-container *ngIf="achievedPoints">
+                    <ng-container *ngIf="achievedPoints !== undefined">
                         {{ achievedPoints + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
                     </ng-container>
                     {{ exercise.maxPoints }}
