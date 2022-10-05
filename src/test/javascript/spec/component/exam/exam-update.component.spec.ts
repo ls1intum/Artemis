@@ -214,7 +214,7 @@ describe('Exam Update Component', () => {
             expect(component.isSaving).toBeFalse();
         }));
 
-        it('should calculate the working time for RealExams correctly', () => {
+        it('should calculate the working time for real exams correctly', () => {
             examWithoutExercises.testExam = false;
 
             examWithoutExercises.startDate = undefined;
@@ -240,7 +240,7 @@ describe('Exam Update Component', () => {
             expect(component.calculateWorkingTime).toBe(0);
         });
 
-        it('should not calculate the working time for testExams', () => {
+        it('should not calculate the working time for test exams', () => {
             examWithoutExercises.testExam = true;
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
@@ -250,7 +250,7 @@ describe('Exam Update Component', () => {
             expect(component.calculateWorkingTime).toBe(60);
         });
 
-        it('validates the working time for TestExams correctly', () => {
+        it('validates the working time for test exams correctly', () => {
             examWithoutExercises.testExam = true;
             examWithoutExercises.workingTime = undefined;
             fixture.detectChanges();
@@ -275,7 +275,7 @@ describe('Exam Update Component', () => {
             expect(component.validateWorkingTime).toBeFalse();
         });
 
-        it('validates the working time for RealExams correctly', () => {
+        it('validates the working time for real exams correctly', () => {
             examWithoutExercises.testExam = false;
 
             examWithoutExercises.workingTime = undefined;
@@ -352,7 +352,7 @@ describe('Exam Update Component', () => {
             expect(spy).toHaveBeenCalledWith(['course-management', course.id!.toString(), 'exams'], examWithoutExercises.id!.toString());
         });
 
-        it('should correctly validate the number of correction rounds in a testExams', () => {
+        it('should correctly validate the number of correction rounds in a test Exams', () => {
             examWithoutExercises.testExam = true;
             examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
             fixture.detectChanges();
@@ -562,7 +562,7 @@ describe('Exam Update Component', () => {
             component.save();
             expect(importSpy).toHaveBeenCalledOnce();
             expect(importSpy).toHaveBeenCalledWith(1, examForImport);
-            expect(alertSpy).toHaveBeenCalledTimes(0);
+            expect(alertSpy).not.toHaveBeenCalled();
         });
 
         it('should  trigger an alarm for a wrong user input in the examWithoutExercises exercises', () => {

@@ -41,6 +41,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     private List<Post> existingPostsWithAnswers;
 
+    private List<Post> existingConversationPosts;
+
     private List<AnswerPost> existingAnswerPosts;
 
     private Long courseId;
@@ -55,12 +57,15 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         // used to test hibernate validation using custom ReactionConstraintValidator
         validator = Validation.buildDefaultValidatorFactory().getValidator();
 
-        database.addUsers(5, 5, 0, 1);
+        database.addUsers(5, 5, 4, 4);
 
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
         // student1)
         existingPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream()
                 .filter(coursePost -> coursePost.getAnswers() != null && coursePost.getPlagiarismCase() == null).toList();
+
+        // filters existing posts with conversation
+        existingConversationPosts = existingPostsWithAnswers.stream().filter(post -> post.getConversation() != null).toList();
 
         // get all answerPosts
         existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
@@ -85,6 +90,31 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
         assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor2", roles = "USER")
+    void testCreateOwnPostReactionOnAnotherUsersConversationMessage() throws Exception {
+        // tutor1 is the author of the message and tutor2 reacts on this post
+        Post messageReactedOn = existingConversationPosts.get(0);
+        Reaction reactionToSaveOnMessage = createReactionOnPost(messageReactedOn);
+
+        Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnMessage, Reaction.class, HttpStatus.CREATED);
+        checkCreatedReaction(reactionToSaveOnMessage, createdReaction);
+        assertThat(messageReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(messageReactedOn.getId()).size() - 1);
+    }
+
+    @Test
+    @WithMockUser(username = "student3", roles = "USER")
+    void testCreateReactionOnConversationBetweenOtherUsers_forbidden() throws Exception {
+        // student 1 is the author of the message between student1 & student2 and student3 not part of the conversation tries to react on it
+        Post messageReactedOn = existingConversationPosts.get(0);
+        Reaction reactionToSaveOnMessage = createReactionOnPost(messageReactedOn);
+
+        Reaction notCreatedReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnMessage, Reaction.class,
+                HttpStatus.FORBIDDEN);
+        assertThat(notCreatedReaction).isNull();
+        assertThat(messageReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(messageReactedOn.getId()).size());
     }
 
     @Test

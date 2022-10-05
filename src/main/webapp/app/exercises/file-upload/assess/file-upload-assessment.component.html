@@ -37,22 +37,20 @@
         </div>
         <!--region Right Panel-->
         <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
-        <span right-header jhiTranslate="assessmentInstructions.instructions.instructions">Instructions</span>
+        <span right-header jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions">Instructions</span>
         <div right-body class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></div>
         <jhi-assessment-instructions right-body [exercise]="exercise" class="markdown-preview"></jhi-assessment-instructions>
         <!--endregion-->
     </jhi-resizeable-container>
     <!--Feedbacks-->
     <div class="row mt-3">
-        <div class="col-md-6">
-            <div *ngIf="invalidError" class="col-8 alert alert-danger" role="alert">{{ invalidError | artemisTranslate }}</div>
-            <jhi-unreferenced-feedback
-                [(feedbacks)]="unreferencedFeedback"
-                (feedbacksChange)="validateAssessment()"
-                [readOnly]="readOnly"
-                [highlightDifferences]="highlightDifferences"
-            ></jhi-unreferenced-feedback>
-        </div>
+        <div *ngIf="invalidError" class="col-8 alert alert-danger" role="alert">{{ invalidError | artemisTranslate }}</div>
+        <jhi-unreferenced-feedback
+            [(feedbacks)]="unreferencedFeedback"
+            (feedbacksChange)="validateAssessment()"
+            [readOnly]="readOnly"
+            [highlightDifferences]="highlightDifferences"
+        ></jhi-unreferenced-feedback>
     </div>
 </ng-template>
 

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
@@ -46,6 +48,9 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private AnswerPostRepository answerPostRepository;
+
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
 
     private Course course;
 
@@ -179,22 +184,24 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         database.createParticipationSubmissionAndResult(earlierTextExerciseId, student1, 10.0, 0.0, 0, true);
         database.createParticipationSubmissionAndResult(earlierTextExerciseId, student2, 10.0, 0.0, 80, true);
 
+        await().until(() -> participantScoreRepository.findAll().size() == 4);
+
         Long courseId = course.getId();
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("courseId", "" + courseId);
         CourseManagementStatisticsDTO result = request.get("/api/management/statistics/course-statistics", HttpStatus.OK, CourseManagementStatisticsDTO.class, parameters);
 
-        assertThat(result.getAverageScoreOfCourse()).isEqualTo(57.5);
-        assertThat(result.getAverageScoresOfExercises()).hasSize(2);
+        assertThat(result.averageScoreOfCourse()).isEqualTo(57.5);
+        assertThat(result.averageScoresOfExercises()).hasSize(2);
 
         // take the second entry as the results are getting sorted for release dates
-        var firstTextExerciseStatistics = result.getAverageScoresOfExercises().get(1);
+        var firstTextExerciseStatistics = result.averageScoresOfExercises().get(1);
         assertThat(firstTextExerciseStatistics.getAverageScore()).isEqualTo(75.0);
         assertThat(firstTextExerciseStatistics.getExerciseId()).isEqualTo(laterTextExerciseId);
         assertThat(firstTextExerciseStatistics.getExerciseName()).isEqualTo(laterTextExercise.getTitle());
 
         // take the first entry as the results are getting sorted for release dates
-        var secondTextExerciseStatistics = result.getAverageScoresOfExercises().get(0);
+        var secondTextExerciseStatistics = result.averageScoresOfExercises().get(0);
         assertThat(secondTextExerciseStatistics.getAverageScore()).isEqualTo(40.0);
         assertThat(secondTextExerciseStatistics.getExerciseId()).isEqualTo(earlierTextExerciseId);
         assertThat(secondTextExerciseStatistics.getExerciseName()).isEqualTo(earlierTextExercise.getTitle());
@@ -229,6 +236,8 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         answerPost.setResolvesPost(true);
         answerPost.setPost(post);
         answerPostRepository.save(answerPost);
+
+        await().until(() -> participantScoreRepository.findAll().size() == 2);
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("exerciseId", "" + firstTextExerciseId);

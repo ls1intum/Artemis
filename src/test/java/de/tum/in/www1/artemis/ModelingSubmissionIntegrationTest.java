@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -8,6 +7,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,9 +19,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -42,9 +44,6 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private CourseRepository courseRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -153,6 +152,22 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     void createModelingSubmission_studentNotInCourse() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void saveAndSubmitModelingSubmission_tooLarge() throws Exception {
+        database.createAndSaveParticipationForExercise(classExercise, "student1");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
+        char[] charsModel = new char[(int) (Constants.MAX_SUBMISSION_MODEL_LENGTH)];
+        Arrays.fill(charsModel, 'a');
+        submission.setModel(new String(charsModel));
+        request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
+
+        char[] charsModelTooLarge = new char[(int) (Constants.MAX_SUBMISSION_MODEL_LENGTH + 1)];
+        Arrays.fill(charsModelTooLarge, 'a');
+        submission.setModel(new String(charsModelTooLarge));
+        request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.PAYLOAD_TOO_LARGE);
     }
 
     @Test
@@ -688,10 +703,10 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     void getModelingResult_BeforeExamPublishDate_Forbidden() throws Exception {
         // create exam
         Exam exam = database.addExamWithExerciseGroup(course, true);
-        exam.setStartDate(now().minusHours(2));
-        exam.setEndDate(now().minusHours(1));
-        exam.setVisibleDate(now().minusHours(3));
-        exam.setPublishResultsDate(now().plusHours(3));
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
+        exam.setPublishResultsDate(ZonedDateTime.now().plusHours(3));
 
         // creating exercise
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
@@ -740,7 +755,11 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "student3", roles = "USER")
     void submitExercise_beforeDueDate_allowed() throws Exception {
-        request.postWithoutLocation("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK, null);
+        ModelingSubmission submission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission,
+                ModelingSubmission.class, HttpStatus.OK);
+
+        assertThat(submission.getSubmissionDate()).isEqualToIgnoringNanos(ZonedDateTime.now());
+        assertThat(submission.getParticipation().getInitializationState()).isEqualTo(InitializationState.FINISHED);
     }
 
     @Test

@@ -102,8 +102,8 @@
 
     <div class="container flex-container">
         <div class="row">
-            <div class="col-md-8 section-card">
-                <div class="section-content" *ngIf="courseWithExercises">
+            <div class="col-md-8 section-card p-0">
+                <div class="section-content px-3 py-1" *ngIf="courseWithExercises">
                     <div *ngIf="futureExercises && futureExercises.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
                             <fa-icon class="control-icon" [icon]="showFutureExercises ? faAngleDown : faAngleUp"></fa-icon>
@@ -238,6 +238,17 @@
         >
             <fa-icon [icon]="faFlag"></fa-icon>
             <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-xl-inline"></span>
+        </a>
+        <a
+            *ngIf="course.isAtLeastInstructor"
+            [routerLink]="['/course-management', course.id, 'tutorial-groups-management']"
+            [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
+            class="btn btn-primary me-1 mb-1 hidden-if-mobile"
+            [ngbTooltip]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate"
+            id="course-card-open-tutorial-groups"
+        >
+            <fa-icon [icon]="faPersonChalkboard"></fa-icon>
+            <span [innerHTML]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate" class="d-none d-xl-inline"></span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"

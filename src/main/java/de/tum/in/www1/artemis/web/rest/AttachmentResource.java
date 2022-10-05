@@ -74,7 +74,7 @@ public class AttachmentResource {
     public ResponseEntity<Attachment> createAttachment(@RequestBody Attachment attachment) throws URISyntaxException {
         log.debug("REST request to save Attachment : {}", attachment);
         if (attachment.getId() != null) {
-            throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idExists");
         }
         Attachment result = attachmentRepository.save(attachment);
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
@@ -94,7 +94,7 @@ public class AttachmentResource {
     public ResponseEntity<Attachment> updateAttachment(@RequestBody Attachment attachment, @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update Attachment : {}", attachment);
         if (attachment.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
 
         // Make sure that the original references are preserved.
@@ -106,7 +106,7 @@ public class AttachmentResource {
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, attachment.getId().toString())).body(result);
+        return ResponseEntity.ok(result);
     }
 
     /**

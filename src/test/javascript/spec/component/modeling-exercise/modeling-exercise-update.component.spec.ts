@@ -62,7 +62,7 @@ describe('ModelingExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('Should call create service on save for new entity', fakeAsync(() => {
+            it('should call create service on save for new entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
@@ -91,7 +91,7 @@ describe('ModelingExercise Management Update Component', () => {
                 route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
             });
 
-            it('Should call update service on save for existing entity', fakeAsync(() => {
+            it('should call update service on save for existing entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
@@ -125,7 +125,7 @@ describe('ModelingExercise Management Update Component', () => {
             route.data = of({ modelingExercise });
         });
 
-        it('Should set isImport and remove all dates', fakeAsync(() => {
+        it('should set isImport and remove all dates', fakeAsync(() => {
             jest.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: categoriesStringified })));
             // WHEN
             comp.ngOnInit();
@@ -160,7 +160,7 @@ describe('ModelingExercise Management Update Component', () => {
             route.data = of({ modelingExercise });
         });
 
-        it('Should set isImport and remove all dates', fakeAsync(() => {
+        it('should set isImport and remove all dates', fakeAsync(() => {
             jest.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: categoriesStringified })));
 
             // WHEN
@@ -192,7 +192,7 @@ describe('ModelingExercise Management Update Component', () => {
             route.data = of({ modelingExercise });
         });
 
-        it('Should set isImport and isExamMode and remove all dates', fakeAsync(() => {
+        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
@@ -222,7 +222,7 @@ describe('ModelingExercise Management Update Component', () => {
             route.data = of({ modelingExercise });
         });
 
-        it('Should set isImport and isExamMode and remove all dates', fakeAsync(() => {
+        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async

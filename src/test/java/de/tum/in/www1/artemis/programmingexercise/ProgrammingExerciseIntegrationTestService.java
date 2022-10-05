@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -1571,11 +1572,18 @@ class ProgrammingExerciseIntegrationTestService {
         assertThat(jplagZipArchive).isNotNull();
         assertThat(jplagZipArchive).exists();
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
-            assertThat(zipFile.getEntry("index.html")).isNotNull();
-            assertThat(zipFile.getEntry("match0.html")).isNotNull();
-            assertThat(zipFile.getEntry("matches_avg.csv")).isNotNull();
-            // only one match exists
-            assertThat(zipFile.getEntry("match1.html")).isNull();
+            // var entries = zipFile.entries();
+            // while(entries.hasMoreElements()) {
+            // System.out.println(entries.nextElement().getName());
+            // }
+            assertThat(zipFile.getEntry("overview.json")).isNotNull();
+            assertThat(zipFile.getEntry("submissions/Submission-1.java/Submission-1.java")).isNotNull();
+            assertThat(zipFile.getEntry("submissions/Submission-2.java/Submission-2.java")).isNotNull();
+
+            // it is random which of the following two exists, but one of them must be part of the zip file
+            var json1 = zipFile.getEntry("Submission-2.java-Submission-1.java.json");
+            var json2 = zipFile.getEntry("Submission-1.java-Submission-2.java.json");
+            assertTrue(json1 != null || json2 != null);
         }
     }
 
@@ -1957,5 +1965,14 @@ class ProgrammingExerciseIntegrationTestService {
 
         request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/file-names", HttpStatus.OK,
                 "/api/repository/" + savedExercise.getSolutionParticipation().getId() + "/file-names");
+    }
+
+    public void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
+        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+
+        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
+
+        request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
+                "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
     }
 }

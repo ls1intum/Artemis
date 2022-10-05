@@ -3,16 +3,17 @@ import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnIn
 import Split from 'split.js';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { FromToElement, TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseId } from 'app/entities/exercise.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { HttpResponse } from '@angular/common/http';
+import { SimpleMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMatch';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
-    constructor(public el: ElementRef) {}
+    constructor(public elementRef: ElementRef) {}
 }
 
 @Component({
@@ -24,7 +25,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
-    @Input() studentLogin: string;
     @Input() sortByStudentLogin: string;
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
@@ -36,8 +36,8 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     public isModelingExercise: boolean;
     public isProgrammingOrTextExercise: boolean;
 
-    public matchesA: Map<string, { from: TextSubmissionElement; to: TextSubmissionElement }[]>;
-    public matchesB: Map<string, { from: TextSubmissionElement; to: TextSubmissionElement }[]>;
+    public matchesA: Map<string, FromToElement[]>;
+    public matchesB: Map<string, FromToElement[]>;
 
     constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
@@ -45,7 +45,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      * Initialize third party libs inside this lifecycle hook.
      */
     ngAfterViewInit(): void {
-        const paneElements = this.panes.map((pane: SplitPaneDirective) => pane.el.nativeElement);
+        const paneElements = this.panes.map((pane: SplitPaneDirective) => pane.elementRef.nativeElement);
 
         this.split = Split(paneElements, {
             minSize: 100,
@@ -68,13 +68,11 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
         if (changes.comparison) {
             this.plagiarismCasesService
-                .getPlagiarismComparisonForSplitView(this.exercise.course?.id!, changes.comparison.currentValue.id, this.studentLogin)
+                .getPlagiarismComparisonForSplitView(getCourseId(this.exercise)!, changes.comparison.currentValue.id)
                 .subscribe((resp: HttpResponse<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>) => {
                     this.plagiarismComparison = resp.body!;
                     if (this.sortByStudentLogin && this.sortByStudentLogin === this.plagiarismComparison.submissionB.studentLogin) {
-                        const temp = this.plagiarismComparison.submissionA;
-                        this.plagiarismComparison.submissionA = this.plagiarismComparison.submissionB;
-                        this.plagiarismComparison.submissionB = temp;
+                        this.swapSubmissions(this.plagiarismComparison);
                     }
                     if (this.isProgrammingOrTextExercise) {
                         this.parseTextMatches(this.plagiarismComparison as PlagiarismComparison<TextSubmissionElement>);
@@ -83,23 +81,38 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
         }
     }
 
-    parseTextMatches({ submissionA, submissionB, matches }: PlagiarismComparison<TextSubmissionElement>) {
-        const matchesA = matches
-            .map((match) => ({
-                start: match.startA,
-                length: match.length,
-            }))
-            .sort((a, b) => a.start - b.start);
+    /**
+     * Swaps fields of A with fields of B in-place.
+     * More specifically, swaps submissionA with submissionB and startA with startB in matches.
+     * @param plagiarismComparison plagiarism comparison that will be modified in-place
+     * @private
+     */
+    private swapSubmissions(plagiarismComparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>) {
+        const temp = plagiarismComparison.submissionA;
+        plagiarismComparison.submissionA = plagiarismComparison.submissionB;
+        plagiarismComparison.submissionB = temp;
 
-        const matchesB = matches
-            .map((match) => ({
-                start: match.startB,
-                length: match.length,
-            }))
-            .sort((a, b) => a.start - b.start);
+        if (plagiarismComparison.matches) {
+            plagiarismComparison.matches.forEach((match) => {
+                const tempStart = match.startA;
+                match.startA = match.startB;
+                match.startB = tempStart;
+            });
+        }
+    }
 
-        this.matchesA = this.mapMatchesToElements(matchesA, submissionA);
-        this.matchesB = this.mapMatchesToElements(matchesB, submissionB);
+    parseTextMatches(plagComparison: PlagiarismComparison<TextSubmissionElement>) {
+        if (plagComparison.matches) {
+            const matchesA = plagComparison.matches.map((match) => new SimpleMatch(match.startA, match.length)).sort((m1, m2) => m1.start - m2.start);
+            const matchesB = plagComparison.matches.map((match) => new SimpleMatch(match.startB, match.length)).sort((m1, m2) => m1.start - m2.start);
+
+            this.matchesA = this.mapMatchesToElements(matchesA, plagComparison.submissionA);
+            this.matchesB = this.mapMatchesToElements(matchesB, plagComparison.submissionB);
+        } else {
+            // empty map in case no matches are available
+            this.matchesA = new Map<string, FromToElement[]>();
+            this.matchesB = new Map<string, FromToElement[]>();
+        }
     }
 
     /**
@@ -107,15 +120,15 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      * @param matches list of objects containing the index and length of matched elements
      * @param submission the submission to map the elements of
      */
-    mapMatchesToElements(matches: { start: number; length: number }[], submission: PlagiarismSubmission<TextSubmissionElement>) {
-        const filesToMatchedElements = new Map();
+    mapMatchesToElements(matches: SimpleMatch[], submission: PlagiarismSubmission<TextSubmissionElement>) {
+        const filesToMatchedElements = new Map<string, FromToElement[]>();
 
-        matches.forEach(({ start, length }) => {
+        matches.forEach((match) => {
             // skip empty jplag (whitespace) matches
-            if (length === 0) {
+            if (match.length === 0) {
                 return;
             }
-            const file = submission.elements![start].file || 'none';
+            const file = submission.elements![match.start]?.file || 'none';
 
             if (!filesToMatchedElements.has(file)) {
                 filesToMatchedElements.set(file, []);
@@ -123,10 +136,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
             const fileMatches = filesToMatchedElements.get(file)!;
 
-            fileMatches.push({
-                from: submission.elements![start],
-                to: submission.elements![start + length - 1],
-            });
+            fileMatches.push(new FromToElement(submission.elements![match.start], submission.elements![match.start + match.length - 1]));
         });
 
         return filesToMatchedElements;

@@ -1,16 +1,19 @@
 <div class="row justify-content-between my-1">
     <div class="col-auto pe-0">
         <span class="posting-header header-author-date">
+            <span class="posting-author-role" container="body" ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}">
+                <fa-icon [icon]="userAuthorityIcon"></fa-icon>
+            </span>
             <span class="posting-author">
                 {{ posting.author!.name }}
             </span>
             <span class="today-flag" *ngIf="postingIsOfToday">{{ todayFlag | artemisTranslate }}</span>
-            <span [disableTooltip]="postingIsOfToday" [ngbTooltip]="posting.creationDate | artemisDate: 'time'">
+            <span container="body" [disableTooltip]="postingIsOfToday" [ngbTooltip]="posting.creationDate | artemisDate: 'time'">
                 {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
             </span>
         </span>
         <fa-icon
-            *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
+            *ngIf="isAuthorOfPosting || (!isCourseMessagesPage && isAtLeastTutorInCourse)"
             size="xs"
             class="ms-1 editIcon clickable icon"
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
@@ -19,7 +22,7 @@
             (click)="openPostingCreateEditModal.emit()"
         ></fa-icon>
         <jhi-confirm-icon
-            *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
+            *ngIf="isAuthorOfPosting || (!isCourseMessagesPage && isAtLeastTutorInCourse)"
             iconSize="xs"
             (confirmEvent)="deletePosting()"
             [ngClass]="'deleteIcon clickable icon'"
@@ -32,7 +35,7 @@
             <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
         </div>
     </ng-template>
-    <div *ngIf="!isAnswerOfAnnouncement" class="col-auto ps-0">
+    <div *ngIf="!isCourseMessagesPage && !isAnswerOfAnnouncement" class="col-auto ps-0">
         <div id="toggleElement" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
             <div *ngIf="posting.resolvesPost; else notResolved">
                 <fa-icon

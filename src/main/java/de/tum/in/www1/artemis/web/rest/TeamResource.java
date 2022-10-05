@@ -106,7 +106,7 @@ public class TeamResource {
     public ResponseEntity<Team> createTeam(@RequestBody Team team, @PathVariable long exerciseId) throws URISyntaxException {
         log.debug("REST request to save Team : {}", team);
         if (team.getId() != null) {
-            throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new team cannot already have an ID", ENTITY_NAME, "idExists");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -151,7 +151,7 @@ public class TeamResource {
     public ResponseEntity<Team> updateTeam(@RequestBody Team team, @PathVariable long exerciseId, @PathVariable long teamId) {
         log.debug("REST request to update Team : {}", team);
         if (team.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
         if (!team.getId().equals(teamId)) {
             throw new BadRequestAlertException("The team has an incorrect id.", ENTITY_NAME, "wrongId");
@@ -281,7 +281,7 @@ public class TeamResource {
         // Delete all participations of the team first and then the team itself
         participationService.deleteAllByTeamId(teamId, false, false);
         // delete all team scores associated with the team
-        teamScoreRepository.deleteAllByTeam(team);
+        teamScoreRepository.deleteAllByTeamId(team.getId());
 
         teamRepository.delete(team);
 
@@ -486,7 +486,8 @@ public class TeamResource {
      */
     private void sendTeamAssignmentUpdates(Exercise exercise, List<Team> teams) {
         // Get participation to given exercise into a map which participation identifiers as key and a lists of all participation with that identifier as value
-        Map<String, List<StudentParticipation>> participationsMap = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId()).stream()
+        Map<String, List<StudentParticipation>> participationsMap = studentParticipationRepository
+                .findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false).stream()
                 .collect(Collectors.toMap(StudentParticipation::getParticipantIdentifier, List::of, (a, b) -> Stream.concat(a.stream(), b.stream()).toList()));
 
         // Send out team assignment update via websockets to each team

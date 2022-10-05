@@ -33,6 +33,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
 
 class MockBreadcrumb {
     label: string;
@@ -87,6 +88,7 @@ describe('NavbarComponent', () => {
                 MockComponent(LoadingNotificationComponent),
                 MockComponent(JhiConnectionWarningComponent),
                 MockComponent(ThemeSwitchComponent),
+                MockComponent(SystemNotificationComponent),
             ],
             providers: [
                 MockProvider(UrlSerializer),
@@ -144,7 +146,7 @@ describe('NavbarComponent', () => {
         component.changeLanguage('elvish');
 
         expect(useSpy).toHaveBeenCalledWith('elvish');
-        expect(languageChangeSpy).toHaveBeenCalledTimes(0);
+        expect(languageChangeSpy).not.toHaveBeenCalled();
     });
 
     it('should not build breadcrumbs for students', () => {
@@ -198,7 +200,7 @@ describe('NavbarComponent', () => {
 
         expect(component.breadcrumbs).toHaveLength(2);
 
-        expect(component.breadcrumbs[0]).toEqual({ label: 'userManagement.home.title', translate: true, uri: '/admin/user-management/' } as MockBreadcrumb);
+        expect(component.breadcrumbs[0]).toEqual({ label: 'artemisApp.userManagement.home.title', translate: true, uri: '/admin/user-management/' } as MockBreadcrumb);
         expect(component.breadcrumbs[1]).toEqual({ label: 'test_user', translate: false, uri: '/admin/user-management/test_user/' } as MockBreadcrumb);
     });
 
@@ -212,7 +214,7 @@ describe('NavbarComponent', () => {
         expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.ORGANIZATION, [1]);
         expect(component.breadcrumbs).toHaveLength(2);
 
-        expect(component.breadcrumbs[0]).toEqual({ label: 'organizationManagement.title', translate: true, uri: '/admin/organization-management/' } as MockBreadcrumb);
+        expect(component.breadcrumbs[0]).toEqual({ label: 'artemisApp.organizationManagement.title', translate: true, uri: '/admin/organization-management/' } as MockBreadcrumb);
         expect(component.breadcrumbs[1]).toEqual({ label: 'Test Organization', translate: false, uri: '/admin/organization-management/1/' } as MockBreadcrumb);
     });
 

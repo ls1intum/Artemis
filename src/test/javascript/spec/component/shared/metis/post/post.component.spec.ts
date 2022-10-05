@@ -15,6 +15,7 @@ import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -28,6 +29,7 @@ describe('PostComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
+            imports: [RouterTestingModule],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostComponent,
@@ -143,6 +145,9 @@ describe('PostComponent', () => {
     });
 
     it('should contain the posting content', () => {
+        component.posting = metisPostExerciseUser1;
+        fixture.detectChanges();
+
         const header = getElement(debugElement, 'jhi-posting-content');
         expect(header).not.toBeNull();
     });

@@ -125,7 +125,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * <ul>
      * <li>The release date is in the future → Schedule combine template commits</li>
      * <li>The build and test student submissions after deadline date is in the future</li>
-     * <li>Manual assessment is enabled and the due date is in the future</li>
+     * <li>The due date is in the future</li>
      * <li>There are participations in the exercise with individual due dates in the future</li>
      * </ul>
      *
@@ -137,7 +137,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             left join pe.studentParticipations participation
             where pe.releaseDate > :#{#now}
                 or pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#now}
-                or (pe.assessmentType <> 'AUTOMATIC' and pe.dueDate > :#{#now})
+                or pe.dueDate > :#{#now}
                 or (participation.individualDueDate is not null and participation.individualDueDate > :#{#now})
             """)
     List<ProgrammingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
@@ -212,32 +212,56 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") Long participationId);
 
-    /**
-     * Query which fetches all the programming exercises for which the user is instructor in the course and matching the search criteria.
-     * As JPQL doesn't support unions, the distinction for course exercises and exam exercises is made with sub queries.
-     *
-     * @param partialTitle       exercise title search term
-     * @param partialCourseTitle course title search term
-     * @param groups             user groups
-     * @param pageable           Pageable
-     * @return Page with search results
-     */
     @Query("""
-            SELECT pe FROM ProgrammingExercise pe
-            WHERE (pe.id IN
-                    (SELECT coursePe.id FROM ProgrammingExercise coursePe
-                    WHERE (coursePe.course.instructorGroupName IN :groups OR coursePe.course.editorGroupName IN :groups)
-                    AND (coursePe.title LIKE %:partialTitle% OR coursePe.course.title LIKE %:partialCourseTitle%))
-                OR pe.id IN
-                    (SELECT coursePe.id FROM ProgrammingExercise coursePe
-                    WHERE (coursePe.exerciseGroup.exam.course.instructorGroupName IN :groups OR coursePe.exerciseGroup.exam.course.editorGroupName IN :groups)
-                    AND (coursePe.title LIKE %:partialTitle% OR coursePe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)))
+                SELECT exercise FROM ProgrammingExercise exercise
+            WHERE (exercise.id IN
+                    (SELECT courseExercise.id FROM ProgrammingExercise courseExercise
+                    WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
+                    AND (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
+                OR exercise.id IN
+                    (SELECT examExercise.id FROM ProgrammingExercise examExercise
+                    WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
+                    AND (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
                         """)
-    Page<ProgrammingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
-            @Param("partialCourseTitle") String partialCourseTitle, @Param("groups") Set<String> groups, Pageable pageable);
+    Page<ProgrammingExercise> queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups,
+            Pageable pageable);
 
-    Page<ProgrammingExercise> findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(String partialTitle,
-            String partialCourseTitle, Pageable pageable);
+    @Query("""
+            SELECT courseExercise FROM ProgrammingExercise courseExercise
+            WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
+            AND (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%)
+                """)
+    Page<ProgrammingExercise> queryBySearchTermInAllCoursesWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+
+    @Query("""
+            SELECT examExercise FROM ProgrammingExercise examExercise
+            WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
+            AND (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)
+                """)
+    Page<ProgrammingExercise> queryBySearchTermInAllExamsWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+
+    @Query("""
+            SELECT exercise FROM ProgrammingExercise exercise
+            WHERE (exercise.id IN
+                    (SELECT courseExercise.id FROM ProgrammingExercise courseExercise
+                    WHERE (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
+                OR exercise.id IN
+                    (SELECT examExercise.id FROM ProgrammingExercise examExercise
+                    WHERE (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
+                        """)
+    Page<ProgrammingExercise> queryBySearchTermInAllCoursesAndExams(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("""
+            SELECT courseExercise FROM ProgrammingExercise courseExercise
+            WHERE (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%)
+                """)
+    Page<ProgrammingExercise> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("""
+            SELECT examExercise FROM ProgrammingExercise examExercise
+            WHERE (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)
+                """)
+    Page<ProgrammingExercise> queryBySearchTermInAllExams(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     @Query("""
             SELECT p FROM ProgrammingExercise p
@@ -248,8 +272,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH p.solutionParticipation
             LEFT JOIN FETCH p.auxiliaryRepositories
             LEFT JOIN FETCH tc.solutionEntries
-            WHERE p.id = :#{#exerciseId}
-            """)
+                WHERE p.id = :#{#exerciseId}
+                """)
     Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(@Param("exerciseId") Long exerciseId);
 
     /**

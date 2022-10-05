@@ -76,7 +76,7 @@ describe('Plagiarism Cases Service', () => {
 
     it('should get plagiarism cases for course for instructor', fakeAsync(() => {
         const returnedFromService = [plagiarismCase1, plagiarismCase2, plagiarismCase3];
-        service.getPlagiarismCasesForInstructor(1).pipe(take(1)).subscribe();
+        service.getCoursePlagiarismCasesForInstructor(1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -97,19 +97,26 @@ describe('Plagiarism Cases Service', () => {
             ...plagiarismCase1,
             verdict: PlagiarismVerdict.PLAGIARISM,
         };
-        service.savePlagiarismCaseVerdict(1, 1, { verdict: PlagiarismVerdict.PLAGIARISM }).pipe(take(1)).subscribe();
+        service.saveVerdict(1, 1, { verdict: PlagiarismVerdict.PLAGIARISM }).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         tick();
     }));
 
-    it('should get plagiarism cases for course for student', fakeAsync(() => {
+    it('should get plagiarism case for course and exercise for student', fakeAsync(() => {
         const returnedFromService = plagiarismCase1;
-        service.getPlagiarismCaseForStudent(1, 1).pipe(take(1)).subscribe();
+        service.getPlagiarismCaseInfoForStudent(1, 1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
+        tick();
+    }));
+
+    it('should get plagiarism cases for course and multiple exercises for student', fakeAsync(() => {
+        service.getPlagiarismCaseInfosForStudent(1, [1, 2]).pipe(take(1)).subscribe();
+
+        httpMock.expectOne({ method: 'GET', url: 'api/courses/1/plagiarism-cases?exerciseId=1&exerciseId=2' });
         tick();
     }));
 
@@ -124,7 +131,7 @@ describe('Plagiarism Cases Service', () => {
 
     it('should get plagiarism comparison for split view', fakeAsync(() => {
         const returnedFromService = plagiarismComparison1;
-        service.getPlagiarismComparisonForSplitView(1, 1, studentLoginA).pipe(take(1)).subscribe();
+        service.getPlagiarismComparisonForSplitView(1, 1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);

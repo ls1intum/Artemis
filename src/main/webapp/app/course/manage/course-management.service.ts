@@ -99,16 +99,6 @@ export class CourseManagementService {
     }
 
     /**
-     * finds the course with the provided unique identifier together with its exercises and participants
-     * @param courseId - the id of the course to be found
-     */
-    findWithExercisesAndParticipations(courseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises-and-relevant-participations`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
-    }
-
-    /**
      * finds a course with the given id and eagerly loaded organizations
      * @param courseId the id of the course to be found
      */
@@ -313,6 +303,30 @@ export class CourseManagementService {
      */
     getAllUsersInCourseGroup(courseId: number, courseGroup: CourseGroup): Observable<HttpResponse<User[]>> {
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/${courseGroup}`, { observe: 'response' });
+    }
+
+    /**
+     * finds users of the course corresponding to the name
+     * @param courseId  the id of the course
+     * @param name      the term to search users
+     */
+    searchOtherUsersInCourse(courseId: number, name: string): Observable<HttpResponse<User[]>> {
+        let httpParams = new HttpParams();
+        httpParams = httpParams.append('nameOfUser', name);
+        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/search-other-users`, { params: httpParams, observe: 'response' });
+    }
+
+    /**
+     * Search for a student on the server by login or name in the specified course.
+     * @param loginOrName The login or name to search for.
+     * @param courseId The id of the course to search in.
+     * @return Observable<HttpResponse<User[]>> with the list of found users as body.
+     */
+    searchStudents(courseId: number, loginOrName: string): Observable<HttpResponse<User[]>> {
+        // create loginOrName HTTP Param
+        let httpParams = new HttpParams();
+        httpParams = httpParams.append('loginOrName', loginOrName);
+        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/students/search`, { observe: 'response', params: httpParams });
     }
 
     /**

@@ -21,15 +21,13 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
-import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
 public class AnswerPostService extends PostingService {
 
     private static final String METIS_ANSWER_POST_ENTITY_NAME = "metis.answerPost";
-
-    private final UserRepository userRepository;
 
     private final AnswerPostRepository answerPostRepository;
 
@@ -42,8 +40,7 @@ public class AnswerPostService extends PostingService {
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService, SimpMessageSendingOperations messagingTemplate) {
-        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
-        this.userRepository = userRepository;
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
         this.groupNotificationService = groupNotificationService;
@@ -65,16 +62,17 @@ public class AnswerPostService extends PostingService {
 
         // check
         if (answerPost.getId() != null) {
-            throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idExists");
         }
 
         final Course course = preCheckUserAndCourse(user, courseId);
-        Post post = postRepository.findByIdElseThrow(answerPost.getPost().getId());
+        Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
 
         // use post from database rather than user input
         answerPost.setPost(post);
         // set author to current user
         answerPost.setAuthor(user);
+        setAuthorRoleForPosting(answerPost, course);
         // on creation of an answer post, we set the resolves_post field to false per default
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
@@ -99,9 +97,9 @@ public class AnswerPostService extends PostingService {
 
         // checks
         if (answerPost.getId() == null || !Objects.equals(answerPost.getId(), answerPostId)) {
-            throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idNull");
         }
-        AnswerPost existingAnswerPost = answerPostRepository.findByIdElseThrow(answerPostId);
+        AnswerPost existingAnswerPost = this.findById(answerPostId);
         final Course course = preCheckUserAndCourse(user, courseId);
 
         AnswerPost updatedAnswerPost;
@@ -133,6 +131,7 @@ public class AnswerPostService extends PostingService {
         final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         answerPost.addReaction(reaction);
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
+        updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
         this.preparePostAndBroadcast(updatedAnswerPost, course);
     }
 
@@ -148,7 +147,7 @@ public class AnswerPostService extends PostingService {
 
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
-        AnswerPost answerPost = answerPostRepository.findByIdElseThrow(answerPostId);
+        AnswerPost answerPost = this.findById(answerPostId);
         mayUpdateOrDeletePostingElseThrow(answerPost, user, course);
 
         // delete
@@ -157,7 +156,7 @@ public class AnswerPostService extends PostingService {
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         Post updatedPost = answerPost.getPost();
         updatedPost.removeAnswerPost(answerPost);
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
     }
 
     /**
@@ -189,22 +188,6 @@ public class AnswerPostService extends PostingService {
     }
 
     /**
-     * Helper method to prepare the post included in the websocket message and initiate the broadcasting
-     *
-     * @param updatedAnswerPost answer post that was updated
-     * @param course            course the answer post belongs to
-     */
-    private void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course) {
-        // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
-        Post updatedPost = updatedAnswerPost.getPost();
-        // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
-        // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
-        updatedPost.removeAnswerPost(updatedAnswerPost);
-        updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
-    }
-
-    /**
      * Retrieve the entity name used in ResponseEntity
      */
     @Override
@@ -219,7 +202,17 @@ public class AnswerPostService extends PostingService {
      * @return retrieved answer post
      */
     public AnswerPost findById(Long answerPostId) {
-        return answerPostRepository.findByIdElseThrow(answerPostId);
+        return answerPostRepository.findAnswerPostByIdElseThrow(answerPostId);
+    }
+
+    /**
+     * Retrieve answer post or answer message from database by id
+     *
+     * @param messageId ID of requested answer post
+     * @return retrieved answer post
+     */
+    public AnswerPost findAnswerPostOrAnswerMessageById(Long messageId) {
+        return answerPostRepository.findAnswerPostOrAnswerMessageByIdElseThrow(messageId);
     }
 
     /**

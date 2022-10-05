@@ -119,7 +119,7 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
      * updates all displayed (relative) times in the UI
      */
     updateDisplayedTimes() {
-        const translationBasePath = 'showStatistic.';
+        const translationBasePath = 'artemisApp.showStatistic.';
         // update remaining time
         if (this.quizExercise && this.quizExercise.dueDate) {
             const endDate = this.quizExercise.dueDate;
@@ -240,7 +240,7 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
         this.pushDataToNgxEntry(this.changeDetector);
 
         // add Axes-labels based on selected language
-        this.setAxisLabels('showStatistic.quizPointStatistic.xAxes', 'showStatistic.quizPointStatistic.yAxes');
+        this.setAxisLabels('artemisApp.showStatistic.quizPointStatistic.xAxes', 'artemisApp.showStatistic.quizPointStatistic.yAxes');
     }
 
     /**

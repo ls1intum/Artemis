@@ -12,6 +12,7 @@ import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-column.model';
 
 @Component({
     template: '',
@@ -125,6 +126,13 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseTitle).toBe('A');
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseMaxPoints).toBe(101);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].exerciseNumberOfParticipations).toBe(23);
+        });
+
+        it('should reset group variant columns first', () => {
+            examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns = [{} as ExerciseGroupVariantColumn];
+            examChecklistExerciseGroupTableComponent.exerciseGroups = [];
+            examChecklistExerciseGroupTableComponent.ngOnChanges();
+            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns).toBeEmpty();
         });
     });
 });

@@ -39,9 +39,10 @@ export enum PostSortCriterion {
 }
 
 export enum MetisPostAction {
-    CREATE_POST = 'CREATE_POST',
-    UPDATE_POST = 'UPDATE_POST',
-    DELETE_POST = 'DELETE_POST',
+    CREATE = 'CREATE',
+    UPDATE = 'UPDATE',
+    DELETE = 'DELETE',
+    READ_CONVERSATION = 'READ_CONVERSATION',
 }
 
 export interface PostContextFilter {
@@ -51,6 +52,7 @@ export interface PostContextFilter {
     lectureId?: number;
     plagiarismCaseId?: number;
     searchText?: string;
+    conversationId?: number;
     filterToUnresolved?: boolean;
     filterToOwn?: boolean;
     filterToAnsweredOrReacted?: boolean;
@@ -106,6 +108,12 @@ export enum ReferenceType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
+}
+
+export enum UserRole {
+    INSTRUCTOR = 'INSTRUCTOR',
+    TUTOR = 'TUTOR',
+    USER = 'USER',
 }
 
 /**

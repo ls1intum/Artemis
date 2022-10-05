@@ -13,6 +13,7 @@
             "created": "Created new Quiz Exercise with identifier {{ param }}",
             "updated": "Updated Quiz Exercise with identifier {{ param }}",
             "deleted": "Deleted Quiz Exercise with identifier {{ param }}",
+            "resetSuccessful": "The reset of the quiz exercise <strong>{{ title }}</strong> was successful",
             "delete": {
                 "question": "Are you sure you want to permanently delete the quiz <strong>{{ title }}</strong>? This action can NOT be undone!"
             },
@@ -265,6 +266,9 @@
                 "title": "Match Answers Exactly",
                 "explanationTitle": "Similarity",
                 "explanation": "Determines the required similarity between predefined solutions and student solutions in the evaluation for each spot. The value (between 50% and 100%) indicates whether only exactly correct answers (100%) are treated as correct or whether students can have typo(s) in their solutions. The lower the value is, the more typos are allowed in the student solutions (based on the Levenshtein distance https://en.wikipedia.org/wiki/Levenshtein_distance). Example: a value of 85% would allow 1 typo in a word with 5 characters and 2 typos in a word with 10 characters. Please use the preview feature for the quiz if you would like to try out different values."
+            },
+            "answerMatching": {
+                "title": "Answer Matching"
             },
             "matchingInfoModalTitle": "Answer Matching Options",
             "quizMode": {

@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
@@ -245,6 +246,18 @@ public interface ContinuousIntegrationService {
      * @return The URL as a String pointing to the to be triggered build plan in the CI system. If this is not needed/supported, an empty optional is returned.
      */
     Optional<String> getWebHookUrl(String projectKey, String buildPlanId);
+
+    /**
+     * Extract the build log statistics from the BuildLogEntries and persist a BuildLogStatisticsEntry.
+     * Not all programming languages and project types might be supported on all implementations of the ContinuousIntegrationService.
+     *
+     * @param programmingSubmission the submission to which the generated BuildLogStatisticsEntry should be attached
+     * @param programmingLanguage the programming language of the programming exercise
+     * @param projectType the project type of the programming exercise
+     * @param buildLogEntries the list of BuildLogEntries received from the CI-Server
+     */
+    void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+            List<BuildLogEntry> buildLogEntries);
 
     /**
      * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out

@@ -75,7 +75,7 @@
                         <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
                     </a>
                     <a
-                        *ngIf="programmingExercise.isAtLeastEditor"
+                        *ngIf="programmingExercise.isAtLeastEditor && plagiarismCheckSupported"
                         [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                         class="btn btn-outline-primary btn-sm me-1"
                         routerLink="plagiarism"
@@ -217,7 +217,7 @@
                         jhiDeleteButton
                         [actionType]="ActionType.Cleanup"
                         [entityTitle]="programmingExercise.title || ''"
-                        deleteQuestion="instructorDashboard.cleanup.question"
+                        deleteQuestion="artemisApp.instructorDashboard.cleanup.question"
                         (delete)="cleanupProgrammingExercise($event)"
                         [dialogError]="dialogError$"
                         deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
@@ -309,7 +309,6 @@
                             class="ms-2"
                             [smallButtons]="true"
                             [repositoryUrl]="programmingExercise?.templateParticipation?.repositoryUrl! || ''"
-                            [isTeamParticipation]="false"
                         ></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
                             class="ms-2"
@@ -328,12 +327,7 @@
                 <dt>
                     <span jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span>
                     <div class="clone-buttons" *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl">
-                        <jhi-clone-repo-button
-                            class="ms-2"
-                            [smallButtons]="true"
-                            [repositoryUrl]="programmingExercise.solutionParticipation.repositoryUrl"
-                            [isTeamParticipation]="false"
-                        ></jhi-clone-repo-button>
+                        <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="programmingExercise.solutionParticipation.repositoryUrl"></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
                             class="ms-2"
                             [exerciseId]="programmingExercise.id!"
@@ -351,12 +345,7 @@
                 <dt>
                     <span jhiTranslate="artemisApp.programmingExercise.testRepositoryUrl">Test Repository Url</span>
                     <div class="clone-buttons" *ngIf="programmingExercise.testRepositoryUrl">
-                        <jhi-clone-repo-button
-                            class="ms-2"
-                            [smallButtons]="true"
-                            [repositoryUrl]="programmingExercise.testRepositoryUrl"
-                            [isTeamParticipation]="false"
-                        ></jhi-clone-repo-button>
+                        <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="programmingExercise.testRepositoryUrl"></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
                             class="ms-2"
                             [exerciseId]="programmingExercise.id!"
@@ -382,12 +371,7 @@
                         <li *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
                             <dt>
                                 <span>{{ auxiliaryRepository.name }} Repository</span>
-                                <jhi-clone-repo-button
-                                    class="ms-2"
-                                    [smallButtons]="true"
-                                    [repositoryUrl]="auxiliaryRepository.repositoryUrl!"
-                                    [isTeamParticipation]="false"
-                                ></jhi-clone-repo-button>
+                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="auxiliaryRepository.repositoryUrl!"></jhi-clone-repo-button>
                                 <jhi-programming-exercise-instructor-repo-download
                                     class="ms-2"
                                     [exerciseId]="programmingExercise.id!"
@@ -473,6 +457,7 @@
                             [showUngradedResults]="true"
                             [showTestNames]="true"
                             [personalParticipation]="false"
+                            (onParticipationChange)="onParticipationChange()"
                             class="me-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
@@ -541,7 +526,7 @@
                                 [icon]="faEye"
                                 [title]="'artemisApp.programmingExercise.diffReport.button'"
                                 [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
-                                (onClick)="getAndShowFullDiff()"
+                                (onClick)="showGitDiff()"
                                 class="ms-2"
                             ></jhi-button>
                         </div>
@@ -551,6 +536,58 @@
                     <dt><span jhiTranslate="artemisApp.programmingExercise.coveredLineRatio">Covered Line Ratio</span></dt>
                     <dd>
                         <span>{{ programmingExercise?.coveredLinesRatio ? (programmingExercise?.coveredLinesRatio! * 100).toFixed(1) + ' %' : 'n.a.' }}</span>
+                    </dd>
+                </div>
+                <div *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.buildLogStatistics">
+                    <dt>
+                        <span jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.title">Build Log Statistics</span>
+                        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildLogStatistics.tooltip"></jhi-help-icon>
+                    </dt>
+                    <dd>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.numberOfBuilds"># Builds</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.agentSetupDuration">Docker Setup</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.testDuration">Test Execution</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.scaDuration">Static Code Analysis</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.totalJobDuration">Total Job Duration</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.dependenciesDownloadedCount">Number of downloaded dependencies</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ programmingExercise.buildLogStatistics.buildCount ?? 0 }}</td>
+                                    <td>
+                                        {{
+                                            programmingExercise.buildLogStatistics.agentSetupDuration
+                                                ? (programmingExercise.buildLogStatistics.agentSetupDuration | number: '1.2-2') + 's'
+                                                : '-'
+                                        }}
+                                    </td>
+                                    <td>
+                                        {{
+                                            programmingExercise.buildLogStatistics.testDuration
+                                                ? (programmingExercise.buildLogStatistics.testDuration | number: '1.2-2') + 's'
+                                                : '-'
+                                        }}
+                                    </td>
+                                    <td>
+                                        {{
+                                            programmingExercise.buildLogStatistics.scaDuration ? (programmingExercise.buildLogStatistics.scaDuration | number: '1.2-2') + 's' : '-'
+                                        }}
+                                    </td>
+                                    <td>
+                                        {{
+                                            programmingExercise.buildLogStatistics.totalJobDuration
+                                                ? (programmingExercise.buildLogStatistics.totalJobDuration | number: '1.2-2') + 's'
+                                                : '-'
+                                        }}
+                                    </td>
+                                    <td>{{ programmingExercise.buildLogStatistics.dependenciesDownloadedCount ?? '-' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </dd>
                 </div>
             </dl>

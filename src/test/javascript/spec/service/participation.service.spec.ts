@@ -92,11 +92,11 @@ describe('Participation Service', () => {
     }));
 
     it('should delete for guided tour', fakeAsync(() => {
-        service.deleteForGuidedTour(123).subscribe((resp) => expect(resp.ok));
+        service.deleteForGuidedTour(123).subscribe((resp) => expect(resp.ok).toBeTrue());
         let request = httpMock.expectOne({ method: 'DELETE' });
         expect(request.request.params.keys()).toHaveLength(0);
 
-        service.deleteForGuidedTour(123, { a: 'param' }).subscribe((resp) => expect(resp.ok));
+        service.deleteForGuidedTour(123, { a: 'param' }).subscribe((resp) => expect(resp.ok).toBeTrue());
         request = httpMock.expectOne({ method: 'DELETE' });
         expect(request.request.params.keys()).toHaveLength(1);
         expect(request.request.params.get('a')).toBe('param');
@@ -129,7 +129,7 @@ describe('Participation Service', () => {
             submissions: [{ id: 2 }, { id: 3 }],
         };
 
-        const mergedParticipation = service.mergeStudentParticipations([participation1, participation2]);
+        const mergedParticipation = service.mergeStudentParticipations([participation1, participation2])[0];
         expect(mergedParticipation?.team!.id!).toEqual(participation1.team!.id);
         expect(mergedParticipation?.team!.name!).toEqual(participation1.team!.name);
         expect(mergedParticipation?.id).toEqual(participation1.id);
@@ -137,6 +137,34 @@ describe('Participation Service', () => {
         expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
         mergedParticipation?.results?.forEach((result) => expect(result.participation).toMatchObject(mergedParticipation));
         mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
+    }));
+
+    it('should not merge practice participation for programming exercises', fakeAsync(() => {
+        const participation1: ProgrammingExerciseStudentParticipation = {
+            id: 1,
+            type: ParticipationType.PROGRAMMING,
+            repositoryUrl: 'repo-url',
+            buildPlanId: 'build-plan-id',
+            student: { id: 1, login: 'student1', guidedTourSettings: [], internal: true },
+            results: [{ id: 3 }],
+            submissions: [{ id: 1 }],
+            testRun: true,
+        };
+
+        const participation2: ProgrammingExerciseStudentParticipation = {
+            id: 2,
+            type: ParticipationType.PROGRAMMING,
+            repositoryUrl: 'repo-url-1',
+            buildPlanId: 'build-plan-id-1',
+            student: { id: 2, login: 'student2', guidedTourSettings: [], internal: true },
+            results: [{ id: 1 }, { id: 2 }],
+            submissions: [{ id: 2 }, { id: 3 }],
+        };
+
+        const mergedParticipations = service.mergeStudentParticipations([participation1, participation2]);
+        expect(mergedParticipations).toHaveLength(2);
+        expect(mergedParticipations[0]).toEqual(participation2);
+        expect(mergedParticipations[1]).toEqual(participation1);
     }));
 
     it('should merge student participations', fakeAsync(() => {
@@ -156,29 +184,12 @@ describe('Participation Service', () => {
             submissions: [{ id: 2 }, { id: 3 }],
         };
 
-        const mergedParticipation = service.mergeStudentParticipations([participation1, participation2]);
+        const mergedParticipation = service.mergeStudentParticipations([participation1, participation2])[0];
         expect(mergedParticipation?.id).toEqual(participation1.id);
         expect(mergedParticipation?.results).toEqual([...participation1.results!, ...participation2.results!]);
         expect(mergedParticipation?.submissions).toEqual([...participation1.submissions!, ...participation2.submissions!]);
         mergedParticipation?.results?.forEach((result) => expect(result.participation).toMatchObject(mergedParticipation));
         mergedParticipation?.submissions?.forEach((submission) => expect(submission.participation).toMatchObject(mergedParticipation));
-    }));
-
-    it('should merge no participations', fakeAsync(() => {
-        const participation: StudentParticipation = {
-            id: 1,
-            type: ParticipationType.SOLUTION,
-            student: { id: 1, login: 'student1', guidedTourSettings: [], internal: true },
-            results: [{ id: 3 }],
-            submissions: [{ id: 1 }],
-        };
-
-        let mergedParticipation = service.mergeStudentParticipations([participation]);
-        expect(mergedParticipation).toBeUndefined();
-
-        participation.type = ParticipationType.STUDENT;
-        mergedParticipation = service.mergeStudentParticipations([participation]);
-        expect(mergedParticipation?.id).toEqual(participation.id);
     }));
 
     it('should update a Participation', fakeAsync(() => {
@@ -237,7 +248,7 @@ describe('Participation Service', () => {
     }));
 
     it('should delete a Participation', fakeAsync(() => {
-        service.delete(123).subscribe((resp) => expect(resp.ok));
+        service.delete(123).subscribe((resp) => expect(resp.ok).toBeTrue());
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });

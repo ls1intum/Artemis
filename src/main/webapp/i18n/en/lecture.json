@@ -46,7 +46,10 @@
                 "editAttachment": "Edit Attachment",
                 "notificationText": "Notification Text",
                 "notificationPlaceholder": "Optional: Notification about changes",
-                "error": "The file {{ fileName }} is too large. The maximum filesize is 10MB"
+                "chooseFile": "Choose File",
+                "error": "The file {{ fileName }} is too large. The maximum file size is 10MB.",
+                "fileLimitation": "Max. file size 10 MB",
+                "fileLimitationTooltip": "Supported types: {{ extensions }}"
             },
             "import": {
                 "table": {

@@ -39,7 +39,7 @@ describe('OrganizationManagementUpdateComponent', () => {
         jest.clearAllMocks();
     });
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         it('should create', () => {
             expect(component).toBeTruthy();
         });

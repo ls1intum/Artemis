@@ -39,7 +39,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     assessmentEditor: ModelingAssessmentComponent;
 
     isNewSubmission: boolean;
-    usedForTutorial = false;
     assessmentMode = false;
     exerciseId: number;
     exampleSubmission: ExampleSubmission;
@@ -57,6 +56,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     toComplete: boolean;
     assessmentExplanation: string;
     isExamMode: boolean;
+    selectedMode: 'readConfirm' | 'assessCorrectly';
 
     legend = [
         {
@@ -128,7 +128,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         }
 
         // if one of the flags is set, we navigated here from the assessment dashboard which means that we are not
-        // interested in the modeling editor, i.e. we only wanna use the assessment mode
+        // interested in the modeling editor, i.e. we only want to use the assessment mode
         if (this.readOnly || this.toComplete) {
             this.assessmentMode = true;
         }
@@ -153,7 +153,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                         // Updates the explanation text with example modeling submission's explanation
                         this.explanationText = this.modelingSubmission.explanationText ?? '';
                     }
-                    this.usedForTutorial = this.exampleSubmission.usedForTutorial!;
+
+                    if (this.exampleSubmission.usedForTutorial) {
+                        this.selectedMode = 'assessCorrectly';
+                    } else {
+                        this.selectedMode = 'readConfirm';
+                    }
+
                     this.assessmentExplanation = this.exampleSubmission.assessmentExplanation!;
 
                     // Do not load the results when we have to assess the submission. The API will not provide it anyway
@@ -199,8 +205,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         const newExampleSubmission: ExampleSubmission = this.exampleSubmission;
         newExampleSubmission.submission = modelingSubmission;
         newExampleSubmission.exercise = this.exercise;
-        newExampleSubmission.usedForTutorial = this.usedForTutorial;
 
+        newExampleSubmission.usedForTutorial = this.selectedMode === 'assessCorrectly';
         this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe({
             next: (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body!;
@@ -245,7 +251,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         const exampleSubmission = this.exampleSubmission;
         exampleSubmission.submission = this.modelingSubmission;
         exampleSubmission.exercise = this.exercise;
-        exampleSubmission.usedForTutorial = this.usedForTutorial;
+        exampleSubmission.usedForTutorial = this.selectedMode === 'assessCorrectly';
+
         return this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).pipe(
             tap((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body!;
@@ -308,7 +315,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     public saveExampleAssessment(): void {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.alertService.error('modelingAssessment.invalidAssessments');
+            this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
         if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation && this.assessments) {
@@ -334,10 +341,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             .subscribe({
                 next: (result: Result) => {
                     this.updateAssessment(result);
-                    this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+                    this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
                 },
                 error: () => {
-                    this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
+                    this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
                 },
             });
     }
@@ -357,10 +364,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         this.modelingAssessmentService.saveExampleAssessment(this.assessments, this.exampleSubmissionId).subscribe({
             next: (result: Result) => {
                 this.updateAssessment(result);
-                this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+                this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
             },
             error: () => {
-                this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
+                this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
             },
         });
     }

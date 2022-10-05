@@ -13,7 +13,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -27,18 +26,12 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
 @RequestMapping("/api")
 public class OnlineUnitResource {
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);
-
-    private static final String ENTITY_NAME = "onlineUnit";
 
     private final OnlineUnitRepository onlineUnitRepository;
 
@@ -102,7 +95,7 @@ public class OnlineUnitResource {
         }
 
         OnlineUnit result = onlineUnitRepository.save(onlineUnit);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, onlineUnit.getId().toString())).body(result);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -172,7 +165,7 @@ public class OnlineUnitResource {
 
     /**
      * Returns the content of the specified meta tag
-     * Inspired by https://www.javachinna.com/generate-rich-link-preview-for-a-given-url-based-on-the-meta-tags-present-in-the-web-page-in-spring-boot/
+     * Inspired by <a href="https://www.javachinna.com/generate-rich-link-preview-for-a-given-url-based-on-the-meta-tags-present-in-the-web-page-in-spring-boot/">...</a>
      *
      * @param document The Jsoup document to query
      * @param tag The meta tag from which to fetch the content

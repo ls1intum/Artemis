@@ -65,7 +65,7 @@ describe('ModelingExercise Management Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should call loadExercises on init', () => {
+    it('should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
         const findStub = jest.spyOn(courseExerciseService, 'findAllModelingExercisesForCourse').mockReturnValue(
@@ -82,11 +82,11 @@ describe('ModelingExercise Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(findStub).toHaveBeenCalled();
+        expect(findStub).toHaveBeenCalledOnce();
         expect(comp.modelingExercises[0]).toEqual(modelingExercise);
     });
 
-    it('Should delete exercise', () => {
+    it('should delete exercise', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(
             of(
@@ -104,7 +104,7 @@ describe('ModelingExercise Management Component', () => {
         expect(modelingExerciseService.delete).toHaveBeenCalledOnce();
     });
 
-    it('Should open modal', () => {
+    it('should open modal', () => {
         const mockReturnValue = { result: Promise.resolve({ id: 456 } as ModelingExercise) } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
@@ -113,12 +113,12 @@ describe('ModelingExercise Management Component', () => {
         expect(modalService.open).toHaveBeenCalledOnce();
     });
 
-    it('Should return exercise id', () => {
+    it('should return exercise id', () => {
         expect(comp.trackId(0, modelingExercise)).toBe(456);
     });
 
     describe('ModelingExercise Search Exercises', () => {
-        it('Should show all exercises', () => {
+        it('should show all exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('UML', '', 'modeling');
 
@@ -127,7 +127,7 @@ describe('ModelingExercise Management Component', () => {
             expect(comp.filteredModelingExercises).toHaveLength(1);
         });
 
-        it('Should show no exercises', () => {
+        it('should show no exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
 
@@ -154,7 +154,7 @@ describe('ModelingExercise Management Component', () => {
             name: 'modelingExerciseListModification',
             content: 'Deleted an modelingExercise',
         });
-        expect(broadcastSpy).toHaveBeenCalledTimes(1);
+        expect(broadcastSpy).toHaveBeenCalledOnce();
     }));
 
     it('should sort rows', () => {

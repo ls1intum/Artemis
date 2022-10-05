@@ -14,8 +14,14 @@
         container="body"
     ></button>
     <ng-template #popContent style="max-width: 660px">
-        <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | artemisTranslate }}</p>
         <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
+        <div class="form-check form-switch" *ngIf="participations && participations.length > 1">
+            <input mdbCheckbox [id]="'switch-practice-'" class="form-check-input" type="checkbox" [checked]="activeParticipation?.testRun" (click)="switchPracticeMode()" />
+            <label class="form-check-label" [for]="'switch-practice'">
+                {{ 'artemisApp.exerciseActions.practiceMode' | artemisTranslate }}
+            </label>
+        </div>
+        <h5>{{ cloneHeadline | artemisTranslate }}</h5>
         <div class="d-flex" style="margin: 0; max-width: 100%">
             <div *ngIf="sshEnabled" aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
                 <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" style="border-top-right-radius: 0; border-bottom-right-radius: 0">
@@ -61,6 +67,6 @@
             >{{ 'artemisApp.exerciseActions.cloneSourceTree' | artemisTranslate }}
         </a>
         <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
-        <span [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | artemisTranslate"></span>
+        <div [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | artemisTranslate"></div>
     </ng-template>
 </ng-container>

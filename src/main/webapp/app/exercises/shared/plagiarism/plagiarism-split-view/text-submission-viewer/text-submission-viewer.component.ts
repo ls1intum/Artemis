@@ -2,13 +2,14 @@ import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from '@
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { FromToElement, TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainChange, DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
+import { captureException } from '@sentry/angular';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -20,7 +21,7 @@ type FilesWithType = { [p: string]: FileType };
 })
 export class TextSubmissionViewerComponent implements OnChanges {
     @Input() exercise: ProgrammingExercise | TextExercise;
-    @Input() matches: Map<string, { from: TextSubmissionElement; to: TextSubmissionElement }[]>;
+    @Input() matches: Map<string, FromToElement[]>;
     @Input() plagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>;
 
     /**
@@ -88,8 +89,8 @@ export class TextSubmissionViewerComponent implements OnChanges {
     private loadProgrammingExercise(currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>) {
         this.isProgrammingExercise = true;
 
-        this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }]);
-        this.repositoryService.getRepositoryContent().subscribe({
+        const domain: DomainChange = [DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }];
+        this.repositoryService.getRepositoryContent(domain).subscribe({
             next: (files) => {
                 this.loading = false;
                 this.files = this.programmingExerciseFilesWithMatches(files);
@@ -162,16 +163,16 @@ export class TextSubmissionViewerComponent implements OnChanges {
         this.currentFile = file;
         this.loading = true;
 
-        this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }]);
+        const domain: DomainChange = [DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }];
 
-        this.repositoryService.getFileHeaders(file).subscribe((response) => {
+        this.repositoryService.getFileHeaders(file, domain).subscribe((response) => {
             const contentType = response.headers.get('content-type');
             if (contentType && !contentType.startsWith('text')) {
                 this.binaryFile = true;
                 this.loading = false;
             } else {
                 this.binaryFile = false;
-                this.repositoryService.getFile(file).subscribe({
+                this.repositoryService.getFile(file, domain).subscribe({
                     next: ({ fileContent }) => {
                         this.loading = false;
                         this.fileContent = this.insertMatchTokens(fileContent);
@@ -200,6 +201,10 @@ export class TextSubmissionViewerComponent implements OnChanges {
     }
 
     insertToken(text: string, token: string, position: number) {
+        // prevent negative values because slice does not handle them as we would wish
+        if (position < 0) {
+            position = 0;
+        }
         return [text.slice(0, position), token, text.slice(position)].join('');
     }
 
@@ -208,18 +213,27 @@ export class TextSubmissionViewerComponent implements OnChanges {
         const matches = this.getMatchesForCurrentFile();
         const offsets = new Array(rows.length).fill(0);
 
-        matches.forEach(({ from, to }) => {
-            const idxLineFrom = from.line - 1;
-            const idxLineTo = to.line - 1;
+        matches.forEach((match) => {
+            if (!match.from) {
+                captureException(new Error('"from" is not defined in insertMatchTokens'));
+                return;
+            }
+            if (!match.to) {
+                captureException(new Error('"to" is not defined in insertMatchTokens'));
+                return;
+            }
 
-            const idxColumnFrom = from.column - 1 + offsets[idxLineFrom];
+            const idxLineFrom = match.from.line - 1;
+            const idxLineTo = match.to.line - 1;
+
+            const idxColumnFrom = match.from.column - 1 + offsets[idxLineFrom];
 
             if (rows[idxLineFrom]) {
                 rows[idxLineFrom] = this.insertToken(rows[idxLineFrom], this.tokenStart, idxColumnFrom);
                 offsets[idxLineFrom] += this.tokenStart.length;
             }
 
-            const idxColumnTo = to.column + to.length - 1 + offsets[idxLineTo];
+            const idxColumnTo = match.to.column + match.to.length - 1 + offsets[idxLineTo];
 
             if (rows[idxLineTo]) {
                 rows[idxLineTo] = this.insertToken(rows[idxLineTo], this.tokenEnd, idxColumnTo);

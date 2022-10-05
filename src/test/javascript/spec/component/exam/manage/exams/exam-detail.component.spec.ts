@@ -27,6 +27,10 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 
 @Component({
     template: '',
@@ -71,6 +75,7 @@ describe('ExamDetailComponent', () => {
                 MockDirective(NgbTooltip),
                 MockComponent(CourseExamArchiveButtonComponent),
                 MockDirective(DeleteButtonDirective),
+                MockPipe(ArtemisDurationFromSecondsPipe),
             ],
             providers: [
                 {
@@ -89,6 +94,8 @@ describe('ExamDetailComponent', () => {
                 MockProvider(ArtemisMarkdownService, {
                     safeHtmlForMarkdown: () => exampleHTML,
                 }),
+                MockProvider(AlertService),
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
             ],
             schemas: [],
         })
@@ -202,12 +209,15 @@ describe('ExamDetailComponent', () => {
         expect(JSON.stringify(route)).toEqual(JSON.stringify(['/course-management', exam.course!.id, 'exams', exam.id, 'edit']));
     });
 
-    it('Should reset an exam when reset exam is called', () => {
+    it('should reset an exam when reset exam is called', () => {
+        const alertService = TestBed.inject(AlertService);
+
         // GIVEN
         examDetailComponent.exam = { ...exam, studentExams: [{ id: 1 }] };
         const responseFakeReset = { body: exam } as HttpResponse<Exam>;
         jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
         jest.spyOn(service, 'reset').mockReturnValue(of(responseFakeReset));
+        const alertSpy = jest.spyOn(alertService, 'success').mockImplementation();
 
         // WHEN
         examDetailComponent.resetExam();
@@ -215,6 +225,8 @@ describe('ExamDetailComponent', () => {
         // THEN
         expect(service.reset).toHaveBeenCalledOnce();
         expect(examDetailComponent.exam).toEqual(exam);
+        expect(alertSpy).toHaveBeenCalledOnce();
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.reset.success');
     });
 
     it('should delete an exam when delete exam is called', () => {

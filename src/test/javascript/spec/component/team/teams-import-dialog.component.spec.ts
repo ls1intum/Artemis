@@ -84,7 +84,7 @@ describe('TeamsImportDialogComponent', () => {
         jest.restoreAllMocks();
     });
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         beforeEach(() => {
             resetComponent();
         });

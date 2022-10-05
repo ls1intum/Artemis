@@ -9,11 +9,19 @@
 
     <div class="col-12 col-lg-4 text-end" *ngIf="exercise.isAtLeastEditor && !readOnly && !toComplete">
         <div class="d-flex justify-content-end flex-wrap align-items-center" *ngIf="!assessmentMode">
-            <div class="form-check align-baseline">
-                <input class="form-check-input" type="checkbox" name="usedForTutorial" id="field_usedForTutorial" [(ngModel)]="usedForTutorial" />
-                <label class="form-check-label" for="field_usedForTutorial" jhiTranslate="artemisApp.exampleSubmission.usedForTutorial"></label>
-            </div>
+            <div>
+                <div class="text-start">
+                    <span>{{ 'artemisApp.exampleSubmission.assessmentTraining' | artemisTranslate }}</span>
+                    <jhi-help-icon placement="auto" [text]="'artemisApp.exampleSubmission.selectModelExplanation'"></jhi-help-icon>
+                </div>
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="mode" id="read-and-confirm-button" autocomplete="off" [value]="'readConfirm'" [(ngModel)]="selectedMode" />
+                    <label class="btn btn-outline-secondary" for="read-and-confirm-button">{{ 'artemisApp.exampleSubmission.readAndConfirm' | artemisTranslate }}</label>
 
+                    <input type="radio" class="btn-check" name="mode" id="only-not-imported" autocomplete="off" [value]="'assessCorrectly'" [(ngModel)]="selectedMode" />
+                    <label class="btn btn-outline-secondary" for="only-not-imported">{{ 'artemisApp.exampleSubmission.assessCorrectly' | artemisTranslate }}</label>
+                </div>
+            </div>
             <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ms-2 button-resize">
                 <fa-icon [icon]="faSave"></fa-icon>
                 <span *ngIf="isNewSubmission" jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission" id="new-modeling-example-submission"
@@ -113,6 +121,7 @@
                         [totalScore]="totalScore"
                         [readOnly]="readOnly"
                         [course]="course"
+                        [explanation]="explanationText"
                         (feedbackChanged)="onReferencedFeedbackChanged($event)"
                     >
                     </jhi-modeling-assessment>

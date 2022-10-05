@@ -82,7 +82,7 @@ public class NotificationResource {
     public ResponseEntity<Notification> createNotification(@RequestBody Notification notification) throws URISyntaxException {
         log.debug("REST request to save Notification : {}", notification);
         if (notification.getId() != null) {
-            throw new BadRequestAlertException("A new notification cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new notification cannot already have an ID", ENTITY_NAME, "idExists");
         }
         restrictSystemNotificationsToAdmin(null, notification);
         Notification result = notificationRepository.save(notification);
@@ -130,7 +130,7 @@ public class NotificationResource {
     public ResponseEntity<Notification> updateNotification(@RequestBody Notification notification) {
         log.debug("REST request to update Notification : {}", notification);
         if (notification.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
         restrictSystemNotificationsToAdmin(null, notification);
         Notification result = notificationRepository.save(notification);

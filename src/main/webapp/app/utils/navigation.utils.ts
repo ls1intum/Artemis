@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { NavigationEnd, Params, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { filter, skip, take } from 'rxjs/operators';
@@ -104,28 +104,6 @@ export class ArtemisNavigationUtilService {
         window.open(url, '_blank');
     }
 }
-
-export const navigateToExampleSubmissions = (router: Router, exercise: Exercise): void => {
-    setTimeout(() => {
-        // If an exercise group is set -> we are in exam mode
-        if (exercise.exerciseGroup) {
-            router.navigate([
-                'course-management',
-                exercise.exerciseGroup!.exam!.course!.id!.toString(),
-                'exams',
-                exercise.exerciseGroup!.exam!.id!.toString(),
-                'exercise-groups',
-                exercise.exerciseGroup!.id!,
-                exercise.type! + '-exercises',
-                exercise.id,
-                'example-submissions',
-            ]);
-            return;
-        }
-
-        router.navigate(['course-management', exercise.course!.id!, exercise.type! + '-exercises', exercise.id, 'example-submissions']);
-    }, 1000);
-};
 
 export const getLinkToSubmissionAssessment = (
     exerciseType: ExerciseType,
@@ -239,4 +217,22 @@ export const navigateToExamExercise = (
     setTimeout(() => {
         navigationUtilService.routeInNewTab(['course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, `${exerciseType}-exercises`, exerciseId, subPage]);
     }, 1000);
+};
+
+/**
+ * Checks router hierarchy to find a given paramKey, starting from the current ActivatedRouteSnapshot
+ * and traversing the parents.
+ * @param route the active route
+ * @param paramKey the desired key of route.snapshot.params
+ */
+export const findParamInRouteHierarchy = (route: ActivatedRoute, paramKey: string): string | undefined => {
+    let currentRoute: ActivatedRoute | null = route;
+    while (currentRoute) {
+        const paramValue = currentRoute.snapshot.params[paramKey];
+        if (paramValue !== undefined) {
+            return paramValue;
+        }
+        currentRoute = currentRoute.parent;
+    }
+    return undefined;
 };

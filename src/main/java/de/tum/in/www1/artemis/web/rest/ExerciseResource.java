@@ -29,8 +29,6 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing Exercise.
@@ -138,7 +136,7 @@ public class ExerciseResource {
 
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
-        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
+        return ResponseEntity.ok(exercise);
     }
 
     /**
@@ -176,7 +174,7 @@ public class ExerciseResource {
             tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
         exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
-        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
+        return ResponseEntity.ok(exercise);
     }
 
     /**
@@ -234,7 +232,7 @@ public class ExerciseResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         exerciseDeletionService.reset(exercise);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, "exercise", exerciseId.toString())).build();
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -283,7 +281,6 @@ public class ExerciseResource {
         List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
         exercise.setStudentParticipations(new HashSet<>());
         for (StudentParticipation participation : participations) {
-
             participation.setResults(exercise.findResultsFilteredForStudents(participation));
             // By filtering the results available yet, they can become null for the exercise.
             if (participation.getResults() != null) {

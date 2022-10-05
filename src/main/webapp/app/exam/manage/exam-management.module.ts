@@ -50,6 +50,9 @@ import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-pic
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
+import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -81,6 +84,8 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisExamModePickerModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         BarChartModule,
+        FeatureToggleModule,
+        ArtemisModePickerModule,
     ],
     declarations: [
         ExamManagementComponent,
@@ -108,6 +113,7 @@ const ENTITY_STATES = [...examManagementState];
         StudentExamDetailTableRowComponent,
         ExamImportComponent,
         ExamExerciseImportComponent,
+        BonusComponent,
     ],
 })
 export class ArtemisExamManagementModule {}

@@ -6,7 +6,7 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -86,10 +86,9 @@ public class QuizBatchService {
      * @param quizExercise the quiz of the batch to join
      * @param user the user to join
      * @param password the password of the batch to join; unused for INDIVIDUAL mode
-     * @param batchId the id of the batch to join without a password; currently not implemented; unused for INDIVIDUAL mode
      * @return the batch that was joined, or empty if the batch could not be found
      */
-    public QuizBatch joinBatch(QuizExercise quizExercise, User user, @Nullable String password, @Nullable Long batchId) throws QuizJoinException {
+    public QuizBatch joinBatch(QuizExercise quizExercise, User user, @Nullable String password) throws QuizJoinException {
         QuizBatch quizBatch = switch (quizExercise.getQuizMode()) {
             case SYNCHRONIZED -> throw new QuizJoinException("quizBatchJoinSynchronized", "Cannot join batch in synchronized quiz");
             case BATCHED -> quizBatchRepository.findByQuizExerciseAndPassword(quizExercise, password)
@@ -174,14 +173,14 @@ public class QuizBatchService {
      * @return the batch that the user currently takes part in or empty
      */
     public Optional<QuizBatch> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
-        var batch = quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, login);
-        if (batch.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+        var batchIdOptional = quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, login);
+        if (batchIdOptional.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
             return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
         }
-        if (quizExercise.getQuizBatches() != null && batch.isPresent()) {
-            final Long batchId = batch.get();
-            return quizExercise.getQuizBatches().stream().filter(b -> Objects.equals(b.getId(), batchId)).findAny().or(() -> quizBatchRepository.findById(batchId));
+        if (quizExercise.getQuizBatches() != null && batchIdOptional.isPresent()) {
+            final Long batchId = batchIdOptional.get();
+            return quizExercise.getQuizBatches().stream().filter(quizBatch -> Objects.equals(quizBatch.getId(), batchId)).findAny().or(() -> quizBatchRepository.findById(batchId));
         }
-        return batch.flatMap(quizBatchRepository::findById);
+        return batchIdOptional.flatMap(quizBatchRepository::findById);
     }
 }

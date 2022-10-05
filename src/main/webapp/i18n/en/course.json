@@ -34,15 +34,15 @@
             },
             "maxComplaintTextLimit": {
                 "title": "Maximum number of characters per complaint",
-                "description": "This number indicates the maximum number of characters a student may use per complaint."
+                "description": "This value indicates the maximum number of characters a student may use per complaint."
             },
             "maxComplaintResponseTextLimit": {
                 "title": "Maximum number of characters per complaint response",
-                "description": "This number indicates the maximum number of characters that may be used for the response per complaint."
+                "description": "This value indicates the maximum number of characters that may be used for the response per complaint."
             },
             "postsEnabled": {
                 "title": "Enable communication features",
-                "description": "Enable communication section on lecture and exercise pages."
+                "description": "Enable course communication overview and communication section on lecture and exercise pages."
             },
             "complaintsEnabled": {
                 "title": "Enable complaints",
@@ -156,7 +156,7 @@
                 "outOf": "out of",
                 "usersPerPage": "{{number}} users per page",
                 "showAllUsers": "Show all users",
-                "searchForUsers": "Add a user to this course group by searching for login or name",
+                "searchForUsers": "Add a user to this group by searching for login or name",
                 "searchNoResults": "No users found",
                 "login": "Login",
                 "registrationNumber": "Registration Number",

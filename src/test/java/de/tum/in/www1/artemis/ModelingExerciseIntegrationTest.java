@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -60,6 +62,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
 
     private ModelingExercise classExercise;
 
@@ -265,7 +270,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
             final ModelingSubmission submission2 = ModelFactory.generateModelingSubmission("model2", false);
             database.addModelingSubmission(classExercise, submission2, "student2");
 
-            final var participations = studentParticipationRepository.findByExerciseId(classExercise.getId());
+            final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(classExercise.getId()));
             assertThat(participations).hasSize(2);
             participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
             participations.get(1).setIndividualDueDate(individualDueDate);
@@ -541,6 +546,34 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testInstructorSearchTermMatchesId() throws Exception {
+        database.resetDatabase();
+        database.addUsers(1, 1, 0, 1);
+        testSearchTermMatchesId();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAdminSearchTermMatchesId() throws Exception {
+        database.resetDatabase();
+        database.addUsers(1, 1, 0, 1);
+        testSearchTermMatchesId();
+    }
+
+    private void testSearchTermMatchesId() throws Exception {
+        final Course course = database.addEmptyCourse();
+        final var now = ZonedDateTime.now();
+        ModelingExercise exercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
+        exercise.setTitle("LoremIpsum");
+        exercise = modelingExerciseRepository.save(exercise);
+
+        final var searchTerm = database.configureSearch(exercise.getId().toString());
+        final var searchResult = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         database.addCourseWithOneModelingExercise();
         database.addCourseWithOneModelingExercise("Activity Diagram");
@@ -561,6 +594,22 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         final var search = database.configureSearch("ClassDiagram");
         final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCourseAndExamFiltersAsInstructor() throws Exception {
+        database.addCourseWithOneReleasedModelExerciseWithKnowledge("Ankh");
+        database.addCourseExamExerciseGroupWithOneModelingExercise("Ankh-Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCourseAndExamFiltersAsAdmin() throws Exception {
+        database.addCourseWithOneReleasedModelExerciseWithKnowledge("Ankh");
+        database.addCourseExamExerciseGroupWithOneModelingExercise("Ankh-Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/");
     }
 
     @Test

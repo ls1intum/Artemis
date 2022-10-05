@@ -2,6 +2,8 @@ import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, 
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -33,7 +35,12 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @Input()
     isEditMode = false;
 
-    fileUploadErrorMessage?: string;
+    // A human-readable list of allowed file extensions
+    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+    // The list of file extensions for the "accept" attribute of the file input field
+    readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+
+    faQuestionCircle = faQuestionCircle;
 
     @Output()
     formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
@@ -43,8 +50,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
     file: File | Blob;
-    readonly fileNamePlaceholder = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.chooseFile');
-    fileName: string = this.fileNamePlaceholder;
+    fileName?: string;
     fileInputTouched = false;
 
     constructor(private translateService: TranslateService, private fb: FormBuilder) {}
@@ -75,7 +81,6 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
 
     onFileChange(event: any): void {
         if (event.target.files.length) {
-            this.fileUploadErrorMessage = undefined; // removes the file size error message when the user selects a new file
             const fileList = event.target.files;
             this.file = fileList[0];
             this.fileName = this.file['name'];
@@ -103,14 +108,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !(this.form.invalid || this.fileUploadErrorMessage || this.fileName === this.fileNamePlaceholder);
-    }
-
-    // will be called from parent component to set the form error when the file upload failed
-    setFileUploadError(errorMessage: string) {
-        this.fileUploadErrorMessage = errorMessage;
-        this.fileInput.nativeElement.value = '';
-        this.fileName = this.fileNamePlaceholder;
+        return !(this.form.invalid || !this.fileName);
     }
 
     submitForm() {
