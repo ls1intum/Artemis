@@ -4,7 +4,6 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { LtiConfiguration } from 'app/entities/lti-configuration.model';
 import { ExerciseLtiConfigurationService, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { HttpResponse } from '@angular/common/http';
 
 @Component({
@@ -18,9 +17,8 @@ export class ExerciseLtiConfigurationComponent implements OnInit, OnDestroy {
     requireExistingUser = true;
     lookupUserByEmail = true;
 
-    // Icons
+    wasCopiedKey = '';
 
-    faQuestionCircle = faQuestionCircle;
     constructor(private route: ActivatedRoute, private exerciseService: ExerciseService, private exerciseLtiConfigurationService: ExerciseLtiConfigurationService) {}
 
     /**
@@ -53,4 +51,16 @@ export class ExerciseLtiConfigurationComponent implements OnInit, OnDestroy {
     getFormattedCustomParameters(): string {
         return `require_existing_user=${this.requireExistingUser}\n` + `lookup_user_by_email=${this.lookupUserByEmail}`;
     }
+
+    /**
+     * set wasCopied for 3 seconds on success for the received key
+     */
+    onCopyFinished = (successful: boolean, key: string): void => {
+        if (successful) {
+            this.wasCopiedKey = key;
+            setTimeout(() => {
+                this.wasCopiedKey = '';
+            }, 3000);
+        }
+    };
 }

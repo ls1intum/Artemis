@@ -8,7 +8,9 @@
             "emptyList": "No items available",
             "unset": "Unset",
             "create": "Create",
-            "edit": "Edit"
+            "edit": "Edit",
+            "copy": "Copy",
+            "copied": "Copied"
         },
         "menu": {
             "home": "Home",

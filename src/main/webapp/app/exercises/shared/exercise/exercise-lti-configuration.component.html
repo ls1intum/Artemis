@@ -19,6 +19,12 @@
         </dt>
         <dd>
             <span>{{ ltiConfiguration?.ltiKey }}</span>
+            <jhi-copy-icon-button
+                [copyText]="ltiConfiguration?.ltiKey ?? ''"
+                [wasCopied]="wasCopiedKey == 'ltiKey'"
+                [onCopyFinished]="onCopyFinished"
+                onCopyFinishedKey="ltiKey"
+            ></jhi-copy-icon-button>
         </dd>
 
         <dt>
@@ -26,6 +32,12 @@
         </dt>
         <dd>
             <span>{{ ltiConfiguration?.ltiSecret }}</span>
+            <jhi-copy-icon-button
+                [copyText]="ltiConfiguration?.ltiSecret ?? ''"
+                [wasCopied]="wasCopiedKey == 'ltiSecret'"
+                [onCopyFinished]="onCopyFinished"
+                onCopyFinishedKey="ltiSecret"
+            ></jhi-copy-icon-button>
         </dd>
 
         <dt>
@@ -33,11 +45,17 @@
         </dt>
         <dd>
             <span>{{ ltiConfiguration?.launchUrl }}</span>
+            <jhi-copy-icon-button
+                [copyText]="ltiConfiguration?.launchUrl ?? ''"
+                [wasCopied]="wasCopiedKey == 'launchUrl'"
+                [onCopyFinished]="onCopyFinished"
+                onCopyFinishedKey="launchUrl"
+            ></jhi-copy-icon-button>
         </dd>
 
         <dt>
             <span>{{ 'artemisApp.lti.ltiLaunchTarget' | artemisTranslate }}</span>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.launchTargetTooltip' | artemisTranslate }}"></fa-icon>
+            <jhi-help-icon placement="top" text="artemisApp.lti.launchTargetTooltip"></jhi-help-icon>
         </dt>
         <dd>
             <span>New Window</span>
@@ -59,23 +77,26 @@
 
         <dt>
             <span>{{ 'artemisApp.lti.requestEmail' | artemisTranslate }}</span>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.requestUserEmailTooltip' | artemisTranslate }}"></fa-icon>
+            <jhi-help-icon placement="top" text="artemisApp.lti.requestUserEmailTooltip"></jhi-help-icon>
         </dt>
         <dd>
             <span>True</span>
         </dd>
 
         <div class="form-group">
-            <h4>{{ 'artemisApp.lti.customParameters' | artemisTranslate }}</h4>
+            <h4>
+                {{ 'artemisApp.lti.customParameters' | artemisTranslate }}
+                <jhi-copy-icon-button
+                    [copyText]="getFormattedCustomParameters()"
+                    [wasCopied]="wasCopiedKey == 'customParameters'"
+                    [onCopyFinished]="onCopyFinished"
+                    onCopyFinishedKey="customParameters"
+                ></jhi-copy-icon-button>
+            </h4>
 
             <dt>
                 <span>{{ 'artemisApp.lti.requireExistingUser' | artemisTranslate }}</span>
-                <fa-icon
-                    [icon]="faQuestionCircle"
-                    class="text-secondary"
-                    placement="top"
-                    ngbTooltip="{{ 'artemisApp.lti.requireExistingUserTooltip' | artemisTranslate }}"
-                ></fa-icon>
+                <jhi-help-icon placement="top" text="artemisApp.lti.requireExistingUserTooltip"></jhi-help-icon>
             </dt>
             <dd>
                 <input type="checkbox" class="form-check-input" (change)="requireExistingUser = !requireExistingUser" [checked]="requireExistingUser" />
@@ -83,7 +104,7 @@
 
             <dt>
                 <span>{{ 'artemisApp.lti.lookupByEmail' | artemisTranslate }}</span>
-                <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.lookupUserByEmailTooltip' | artemisTranslate }}"></fa-icon>
+                <jhi-help-icon placement="top" text="artemisApp.lti.lookupUserByEmailTooltip"></jhi-help-icon>
             </dt>
             <dd>
                 <input type="checkbox" class="form-check-input" (change)="lookupUserByEmail = !lookupUserByEmail" [checked]="lookupUserByEmail" />
