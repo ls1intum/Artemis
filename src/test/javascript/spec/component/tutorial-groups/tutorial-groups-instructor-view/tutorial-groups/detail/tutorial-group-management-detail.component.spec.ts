@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/detail/tutorial-group-management-detail.component';
-import { TutorialGroupDetailStubComponent } from '../../../stubs/tutorial-group-detail-stub.component.spec';
+import { TutorialGroupDetailStubComponent } from '../../../stubs/tutorial-group-detail-stub.component';
 import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-group-row-buttons-stub.component';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';

@@ -113,10 +113,4 @@ describe('TutorialGroupDetailComponent', () => {
         registrationLink.click();
         expect(registrationClickHandler).toHaveBeenCalledOnce();
     });
-
-    it('should render template reference and pass in tutorial group', () => {
-        fixture.detectChanges();
-        const templateReference = fixture.debugElement.nativeElement.querySelector('#templateReference');
-        expect(templateReference).not.toBeNull();
-    });
 });

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTutorialGroupDetailComponent } from 'app/overview/tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
-import { TutorialGroupDetailStubComponent } from '../stubs/tutorial-group-detail-stub.component.spec';
+import { TutorialGroupDetailStubComponent } from '../stubs/tutorial-group-detail-stub.component';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
