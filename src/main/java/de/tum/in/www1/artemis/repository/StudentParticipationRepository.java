@@ -96,6 +96,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.student.login = :#{#username}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            """)
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.student.login = :#{#username}
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
                 AND p.testRun = :#{#testRun}
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId, @Param("username") String username,
@@ -576,18 +585,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
-            WHERE p.testRun = FALSE
-            AND p.initializationDate = :#{#initializationDate}
-                AND p.student.id = :#{#studentId}
-                AND p.exercise in :#{#exercises}
-            """)
-    List<StudentParticipation> findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
-            @Param("exercises") List<Exercise> exercises, @Param("initializationDate") ZonedDateTime initializationDate);
-
-    @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results r
             WHERE p.testRun = true
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
@@ -807,18 +804,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         else {
             return findByStudentIdAndIndividualExercisesWithEagerSubmissionsIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
         }
-    }
-
-    /**
-     * Gets all participation for the given studentExam for a test exam with their submissions and result.
-     * As multiple participations for a test exam can exist, the link is established with studentExam.startedDate <-> participation.InitializationDate
-     *
-     * @param studentExam studentExam with exercises loaded
-     * @return student's participations with submissions and results.
-     */
-    default List<StudentParticipation> findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(StudentExam studentExam) {
-        return findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises(),
-                studentExam.getStartedDate());
     }
 
     /**

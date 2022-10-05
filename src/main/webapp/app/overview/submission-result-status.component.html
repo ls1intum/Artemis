@@ -1,27 +1,41 @@
 <div class="col-auto" [ngSwitch]="exercise.participationStatus">
     <!-- On desktop -->
     <div class="d-none d-sm-inline">
-        <span class="text-muted" *ngSwitchCase="'no-team-assigned'">{{ 'artemisApp.courseOverview.exerciseList.userNotAssignedToTeam' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'exercise-missed'">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadline' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'exercise-active'">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'artemisApp.courseOverview.exerciseList.quizNotStarted' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuiz' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'artemisApp.courseOverview.exerciseList.userNotParticipated' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'artemisApp.courseOverview.exerciseList.userParticipating' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmitted' | artemisTranslate }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.NO_TEAM_ASSIGNED">{{ 'artemisApp.courseOverview.exerciseList.userNotAssignedToTeam' | artemisTranslate }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.UNINITIALIZED">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExercise' | artemisTranslate }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.EXERCISE_MISSED">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadline' | artemisTranslate }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.EXERCISE_ACTIVE">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmitted' | artemisTranslate }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.QUIZ_NOT_STARTED">{{ 'artemisApp.courseOverview.exerciseList.quizNotStarted' | artemisTranslate }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.QUIZ_UNINITIALIZED">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuiz' | artemisTranslate }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.QUIZ_NOT_PARTICIPATED">{{
+            'artemisApp.courseOverview.exerciseList.userNotParticipated' | artemisTranslate
+        }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.QUIZ_ACTIVE">{{ 'artemisApp.courseOverview.exerciseList.userParticipating' | artemisTranslate }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.QUIZ_SUBMITTED">{{ 'artemisApp.courseOverview.exerciseList.userSubmitted' | artemisTranslate }}</span>
     </div>
     <!-- On mobile -->
     <div class="d-sm-none">
-        <span class="text-muted" *ngSwitchCase="'no-team-assigned'">{{ 'artemisApp.courseOverview.exerciseList.userNotAssignedToTeamShort' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'exercise-missed'">{{ 'artemisApp.courseOverview.exerciseList.exerciseMissedDeadlineShort' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'exercise-active'">{{ 'artemisApp.courseOverview.exerciseList.exerciseNotSubmittedShort' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'quiz-not-started'">{{ 'artemisApp.courseOverview.exerciseList.quizNotStartedShort' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">{{ 'artemisApp.courseOverview.exerciseList.userNotStartedQuizShort' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'quiz-not-participated'">{{ 'artemisApp.courseOverview.exerciseList.userNotParticipatedShort' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'quiz-active'">{{ 'artemisApp.courseOverview.exerciseList.userParticipatingShort' | artemisTranslate }}</span>
-        <span class="text-muted" *ngSwitchCase="'quiz-submitted'">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | artemisTranslate }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.NO_TEAM_ASSIGNED">{{
+            'artemisApp.courseOverview.exerciseList.userNotAssignedToTeamShort' | artemisTranslate
+        }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.UNINITIALIZED">{{
+            'artemisApp.courseOverview.exerciseList.userNotStartedExerciseShort' | artemisTranslate
+        }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.EXERCISE_MISSED">{{
+            'artemisApp.courseOverview.exerciseList.exerciseMissedDeadlineShort' | artemisTranslate
+        }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.EXERCISE_ACTIVE">{{
+            'artemisApp.courseOverview.exerciseList.exerciseNotSubmittedShort' | artemisTranslate
+        }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.QUIZ_NOT_STARTED">{{ 'artemisApp.courseOverview.exerciseList.quizNotStartedShort' | artemisTranslate }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.QUIZ_UNINITIALIZED">{{
+            'artemisApp.courseOverview.exerciseList.userNotStartedQuizShort' | artemisTranslate
+        }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.QUIZ_NOT_PARTICIPATED">{{
+            'artemisApp.courseOverview.exerciseList.userNotParticipatedShort' | artemisTranslate
+        }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.QUIZ_ACTIVE">{{ 'artemisApp.courseOverview.exerciseList.userParticipatingShort' | artemisTranslate }}</span>
+        <span class="text-muted" *ngSwitchCase="ParticipationStatus.QUIZ_SUBMITTED">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | artemisTranslate }}</span>
     </div>
     <!-- Updating result -->
     <span *ngIf="['initialized', 'inactive', 'quiz-finished', 'exercise-submitted'].includes(exercise.participationStatus!) && participation">

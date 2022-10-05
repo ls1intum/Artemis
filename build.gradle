@@ -31,7 +31,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.11.1"
+version = "5.11.2"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -170,7 +170,28 @@ dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
     implementation "org.gitlab4j:gitlab4j-api:5.0.1"
 
-    implementation "de.jplag:jplag:3.0.0"
+    implementation "de.jplag:jplag:${jplag_version}"
+    implementation "de.jplag:java:${jplag_version}"
+    implementation "de.jplag:kotlin:${jplag_version}"
+    implementation "de.jplag:cpp:${jplag_version}"
+    implementation "de.jplag:swift:${jplag_version}"
+    implementation "de.jplag:java:${jplag_version}"
+    implementation "de.jplag:python-3:${jplag_version}"
+    implementation "de.jplag:text:${jplag_version}"
+
+
+    implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
+    implementation "org.slf4j:jul-to-slf4j:${slf4j_version}"
+    implementation ("org.slf4j:slf4j-api") {
+        version {
+            strictly "${slf4j_version}"
+        }
+    }
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.17.2"
+//    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.19.0"
+//    implementation "ch.qos.logback:logback-classic:1.4.1"
+
+
 
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
