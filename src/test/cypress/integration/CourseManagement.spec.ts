@@ -157,21 +157,21 @@ describe('Course management', () => {
             });
         });
 
-        // it('Deletes not existing course icon', () => {
-        //     artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).then((response) => {
-        //         courseId = response.body!.id!;
-        //     });
-        //     navigationBar.openCourseManagement();
-        //     courseManagementPage.openCourse(courseShortName);
-        //     cy.get('#edit-course').click();
-        //     cy.get('#delete-course-icon').should('not.exist');
-        //     cy.get('.no-image').should('exist');
-        // });
-        //
-        // after(() => {
-        //     if (!!courseId) {
-        //         artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
-        //     }
-        // });
+        it('Deletes not existing course icon', () => {
+            artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).then((response) => {
+                courseId = response.body!.id!;
+            });
+            navigationBar.openCourseManagement();
+            courseManagementPage.openCourse(courseShortName);
+            cy.get('#edit-course').click();
+            cy.get('#delete-course-icon').should('not.exist');
+            cy.get('.no-image').should('exist');
+        });
+
+        after(() => {
+            if (!!courseId) {
+                artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
+            }
+        });
     });
 });
