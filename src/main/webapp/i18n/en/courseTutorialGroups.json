@@ -5,10 +5,10 @@
         },
         "pages": {
             "courseTutorialGroups": {
-                "title": "Your Tutorial Group Registrations",
+                "title": "Your registered Tutorial Groups",
                 "noRegistrations": "You are not registered to any tutorial group in this course.",
-                "allFilter": "Show All Groups",
-                "registeredFilter": "Show Your Registered Groups"
+                "allFilter": "Show all Tutorial Groups",
+                "registeredFilter": "Show registered Tutorial Groups"
             },
             "courseTutorialGroupDetail": {
                 "title": "Tutorial Group Detail"
