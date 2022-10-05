@@ -28,6 +28,12 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long> {
 
+    /**
+     * Get all quiz exercises by courseId
+     *
+     * @param courseId the id of the course
+     * @return the list of entity
+     */
     @Query("""
             SELECT DISTINCT e FROM QuizExercise e
             LEFT JOIN FETCH e.categories
@@ -35,6 +41,12 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
             """)
     List<QuizExercise> findAllByCourseIdWithCategories(@Param("courseId") Long courseId);
 
+    /**
+     * Get all quiz exercises by examId
+     *
+     * @param examId the id of the exam
+     * @return the list of entity
+     */
     @Query("""
             SELECT qe
             FROM QuizExercise qe
