@@ -41,6 +41,7 @@
                         <b jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</b>
                     </div>
                     <div
+                        *ngIf="hasTutorialGroups()"
                         [jhiFeatureToggleHide]="FeatureToggle.TutorialGroups"
                         jhiOrionFilter
                         [showInOrionWindow]="false"
