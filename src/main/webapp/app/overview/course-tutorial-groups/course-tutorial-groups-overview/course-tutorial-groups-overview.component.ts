@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 @Component({
     selector: 'jhi-course-tutorial-groups-overview',
     templateUrl: './course-tutorial-groups-overview.component.html',
-    styleUrls: ['./course-tutorial-groups-overview.component.scss'],
 })
 export class CourseTutorialGroupsOverviewComponent {
     @Input()

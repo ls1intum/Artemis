@@ -4,7 +4,6 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 @Component({
     selector: 'jhi-course-tutorial-groups-registered',
     templateUrl: './course-tutorial-groups-registered.component.html',
-    styleUrls: ['./course-tutorial-groups-registered.component.scss'],
 })
 export class CourseTutorialGroupsRegisteredComponent {
     @Input()

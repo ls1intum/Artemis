@@ -14,7 +14,7 @@ export class CourseTutorialGroupCardComponent implements OnChanges {
     @Input()
     courseId: number;
     @Input()
-    registeredTutorialGroup: TutorialGroup;
+    tutorialGroup: TutorialGroup;
     teachingAssistant: User;
     // ToDo: Determine upcoming tutorial group sessions
     upcomingSession: undefined;
@@ -24,7 +24,7 @@ export class CourseTutorialGroupCardComponent implements OnChanges {
 
     @HostListener('click', ['$event'])
     onCardClicked() {
-        this.router.navigate(['/courses', this.courseId, 'tutorial-groups', this.registeredTutorialGroup.id]);
+        this.router.navigate(['/courses', this.courseId, 'tutorial-groups', this.tutorialGroup.id]);
     }
 
     constructor(private router: Router) {}
@@ -34,11 +34,11 @@ export class CourseTutorialGroupCardComponent implements OnChanges {
             if (changes.hasOwnProperty(propName)) {
                 const change = changes[propName];
                 switch (propName) {
-                    case 'registeredTutorialGroup': {
+                    case 'tutorialGroup': {
                         if (change.currentValue) {
-                            this.registeredTutorialGroup = change.currentValue;
-                            if (this.registeredTutorialGroup && this.registeredTutorialGroup.teachingAssistant) {
-                                this.teachingAssistant = this.registeredTutorialGroup.teachingAssistant;
+                            this.tutorialGroup = change.currentValue;
+                            if (this.tutorialGroup && this.tutorialGroup.teachingAssistant) {
+                                this.teachingAssistant = this.tutorialGroup.teachingAssistant;
                             }
                         }
                     }
