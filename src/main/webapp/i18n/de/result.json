@@ -28,6 +28,7 @@
             "resultStringNonProgramming": "{{ relativeScore }}%, {{ points }} Punkte",
             "resultStringProgramming": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ points }} Punkte",
             "resultStringProgrammingCodeIssues": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ numberOfIssues }} Issues, {{ points }} Punkte",
+            "resultStringProgrammingShort": "{{ relativeScore }}%, {{ buildAndTestMessage }}",
             "resultStringShort": "{{ relativeScore }}%",
             "completionDate": "Abgabedatum",
             "successful": "Erfolgreich",

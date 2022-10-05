@@ -146,43 +146,72 @@ describe('ResultService', () => {
             translateServiceSpy = jest.spyOn(translateService, 'instant');
         });
 
-        it('should return correct string for non programming exercise', () => {
+        it('should return correct string for non programming exercise long format', () => {
             expect(resultService.getResultString(modelingResult, modelingExercise)).toBe('artemisApp.result.resultStringNonProgramming');
             expect(translateServiceSpy).toHaveBeenCalledOnce();
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringNonProgramming', { relativeScore: 42, points: 21 });
         });
 
-        it('should return correct string for programming exercise with build failure', () => {
-            expect(resultService.getResultString(result1, programmingExercise)).toBe('artemisApp.result.resultStringProgramming');
+        it('should return correct string for non programming exercise short format', () => {
+            expect(resultService.getResultString(modelingResult, modelingExercise, true)).toBe('artemisApp.result.resultStringShort');
+            expect(translateServiceSpy).toHaveBeenCalledOnce();
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringShort', { relativeScore: 42 });
+        });
+
+        it.each([true, false])('should return correct string for programming exercise with build failure', (short: boolean) => {
+            const expectedProgrammingString = short ? 'artemisApp.result.resultStringProgrammingShort' : 'artemisApp.result.resultStringProgramming';
+            expect(resultService.getResultString(result1, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildFailed');
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
-                relativeScore: 0,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildFailed',
-                points: 0,
-            });
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 0,
+                    buildAndTestMessage: 'artemisApp.result.resultStringBuildFailed',
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 0,
+                    buildAndTestMessage: 'artemisApp.result.resultStringBuildFailed',
+                    points: 0,
+                });
+            }
         });
 
-        it('should return correct string for programming exercise with no tests', () => {
-            expect(resultService.getResultString(result2, programmingExercise)).toBe('artemisApp.result.resultStringProgramming');
+        it.each([true, false])('should return correct string for programming exercise with no tests', (short: boolean) => {
+            const expectedProgrammingString = short ? 'artemisApp.result.resultStringProgrammingShort' : 'artemisApp.result.resultStringProgramming';
+            expect(resultService.getResultString(result2, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulNoTests');
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
-                relativeScore: 20,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulNoTests',
-                points: 40,
-            });
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 20,
+                    buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulNoTests',
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 20,
+                    buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulNoTests',
+                    points: 40,
+                });
+            }
         });
 
-        it('should return correct string for programming exercise with tests', () => {
-            expect(resultService.getResultString(result3, programmingExercise)).toBe('artemisApp.result.resultStringProgramming');
+        it.each([true, false])('should return correct string for programming exercise with tests', (short: boolean) => {
+            const expectedProgrammingString = short ? 'artemisApp.result.resultStringShort' : 'artemisApp.result.resultStringProgramming';
+            expect(resultService.getResultString(result3, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
-                relativeScore: 60,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulTests',
-                points: 120,
-            });
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 60,
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 60,
+                    buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulTests',
+                    points: 120,
+                });
+            }
         });
 
         it('should return correct string for programming exercise with code issues', () => {
