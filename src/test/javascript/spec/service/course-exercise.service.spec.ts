@@ -237,6 +237,14 @@ describe('Course Management Service', () => {
         tick();
     }));
 
+    it('should find all exercises for course by search term', fakeAsync(() => {
+        service.findAllExercisesForCourseBySearchTerm(123, 'term').subscribe((resp) => expect(resp.ok).toBeTrue());
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush([]);
+        tick();
+    }));
+
     afterEach(() => {
         httpMock.verify();
         jest.restoreAllMocks();

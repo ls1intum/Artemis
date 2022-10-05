@@ -76,6 +76,7 @@
                 "userParticipatingShort": "Aktuelle Teilnahme",
                 "userSubmittedShort": "Bereits abgegeben.",
                 "noDateAssociated": "Ohne Datum",
+                "search": "Suchen Sie nach Übungen nach Titel",
                 "details": {
                     "courseInformation": "Kursinformationen:",
                     "totalExercises": "Aufgaben insgesamt:",

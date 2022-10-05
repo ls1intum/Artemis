@@ -817,4 +817,22 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
         courseTestService.testCreateCourseWithInvalidStartAndEndDate();
     }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSearchExercisesInCourseFound() throws Exception {
+        courseTestService.testSearchExercisesInCourseFound();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSearchExercisesInCourseNotFound() throws Exception {
+        courseTestService.testSearchExercisesInCourseNotFound();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSearchExercisesInCourseSearchTermLessThan3Chars() throws Exception {
+        courseTestService.testSearchExercisesInCourseSearchTermLessThan3Chars();
+    }
 }

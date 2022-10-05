@@ -1,12 +1,12 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { COURSE_BASE } from '../support/requests/CourseManagementRequests';
-import { GET, BASE_API, POST } from '../support/constants';
-import { artemis } from '../support/ArtemisTesting';
-import { CourseManagementPage } from '../support/pageobjects/course/CourseManagementPage';
-import { NavigationBar } from '../support/pageobjects/NavigationBar';
-import { ArtemisRequests } from '../support/requests/ArtemisRequests';
-import { generateUUID } from '../support/utils';
-import { Course } from 'app/entities/course.model';
+import { COURSE_BASE } from '../../support/requests/CourseManagementRequests';
+import { GET, BASE_API, POST } from '../../support/constants';
+import { artemis } from '../../support/ArtemisTesting';
+import { CourseManagementPage } from '../../support/pageobjects/course/CourseManagementPage';
+import { NavigationBar } from '../../support/pageobjects/NavigationBar';
+import { ArtemisRequests } from '../../support/requests/ArtemisRequests';
+import { generateUUID } from '../../support/utils';
+import { Course } from '../../../../main/webapp/app/entities/course.model';
 
 // Requests
 const artemisRequests: ArtemisRequests = new ArtemisRequests();

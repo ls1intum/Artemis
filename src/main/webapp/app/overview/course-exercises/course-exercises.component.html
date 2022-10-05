@@ -77,9 +77,29 @@
 </ng-template>
 
 <div class="row">
-    <div class="col-12 col-lg-8">
-        <div class="mt-3 position-relative" *ngIf="course">
-            <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise.exercise)">
+    <div class="col-12 col-lg-8 course-exercises">
+        <div class="position-relative" *ngIf="course">
+            <div class="search-exercises-container row mb-3">
+                <input
+                    id="search-exercises"
+                    type="text"
+                    class="form-control"
+                    [placeholder]="'artemisApp.courseOverview.exerciseList.search' | artemisTranslate"
+                    (keydown.enter)="onSearch($event)"
+                />
+                <div class="search-exercises-info" [class.active]="isSearching">
+                    <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                </div>
+                <div class="search-exercises-info" [class.active]="searchFailed">
+                    <span class="badge bg-danger" jhiTranslate="artemisApp.dataTable.search.failed"> Search failed </span>
+                </div>
+                <div class="search-exercises-info" [class.active]="searchQueryTooShort">
+                    <span class="badge bg-info" jhiTranslate="artemisApp.dataTable.search.minQueryLengthHint" [translateValues]="{ length: 3 }">
+                        Please enter at least 3 characters
+                    </span>
+                </div>
+            </div>
+            <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise.exercise) && !isSearching">
                 <h3 class="text-primary">
                     <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
                         {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExercise.dueDate | artemisDate } }}

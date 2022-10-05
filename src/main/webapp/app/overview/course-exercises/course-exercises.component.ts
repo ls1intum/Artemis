@@ -17,10 +17,12 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
-import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -78,6 +80,9 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     exerciseForGuidedTour?: Exercise;
     nextRelevantExercise?: ExerciseWithDueDate;
     sortingAttribute: SortingAttribute;
+    isSearching = false;
+    searchFailed = false;
+    searchQueryTooShort = false;
 
     // Icons
     faPlayCircle = faPlayCircle;
@@ -86,6 +91,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     faAngleDown = faAngleDown;
     faSortNumericUp = faSortNumericUp;
     faSortNumericDown = faSortNumericDown;
+    faCircleNotch = faCircleNotch;
 
     // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
@@ -97,6 +103,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
 
     constructor(
         private courseService: CourseManagementService,
+        private courseExerciseService: CourseExerciseService,
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseManagementService,
         private translateService: TranslateService,
@@ -216,6 +223,33 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
      */
     isVisibleToStudents(exercise: Exercise): boolean | undefined {
         return !this.activeFilters.has(ExerciseFilter.UNRELEASED) || (exercise as QuizExercise)?.visibleToStudents;
+    }
+
+    /**
+     * Method is called when enter key is pressed on search input
+     * @param event The event of the enter key action
+     */
+    onSearch(event: any) {
+        this.searchFailed = false;
+        this.searchQueryTooShort = false;
+        if (this.course) {
+            if (event.target.value?.length >= 3) {
+                this.isSearching = true;
+                this.courseExerciseService.findAllExercisesForCourseBySearchTerm(this.courseId, event.target.value).subscribe({
+                    next: (httpResponse: HttpResponse<Exercise[]>) => {
+                        this.course!.exercises = httpResponse.body ? httpResponse.body : undefined;
+                        this.applyFiltersAndOrder();
+                        this.isSearching = false;
+                    },
+                    error: () => {
+                        this.searchFailed = true;
+                        this.isSearching = false;
+                    },
+                });
+            } else {
+                this.searchQueryTooShort = true;
+            }
+        }
     }
 
     /**

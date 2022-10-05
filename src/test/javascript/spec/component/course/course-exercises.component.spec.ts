@@ -3,11 +3,12 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { RouterTestingModule } from '@angular/router/testing';
+import { By } from '@angular/platform-browser';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -29,11 +30,14 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
+import { HttpResponse } from '@angular/common/http';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
     let component: CourseExercisesComponent;
     let service: CourseManagementService;
+    let courseExerciseService: CourseExerciseService;
     let courseCalculation: CourseScoreCalculationService;
     let exerciseService: ExerciseService;
     let localStorageService: LocalStorageService;
@@ -76,6 +80,7 @@ describe('CourseExercisesComponent', () => {
                 fixture = TestBed.createComponent(CourseExercisesComponent);
                 component = fixture.componentInstance;
                 service = TestBed.inject(CourseManagementService);
+                courseExerciseService = TestBed.inject(CourseExerciseService);
                 courseCalculation = TestBed.inject(CourseScoreCalculationService);
                 exerciseService = TestBed.inject(ExerciseService);
                 localStorageService = TestBed.inject(LocalStorageService);
@@ -350,5 +355,46 @@ describe('CourseExercisesComponent', () => {
         component.sortingOrder = ExerciseSortingOrder.ASC;
         component.setSortingAttribute(SortingAttribute.RELEASE_DATE);
         checkUpcomingExercises();
+    });
+
+    it('should not perform any search if course is undefined', () => {
+        component.course = undefined;
+        const searchInput = fixture.debugElement.query(By.css('#search-exercises')).nativeElement;
+        searchInput.value = '';
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        searchInput.dispatchEvent(event);
+        expect(component.isSearching).toBeFalse();
+    });
+
+    it('should display search query too short when query is less than 3 characters', () => {
+        const searchInput = fixture.debugElement.query(By.css('#search-exercises')).nativeElement;
+        searchInput.value = 'te';
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        searchInput.dispatchEvent(event);
+        expect(component.isSearching).toBeFalse();
+        expect(component.searchQueryTooShort).toBeTrue();
+    });
+
+    it('should display search is failed when searching returns error', () => {
+        const searchInput = fixture.debugElement.query(By.css('#search-exercises')).nativeElement;
+        searchInput.value = 'tes';
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        jest.spyOn(courseExerciseService, 'findAllExercisesForCourseBySearchTerm').mockReturnValue(throwError(() => ({ status: 500 })));
+        searchInput.dispatchEvent(event);
+        expect(component.isSearching).toBeFalse();
+        expect(component.searchFailed).toBeTrue();
+    });
+
+    it('should filter exercises based on search query', () => {
+        const searchInput = fixture.debugElement.query(By.css('#search-exercises')).nativeElement;
+        searchInput.value = 'pat';
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        const exercise1 = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
+        const exercise2 = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
+        const exercises = [exercise1, exercise2];
+        jest.spyOn(courseExerciseService, 'findAllExercisesForCourseBySearchTerm').mockReturnValue(of(new HttpResponse({ body: exercises })));
+        searchInput.dispatchEvent(event);
+        expect(component.isSearching).toBeFalse();
+        expect(component.course?.exercises).toEqual(exercises);
     });
 });
