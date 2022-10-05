@@ -442,9 +442,6 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException();
         }
 
-        // Check if tutors can start assessing the students submission
-        programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
-
         // Check if the limit of simultaneously locked submissions has been reached
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
@@ -455,6 +452,9 @@ public class ProgrammingSubmissionResource {
         }
         else {
             submission = programmingSubmissionService.getRandomAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
+
+            // Check if tutors can start assessing the students submission
+            programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
         }
 
         if (lockSubmission) {
