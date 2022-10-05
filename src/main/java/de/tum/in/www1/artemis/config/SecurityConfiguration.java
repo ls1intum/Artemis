@@ -136,7 +136,6 @@ public class SecurityConfiguration {
         .and()
             // api
             .authorizeRequests()
-            .antMatchers("/git/*").permitAll()
             .antMatchers("/api/register").permitAll()
             .antMatchers("/api/activate").permitAll()
             .antMatchers("/api/authenticate").permitAll()

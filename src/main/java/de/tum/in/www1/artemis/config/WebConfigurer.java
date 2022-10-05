@@ -7,14 +7,19 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.EnumSet;
+import java.util.HashMap;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.ServletContext;
 
+import de.tum.in.www1.artemis.security.jgitServlet.JGitFetchFilter;
+import de.tum.in.www1.artemis.security.jgitServlet.JGitPushFilter;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.RemoteRepositoryException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
+import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.slf4j.Logger;
@@ -52,12 +57,17 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final JHipsterProperties jHipsterProperties;
 
+    private final JGitFetchFilter jGitFetchFilter;
+    private final JGitPushFilter jGitPushFilter;
+
     @Value("${artemis.local-git-server-path}")
     private String localGitPath;
 
-    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties) {
+    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties, JGitFetchFilter jGitFetchFilter, JGitPushFilter jGitPushFilter) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
+        this.jGitFetchFilter = jGitFetchFilter;
+        this.jGitPushFilter = jGitPushFilter;
     }
 
     @Override
@@ -89,12 +99,14 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         log.info("Web application fully configured");
     }
 
+    private final HashMap<String, Repository> repositories = new HashMap<>();
+
     @Bean
     public ServletRegistrationBean<GitServlet> jgitServlet(ApplicationContext applicationContext) {
 
         try {
-//            Repository repository = createNewRepository();
-//            populateRepository(repository);
+            //Repository repository = createNewRepository();
+            //populateRepository(repository);
             GitServlet gs = new GitServlet();
             gs.setRepositoryResolver((req, name) -> {
                 // req – the current request, may be used to inspect session state including cookies or user authentication.
@@ -102,19 +114,37 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
                 // Returns the opened repository instance, never null.
 
                 // Find the local repository depending on the name and return an opened instance. Must be closed later on.
-                String projectKey = name.split("-")[0].toUpperCase();
-                File gitDir = new File(localGitPath + "/" + projectKey + "/" + name + ".git");
-
-                Repository repository = null;
-
-                try {
-                    repository = FileRepositoryBuilder.create(gitDir);
-                    return repository;
-                } catch (IOException ex) {
+                log.debug("Path to resolve repository from: " + localGitPath + File.separator + name);
+                if (!new File(localGitPath + File.separator + name).exists()) {
                     log.error("Could not find local repository with name {}", name);
                     throw new RepositoryNotFoundException(name);
                 }
+                //String projectKey = name.split("-")[0].toUpperCase();
+                //File gitDir = new File(localGitPath + "/" + projectKey + "/" + name + ".git");
+                File gitDir = new File(localGitPath + File.separator + name + File.separator + ".git");
+
+                Repository repository = null;
+
+                if (repositories.containsKey(name)) {
+                    log.debug("Retrieving existing local repository {}", name);
+                    repository = repositories.get(name);
+                } else {
+                    log.debug("Opening local repository {}", name);
+                    try {
+                        repository = FileRepositoryBuilder.create(gitDir);
+                        this.repositories.put(name, repository);
+                    } catch (IOException e) {
+                        log.error("Unable to open local repository {}", name);
+                        throw new RepositoryNotFoundException(name);
+                    }
+                }
+
+                repository.incrementOpen();
+                return repository;
             });
+
+            gs.addUploadPackFilter(jGitFetchFilter);
+            gs.addReceivePackFilter(jGitPushFilter);
 
             return new ServletRegistrationBean<>(gs, "/git/*");
 
@@ -125,7 +155,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         return null;
     }
 
-    private static void populateRepository(Repository repository) throws IOException, GitAPIException {
+    private void populateRepository(Repository repository) throws IOException, GitAPIException {
         // enable pushing to the sample repository via http
         repository.getConfig().setString("http", null, "receivepack", "true");
 
@@ -137,13 +167,13 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
             git.add().addFilepattern("testfile").call();
 
-            System.out.println("Added file " + myfile + " to repository at " + repository.getDirectory());
+            log.debug("Added file " + myfile + " to repository at " + repository.getDirectory());
 
             git.commit().setMessage("Test-Checkin").call();
         }
     }
 
-    private static Repository createNewRepository() throws IOException {
+    private Repository createNewRepository() throws IOException {
         // prepare a new folder
         File localPath = File.createTempFile("TestGitRepository", "");
         if(!localPath.delete()) {
@@ -157,6 +187,8 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         // create the directory
         Repository repository = FileRepositoryBuilder.create(new File(localPath, ".git"));
         repository.create();
+
+        log.debug("Created repository at {}", localPath);
 
         return repository;
     }
