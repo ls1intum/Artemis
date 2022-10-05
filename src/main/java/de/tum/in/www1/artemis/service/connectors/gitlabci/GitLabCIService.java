@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.service.connectors.gitlabci;
 
 import java.net.URL;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.ProjectApi;
+import org.gitlab4j.api.models.PipelineStatus;
 import org.gitlab4j.api.models.Project;
 import org.gitlab4j.api.models.Trigger;
+import org.gitlab4j.api.models.Variable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,17 +19,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 @Profile("gitlabci")
@@ -37,43 +40,84 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(GitLabCIService.class);
 
-    // TODO: Generate an URL and make it accessible via the API
-    public static final String CI_CONFIG_URL = "https://home.in.tum.de/~scbe/Artemis/gitlabci-runners/getting-started-template.yml";
+    private static final String VARIABLE_DOCKER_IMAGE_NAME = "ARTEMIS_DOCKER_IMAGE";
+
+    private static final String VARIABLE_BRANCH_NAME = "ARTEMIS_BRANCH";
+
+    private static final String VARIABLE_ARTEMIS_SERVER_URL_NAME = "ARTEMIS_SERVER_URL";
 
     private final GitLabApi gitlab;
 
     private final UrlService urlService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final BuildPlanRepository buildPlanRepository;
+
+    private final GitLabCIBuildPlanService buildPlanService;
+
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
+    @Value("${server.url}")
+    private URL artemisServerUrl;
+
     public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService) {
+            RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository,
+            BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.gitlab = gitlab;
         this.urlService = urlService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.buildPlanRepository = buildPlanRepository;
+        this.buildPlanService = buildPlanService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        addBuildPlanToGitLabRepositoryConfiguration(repositoryURL);
+        addBuildPlanToProgrammingExerciseIfUnset(exercise);
+        setupGitLabCIConfiguration(repositoryURL, exercise);
+        // TODO: triggerBuild(repositoryURL, exercise.getBranch());
     }
 
-    private void addBuildPlanToGitLabRepositoryConfiguration(VcsRepositoryUrl repositoryURL) {
+    private void setupGitLabCIConfiguration(VcsRepositoryUrl repositoryURL, ProgrammingExercise exercise) {
         final String repositoryPath = getRepositoryPath(repositoryURL);
+        ProjectApi projectApi = gitlab.getProjectApi();
         try {
-            Project project = gitlab.getProjectApi().getProject(repositoryPath);
+            Project project = projectApi.getProject(repositoryPath);
 
             project.setJobsEnabled(true);
             project.setSharedRunnersEnabled(true);
             project.setAutoDevopsEnabled(false);
-            project.setCiConfigPath(GitLabCIService.CI_CONFIG_URL);
 
-            gitlab.getProjectApi().updateProject(project);
+            project.setCiConfigPath(generateBuildPlanURL(exercise));
+
+            projectApi.updateProject(project);
         }
         catch (GitLabApiException e) {
-            throw new GitLabCIException("Error getting project from repository path for " + repositoryURL.toString(), e);
+            throw new GitLabCIException("Error enabling CI for " + repositoryURL.toString(), e);
+        }
+
+        try {
+            // TODO: Update variables
+            projectApi.createVariable(repositoryPath, VARIABLE_DOCKER_IMAGE_NAME,
+                    programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())), Variable.Type.ENV_VAR, false,
+                    true);
+            projectApi.createVariable(repositoryPath, VARIABLE_BRANCH_NAME, exercise.getBranch(), Variable.Type.ENV_VAR, false, true);
+            projectApi.createVariable(repositoryPath, VARIABLE_ARTEMIS_SERVER_URL_NAME, artemisServerUrl.toExternalForm(), Variable.Type.ENV_VAR, false, true);
+        }
+        catch (GitLabApiException e) {
+            log.error("Error creating variable for " + repositoryURL.toString() + " The variables may already have been created.", e);
+        }
+    }
+
+    private void addBuildPlanToProgrammingExerciseIfUnset(ProgrammingExercise programmingExercise) {
+        if (programmingExercise.getBuildPlan() == null) {
+            programmingExerciseRepository.updateBuildPlan(programmingExercise, buildPlanService.getBuildPlan(programmingExercise), buildPlanRepository);
         }
     }
 
@@ -83,8 +127,15 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
-        addBuildPlanToGitLabRepositoryConfiguration(exercise.getRepositoryURL(RepositoryType.TEMPLATE));
-        addBuildPlanToGitLabRepositoryConfiguration(exercise.getRepositoryURL(RepositoryType.SOLUTION));
+        addBuildPlanToProgrammingExerciseIfUnset(exercise);
+
+        VcsRepositoryUrl templateUrl = exercise.getVcsTemplateRepositoryUrl();
+        setupGitLabCIConfiguration(templateUrl, exercise);
+        // TODO: triggerBuild(templateUrl, exercise.getBranch());
+
+        VcsRepositoryUrl solutionUrl = exercise.getVcsSolutionRepositoryUrl();
+        setupGitLabCIConfiguration(solutionUrl, exercise);
+        // TODO: triggerBuild(solutionUrl, exercise.getBranch());
     }
 
     @Override
@@ -96,7 +147,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        addBuildPlanToGitLabRepositoryConfiguration(participation.getVcsRepositoryUrl());
+        setupGitLabCIConfiguration(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise());
     }
 
     @Override
@@ -106,14 +157,18 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException {
-        final String repositoryPath = getRepositoryPath(participation.getVcsRepositoryUrl());
+        triggerBuild(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise().getBranch());
+    }
+
+    private void triggerBuild(VcsRepositoryUrl vcsRepositoryUrl, String branch) {
+        final String repositoryPath = getRepositoryPath(vcsRepositoryUrl);
         try {
             Trigger trigger = gitlab.getPipelineApi().createPipelineTrigger(repositoryPath, "Trigger build");
-            gitlab.getPipelineApi().triggerPipeline(repositoryPath, trigger, "Trigger build", null);
+            gitlab.getPipelineApi().triggerPipeline(repositoryPath, trigger, branch, null);
             gitlab.getPipelineApi().deletePipelineTrigger(repositoryPath, trigger.getId());
         }
         catch (GitLabApiException e) {
-            throw new GitLabCIException("Error triggering the build for " + repositoryPath);
+            throw new GitLabCIException("Error triggering the build for " + repositoryPath, e);
         }
     }
 
@@ -143,9 +198,25 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        log.error("Unsupported action: GitLabCIService.getBuildStatus()");
-        // TODO
-        return null;
+        // https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines
+        final String repositoryPath = getRepositoryPath(participation.getVcsRepositoryUrl());
+        try {
+            // TODO: Get latest pipeline
+            PipelineStatus status = gitlab.getPipelineApi().getPipelines(repositoryPath).get(0).getStatus();
+            if (status.equals(PipelineStatus.CREATED) || status.equals(PipelineStatus.WAITING_FOR_RESOURCE) || status.equals(PipelineStatus.PREPARING)
+                    || status.equals(PipelineStatus.PENDING)) {
+                return BuildStatus.QUEUED;
+            }
+            else if (status.equals(PipelineStatus.RUNNING)) {
+                return BuildStatus.BUILDING;
+            }
+            else {
+                return BuildStatus.INACTIVE;
+            }
+        }
+        catch (GitLabApiException | IndexOutOfBoundsException e) {
+            return BuildStatus.INACTIVE;
+        }
     }
 
     @Override
@@ -218,5 +289,12 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Override
     protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
         // TODO
+    }
+
+    private String generateBuildPlanURL(ProgrammingExercise exercise) {
+        programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
+        // We need this workaround (&file-extension=.yml) since GitLab only accepts URLs ending with .yml.
+        // See https://gitlab.com/gitlab-org/gitlab/-/issues/27526
+        return String.format("%s/api/programming-exercises/%s/build-plan?secret=%s&file-extension=.yml", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
     }
 }

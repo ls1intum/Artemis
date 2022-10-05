@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -86,6 +87,15 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
     private String projectKey;
+
+    @Size(max = 36)
+    @Nullable
+    @Column(name = "build_plan_access_secret", table = "programming_exercise_details", length = 36)
+    private String buildPlanAccessSecret;
+
+    @ManyToOne
+    @JoinColumn(name = "build_plan_id", table = "programming_exercise_details")
+    private BuildPlan buildPlan;
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
@@ -775,5 +785,31 @@ public class ProgrammingExercise extends Exercise {
 
     public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
         this.exerciseHints = exerciseHints;
+    }
+
+    public void setBuildPlan(BuildPlan buildPlan) {
+        this.buildPlan = buildPlan;
+    }
+
+    // TODO: Safe build plan when exercise is created
+    public BuildPlan getBuildPlan() {
+        return buildPlan;
+    }
+
+    public void setBuildPlanAccessSecret(String buildPlanAccessSecret) {
+        this.buildPlanAccessSecret = buildPlanAccessSecret;
+    }
+
+    public boolean isBuildPlanAccessSecretSet() {
+        return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
+    }
+
+    public String getBuildPlanAccessSecret() {
+        return buildPlanAccessSecret;
+    }
+
+    public void generateAndSetBuildPlanAccessSecret() {
+        buildPlanAccessSecret = UUID.randomUUID().toString();
+        // SecureRandom.getInstanceStrong();
     }
 }

@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -801,5 +802,20 @@ public class ProgrammingExerciseResource {
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/file-names");
+    }
+
+    @GetMapping(BUILD_PLAN)
+    @PreAuthorize("permitAll()")
+    public ResponseEntity<String> getBuildPlan(@PathVariable Long exerciseId, @RequestParam("secret") String secret) {
+        log.debug("REST request to get build plan for programming exercise with id : {}", exerciseId);
+        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
+        if (optionalProgrammingExercise.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
+        if (programmingExercise.getBuildPlanAccessSecret() == null || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
+            throw new AccessForbiddenException();
+        }
+        return ResponseEntity.ok().body(programmingExercise.getBuildPlan().getBuildPlan());
     }
 }

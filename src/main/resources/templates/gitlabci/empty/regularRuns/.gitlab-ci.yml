@@ -1,0 +1,19 @@
+image: ${ARTEMIS_DOCKER_IMAGE}
+
+stages:
+    - test
+
+test-job:
+    stage: test
+    only:
+        - ${ARTEMIS_BRANCH}
+    allow_failure: true
+    variables:
+        GIT_STRATEGY: none
+        ARTEMIS_SERVER_URL: $ARTEMIS_SERVER_URL
+        studentid: $studentid
+        uploadsecret: $uploadsecret
+    script:
+        - git clone ${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_NAMESPACE}/$(echo ${CI_PROJECT_NAME} | sed "s/\-[^\-]*$/-tests/gm") .
+        - git clone ${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME} assignment
+        - mvn --version

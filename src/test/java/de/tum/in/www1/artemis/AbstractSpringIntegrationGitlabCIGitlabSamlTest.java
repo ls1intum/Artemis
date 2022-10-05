@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.URISyntaxException;
@@ -12,6 +11,7 @@ import java.util.Set;
 
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.models.PipelineStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIService;
@@ -89,6 +90,11 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
         gitlabRequestMockProvider.mockCreateRepository(exercise, solutionRepoName);
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         gitlabRequestMockProvider.mockAddAuthenticatedWebHook();
+
+        if (failToCreateCiProject) {
+            doThrow(new ContinuousIntegrationException()).when(continuousIntegrationService).createProjectForExercise(any());
+            doThrow(new ContinuousIntegrationException()).when(continuousIntegrationService).createBuildPlanForExercise(any(), any(), any(), any(), any());
+        }
 
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
 
@@ -366,6 +372,10 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     @Override
     public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws GitLabApiException {
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
+    }
+
+    public void mockGetBuildStatus(PipelineStatus pipelineStatus) throws GitLabApiException {
+        gitlabRequestMockProvider.mockGetBuildStatus(pipelineStatus);
     }
 
     @Override

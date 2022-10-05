@@ -144,6 +144,7 @@ public class SecurityConfiguration {
             .antMatchers("/api/lti/launch/*").permitAll()
             .antMatchers("/api/files/attachments/lecture/**").permitAll()
             .antMatchers("/api/files/attachments/attachment-unit/**").permitAll()
+            .antMatchers("/api/programming-exercises/*/build-plan").permitAll()
             .antMatchers("/api/files/file-upload-exercises/**").permitAll()
             .antMatchers("/api/files/markdown/**").permitAll()
             .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH).permitAll()

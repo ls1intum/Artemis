@@ -14,13 +14,13 @@ import de.tum.in.www1.artemis.config.Constants;
 @Profile("gitlabci")
 public class GitLabCIBuildPlanLinkInfoContributor implements InfoContributor {
 
-    @Value("${artemis.version-control.url}")
-    private URL gitlabServerUrl;
+    @Value("${server.url}")
+    private URL artemisServerUrl;
 
     @Override
     public void contribute(Info.Builder builder) {
-        // TODO: Add a template build plan url. Jenkins and Bamboo each use specific wildcards, which are then interpreted in the client. Since GitLab CI has a other structure (no
-        // build plan ids) a change in the client code is necessary.
-        builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, gitlabServerUrl);
+        // TODO: Not defined in https://github.com/ls1intum/Artemis/blob/develop/src/main/webapp/app/exercises/programming/shared/utils/programming-exercise.utils.ts#L24-L28
+        final var buildPlanURLTemplate = artemisServerUrl + "/api/programming-exercises/{exerciseId}/build-plan";
+        builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
     }
 }
