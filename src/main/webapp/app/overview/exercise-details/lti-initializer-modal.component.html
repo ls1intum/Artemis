@@ -17,6 +17,21 @@
             </span>
             <a target="_blank" [routerLink]="this.passwordResetLocation" jhiTranslate="artemisApp.lti.initialization.body.passwordChange">Change password</a>
         </p>
-        <button type="button" class="btn btn-primary" data-dismiss="modal" (click)="clear()" jhiTranslate="artemisApp.lti.initialization.body.confirm">Confirm</button>
+        <p>
+            <input type="checkbox" class="form-check-input" (change)="readAndUnderstood = !readAndUnderstood" [checked]="readAndUnderstood" />
+            <strong jhiTranslate="artemisApp.lti.initialization.body.readAndUnderstood">
+                I have read the information above and understand that I should save the password displayed above.
+            </strong>
+        </p>
+        <button
+            type="button"
+            class="btn btn-primary"
+            data-dismiss="modal"
+            [disabled]="!readAndUnderstood"
+            (click)="clear()"
+            jhiTranslate="artemisApp.lti.initialization.body.confirm"
+        >
+            Confirm
+        </button>
     </div>
 </div>

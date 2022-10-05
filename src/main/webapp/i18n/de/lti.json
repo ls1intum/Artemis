@@ -12,6 +12,7 @@
                     "passwordLabel": "Dein Passwort",
                     "passwordHint": "Merk dir das Passwort gut. Du wirst es benötigen um dich manuell einzuloggen oder für unsere Programmieraufgaben.<br>Wenn du dein Passwort vergessen hast oder ändern möchtest kannst du es auf der Login-Seite zurücksetzen. Du kannst das Passwort auch sofort ändern:",
                     "passwordChange": "Passwort ändern",
+                    "readAndUnderstood": "Ich habe die obigen Informationen gelesen und verstehe, dass ich das oben angezeigte Passwort speichern muss.",
                     "confirm": "Bestätigen"
                 }
             },

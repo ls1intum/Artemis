@@ -12,6 +12,7 @@
                     "passwordLabel": "Your password",
                     "passwordHint": "Make sure to remember your password as you will need it to log in manually or connect with our services for programming exercises.<br>If you forget your password or want to change it, you can reset it on the login page. You can also change your password now:",
                     "passwordChange": "Change password",
+                    "readAndUnderstood": "I have read the information above and understand that I should save the password displayed above.",
                     "confirm": "Confirm"
                 }
             },

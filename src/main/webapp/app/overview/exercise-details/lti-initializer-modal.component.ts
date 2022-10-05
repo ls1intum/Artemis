@@ -11,6 +11,8 @@ export class LtiInitializerModalComponent {
     password: string;
     passwordResetLocation = ['account', 'reset', 'request'];
 
+    readAndUnderstood = false;
+
     constructor(private activeModal: NgbActiveModal, private alertService: AlertService, private router: Router, private activatedRoute: ActivatedRoute) {}
 
     /**
