@@ -60,14 +60,14 @@ export class ExerciseDetailsStudentActionsComponent {
      * see exercise.utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
-        return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
+        return !this.examMode && isStartExerciseAvailable(this.exercise as ProgrammingExercise);
     }
 
     /**
      * see exercise.utils -> isStartPracticeAvailable
      */
     isStartPracticeAvailable(): boolean {
-        return isStartPracticeAvailable(this.exercise as ProgrammingExercise);
+        return !this.examMode && isStartPracticeAvailable(this.exercise as ProgrammingExercise);
     }
 
     /**
@@ -179,7 +179,11 @@ export class ExerciseDetailsStudentActionsComponent {
     public shouldDisplayIDEButtons(): boolean {
         return !!this.exercise.studentParticipations?.some((participation) => {
             const status = participationStatus(this.exercise, participation.testRun);
-            return status === ParticipationStatus.INITIALIZED || (status === ParticipationStatus.INACTIVE && !isStartExerciseAvailable(this.exercise) && !participation.testRun);
+            return (
+                status === ParticipationStatus.INITIALIZED ||
+                (status === ParticipationStatus.INACTIVE &&
+                    ((!isStartExerciseAvailable(this.exercise) && !participation.testRun) || (!isStartPracticeAvailable(this.exercise) && participation.testRun)))
+            );
         });
     }
 
