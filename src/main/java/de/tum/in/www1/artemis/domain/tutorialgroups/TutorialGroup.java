@@ -184,12 +184,12 @@ public class TutorialGroup extends DomainObject {
      */
     public void setTransientPropertiesForUser(User user) {
         if (Hibernate.isInitialized(registrations) && registrations != null) {
-            numberOfRegisteredUsers = registrations.size();
-            isUserRegistered = registrations.stream().anyMatch(registration -> registration.getStudent().equals(user));
+            this.setIsUserRegistered(registrations.stream().anyMatch(registration -> registration.getStudent().equals(user)));
+            this.setNumberOfRegisteredUsers(registrations.size());
         }
         else {
-            isUserRegistered = null;
-            numberOfRegisteredUsers = null;
+            this.setIsUserRegistered(null);
+            this.setNumberOfRegisteredUsers(null);
         }
     }
 

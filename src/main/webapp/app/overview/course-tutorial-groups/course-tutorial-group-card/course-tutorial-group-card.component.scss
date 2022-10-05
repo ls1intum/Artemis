@@ -1,6 +1,7 @@
 :host(.tutorial-group-card) {
     width: 18rem;
     margin: 6px;
+
     &:hover {
         box-shadow: 0 2px 4px 0 var(--primary);
         cursor: pointer;
