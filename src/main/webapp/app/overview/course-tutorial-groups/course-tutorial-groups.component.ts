@@ -17,7 +17,6 @@ type filter = 'all' | 'registered';
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
-    styleUrls: ['./course-tutorial-groups.component.scss'],
 })
 export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
