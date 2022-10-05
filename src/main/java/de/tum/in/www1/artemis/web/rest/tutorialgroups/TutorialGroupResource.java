@@ -17,10 +17,8 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -47,18 +45,15 @@ public class TutorialGroupResource {
 
     private final UserRepository userRepository;
 
-    private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
-
     private final AuthorizationCheckService authorizationCheckService;
 
     public TutorialGroupResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository) {
+            TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository) {
         this.tutorialGroupService = tutorialGroupService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.tutorialGroupRepository = tutorialGroupRepository;
-        this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
     }
 
     /**
@@ -281,24 +276,6 @@ public class TutorialGroupResource {
         Set<StudentDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudents(tutorialGroupFromDatabase, studentDtos,
                 TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION);
         return ResponseEntity.ok().body(notFoundStudentDtos);
-    }
-
-    /**
-     * GET /courses/{courseId}/tutorial-groups/registrations : get the tutorial group registrations for the given course of the current user
-     *
-     * @param courseId the id of the course for which teh tutorial group registrations should be retrieved
-     * @return ResponseEntity with status 200 (OK) and with body the registrations
-     */
-    @GetMapping("/courses/{courseId}/tutorial-groups/registrations")
-    @PreAuthorize("hasRole('USER')")
-    @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<Set<TutorialGroupRegistration>> getRegistrationsForUser(@PathVariable Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        User loggedInUser = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get tutorial group registrations for user: {} of course: {}", loggedInUser.getLogin(), courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, loggedInUser);
-        var registrations = tutorialGroupRegistrationRepository.findByCourseAndUserWithTutorialGroups(course, loggedInUser);
-        return ResponseEntity.ok().body(registrations);
     }
 
     private void trimStringFields(TutorialGroup tutorialGroup) {
