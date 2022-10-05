@@ -218,7 +218,7 @@ public class QuizExerciseResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
-        var quizExercises = quizExerciseRepository.findByCourseIdWithCategories(courseId);
+        var quizExercises = quizExerciseRepository.findAllByCourseIdWithCategories(courseId);
 
         for (QuizExercise quizExercise : quizExercises) {
             quizExercise.setQuizQuestions(null);
@@ -241,7 +241,7 @@ public class QuizExerciseResource {
     @PreAuthorize("hasRole('EDITOR')")
     public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
         log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
-        List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
+        List<QuizExercise> quizExercises = quizExerciseRepository.findAllByExamId(examId);
         Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
