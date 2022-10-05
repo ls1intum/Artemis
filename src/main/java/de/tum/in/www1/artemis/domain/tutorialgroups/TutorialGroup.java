@@ -177,6 +177,11 @@ public class TutorialGroup extends DomainObject {
         this.numberOfRegisteredUsers = numberOfRegisteredUsers;
     }
 
+    /**
+     * Sets the transient fields isUserRegistered and numberOfRegisteredUsers for the given user.
+     *
+     * @param user the user for which the transient fields should be set
+     */
     public void setTransientPropertiesForUser(User user) {
         if (Hibernate.isInitialized(registrations) && registrations != null) {
             numberOfRegisteredUsers = registrations.size();
@@ -188,6 +193,9 @@ public class TutorialGroup extends DomainObject {
         }
     }
 
+    /**
+     * Hides privacy sensitive information.
+     */
     public void hidePrivacySensitiveInformation() {
         this.setRegistrations(null);
     }
