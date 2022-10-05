@@ -45,7 +45,7 @@ describe(`ErrorHandlerInterceptor`, () => {
 
         errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
-        expect(eventManagerMock.broadcast).toHaveBeenCalledTimes(0);
+        expect(eventManagerMock.broadcast).not.toHaveBeenCalled();
     });
 
     it('should not broadcast an http error if status is 401 but url includes /api/account', () => {
@@ -56,6 +56,6 @@ describe(`ErrorHandlerInterceptor`, () => {
 
         errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
-        expect(eventManagerMock.broadcast).toHaveBeenCalledTimes(0);
+        expect(eventManagerMock.broadcast).not.toHaveBeenCalled();
     });
 });

@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
@@ -148,17 +146,7 @@ public class LectureUnitResource {
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture().getCourse(), null);
 
-        String lectureUnitName;
-
-        if (lectureUnit instanceof ExerciseUnit && ((ExerciseUnit) lectureUnit).getExercise() != null) {
-            lectureUnitName = ((ExerciseUnit) lectureUnit).getExercise().getTitle();
-        }
-        else if (lectureUnit instanceof AttachmentUnit && ((AttachmentUnit) lectureUnit).getAttachment() != null) {
-            lectureUnitName = ((AttachmentUnit) lectureUnit).getAttachment().getName();
-        }
-        else {
-            lectureUnitName = lectureUnit.getName();
-        }
+        String lectureUnitName = lectureUnit.getName();
         if (Objects.isNull(lectureUnitName)) {
             lectureUnitName = "lectureUnitWithoutName";
         }

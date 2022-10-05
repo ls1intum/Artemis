@@ -48,13 +48,15 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         database.addUsers(5, 5, 4, 4);
         student1 = database.getUserByLogin("student1");
 
-        // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
+        // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
-        existingPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream()
+        List<Post> existingPostsAndConversationPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream()
                 .filter(coursePost -> coursePost.getAnswers() != null && coursePost.getPlagiarismCase() == null).toList();
 
+        existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).toList();
+
         // get all answerPosts
-        existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
+        existingAnswerPosts = existingPostsAndConversationPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
 
         // get all existing posts with answers in exercise context
         existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getExercise() != null).toList();

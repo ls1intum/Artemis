@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { francAll } from 'franc-min';
-import { Language } from 'app/entities/tutor-group.model';
+import { Language } from 'app/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Injectable({ providedIn: 'root' })

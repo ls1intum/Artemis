@@ -14,7 +14,6 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -84,9 +83,6 @@ public class ProgrammingExerciseGradingService {
 
     private final TestwiseCoverageService testwiseCoverageService;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultGitBranch;
-
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ProgrammingTriggerService programmingTriggerService, SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
@@ -131,12 +127,8 @@ public class ProgrammingExerciseGradingService {
         Result newResult = null;
         try {
             var buildResult = continuousIntegrationService.get().convertBuildResult(requestBody);
-            var optionalBranchNameFromAssignmentRepo = buildResult.getBranchNameFromAssignmentRepo();
+            checkCorrectBranchElseThrow(participation.getProgrammingExercise(), buildResult);
 
-            // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
-            if (optionalBranchNameFromAssignmentRepo.isPresent() && !optionalBranchNameFromAssignmentRepo.get().equals(defaultGitBranch)) {
-                throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
-            }
             newResult = continuousIntegrationService.get().createResultFromBuildResult(buildResult, participation);
 
             // Fetch submission or create a fallback
@@ -147,17 +139,23 @@ public class ProgrammingExerciseGradingService {
 
             if (buildResult.hasLogs()) {
                 var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
+                var projectType = participation.getProgrammingExercise().getProjectType();
                 var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
-                buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
-                var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
 
-                // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-                latestSubmission.setBuildLogEntries(savedBuildLogs);
+                continuousIntegrationService.get().extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
+
+                if (!buildResult.isBuildSuccessful()) {
+                    buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
+                    var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
+
+                    // Set the received logs in order to avoid duplicate entries (this removes existing logs)
+                    latestSubmission.setBuildLogEntries(savedBuildLogs);
+                }
             }
 
             // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
             newResult.setSubmission(latestSubmission);
-            newResult.setRatedIfNotExceeded(exerciseDateService.getDueDate(participation).orElse(null), latestSubmission);
+            newResult.setRatedIfNotExceeded(exerciseDateService.getDueDate(participation).orElse(null), latestSubmission, (Participation) participation);
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
@@ -165,6 +163,24 @@ public class ProgrammingExerciseGradingService {
         }
 
         return Optional.ofNullable(newResult).map(result -> processNewProgrammingExerciseResult(participation, result));
+    }
+
+    /**
+     * Checks that the build result belongs to the default branch of the exercise.
+     *
+     * @param exercise The exercise in which the submission was made.
+     * @param buildResult The build result received from the CI system.
+     * @throws IllegalArgumentException Thrown if the result does not belong to the default branch of the exercise.
+     */
+    private void checkCorrectBranchElseThrow(final ProgrammingExercise exercise, final AbstractBuildResultNotificationDTO buildResult) throws IllegalArgumentException {
+        // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
+        buildResult.getBranchNameFromAssignmentRepo().ifPresent(branchName -> {
+            final String exerciseDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(exercise);
+
+            if (!branchName.equals(exerciseDefaultBranch)) {
+                throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
+            }
+        });
     }
 
     /**
@@ -257,7 +273,7 @@ public class ProgrammingExerciseGradingService {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }
 
-            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
+            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isTestRun()) {
                 // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
                 Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult);
                 // Adding back dropped submission

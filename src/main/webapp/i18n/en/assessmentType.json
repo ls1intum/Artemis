@@ -14,9 +14,9 @@
             "tooltip": {
                 "null": "No assessment type set.",
                 "undefined": "No assessment type set.",
-                "AUTOMATIC": "This exercise is graded automatically and not by tutors.",
-                "SEMI_AUTOMATIC": "This exercise is graded by a tutor. But automatic grading like test cases in programming exercise make grading suggestions.",
-                "MANUAL": "This exercise is graded manually by a tutor."
+                "AUTOMATIC": "Instructor-created test cases automatically assess your submission to this exercise and provide immediate feedback.",
+                "SEMI_AUTOMATIC": "This exercise is manually graded, but instructor-created test cases help during the assessment and provide immediate feedback.",
+                "MANUAL": "This exercise is graded manually."
             }
         }
     }
