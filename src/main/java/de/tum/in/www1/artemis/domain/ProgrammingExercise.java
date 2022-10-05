@@ -778,6 +778,9 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
+    /**
+     * Validates settings for exercises, where allowManualFeedbackRequests is set
+     */
     public void validateManualFeedbackSettings() {
         if (!this.getAllowManualFeedbackRequests())
             return;
