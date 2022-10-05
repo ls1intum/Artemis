@@ -61,11 +61,11 @@
                     <span class="ms-1" jhiTranslate="artemisApp.result.chart.filterApplied">A filter is applied to your feedback</span>
                     <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
                 </div>
-                <div *ngIf="testCount">
-                    {{ 'artemisApp.result.testCount' | artemisTranslate: { passed: passedTestCount, total: testCount } }}
+                <div *ngIf="result.testCaseCount">
+                    {{ 'artemisApp.result.testCount' | artemisTranslate: { passed: result.passedTestCaseCount, total: result.testCaseCount } }}
                 </div>
-                <div *ngIf="scaIssueCount">
-                    {{ 'artemisApp.result.scaIssueCount' | artemisTranslate: { issues: scaIssueCount } }}
+                <div *ngIf="result.codeIssueCount">
+                    {{ 'artemisApp.result.scaIssueCount' | artemisTranslate: { issues: result.codeIssueCount } }}
                 </div>
                 <div *ngIf="manualFeedbackCount">
                     {{ 'artemisApp.result.manualFeedbackCount' | artemisTranslate: { feedbacks: manualFeedbackCount } }}
