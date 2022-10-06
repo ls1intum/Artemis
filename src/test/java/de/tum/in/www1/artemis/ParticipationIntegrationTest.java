@@ -349,7 +349,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void requestFeedbackExerciseOptionsFail() throws Exception {
+    void requestFeedbackExerciseNotPossibleIfOnlyAutomaticFeedbacks() throws Exception {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         exerciseRepo.save(programmingExercise);
 
@@ -394,8 +394,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 HttpStatus.OK);
 
         assertThat(response.getResults()).allMatch(result1 -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC);
-        assertThat(response.getIndividualDueDate()).isNotNull();
-        assertThat(response.getIndividualDueDate()).isBefore(ZonedDateTime.now());
+        assertThat(response.getIndividualDueDate()).isNotNull().isBefore(ZonedDateTime.now());
 
         verify(programmingExerciseParticipationService, times(1)).lockStudentRepository(programmingExercise, participation);
     }
