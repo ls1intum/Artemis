@@ -782,8 +782,9 @@ public class ProgrammingExercise extends Exercise {
      * Validates settings for exercises, where allowManualFeedbackRequests is set
      */
     public void validateManualFeedbackSettings() {
-        if (!this.getAllowManualFeedbackRequests())
+        if (!this.getAllowManualFeedbackRequests()) {
             return;
+        }
 
         if (this.getAssessmentType() == AssessmentType.AUTOMATIC) {
             throw new BadRequestAlertException("Assessment type is not manual", "Exercise", "invalidManualFeedbackSettings");
