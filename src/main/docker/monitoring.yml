@@ -1,7 +1,7 @@
 # This configuration is intended for development purpose, it's **your** responsibility to harden it for production
 services:
-  prometheus-artemis:
-    container_name: prometheus-artemis
+  prometheus:
+    container_name: prometheus
     image: prom/prometheus:v2.34.0
     # If you want to run this in production, you should persist the /etc/prometheus-directory
     #volumes:
@@ -13,8 +13,8 @@ services:
     # On macOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and
     # grafana/provisioning/datasources/datasource.yml
     network_mode: 'host' # to test locally running service
-  grafana-artemis:
-    container_name: grafana-artemis
+  grafana:
+    container_name: grafana
     image: grafana/grafana:9.0.2
     volumes:
       - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/
