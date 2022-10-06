@@ -233,4 +233,35 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         comp.exercise = teamExerciseWithoutTeamAssigned;
         expect(comp.publishBuildPlanUrl()).toBeUndefined();
     });
+
+    it('should show correct buttons in exam mode', fakeAsync(() => {
+        const exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
+        exercise.allowOfflineIde = false;
+        exercise.allowOnlineEditor = true;
+        exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
+        comp.exercise = exercise;
+        comp.examMode = true;
+
+        fixture.detectChanges();
+        tick();
+
+        let startExerciseButton = debugElement.query(By.css('button.start-exercise'));
+        expect(startExerciseButton).toBeNull();
+        let codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
+        expect(codeEditorButton).toBeNull();
+        let cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepoButton).toBeNull();
+
+        exercise.allowOfflineIde = true;
+
+        fixture.detectChanges();
+        tick();
+
+        startExerciseButton = debugElement.query(By.css('button.start-exercise'));
+        expect(startExerciseButton).toBeNull();
+        codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
+        expect(codeEditorButton).toBeNull();
+        cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepoButton).not.toBeNull();
+    }));
 });

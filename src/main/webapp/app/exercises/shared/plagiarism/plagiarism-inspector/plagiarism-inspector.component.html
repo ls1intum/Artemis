@@ -88,7 +88,7 @@
                 <input required type="number" [disabled]="!enableMinimumScore" class="form-control" min="0" max="100" id="plagiarism-minimum-score" [(ngModel)]="minimumScore" />
             </div>
 
-            <div class="plagiarism-option" [class.disabled]="!enableMinimumSize">
+            <div class="plagiarism-option" [class.disabled]="!enableMinimumSize" *ngIf="exercise.type !== PROGRAMMING">
                 <div class="plagiarism-checkbox form-check" for="enableMinimumSize">
                     <input type="checkbox" id="enableMinimumSize" class="plagiarism-option-checkbox form-check-input" [(ngModel)]="enableMinimumSize" checked />
                     <label class="plagiarism-option-label form-check-label" jhiTranslate="artemisApp.plagiarism.minimumSize">Minimum Size</label>

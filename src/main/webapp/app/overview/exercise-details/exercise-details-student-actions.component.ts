@@ -57,17 +57,17 @@ export class ExerciseDetailsStudentActionsComponent {
     ) {}
 
     /**
-     * see exercise.utils -> isStartExerciseAvailable
+     * Starting an exercise is not possible in the exam, otherwise see exercise.utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
-        return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
+        return !this.examMode && isStartExerciseAvailable(this.exercise as ProgrammingExercise);
     }
 
     /**
-     * see exercise.utils -> isStartPracticeAvailable
+     * Practicing an exercise is not possible in the exam, otherwise see exercise.utils -> isStartPracticeAvailable
      */
     isStartPracticeAvailable(): boolean {
-        return isStartPracticeAvailable(this.exercise as ProgrammingExercise);
+        return !this.examMode && isStartPracticeAvailable(this.exercise as ProgrammingExercise);
     }
 
     /**
@@ -153,13 +153,17 @@ export class ExerciseDetailsStudentActionsComponent {
 
     /**
      * Display the 'open code editor' or 'clone repo' buttons if
-     * - the participation is initialized (build plan exists, no clean up happened), or
+     * - the participation is initialized (build plan exists, this is always the case during an exam), or
      * - the participation is inactive (build plan cleaned up), but can not be resumed (e.g. because we're after the due date)
      */
     public shouldDisplayIDEButtons(): boolean {
         return !!this.exercise.studentParticipations?.some((participation) => {
             const status = participationStatus(this.exercise, participation.testRun);
-            return status === ParticipationStatus.INITIALIZED || (status === ParticipationStatus.INACTIVE && !isStartExerciseAvailable(this.exercise) && !participation.testRun);
+            return (
+                status === ParticipationStatus.INITIALIZED ||
+                (status === ParticipationStatus.INACTIVE &&
+                    ((!isStartExerciseAvailable(this.exercise) && !participation.testRun) || (!isStartPracticeAvailable(this.exercise) && participation.testRun)))
+            );
         });
     }
 
