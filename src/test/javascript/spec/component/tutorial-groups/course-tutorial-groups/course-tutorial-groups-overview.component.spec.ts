@@ -12,12 +12,6 @@ import { Router } from '@angular/router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { By } from '@angular/platform-browser';
 
-@Component({ selector: 'jhi-side-panel', template: '' })
-class MockSidePanel {
-    @Input() panelHeader: string;
-    @Input() panelDescriptionHeader?: string;
-}
-
 describe('CourseTutorialGroupsOverviewComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupsOverviewComponent>;
     let component: CourseTutorialGroupsOverviewComponent;
@@ -29,7 +23,7 @@ describe('CourseTutorialGroupsOverviewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [CourseTutorialGroupsOverviewComponent, MockSidePanel, TutorialGroupsTableStubComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CourseTutorialGroupsOverviewComponent, TutorialGroupsTableStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(TutorialGroupsService), MockProvider(AlertService), { provide: Router, useValue: router }],
         })
             .compileComponents()
@@ -65,9 +59,5 @@ describe('CourseTutorialGroupsOverviewComponent', () => {
         component.onTutorialGroupSelected(tutorialGroupOne);
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/courses', 1, 'tutorial-groups', 1]);
-    });
-
-    it('should add the number of registered students together', () => {
-        expect(component.totalNumberOfRegistrations).toBe(15);
     });
 });

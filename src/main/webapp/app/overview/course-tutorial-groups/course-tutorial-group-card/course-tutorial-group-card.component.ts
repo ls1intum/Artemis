@@ -1,6 +1,5 @@
-import { Component, HostListener, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, HostListener, Input } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { User } from 'app/core/user/user.model';
 import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
 
@@ -10,7 +9,7 @@ import { Router } from '@angular/router';
     styleUrls: ['./course-tutorial-group-card.component.scss'],
     host: { class: 'card tutorial-group-card' },
 })
-export class CourseTutorialGroupCardComponent implements OnChanges {
+export class CourseTutorialGroupCardComponent {
     @Input()
     courseId: number;
     @Input()
@@ -27,19 +26,4 @@ export class CourseTutorialGroupCardComponent implements OnChanges {
     }
 
     constructor(private router: Router) {}
-
-    ngOnChanges(changes: SimpleChanges) {
-        for (const propName in changes) {
-            if (changes.hasOwnProperty(propName)) {
-                const change = changes[propName];
-                switch (propName) {
-                    case 'tutorialGroup': {
-                        if (change.currentValue) {
-                            this.tutorialGroup = change.currentValue;
-                        }
-                    }
-                }
-            }
-        }
-    }
 }

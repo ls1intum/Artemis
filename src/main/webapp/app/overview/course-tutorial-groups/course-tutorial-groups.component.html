@@ -27,12 +27,19 @@
 </ng-template>
 
 <div class="my-2">
-    <ng-container [ngSwitch]="selectedFilter">
-        <jhi-course-tutorial-groups-overview *ngSwitchCase="'all'" [tutorialGroups]="tutorialGroups" [courseId]="courseId"></jhi-course-tutorial-groups-overview>
-        <jhi-course-tutorial-groups-registered
-            *ngSwitchCase="'registered'"
-            [registeredTutorialGroups]="registeredTutorialGroups"
-            [courseId]="courseId"
-        ></jhi-course-tutorial-groups-registered>
-    </ng-container>
+    <div class="row">
+        <div class="col-12 col-xl-8">
+            <ng-container [ngSwitch]="selectedFilter">
+                <jhi-course-tutorial-groups-overview *ngSwitchCase="'all'" [tutorialGroups]="tutorialGroups" [courseId]="courseId"></jhi-course-tutorial-groups-overview>
+                <jhi-course-tutorial-groups-registered
+                    *ngSwitchCase="'registered'"
+                    [registeredTutorialGroups]="registeredTutorialGroups"
+                    [courseId]="courseId"
+                ></jhi-course-tutorial-groups-registered>
+            </ng-container>
+        </div>
+        <div class="col-12 col-xl-4">
+            <jhi-course-tutorial-group-side-panel [tutorialGroups]="tutorialGroups"></jhi-course-tutorial-group-side-panel>
+        </div>
+    </div>
 </div>

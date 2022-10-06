@@ -8,7 +8,6 @@ import { Router } from '@angular/router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { SimpleChange } from '@angular/core';
 
 describe('CourseTutorialGroupCardComponent', () => {
     let component: CourseTutorialGroupCardComponent;
@@ -34,14 +33,6 @@ describe('CourseTutorialGroupCardComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
-    });
-
-    it('should load the tutorial group and teaching assistants from input', () => {
-        component.ngOnChanges({
-            tutorialGroup: new SimpleChange(exampleTutorialGroup, exampleTutorialGroup, false),
-        });
-        expect(component.tutorialGroup).toEqual(exampleTutorialGroup);
-        expect(component.teachingAssistant).toEqual(exampleTA);
     });
 
     it('should navigate to tutorial group detail page when card is clicked', () => {
