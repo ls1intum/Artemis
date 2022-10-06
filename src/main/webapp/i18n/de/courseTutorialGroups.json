@@ -11,10 +11,10 @@
                 "registeredFilter": "Angemeldete Übungsgruppen anzeigen"
             },
             "courseTutorialGroupDetail": {
-                "title": "Übungsgruppen Details"
+                "title": "Übungsgruppen-Details"
             },
             "courseTutorialGroupOverview": {
-                "title": "Übungsgruppen Übersicht",
+                "title": "Übungsgruppen-Übersicht",
                 "sidePanel": {
                     "header": "Kursinformationen",
                     "numberOfGroups": "Anzahl an Übungsgruppen: ",
