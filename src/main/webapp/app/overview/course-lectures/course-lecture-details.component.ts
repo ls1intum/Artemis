@@ -101,14 +101,14 @@ export class CourseLectureDetailsComponent implements OnInit {
     downloadAttachment(downloadUrl?: string): void {
         if (!this.isDownloadingLink && downloadUrl) {
             this.isDownloadingLink = downloadUrl;
-            this.fileService.downloadFileWithAccessToken(downloadUrl);
+            this.fileService.downloadFile(downloadUrl);
             this.isDownloadingLink = undefined;
         }
     }
 
     downloadMergedFiles(): void {
         if (this.lecture?.course?.id && this.lectureId) {
-            this.fileService.downloadMergedFileWithAccessToken(this.lecture.course.id, this.lectureId);
+            this.fileService.downloadMergedFile(this.lecture.course.id, this.lectureId);
         }
     }
 

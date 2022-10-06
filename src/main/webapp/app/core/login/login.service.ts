@@ -63,15 +63,6 @@ export class LoginService {
     }
 
     /**
-     * Login with JWT token.
-     * @param jwt {string} The JWT token.
-     * @param rememberMe {boolean} True to save JWT in localStorage, false to save it in sessionStorage.
-     */
-    loginWithToken(jwt: string, rememberMe: boolean) {
-        return this.authServerProvider.loginWithToken(jwt, rememberMe);
-    }
-
-    /**
      * Log out the user and remove all traces of the login from the browser:
      * Tokens, Alerts, User object in memory.
      * Will redirect to home when done.
@@ -81,7 +72,7 @@ export class LoginService {
 
         this.authServerProvider
             // 1: Clear the auth tokens from the browser's caches.
-            .removeAuthTokenFromCaches()
+            .logout()
             .pipe(
                 // 2: Clear all other caches (this is important so if a new user logs in, no old values are available
                 tap(() => {

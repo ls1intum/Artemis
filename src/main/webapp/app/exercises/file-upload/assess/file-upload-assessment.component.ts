@@ -421,7 +421,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     downloadFile(filePath: string) {
-        this.fileService.downloadFileWithAccessToken(filePath);
+        this.fileService.downloadFile(filePath);
     }
 
     private checkPermissions() {

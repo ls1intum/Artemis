@@ -1,13 +1,10 @@
 package de.tum.in.www1.artemis.security.jwt;
 
-import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -35,20 +32,6 @@ public class TokenProvider {
     private final Logger log = LoggerFactory.getLogger(TokenProvider.class);
 
     private static final String AUTHORITIES_KEY = "auth";
-
-    public static final String FILENAME_KEY = "filename";
-
-    public static final String COURSE_ID_KEY = "courseId";
-
-    public static final String LECTURE_ID_KEY = "lectureId";
-
-    public static final String ATTACHMENT_UNIT_ID_KEY = "attachmentUnitId";
-
-    public static final String EXERCISE_ID_KEY = "exerciseId";
-
-    public static final String SUBMISSION_ID_KEY = "submissionId";
-
-    public static final String DOWNLOAD_FILE = "FILE_DOWNLOAD";
 
     private Key key;
 
@@ -108,36 +91,6 @@ public class TokenProvider {
     }
 
     /**
-     * Generates an access token with custom claims that allows a user to download a file. This token is only valid for the given validity period.
-     *
-     * @param authentication            Currently active authentication mostly the currently logged-in user
-     * @param durationValidityInSeconds The duration how long the access token should be valid
-     * @param customClaims              The claims that are included in the token
-     * @return File access token as a JWT token
-     */
-    public String createFileTokenWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, Claims customClaims) {
-        long now = (new Date()).getTime();
-        Date validity = new Date(now + durationValidityInSeconds * 1000);
-
-        return Jwts.builder().setSubject(authentication.getName()).addClaims(customClaims).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
-    }
-
-    /**
-     * Generates an access token that allows a user to download a file of a course. This token is only valid for the given validity period.
-     *
-     * @param authentication            Currently active authentication mostly the currently logged-in user
-     * @param durationValidityInSeconds The duration how long the access token should be valid
-     * @param courseId                  The id of the course, which the token belongs to
-     * @return File access token as a JWT token
-     */
-    public String createFileTokenForCourseWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, Long courseId) throws IllegalAccessException {
-        long now = (new Date()).getTime();
-        Date validity = new Date(now + durationValidityInSeconds * 1000);
-
-        return Jwts.builder().setSubject(authentication.getName()).claim(COURSE_ID_KEY, courseId).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
-    }
-
-    /**
      * Convert JWT Authorization Token into UsernamePasswordAuthenticationToken, including a USer object and its authorities
      *
      * @param token JWT Authorization Token
@@ -155,49 +108,6 @@ public class TokenProvider {
         User principal = new User(claims.getSubject(), "", authorities);
 
         return new UsernamePasswordAuthenticationToken(principal, token, authorities);
-    }
-
-    /**
-     * Checks if custom claims are inside the signed JWT token. Also validates the JWT token if it is still valid.
-     *
-     * @param authToken      The token that has to be checked
-     * @param requiredClaims The claims that should be included in the token
-     * @return true if everything matches
-     */
-    public boolean validateTokenForAuthorityAndFile(String authToken, Map<String, ? extends Serializable> requiredClaims) {
-        if (!validateJwsToken(authToken) || requiredClaims.isEmpty()) {
-            return false;
-        }
-
-        Claims tokenClaims = parseClaims(authToken);
-
-        for (var requiredClaim : requiredClaims.entrySet()) {
-            if (!Objects.equals(tokenClaims.get(requiredClaim.getKey()), requiredClaim.getValue())) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Checks if a certain course id is inside the JWT token. Also validates the JWT token if it is still valid.
-     *
-     * @param authToken The token that has to be checked
-     * @param courseId  The course id the token belongs to
-     * @return true if everything matches
-     */
-    public boolean validateTokenForAuthorityAndCourse(String authToken, Long courseId) {
-        if (!validateJwsToken(authToken)) {
-            return false;
-        }
-        try {
-            Long courseIdToken = ((Integer) parseClaims(authToken).get(COURSE_ID_KEY)).longValue();
-            return courseIdToken.equals(courseId);
-        }
-        catch (Exception e) {
-            log.warn("Invalid action validateTokenForAuthorityAndCourse: ", e);
-        }
-        return false;
     }
 
     /**
@@ -244,7 +154,7 @@ public class TokenProvider {
         return false;
     }
 
-    public Claims parseClaims(String authToken) {
+    private Claims parseClaims(String authToken) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken).getBody();
     }
 }

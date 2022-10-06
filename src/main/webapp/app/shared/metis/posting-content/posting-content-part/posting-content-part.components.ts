@@ -27,7 +27,7 @@ export class PostingContentPartComponent {
      * @param attachmentUrl URL of the attachment to be displayed
      */
     openAttachment(attachmentUrl: string): void {
-        this.fileService.downloadFileWithAccessToken(attachmentUrl);
+        this.fileService.downloadFile(attachmentUrl);
     }
 
     /**

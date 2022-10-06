@@ -8,16 +8,10 @@ export class Credentials {
     constructor(public username: string, public password: string, public rememberMe: boolean) {}
 }
 
-type JwtToken = {
-    id_token: string;
-};
-
 export interface IAuthServerProvider {
     getToken: () => string;
     login: (credentials: Credentials) => Observable<void>;
-    loginWithToken: (jwt: string, rememberMe: boolean) => Promise<string>;
-    storeAuthenticationToken: (jwt: string, rememberMe: boolean) => void;
-    removeAuthTokenFromCaches: () => Observable<undefined>;
+    logout: () => Observable<void>;
     clearCaches: () => Observable<undefined>;
 }
 
@@ -30,44 +24,15 @@ export class AuthServerProvider implements IAuthServerProvider {
     }
 
     login(credentials: Credentials): Observable<void> {
-        return this.http.post<JwtToken>(SERVER_API_URL + 'api/authenticate', credentials).pipe(map((response) => this.authenticateSuccess(response, credentials.rememberMe)));
+        return this.http.post(SERVER_API_URL + 'api/authenticate', credentials).pipe(map(() => console.log('')));
     }
 
     loginSAML2(rememberMe: boolean): Observable<void> {
-        return this.http.post<JwtToken>(SERVER_API_URL + 'api/saml2', rememberMe.toString()).pipe(map((response) => this.authenticateSuccess(response, rememberMe)));
+        return this.http.post(SERVER_API_URL + 'api/saml2', rememberMe.toString()).pipe(map(() => console.log('')));
     }
 
-    loginWithToken(jwt: string, rememberMe: boolean): Promise<string> {
-        if (jwt) {
-            this.storeAuthenticationToken(jwt, rememberMe);
-            return Promise.resolve(jwt);
-        } else {
-            return Promise.reject('auth-jwt-service Promise reject'); // Put appropriate error message here
-        }
-    }
-
-    private authenticateSuccess(response: JwtToken, rememberMe: boolean): void {
-        const jwt = response.id_token;
-        this.storeAuthenticationToken(jwt, rememberMe);
-    }
-
-    storeAuthenticationToken(jwt: string, rememberMe: boolean): void {
-        if (rememberMe) {
-            this.localStorage.store('authenticationToken', jwt);
-        } else {
-            this.sessionStorage.store('authenticationToken', jwt);
-        }
-    }
-
-    /**
-     * Removes the user's auth tokens from the browser's caches.
-     * This will lead to all endpoint requests failing with a 401.
-     */
-    removeAuthTokenFromCaches(): Observable<undefined> {
-        this.localStorage.clear('authenticationToken');
-        this.sessionStorage.clear('authenticationToken');
-        // The local or session storage might have to be cleared asynchronously in future due to updated browser apis. This is why this method is already acting asynchronous.
-        return of(undefined);
+    logout(): Observable<void> {
+        return this.http.post(SERVER_API_URL + 'api/logout', null).pipe(map(() => console.log('')));
     }
 
     /**
