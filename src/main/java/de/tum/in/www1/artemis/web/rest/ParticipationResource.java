@@ -303,6 +303,7 @@ public class ParticipationResource {
             throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
         }
 
+        // The participations due date is a flag showing that a feedback request is sent
         participation.setIndividualDueDate(currentDate);
 
         participation = programmingExerciseStudentParticipationRepository.save(participation);
