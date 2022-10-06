@@ -122,7 +122,11 @@ export class OnlineEditorPage {
      * @returns the element containing the result score percentage.
      */
     getResultScore() {
-        return cy.get('#result-score');
+        let resultScore = cy.get('#result-score');
+        if (!resultScore) {
+            resultScore = cy.get('#result-score-no-feedback');
+        }
+        return resultScore;
     }
 
     /**

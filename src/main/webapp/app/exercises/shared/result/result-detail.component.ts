@@ -230,8 +230,6 @@ export class ResultDetailComponent implements OnInit {
             });
     }
 
-    private countFeedbacks() {}
-
     /**
      * Loads the missing feedback details
      * @param participationId the current participation
