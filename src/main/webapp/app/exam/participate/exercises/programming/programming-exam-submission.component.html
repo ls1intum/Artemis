@@ -65,7 +65,7 @@
         <span>{{ exercise.title }}</span>
         <span>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]</span>
     </h4>
-    <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [showResult]="true"></jhi-exercise-details-student-actions>
+    <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [showResult]="true" [examMode]="true"></jhi-exercise-details-student-actions>
     <div style="display: flex; justify-content: flex-end">
         <jhi-updating-result
             *ngIf="studentParticipation"

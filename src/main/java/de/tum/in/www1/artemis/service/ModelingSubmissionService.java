@@ -127,6 +127,11 @@ public class ModelingSubmissionService extends SubmissionService {
         modelingSubmission.setType(SubmissionType.MANUAL);
         participation.addSubmission(modelingSubmission);
 
+        if (participation.getInitializationState() != InitializationState.FINISHED) {
+            participation.setInitializationState(InitializationState.FINISHED);
+            studentParticipationRepository.save(participation);
+        }
+
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         modelingSubmission.setResults(new ArrayList<>());
         modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
@@ -142,11 +147,6 @@ public class ModelingSubmissionService extends SubmissionService {
         }
         catch (Exception ex) {
             log.error("Modeling submission version could not be saved", ex);
-        }
-
-        if (participation.getInitializationState() != InitializationState.FINISHED) {
-            participation.setInitializationState(InitializationState.FINISHED);
-            studentParticipationRepository.save(participation);
         }
 
         return modelingSubmission;
