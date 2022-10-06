@@ -78,7 +78,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * updates all displayed (relative) times in the UI
      */
     updateDisplayedTimes() {
-        const translationBasePath = 'showStatistic.';
+        const translationBasePath = 'artemisApp.showStatistic.';
         // update remaining time
         if (this.quizExercise && this.quizExercise.dueDate) {
             const endDate = this.quizExercise.dueDate;

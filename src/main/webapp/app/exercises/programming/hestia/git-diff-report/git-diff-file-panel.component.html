@@ -1,0 +1,33 @@
+<ngb-accordion activeIds="custom-panel-1" [destroyOnHide]="false" class="git-diff-file-panel">
+    <ngb-panel id="custom-panel-1" class="similar-post-list">
+        <ng-template ngbPanelHeader let-opened="opened">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="my-2 ps-1">
+                    <div *ngIf="filePath && previousFilePath && filePath !== previousFilePath; else oneFileName">{{ previousFilePath }} → {{ filePath }}</div>
+                    <ng-template #oneFileName>
+                        {{ filePath || previousFilePath }}
+                    </ng-template>
+                </div>
+                <div>
+                    <jhi-git-diff-line-stat
+                        [addedLineCount]="addedLineCount"
+                        [removedLineCount]="removedLineCount"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport' | artemisTranslate }}"
+                    >
+                    </jhi-git-diff-line-stat>
+                    <button ngbPanelToggle class="btn ms-1">
+                        <fa-icon [icon]="opened ? faAngleUp : faAngleDown"></fa-icon>
+                    </button>
+                </div>
+            </div>
+        </ng-template>
+        <ng-template ngbPanelContent>
+            <jhi-git-diff-file
+                [diffEntries]="diffEntries"
+                [templateFileContent]="templateFileContent"
+                [solutionFileContent]="solutionFileContent"
+                [numberOfContextLines]="numberOfContextLines"
+            ></jhi-git-diff-file>
+        </ng-template>
+    </ngb-panel>
+</ngb-accordion>

@@ -986,4 +986,14 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
             return localRepository;
         });
     }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testGetTemplateFilesWithContentShouldRedirect() throws Exception {
+        programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContent((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            assertDoesNotThrow(() -> hestiaUtilTestService.setupTemplate(files, exercise, localRepository));
+            return localRepository;
+        });
+    }
 }

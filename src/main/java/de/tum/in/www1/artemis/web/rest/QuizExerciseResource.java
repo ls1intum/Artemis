@@ -126,7 +126,7 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> createQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
         log.info("REST request to create QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
-            throw new BadRequestAlertException("A new quizExercise cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new quizExercise cannot already have an ID", ENTITY_NAME, "idExists");
         }
 
         // check if quiz is valid
@@ -349,7 +349,7 @@ public class QuizExerciseResource {
         }
 
         try {
-            var batch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password);
+            var batch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password());
             return ResponseEntity.ok(batch);
         }
         catch (QuizJoinException ex) {

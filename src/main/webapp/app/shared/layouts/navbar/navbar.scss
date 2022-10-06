@@ -87,6 +87,10 @@ a:not(.btn):hover {
 
     .nav-link {
         color: var(--navbar-dark-color);
+
+        &:hover {
+            color: var(--link-color);
+        }
     }
 
     a.nav-link {

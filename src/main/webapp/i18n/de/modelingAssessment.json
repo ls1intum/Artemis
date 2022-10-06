@@ -1,21 +1,23 @@
 {
-    "modelingAssessment": {
-        "points": "Punkte",
-        "conflicts": "Konflikte",
-        "assessor": "Bewertet von: {{firstName}} {{lastName}}",
-        "noModel": "Kein Modell zum Darstellen gefunden.",
-        "invalidAssessments": "Deine Bewertung ist nicht gültig!",
-        "messages": {
-            "noConflicts": "Konflikte konnten nicht geladen werden",
-            "conflictsResolved": "Alle Konflikte wurden bearbeitet."
-        },
-        "dashboard": {
-            "heading": "Einreichungen und Bewertungen der Modellierungsaufgabe \"{{ title }}\"",
-            "actions": {
-                "open": "Modell bewerten"
-            }
-        },
-        "notFound": "Wir haben keine neue Modellierungsaufgabe ohne Bewertung gefunden, bitte gehe zurück zum Dashboard.",
-        "impactWarning": "Dieses Feedback kann {{affectedSubmissionsCount}} weitere ähnliche Einreichung/en beeinflussen."
+    "artemisApp": {
+        "modelingAssessment": {
+            "points": "Punkte",
+            "conflicts": "Konflikte",
+            "assessor": "Bewertet von: {{firstName}} {{lastName}}",
+            "noModel": "Kein Modell zum Darstellen gefunden.",
+            "invalidAssessments": "Deine Bewertung ist nicht gültig!",
+            "messages": {
+                "noConflicts": "Konflikte konnten nicht geladen werden",
+                "conflictsResolved": "Alle Konflikte wurden bearbeitet."
+            },
+            "dashboard": {
+                "heading": "Einreichungen und Bewertungen der Modellierungsaufgabe \"{{ title }}\"",
+                "actions": {
+                    "open": "Modell bewerten"
+                }
+            },
+            "notFound": "Wir haben keine neue Modellierungsaufgabe ohne Bewertung gefunden, bitte gehe zurück zum Dashboard.",
+            "impactWarning": "Dieses Feedback kann {{affectedSubmissionsCount}} weitere ähnliche Einreichung/en beeinflussen."
+        }
     }
 }
