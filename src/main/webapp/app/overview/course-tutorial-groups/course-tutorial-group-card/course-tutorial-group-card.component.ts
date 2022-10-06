@@ -15,7 +15,6 @@ export class CourseTutorialGroupCardComponent implements OnChanges {
     courseId: number;
     @Input()
     tutorialGroup: TutorialGroup;
-    teachingAssistant: User;
     // ToDo: Determine upcoming tutorial group sessions
     upcomingSession: undefined;
 
@@ -37,9 +36,6 @@ export class CourseTutorialGroupCardComponent implements OnChanges {
                     case 'tutorialGroup': {
                         if (change.currentValue) {
                             this.tutorialGroup = change.currentValue;
-                            if (this.tutorialGroup && this.tutorialGroup.teachingAssistant) {
-                                this.teachingAssistant = this.tutorialGroup.teachingAssistant;
-                            }
                         }
                     }
                 }

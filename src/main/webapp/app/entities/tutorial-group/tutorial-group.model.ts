@@ -2,6 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroupRegistration } from 'app/entities/tutorial-group/tutorial-group-registration.model';
+
 export class TutorialGroup implements BaseEntity {
     public id?: number;
     public title?: string;
@@ -17,6 +18,6 @@ export class TutorialGroup implements BaseEntity {
     // transientFields
     public isUserRegistered?: boolean;
     public numberOfRegisteredUsers?: number;
-
-    constructor() {}
+    public teachingAssistantName?: string;
+    public courseTitle?: string;
 }

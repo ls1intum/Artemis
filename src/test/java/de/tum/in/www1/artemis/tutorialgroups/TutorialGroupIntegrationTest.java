@@ -155,9 +155,12 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
-        for (var tutorialGroup : tutorialGroupsOfCourse) {
-            assertThat(tutorialGroup.getRegistrations()).isEqualTo(Set.of()); // private information hidden
+        for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
+            assertThat(tutorialGroup.getRegistrations()).isEqualTo(Set.of());
+            assertThat(tutorialGroup.getTeachingAssistant()).isEqualTo(null);
+            assertThat(tutorialGroup.getCourse()).isEqualTo(null);
         }
+
     }
 
     @Test
@@ -165,7 +168,10 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void getOneOfCourse_asInstructor_shouldReturnTutorialGroup() throws Exception {
         var tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
-        assertThat(tutorialGroup.getRegistrations()).isEqualTo(Set.of()); // private information hidden
+        // private information hidden
+        assertThat(tutorialGroup.getRegistrations()).isEqualTo(Set.of());
+        assertThat(tutorialGroup.getTeachingAssistant()).isEqualTo(null);
+        assertThat(tutorialGroup.getCourse()).isEqualTo(null);
     }
 
     @Test

@@ -10,7 +10,7 @@
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.title' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
-                <th jhiSortBy="teachingAssistant.name">
+                <th jhiSortBy="teachingAssistantName">
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.teachingAssistant' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
@@ -61,7 +61,7 @@
                         <span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span>
                     </ng-template>
                 </td>
-                <td>{{ tutorialGroup.teachingAssistant?.name }}</td>
+                <td>{{ tutorialGroup.teachingAssistantName }}</td>
                 <td>{{ tutorialGroup.capacity }}</td>
                 <td>{{ tutorialGroup.numberOfRegisteredUsers }}</td>
                 <td>

@@ -12,12 +12,12 @@
             <span>{{ 'artemisApp.entities.tutorialGroup.course' | artemisTranslate }}</span>
         </dt>
         <dd>
-            <ng-container *ngIf="tutorialGroup.course">
+            <ng-container *ngIf="tutorialGroup.courseTitle">
                 <ng-container *ngIf="courseClickHandler; else noCourseClickHandler">
-                    <a id="courseLink" [routerLink]="" class="link-primary" (click)="courseClickHandler()">{{ tutorialGroup.course.title }}</a>
+                    <a id="courseLink" [routerLink]="" class="link-primary" (click)="courseClickHandler()">{{ tutorialGroup.courseTitle }}</a>
                 </ng-container>
                 <ng-template #noCourseClickHandler>
-                    <span>{{ tutorialGroup.course.title }}</span>
+                    <span>{{ tutorialGroup.courseTitle }}</span>
                 </ng-template>
             </ng-container>
         </dd>
@@ -33,7 +33,7 @@
             <span>{{ 'artemisApp.entities.tutorialGroup.teachingAssistant' | artemisTranslate }}</span>
         </dt>
         <dd>
-            <span *ngIf="tutorialGroup.teachingAssistant; else teachingAssistantNotSet">{{ tutorialGroup.teachingAssistant.name }}</span>
+            <span *ngIf="tutorialGroup.teachingAssistantName; else teachingAssistantNotSet">{{ tutorialGroup.teachingAssistantName }}</span>
             <ng-template #teachingAssistantNotSet>
                 <span>{{ 'artemisApp.pages.tutorialGroupDetail.teachingAssistantNotSet' | artemisTranslate }}</span>
             </ng-template>

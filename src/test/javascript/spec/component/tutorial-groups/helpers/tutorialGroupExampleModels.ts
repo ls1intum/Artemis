@@ -15,6 +15,8 @@ export interface GenerateExampleTutorialGroupParams {
     isUserRegistered?: boolean;
     numberOfRegisteredUsers?: number;
     course?: Course;
+    teachingAssistantName?: string;
+    courseTitle?: string;
 }
 
 export const generateExampleTutorialGroup = ({
@@ -29,6 +31,8 @@ export const generateExampleTutorialGroup = ({
     isUserRegistered = false,
     numberOfRegisteredUsers = 5,
     course = { id: 1, title: 'Test Course' } as Course,
+    teachingAssistantName = 'Example TA',
+    courseTitle = 'Test Course',
 }: GenerateExampleTutorialGroupParams) => {
     const exampleTutorialGroup = new TutorialGroup();
     exampleTutorialGroup.id = id;
@@ -42,6 +46,8 @@ export const generateExampleTutorialGroup = ({
     exampleTutorialGroup.isUserRegistered = isUserRegistered;
     exampleTutorialGroup.numberOfRegisteredUsers = numberOfRegisteredUsers;
     exampleTutorialGroup.course = course;
+    exampleTutorialGroup.teachingAssistantName = teachingAssistantName;
+    exampleTutorialGroup.courseTitle = courseTitle;
     return exampleTutorialGroup;
 };
 

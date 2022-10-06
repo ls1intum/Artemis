@@ -103,12 +103,9 @@ public class TutorialGroupResource {
         log.debug("REST request to get all tutorial groups of course with id: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-
         // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
         var tutorialGroups = tutorialGroupService.findAllForCourse(course, user);
-        tutorialGroups.forEach(TutorialGroup::hidePrivacySensitiveInformation);
         return ResponseEntity.ok(new ArrayList<>(tutorialGroups));
     }
 
@@ -124,12 +121,10 @@ public class TutorialGroupResource {
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
-        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
-        checkEntityIdMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
+        var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, tutorialGroup.getCourse(), user);
-        tutorialGroup.setTransientPropertiesForUser(user);
-        tutorialGroup.hidePrivacySensitiveInformation();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        var tutorialGroup = tutorialGroupService.getOneOfCourse(course, user, tutorialGroupId);
         return ResponseEntity.ok().body(tutorialGroup);
     }
 

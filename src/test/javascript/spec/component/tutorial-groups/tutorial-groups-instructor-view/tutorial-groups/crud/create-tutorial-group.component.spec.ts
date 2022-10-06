@@ -59,6 +59,8 @@ describe('CreateTutorialGroupComponent', () => {
         delete exampleTutorialGroup.isUserRegistered;
         delete exampleTutorialGroup.course;
         delete exampleTutorialGroup.numberOfRegisteredUsers;
+        delete exampleTutorialGroup.courseTitle;
+        delete exampleTutorialGroup.teachingAssistantName;
 
         const createResponse: HttpResponse<TutorialGroup> = new HttpResponse({
             body: exampleTutorialGroup,

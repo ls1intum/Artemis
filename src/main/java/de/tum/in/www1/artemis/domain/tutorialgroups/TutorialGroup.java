@@ -72,6 +72,14 @@ public class TutorialGroup extends DomainObject {
     @JsonSerialize
     private Integer numberOfRegisteredUsers;
 
+    @Transient
+    @JsonSerialize
+    private String teachingAssistantName;
+
+    @Transient
+    @JsonSerialize
+    private String courseTitle;
+
     public TutorialGroup() {
         // Empty constructor needed for Jackson.
     }
@@ -177,8 +185,24 @@ public class TutorialGroup extends DomainObject {
         this.numberOfRegisteredUsers = numberOfRegisteredUsers;
     }
 
+    public String getTeachingAssistantName() {
+        return teachingAssistantName;
+    }
+
+    public void setTeachingAssistantName(String teachingAssistantName) {
+        this.teachingAssistantName = teachingAssistantName;
+    }
+
+    public String getCourseTitle() {
+        return courseTitle;
+    }
+
+    public void setCourseTitle(String courseTitle) {
+        this.courseTitle = courseTitle;
+    }
+
     /**
-     * Sets the transient fields isUserRegistered and numberOfRegisteredUsers for the given user.
+     * Sets the transient fields for the given user.
      *
      * @param user the user for which the transient fields should be set
      */
@@ -191,6 +215,20 @@ public class TutorialGroup extends DomainObject {
             this.setIsUserRegistered(null);
             this.setNumberOfRegisteredUsers(null);
         }
+
+        if (Hibernate.isInitialized(course) && course != null) {
+            this.setCourseTitle(course.getTitle());
+        }
+        else {
+            this.setCourseTitle(null);
+        }
+
+        if (Hibernate.isInitialized(teachingAssistant) && teachingAssistant != null) {
+            this.setTeachingAssistantName(teachingAssistant.getName());
+        }
+        else {
+            this.setTeachingAssistantName(null);
+        }
     }
 
     /**
@@ -198,6 +236,8 @@ public class TutorialGroup extends DomainObject {
      */
     public void hidePrivacySensitiveInformation() {
         this.setRegistrations(null);
+        this.setTeachingAssistant(null);
+        this.setCourse(null);
     }
 
 }
