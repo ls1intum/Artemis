@@ -411,7 +411,8 @@ public class CourseService {
         for (var studentDto : studentDTOs) {
             var registrationNumber = studentDto.getRegistrationNumber();
             var login = studentDto.getLogin();
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, courseGroupName, courseGroupRole, login);
+            var email = studentDto.getEmail();
+            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, courseGroupName, courseGroupRole, login, email);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
             }

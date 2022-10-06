@@ -803,7 +803,8 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         String group = "students";
         String registrationNumber1 = "1234567";
         String registrationNumber2 = "2345678";
-        courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2);
+        String email = "test@mail";
+        courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2, email);
     }
 
     @Test

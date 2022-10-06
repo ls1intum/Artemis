@@ -16,6 +16,7 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutor
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
+const POSSIBLE_EMAIL_HEADERS = ['email', 'e-mail', 'mail'];
 const POSSIBLE_FIRST_NAME_HEADERS = ['firstname', 'firstnameofstudent', 'givenname', 'forename', 'vorname'];
 const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstudent', 'surname', 'nachname', 'familienname', 'name'];
 
@@ -109,6 +110,7 @@ export class UsersImportDialogComponent implements OnDestroy {
 
         const registrationNumberHeader = usedHeaders.find((value) => POSSIBLE_REGISTRATION_NUMBER_HEADERS.includes(value)) || '';
         const loginHeader = usedHeaders.find((value) => POSSIBLE_LOGIN_HEADERS.includes(value)) || '';
+        const emailHeader = usedHeaders.find((value) => POSSIBLE_EMAIL_HEADERS.includes(value)) || '';
         const firstNameHeader = usedHeaders.find((value) => POSSIBLE_FIRST_NAME_HEADERS.includes(value)) || '';
         const lastNameHeader = usedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
 
@@ -117,6 +119,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                 ({
                     registrationNumber: users[registrationNumberHeader]?.trim() || '',
                     login: users[loginHeader]?.trim() || '',
+                    email: users[emailHeader]?.trim() || '',
                     firstName: users[firstNameHeader]?.trim() || '',
                     lastName: users[lastNameHeader]?.trim() || '',
                 } as StudentDTO),
@@ -156,7 +159,8 @@ export class UsersImportDialogComponent implements OnDestroy {
         for (const [i, user] of csvUsers.entries()) {
             const hasLogin = this.checkIfEntryContainsKey(user, POSSIBLE_LOGIN_HEADERS);
             const hasRegistrationNumber = this.checkIfEntryContainsKey(user, POSSIBLE_REGISTRATION_NUMBER_HEADERS);
-            if (!hasLogin && !hasRegistrationNumber) {
+            const hasEmail = this.checkIfEntryContainsKey(user, POSSIBLE_EMAIL_HEADERS);
+            if (!hasLogin && !hasRegistrationNumber && !hasEmail) {
                 // '+ 2' instead of '+ 1' due to the header column in the csv file
                 invalidList.push(i + 2);
             }

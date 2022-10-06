@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.dto;
 
 import java.util.Objects;
 
+import javax.validation.constraints.Email;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -21,6 +22,10 @@ public class StudentDTO {
 
     @Size(max = 10)
     private String registrationNumber;
+
+    @Email
+    @Size(max = 100)
+    private String email;
 
     public String getLogin() {
         return login;
@@ -54,6 +59,14 @@ public class StudentDTO {
         this.registrationNumber = registrationNumber;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public StudentDTO registrationNumber(String registrationNumber) {
         this.registrationNumber = registrationNumber;
         return this;
@@ -68,22 +81,23 @@ public class StudentDTO {
             return false;
         }
         StudentDTO that = (StudentDTO) obj;
-        return Objects.equals(registrationNumber, that.registrationNumber) || Objects.equals(login, that.login);
+        return Objects.equals(registrationNumber, that.registrationNumber) || Objects.equals(login, that.login) || Objects.equals(email, that.email);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(registrationNumber) ^ Objects.hash(login);
+        return Objects.hash(registrationNumber) ^ Objects.hash(login) ^ Objects.hash(email);
     }
 
     @Override
     public String toString() {
         return "StudentDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber
-                + '\'' + '}';
+                + '\'' + ", email='" + email + '\'' + '}';
     }
 
     @JsonIgnore
     public String toDatabaseString() {
-        return "Student: login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\'';
+        return "Student: login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\''
+                + ", email='" + email + '\'';
     }
 }

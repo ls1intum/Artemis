@@ -42,6 +42,7 @@
                         <th scope="col">#</th>
                         <th scope="col" style="width: 300px" [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation number</th>
                         <th scope="col">Login</th>
+                        <th scope="col" [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
                         <th scope="col" [jhiTranslate]="'artemisApp.importUsers.firstName'">First name</th>
                         <th scope="col" [jhiTranslate]="'artemisApp.importUsers.lastName'">Last name</th>
                     </tr>
@@ -51,6 +52,7 @@
                         <th scope="row">{{ i + 1 }}</th>
                         <td style="width: 300px">{{ user.registrationNumber }}</td>
                         <td>{{ user.login }}</td>
+                        <td>{{ user.email }}</td>
                         <td>{{ user.firstName }}</td>
                         <td>{{ user.lastName }}</td>
                     </tr>

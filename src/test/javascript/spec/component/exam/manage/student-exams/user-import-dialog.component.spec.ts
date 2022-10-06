@@ -68,8 +68,8 @@ describe('UsersImportButtonComponent', () => {
     });
 
     it('should reset dialog when selecting csv file', async () => {
-        component.usersToImport = [{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1' }];
-        component.notFoundUsers = [{ registrationNumber: '2', lastName: 'lastName2', firstName: 'firstName2', login: 'login2' }];
+        component.usersToImport = [{ registrationNumber: '1', lastName: 'lastName', firstName: 'firstName', login: 'login1', email: 'test@mail' }];
+        component.notFoundUsers = [{ registrationNumber: '2', lastName: 'lastName2', firstName: 'firstName2', login: 'login2', email: 'test@mail' }];
         component.hasImported = true;
 
         const event = { target: { files: [studentCsvColumns] } };
@@ -108,10 +108,10 @@ describe('UsersImportButtonComponent', () => {
 
     it('should import students', () => {
         const studentsToImport: StudentDTO[] = [
-            { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1' },
-            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' },
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1', email: 'test@mail' },
+            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: 'test@mail' },
         ];
-        const studentsNotFound: StudentDTO[] = [{ registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' }];
+        const studentsNotFound: StudentDTO[] = [{ registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: 'test@mail' }];
 
         const fakeResponse = { body: studentsNotFound } as HttpResponse<StudentDTO[]>;
         jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
@@ -138,15 +138,36 @@ describe('UsersImportButtonComponent', () => {
             expect(component.usersToImport).toHaveLength(5);
 
             const expectedStudentDTOs: StudentDTO[] = [
-                { registrationNumber: '01234567', firstName: 'Max Moritz', lastName: 'Mustermann', login: '' },
-                { registrationNumber: '01234568', firstName: 'John-James', lastName: 'Doe', login: '' },
-                { registrationNumber: '01234569', firstName: 'Jane', lastName: 'Doe', login: '' },
-                { registrationNumber: '01234570', firstName: 'Alice', lastName: '-', login: '' },
-                { registrationNumber: '01234571', firstName: 'Bob', lastName: 'Ross', login: '' },
+                { registrationNumber: '01234567', firstName: 'Max Moritz', lastName: 'Mustermann', login: '', email: '' },
+                { registrationNumber: '01234568', firstName: 'John-James', lastName: 'Doe', login: '', email: '' },
+                { registrationNumber: '01234569', firstName: 'Jane', lastName: 'Doe', login: '', email: '' },
+                { registrationNumber: '01234570', firstName: 'Alice', lastName: '-', login: '', email: '' },
+                { registrationNumber: '01234571', firstName: 'Bob', lastName: 'Ross', login: '', email: '' },
             ];
 
             expect(component.usersToImport).toEqual(expectedStudentDTOs);
         });
+    });
+
+    describe('should read students from csv with email only', () => {
+        const testDir = path.join(__dirname, '../../../../util/user-import');
+
+        const pathToTestFile = path.join(testDir, 'UserImportEmailOnlySampleFile.csv');
+        const csv = fs.readFileSync(pathToTestFile, 'utf-8');
+        const event = { target: { files: [csv] } };
+        component.onCSVFileSelect(event);
+
+        expect(component.usersToImport).toHaveLength(5);
+
+        const expectedStudentDTOs: StudentDTO[] = [
+            { registrationNumber: '', firstName: '', lastName: '', login: '', email: 'testuser1@mail.com' },
+            { registrationNumber: '', firstName: '', lastName: '', login: '', email: 'testuser2@mail.com' },
+            { registrationNumber: '', firstName: '', lastName: '', login: '', email: 'testuser3@mail.com' },
+            { registrationNumber: '', firstName: '', lastName: '', login: '', email: 'testuser4@mail.com' },
+            { registrationNumber: '', firstName: '', lastName: '', login: '', email: 'testuser5@mail.com' },
+        ];
+
+        expect(component.usersToImport).toEqual(expectedStudentDTOs);
     });
 
     it('should compute invalid student entries', () => {
@@ -171,10 +192,10 @@ describe('UsersImportButtonComponent', () => {
 
     it('should import correctly', () => {
         const importedStudents: StudentDTO[] = [
-            { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1' },
-            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' },
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Musetermann', login: 'login1', email: '' },
+            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: '' },
         ];
-        const notImportedStudents: StudentDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3' }];
+        const notImportedStudents: StudentDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
         const fakeResponse = { body: notImportedStudents } as HttpResponse<StudentDTO[]>;
         jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
@@ -190,10 +211,10 @@ describe('UsersImportButtonComponent', () => {
 
     it('should invoke REST call on "Import" but not on "Finish"', () => {
         const studentsToImport: StudentDTO[] = [
-            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1' },
-            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2' },
+            { registrationNumber: '1', firstName: 'Max', lastName: 'Mustermann', login: 'login1', email: '' },
+            { registrationNumber: '2', firstName: 'Bob', lastName: 'Ross', login: 'login2', email: '' },
         ];
-        const studentsNotFound: StudentDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3' }];
+        const studentsNotFound: StudentDTO[] = [{ registrationNumber: '3', firstName: 'Some', lastName: 'Dude', login: 'login3', email: '' }];
 
         const fakeResponse = { body: studentsNotFound } as HttpResponse<StudentDTO[]>;
         jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));

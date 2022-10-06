@@ -629,7 +629,7 @@ public class UserService {
      *       @return the found student, otherwise returns an empty optional
      *
      * */
-    public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login) {
+    public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login, String email) {
         try {
             // 1) we use the registration number and try to find the student in the Artemis user database
             var optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
@@ -662,7 +662,16 @@ public class UserService {
                 return optionalStudent;
             }
 
-            log.warn("User with registration number '{}' and login '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login);
+            // 4) if we still cannot find the user, we try again using the email
+            optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email);
+            if (optionalStudent.isPresent()) {
+                var student = optionalStudent.get();
+                // the newly created user needs to get the rights to access the course
+                this.addUserToGroup(student, courseGroupName, courseGroupRole);
+                return optionalStudent;
+            }
+
+            log.warn("User with registration number '{}', login '{}' and email '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login, email);
         }
         catch (Exception ex) {
             log.warn("Error while processing user with registration number {}", registrationNumber, ex);

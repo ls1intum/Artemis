@@ -686,11 +686,12 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         String group = "students";
         String registrationNumber1 = "1234567";
         String registrationNumber2 = "2345678";
+        String email = "test@mail";
         jiraRequestMockProvider.mockAddUserToGroup(group, false);
         jiraRequestMockProvider.mockAddUserToGroup(group, false);
         doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber1);
         doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber2);
-        courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2);
+        courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2, email);
     }
 
     @Test

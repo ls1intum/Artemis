@@ -21,7 +21,8 @@
             "genericErrorMessage": "Import of users failed!",
             "firstName": "First name",
             "lastName": "Last name",
-            "registrationNumber": "registration number"
+            "registrationNumber": "registration number",
+            "email": "Email"
         }
     }
 }

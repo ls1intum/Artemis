@@ -91,7 +91,8 @@ public class ExamRegistrationService {
         for (var studentDto : studentDTOs) {
             var registrationNumber = studentDto.getRegistrationNumber();
             var login = studentDto.getLogin();
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, course.getStudentGroupName(), Role.STUDENT, login);
+            var email = studentDto.getEmail();
+            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, course.getStudentGroupName(), Role.STUDENT, login, email);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
             }

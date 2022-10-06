@@ -2079,15 +2079,17 @@ public class CourseTestService {
     }
 
     // Test
-    public void testAddUsersToCourseGroup(String group, String registrationNumber1, String registrationNumber2) throws Exception {
+    public void testAddUsersToCourseGroup(String group, String registrationNumber1, String registrationNumber2, String email) throws Exception {
         var course = database.createCoursesWithExercisesAndLectures(true).get(0);
         StudentDTO dto1 = new StudentDTO().registrationNumber(registrationNumber1);
         dto1.setLogin("newstudent1");
         StudentDTO dto2 = new StudentDTO().registrationNumber(registrationNumber2);
         dto1.setLogin("newstudent2");
-        var newStudents = request.postListWithResponseBody("/api/courses/" + course.getId() + "/" + group, List.of(dto1, dto2), StudentDTO.class, HttpStatus.OK);
-        assertThat(newStudents).hasSize(2);
-        assertThat(newStudents).contains(dto1, dto2);
+        StudentDTO dto3 = new StudentDTO();
+        dto3.setEmail(email);
+        var newStudents = request.postListWithResponseBody("/api/courses/" + course.getId() + "/" + group, List.of(dto1, dto2, dto3), StudentDTO.class, HttpStatus.OK);
+        assertThat(newStudents).hasSize(3);
+        assertThat(newStudents).contains(dto1, dto2, dto3);
     }
 
     // Test

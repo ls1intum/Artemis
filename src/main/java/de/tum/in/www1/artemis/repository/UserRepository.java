@@ -75,6 +75,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
+    Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(String login, boolean isInternal);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
@@ -404,6 +407,19 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             return Optional.empty();
         }
         return findOneWithGroupsAndAuthoritiesByLogin(login);
+    }
+
+    /**
+     * Finds a single user with groups and authorities using the email
+     *
+     * @param email user email string
+     * @return the user with groups and authorities
+     */
+    default Optional<User> findUserWithGroupsAndAuthoritiesByEmail(String email) {
+        if (!StringUtils.hasText(email)) {
+            return Optional.empty();
+        }
+        return findOneWithGroupsAndAuthoritiesByEmail(email);
     }
 
     @NotNull

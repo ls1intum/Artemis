@@ -21,7 +21,8 @@
             "genericErrorMessage": "Der Import von Nutzern in den Kurs oder die Klausur ist fehlgeschlagen!",
             "firstName": "Vorname",
             "lastName": "Nachname",
-            "registrationNumber": "Matrikelnummer"
+            "registrationNumber": "Matrikelnummer",
+            "email": "E-Mail"
         }
     }
 }
