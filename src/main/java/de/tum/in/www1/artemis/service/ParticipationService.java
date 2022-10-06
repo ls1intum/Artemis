@@ -102,7 +102,7 @@ public class ParticipationService {
 
     /**
      * This method is called when an StudentExam for a test exam is set up for conduction.
-     * It creates a Participation which connects the corresponding student and exercise. The test exam is linked with the iitializationDate = startedDate (StudentExam)
+     * It creates a Participation which connects the corresponding student and exercise. The test exam is linked with the initializationDate = startedDate (StudentExam)
      * Additionally, it configures repository / build plan related stuff for programming exercises.
      * In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
@@ -112,6 +112,8 @@ public class ParticipationService {
      * @param initializationDate      - the date which should be set as the initializationDate of the Participation. Links studentExam <-> participation
      * @return a new participation for the given exercise and user
      */
+    // TODO: Stephan Krusche: offer this method again like above "startExercise" without initializationDate which is not really necessary at the moment, because we only support on
+    // test exam per exam/student
     public StudentParticipation startExerciseWithInitializationDate(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime initializationDate) {
         // common for all exercises
         // Check if participation already exists
@@ -462,12 +464,20 @@ public class ParticipationService {
     /**
      * Get one participation (in any state) by its participant and exercise.
      *
-     * @param exercise    the exercise for which to find a participation
-     * @param participant the short name of the team
-     * @return the participation of the given team and exercise in any state
+     * @param exercise the exercise for which to find a participation
+     * @param participant the participant for which to find a participation
+     * @return the participation of the given participant and exercise in any state
      */
     public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyState(Exercise exercise, Participant participant) {
-        return findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
+        if (participant instanceof User user) {
+            return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+        }
+        else if (participant instanceof Team team) {
+            return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
+        }
+        else {
+            throw new Error("Unknown Participant type");
+        }
     }
 
     /**
@@ -522,7 +532,7 @@ public class ParticipationService {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
             return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, false);
+        return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**
