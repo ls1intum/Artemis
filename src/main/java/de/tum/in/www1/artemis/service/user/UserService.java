@@ -626,6 +626,7 @@ public class UserService {
      *       @param courseGroupName        the courseGroup the user has to be added to
      *       @param courseGroupRole        the courseGroupRole enum
      *       @param login                  the login of the user
+     *       @param email                  the email of the user
      *       @return the found student, otherwise returns an empty optional
      *
      * */
