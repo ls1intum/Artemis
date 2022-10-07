@@ -122,7 +122,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 if (this.submission?.submitted) {
                     this.setSubmittedFile();
                 }
-                if (this.submission?.submitted && this.result && this.result.completionDate) {
+                if (this.submission?.submitted && this.result?.completionDate) {
                     this.fileUploadAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                         this.result = assessmentResult;
                     });
