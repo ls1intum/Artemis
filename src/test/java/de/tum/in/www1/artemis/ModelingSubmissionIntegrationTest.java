@@ -159,15 +159,17 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     void saveAndSubmitModelingSubmission_tooLarge() throws Exception {
         database.createAndSaveParticipationForExercise(classExercise, "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
+        // should be ok
         char[] charsModel = new char[(int) (Constants.MAX_SUBMISSION_MODEL_LENGTH)];
         Arrays.fill(charsModel, 'a');
         submission.setModel(new String(charsModel));
         request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
 
+        // should be too large
         char[] charsModelTooLarge = new char[(int) (Constants.MAX_SUBMISSION_MODEL_LENGTH + 1)];
         Arrays.fill(charsModelTooLarge, 'a');
         submission.setModel(new String(charsModelTooLarge));
-        request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.PAYLOAD_TOO_LARGE);
+        request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
