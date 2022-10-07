@@ -139,6 +139,9 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
                     }
                 }
 
+                // Enable pushing without credentials
+                repository.getConfig().setString("http", null, "receivepack", "true");
+
                 repository.incrementOpen();
                 return repository;
             });
