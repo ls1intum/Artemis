@@ -2,13 +2,17 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -177,11 +181,24 @@ public abstract class AssessmentResource {
         // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
         // The reason is that example submissions with isTutorial = false should be shown immediately (with the assessment) to the tutor and
         // for example submission with isTutorial = true, the assessment should not be shown to the tutor. Instead, the tutor should try to assess it him/herself
-        if (!(isAtLeastEditor || (isAtLeastTutor && !exampleSubmission.isUsedForTutorial()))) {
-            throw new AccessForbiddenException();
+        // Therefore we send a result with only the references included, which is needed to tell the tutor which elements he missed to assess
+        Result result = assessmentService.getExampleAssessment(submissionId);
+
+        if (!Objects.isNull(result) && !(isAtLeastEditor || (isAtLeastTutor && !exampleSubmission.isUsedForTutorial()))) {
+            Result freshResult = new Result();
+            freshResult.setId(result.getId());
+            if (Hibernate.isInitialized(result.getFeedbacks())) {
+                result.getFeedbacks().stream().filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
+                        .forEach(feedback -> {
+                            Feedback freshFeedback = new Feedback();
+                            freshFeedback.setId(feedback.getId());
+                            freshResult.addFeedback(freshFeedback.reference(feedback.getReference()).type(feedback.getType()));
+                        });
+            }
+            result = freshResult;
         }
 
-        return ResponseEntity.ok(assessmentService.getExampleAssessment(submissionId));
+        return ResponseEntity.ok(result);
     }
 
     /**

@@ -97,6 +97,11 @@
     <div class="col-12">
         <div class="row flex-nowrap">
             <div class="col editor-container-outer">
+                <div *ngIf="highlightedElements && highlightedElements.size > 0" class="col">
+                    <div style="background-color: lightblue" class="my-2 text-center">
+                        <span>{{ 'artemisApp.exampleSubmission.modelElementHint' | artemisTranslate }}</span>
+                    </div>
+                </div>
                 <div class="row editor-container-inner">
                     <jhi-modeling-editor
                         class="col-12"
@@ -122,6 +127,7 @@
                         [readOnly]="readOnly"
                         [course]="course"
                         [explanation]="explanationText"
+                        [highlightedElements]="highlightedElements"
                         (feedbackChanged)="onReferencedFeedbackChanged($event)"
                     >
                     </jhi-modeling-assessment>
