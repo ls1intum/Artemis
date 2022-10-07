@@ -156,6 +156,7 @@
         *ngIf="exercise"
         [exercise]="exercise"
         [isAssessmentTraining]="toComplete"
+        [showAssessmentInstructions]="state.ui === UIStates.ASSESSMENT"
         class="markdown-preview"
     ></jhi-assessment-instructions>
     <!--endregion-->

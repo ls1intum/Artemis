@@ -1,4 +1,4 @@
-<div class="border p-2">
+<div class="border p-2" *ngIf="showAssessmentInstructions">
     <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.structuredGradingInstructions">
         <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly" [criteria]="criteria"></jhi-structured-grading-instructions-assessment-layout>
     </jhi-expandable-section>
@@ -30,7 +30,7 @@
     </ng-container>
 </jhi-expandable-section>
 
-<jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">
+<jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions" *ngIf="showAssessmentInstructions">
     <p class="markdown-preview" [innerHTML]="gradingInstructions"></p>
 </jhi-expandable-section>
 
