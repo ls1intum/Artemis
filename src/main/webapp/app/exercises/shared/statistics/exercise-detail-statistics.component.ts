@@ -13,11 +13,11 @@ export class ExerciseDetailStatisticsComponent implements OnInit {
     @Input() doughnutStats: ExerciseManagementStatisticsDto;
     @Input() exerciseType: ExerciseType;
 
-    course?: Course;
+    course: Course;
 
     readonly DoughnutChartType = DoughnutChartType;
 
     ngOnInit() {
-        this.course = getCourseFromExercise(this.exercise);
+        this.course = getCourseFromExercise(this.exercise)!;
     }
 }
