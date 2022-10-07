@@ -61,14 +61,16 @@
                     <span class="ms-1" jhiTranslate="artemisApp.result.chart.filterApplied">A filter is applied to your feedback</span>
                     <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
                 </div>
-                <div *ngIf="result.testCaseCount">
-                    {{ 'artemisApp.result.testCount' | artemisTranslate: { passed: result.passedTestCaseCount, total: result.testCaseCount } }}
-                </div>
-                <div *ngIf="result.codeIssueCount">
-                    {{ 'artemisApp.result.scaIssueCount' | artemisTranslate: { issues: result.codeIssueCount } }}
-                </div>
-                <div *ngIf="manualFeedbackCount">
-                    {{ 'artemisApp.result.manualFeedbackCount' | artemisTranslate: { feedbacks: manualFeedbackCount } }}
+                <div *ngIf="result.testCaseCount || result.codeIssueCount || manualFeedbackCount" class="mb-2">
+                    <div *ngIf="result.testCaseCount">
+                        {{ 'artemisApp.result.testCount' | artemisTranslate: { passed: result.passedTestCaseCount, total: result.testCaseCount } }}
+                    </div>
+                    <div *ngIf="result.codeIssueCount">
+                        {{ 'artemisApp.result.scaIssueCount' | artemisTranslate: { issues: result.codeIssueCount } }}
+                    </div>
+                    <div *ngIf="manualFeedbackCount">
+                        {{ 'artemisApp.result.manualFeedbackCount' | artemisTranslate: { feedbacks: manualFeedbackCount } }}
+                    </div>
                 </div>
                 <div *ngFor="let feedback of filteredFeedbackList" [ngClass]="['feedback-item', 'alert', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
                     <span>{{ feedback.category }}</span>
