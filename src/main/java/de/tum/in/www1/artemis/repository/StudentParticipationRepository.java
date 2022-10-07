@@ -390,13 +390,14 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH r.feedbacks
             WHERE p.exercise.id = :#{#exerciseId}
             AND (p.individualDueDate IS NULL OR p.individualDueDate <= :#{#now})
+            AND p.testRun = false
             AND NOT EXISTS
                 (SELECT prs FROM p.results prs
                     WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
                     AND s.submitted = true
                     AND s.id = (SELECT max(id) FROM p.submissions)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDate(@Param("exerciseId") Long exerciseId,
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
             @Param("now") ZonedDateTime now);
 
     @Query("""

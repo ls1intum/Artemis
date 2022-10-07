@@ -373,7 +373,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                     .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).toList();
         }
         else {
-            submissions = submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+            submissions = submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
             // automatic results are null in the received results list. We need to filter them out for the client to display the dashboard correctly
             submissions.forEach(Submission::removeNullResults);
         }

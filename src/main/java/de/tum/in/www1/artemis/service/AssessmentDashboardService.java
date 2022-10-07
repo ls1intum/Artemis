@@ -79,12 +79,12 @@ public class AssessmentDashboardService {
             DueDateStat totalNumberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
-                totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
+                totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
                 log.debug("Finished >> programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted << call for exercise {} in {}", exercise.getId(),
                         TimeLogUtil.formatDurationFrom(start));
             }
             else {
-                totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
+                totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
                 log.debug("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExercise << call for exercise {} in {}", exercise.getId(),
                         TimeLogUtil.formatDurationFrom(start));
             }
