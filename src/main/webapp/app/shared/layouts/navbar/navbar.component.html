@@ -61,7 +61,7 @@
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item" *ngIf="currAccount" (click)="logout()" id="logout">
+                    <a class="dropdown-item" *ngIf="currAccount" routerLink="logout" id="logout">
                         <fa-icon [icon]="faSignOutAlt" [fixedWidth]="true"></fa-icon>
                         <span jhiTranslate="global.menu.account.logout">Sign out</span>
                     </a>

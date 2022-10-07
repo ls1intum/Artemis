@@ -4,7 +4,7 @@ import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
-const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
+const LAYOUT_ROUTES: Routes = [...navbarRoute, ...errorRoute];
 
 @NgModule({
     imports: [
