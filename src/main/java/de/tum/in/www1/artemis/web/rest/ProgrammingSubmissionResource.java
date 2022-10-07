@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.slf4j.Logger;
@@ -447,7 +448,9 @@ public class ProgrammingSubmissionResource {
 
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         ProgrammingSubmission submission;
-        if (programmingExercise.getAllowManualFeedbackRequests()) {
+        if (programmingExercise.getAllowManualFeedbackRequests() && Objects.nonNull(programmingExercise.getDueDate())
+                && programmingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
+            // Assess manual feedback request before the deadline
             submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
         else {
