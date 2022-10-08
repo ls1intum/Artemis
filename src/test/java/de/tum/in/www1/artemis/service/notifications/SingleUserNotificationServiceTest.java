@@ -293,27 +293,37 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testTutorialGroupNotifications_studentRegistration() {
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, user, userTwo);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE);
+        verifyEmail();
     }
 
     @Test
     void testTutorialGroupNotifications_studentDeregistration() {
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, user, userTwo);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE);
+        verifyEmail();
     }
 
     @Test
     void testTutorialGroupNotifications_tutorRegistration() {
+        notificationSettingRepository
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, user, userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE);
+        verifyEmail();
 
     }
 
     @Test
     void testTutorialGroupNotifications_tutorDeregistration() {
+        notificationSettingRepository
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, user, userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE);
+        verifyEmail();
     }
 
     /**

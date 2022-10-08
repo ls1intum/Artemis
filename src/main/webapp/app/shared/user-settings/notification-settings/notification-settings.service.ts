@@ -14,6 +14,9 @@ import {
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
     Notification,
     NotificationType,
+    TUTORIAL_GROUP_DEREGISTERED_STUDENT_TITLE,
+    TUTORIAL_GROUP_DEREGISTERED_TUTOR_TITLE,
+    TUTORIAL_GROUP_REGISTERED_TUTOR_TITLE,
 } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
@@ -37,6 +40,8 @@ export class NotificationSettingsService {
         [SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST, [NEW_COURSE_POST_TITLE]],
         [SettingId.NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, [NEW_REPLY_FOR_COURSE_POST_TITLE]],
         [SettingId.NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED, [EXAM_ARCHIVE_STARTED_TITLE, COURSE_ARCHIVE_STARTED_TITLE]],
+        [SettingId.NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION, [TUTORIAL_GROUP_REGISTERED_TUTOR_TITLE, TUTORIAL_GROUP_DEREGISTERED_TUTOR_TITLE]],
+        [SettingId.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION, [TUTORIAL_GROUP_DEREGISTERED_STUDENT_TITLE, TUTORIAL_GROUP_DEREGISTERED_STUDENT_TITLE]],
     ]);
 
     // needed to make it possible for other services to get the latest settings without calling the server additional times

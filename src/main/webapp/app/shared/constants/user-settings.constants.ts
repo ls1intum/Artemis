@@ -29,6 +29,12 @@ export enum SettingId {
     NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST = 'notification.lecture-notification.new-lecture-post',
     NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST = 'notification.lecture-notification.new-reply-for-lecture-post',
 
+    // tutorial notification setting group
+    NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION = 'notification.tutorial-group-notification.tutorial-group-registration',
+
+    // tutor notification setting group
+    NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION = 'notification.tutor-notification.tutorial-group-registration',
+
     // editor notification setting group
     NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED = 'notification.editor-notification.programming-test-cases-changed',
 
