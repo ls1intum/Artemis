@@ -33,7 +33,6 @@ on:
 # Keep in sync with codeql-analysis.yml and test.yml
 env:
   CI: true
-  node: 16.x
   java: 17
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 
@@ -43,11 +42,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '${{ env.node }}'
-        cache: 'npm'
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
@@ -56,8 +50,8 @@ jobs:
         cache: 'gradle'
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
-      env:
-        NODE_OPTIONS: --max_old_space_size=6144
+      # env:
+      #   NODE_OPTIONS: --max_old_space_size=6144
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
