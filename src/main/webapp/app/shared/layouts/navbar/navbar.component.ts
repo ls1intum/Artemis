@@ -54,6 +54,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
 @Component({
     selector: 'jhi-navbar',
@@ -134,6 +135,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private organisationService: OrganizationManagementService,
         public themeService: ThemeService,
         private entityTitleService: EntityTitleService,
+        private pendingChangesGuard: PendingChangesGuard,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
@@ -675,7 +677,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     logout() {
         this.collapseNavbar();
-        this.router.navigateByUrl('logout');
+        this.router.navigate(['/']).then((res) => {
+            if (res) {
+                this.participationWebsocketService.resetLocalCache();
+                this.loginService.logout(true);
+            }
+        });
     }
 
     toggleNavbar() {
