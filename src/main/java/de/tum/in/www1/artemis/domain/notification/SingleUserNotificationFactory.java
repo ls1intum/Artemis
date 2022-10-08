@@ -4,12 +4,17 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 
+import java.util.Objects;
+
+import org.springframework.util.StringUtils;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 public class SingleUserNotificationFactory {
 
@@ -115,4 +120,52 @@ public class SingleUserNotificationFactory {
         notification.setTransientAndStringTarget(createPlagiarismCaseTarget(plagiarismCase.getId(), courseId));
         return notification;
     }
+
+    /**
+     * Creates an instance of SingleUserNotification for tutorial groups.
+     *
+     * @param tutorialGroup        to which the notification is related
+     * @param notificationType     type of the notification that should be created
+     * @param student              who should be notified or is related to the notification
+     * @param responsibleForAction the user who is responsible for the action that triggered the notification
+     * @return an instance of SingleUserNotification
+     */
+    public static SingleUserNotification createNotification(TutorialGroup tutorialGroup, NotificationType notificationType, User student, User responsibleForAction) {
+        var title = findCorrespondingNotificationTitle(notificationType);
+        if (!StringUtils.hasText(title)) {
+            throw new UnsupportedOperationException("No matching title found for: " + notificationType);
+        }
+        SingleUserNotification notification;
+        switch (notificationType) {
+            case TUTORIAL_GROUP_REGISTRATION_STUDENT -> {
+                notification = new SingleUserNotification(student, title,
+                        "You have been registered to the tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
+                notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId()));
+            }
+            case TUTORIAL_GROUP_DEREGISTRATION_STUDENT -> {
+                notification = new SingleUserNotification(student, title,
+                        "You have been deregistered from the tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
+                notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId()));
+            }
+            case TUTORIAL_GROUP_REGISTRATION_TUTOR -> {
+                if (Objects.isNull(tutorialGroup.getTeachingAssistant())) {
+                    throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
+                }
+                notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title, "The student " + student.getName()
+                        + " has been registered to your tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
+                notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId()));
+            }
+            case TUTORIAL_GROUP_DEREGISTRATION_TUTOR -> {
+                if (Objects.isNull(tutorialGroup.getTeachingAssistant())) {
+                    throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
+                }
+                notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title, "The student " + student.getName()
+                        + " has been deregistered from your tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
+                notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId()));
+            }
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType for tutorial groups: " + notificationType);
+        }
+        return notification;
+    }
+
 }

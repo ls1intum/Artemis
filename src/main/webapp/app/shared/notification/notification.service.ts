@@ -19,6 +19,10 @@ import {
     NEW_REPLY_FOR_EXERCISE_POST_TITLE,
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
     Notification,
+    TUTORIAL_GROUP_DEREGISTERED_STUDENT_TITLE,
+    TUTORIAL_GROUP_DEREGISTERED_TUTOR_TITLE,
+    TUTORIAL_GROUP_REGISTERED_STUDENT_TITLE,
+    TUTORIAL_GROUP_REGISTERED_TUTOR_TITLE,
 } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -26,6 +30,7 @@ import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -93,6 +98,12 @@ export class NotificationService {
                 const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
                 const routeComponents: RouteComponents = MetisService.getLinkForLecturePost(targetCourseId, target.lecture ?? target.lectureId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
+            } else if ([TUTORIAL_GROUP_REGISTERED_TUTOR_TITLE, TUTORIAL_GROUP_DEREGISTERED_TUTOR_TITLE].includes(notification?.title ?? '')) {
+                const routeComponents: RouteComponents = TutorialGroupsService.getLinkForTutorialGroupManagementDetail(targetCourseId, target.id);
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, {});
+            } else if ([TUTORIAL_GROUP_DEREGISTERED_STUDENT_TITLE, TUTORIAL_GROUP_REGISTERED_STUDENT_TITLE].includes(notification?.title ?? '')) {
+                const routeComponents: RouteComponents = TutorialGroupsService.getLinkForTutorialGroupDetail(targetCourseId, target.id);
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, {});
             } else {
                 this.router.navigate([target.mainPage, targetCourseId, target.entity, target.id]);
             }

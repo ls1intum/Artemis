@@ -5,6 +5,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 public class NotificationTargetFactory {
 
@@ -189,11 +190,16 @@ public class NotificationTargetFactory {
      * Create a NotificationTarget for plagiarism case related notifications
      *
      * @param plagiarismCaseId is the id of the PlagiarismCase
-     * @param courseId of the Course
+     * @param courseId         of the Course
      * @return the final NotificationTarget
      */
     public static NotificationTarget createPlagiarismCaseTarget(Long plagiarismCaseId, Long courseId) {
         return new NotificationTarget(PLAGIARISM_DETECTED_TEXT, plagiarismCaseId, PLAGIARISM_TEXT, courseId, COURSES_TEXT);
+    }
+
+    // Tutorial Group related targets
+    public static NotificationTarget createTutorialGroupTarget(TutorialGroup tutorialGroup, Long courseId) {
+        return new NotificationTarget(tutorialGroup.getId(), courseId);
     }
 
     /// URL/Link related methods
@@ -202,7 +208,7 @@ public class NotificationTargetFactory {
      * Extracts a viable URL from the provided notification and baseUrl
      *
      * @param notification which transient target property will be used for creating the URL
-     * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
+     * @param baseUrl      the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
      * @return viable URL to the notification related page
      */
     public static String extractNotificationUrl(Notification notification, String baseUrl) {

@@ -76,5 +76,13 @@ export const NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE = 'New possible plagiari
 
 export const PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE = 'Final state for plagiarism case';
 
+export const TUTORIAL_GROUP_REGISTERED_STUDENT_TITLE = 'You have been registered to a tutorial group';
+
+export const TUTORIAL_GROUP_DEREGISTERED_STUDENT_TITLE = 'You have been deregistered from a tutorial group';
+
+export const TUTORIAL_GROUP_REGISTERED_TUTOR_TITLE = 'A student has been registered to your tutorial group';
+
+export const TUTORIAL_GROUP_DEREGISTERED_TUTOR_TITLE = 'A student has been deregistered from your tutorial group';
+
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'Live Exam Exercise Update';

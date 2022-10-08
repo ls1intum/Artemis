@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
@@ -47,6 +48,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     private User user;
 
+    private User userTwo;
+
+    private User userThree;
+
     private FileUploadExercise fileUploadExercise;
 
     private Post post;
@@ -59,6 +64,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     private Result result;
 
+    private TutorialGroup tutorialGroup;
+
     /**
      * Sets up all needed mocks and their wanted behavior
      */
@@ -70,6 +77,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         List<User> users = database.addUsers(3, 0, 0, 0);
         user = users.get(0);
+
+        userTwo = users.get(1);
+
+        userThree = users.get(2);
 
         exercise = new TextExercise();
         exercise.setCourse(course);
@@ -103,6 +114,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         result = new Result();
         result.setScore(1D);
         result.setCompletionDate(ZonedDateTime.now().minusMinutes(1));
+
+        tutorialGroup = new TutorialGroup();
+        tutorialGroup.setCourse(course);
+        tutorialGroup.setTeachingAssistant(userTwo);
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
@@ -272,6 +287,33 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
         verifyEmail();
+    }
+
+    // Tutorial Group related
+
+    @Test
+    void testTutorialGroupNotifications_studentRegistration() {
+        singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, user, userTwo);
+        verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE);
+    }
+
+    @Test
+    void testTutorialGroupNotifications_studentDeregistration() {
+        singleUserNotificationService.notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, user, userTwo);
+        verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE);
+    }
+
+    @Test
+    void testTutorialGroupNotifications_tutorRegistration() {
+        singleUserNotificationService.notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, user, userThree);
+        verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE);
+
+    }
+
+    @Test
+    void testTutorialGroupNotifications_tutorDeregistration() {
+        singleUserNotificationService.notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, user, userThree);
+        verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE);
     }
 
     /**

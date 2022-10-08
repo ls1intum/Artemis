@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -65,7 +66,9 @@ public class SingleUserNotificationService {
             // Plagiarism related
             case NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT -> createNotification((PlagiarismCase) notificationSubject, notificationType,
                     (User) typeSpecificInformation, author);
-
+            // Tutorial Group related
+            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR -> createNotification(
+                    (TutorialGroup) notificationSubject, notificationType, (User) typeSpecificInformation, author);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(singleUserNotification, notificationSubject);
@@ -196,18 +199,35 @@ public class SingleUserNotificationService {
 
     /**
      * Notify student about plagiarism case verdict.
-     *  @param plagiarismCase that hold the major information for the plagiarism case
-     * @param student who should be notified
+     *
+     * @param plagiarismCase that hold the major information for the plagiarism case
+     * @param student        who should be notified
      */
     public void notifyUserAboutPlagiarismCaseVerdict(PlagiarismCase plagiarismCase, User student) {
         notifyRecipientWithNotificationType(plagiarismCase, PLAGIARISM_CASE_VERDICT_STUDENT, student, userRepository.getUser());
+    }
+
+    public void notifyStudentAboutRegistrationToTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
+        notifyRecipientWithNotificationType(tutorialGroup, TUTORIAL_GROUP_REGISTRATION_STUDENT, student, responsibleUser);
+    }
+
+    public void notifyStudentAboutDeregistrationFromTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
+        notifyRecipientWithNotificationType(tutorialGroup, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, student, responsibleUser);
+    }
+
+    public void notifyTutorAboutRegistrationToTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
+        notifyRecipientWithNotificationType(tutorialGroup, TUTORIAL_GROUP_REGISTRATION_TUTOR, student, responsibleUser);
+    }
+
+    public void notifyTutorAboutDeregistrationFromTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
+        notifyRecipientWithNotificationType(tutorialGroup, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, student, responsibleUser);
     }
 
     /**
      * Saves the given notification in database and sends it to the client via websocket.
      * Also creates and sends an email.
      *
-     * @param notification that should be saved and sent
+     * @param notification        that should be saved and sent
      * @param notificationSubject which information will be extracted to create the email
      */
     private void saveAndSend(SingleUserNotification notification, Object notificationSubject) {

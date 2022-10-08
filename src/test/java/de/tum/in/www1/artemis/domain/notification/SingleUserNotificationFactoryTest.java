@@ -10,9 +10,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
@@ -24,6 +28,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 class SingleUserNotificationFactoryTest {
 
@@ -48,6 +53,18 @@ class SingleUserNotificationFactoryTest {
     private static AnswerPost answerPost;
 
     private static final String POST_NOTIFICATION_TEXT = "Your post got replied.";
+
+    private static TutorialGroup tutorialGroup;
+
+    private static final Long TUTORIAL_GROUP_ID = 21L;
+
+    private static final String TUTORIAL_GROUP_TITLE = "tutorial group title";
+
+    private static User teachingAssistant;
+
+    private static User instructor;
+
+    private static User tutorialGroupStudent;
 
     private String expectedTitle;
 
@@ -122,6 +139,25 @@ class SingleUserNotificationFactoryTest {
         plagiarismCase.setExercise(exercise);
         plagiarismCase.setStudent(cheatingUser);
         plagiarismCase.setPlagiarismSubmissions(plagiarismSubmissionSet);
+
+        teachingAssistant = new User();
+        teachingAssistant.setFirstName("John");
+        teachingAssistant.setLastName("Doe");
+
+        tutorialGroup = new TutorialGroup();
+        tutorialGroup.setCourse(course);
+        tutorialGroup.setId(TUTORIAL_GROUP_ID);
+        tutorialGroup.setTitle(TUTORIAL_GROUP_TITLE);
+        tutorialGroup.setTeachingAssistant(teachingAssistant);
+
+        tutorialGroupStudent = new User();
+        tutorialGroupStudent.setFirstName("Jane");
+        tutorialGroupStudent.setLastName("Doe");
+
+        instructor = new User();
+        instructor.setFirstName("John");
+        instructor.setLastName("Smith");
+
     }
 
     /// Test for Notifications based on Posts
@@ -147,6 +183,11 @@ class SingleUserNotificationFactoryTest {
      */
     private void createAndCheckPlagiarismNotification() {
         createdNotification = createNotification(plagiarismCase, notificationType, cheatingUser, user);
+        checkNotification();
+    }
+
+    private void createAndCheckTutorialGroupNotification(User responsibleUser) {
+        createdNotification = createNotification(tutorialGroup, notificationType, tutorialGroupStudent, responsibleUser);
         checkNotification();
     }
 
@@ -264,4 +305,31 @@ class SingleUserNotificationFactoryTest {
         expectedTransientTarget = createPlagiarismCaseTarget(plagiarismCase.getId(), COURSE_ID);
         createAndCheckPlagiarismNotification();
     }
+
+    /// Test for Notifications based on Tutorial Groups
+    @ParameterizedTest
+    @MethodSource("provideTutorialGroupTestParameters")
+    void createNotification_withNotificationType_NewTutorialGroup(NotificationType notificationType, String expectedTitle, String expectedText, User responsibleUser) {
+        this.notificationType = notificationType;
+        this.expectedTitle = expectedTitle;
+        this.expectedText = expectedText;
+        expectedPriority = MEDIUM;
+        expectedTransientTarget = createTutorialGroupTarget(tutorialGroup, COURSE_ID);
+        createAndCheckTutorialGroupNotification(responsibleUser);
+    }
+
+    private static Stream<Arguments> provideTutorialGroupTestParameters() {
+        return Stream.of(
+                Arguments.of(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE,
+                        "You have been registered to the tutorial group " + tutorialGroup.getTitle() + " by " + teachingAssistant.getName() + ".", teachingAssistant),
+                Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE,
+                        "You have been deregistered from the tutorial group " + tutorialGroup.getTitle() + " by " + teachingAssistant.getName() + ".", teachingAssistant),
+                Arguments.of(TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE,
+                        "The student " + tutorialGroupStudent.getName() + " has been registered to your tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName()
+                                + ".",
+                        instructor),
+                Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE, "The student " + tutorialGroupStudent.getName()
+                        + " has been deregistered from your tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName() + ".", instructor));
+    }
+
 }

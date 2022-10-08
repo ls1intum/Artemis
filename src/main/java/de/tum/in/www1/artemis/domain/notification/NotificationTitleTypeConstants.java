@@ -61,6 +61,14 @@ public class NotificationTitleTypeConstants {
 
     public static final String PLAGIARISM_CASE_VERDICT_STUDENT_TITLE = "Verdict for your plagiarism case";
 
+    public static final String TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE = "You have been registered to a tutorial group";
+
+    public static final String TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE = "You have been deregistered from a tutorial group";
+
+    public static final String TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE = "A student has been registered to your tutorial group";
+
+    public static final String TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE = "A student has been deregistered from your tutorial group";
+
     // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
             .put(EXERCISE_SUBMISSION_ASSESSED, EXERCISE_SUBMISSION_ASSESSED_TITLE).put(ATTACHMENT_CHANGE, ATTACHMENT_CHANGE_TITLE).put(EXERCISE_RELEASED, EXERCISE_RELEASED_TITLE)
@@ -73,7 +81,9 @@ public class NotificationTitleTypeConstants {
             .put(COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FINISHED_TITLE).put(COURSE_ARCHIVE_FAILED, COURSE_ARCHIVE_FAILED_TITLE)
             .put(EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED_TITLE).put(EXAM_ARCHIVE_FAILED, EXAM_ARCHIVE_FAILED_TITLE).put(EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FINISHED_TITLE)
             .put(PROGRAMMING_TEST_CASES_CHANGED, PROGRAMMING_TEST_CASES_CHANGED_TITLE).put(NEW_PLAGIARISM_CASE_STUDENT, NEW_PLAGIARISM_CASE_STUDENT_TITLE)
-            .put(PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT_TITLE).build();
+            .put(PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT_TITLE).put(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE)
+            .put(TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE).put(TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE)
+            .put(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title
