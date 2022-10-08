@@ -13,7 +13,7 @@ import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-
 import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { generateExampleTutorialGroup, tutorialGroupToTutorialGroupFormData } from '../../../helpers/tutorialGroupExampleModels';
-import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route.providers';
+import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 
 describe('EditTutorialGroupComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupComponent>;
@@ -33,7 +33,16 @@ describe('EditTutorialGroupComponent', () => {
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
-                simpleTwoLayerActivatedRouteProvider(new Map([['tutorialGroupId', 1]]), new Map([['courseId', 2]])),
+                mockedActivatedRoute(
+                    {
+                        tutorialGroupId: 1,
+                    },
+                    {},
+                    {},
+                    {
+                        courseId: 2,
+                    },
+                ),
             ],
         })
             .compileComponents()

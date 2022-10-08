@@ -3,22 +3,6 @@ import { Course, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroupFormData } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 
-export interface GenerateExampleTutorialGroupParams {
-    id?: number;
-    title?: string;
-    capacity?: number;
-    campus?: string;
-    language?: Language;
-    additionalInformation?: string;
-    isOnline?: boolean;
-    teachingAssistant?: User;
-    isUserRegistered?: boolean;
-    numberOfRegisteredUsers?: number;
-    course?: Course;
-    teachingAssistantName?: string;
-    courseTitle?: string;
-}
-
 export const generateExampleTutorialGroup = ({
     id = 1,
     title = 'Example',
@@ -33,7 +17,7 @@ export const generateExampleTutorialGroup = ({
     course = { id: 1, title: 'Test Course' } as Course,
     teachingAssistantName = 'Example TA',
     courseTitle = 'Test Course',
-}: GenerateExampleTutorialGroupParams) => {
+}: TutorialGroup) => {
     const exampleTutorialGroup = new TutorialGroup();
     exampleTutorialGroup.id = id;
     exampleTutorialGroup.title = title;

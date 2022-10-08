@@ -106,7 +106,7 @@ describe('CourseTutorialGroupsComponent', () => {
 
     it('should load tutorial groups from service if they are not available in the cache and update the cache', () => {
         const tutorialGroupsService = TestBed.inject(TutorialGroupsService);
-        const getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllOfCourse').mockReturnValue(
+        const getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [tutorialGroupOne, tutorialGroupTwo],
@@ -132,7 +132,7 @@ describe('CourseTutorialGroupsComponent', () => {
 
     it('should not load tutorial groups from service if they are available in the cache', () => {
         const tutorialGroupsService = TestBed.inject(TutorialGroupsService);
-        const getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllOfCourse');
+        const getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllForCourse');
         const getCourseSpy = jest
             .spyOn(TestBed.inject(CourseScoreCalculationService), 'getCourse')
             .mockReturnValue({ id: 1, title: 'Test Course', tutorialGroups: [tutorialGroupOne, tutorialGroupTwo] } as Course);

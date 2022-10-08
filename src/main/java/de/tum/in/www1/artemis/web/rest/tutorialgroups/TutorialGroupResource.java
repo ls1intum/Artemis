@@ -99,7 +99,7 @@ public class TutorialGroupResource {
     @GetMapping("/courses/{courseId}/tutorial-groups")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<List<TutorialGroup>> getAllOfCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<TutorialGroup>> getAllForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutorial groups of course with id: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();

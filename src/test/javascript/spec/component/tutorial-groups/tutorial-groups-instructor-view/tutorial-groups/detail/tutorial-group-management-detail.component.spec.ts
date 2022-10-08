@@ -8,11 +8,11 @@ import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
-import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route.providers';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 
 describe('TutorialGroupManagementDetailComponent', () => {
     let fixture: ComponentFixture<TutorialGroupManagementDetailComponent>;
@@ -25,7 +25,16 @@ describe('TutorialGroupManagementDetailComponent', () => {
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
-                simpleTwoLayerActivatedRouteProvider(new Map([['tutorialGroupId', 1]]), new Map([['courseId', 2]])),
+                mockedActivatedRoute(
+                    {
+                        tutorialGroupId: 1,
+                    },
+                    {},
+                    {},
+                    {
+                        courseId: 2,
+                    },
+                ),
             ],
         })
             .compileComponents()

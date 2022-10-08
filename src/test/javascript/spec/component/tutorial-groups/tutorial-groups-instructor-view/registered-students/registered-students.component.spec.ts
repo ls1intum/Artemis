@@ -13,7 +13,7 @@ import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial
 import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/entities/tutorial-group/tutorial-group-registration.model';
 import { ArtemisTestModule } from '../../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { simpleTwoLayerActivatedRouteProvider } from '../../../../helpers/mocks/activated-route/simple-activated-route.providers';
+import { mockedActivatedRoute } from '../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 
 @Component({ selector: 'jhi-course-group', template: '' })
 class CourseGroupStubComponent {
@@ -61,7 +61,13 @@ describe('Registered Students Component', () => {
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(CourseManagementService),
-                simpleTwoLayerActivatedRouteProvider(new Map([['tutorialGroupId', 123]]), new Map(), { course }),
+                mockedActivatedRoute(
+                    {
+                        tutorialGroupId: 123,
+                    },
+                    {},
+                    { course },
+                ),
             ],
         })
             .compileComponents()

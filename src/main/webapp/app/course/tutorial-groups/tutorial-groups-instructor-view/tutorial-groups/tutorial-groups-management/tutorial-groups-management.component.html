@@ -10,7 +10,7 @@
                     </a>
                 </div>
             </div>
-            <ng-container *ngIf="tutorialGroups && tutorialGroups.length > 0">
+            <ng-container *ngIf="tutorialGroups?.length">
                 <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [courseId]="courseId" [tutorialGroupClickHandler]="onTutorialGroupSelected" [showIdColumn]="true">
                     <ng-template let-tutorialGroup>
                         <jhi-tutorial-group-row-buttons [courseId]="courseId" [tutorialGroup]="tutorialGroup" (tutorialGroupDeleted)="loadTutorialGroups()">

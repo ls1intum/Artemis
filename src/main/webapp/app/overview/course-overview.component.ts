@@ -204,7 +204,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         forkJoin([
             this.learningGoalService.getAllForCourse(this.courseId),
             this.learningGoalService.getAllPrerequisitesForCourse(this.courseId),
-            this.tutorialGroupService.getAllOfCourse(this.courseId),
+            this.tutorialGroupService.getAllForCourse(this.courseId),
         ]).subscribe({
             next: ([learningGoals, prerequisites, tutorialGroups]) => {
                 if (this.course) {

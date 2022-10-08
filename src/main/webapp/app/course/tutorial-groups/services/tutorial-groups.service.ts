@@ -17,7 +17,7 @@ export class TutorialGroupsService {
         return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/campus-values`, { observe: 'response' });
     }
 
-    getAllOfCourse(courseId: number): Observable<EntityArrayResponseType> {
+    getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<TutorialGroup[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, { observe: 'response' });
     }
 

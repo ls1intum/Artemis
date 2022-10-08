@@ -14,8 +14,8 @@ import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/
 import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-group-row-buttons-stub.component';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
-import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route.providers';
 import { TutorialGroupsTableStubComponent } from '../../../stubs/tutorial-groups-table-stub.component';
+import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 
 describe('TutorialGroupsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
@@ -44,7 +44,14 @@ describe('TutorialGroupsManagementComponent', () => {
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
-                simpleTwoLayerActivatedRouteProvider(new Map(), new Map([['courseId', 1]])),
+                mockedActivatedRoute(
+                    {},
+                    {},
+                    {},
+                    {
+                        courseId: 1,
+                    },
+                ),
             ],
         })
             .compileComponents()
@@ -55,7 +62,7 @@ describe('TutorialGroupsManagementComponent', () => {
                 tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
 
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
-                getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllOfCourse').mockReturnValue(
+                getAllOfCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(
                     of(
                         new HttpResponse({
                             body: [tutorialGroupOne, tutorialGroupTwo],

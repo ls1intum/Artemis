@@ -102,7 +102,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     loadTutorialGroupsFromServer() {
         this.isLoading = true;
         this.tutorialGroupService
-            .getAllOfCourse(this.courseId)
+            .getAllForCourse(this.courseId)
             .pipe(
                 map((res: HttpResponse<TutorialGroup[]>) => res.body),
                 finalize(() => {
