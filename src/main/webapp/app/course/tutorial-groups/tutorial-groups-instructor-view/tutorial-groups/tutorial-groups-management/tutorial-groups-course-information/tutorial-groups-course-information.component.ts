@@ -2,10 +2,10 @@ import { Component, Input } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 @Component({
-    selector: 'jhi-course-tutorial-group-side-panel',
-    templateUrl: './course-tutorial-group-side-panel.component.html',
+    selector: 'jhi-tutorial-groups-course-information',
+    templateUrl: './tutorial-groups-course-information.component.html',
 })
-export class CourseTutorialGroupSidePanelComponent {
+export class TutorialGroupsCourseInformationComponent {
     @Input()
     tutorialGroups: TutorialGroup[] = [];
 

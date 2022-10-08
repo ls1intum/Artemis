@@ -16,6 +16,13 @@ import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/s
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { TutorialGroupsTableStubComponent } from '../../../stubs/tutorial-groups-table-stub.component';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { Component, Input } from '@angular/core';
+
+@Component({ selector: 'jhi-tutorial-groups-course-information', template: '' })
+class MockTutorialGroupsCourseInformationComponent {
+    @Input()
+    tutorialGroups: TutorialGroup[] = [];
+}
 
 describe('TutorialGroupsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
@@ -33,6 +40,7 @@ describe('TutorialGroupsManagementComponent', () => {
         TestBed.configureTestingModule({
             declarations: [
                 TutorialGroupsManagementComponent,
+                MockTutorialGroupsCourseInformationComponent,
                 LoadingIndicatorContainerStubComponent,
                 TutorialGroupsTableStubComponent,
                 TutorialGroupRowButtonsStubComponent,

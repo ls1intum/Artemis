@@ -37,12 +37,6 @@ class MockCourseTutorialGroupsRegisteredComponent {
     courseId: number;
 }
 
-@Component({ selector: 'jhi-course-tutorial-group-side-panel', template: '' })
-class MockCourseTutorialGroupSidePanelComponent {
-    @Input()
-    tutorialGroups: TutorialGroup[] = [];
-}
-
 describe('CourseTutorialGroupsComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupsComponent>;
     let component: CourseTutorialGroupsComponent;
@@ -57,13 +51,7 @@ describe('CourseTutorialGroupsComponent', () => {
     beforeEach(() => {
         queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
-            declarations: [
-                CourseTutorialGroupsComponent,
-                MockCourseTutorialGroupsOverviewComponent,
-                MockCourseTutorialGroupsRegisteredComponent,
-                MockCourseTutorialGroupSidePanelComponent,
-                MockPipe(ArtemisTranslatePipe),
-            ],
+            declarations: [CourseTutorialGroupsComponent, MockCourseTutorialGroupsOverviewComponent, MockCourseTutorialGroupsRegisteredComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(CourseScoreCalculationService),
