@@ -51,7 +51,7 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
-        distribution: 'temurin'
+        distribution: 'zulu'
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Production Build
