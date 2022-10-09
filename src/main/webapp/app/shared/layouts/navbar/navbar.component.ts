@@ -312,6 +312,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     studentPathBreadcrumbTranslations = {
         exams: 'artemisApp.courseOverview.menu.exams',
+        test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
         learning_goals: 'artemisApp.courseOverview.menu.learningGoals',
