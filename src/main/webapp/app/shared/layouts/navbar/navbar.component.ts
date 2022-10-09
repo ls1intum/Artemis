@@ -381,6 +381,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (isStudentPath) {
             switch (this.lastRouteUrlSegment) {
                 case 'code-editor':
+                case 'test-exam':
                 case 'participate':
                     this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
                     return;
@@ -505,6 +506,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'mc-question-statistic':
             case 'dnd-question-statistic':
             case 'sa-question-statistic':
+            case 'test-exam':
             case 'participate':
                 break;
             case 'example-submissions':
