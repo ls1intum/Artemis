@@ -123,7 +123,7 @@ jobs:
 
     # TODO: Push to Docker Hub (develop + tag)
 
-    # TODO: Push to Chair Habour (??)
+    # TODO: Push to Chair Harbour (??)
 
   deploy:
     if: ${{ github.event_name == 'pull_request' }}
@@ -214,7 +214,7 @@ jobs:
         done
 
     # Always disconnect from VPN
-    - name: Disconncet VPN
+    - name: Disconnect VPN
       run: |
         sudo killall openvpn
         rm lrz.ovpn
