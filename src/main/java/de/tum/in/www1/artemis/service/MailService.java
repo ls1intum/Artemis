@@ -32,8 +32,8 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -210,6 +210,10 @@ public class MailService {
             context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
         }
 
+        if (notificationSubject instanceof SingleUserNotificationService.TutorialGroupRegistrationNotificationSubject) {
+            setContactForTutorialGroupRegistrationsNotifications(context, notificationType);
+        }
+
         if (notificationSubject instanceof Post post) {
             // posts use a different mechanism for the url
             context.setVariable(NOTIFICATION_URL, extractNotificationUrl(post, artemisServerUrl.toString()));
@@ -220,16 +224,12 @@ public class MailService {
         }
         context.setVariable(BASE_URL, artemisServerUrl);
 
-        if (notificationSubject instanceof TutorialGroup) {
-            setContactForTutorialGroupNotifications(context, notificationType);
-        }
-
         String content = createContentForNotificationEmailByType(notificationType, context);
 
         sendEmail(user, subject, content, false, true);
     }
 
-    private void setContactForTutorialGroupNotifications(Context context, NotificationType notificationType) {
+    private void setContactForTutorialGroupRegistrationsNotifications(Context context, NotificationType notificationType) {
 
         if (NotificationType.TUTORIAL_GROUP_REGISTRATION_STUDENT.equals(notificationType)) {
             context.setVariable(NOTIFICATION_TYPE, "studentRegistration");

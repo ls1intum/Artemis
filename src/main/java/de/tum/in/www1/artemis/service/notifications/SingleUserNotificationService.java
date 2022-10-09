@@ -68,7 +68,9 @@ public class SingleUserNotificationService {
                     (User) typeSpecificInformation, author);
             // Tutorial Group related
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR -> createNotification(
-                    (TutorialGroup) notificationSubject, notificationType, (User) typeSpecificInformation, author);
+                    ((TutorialGroupRegistrationNotificationSubject) notificationSubject).tutorialGroup, notificationType,
+                    ((TutorialGroupRegistrationNotificationSubject) notificationSubject).student,
+                    ((TutorialGroupRegistrationNotificationSubject) notificationSubject).responsibleUser);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(singleUserNotification, notificationSubject);
@@ -207,20 +209,30 @@ public class SingleUserNotificationService {
         notifyRecipientWithNotificationType(plagiarismCase, PLAGIARISM_CASE_VERDICT_STUDENT, student, userRepository.getUser());
     }
 
+    /**
+     * Record to store tutorial group, registered/deregistered user and responsible user in one notification subject.
+     */
+    public record TutorialGroupRegistrationNotificationSubject(TutorialGroup tutorialGroup, User student, User responsibleUser) {
+    }
+
     public void notifyStudentAboutRegistrationToTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
-        notifyRecipientWithNotificationType(tutorialGroup, TUTORIAL_GROUP_REGISTRATION_STUDENT, student, responsibleUser);
+        notifyRecipientWithNotificationType(new TutorialGroupRegistrationNotificationSubject(tutorialGroup, student, responsibleUser), TUTORIAL_GROUP_REGISTRATION_STUDENT, null,
+                null);
     }
 
     public void notifyStudentAboutDeregistrationFromTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
-        notifyRecipientWithNotificationType(tutorialGroup, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, student, responsibleUser);
+        notifyRecipientWithNotificationType(new TutorialGroupRegistrationNotificationSubject(tutorialGroup, student, responsibleUser), TUTORIAL_GROUP_DEREGISTRATION_STUDENT, null,
+                null);
     }
 
     public void notifyTutorAboutRegistrationToTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
-        notifyRecipientWithNotificationType(tutorialGroup, TUTORIAL_GROUP_REGISTRATION_TUTOR, student, responsibleUser);
+        notifyRecipientWithNotificationType(new TutorialGroupRegistrationNotificationSubject(tutorialGroup, student, responsibleUser), TUTORIAL_GROUP_REGISTRATION_TUTOR, null,
+                null);
     }
 
     public void notifyTutorAboutDeregistrationFromTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
-        notifyRecipientWithNotificationType(tutorialGroup, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, student, responsibleUser);
+        notifyRecipientWithNotificationType(new TutorialGroupRegistrationNotificationSubject(tutorialGroup, student, responsibleUser), TUTORIAL_GROUP_DEREGISTRATION_TUTOR, null,
+                null);
     }
 
     /**

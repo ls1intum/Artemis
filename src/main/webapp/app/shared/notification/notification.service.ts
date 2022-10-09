@@ -98,12 +98,6 @@ export class NotificationService {
                 const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
                 const routeComponents: RouteComponents = MetisService.getLinkForLecturePost(targetCourseId, target.lecture ?? target.lectureId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
-            } else if ([TUTORIAL_GROUP_REGISTERED_TUTOR_TITLE, TUTORIAL_GROUP_DEREGISTERED_TUTOR_TITLE].includes(notification?.title ?? '')) {
-                const routeComponents: RouteComponents = TutorialGroupsService.getLinkForTutorialGroupManagementDetail(targetCourseId, target.id);
-                this.navigateToNotificationTarget(targetCourseId, routeComponents, {});
-            } else if ([TUTORIAL_GROUP_DEREGISTERED_STUDENT_TITLE, TUTORIAL_GROUP_REGISTERED_STUDENT_TITLE].includes(notification?.title ?? '')) {
-                const routeComponents: RouteComponents = TutorialGroupsService.getLinkForTutorialGroupDetail(targetCourseId, target.id);
-                this.navigateToNotificationTarget(targetCourseId, routeComponents, {});
             } else {
                 this.router.navigate([target.mainPage, targetCourseId, target.entity, target.id]);
             }

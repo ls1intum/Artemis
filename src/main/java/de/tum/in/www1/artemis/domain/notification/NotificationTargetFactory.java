@@ -23,6 +23,10 @@ public class NotificationTargetFactory {
 
     public static final String LECTURES_TEXT = "lectures";
 
+    public static final String TUTORIAL_GROUP_MANAGEMENT_TEXT = "tutorial-groups-management";
+
+    public static final String TUTORIAL_GROUPS_TEXT = "tutorial-groups";
+
     public static final String ATTACHMENT_UPDATED_TEXT = "attachmentUpdated";
 
     public static final String EXERCISE_RELEASED_TEXT = "exerciseReleased";
@@ -198,8 +202,13 @@ public class NotificationTargetFactory {
     }
 
     // Tutorial Group related targets
-    public static NotificationTarget createTutorialGroupTarget(TutorialGroup tutorialGroup, Long courseId) {
-        return new NotificationTarget(tutorialGroup.getId(), courseId);
+    public static NotificationTarget createTutorialGroupTarget(TutorialGroup tutorialGroup, Long courseId, boolean isManagement) {
+        var notificationTarget = new NotificationTarget();
+        notificationTarget.setIdentifier(tutorialGroup.getId());
+        notificationTarget.setEntity(isManagement ? TUTORIAL_GROUP_MANAGEMENT_TEXT : TUTORIAL_GROUPS_TEXT);
+        notificationTarget.setCourseId(courseId);
+        notificationTarget.setMainPage(isManagement ? COURSE_MANAGEMENT_TEXT : COURSES_TEXT);
+        return notificationTarget;
     }
 
     /// URL/Link related methods

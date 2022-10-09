@@ -9,20 +9,26 @@
     <div class="notification-content">
         <div th:switch="${notificationType}">
             <span th:case="'studentRegistration'" th:text="#{email.notification.title.tutorialGroup.registrationStudent(
-            ${notificationSubject.getTitle()},
-            ${notificationSubject.getCourse().getTitle()}
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
             )}"></span>
             <span th:case="'tutorRegistration'" th:text="#{email.notification.title.tutorialGroup.registrationTutor(
-            ${notificationSubject.getTitle()},
-            ${notificationSubject.getCourse().getTitle()}
+            ${notificationSubject.student.getName()},
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
             )}"></span>
             <span th:case="'studentDeregistration'" th:text="#{email.notification.title.tutorialGroup.deregistrationStudent(
-            ${notificationSubject.getTitle()},
-            ${notificationSubject.getCourse().getTitle()}
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
             )}"></span>
             <span th:case="'tutorDeregistration'" th:text="#{email.notification.title.tutorialGroup.deregistrationTutor(
-            ${notificationSubject.getTitle()},
-            ${notificationSubject.getCourse().getTitle()}
+            ${notificationSubject.student.getName()},
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
             )}"></span>
         </div>
         <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>

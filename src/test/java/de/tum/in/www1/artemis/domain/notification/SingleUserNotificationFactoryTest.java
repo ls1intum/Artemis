@@ -309,27 +309,28 @@ class SingleUserNotificationFactoryTest {
     /// Test for Notifications based on Tutorial Groups
     @ParameterizedTest
     @MethodSource("provideTutorialGroupTestParameters")
-    void createNotification_withNotificationType_NewTutorialGroup(NotificationType notificationType, String expectedTitle, String expectedText, User responsibleUser) {
+    void createNotification_withNotificationType_NewTutorialGroup(NotificationType notificationType, String expectedTitle, String expectedText, User responsibleUser,
+            Boolean isManagement) {
         this.notificationType = notificationType;
         this.expectedTitle = expectedTitle;
         this.expectedText = expectedText;
         expectedPriority = MEDIUM;
-        expectedTransientTarget = createTutorialGroupTarget(tutorialGroup, COURSE_ID);
+        expectedTransientTarget = createTutorialGroupTarget(tutorialGroup, COURSE_ID, isManagement);
         createAndCheckTutorialGroupNotification(responsibleUser);
     }
 
     private static Stream<Arguments> provideTutorialGroupTestParameters() {
         return Stream.of(
                 Arguments.of(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE,
-                        "You have been registered to the tutorial group " + tutorialGroup.getTitle() + " by " + teachingAssistant.getName() + ".", teachingAssistant),
+                        "You have been registered to the tutorial group " + tutorialGroup.getTitle() + " by " + teachingAssistant.getName() + ".", teachingAssistant, false),
                 Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE,
-                        "You have been deregistered from the tutorial group " + tutorialGroup.getTitle() + " by " + teachingAssistant.getName() + ".", teachingAssistant),
+                        "You have been deregistered from the tutorial group " + tutorialGroup.getTitle() + " by " + teachingAssistant.getName() + ".", teachingAssistant, false),
                 Arguments.of(TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE,
                         "The student " + tutorialGroupStudent.getName() + " has been registered to your tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName()
                                 + ".",
-                        instructor),
+                        instructor, true),
                 Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE, "The student " + tutorialGroupStudent.getName()
-                        + " has been deregistered from your tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName() + ".", instructor));
+                        + " has been deregistered from your tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName() + ".", instructor, true));
     }
 
 }
