@@ -351,6 +351,12 @@ describe('ExamParticipationComponent', () => {
         expect(secondSubmission.isSynced).toBeTrue();
         expect(secondSubmission.submitted).toBeFalse();
 
+        if (!!comp.testRunId || studentExam.exam?.testExam) {
+            expect(comp.individualStudentEndDate).toEqual(comp.testStartTime!.add(studentExam.workingTime!, 'seconds'));
+        } else {
+            expect(comp.individualStudentEndDate).toEqual(comp.exam.startDate!.add(studentExam.workingTime!, 'seconds'));
+        }
+
         // Initialize Exam Overview Page
         expect(comp.activeExamPage.exercise).toBeUndefined();
         expect(comp.activeExamPage.isOverviewPage).toBeTrue();
@@ -360,7 +366,19 @@ describe('ExamParticipationComponent', () => {
         const studentExam = new StudentExam();
         studentExam.workingTime = 100;
         comp.testStartTime = dayjs().subtract(1000, 'seconds');
-        comp.exam = new Exam();
+        const exam = new Exam();
+        comp.exam = exam;
+        testExamStarted(studentExam);
+    });
+
+    it('should initialize test exam', () => {
+        const studentExam = new StudentExam();
+        const exam = new Exam();
+        exam.testExam = true;
+        studentExam.exam = exam;
+        studentExam.workingTime = 100;
+        comp.testStartTime = dayjs().subtract(1000, 'seconds');
+        comp.exam = exam;
         testExamStarted(studentExam);
     });
 

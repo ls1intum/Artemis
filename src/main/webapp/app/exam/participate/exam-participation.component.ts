@@ -304,7 +304,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
             this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
-            if (!!this.testRunId || this.testExam) {
+            if (!!this.testRunId || this.studentExam?.exam?.testExam) {
                 this.individualStudentEndDate = this.testStartTime!.add(this.studentExam.workingTime!, 'seconds');
             } else {
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
