@@ -210,7 +210,8 @@ public class MailService {
         }
 
         if (notificationSubject instanceof SingleUserNotificationService.TutorialGroupRegistrationNotificationSubject) {
-            setContextForTutorialGroupRegistrationsNotifications(context, notificationType);
+            setContextForTutorialGroupRegistrationsNotifications(context, notificationType,
+                    (SingleUserNotificationService.TutorialGroupRegistrationNotificationSubject) notificationSubject);
         }
 
         if (notificationSubject instanceof Post post) {
@@ -228,19 +229,28 @@ public class MailService {
         sendEmail(user, subject, content, false, true);
     }
 
-    private void setContextForTutorialGroupRegistrationsNotifications(Context context, NotificationType notificationType) {
+    private void setContextForTutorialGroupRegistrationsNotifications(Context context, NotificationType notificationType,
+            SingleUserNotificationService.TutorialGroupRegistrationNotificationSubject notificationSubject) {
 
         if (NotificationType.TUTORIAL_GROUP_REGISTRATION_STUDENT.equals(notificationType)) {
             context.setVariable(NOTIFICATION_TYPE, "studentRegistration");
+            context.setVariable("student", notificationSubject.students().stream().findFirst().orElse(null));
         }
         if (NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT.equals(notificationType)) {
             context.setVariable(NOTIFICATION_TYPE, "studentDeregistration");
+            context.setVariable("student", notificationSubject.students().stream().findFirst().orElse(null));
         }
         if (NotificationType.TUTORIAL_GROUP_REGISTRATION_TUTOR.equals(notificationType)) {
             context.setVariable(NOTIFICATION_TYPE, "tutorRegistration");
+            context.setVariable("student", notificationSubject.students().stream().findFirst().orElse(null));
         }
         if (NotificationType.TUTORIAL_GROUP_DEREGISTRATION_TUTOR.equals(notificationType)) {
             context.setVariable(NOTIFICATION_TYPE, "tutorDeregistration");
+            context.setVariable("student", notificationSubject.students().stream().findFirst().orElse(null));
+        }
+        if (NotificationType.TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR.equals(notificationType)) {
+            context.setVariable(NOTIFICATION_TYPE, "tutorRegistrationMultiple");
+            context.setVariable("numberOfStudents", notificationSubject.students().size());
         }
     }
 
@@ -262,7 +272,7 @@ public class MailService {
             case DUPLICATE_TEST_CASE -> templateEngine.process("mail/notification/duplicateTestCasesEmail", context);
             case NEW_PLAGIARISM_CASE_STUDENT -> templateEngine.process("mail/notification/plagiarismCaseEmail", context);
             case PLAGIARISM_CASE_VERDICT_STUDENT -> templateEngine.process("mail/notification/plagiarismVerdictEmail", context);
-            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR -> templateEngine
+            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR -> templateEngine
                     .process("mail/notification/tutorialGroupRegistrationEmail", context);
             case TUTORIAL_GROUP_DELETED -> templateEngine.process("mail/notification/tutorialGroupDeletedEmail", context);
             case TUTORIAL_GROUP_UPDATED -> templateEngine.process("mail/notification/tutorialGroupUpdatedEmail", context);

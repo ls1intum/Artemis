@@ -76,13 +76,15 @@ export const NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE = 'New possible plagiari
 
 export const PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE = 'Final state for plagiarism case';
 
-export const TUTORIAL_GROUP_REGISTERED_STUDENT_TITLE = 'You have been registered to a tutorial group';
+export const TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE = 'You have been registered to a tutorial group';
 
-export const TUTORIAL_GROUP_DEREGISTERED_STUDENT_TITLE = 'You have been deregistered from a tutorial group';
+export const TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE = 'You have been deregistered from a tutorial group';
 
-export const TUTORIAL_GROUP_REGISTERED_TUTOR_TITLE = 'A student has been registered to your tutorial group';
+export const TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE = 'A student has been registered to your tutorial group';
 
-export const TUTORIAL_GROUP_DEREGISTERED_TUTOR_TITLE = 'A student has been deregistered from your tutorial group';
+export const TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE = 'A student has been deregistered from your tutorial group';
+
+export const TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE = 'Multiple students have been registered to your tutorial group';
 
 export const TUTORIAL_GROUP_DELETED_TITLE = 'Tutorial Group deleted';
 

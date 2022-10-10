@@ -187,7 +187,7 @@ class SingleUserNotificationFactoryTest {
     }
 
     private void createAndCheckTutorialGroupNotification(User responsibleUser) {
-        createdNotification = createNotification(tutorialGroup, notificationType, tutorialGroupStudent, responsibleUser);
+        createdNotification = createNotification(tutorialGroup, notificationType, Set.of(tutorialGroupStudent), responsibleUser);
         checkNotification();
     }
 
@@ -309,7 +309,7 @@ class SingleUserNotificationFactoryTest {
     /// Test for Notifications based on Tutorial Groups
     @ParameterizedTest
     @MethodSource("provideTutorialGroupTestParameters")
-    void createNotification_withNotificationType_NewTutorialGroup(NotificationType notificationType, String expectedTitle, String expectedText, User responsibleUser,
+    void createNotification_withNotificationType_TutorialGroupNotifications(NotificationType notificationType, String expectedTitle, String expectedText, User responsibleUser,
             Boolean isManagement, Boolean isDetailPage) {
         this.notificationType = notificationType;
         this.expectedTitle = expectedTitle;
@@ -330,8 +330,12 @@ class SingleUserNotificationFactoryTest {
                         "The student " + tutorialGroupStudent.getName() + " has been registered to your tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName()
                                 + ".",
                         instructor, true, true),
-                Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE, "The student " + tutorialGroupStudent.getName()
-                        + " has been deregistered from your tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName() + ".", instructor, true, true));
+                Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE,
+                        "The student " + tutorialGroupStudent.getName() + " has been deregistered from your tutorial group " + tutorialGroup.getTitle() + " by "
+                                + instructor.getName() + ".",
+                        instructor, true, true),
+                Arguments.of(TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE,
+                        "1 students have been registered to your tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName() + ".", instructor, true, true));
     }
 
 }

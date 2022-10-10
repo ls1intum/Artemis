@@ -69,6 +69,8 @@ public class NotificationTitleTypeConstants {
 
     public static final String TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE = "A student has been deregistered from your tutorial group";
 
+    public static final String TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE = "Multiple students have been registered to your tutorial group";
+
     public static final String TUTORIAL_GROUP_DELETED_TITLE = "Tutorial Group deleted";
 
     public static final String TUTORIAL_GROUP_UPDATED_TITLE = "Tutorial Group updated";
@@ -88,7 +90,7 @@ public class NotificationTitleTypeConstants {
             .put(PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT_TITLE).put(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE)
             .put(TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE).put(TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE)
             .put(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE).put(TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_DELETED_TITLE)
-            .put(TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_UPDATED_TITLE).build();
+            .put(TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_UPDATED_TITLE).put(TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title

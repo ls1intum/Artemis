@@ -14,7 +14,7 @@
             ${notificationSubject.responsibleUser.getName()}
             )}"></span>
             <span th:case="'tutorRegistration'" th:text="#{email.notification.title.tutorialGroup.registrationTutor(
-            ${notificationSubject.student.getName()},
+            ${student.getName()},
             ${notificationSubject.tutorialGroup.getTitle()},
             ${notificationSubject.tutorialGroup.getCourse().getTitle()},
             ${notificationSubject.responsibleUser.getName()}
@@ -25,7 +25,13 @@
             ${notificationSubject.responsibleUser.getName()}
             )}"></span>
             <span th:case="'tutorDeregistration'" th:text="#{email.notification.title.tutorialGroup.deregistrationTutor(
-            ${notificationSubject.student.getName()},
+            ${student.getName()},
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
+            )}"></span>
+            <span th:case="'tutorRegistrationMultiple'" th:text="#{email.notification.title.tutorialGroup.registrationMultipleTutor(
+            ${numberOfStudents},
             ${notificationSubject.tutorialGroup.getTitle()},
             ${notificationSubject.tutorialGroup.getCourse().getTitle()},
             ${notificationSubject.responsibleUser.getName()}
