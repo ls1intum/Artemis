@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
-public class TutorialGroupNotificationFactoryTest {
+class TutorialGroupNotificationFactoryTest {
 
     private static TutorialGroup tutorialGroup;
 
@@ -23,20 +23,12 @@ public class TutorialGroupNotificationFactoryTest {
 
     private static final String TUTORIAL_GROUP_TITLE = "tutorial group title";
 
-    private static Course course;
-
-    private static User teachingAssistant;
-
-    private static User instructor;
-
-    private static User tutorialGroupStudent;
-
     @BeforeAll
     static void setUp() {
-        course = new Course();
+        Course course = new Course();
         course.setId(COURSE_ID);
 
-        teachingAssistant = new User();
+        User teachingAssistant = new User();
         teachingAssistant.setFirstName("John");
         teachingAssistant.setLastName("Doe");
 
@@ -46,11 +38,11 @@ public class TutorialGroupNotificationFactoryTest {
         tutorialGroup.setTitle(TUTORIAL_GROUP_TITLE);
         tutorialGroup.setTeachingAssistant(teachingAssistant);
 
-        tutorialGroupStudent = new User();
+        User tutorialGroupStudent = new User();
         tutorialGroupStudent.setFirstName("Jane");
         tutorialGroupStudent.setLastName("Doe");
 
-        instructor = new User();
+        User instructor = new User();
         instructor.setFirstName("John");
         instructor.setLastName("Smith");
 

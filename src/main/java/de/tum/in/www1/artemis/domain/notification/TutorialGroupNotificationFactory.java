@@ -8,6 +8,13 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 public class TutorialGroupNotificationFactory {
 
+    /**
+     * Creates a TutorialGroupNotification for the given tutorial group and notification type.
+     *
+     * @param tutorialGroup    the tutorial group for which the notification is created
+     * @param notificationType the type of the notification
+     * @return the created notification
+     */
     public static TutorialGroupNotification createTutorialGroupNotification(TutorialGroup tutorialGroup, NotificationType notificationType) {
         var title = findCorrespondingNotificationTitleOrThrow(notificationType);
         var text = "";

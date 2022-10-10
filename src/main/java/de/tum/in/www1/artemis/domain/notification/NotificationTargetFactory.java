@@ -202,9 +202,21 @@ public class NotificationTargetFactory {
     }
 
     // Tutorial Group related targets
+
+    /**
+     * Create a NotificationTarget for notifications related to a Tutorial Group.
+     *
+     * @param tutorialGroup that is related to the notification
+     * @param courseId      of the course to which the tutorial group belongs
+     * @param isManagement  true if the notification should link to the tutorial group management page
+     * @param isDetailPage  true if the notification should lik to the detail page of the tutorial group
+     * @return the created NotificationTarget
+     */
     public static NotificationTarget createTutorialGroupTarget(TutorialGroup tutorialGroup, Long courseId, boolean isManagement, boolean isDetailPage) {
         var notificationTarget = new NotificationTarget();
-        notificationTarget.setIdentifier(isDetailPage ? tutorialGroup.getId() : null);
+        if (isDetailPage) {
+            notificationTarget.setIdentifier(tutorialGroup.getId());
+        }
         notificationTarget.setEntity(isManagement ? TUTORIAL_GROUP_MANAGEMENT_TEXT : TUTORIAL_GROUPS_TEXT);
         notificationTarget.setCourseId(courseId);
         notificationTarget.setMainPage(isManagement ? COURSE_MANAGEMENT_TEXT : COURSES_TEXT);
@@ -224,8 +236,8 @@ public class NotificationTargetFactory {
         NotificationTarget target = notification.getTargetTransient();
         var mainPage = target.getMainPage() != null ? target.getMainPage() : "";
         var entity = target.getEntity() != null ? target.getEntity() : "";
-        var identifier = (target.getIdentifier() != null) ? (target.getIdentifier() + "") : "";
-        var courseId = (target.getCourseId() != null) ? (target.getCourseId() + "") : "";
+        var identifier = (target.getIdentifier() != null) ? String.valueOf(target.getIdentifier()) : "";
+        var courseId = (target.getCourseId() != null) ? String.valueOf(target.getCourseId()) : "";
 
         return baseUrl + "/" + mainPage + "/" + courseId + "/" + entity + "/" + identifier;
     }

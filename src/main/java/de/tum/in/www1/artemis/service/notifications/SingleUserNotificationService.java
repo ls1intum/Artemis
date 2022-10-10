@@ -215,31 +215,80 @@ public class SingleUserNotificationService {
     public record TutorialGroupNotificationSubject(TutorialGroup tutorialGroup, Set<User> users, User responsibleUser) {
     }
 
+    /**
+     * Notify a student that he or she has been registered for a tutorial group.
+     *
+     * @param tutorialGroup   the tutorial group the student has been registered for
+     * @param student         the student that has been registered for the tutorial group
+     * @param responsibleUser the user that has registered the student for the tutorial group
+     */
     public void notifyStudentAboutRegistrationToTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
         notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(student), responsibleUser), TUTORIAL_GROUP_REGISTRATION_STUDENT, null, null);
     }
 
+    /**
+     * Notify a student that he or she has been deregistered from a tutorial group.
+     *
+     * @param tutorialGroup   the tutorial group the student has been deregistered from
+     * @param student         the student that has been deregistered from the tutorial group
+     * @param responsibleUser the user that has deregistered the student from the tutorial group
+     */
     public void notifyStudentAboutDeregistrationFromTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
         notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(student), responsibleUser), TUTORIAL_GROUP_DEREGISTRATION_STUDENT, null,
                 null);
     }
 
+    /**
+     * Notify a tutor of tutorial group that multiple students have been registered for the tutorial group he or she is responsible for.
+     *
+     * @param tutorialGroup   the tutorial group the students have been registered for (containing the tutor that should be notified)
+     * @param students        the students that have been registered for the tutorial group
+     * @param responsibleUser the user that has registered the student for the tutorial group
+     */
     public void notifyTutorAboutMultipleRegistrationsToTutorialGroup(TutorialGroup tutorialGroup, Set<User> students, User responsibleUser) {
         notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, students, responsibleUser), TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, null, null);
     }
 
+    /**
+     * Notify a tutor of a tutorial group that a student has been registered for the tutorial group he or she is responsible for.
+     *
+     * @param tutorialGroup   the tutorial group the student has registered for (containing the tutor that should be notified)
+     * @param student         the student that has been registered for the tutorial group
+     * @param responsibleUser the user that has registered the student for the tutorial group
+     */
     public void notifyTutorAboutRegistrationToTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
         notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(student), responsibleUser), TUTORIAL_GROUP_REGISTRATION_TUTOR, null, null);
     }
 
+    /**
+     * Notify a tutor of a tutorial group that a student has been deregistered from the tutorial group he or she is responsible for.
+     *
+     * @param tutorialGroup   the tutorial group the student has been deregistered from (containing the tutor that should be notified)
+     * @param student         the student that has been deregistered from the tutorial group
+     * @param responsibleUser the user that has deregistered the student from the tutorial group
+     */
     public void notifyTutorAboutDeregistrationFromTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
         notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(student), responsibleUser), TUTORIAL_GROUP_DEREGISTRATION_TUTOR, null, null);
     }
 
+    /**
+     * Notify a tutor that he or she has been assigned to lead a tutorial group.
+     *
+     * @param tutorialGroup   the tutorial group the tutor has been assigned to lead
+     * @param tutorToContact  the tutor that has been assigned to lead the tutorial group
+     * @param responsibleUser the user that has assigned the tutor to lead the tutorial group
+     */
     public void notifyTutorAboutAssignmentToTutorialGroup(TutorialGroup tutorialGroup, User tutorToContact, User responsibleUser) {
         notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(tutorToContact), responsibleUser), TUTORIAL_GROUP_ASSIGNED, null, null);
     }
 
+    /**
+     * Notify a tutor that he or she has been unassigned from the leadership of a tutorial group.
+     *
+     * @param tutorialGroup   the tutorial group the tutor has been unassigned from
+     * @param tutorToContact  the tutor that has been unassigned
+     * @param responsibleUser the user that has unassigned the tutor
+     */
     public void notifyTutorAboutUnassignmentFromTutorialGroup(TutorialGroup tutorialGroup, User tutorToContact, User responsibleUser) {
         notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(tutorToContact), responsibleUser), TUTORIAL_GROUP_UNASSIGNED, null, null);
     }

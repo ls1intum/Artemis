@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
  * A Notification concerning all students in a tutorial group.
  */
 @Entity
-@DiscriminatorValue(value = "T")
+@DiscriminatorValue("T")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorialGroupNotification extends Notification {
 

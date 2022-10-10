@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificatio
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 
-public class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
@@ -56,8 +56,6 @@ public class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrat
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
 
-    private Course course;
-
     private TutorialGroup tutorialGroup;
 
     private User student1;
@@ -68,7 +66,7 @@ public class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrat
     void setUp() {
         // creating the users student1-student10, tutor1-tutor10, editor1-editor10 and instructor1-instructor10
         this.database.addUsers(10, 10, 10, 10);
-        course = this.database.createCourse();
+        Course course = this.database.createCourse();
         student1 = userRepository.findOneByLogin("student1").get();
         tutor1 = userRepository.findOneByLogin("tutor1").get();
         tutorialGroup = createAndSaveTutorialGroup(course.getId(), "ExampleTitle1", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
