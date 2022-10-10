@@ -150,8 +150,8 @@ public class NotificationSettingsService {
             if (!decidedIds.contains(defaultSetting.getSettingId())) {
                 notificationSettings.add(defaultSetting);
             }
-            Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, notificationSettings);
         }
+        Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, notificationSettings);
         return !deactivatedTypes.contains(type);
     }
 

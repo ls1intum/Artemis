@@ -23,7 +23,10 @@ public class TutorialGroupNotificationFactory {
 
     private static void setNotificationTarget(TutorialGroupNotification notification) {
         if (notification.notificationType == NotificationType.TUTORIAL_GROUP_UPDATED) {
-            notification.setTransientAndStringTarget(createTutorialGroupTarget(notification.getTutorialGroup(), notification.getTutorialGroup().getCourse().getId(), false));
+            notification.setTransientAndStringTarget(createTutorialGroupTarget(notification.getTutorialGroup(), notification.getTutorialGroup().getCourse().getId(), false, true));
+        }
+        if (notification.notificationType == NotificationType.TUTORIAL_GROUP_DELETED) {
+            notification.setTransientAndStringTarget(createTutorialGroupTarget(notification.getTutorialGroup(), notification.getTutorialGroup().getCourse().getId(), false, false));
         }
     }
 

@@ -140,12 +140,12 @@ public class SingleUserNotificationFactory {
             case TUTORIAL_GROUP_REGISTRATION_STUDENT -> {
                 notification = new SingleUserNotification(student, title,
                         "You have been registered to the tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
-                notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), false));
+                notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), false, true));
             }
             case TUTORIAL_GROUP_DEREGISTRATION_STUDENT -> {
                 notification = new SingleUserNotification(student, title,
                         "You have been deregistered from the tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
-                notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), false));
+                notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), false, true));
             }
             case TUTORIAL_GROUP_REGISTRATION_TUTOR -> {
                 if (Objects.isNull(tutorialGroup.getTeachingAssistant())) {
@@ -153,7 +153,7 @@ public class SingleUserNotificationFactory {
                 }
                 notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title, "The student " + student.getName()
                         + " has been registered to your tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
-                notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true));
+                notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
             }
             case TUTORIAL_GROUP_DEREGISTRATION_TUTOR -> {
                 if (Objects.isNull(tutorialGroup.getTeachingAssistant())) {
@@ -161,7 +161,7 @@ public class SingleUserNotificationFactory {
                 }
                 notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title, "The student " + student.getName()
                         + " has been deregistered from your tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
-                notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true));
+                notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
