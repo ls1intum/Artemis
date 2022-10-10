@@ -238,16 +238,21 @@ public class TutorialGroupResource {
             checkTitleIsUnique(updatedTutorialGroup);
         }
 
+        // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails
         if (oldTutorialGroup.getTeachingAssistant() == null && updatedTutorialGroup.getTeachingAssistant() != null) {
-            singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, updatedTutorialGroup.getTeachingAssistant(), responsibleUser);
+            var newTAFromDatabase = userRepository.findOneByLogin(updatedTutorialGroup.getTeachingAssistant().getLogin());
+            newTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser));
         }
         else if (oldTutorialGroup.getTeachingAssistant() != null && updatedTutorialGroup.getTeachingAssistant() == null) {
-            singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, oldTutorialGroup.getTeachingAssistant(), responsibleUser);
+            var oldTAFromDatabase = userRepository.findOneByLogin(oldTutorialGroup.getTeachingAssistant().getLogin());
+            oldTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser));
         }
         else if (oldTutorialGroup.getTeachingAssistant() != null && updatedTutorialGroup.getTeachingAssistant() != null
                 && !oldTutorialGroup.getTeachingAssistant().equals(updatedTutorialGroup.getTeachingAssistant())) {
-            singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, oldTutorialGroup.getTeachingAssistant(), responsibleUser);
-            singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, updatedTutorialGroup.getTeachingAssistant(), responsibleUser);
+            var oldTAFromDatabase = userRepository.findOneByLogin(oldTutorialGroup.getTeachingAssistant().getLogin());
+            oldTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser));
+            var newTAFromDatabase = userRepository.findOneByLogin(updatedTutorialGroup.getTeachingAssistant().getLogin());
+            newTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser));
         }
 
         tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(oldTutorialGroup,
