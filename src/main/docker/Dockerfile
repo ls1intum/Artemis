@@ -1,3 +1,13 @@
+FROM eclipse-temurin:17 as builder
+
+ENV NODE_OPTIONS="--max-old-space-size=6144"
+
+COPY . /artemis-build
+WORKDIR /artemis-build
+RUN ./gradlew -Pprod -Pwar bootWar
+
+# ---
+
 FROM eclipse-temurin:17
 
 ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
@@ -35,8 +45,8 @@ COPY src/main/resources/config/application*.yml ./
 
 # Copy Artemis.war to execution location
 WORKDIR /opt/artemis
-ARG WAR_PATH=build/libs
-COPY $WAR_PATH/*.war Artemis.war
+ARG WAR_PATH=/artemis-build/build/libs
+COPY --from=builder $WAR_PATH/*.war Artemis.war
 
 COPY bootstrap.sh /bootstrap.sh
 

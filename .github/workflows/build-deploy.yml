@@ -38,42 +38,48 @@ env:
 
 jobs:
 
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Create npm Cache Directory
-      run: mkdir -p .npm
-    - name: Production Build
-      run: 'docker run -i -v $(pwd)/.npm/:/root/.npm/ -v $(pwd):/artemis-build eclipse-temurin:${{ env.java }} sh -c "export NODE_OPTIONS=\"--max-old-space-size=6144\" && cd /artemis-build && ./gradlew -Pprod -Pwar clean bootWar"'
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: Artemis.war
-        path: build/libs/Artemis-*.war
-    - name: Upload Release Artifact
-      if: github.event_name == 'release' && github.event.action == 'created'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: build/libs/Artemis-${{ github.event.release.tag_name }}.war
-        asset_name: Artemis.war
-        asset_content_type: application/x-webarchive
+  # build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - name: Setup Java
+  #     uses: actions/setup-java@v3
+  #     with:
+  #       distribution: 'zulu'
+  #       java-version: '${{ env.java }}'
+  #       cache: 'gradle'
+  #   - name: Production Build
+  #     run: ./gradlew -Pprod -Pwar clean bootWar
+  #     env:
+  #       NODE_OPTIONS: --max_old_space_size=6144
+  #   - name: Upload Artifact
+  #     uses: actions/upload-artifact@v3
+  #     with:
+  #       name: Artemis.war
+  #       path: build/libs/Artemis-*.war
+  #   - name: Upload Release Artifact
+  #     if: github.event_name == 'release' && github.event.action == 'created'
+  #     uses: actions/upload-release-asset@v1
+  #     env:
+  #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     with:
+  #       upload_url: ${{ github.event.release.upload_url }}
+  #       asset_path: build/libs/Artemis-${{ github.event.release.tag_name }}.war
+  #       asset_name: Artemis.war
+  #       asset_content_type: application/x-webarchive
 
   docker:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
-    needs: build
+    # needs: build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Download Artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: Artemis.war
+    # - name: Download Artifact
+    #   uses: actions/download-artifact@v3
+    #   with:
+    #     name: Artemis.war
     - name: Build Docker Image
-      run: docker build --build-arg WAR_PATH=. -t artemis -f src/main/docker/Dockerfile .
+      run: docker build -t artemis -f src/main/docker/Dockerfile .
 
     - name: Compute Tag
       uses: actions/github-script@v6
@@ -119,7 +125,7 @@ jobs:
 
   deploy:
     if: ${{ github.event_name == 'pull_request' }}
-    needs: build
+    # needs: build
     runs-on: ubuntu-latest
     strategy:
       matrix:
