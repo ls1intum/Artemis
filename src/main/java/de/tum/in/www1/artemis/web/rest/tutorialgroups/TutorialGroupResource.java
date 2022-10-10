@@ -215,42 +215,45 @@ public class TutorialGroupResource {
     /**
      * PUT /courses/:courseId/tutorial-groups/:tutorialGroupId : Updates an existing tutorial group
      *
-     * @param courseId        the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId the id of the tutorial group to update
-     * @param tutorialGroup   group the tutorial group to update
+     * @param courseId             the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId      the id of the tutorial group to update
+     * @param updatedTutorialGroup group the tutorial group to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group
      */
     @PutMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @RequestBody @Valid TutorialGroup tutorialGroup) {
-        log.debug("REST request to update TutorialGroup : {}", tutorialGroup);
-        if (tutorialGroup.getId() == null) {
+    public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @RequestBody @Valid TutorialGroup updatedTutorialGroup) {
+        log.debug("REST request to update TutorialGroup : {}", updatedTutorialGroup);
+        if (updatedTutorialGroup.getId() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
         }
-        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
-        checkEntityIdMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
+        var oldTutorialGroup = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
+        checkEntityIdMatchesPathIds(updatedTutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
 
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
-        trimStringFields(tutorialGroup);
-        if (!tutorialGroupFromDatabase.getTitle().equals(tutorialGroup.getTitle())) {
-            checkTitleIsUnique(tutorialGroup);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, oldTutorialGroup.getCourse(), responsibleUser);
+        trimStringFields(updatedTutorialGroup);
+        if (!oldTutorialGroup.getTitle().equals(updatedTutorialGroup.getTitle())) {
+            checkTitleIsUnique(updatedTutorialGroup);
         }
-        if (!tutorialGroupFromDatabase.getTeachingAssistant().equals(tutorialGroup.getTeachingAssistant())) {
-            if (tutorialGroup.getTeachingAssistant() != null) {
-                singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), responsibleUser);
-            }
-            if (tutorialGroupFromDatabase.getTeachingAssistant() != null) {
-                singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(tutorialGroup, tutorialGroupFromDatabase.getTeachingAssistant(), responsibleUser);
-            }
-        }
-        tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(tutorialGroupFromDatabase,
-                tutorialGroup.getTeachingAssistant() == null || !tutorialGroup.getTeachingAssistant().equals(responsibleUser));
-        overrideValues(tutorialGroup, tutorialGroupFromDatabase);
 
-        var updatedTutorialGroup = tutorialGroupRepository.save(tutorialGroupFromDatabase);
-        return ResponseEntity.ok(updatedTutorialGroup);
+        if (oldTutorialGroup.getTeachingAssistant() == null && updatedTutorialGroup.getTeachingAssistant() != null) {
+            singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, updatedTutorialGroup.getTeachingAssistant(), responsibleUser);
+        }
+        else if (oldTutorialGroup.getTeachingAssistant() != null && updatedTutorialGroup.getTeachingAssistant() == null) {
+            singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, oldTutorialGroup.getTeachingAssistant(), responsibleUser);
+        }
+        else if (oldTutorialGroup.getTeachingAssistant() != null && updatedTutorialGroup.getTeachingAssistant() != null
+                && !oldTutorialGroup.getTeachingAssistant().equals(updatedTutorialGroup.getTeachingAssistant())) {
+            singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, oldTutorialGroup.getTeachingAssistant(), responsibleUser);
+            singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, updatedTutorialGroup.getTeachingAssistant(), responsibleUser);
+        }
+
+        tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(oldTutorialGroup,
+                updatedTutorialGroup.getTeachingAssistant() == null || !updatedTutorialGroup.getTeachingAssistant().equals(responsibleUser));
+        overrideValues(updatedTutorialGroup, oldTutorialGroup);
+        return ResponseEntity.ok(tutorialGroupRepository.save(oldTutorialGroup));
     }
 
     /**
