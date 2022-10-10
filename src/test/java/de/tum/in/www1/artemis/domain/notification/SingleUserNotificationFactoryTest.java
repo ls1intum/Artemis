@@ -335,7 +335,11 @@ class SingleUserNotificationFactoryTest {
                                 + instructor.getName() + ".",
                         instructor, true, true),
                 Arguments.of(TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE,
-                        "1 students have been registered to your tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName() + ".", instructor, true, true));
+                        "1 students have been registered to your tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName() + ".", instructor, true, true),
+                Arguments.of(TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_ASSIGNED_TITLE,
+                        "You have been assigned to lead the tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName() + ".", instructor, true, true),
+                Arguments.of(TUTORIAL_GROUP_UNASSIGNED, TUTORIAL_GROUP_UNASSIGNED_TITLE,
+                        "You have been unassigned from leading the tutorial group " + tutorialGroup.getTitle() + " by " + instructor.getName() + ".", instructor, true, true));
     }
 
 }

@@ -36,6 +36,16 @@
             ${notificationSubject.tutorialGroup.getCourse().getTitle()},
             ${notificationSubject.responsibleUser.getName()}
             )}"></span>
+            <span th:case="'tutorialGroupAssigned'" th:text="#{email.notification.title.tutorialGroup.assigned(
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
+            )}"></span>
+            <span th:case="'tutorialGroupUnassigned'" th:text="#{email.notification.title.tutorialGroup.unassigned(
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
+            )}"></span>
         </div>
         <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
     </div>

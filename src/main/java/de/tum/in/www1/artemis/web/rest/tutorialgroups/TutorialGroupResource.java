@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.TutorialGroupService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -53,14 +54,18 @@ public class TutorialGroupResource {
 
     private final TutorialGroupNotificationService tutorialGroupNotificationService;
 
+    private final SingleUserNotificationService singleUserNotificationService;
+
     public TutorialGroupResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupNotificationService tutorialGroupNotificationService) {
+            TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupNotificationService tutorialGroupNotificationService,
+            SingleUserNotificationService singleUserNotificationService) {
         this.tutorialGroupService = tutorialGroupService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupNotificationService = tutorialGroupNotificationService;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -167,12 +172,17 @@ public class TutorialGroupResource {
         }
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, responsibleUser);
         tutorialGroup.setCourse(course);
 
         trimStringFields(tutorialGroup);
         checkTitleIsUnique(tutorialGroup);
         TutorialGroup persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroup);
+
+        if (tutorialGroup.getTeachingAssistant() != null) {
+            singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(persistedTutorialGroup, persistedTutorialGroup.getTeachingAssistant(), responsibleUser);
+        }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId())).body(persistedTutorialGroup);
     }
@@ -222,9 +232,16 @@ public class TutorialGroupResource {
         if (!tutorialGroupFromDatabase.getTitle().equals(tutorialGroup.getTitle())) {
             checkTitleIsUnique(tutorialGroup);
         }
+        if (!tutorialGroupFromDatabase.getTeachingAssistant().equals(tutorialGroup.getTeachingAssistant())) {
+            if (tutorialGroup.getTeachingAssistant() != null) {
+                singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), responsibleUser);
+            }
+            if (tutorialGroupFromDatabase.getTeachingAssistant() != null) {
+                singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(tutorialGroup, tutorialGroupFromDatabase.getTeachingAssistant(), responsibleUser);
+            }
+        }
         tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(tutorialGroupFromDatabase,
                 tutorialGroup.getTeachingAssistant() == null || !tutorialGroup.getTeachingAssistant().equals(responsibleUser));
-
         overrideValues(tutorialGroup, tutorialGroupFromDatabase);
 
         var updatedTutorialGroup = tutorialGroupRepository.save(tutorialGroupFromDatabase);

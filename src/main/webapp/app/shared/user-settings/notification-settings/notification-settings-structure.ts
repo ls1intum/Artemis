@@ -144,6 +144,12 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                     settingId: SettingId.NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION,
                     emailSupport: true,
                 },
+                {
+                    key: 'assignUnassignTutorialGroup',
+                    descriptionKey: 'assignUnassignTutorialGroupDescription',
+                    settingId: SettingId.NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN,
+                    emailSupport: true,
+                },
             ],
         },
         {

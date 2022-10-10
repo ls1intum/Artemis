@@ -90,5 +90,9 @@ export const TUTORIAL_GROUP_DELETED_TITLE = 'Tutorial Group deleted';
 
 export const TUTORIAL_GROUP_UPDATED_TITLE = 'Tutorial Group updated';
 
+export const TUTORIAL_GROUP_ASSIGNED_TITLE = 'You have been assigned to lead a tutorial group';
+
+export const TUTORIAL_GROUP_UNASSIGNED_TITLE = 'You have been unassigned from leading a tutorial group';
+
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'Live Exam Exercise Update';

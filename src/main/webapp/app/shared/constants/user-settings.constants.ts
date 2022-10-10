@@ -35,6 +35,7 @@ export enum SettingId {
 
     // tutor notification setting group
     NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION = 'notification.tutor-notification.tutorial-group-registration',
+    NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN = 'notification.tutor-notification.tutorial-group-assign-unassign',
 
     // editor notification setting group
     NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED = 'notification.editor-notification.programming-test-cases-changed',
