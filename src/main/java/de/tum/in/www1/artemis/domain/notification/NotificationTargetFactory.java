@@ -202,9 +202,9 @@ public class NotificationTargetFactory {
     }
 
     // Tutorial Group related targets
-    public static NotificationTarget createTutorialGroupTarget(TutorialGroup tutorialGroup, Long courseId, boolean isManagement) {
+    public static NotificationTarget createTutorialGroupTarget(TutorialGroup tutorialGroup, Long courseId, boolean isManagement, boolean isDetailPage) {
         var notificationTarget = new NotificationTarget();
-        notificationTarget.setIdentifier(tutorialGroup.getId());
+        notificationTarget.setIdentifier(isDetailPage ? tutorialGroup.getId() : null);
         notificationTarget.setEntity(isManagement ? TUTORIAL_GROUP_MANAGEMENT_TEXT : TUTORIAL_GROUPS_TEXT);
         notificationTarget.setCourseId(courseId);
         notificationTarget.setMainPage(isManagement ? COURSE_MANAGEMENT_TEXT : COURSES_TEXT);
@@ -222,7 +222,12 @@ public class NotificationTargetFactory {
      */
     public static String extractNotificationUrl(Notification notification, String baseUrl) {
         NotificationTarget target = notification.getTargetTransient();
-        return baseUrl + "/" + target.getMainPage() + "/" + target.getCourseId() + "/" + target.getEntity() + "/" + target.getIdentifier();
+        var mainPage = target.getMainPage() != null ? target.getMainPage() : "";
+        var entity = target.getEntity() != null ? target.getEntity() : "";
+        var identifier = (target.getIdentifier() != null) ? (target.getIdentifier() + "") : "";
+        var courseId = (target.getCourseId() != null) ? (target.getCourseId() + "") : "";
+
+        return baseUrl + "/" + mainPage + "/" + courseId + "/" + entity + "/" + identifier;
     }
 
     /**
