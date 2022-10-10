@@ -185,7 +185,9 @@ public class TutorialGroupResource {
         TutorialGroup persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
         if (tutorialGroup.getTeachingAssistant() != null) {
-            singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(persistedTutorialGroup, persistedTutorialGroup.getTeachingAssistant(), responsibleUser);
+            // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails
+            var taFromDatabase = userRepository.findOneByLogin(tutorialGroup.getTeachingAssistant().getLogin());
+            taFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(persistedTutorialGroup, user, responsibleUser));
         }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId())).body(persistedTutorialGroup);
