@@ -2,16 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { map } from 'rxjs/operators';
 
 export class Credentials {
     constructor(public username: string, public password: string, public rememberMe: boolean) {}
 }
 
 export interface IAuthServerProvider {
-    getToken: () => string;
-    login: (credentials: Credentials) => Observable<void>;
-    logout: () => Observable<void>;
+    login: (credentials: Credentials) => Observable<Object>;
+    loginSAML2: (rememberMe: boolean) => Observable<Object>;
+    logout: () => Observable<Object>;
     clearCaches: () => Observable<undefined>;
 }
 
@@ -19,20 +18,16 @@ export interface IAuthServerProvider {
 export class AuthServerProvider implements IAuthServerProvider {
     constructor(private http: HttpClient, private localStorage: LocalStorageService, private sessionStorage: SessionStorageService) {}
 
-    getToken() {
-        return this.localStorage.retrieve('authenticationToken') || this.sessionStorage.retrieve('authenticationToken');
+    login(credentials: Credentials): Observable<Object> {
+        return this.http.post(SERVER_API_URL + 'api/authenticate', credentials);
     }
 
-    login(credentials: Credentials): Observable<void> {
-        return this.http.post(SERVER_API_URL + 'api/authenticate', credentials).pipe(map(() => console.log('')));
+    loginSAML2(rememberMe: boolean): Observable<Object> {
+        return this.http.post(SERVER_API_URL + 'api/saml2', rememberMe.toString());
     }
 
-    loginSAML2(rememberMe: boolean): Observable<void> {
-        return this.http.post(SERVER_API_URL + 'api/saml2', rememberMe.toString()).pipe(map(() => console.log('')));
-    }
-
-    logout(): Observable<void> {
-        return this.http.post(SERVER_API_URL + 'api/logout', null).pipe(map(() => console.log('')));
+    logout(): Observable<Object> {
+        return this.http.post(SERVER_API_URL + 'api/logout', null);
     }
 
     /**

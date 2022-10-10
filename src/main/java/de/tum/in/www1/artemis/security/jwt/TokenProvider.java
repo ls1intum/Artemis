@@ -69,6 +69,16 @@ public class TokenProvider {
     }
 
     /**
+     * Gets the validity for the generated tokens.
+     *
+     * @param rememberMe     Determines Token lifetime (30 minutes vs 30 days)
+     * @return long          The validity of the generated tokens
+     */
+    public long getTokenValidity(boolean rememberMe) {
+        return rememberMe ? this.tokenValidityInMillisecondsForRememberMe : this.tokenValidityInMilliseconds;
+    }
+
+    /**
      * Create JWT Token a fully populated <code>Authentication</code> object.
      *
      * @param authentication Authentication Object
@@ -79,14 +89,7 @@ public class TokenProvider {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
         long now = (new Date()).getTime();
-        Date validity;
-        if (rememberMe) {
-            validity = new Date(now + this.tokenValidityInMillisecondsForRememberMe);
-        }
-        else {
-            validity = new Date(now + this.tokenValidityInMilliseconds);
-        }
-
+        Date validity = new Date(now + getTokenValidity(rememberMe));
         return Jwts.builder().setSubject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
     }
 
