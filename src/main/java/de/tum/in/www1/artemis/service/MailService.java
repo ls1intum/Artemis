@@ -191,7 +191,13 @@ public class MailService {
         NotificationType notificationType = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
         log.debug("Sending \"{}\" notification email to '{}'", notificationType.name(), user.getEmail());
 
-        Locale locale = Locale.forLanguageTag(user.getLangKey());
+        String localeKey = user.getLangKey();
+        if (localeKey == null) {
+            throw new IllegalArgumentException(
+                    "The user object has no language key defined. This can happen if you do not load the user object from the database but take it straight from the client");
+        }
+
+        Locale locale = Locale.forLanguageTag(localeKey);
 
         Context context = new Context(locale);
         context.setVariable(USER, user);
