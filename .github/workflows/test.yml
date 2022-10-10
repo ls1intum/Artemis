@@ -87,10 +87,10 @@ jobs:
     timeout-minutes: 30
     steps:
         - uses: actions/checkout@v3
-        # TODO: investigate why the tests have problems with a different `--max-old-space-size` than the default
-        # is there maybe not enough memory? One github runner has 7GB.
-        - name: remove project-wide .npmrc for this test
-          run: ls -alh && rm .npmrc && ls -alh
+        # It seems like there is some memory issue with these tests with the project-wide default node option
+        # `--max-old-space-size` set in the .npmrc, therefore we delete it for this test as a workaround
+        - name: remove project-wide node options set in .npmrc just for this test
+          run: rm .npmrc
         - name: Setup Node.js
           uses: actions/setup-node@v3
           with:
