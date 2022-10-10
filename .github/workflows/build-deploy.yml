@@ -42,8 +42,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: Create npm Cache Directory
+      run: mkdir -p .npm
     - name: Production Build
-      run: 'docker run -i -v $(pwd):/artemis-build eclipse-temurin:${{ env.java }} sh -c "cd /artemis-build && ./gradlew -Pprod -Pwar clean bootWar"'
+      run: 'docker run -i -v $(pwd)/.npm/:/root/.npm/ -v $(pwd):/artemis-build eclipse-temurin:${{ env.java }} sh -c "export NODE_OPTIONS=\"--max-old-space-size=6144\" && cd /artemis-build && ./gradlew -Pprod -Pwar clean bootWar"'
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
