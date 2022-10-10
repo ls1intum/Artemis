@@ -75,9 +75,6 @@ public class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrat
                 userRepository.findOneByLogin("tutor1").get(), ImmutableSet.of(userRepository.findOneByLogin("student1").get(), userRepository.findOneByLogin("student2").get(),
                         userRepository.findOneByLogin("student3").get(), userRepository.findOneByLogin("student4").get(), userRepository.findOneByLogin("student5").get()));
 
-        // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
-        database.changeUser("instructor1");
-
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
@@ -111,6 +108,7 @@ public class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrat
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void notifyAboutTutorialGroupDeletion_shouldSaveAndSend() {
         prepareNotificationSettingForTest(student1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
         tutorialGroupNotificationService.notifyAboutTutorialGroupDeletion(tutorialGroup);

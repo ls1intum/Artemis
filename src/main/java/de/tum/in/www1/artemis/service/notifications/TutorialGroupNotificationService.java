@@ -67,14 +67,14 @@ public class TutorialGroupNotificationService {
     private void saveAndSend(TutorialGroupNotification notification, boolean notifyTutor) {
         tutorialGroupNotificationRepository.save(notification);
         sendNotificationViaWebSocket(notification);
-        sendNotificationViaMail(notification);
+        sendNotificationViaMail(notification, notifyTutor);
     }
 
-    private void sendNotificationViaMail(TutorialGroupNotification notification) {
+    private void sendNotificationViaMail(TutorialGroupNotification notification, boolean notifyTutor) {
         if (notificationSettingsService.checkNotificationTypeForEmailSupport(notification.notificationType)) {
-            var studentsToMail = findUsersToMail(notification);
-            if (!studentsToMail.isEmpty()) {
-                mailService.sendNotificationEmailForMultipleUsers(notification, new ArrayList<>(studentsToMail), notification.getTutorialGroup());
+            var usersToMail = findUsersToMail(notification, notifyTutor);
+            if (!usersToMail.isEmpty()) {
+                mailService.sendNotificationEmailForMultipleUsers(notification, new ArrayList<>(usersToMail), notification.getTutorialGroup());
             }
         }
     }
@@ -84,13 +84,12 @@ public class TutorialGroupNotificationService {
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
     }
 
-    private Set<User> findUsersToMail(TutorialGroupNotification notification) {
+    private Set<User> findUsersToMail(TutorialGroupNotification notification, boolean notifyTutor) {
         var tutorialGroup = notification.getTutorialGroup();
         // ToDo: Adapt to the type of registration in the future
-        // ToDo: Not always contact the teaching assistant for example if the tutor is who performed the update
         var potentiallyInterestedUsers = tutorialGroupRegistrationRepository.findAllByTutorialGroupAndType(tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)
                 .stream().map(TutorialGroupRegistration::getStudent);
-        if (tutorialGroup.getTeachingAssistant() != null) {
+        if (tutorialGroup.getTeachingAssistant() != null && notifyTutor) {
             potentiallyInterestedUsers = Stream.concat(potentiallyInterestedUsers, Stream.of(tutorialGroup.getTeachingAssistant()));
         }
         return potentiallyInterestedUsers.filter(user -> StringUtils.hasText(user.getEmail()))
