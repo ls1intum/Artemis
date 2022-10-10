@@ -324,12 +324,12 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStudents: StudentDTO[] = [
-            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1' },
-            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2' },
+            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1', email: '' },
+            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2', email: '' },
         ];
         const expected: StudentDTO[] = [
-            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1' },
-            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2' },
+            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1', email: '' },
+            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2', email: '' },
         ];
 
         // WHEN
@@ -605,8 +605,8 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expected: StudentDTO[] = [
-            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1' },
-            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2' },
+            { firstName: 'firstName1', lastName: 'lastName1', registrationNumber: '1', login: 'login1', email: '' },
+            { firstName: 'firstName2', lastName: 'lastName2', registrationNumber: '2', login: 'login2', email: '' },
         ];
 
         service.addAllStudentsOfCourseToExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toBeUndefined());
