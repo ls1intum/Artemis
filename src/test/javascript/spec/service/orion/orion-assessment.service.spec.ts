@@ -51,7 +51,7 @@ describe('OrionAssessmentService', () => {
 
     it('downloadSubmissionInOrion with new should call send', () => {
         const sendSubmissionToOrionSpy = jest.spyOn(orionAssessmentService, <any>'sendSubmissionToOrion');
-        const getSubmissionStub = jest.spyOn(programmingSubmissionService, 'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
+        const getSubmissionStub = jest.spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment');
 
         getSubmissionStub.mockReturnValue(of(programmingSubmission));
 

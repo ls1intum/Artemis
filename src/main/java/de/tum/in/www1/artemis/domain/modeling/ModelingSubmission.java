@@ -1,9 +1,13 @@
 package de.tum.in.www1.artemis.domain.modeling;
 
+import static de.tum.in.www1.artemis.config.Constants.MAX_SUBMISSION_MODEL_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.MAX_SUBMISSION_TEXT_LENGTH;
+
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.springframework.util.StringUtils;
@@ -23,10 +27,12 @@ import de.tum.in.www1.artemis.domain.Submission;
 public class ModelingSubmission extends Submission {
 
     @Column(name = "model")
+    @Size(max = MAX_SUBMISSION_MODEL_LENGTH, message = "The modeling submission is too large.")
     @Lob
     private String model;
 
     @Column(name = "explanation_text")
+    @Size(max = MAX_SUBMISSION_TEXT_LENGTH, message = "The explanation of the modeling submission is too large.")
     @Lob
     private String explanationText;
 
