@@ -42,16 +42,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Setup Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: '${{ env.java }}'
-        cache: 'gradle'
     - name: Production Build
-      run: ./gradlew -Pprod -Pwar clean bootWar
-      env:
-        NODE_OPTIONS: --max-old-space-size=6144
+      run: 'docker run -i -v $(pwd):/artemis-build eclipse-temurin:${{ env.java }} sh -c "cd /artemis-build && ./gradlew -Pprod -Pwar clean bootWar"'
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
@@ -78,10 +70,8 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: Artemis.war
-    - name: Copy Dockerfile to Build Directory
-      run: cp src/main/docker/Dockerfile .
     - name: Build Docker Image
-      run: docker build --build-arg WAR_PATH=. -t artemis .
+      run: docker build --build-arg WAR_PATH=. -t artemis -f src/main/docker/Dockerfile .
 
     - name: Compute Tag
       uses: actions/github-script@v6
