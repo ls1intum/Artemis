@@ -70,40 +70,27 @@ export class LoginService {
     logout(wasInitiatedByUser: boolean) {
         this.logoutWasForceful = !wasInitiatedByUser;
 
-        this.authServerProvider
-            // 1: Clear the auth tokens from the browser's caches.
-            .logout()
-            .pipe(
-                // 2: Clear all other caches (this is important so if a new user logs in, no old values are available
-                tap(() => {
-                    if (wasInitiatedByUser) {
-                        // only clear caches on an intended logout. Do not clear the caches, when the user was logged out automatically
-                        return this.authServerProvider.clearCaches();
-                    }
-                }),
-                // 3: Set the user's auth object to null as components might have to act on the user being logged out.
-                tap(() => {
-                    return this.accountService.authenticate(undefined);
-                }),
-                // 4: Clear all existing alerts of the user.
-                tap(() => {
-                    return this.alertService.closeAll();
-                }),
-                // 5: Clean up notification service.
-                tap(() => {
-                    return this.notificationService.cleanUp();
-                }),
-                // 6: Navigate to the login screen.
-                switchMap(() => {
-                    return from(this.router.navigateByUrl('/'));
-                }),
-                // If something happens during the logout, show the error to the user.
-                catchError((error: any) => {
-                    this.alertService.error('logout.failed', { error });
-                    return EMPTY;
-                }),
-            )
-            .subscribe();
+        if (wasInitiatedByUser) {
+            this.authServerProvider
+                .logout()
+                .pipe(
+                    // If something happens during the logout, show the error to the user.
+                    catchError((error: any) => {
+                        this.alertService.error('logout.failed', { error });
+                        return EMPTY;
+                    }),
+                )
+                .subscribe();
+        }
+
+        this.onLogout();
+    }
+
+    private onLogout(): void {
+        this.accountService.authenticate(undefined);
+        this.alertService.closeAll();
+        this.notificationService.cleanUp();
+        this.router.navigateByUrl('/');
     }
 
     lastLogoutWasForceful(): boolean {
