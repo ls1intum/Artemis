@@ -126,6 +126,12 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
                     settingId: SettingId.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION,
                     emailSupport: true,
                 },
+                {
+                    key: 'tutorialGroupUpdateDelete',
+                    descriptionKey: 'tutorialGroupUpdateDeleteDescription',
+                    settingId: SettingId.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE,
+                    emailSupport: true,
+                },
             ],
         },
         {

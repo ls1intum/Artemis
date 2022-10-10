@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -9,6 +10,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -21,12 +23,15 @@ public class TutorialGroupService {
 
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
+    private final CourseRepository courseRepository;
+
     private final UserRepository userRepository;
 
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            UserRepository userRepository) {
+            CourseRepository courseRepository, UserRepository userRepository) {
         this.singleUserNotificationService = singleUserNotificationService;
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
+        this.courseRepository = courseRepository;
         this.userRepository = userRepository;
     }
 
@@ -106,10 +111,15 @@ public class TutorialGroupService {
         return notFoundStudentDTOs;
     }
 
+    public List<TutorialGroup> findAllForNotifications(User user) {
+        return courseRepository.findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(ZonedDateTime.now(), user.getId()).stream()
+                .flatMap(course -> course.getTutorialGroups().stream()).collect(Collectors.toList());
+
+    }
+
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {
         var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(studentDto.getRegistrationNumber())
                 .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDto.getLogin()));
         return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
     }
-
 }

@@ -44,7 +44,8 @@
                 "courseAndExamArchivingStarted": "Kurs und Klausur Archivierungsstart",
                 "fileSubmissionSuccessful": "Erfolgreiche Einreichung von Dateiupload-Aufgaben",
                 "programmingTestCasesChanged": "Veränderte Testfälle bei Programmieraufgaben",
-                "registrationTutorialGroup": "An- und Abmeldungen von Übungsgruppen"
+                "registrationTutorialGroup": "An- und Abmeldungen von Übungsgruppen",
+                "tutorialGroupUpdateDelete": "Änderungen und Löschungen von Übungsgruppen"
             },
             "settingDescriptions": {
                 "basicWeeklySummaryDescription": "Erhalte jeden Freitag um 17:00 Uhr eine einfache wöchentliche Zusammenfassung (bsp. welche neuen Aufgaben diese Woche veröffentlicht wurden und noch bearbeitbar sind)",
@@ -63,7 +64,8 @@
                 "fileSubmissionSuccessfulDescription": "Erhalte eine Mitteilung nach dem erfolgreichen Einreichen von Dateiupload-Aufgaben",
                 "programmingTestCasesChangedDescription": "Erhalte eine Mitteilung bei Änderungen von Testfällen in Programmieraufgaben",
                 "registrationTutorialGroupTutorDescription": "Erhalte eine Mitteilung, wenn ein Student für deine Übungsgruppe registriert oder abgemeldet wurde",
-                "registrationTutorialGroupStudentDescription": "Erhalte eine Mitteilung, wenn du für eine Übungsgruppe registriert oder abgemeldet wurdest"
+                "registrationTutorialGroupStudentDescription": "Erhalte eine Mitteilung, wenn du für eine Übungsgruppe registriert oder abgemeldet wurdest",
+                "tutorialGroupUpdateDeleteDescription": "Erhalte eine Mitteilung, wenn eine Übungsgruppe aktualisiert oder gelöscht wurde in der du registriert oder Tutor:in bist"
             }
         }
     }

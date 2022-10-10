@@ -163,7 +163,7 @@ public class SingleUserNotificationFactory {
                         + " has been deregistered from your tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true));
             }
-            default -> throw new UnsupportedOperationException("Unsupported NotificationType for tutorial groups: " + notificationType);
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
         return notification;
     }

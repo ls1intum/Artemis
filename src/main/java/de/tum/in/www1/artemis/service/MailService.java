@@ -27,7 +27,6 @@ import org.thymeleaf.spring5.SpringTemplateEngine;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -211,7 +210,7 @@ public class MailService {
         }
 
         if (notificationSubject instanceof SingleUserNotificationService.TutorialGroupRegistrationNotificationSubject) {
-            setContactForTutorialGroupRegistrationsNotifications(context, notificationType);
+            setContextForTutorialGroupRegistrationsNotifications(context, notificationType);
         }
 
         if (notificationSubject instanceof Post post) {
@@ -229,7 +228,7 @@ public class MailService {
         sendEmail(user, subject, content, false, true);
     }
 
-    private void setContactForTutorialGroupRegistrationsNotifications(Context context, NotificationType notificationType) {
+    private void setContextForTutorialGroupRegistrationsNotifications(Context context, NotificationType notificationType) {
 
         if (NotificationType.TUTORIAL_GROUP_REGISTRATION_STUDENT.equals(notificationType)) {
             context.setVariable(NOTIFICATION_TYPE, "studentRegistration");
@@ -265,6 +264,8 @@ public class MailService {
             case PLAGIARISM_CASE_VERDICT_STUDENT -> templateEngine.process("mail/notification/plagiarismVerdictEmail", context);
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR -> templateEngine
                     .process("mail/notification/tutorialGroupRegistrationEmail", context);
+            case TUTORIAL_GROUP_DELETED -> templateEngine.process("mail/notification/tutorialGroupDeletedEmail", context);
+            case TUTORIAL_GROUP_UPDATED -> templateEngine.process("mail/notification/tutorialGroupUpdatedEmail", context);
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }
@@ -289,7 +290,7 @@ public class MailService {
     }
 
     @Async
-    public void sendNotificationEmailForMultipleUsers(GroupNotification notification, List<User> users, Object notificationSubject) {
+    public void sendNotificationEmailForMultipleUsers(Notification notification, List<User> users, Object notificationSubject) {
         users.forEach(user -> sendNotificationEmail(notification, user, notificationSubject));
     }
 

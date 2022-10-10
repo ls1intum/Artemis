@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { StudentDTO } from 'app/entities/student-dto.model';
-import { RouteComponents } from 'app/shared/metis/metis.util';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
@@ -50,13 +49,5 @@ export class TutorialGroupsService {
 
     delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {
         return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' });
-    }
-
-    static getLinkForTutorialGroupManagementDetail(courseId: number, tutorialGroupId: number): RouteComponents {
-        return ['/courses-management', courseId, 'tutorial-groups-management', tutorialGroupId];
-    }
-
-    static getLinkForTutorialGroupDetail(courseId: number, tutorialGroupId: number): RouteComponents {
-        return ['/courses', courseId, 'tutorial-groups', tutorialGroupId];
     }
 }

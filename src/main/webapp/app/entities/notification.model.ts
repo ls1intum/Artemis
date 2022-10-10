@@ -84,5 +84,9 @@ export const TUTORIAL_GROUP_REGISTERED_TUTOR_TITLE = 'A student has been registe
 
 export const TUTORIAL_GROUP_DEREGISTERED_TUTOR_TITLE = 'A student has been deregistered from your tutorial group';
 
+export const TUTORIAL_GROUP_DELETED_TITLE = 'Tutorial Group deleted';
+
+export const TUTORIAL_GROUP_UPDATED_TITLE = 'Tutorial Group updated';
+
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'Live Exam Exercise Update';

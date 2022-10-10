@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.TutorialGroupService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -50,13 +51,29 @@ public class TutorialGroupResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final TutorialGroupNotificationService tutorialGroupNotificationService;
+
     public TutorialGroupResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository) {
+            TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupNotificationService tutorialGroupNotificationService) {
         this.tutorialGroupService = tutorialGroupService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.tutorialGroupRepository = tutorialGroupRepository;
+        this.tutorialGroupNotificationService = tutorialGroupNotificationService;
+    }
+
+    /**
+     * GET /tutorial-groups/for-notifications
+     *
+     * @return the list of tutorial groups for which the current user should receive notifications
+     */
+    @GetMapping("/tutorial-groups/for-notifications")
+    @PreAuthorize("hasRole('USER')")
+    public List<TutorialGroup> getAllTutorialGroupsForNotifications() {
+        log.debug("REST request to get all tutorial groups for which the current user should receive notifications");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        return tutorialGroupService.findAllForNotifications(user);
     }
 
     /**
@@ -175,6 +192,7 @@ public class TutorialGroupResource {
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
+        tutorialGroupNotificationService.notifyAboutTutorialGroupDeletion(tutorialGroupFromDatabase);
         tutorialGroupRepository.deleteById(tutorialGroupFromDatabase.getId());
         return ResponseEntity.noContent().build();
     }
@@ -197,12 +215,16 @@ public class TutorialGroupResource {
         }
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         checkEntityIdMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
+        var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
 
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
         trimStringFields(tutorialGroup);
         if (!tutorialGroupFromDatabase.getTitle().equals(tutorialGroup.getTitle())) {
             checkTitleIsUnique(tutorialGroup);
         }
+        tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(tutorialGroupFromDatabase,
+                tutorialGroup.getTeachingAssistant() == null || !tutorialGroup.getTeachingAssistant().equals(responsibleUser));
+
         overrideValues(tutorialGroup, tutorialGroupFromDatabase);
 
         var updatedTutorialGroup = tutorialGroupRepository.save(tutorialGroupFromDatabase);
