@@ -35,7 +35,6 @@
         "@sentry/angular": "7.12.1",
         "@sentry/tracing": "7.12.1",
         "@swimlane/ngx-charts": "20.1.0",
-        "@swimlane/ngx-graph": "^8.0.2",
         "ace-builds": "1.10.1",
         "bootstrap": "5.2.1",
         "brace": "0.11.1",
