@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -166,18 +163,7 @@ public class SubmissionService {
         return submissions;
     }
 
-    /**
-     * Given an exercise id, find a random submission for that exercise which still doesn't have any manual result.
-     * No manual result means that no user has started an assessment for the corresponding submission yet.
-     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
-     * If @param correctionRound is bigger than 0, only submission are shown for which the user has not assessed the first result.
-     *
-     * @param exercise the exercise for which we want to retrieve a submission without manual result
-     * @param correctionRound - the correction round we want our submission to have results for
-     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
-     */
-    public Optional<Submission> getRandomSubmissionEligibleForNewAssessment(Exercise exercise, boolean examMode, int correctionRound) {
+    private List<Submission> getAssessableSubmissions(Exercise exercise, boolean examMode, int correctionRound) {
         final List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
@@ -207,12 +193,39 @@ public class SubmissionService {
             submissionsWithoutResult = selectOnlySubmissionsBeforeDueDate(submissionsWithoutResult);
         }
 
-        if (submissionsWithoutResult.isEmpty()) {
-            return Optional.empty();
-        }
-        else {
-            return Optional.of(submissionsWithoutResult.get(ThreadLocalRandom.current().nextInt(submissionsWithoutResult.size())));
-        }
+        return submissionsWithoutResult;
+    }
+
+    /**
+     * Returns the next submission without result and with individual due date,
+     * in the ordering of their individual due dates.
+     * @param exercise the exercise for which we want to retrieve a submission
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param correctionRound the correction round we want our submission to have results for
+     * @return the next submission, ordered by individual due date (the earliest first), without any manual result
+     */
+    public Optional<Submission> getNextAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
+        var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
+
+        return assessableSubmissions.stream().filter(a -> Objects.nonNull(a.getParticipation().getIndividualDueDate()))
+                .min(Comparator.comparing(a -> a.getParticipation().getIndividualDueDate()));
+    }
+
+    /**
+     * Given an exercise id, find a random submission for that exercise which still doesn't have any manual result.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
+     * If {@code correctionRound} is bigger than 0, only submissions are shown for which the user has not assessed the first result.
+     *
+     * @param exercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound the correction round we want our submission to have results for
+     * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    public Optional<Submission> getRandomAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
+        var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
+
+        return assessableSubmissions.isEmpty() ? Optional.empty() : Optional.of(assessableSubmissions.get(ThreadLocalRandom.current().nextInt(assessableSubmissions.size())));
     }
 
     /**
@@ -558,7 +571,7 @@ public class SubmissionService {
         }
         else {
             // special check for programming exercises as they use buildAndTestStudentSubmissionAfterDueDate instead of dueDate
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
+            if (exercise instanceof ProgrammingExercise programmingExercise && !exercise.getAllowManualFeedbackRequests()) {
                 if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
                         && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().isAfter(ZonedDateTime.now())) {
                     log.debug("The due date to build and test of exercise '{}' has not been reached yet.", exercise.getTitle());
@@ -566,7 +579,7 @@ public class SubmissionService {
                 }
             }
 
-            if (exercise.getDueDate() != null && exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+            if (exerciseDateService.isBeforeEarliestDueDate(exercise).orElse(false)) {
                 log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
