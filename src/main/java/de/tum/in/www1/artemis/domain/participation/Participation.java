@@ -277,11 +277,11 @@ public abstract class Participation extends DomainObject implements Participatio
     }
 
     /**
-     * Adds the prefix "-practice" to the given name, if this is a test run that is might be used for practice
+     * Adds the prefix "-practice" to the given name, if this is a test run that might be used for practice
      * @param string the string that might get "practice-" added its front
      * @return the same string with "practice-" added to the front if this is a test run participation
      */
-    public String addPotentialPracticePrefix(String string) {
+    public String addPracticePrefixIfTestRun(String string) {
         return (isTestRun() ? "practice-" : "") + string;
     }
 
