@@ -20,7 +20,8 @@
             "detail": {
                 "title": "Result"
             },
-            "noResult": "No graded result",
+            "noResult": "No result",
+            "noGradedResult": "No graded result",
             "resultString": "Result Text",
             "resultStringBuildFailed": "Build failed",
             "resultStringBuildSuccessfulNoTests": "Build successful, no tests executed",

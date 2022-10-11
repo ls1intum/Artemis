@@ -30,7 +30,9 @@
                     <span class="result" [ngbTooltip]="resultTooltip | artemisTranslate" container="body">
                         {{ resultString }}
                     </span>
-                    <span class="result" [ngbTooltip]="result.submission?.submissionDate | artemisDate"> ({{ result.submission?.submissionDate! | artemisTimeAgo }}) </span>
+                    <span class="result" [ngbTooltip]="result.submission?.submissionDate | artemisDate" container="body">
+                        ({{ result.submission?.submissionDate! | artemisTimeAgo }})
+                    </span>
                 </span>
             </ng-template>
             <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">
@@ -39,7 +41,7 @@
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-graded" ngbTooltip="{{ badgeTooltip | artemisTranslate }}" placement="right">
+            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-graded" ngbTooltip="{{ badgeTooltip | artemisTranslate }}" container="body">
                 {{ badgeText | artemisTranslate | uppercase }}
             </span>
         </ng-container>
@@ -84,7 +86,7 @@
     <ng-container *ngSwitchDefault>
         <span class="text-muted">
             <fa-icon [icon]="farCircle" size="lg"></fa-icon>&nbsp;
-            <span jhiTranslate="artemisApp.result.noResult">No graded result</span>
+            <span> {{ (showUngradedResults ? 'artemisApp.result.noResult' : 'artemisApp.result.noGradedResult') | artemisTranslate }}</span>
         </span>
     </ng-container>
 </ng-container>

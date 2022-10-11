@@ -20,7 +20,8 @@
             "detail": {
                 "title": "Bewertung"
             },
-            "noResult": "Kein gewertetes Ergebnis",
+            "noResult": "Kein Ergebnis",
+            "noGradedResult": "Kein gewertetes Ergebnis",
             "resultString": "Ergebnistext",
             "resultStringBuildFailed": "Build gescheitert",
             "resultStringBuildSuccessfulNoTests": "Build erfolgreich, keine Tests ausgeführt",
