@@ -10,7 +10,6 @@ import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 })
 export class CourseManagementExercisesComponent implements OnInit {
     course: Course;
-    courseId = 0;
     showSearch = false;
     quizExercisesCount = 0;
     textExercisesCount = 0;
@@ -31,11 +30,14 @@ export class CourseManagementExercisesComponent implements OnInit {
     constructor(private courseService: CourseManagementService, private route: ActivatedRoute) {}
 
     /**
-     * initializes courseId and course
+     * initializes course
      */
     ngOnInit(): void {
-        this.courseId = Number(this.route.parent!.snapshot.paramMap.get('courseId'));
-        this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
+        this.route.parent!.data.subscribe(({ course }) => {
+            if (course) {
+                this.course = course;
+            }
+        });
         this.exerciseFilter = new ExerciseFilter('');
     }
 

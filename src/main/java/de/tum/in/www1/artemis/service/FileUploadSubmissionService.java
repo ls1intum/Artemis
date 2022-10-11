@@ -92,7 +92,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<FileUploadSubmission> getRandomFileUploadSubmissionEligibleForNewAssessment(FileUploadExercise fileUploadExercise, boolean examMode, int correctionRound) {
-        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(fileUploadExercise, examMode, correctionRound);
+        var submissionWithoutResult = super.getRandomAssessableSubmission(fileUploadExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) submissionWithoutResult.get();
             return Optional.of(fileUploadSubmission);

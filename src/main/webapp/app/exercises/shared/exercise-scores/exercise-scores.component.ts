@@ -103,6 +103,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             filterProp: FilterProp.ALL,
         };
         this.results = [];
+        this.filteredResults = [];
         this.filteredResultsSize = 0;
     }
 
