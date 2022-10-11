@@ -92,7 +92,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
         plagiarismComparison.submissionA = plagiarismComparison.submissionB;
         plagiarismComparison.submissionB = temp;
 
-        if (plagiarismComparison.matches) {
+        if (plagiarismComparison?.matches) {
             plagiarismComparison.matches.forEach((match) => {
                 const tempStart = match.startA;
                 match.startA = match.startB;
