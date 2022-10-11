@@ -131,7 +131,7 @@
                 <div class="row" *ngIf="showMoreResults">
                     <div class="col-12 col-md-12">
                         <div *ngFor="let result of sortedHistoryResults; let i = index">
-                            <h3
+                            <h4
                                 *ngIf="
                                     result.submission &&
                                     result.submission.submissionDate &&
@@ -140,9 +140,10 @@
                                         !sortedHistoryResults[i - 1].submission?.submissionDate ||
                                         !dayjs(result.submission.submissionDate).isSame(sortedHistoryResults[i - 1].submission?.submissionDate, 'day'))
                                 "
+                                class="mt-2"
                             >
                                 {{ result.submission.submissionDate | artemisDate: 'long-date' }}
-                            </h3>
+                            </h4>
                             <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [showTestDetails]="true" [exercise]="exercise"> </jhi-result>
                         </div>
                         <div class="no-results" *ngIf="!sortedHistoryResults">

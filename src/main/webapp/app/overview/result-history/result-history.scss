@@ -1,4 +1,5 @@
-$result-element-size: 25px;
+$result-element-size: 75px;
+$result-icon-size: 25px;
 .result-history-wrapper {
     display: flex;
     width: 100%;
@@ -14,9 +15,9 @@ $result-element-size: 25px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                width: $result-element-size;
-                height: $result-element-size;
-                border-radius: $result-element-size;
+                width: $result-icon-size;
+                height: $result-icon-size;
+                border-radius: $result-icon-size;
                 background-color: #0f6ab4;
                 color: white;
 
@@ -37,16 +38,16 @@ $result-element-size: 25px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                margin-left: -32px;
-                margin-right: -32px;
+                margin-left: -45px;
+                margin-right: -45px;
                 margin-top: 5px;
             }
         }
 
         .result-divider {
-            width: calc(100% - #{$result-element-size});
+            width: 300%;
             border-top: 1px solid;
-            margin-top: $result-element-size * 0.5;
+            margin-top: $result-icon-size * 0.5;
         }
 
         &:last-child {

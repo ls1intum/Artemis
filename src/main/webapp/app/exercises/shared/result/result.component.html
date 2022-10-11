@@ -11,6 +11,7 @@
     </ng-container>
     <ng-container *ngSwitchCase="ResultTemplateStatus.HAS_RESULT">
         <ng-container *ngIf="result">
+            <fa-icon class="result-score-icon" [ngClass]="textColorClass" [icon]="resultIconClass" size="lg"></fa-icon>
             <span
                 *ngIf="resultIsPreliminary(result) || hasFeedback; else notPreliminaryAndNoFeedback"
                 [ngClass]="textColorClass"
@@ -18,15 +19,14 @@
                 id="result-score"
                 (click)="showDetails(result)"
             >
-                <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
                 <span class="guided-tour result" [ngbTooltip]="resultTooltip | artemisTranslate" container="body">
                     {{ resultString }}
                 </span>
                 <span class="result" [ngbTooltip]="result.submission?.submissionDate | artemisDate"> ({{ result.submission?.submissionDate! | artemisTimeAgo }}) </span>
             </span>
             <ng-template #notPreliminaryAndNoFeedback>
+                <fa-icon class="result-score-icon" [ngClass]="textColorClass" [icon]="resultIconClass" size="lg"></fa-icon>
                 <span [ngClass]="textColorClass" class="guided-tour result" id="result-score-no-feedback">
-                    <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
                     <span class="result" [ngbTooltip]="resultTooltip | artemisTranslate" container="body">
                         {{ resultString }}
                     </span>

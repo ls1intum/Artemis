@@ -24,12 +24,21 @@
         <div *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer" class="result-detail-container">
             <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
                 <span class="result-score-chart-title">
-                    <span jhiTranslate="artemisApp.result.score">Score</span>: {{ roundValueSpecifiedByCourseSettings(result.score, course) }}%
-                    <ng-container *ngIf="result.score !== undefined && exercise && exercise.maxPoints">
-                        , {{ roundValueSpecifiedByCourseSettings((result.score * exercise.maxPoints) / 100, course) }}&nbsp;{{
-                            'artemisApp.result.chart.points' | artemisTranslate
-                        }}
-                    </ng-container>
+                    <span *ngIf="!exercise || !exercise.maxPoints; else scoreWithPoints">
+                        {{ 'artemisApp.result.score' | artemisTranslate: { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
+                    </span>
+                    <ng-template #scoreWithPoints>
+                        <span *ngIf="result.score && exercise && exercise.maxPoints">
+                            {{
+                                'artemisApp.result.scoreWithPoints'
+                                    | artemisTranslate
+                                        : {
+                                              score: roundValueSpecifiedByCourseSettings(result.score, course),
+                                              points: roundValueSpecifiedByCourseSettings((result.score * exercise.maxPoints) / 100, course)
+                                          }
+                            }}
+                        </span>
+                    </ng-template>
                 </span>
                 <div id="feedback-chart" #containerRef class="chart-space">
                     <ngx-charts-bar-horizontal-stacked
