@@ -12,3 +12,7 @@ test-results/
 www/
 !*.jar
 !*.war
+# Custom exclusions
+node_modules
+.gradle
+Dockerfile
