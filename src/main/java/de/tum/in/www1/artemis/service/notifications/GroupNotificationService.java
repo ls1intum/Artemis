@@ -97,7 +97,8 @@ public class GroupNotificationService {
                 case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, notificationType,
                         (String) typeSpecificInformation);
                 // Additional Types
-                case PROGRAMMING_TEST_CASES_CHANGED -> createNotification((Exercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
+                case PROGRAMMING_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST -> createNotification((Exercise) notificationSubject, author, group, notificationType,
+                        (String) typeSpecificInformation);
                 default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
             };
             saveAndSend(resultingGroupNotification, notificationSubject);
@@ -253,6 +254,10 @@ public class GroupNotificationService {
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(Post post, AnswerPost answerPost, Course course) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_EXERCISE_POST, post, course, answerPost.getAuthor());
+    }
+
+    public void notifyTutorAndEditorAndInstructorGroupAboutNewFeedbackRequest(Exercise exercise) {
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_MANUAL_FEEDBACK_REQUEST, exercise, null, null);
     }
 
     /**
