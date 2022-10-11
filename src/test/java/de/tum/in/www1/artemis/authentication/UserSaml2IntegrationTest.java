@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
-import static org.assertj.core.api.AssertionsForClassTypes.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +21,6 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationSaml2Test;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
@@ -36,9 +36,6 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
     private static final String STUDENT_PASSWORD = "test1234";
 
     private static final String STUDENT_REGISTRATION_NUMBER = "12345678";
-
-    @Autowired
-    private TokenProvider tokenProvider;
 
     @Autowired
     private UserRepository userRepository;
