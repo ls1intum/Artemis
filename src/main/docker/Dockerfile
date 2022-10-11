@@ -29,7 +29,7 @@ RUN chown -R 1000:1000 /src
 USER 1000
 ENV HOME=/src
 ENV NODE_OPTIONS=--max_old_space_size=6144
-RUN ./gradlew build -x test -x jacocoTestCoverageVerification -x spotlessJava -Pprod -Pwar clean bootWar
+RUN ./gradlew build -x test -x jacocoTestCoverageVerification -x spotlessJava -Pprod -Pwar bootWar
 RUN du .
 
 
