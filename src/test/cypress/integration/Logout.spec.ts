@@ -1,9 +1,6 @@
 import { artemis } from '../support/ArtemisTesting';
 import { authTokenKey } from '../support/constants';
 import { Course } from '../../../main/webapp/app/entities/course.model';
-import { CypressExamBuilder } from '../support/requests/CourseManagementRequests';
-import dayjs from 'dayjs/esm';
-import { Exam } from '../../../main/webapp/app/entities/exam.model';
 import { ModelingExercise } from '../../../main/webapp/app/entities/modeling-exercise.model';
 
 const courseRequests = artemis.requests.courseManagement;
@@ -13,7 +10,6 @@ const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
 
 describe('Logout tests', () => {
     let course: Course;
-    let exam: Exam;
     let modelingExercise: ModelingExercise;
     const studentOne = users.getStudentOne();
     const admin = users.getAdmin();
