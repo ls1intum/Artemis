@@ -623,7 +623,7 @@ public class ProgrammingExerciseExportService {
      * @param participation       The student participation for the student/team identifier, which should be added.
      */
     public void addParticipantIdentifierToProjectName(Repository repository, ProgrammingExercise programmingExercise, StudentParticipation participation) {
-        String participantIdentifier = (participation.isTestRun() ? "practice-" : "") + participation.getParticipantIdentifier();
+        String participantIdentifier = participation.addPotentialPracticePrefix(participation.getParticipantIdentifier());
 
         // Get all files in repository except .git files
         List<String> allRepoFiles = listAllFilesInPath(repository.getLocalPath());
