@@ -31,10 +31,10 @@ export class PlagiarismComparison<E extends PlagiarismSubmissionElement> {
     /**
      * List of matches between both submissions involved in this comparison.
      */
-    matches: PlagiarismMatch[];
+    matches?: PlagiarismMatch[];
 
     /**
-     * Similarity of the compared submissions (between 0 and 1).
+     * Similarity of the compared submissions in percentage (between 0 and 100).
      */
     similarity: number;
 

@@ -410,6 +410,9 @@ public class RequestUtilService {
         if (responseType == Void.class && contentAsString.isEmpty()) {
             return (T) "";
         }
+        if (res.getResponse().getContentType() == null) {
+            return null;
+        }
         return mapper.readValue(contentAsString, responseType);
     }
 
