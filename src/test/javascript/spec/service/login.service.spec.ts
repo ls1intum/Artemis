@@ -1,4 +1,4 @@
-import { of, throwError } from 'rxjs';
+import { throwError } from 'rxjs';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
@@ -22,12 +22,11 @@ describe('LoginService', () => {
     let notificationService: NotificationService;
     let loginService: LoginService;
 
-    let removeAuthTokenFromCachesStub: jest.SpyInstance;
     let authenticateStub: jest.SpyInstance;
+    let authServerProviderStub: jest.SpyInstance;
     let alertServiceClearStub: jest.SpyInstance;
     let notificationServiceCleanUpStub: jest.SpyInstance;
     let navigateByUrlStub: jest.SpyInstance;
-    let alertServiceErrorStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -49,12 +48,11 @@ describe('LoginService', () => {
                 notificationService = TestBed.inject(NotificationService);
                 loginService = TestBed.inject(LoginService);
 
-                removeAuthTokenFromCachesStub = jest.spyOn(authServerProvider, 'removeAuthTokenFromCaches');
                 authenticateStub = jest.spyOn(accountService, 'authenticate');
+                authServerProviderStub = jest.spyOn(authServerProvider, 'logout');
                 alertServiceClearStub = jest.spyOn(alertService, 'closeAll');
                 notificationServiceCleanUpStub = jest.spyOn(notificationService, 'cleanUp');
                 navigateByUrlStub = jest.spyOn(router, 'navigateByUrl');
-                alertServiceErrorStub = jest.spyOn(alertService, 'error');
             });
     });
 
@@ -63,27 +61,22 @@ describe('LoginService', () => {
     });
 
     it('should properly log out when every action is successful', () => {
-        removeAuthTokenFromCachesStub.mockReturnValue(of(undefined));
         navigateByUrlStub.mockReturnValue(Promise.resolve(true));
         loginService.logout(true);
 
         commonExpects();
-        expect(alertServiceErrorStub).not.toHaveBeenCalled();
+        expect(authServerProviderStub).toHaveBeenCalledOnce();
     });
 
-    it('should emit an error when an action fails', () => {
-        const error = 'fatal error';
-        removeAuthTokenFromCachesStub.mockReturnValue(of(undefined));
-        authenticateStub.mockReturnValue(throwError(() => error));
-        loginService.logout(true);
+    it('should logout properly and not call server logout on forceful logout', () => {
+        navigateByUrlStub.mockReturnValue(Promise.resolve(true));
+        loginService.logout(false);
 
         commonExpects();
-        expect(alertServiceErrorStub).toHaveBeenCalledOnce();
+        expect(authServerProviderStub).not.toHaveBeenCalled();
     });
 
     function commonExpects() {
-        expect(removeAuthTokenFromCachesStub).toHaveBeenCalledOnce();
-        expect(removeAuthTokenFromCachesStub).toHaveBeenCalledWith();
         expect(authenticateStub).toHaveBeenCalledOnce();
         expect(authenticateStub).toHaveBeenCalledWith(undefined);
         expect(notificationServiceCleanUpStub).toHaveBeenCalledOnce();

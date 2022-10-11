@@ -5,11 +5,11 @@ import { tap } from 'rxjs/operators';
 import { LoginService } from 'app/core/login/login.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { Router } from '@angular/router';
-import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable()
 export class AuthExpiredInterceptor implements HttpInterceptor {
-    constructor(private loginService: LoginService, private stateStorageService: StateStorageService, private router: Router, private authServerProvider: AuthServerProvider) {}
+    constructor(private loginService: LoginService, private stateStorageService: StateStorageService, private router: Router, private accountService: AccountService) {}
 
     /**
      * Identifies and handles a given HTTP request. If the request's error status is 401, the current user will be logged out.
@@ -23,8 +23,7 @@ export class AuthExpiredInterceptor implements HttpInterceptor {
             tap({
                 error: (err: any) => {
                     if (err instanceof HttpErrorResponse) {
-                        // When there is no existing token we were not logged in to begin with
-                        if (err.status === 401) {
+                        if (err.status === 401 && this.accountService.isAuthenticated()) {
                             // save the url before the logout navigates to another page in a constant
                             const currentUrl = this.router.routerState.snapshot.url;
                             this.loginService.logout(false);

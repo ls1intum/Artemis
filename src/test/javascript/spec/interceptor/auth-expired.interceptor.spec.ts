@@ -1,9 +1,9 @@
 import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { LoginService } from 'app/core/login/login.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { Router } from '@angular/router';
-import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { throwError } from 'rxjs';
 
 describe(`AuthExpiredInterceptor`, () => {
@@ -11,9 +11,7 @@ describe(`AuthExpiredInterceptor`, () => {
 
     let loginServiceMock: LoginService;
     let stateStorageServiceMock: StateStorageService;
-    let authServerProviderMock: AuthServerProvider;
-
-    const token = 'token-123';
+    let accountServiceMock: AccountService;
 
     const routerMock = {
         routerState: {
@@ -30,39 +28,39 @@ describe(`AuthExpiredInterceptor`, () => {
         stateStorageServiceMock = {
             storeUrl: jest.fn(),
         } as any as StateStorageService;
-        authServerProviderMock = {
-            getToken: jest.fn(),
-        } as any as AuthServerProvider;
+        accountServiceMock = {
+            isAuthenticated: jest.fn(),
+        } as any as AccountService;
 
-        authInterceptor = new AuthExpiredInterceptor(loginServiceMock, stateStorageServiceMock, routerMock, authServerProviderMock);
+        authInterceptor = new AuthExpiredInterceptor(loginServiceMock, stateStorageServiceMock, routerMock, accountServiceMock);
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should logout and store the current url if status is 401 and there is no token', () => {
+    it('should logout and store the current url if status is 401 and user is authenticated', () => {
         const mockHandler = {
             handle: () => throwError(() => new HttpErrorResponse({ status: 401 })),
         };
-        const tokenSpy = jest.spyOn(authServerProviderMock, 'getToken').mockReturnValue(token);
+        const isAuthenticatedSpy = jest.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
 
         authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
-        expect(tokenSpy).toHaveBeenCalledOnce();
+        expect(isAuthenticatedSpy).toHaveBeenCalledOnce();
         expect(loginServiceMock.logout).toHaveBeenCalledWith(false);
         expect(stateStorageServiceMock.storeUrl).toHaveBeenCalledWith('https://example.com');
     });
 
-    it('should ignore if there is no token provided', () => {
+    it('should ignore if user is not authenticated', () => {
         const mockHandler = {
             handle: () => throwError(() => new HttpErrorResponse({ status: 401 })),
         };
-        const tokenSpy = jest.spyOn(authServerProviderMock, 'getToken');
+        const isAuthenticatedSpy = jest.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(false);
 
         authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
-        expect(tokenSpy).toHaveBeenCalledOnce();
+        expect(isAuthenticatedSpy).toHaveBeenCalledOnce();
         expect(loginServiceMock.logout).not.toHaveBeenCalled();
         expect(stateStorageServiceMock.storeUrl).not.toHaveBeenCalled();
     });
@@ -71,11 +69,11 @@ describe(`AuthExpiredInterceptor`, () => {
         const mockHandler = {
             handle: () => throwError(() => new HttpErrorResponse({ status: 400 })),
         };
-        const tokenSpy = jest.spyOn(authServerProviderMock, 'getToken').mockReturnValue(token);
+        const isAuthenticatedSpy = jest.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
 
         authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
-        expect(tokenSpy).not.toHaveBeenCalled();
+        expect(isAuthenticatedSpy).not.toHaveBeenCalled();
         expect(loginServiceMock.logout).not.toHaveBeenCalled();
         expect(stateStorageServiceMock.storeUrl).not.toHaveBeenCalled();
     });

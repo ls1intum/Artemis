@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
-import { EMPTY } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -70,24 +69,23 @@ export class LoginService {
     logout(wasInitiatedByUser: boolean) {
         this.logoutWasForceful = !wasInitiatedByUser;
 
+        this.accountService.authenticate(undefined);
+
         if (wasInitiatedByUser) {
             this.authServerProvider
                 .logout()
                 .pipe(
-                    // If something happens during the logout, show the error to the user.
-                    catchError((error: any) => {
-                        this.alertService.error('logout.failed', { error });
-                        return EMPTY;
+                    finalize(() => {
+                        this.onLogout();
                     }),
                 )
                 .subscribe();
+        } else {
+            this.onLogout();
         }
-
-        this.onLogout();
     }
 
     private onLogout(): void {
-        this.accountService.authenticate(undefined);
         this.alertService.closeAll();
         this.notificationService.cleanUp();
         this.router.navigateByUrl('/');

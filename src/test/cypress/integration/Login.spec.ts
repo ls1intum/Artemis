@@ -1,5 +1,4 @@
 import { artemis } from '../support/ArtemisTesting';
-import { authTokenKey } from '../support/constants';
 
 const user = artemis.users.getStudentOne();
 const loginPage = artemis.pageobjects.login;
@@ -8,22 +7,14 @@ describe('Login page tests', () => {
     it('Logs in via the UI', () => {
         cy.visit('/');
         loginPage.login(user);
-        cy.url()
-            .should('include', '/courses')
-            .then(() => {
-                expect(localStorage.getItem(authTokenKey)).to.not.be.null;
-            });
+        cy.url().should('include', '/courses');
     });
 
     it('Logs in programmatically and logs out via the UI', () => {
         cy.login(user, '/courses');
         cy.url().should('include', '/courses');
         cy.get('#account-menu').click().get('#logout').click();
-        cy.url()
-            .should('equal', Cypress.config().baseUrl + '/')
-            .then(() => {
-                expect(localStorage.getItem(authTokenKey)).to.be.null;
-            });
+        cy.url().should('equal', Cypress.config().baseUrl + '/');
     });
 
     it('Displays error messages on wrong password', () => {

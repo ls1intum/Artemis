@@ -3,9 +3,8 @@ import { EMPTY } from 'rxjs';
 import { of } from 'rxjs';
 
 export class MockAuthServerProviderService implements IAuthServerProvider {
-    getToken = () => 'abc';
-    login = (credentials: Credentials) => EMPTY;
-    removeAuthTokenFromCaches = () => of(undefined);
+    login = (credentials: Credentials) => of(EMPTY);
+    loginSAML2 = (rememberMe: boolean) => of(EMPTY);
+    logout = () => of(EMPTY);
     clearCaches = () => of(undefined);
-    storeAuthenticationToken = (jwt: string, rememberMe: boolean) => {};
 }

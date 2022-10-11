@@ -92,7 +92,7 @@ describe('AttachmentUnitComponent', () => {
 
     it('should download attachment when clicked', () => {
         const fileService = TestBed.inject(FileService);
-        const downloadFileStub = jest.spyOn(fileService, 'downloadFileWithAccessToken');
+        const downloadFileStub = jest.spyOn(fileService, 'downloadFile');
         const downloadButton = attachmentUnitComponentFixture.debugElement.nativeElement.querySelector('#downloadButton');
         expect(downloadButton).not.toBeNull();
         downloadButton.click();

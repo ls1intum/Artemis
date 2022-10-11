@@ -1,6 +1,5 @@
-import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable } from 'rxjs';
 import { FileType } from '../../programming/shared/code-editor/model/code-editor.model';
 import { map } from 'rxjs/operators';
@@ -120,28 +119,5 @@ export class RepositoryFileService implements IRepositoryFileService {
      */
     delete(participationId: number, fileName: string): Observable<void> {
         return this.http.delete<void>(`${this.resourceUrl}/${participationId}/file`, { params: new HttpParams().set('file', fileName) });
-    }
-}
-
-@Injectable()
-export class RepositoryInterceptor implements HttpInterceptor {
-    constructor(private localStorage: LocalStorageService, private sessionStorage: SessionStorageService) {}
-
-    /**
-     * Identifies and handles a given HTTP request.
-     * @param req The request object to handle.
-     * @param next The next interceptor in the chain.
-     * @returns An observable of the event stream.
-     */
-    intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        // TODO: check why the auth.interceptor.ts does not add the authorization header
-        const token = this.localStorage.retrieve('authenticationToken') || this.sessionStorage.retrieve('authenticationToken');
-        if (!!token) {
-            const authReq = req.clone({
-                headers: req.headers.set('Authorization', 'Bearer ' + token),
-            });
-            return next.handle(authReq);
-        }
-        return next.handle(req);
     }
 }

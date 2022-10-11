@@ -2,7 +2,6 @@ import { APP_INITIALIZER, ErrorHandler, LOCALE_ID, NgModule } from '@angular/cor
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
-import { AuthInterceptor } from 'app/core/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
@@ -11,7 +10,6 @@ import { NgxWebstorageModule, SessionStorageService } from 'ngx-webstorage';
 import locale from '@angular/common/locales/en';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-import { RepositoryInterceptor } from 'app/exercises/shared/result/repository.service';
 import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
@@ -67,11 +65,6 @@ import { Router } from '@angular/router';
          */
         {
             provide: HTTP_INTERCEPTORS,
-            useClass: AuthInterceptor,
-            multi: true,
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
             useClass: AuthExpiredInterceptor,
             multi: true,
         },
@@ -88,11 +81,6 @@ import { Router } from '@angular/router';
         {
             provide: HTTP_INTERCEPTORS,
             useClass: NotificationInterceptor,
-            multi: true,
-        },
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: RepositoryInterceptor,
             multi: true,
         },
         {

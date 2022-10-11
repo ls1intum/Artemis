@@ -25,7 +25,7 @@ import { CypressCredentials } from './users';
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
-import { authTokenKey, BASE_API, POST } from './constants';
+import { BASE_API, POST } from './constants';
 
 export {};
 
@@ -42,25 +42,7 @@ declare global {
 }
 
 /**
- * Overwrite the normal cypress request to always add the authorization token.
- */
-Cypress.Commands.overwrite('request', (originalFn, options) => {
-    const token = localStorage.getItem(authTokenKey)?.replace(/"/g, '');
-    if (!!token) {
-        const authHeader = 'Bearer ' + token;
-        if (!!options.headers) {
-            options.headers.Authorization = authHeader;
-        } else {
-            options.headers = { Authorization: authHeader };
-        }
-        return originalFn(options);
-    }
-
-    return originalFn(options);
-});
-
-/**
- * Logs in using API and sets authToken in Cypress.env
+ * Logs in using API
  * */
 Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
     const username = credentials.username;
@@ -81,7 +63,6 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
         failOnStatusCode: false,
     }).then((response) => {
         expect(response.status).to.equal(200);
-        localStorage.setItem(authTokenKey, '"' + response.body.id_token + '"');
         if (url) {
             cy.visit(url);
         }

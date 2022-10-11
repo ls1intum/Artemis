@@ -328,7 +328,7 @@ describe('FileUploadSubmissionComponent', () => {
 
     it('should download file', () => {
         const fileService = TestBed.inject(FileService);
-        const fileServiceStub = jest.spyOn(fileService, 'downloadFileWithAccessToken').mockImplementation();
+        const fileServiceStub = jest.spyOn(fileService, 'downloadFile').mockImplementation();
 
         comp.downloadFile('');
 
