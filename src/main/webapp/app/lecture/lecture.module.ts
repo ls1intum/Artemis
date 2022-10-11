@@ -6,6 +6,7 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { LectureUpdateComponent } from 'app/lecture/lecture-update.component';
+import { LectureUpdateWizardComponent } from 'app/lecture/lecture-update-wizard.component';
 import { LectureComponent } from 'app/lecture/lecture.component';
 import { LectureDetailComponent } from 'app/lecture/lecture-detail.component';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
@@ -26,6 +27,6 @@ const ENTITY_STATES = [...lectureRoute];
         ArtemisMarkdownModule,
         ArtemisMarkdownEditorModule,
     ],
-    declarations: [LectureComponent, LectureDetailComponent, LectureImportComponent, LectureUpdateComponent, LectureAttachmentsComponent],
+    declarations: [LectureComponent, LectureDetailComponent, LectureImportComponent, LectureUpdateComponent, LectureUpdateWizardComponent, LectureAttachmentsComponent],
 })
 export class ArtemisLectureModule {}
