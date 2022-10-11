@@ -29,6 +29,8 @@ class TokenProviderTest {
 
     private static final long ONE_MINUTE = 60000;
 
+    private static final long TEN_MINUTES = 600000;
+
     private Key key;
 
     private TokenProvider tokenProvider;
@@ -46,6 +48,8 @@ class TokenProviderTest {
 
         ReflectionTestUtils.setField(tokenProvider, "key", key);
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", ONE_MINUTE);
+        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMillisecondsForRememberMe", TEN_MINUTES);
+
     }
 
     @Test
@@ -121,6 +125,20 @@ class TokenProviderTest {
 
         Key key = (Key) ReflectionTestUtils.getField(tokenProvider, "key");
         assertThat(key).isNotNull().isEqualTo(Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
+    }
+
+    @Test
+    void testGetTokenValidityRememberMe() {
+        long validity = tokenProvider.getTokenValidity(true);
+
+        assertThat(validity).isEqualTo(TEN_MINUTES);
+    }
+
+    @Test
+    void testGetTokenValidityNotRememberMe() {
+        long validity = tokenProvider.getTokenValidity(false);
+
+        assertThat(validity).isEqualTo(ONE_MINUTE);
     }
 
     private Authentication createAuthentication() {

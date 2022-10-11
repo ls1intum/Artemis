@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
 
+import javax.servlet.http.Cookie;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -50,30 +52,20 @@ class JWTFilterTest {
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
         String jwt = tokenProvider.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new Cookie("jwt", jwt));
         request.setRequestURI("/api/test");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
         jwtFilter.doFilter(request, response, filterChain);
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
-        assertThat(SecurityContextHolder.getContext().getAuthentication().getCredentials()).hasToString(jwt);
     }
 
     @Test
     void testJWTFilterInvalidToken() throws Exception {
         String jwt = "wrong_jwt";
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setRequestURI("/api/test");
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        MockFilterChain filterChain = new MockFilterChain();
-        jwtFilter.doFilter(request, response, filterChain);
-        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-    }
-
-    @Test
-    void testJWTFilterMissingAuthorization() throws Exception {
-        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new Cookie("jwt", jwt));
         request.setRequestURI("/api/test");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
@@ -99,6 +91,7 @@ class JWTFilterTest {
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
         String jwt = tokenProvider.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new Cookie("jwt", jwt));
         request.setRequestURI("/api/test");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();

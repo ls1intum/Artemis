@@ -7,7 +7,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -30,7 +33,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
@@ -44,9 +46,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Autowired
     private ArtemisInternalAuthenticationProvider artemisInternalAuthenticationProvider;
-
-    @Autowired
-    private TokenProvider tokenProvider;
 
     @Autowired
     private CourseRepository courseRepository;
@@ -254,9 +253,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        // UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.OK, httpHeaders);
-        // assertThat(jwtToken.getIdToken()).as("JWT token is present").isNotNull();
-        // assertThat(this.tokenProvider.validateTokenForAuthority(jwtToken.getIdToken())).as("JWT token is valid").isTrue();
+        request.postWithResponseBody("/api/authenticate", loginVM, null, HttpStatus.OK);
     }
 
     @Test
