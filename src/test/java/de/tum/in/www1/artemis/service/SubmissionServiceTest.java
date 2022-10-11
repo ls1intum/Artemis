@@ -178,7 +178,6 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void testProgrammingExerciseGetRandomSubmissionEligibleForNewAssessmentNoAssessments() {
-
         submission1 = new ProgrammingSubmission();
         submission2 = new ProgrammingSubmission();
 
