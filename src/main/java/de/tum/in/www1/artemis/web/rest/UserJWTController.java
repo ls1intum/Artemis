@@ -118,6 +118,7 @@ public class UserJWTController {
 
     /**
      * Removes the cookie containing the jwt
+     * @param response  HTTP response
      */
     @PostMapping("/logout")
     public void logout(HttpServletResponse response) {
