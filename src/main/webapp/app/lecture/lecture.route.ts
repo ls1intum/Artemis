@@ -8,6 +8,7 @@ import { LectureService } from './lecture.service';
 import { LectureComponent } from './lecture.component';
 import { LectureDetailComponent } from './lecture-detail.component';
 import { LectureUpdateComponent } from './lecture-update.component';
+import { LectureUpdateWizardComponent } from './lecture-update-wizard.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import { Authority } from 'app/shared/constants/authority.constants';

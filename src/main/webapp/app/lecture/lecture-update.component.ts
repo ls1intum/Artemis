@@ -22,6 +22,7 @@ export class LectureUpdateComponent implements OnInit {
     EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
+    isShowingWizardMode: boolean;
 
     courses: Course[];
     startDate: string;
@@ -48,6 +49,7 @@ export class LectureUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
+        this.isShowingWizardMode = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
@@ -80,6 +82,14 @@ export class LectureUpdateComponent implements OnInit {
         } else {
             this.subscribeToSaveResponse(this.lectureService.create(this.lecture));
         }
+    }
+
+    /**
+     * Activate or deactivate the wizard mode for easier lecture creation.
+     * This function is called by pressing "Switch to guided mode" when creating a new lecture
+     */
+    toggleWizardMode() {
+        this.isShowingWizardMode = !this.isShowingWizardMode;
     }
 
     /**
