@@ -11,7 +11,7 @@ import { Course } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave, faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -32,6 +32,7 @@ export class LectureUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
+    faHandShakeAngle = faHandshakeAngle;
 
     constructor(
         protected alertService: AlertService,

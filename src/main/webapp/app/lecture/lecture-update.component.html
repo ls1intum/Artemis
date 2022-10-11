@@ -1,7 +1,18 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
-            <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel">Create or edit a Lecture</h2>
+            <div class="d-flex">
+                <div class="flex-grow-1">
+                    <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel">Create or edit a Lecture</h2>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <div class="guided-mode-button">
+                        <button type="submit" id="guided.mode" class="btn btn-primary">
+                            <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToGuidedModeLabel">Switch to guided mode</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
             <div>
                 <div class="form-group" [hidden]="!lecture.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>

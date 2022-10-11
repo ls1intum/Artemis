@@ -12,7 +12,8 @@
                     "filterFuture": "Zukünftige",
                     "filterUnspecifiedDates": "Ohne Zeitangaben"
                 },
-                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten"
+                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten",
+                "switchToGuidedModeLabel": "Zum geführten Modus wechseln"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",
             "updated": "Vorlesung aktualisiert mit ID {{ param }}",
