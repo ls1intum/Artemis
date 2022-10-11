@@ -1,20 +1,57 @@
 import { artemis } from '../support/ArtemisTesting';
 import { authTokenKey } from '../support/constants';
+import { Course } from '../../../main/webapp/app/entities/course.model';
+import { CypressExamBuilder } from '../support/requests/CourseManagementRequests';
+import dayjs from 'dayjs/esm';
+import { Exam } from '../../../main/webapp/app/entities/exam.model';
+import { ModelingExercise } from '../../../main/webapp/app/entities/modeling-exercise.model';
 
-const user = artemis.users.getStudentOne();
-const loginPage = artemis.pageobjects.login;
+const courseRequests = artemis.requests.courseManagement;
+const users = artemis.users;
+const courseOverview = artemis.pageobjects.course.overview;
+const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
 
 describe('Logout tests', () => {
-    it('Logs in via the UI and logs out', () => {
-        cy.visit('/');
-        loginPage.login(user);
-        cy.url()
-            .should('include', '/courses')
-            .then(() => {
-                expect(localStorage.getItem(authTokenKey)).to.not.be.null;
-            });
+    let course: Course;
+    let exam: Exam;
+    let modelingExercise: ModelingExercise;
+    const studentOne = users.getStudentOne();
+    const admin = users.getAdmin();
 
+    before('Login as admin and create a course with a modeling exercise', () => {
+        cy.login(admin);
+
+        courseRequests.createCourse(true).then((response) => {
+            course = response.body;
+            courseRequests.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
+                modelingExercise = resp.body;
+            });
+        });
+    });
+
+    after(() => {
+        if (!!course) {
+            cy.login(users.getAdmin());
+            courseRequests.deleteCourse(course.id!);
+        }
+    });
+
+    const startExerciseAndMakeChanges = () => {
+        cy.login(studentOne);
+        cy.visit(`/courses/${course.id}/exercises`);
+        courseOverview.startExercise(modelingExercise.id!);
+        courseOverview.openRunningExercise(modelingExercise.id!);
+        modelingEditor.addComponentToModel(1);
+        modelingEditor.addComponentToModel(2);
         cy.get('#account-menu').click().get('#logout').click();
+    };
+
+    it('Logs out by pressing OK when unsaved changes on exercise mode', () => {
+        startExerciseAndMakeChanges();
+        cy.on('window:confirm', (text) => {
+            expect(text).to.contains('You have unsaved changes');
+            return true;
+        });
         cy.url()
             .should('equal', Cypress.config().baseUrl + '/')
             .then(() => {
@@ -22,43 +59,16 @@ describe('Logout tests', () => {
             });
     });
 
-    it('Logs out by pressing OK when unsaved changes on exercise mode', () => {
-        /**
-         * TODO: 1 - Login
-         * TODO: 2 - Create a course and modeling exercise
-         * TODO: 3 - Open modeling exercise and make changes
-         * TODO: 4 - Click logout button and confirms the popup
-         * TODO: 5 - It should log out
-         */
-    });
-
     it('Stays logged in by pressing cancel when trying to logout during unsaved changes on exercise mode', () => {
-        /**
-         * TODO: 1 - Login
-         * TODO: 2 - Create a course and modeling exercise
-         * TODO: 3 - Open modeling exercise and make changes
-         * TODO: 4 - Click logout button and cancel the popup
-         * TODO: 5 - It should stay logged in
-         */
-    });
-
-    it('Logs out by pressing OK when unsaved changes on exam mode', () => {
-        /**
-         * TODO: 1 - Login
-         * TODO: 2 - Create a course and one exam
-         * TODO: 3 - Open exam and make changes
-         * TODO: 4 - Click logout button and cancel the popup
-         * TODO: 5 - It should stay logged in
-         */
-    });
-
-    it('Stays logged in by pressing cancel when trying to logout during unsaved changes on exam mode', () => {
-        /**
-         * TODO: 1 - Login
-         * TODO: 2 - Create a course and one exam
-         * TODO: 3 - Open exam and make changes
-         * TODO: 4 - Click logout button and confirm the popup
-         * TODO: 5 - It should log out
-         */
+        startExerciseAndMakeChanges();
+        cy.on('window:confirm', (text) => {
+            expect(text).to.contains('You have unsaved changes');
+            return false;
+        });
+        cy.url()
+            .should('not.equal', Cypress.config().baseUrl + '/')
+            .then(() => {
+                expect(localStorage.getItem(authTokenKey)).to.not.be.null;
+            });
     });
 });
