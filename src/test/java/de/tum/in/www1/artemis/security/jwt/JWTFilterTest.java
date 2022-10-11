@@ -52,7 +52,7 @@ class JWTFilterTest {
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
         String jwt = tokenProvider.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setCookies(new Cookie("jwt", jwt));
+        request.setCookies(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt));
         request.setRequestURI("/api/test");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
@@ -65,7 +65,7 @@ class JWTFilterTest {
     void testJWTFilterInvalidToken() throws Exception {
         String jwt = "wrong_jwt";
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setCookies(new Cookie("jwt", jwt));
+        request.setCookies(new Cookie(JWTFilter.JWT_COOKIE_NAME, jwt));
         request.setRequestURI("/api/test");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
@@ -86,12 +86,12 @@ class JWTFilterTest {
     }
 
     @Test
-    void testJWTFilterWrongScheme() throws Exception {
+    void testJWTFilterWrongCookieName() throws Exception {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password",
                 Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
         String jwt = tokenProvider.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setCookies(new Cookie("jwt", jwt));
+        request.setCookies(new Cookie("wrong_jwt", jwt));
         request.setRequestURI("/api/test");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();

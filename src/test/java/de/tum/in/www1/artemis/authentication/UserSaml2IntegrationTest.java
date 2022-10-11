@@ -142,7 +142,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
         // Create user
         mockSAMLAuthentication();
-        // request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
         assertStudentExists();
 
         // Change Password
@@ -155,7 +155,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        request.postWithResponseBody("/api/authenticate", createLoginVM(), null, HttpStatus.OK, httpHeaders);
+        request.postWithoutResponseBody("/api/authenticate", createLoginVM(), HttpStatus.OK, httpHeaders);
 
         // Check SAML Login afterwards ..
 
@@ -163,7 +163,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
         // Mock existing SAML2 Auth
         mockSAMLAuthentication();
         // Test whether authorizeSAML2 generates a valid token
-        request.postWithResponseBody("/api/saml2", Boolean.FALSE, null, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
     /**
@@ -181,7 +181,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
     private void authenticate(Saml2AuthenticatedPrincipal principal) throws Exception {
         mockSAMLAuthentication(principal);
-        request.postWithResponseBody("/api/saml2", Boolean.FALSE, null, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
     private void mockSAMLAuthentication() {

@@ -127,6 +127,30 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
+    public void postWithoutResponseBody(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        postWithoutResponseBody(path, body, expectedStatus, null, null);
+    }
+
+    public void postWithoutResponseBody(String path, Object body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
+        postWithoutResponseBody(path, body, expectedStatus, httpHeaders, null);
+    }
+
+    public void postWithoutResponseBody(String path, Object body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
+        if (httpHeaders != null) {
+            request.headers(httpHeaders);
+        }
+        MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        if (expectedResponseHeaders != null) {
+            for (String headerKey : expectedResponseHeaders.keySet()) {
+                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
+            }
+        }
+        restoreSecurityContext();
+    }
+
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
         return postWithResponseBody(path, body, responseType, expectedStatus, httpHeaders, null);
     }

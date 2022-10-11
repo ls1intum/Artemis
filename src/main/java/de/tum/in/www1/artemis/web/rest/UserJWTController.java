@@ -53,8 +53,10 @@ public class UserJWTController {
 
     /**
      * Authorizes a User
-     * @param loginVM user credentials View Mode
-     * @param userAgent User Agent
+     * @param loginVM       user credentials View Mode
+     * @param userAgent     User Agent
+     * @param response      HTTP response
+     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
      */
     @PostMapping("/authenticate")
     public ResponseEntity<Void> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
@@ -83,7 +85,9 @@ public class UserJWTController {
     /**
      * Authorizes a User logged in with SAML2
      *
-     * @param body the body of the request. "true" to remember the user.
+     * @param body      the body of the request. "true" to remember the user.
+     * @param response  HTTP response
+     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (user not activated)
      */
     @PostMapping("/saml2")
     public ResponseEntity<Void> authorizeSAML2(@RequestBody final String body, HttpServletResponse response) { // TODO: Test

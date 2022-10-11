@@ -253,7 +253,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        request.postWithResponseBody("/api/authenticate", loginVM, null, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/authenticate", loginVM, HttpStatus.OK, httpHeaders);
     }
 
     @Test
