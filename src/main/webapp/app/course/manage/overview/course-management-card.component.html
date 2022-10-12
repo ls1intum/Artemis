@@ -240,7 +240,7 @@
             <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-xl-inline"></span>
         </a>
         <a
-            *ngIf="course.isAtLeastInstructor"
+            *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'tutorial-groups-management']"
             [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
             class="btn btn-primary me-1 mb-1 hidden-if-mobile"

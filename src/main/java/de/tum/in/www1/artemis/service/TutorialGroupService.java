@@ -107,10 +107,11 @@ public class TutorialGroupService {
     public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user) {
         Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(course.getId());
         tutorialGroups.forEach(tutorialGroup -> tutorialGroup.setTransientPropertiesForUser(user));
-        if (authorizationCheckService.isOnlyStudentInCourse(course, user)) {
-            tutorialGroups.forEach(TutorialGroup::hidePrivacySensitiveInformation);
-
-        }
+        tutorialGroups.forEach(tutorialGroup -> {
+            if (!authorizationCheckService.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+                tutorialGroup.hidePrivacySensitiveInformation();
+            }
+        });
         return tutorialGroups;
     }
 
@@ -128,9 +129,8 @@ public class TutorialGroupService {
             throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial group", "tutorialGroup", "courseIdMismatch");
         }
         tutorialGroup.setTransientPropertiesForUser(user);
-        if (authorizationCheckService.isOnlyStudentInCourse(course, user)) {
+        if (!authorizationCheckService.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
             tutorialGroup.hidePrivacySensitiveInformation();
-
         }
         return tutorialGroup;
     }

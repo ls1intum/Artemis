@@ -90,7 +90,8 @@
                 "additionalInformationNotSet": "Keine zusätzlichen Informationen festgelegt"
             },
             "registeredStudents": {
-                "title": "Registrierte Studierende"
+                "title": "Registrierte Studierende",
+                "capacityWarning": "Die Kapazität der Übungsgruppe von {{ capacity }} ist erreicht! Are you sure you want to register more students?"
             }
         }
     }

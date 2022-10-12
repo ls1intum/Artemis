@@ -1,7 +1,7 @@
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Course, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { TutorialGroupFormData } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
+import { TutorialGroupFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 
 export const generateExampleTutorialGroup = ({
     id = 1,

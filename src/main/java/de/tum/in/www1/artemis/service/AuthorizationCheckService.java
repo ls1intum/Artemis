@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -484,9 +485,40 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Determines if a user is allowed to see private information about a tutorial group such as the list of registered students
+     *
+     * @param tutorialGroup the tutorial group for which to check permission
+     * @param user          the user for which to check permission
+     * @return true if the user is allowed, false otherwise
+     */
+    public boolean isAllowedToSeePrivateTutorialGroupInformation(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
+        if (user == null || user.getGroups() == null) {
+            user = userRepository.getUserWithGroupsAndAuthorities();
+        }
+        if (isAdmin(user)) {
+            return true;
+        }
+        Course course = tutorialGroup.getCourse();
+        return isAtLeastEditorInCourse(course, user) || (tutorialGroup.getTeachingAssistant() != null && tutorialGroup.getTeachingAssistant().equals(user));
+    }
+
+    /**
+     * Checks if a user is allowed to change the registrations of a tutorial group
+     *
+     * @param tutorialGroup the tutorial group for which to check permission
+     * @param user          the user for which to check permission
+     */
+    public void isAllowedToChangeRegistrationsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
+        // ToDo: Clarify if this is the correct permission check
+        if (!isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+            throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
+        }
+    }
+
+    /**
      * NOTE: this method should only be used in a REST Call context, when the SecurityContext is correctly setup.
      * Preferably use the method isAdmin(user) below
-     *
+     * <p>
      * Checks if the currently logged-in user is an admin user
      *
      * @return true, if user is admin, otherwise false

@@ -5,6 +5,7 @@
         "generic": {
             "yes": "Yes",
             "no": "No",
+            "you": "You",
             "emptyList": "No items available",
             "unset": "Unset",
             "create": "Create",

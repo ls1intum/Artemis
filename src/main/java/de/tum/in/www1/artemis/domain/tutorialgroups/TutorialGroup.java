@@ -70,6 +70,10 @@ public class TutorialGroup extends DomainObject {
 
     @Transient
     @JsonSerialize
+    private Boolean isUserTutor;
+
+    @Transient
+    @JsonSerialize
     private Integer numberOfRegisteredUsers;
 
     @Transient
@@ -177,6 +181,14 @@ public class TutorialGroup extends DomainObject {
         isUserRegistered = userRegistered;
     }
 
+    public Boolean getIsUserTutor() {
+        return isUserTutor;
+    }
+
+    public void setIsUserTutor(Boolean userTutor) {
+        isUserTutor = userTutor;
+    }
+
     public Integer getNumberOfRegisteredUsers() {
         return numberOfRegisteredUsers;
     }
@@ -225,6 +237,7 @@ public class TutorialGroup extends DomainObject {
 
         if (Hibernate.isInitialized(teachingAssistant) && teachingAssistant != null) {
             this.setTeachingAssistantName(teachingAssistant.getName());
+            this.isUserTutor = teachingAssistant.equals(user);
         }
         else {
             this.setTeachingAssistantName(null);

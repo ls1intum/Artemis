@@ -82,7 +82,7 @@ export const courseManagementState: Routes = [
             course: CourseManagementResolve,
         },
         loadChildren: () =>
-            import('app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-instructor-view.module').then((m) => m.ArtemisTutorialGroupsInstructorViewModule),
+            import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsInstructorViewModule),
     },
     {
         // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered

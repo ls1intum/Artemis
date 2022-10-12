@@ -3,7 +3,7 @@
 import {
     TutorialGroupFormComponent,
     TutorialGroupFormData,
-} from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
+} from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { ComponentFixture } from '@angular/core/testing';
 
 type SupportedForms = TutorialGroupFormComponent;

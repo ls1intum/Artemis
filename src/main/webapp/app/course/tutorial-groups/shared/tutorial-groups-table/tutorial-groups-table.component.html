@@ -41,7 +41,7 @@
             <tr
                 *ngFor="let tutorialGroup of tutorialGroups; trackBy: trackId"
                 id="tutorial-group-row-{{ tutorialGroup.id }}"
-                [ngClass]="{ 'table-success': tutorialGroup.isUserRegistered }"
+                [ngClass]="{ 'table-success': tutorialGroup.isUserRegistered, 'table-info': tutorialGroup.isUserTutor }"
             >
                 <td *ngIf="showIdColumn">
                     <ng-container *ngIf="tutorialGroupClickHandler; else noTutorialGroupClickHandler">
@@ -61,7 +61,7 @@
                         <span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span>
                     </ng-template>
                 </td>
-                <td>{{ tutorialGroup.teachingAssistantName }}</td>
+                <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
                 <td>{{ tutorialGroup.capacity }}</td>
                 <td>{{ tutorialGroup.numberOfRegisteredUsers }}</td>
                 <td>

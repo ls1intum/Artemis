@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
@@ -228,9 +227,12 @@ public class CourseService {
         course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
-            course.getTutorialGroups().forEach(TutorialGroup::hidePrivacySensitiveInformation);
-
         }
+        course.getTutorialGroups().forEach(tutorialGroup -> {
+            if (!authCheckService.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+                tutorialGroup.hidePrivacySensitiveInformation();
+            }
+        });
         return course;
     }
 

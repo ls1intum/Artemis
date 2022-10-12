@@ -90,7 +90,8 @@
                 "additionalInformationNotSet": "No additional Information set"
             },
             "registeredStudents": {
-                "title": "Registered Students"
+                "title": "Registered Students",
+                "capacityWarning": "The capacity of this tutorial group of {{ capacity }} has been reached. Are you sure you want to register more students?"
             }
         }
     }
