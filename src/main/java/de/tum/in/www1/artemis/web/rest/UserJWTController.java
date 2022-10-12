@@ -73,7 +73,7 @@ public class UserJWTController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
 
-            buildAndSetCookie(response, authentication, rememberMe);
+            buildAndSetCookieForLogin(response, authentication, rememberMe);
             return ResponseEntity.ok().build();
         }
         catch (CaptchaRequiredException ex) {
@@ -112,7 +112,7 @@ public class UserJWTController {
         }
 
         final boolean rememberMe = Boolean.parseBoolean(body);
-        buildAndSetCookie(response, authentication, rememberMe);
+        buildAndSetCookieForLogin(response, authentication, rememberMe);
         return ResponseEntity.ok().build();
     }
 
@@ -122,26 +122,36 @@ public class UserJWTController {
      */
     @PostMapping("/logout")
     public void logout(HttpServletResponse response) {
-        ResponseCookie responseCookie = ResponseCookie.from(JWTFilter.JWT_COOKIE_NAME, "").maxAge(0).build();
-        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        // Logout needs to build the same cookie (secure, httpOnly and sameSite='Strict') or browsers will ignore the header and not unset the cookie
+        buildAndSetCookie(response, "", Duration.ZERO);
+    }
+
+    /**
+     * Builds the cookie containing the jwt for a login and sets it in the response
+     * @param response the body of the request. "true" to remember the user.
+     * @param authentication the authentication object for the current user used to create the jwt.
+     * @param rememberMe boolean used to create the jwt.
+     */
+    private void buildAndSetCookieForLogin(HttpServletResponse response, Authentication authentication, boolean rememberMe) {
+        String jwt = tokenProvider.createToken(authentication, rememberMe);
+        Duration duration = Duration.of(tokenProvider.getTokenValidity(rememberMe), ChronoUnit.MILLIS);
+        buildAndSetCookie(response, jwt, duration);
     }
 
     /**
      * Builds the cookie containing the jwt and sets it in the response
      * @param response the body of the request. "true" to remember the user.
-     * @param authentication the authentication object for the current user used to create the jwt.
-     * @param rememberMe boolean used to create the jwt.
+     * @param jwt      the token that will be used as the cookie's value
+     * @param duration the validity of the cookie
      */
-    private void buildAndSetCookie(HttpServletResponse response, Authentication authentication, boolean rememberMe) {
-        String jwt = tokenProvider.createToken(authentication, rememberMe);
+    private void buildAndSetCookie(HttpServletResponse response, String jwt, Duration duration) {
         // @formatter:off
         ResponseCookie responseCookie = ResponseCookie.from(JWTFilter.JWT_COOKIE_NAME, jwt)
             .httpOnly(true)
             .sameSite("Strict")
             .secure(true)
-            //.path("/") management endpoints are not accessible without path "/", but with path "/" logout can't unset cookie anymore because it's not the same path
-            //           can we move the management endpoints under api like api/management/**? would fix the issue - or is there a better solution?
-            .maxAge(Duration.of(tokenProvider.getTokenValidity(rememberMe), ChronoUnit.MILLIS)) // set max age / expiration? maybe equal to token expiration? how would/does the refresh work?
+            .path("/")
+            .maxAge(duration)
             .build();
         // @formatter:on
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
