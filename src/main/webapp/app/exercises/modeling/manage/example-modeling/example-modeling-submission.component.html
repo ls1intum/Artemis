@@ -98,7 +98,7 @@
         <div class="row flex-nowrap">
             <div class="col editor-container-outer">
                 <div *ngIf="highlightedElements && highlightedElements.size > 0" class="col">
-                    <div style="background-color: lightblue" class="my-2 text-center">
+                    <div [style.background-color]="highlightColor" class="my-2 text-center">
                         <span>{{ 'artemisApp.exampleSubmission.modelElementHint' | artemisTranslate }}</span>
                     </div>
                 </div>

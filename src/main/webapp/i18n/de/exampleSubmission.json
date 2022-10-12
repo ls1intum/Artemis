@@ -39,7 +39,7 @@
             "assessCorrectly": "Richtig bewerten",
             "createNewSubmission": "Neue Beispielabgabe erstellen",
             "editExampleSubmission": "Beispielabgabe bearbeiten",
-            "modelElementHint": "Tipp: Fälschlicherweise nicht bewertete Modell-Elemente sind mit einem hellblauen Hintergrund gekennzeichnet.",
+            "modelElementHint": "Tipp: Fälschlicherweise nicht bewertete Modell-Elemente sind mit einem blauen Hintergrund gekennzeichnet.",
             "editExampleSubmissionConfirmationQuestion": "Bist du sicher, dass du die Beispielabgabe bearbeiten möchtest? Die aktuelle Bewertung wird dauerhaft gelöscht und du musst die Abgabe erneut bewerten.",
             "updateExampleSubmission": "Beispielabgabe aktualisieren",
             "problemStatement": "Problemstellung",

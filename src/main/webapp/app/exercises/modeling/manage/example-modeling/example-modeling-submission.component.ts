@@ -26,6 +26,7 @@ import { faChalkboardTeacher, faCheck, faCircle, faCodeBranch, faExclamation, fa
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/exercises/modeling/assess/modeling-assessment.util';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -96,6 +97,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     highlightedElements = new Map<string, string>();
     referencedExampleFeedback: Feedback[] = [];
+    highlightColor = 'lightblue';
 
     // Icons
     faSave = faSave;
@@ -115,6 +117,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         private router: Router,
         private navigationUtilService: ArtemisNavigationUtilService,
         private changeDetector: ChangeDetectorRef,
+        private themeService: ThemeService,
     ) {}
 
     ngOnInit(): void {
@@ -137,6 +140,20 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             this.assessmentMode = true;
         }
         this.loadAll();
+
+        this.themeService.getPreferenceObservable().subscribe((themeOrUndefined) => {
+            if (themeOrUndefined === Theme.DARK) {
+                this.highlightColor = 'darkblue';
+            } else {
+                this.highlightColor = 'lightblue';
+            }
+
+            const updatedHighlights = new Map<string, string>();
+            this.highlightedElements.forEach((value, key) => {
+                updatedHighlights.set(key, this.highlightColor);
+            });
+            this.highlightedElements = updatedHighlights;
+        });
     }
 
     private loadAll(): void {
@@ -466,7 +483,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         );
         this.highlightedElements = new Map<string, string>();
         for (const feedback of missedReferencedExampleFeedbacks) {
-            this.highlightedElements.set(feedback.referenceId!, 'lightblue');
+            this.highlightedElements.set(feedback.referenceId!, this.highlightColor);
         }
         this.changeDetector.detectChanges();
     }
