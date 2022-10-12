@@ -5,7 +5,13 @@
                 <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToTraditionalModeLabel">Switch to normal mode</span>
             </button>
         </div>
-        <div class="form-group flex-grow-1" style="background: #6c4e05; height: 100%"></div>
+        <div class="flex-grow-1 d-flex justify-content-center align-items-center stepContainer">
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+        </div>
         <div class="ms-3">
             <button type="button" id="next" [disabled]="isSaving" class="btn btn-primary" (click)="next()">
                 <fa-icon [icon]="faArrowRight"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lecture.home.nextStepLabel">Next</span>
