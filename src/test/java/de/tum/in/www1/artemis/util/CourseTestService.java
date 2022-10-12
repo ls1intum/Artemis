@@ -2108,28 +2108,7 @@ public class CourseTestService {
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     public void testSearchExercisesInCourseFound() throws Exception {
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-
-        QuizExercise quizExercise1 = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED, course);
-        quizExercise1.setTitle("Abstract Factory Pattern");
-        course.addExercises(quizExercise1);
-
-        QuizExercise quizExercise2 = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED, course);
-        quizExercise2.setTitle("Simple Factory Pattern");
-        course.addExercises(quizExercise2);
-
-        QuizExercise quizExercise3 = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED, course);
-        quizExercise3.setTitle("Strategy Pattern");
-        course.addExercises(quizExercise3);
-
-        course = courseRepo.save(course);
-        exerciseRepo.save(quizExercise1);
-        exerciseRepo.save(quizExercise2);
-        exerciseRepo.save(quizExercise3);
-
+        Course course = initializeCourseForTestSearchExercisesInCourse();
         String searchTerm = "Factory";
         final var exercises = request.get("/api/courses/" + course.getId() + "/exercises/search?searchTerm=" + searchTerm, HttpStatus.OK, Set.class);
         assertThat(exercises).hasSize(2);
@@ -2141,39 +2120,13 @@ public class CourseTestService {
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     public void testSearchExercisesInCourseNotFound() throws Exception {
-        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-
-        QuizExercise quizExercise1 = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED, course);
-        quizExercise1.setTitle("Abstract Factory Pattern");
-        course.addExercises(quizExercise1);
-
-        QuizExercise quizExercise2 = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED, course);
-        quizExercise2.setTitle("Simple Factory Pattern");
-        course.addExercises(quizExercise2);
-
-        QuizExercise quizExercise3 = ModelFactory.generateQuizExercise(pastTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED, course);
-        quizExercise3.setTitle("Strategy Pattern");
-        course.addExercises(quizExercise3);
-
-        course = courseRepo.save(course);
-        exerciseRepo.save(quizExercise1);
-        exerciseRepo.save(quizExercise2);
-        exerciseRepo.save(quizExercise3);
-
+        Course course = initializeCourseForTestSearchExercisesInCourse();
         String searchTerm = "Flyweight";
         final var exercises = request.get("/api/courses/" + course.getId() + "/exercises/search?searchTerm=" + searchTerm, HttpStatus.OK, Set.class);
         assertThat(exercises).isEmpty();
     }
 
-    /**
-     * Test returning Bad Request if searchTearm is less than 3 characters
-     *
-     * @throws Exception might be thrown from Network Call to Artemis API
-     */
-    public void testSearchExercisesInCourseSearchTermLessThan3Chars() throws Exception {
+    private Course initializeCourseForTestSearchExercisesInCourse() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
 
@@ -2196,7 +2149,7 @@ public class CourseTestService {
         exerciseRepo.save(quizExercise2);
         exerciseRepo.save(quizExercise3);
 
-        String searchTerm = "Fa";
-        request.get("/api/courses/" + course.getId() + "/exercises/search?searchTerm=" + searchTerm, HttpStatus.BAD_REQUEST, Set.class);
+        return course;
     }
+
 }

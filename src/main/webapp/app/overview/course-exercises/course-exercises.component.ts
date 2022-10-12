@@ -82,7 +82,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     sortingAttribute: SortingAttribute;
     isSearching = false;
     searchFailed = false;
-    searchQueryTooShort = false;
 
     // Icons
     faPlayCircle = faPlayCircle;
@@ -231,24 +230,19 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
      */
     onSearch(event: any) {
         this.searchFailed = false;
-        this.searchQueryTooShort = false;
         if (this.course) {
-            if (event.target.value?.length >= 3) {
-                this.isSearching = true;
-                this.courseExerciseService.findAllExercisesForCourseBySearchTerm(this.courseId, event.target.value).subscribe({
-                    next: (httpResponse: HttpResponse<Exercise[]>) => {
-                        this.course!.exercises = httpResponse.body ? httpResponse.body : undefined;
-                        this.applyFiltersAndOrder();
-                        this.isSearching = false;
-                    },
-                    error: () => {
-                        this.searchFailed = true;
-                        this.isSearching = false;
-                    },
-                });
-            } else {
-                this.searchQueryTooShort = true;
-            }
+            this.isSearching = true;
+            this.courseExerciseService.findAllExercisesForCourseBySearchTerm(this.courseId, event.target.value).subscribe({
+                next: (httpResponse: HttpResponse<Exercise[]>) => {
+                    this.course!.exercises = httpResponse.body ? httpResponse.body : undefined;
+                    this.applyFiltersAndOrder();
+                    this.isSearching = false;
+                },
+                error: () => {
+                    this.searchFailed = true;
+                    this.isSearching = false;
+                },
+            });
         }
     }
 

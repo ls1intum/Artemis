@@ -366,15 +366,6 @@ describe('CourseExercisesComponent', () => {
         expect(component.isSearching).toBeFalse();
     });
 
-    it('should display search query too short when query is less than 3 characters', () => {
-        const searchInput = fixture.debugElement.query(By.css('#search-exercises')).nativeElement;
-        searchInput.value = 'te';
-        const event = new KeyboardEvent('keydown', { key: 'Enter' });
-        searchInput.dispatchEvent(event);
-        expect(component.isSearching).toBeFalse();
-        expect(component.searchQueryTooShort).toBeTrue();
-    });
-
     it('should display search is failed when searching returns error', () => {
         const searchInput = fixture.debugElement.query(By.css('#search-exercises')).nativeElement;
         searchInput.value = 'tes';

@@ -93,11 +93,6 @@
                 <div class="search-exercises-info" [class.active]="searchFailed">
                     <span class="badge bg-danger" jhiTranslate="artemisApp.dataTable.search.failed"> Search failed </span>
                 </div>
-                <div class="search-exercises-info" [class.active]="searchQueryTooShort">
-                    <span class="badge bg-info" jhiTranslate="artemisApp.dataTable.search.minQueryLengthHint" [translateValues]="{ length: 3 }">
-                        Please enter at least 3 characters
-                    </span>
-                </div>
             </div>
             <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise.exercise) && !isSearching">
                 <h3 class="text-primary">

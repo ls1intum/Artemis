@@ -716,10 +716,4 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     void testSearchExercisesInCourseNotFound() throws Exception {
         courseTestService.testSearchExercisesInCourseNotFound();
     }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void testSearchExercisesInCourseSearchTermLessThan3Chars() throws Exception {
-        courseTestService.testSearchExercisesInCourseSearchTermLessThan3Chars();
-    }
 }

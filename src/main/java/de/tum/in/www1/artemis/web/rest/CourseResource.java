@@ -1080,10 +1080,6 @@ public class CourseResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<Exercise>> searchExercisesInCourse(@PathVariable Long courseId, @RequestParam("searchTerm") String searchTerm) {
         log.debug("REST request to search for exercises in course : {} with searchTerm : {}", courseId, searchTerm);
-        // restrict result size by only allowing reasonable searches
-        if (searchTerm.length() < 3) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'searchTerm' must be three characters or longer.");
-        }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
         Set<Exercise> exercises = exerciseService.findAllForCourseBySearchTerm(course, searchTerm, user);
