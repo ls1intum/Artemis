@@ -4,6 +4,8 @@ services:
         extends:
             file: ./artemis/artemis.yml
             service: artemis-app
+        ports:
+            - 5005:5005 # Java Remote Debugging port declared in the java cmd options
         depends_on:
             - artemis-mysql
     artemis-mysql:
