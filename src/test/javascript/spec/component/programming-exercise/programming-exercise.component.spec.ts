@@ -187,15 +187,6 @@ describe('ProgrammingExercise Management Component', () => {
         expect(modalService.open).toHaveBeenCalledOnce();
     });
 
-    it('should open repo export modal', () => {
-        const mockReturnValue = { componentInstance: {} } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-
-        comp.openRepoExportModal();
-        expect(modalService.open).toHaveBeenCalledWith(ProgrammingAssessmentRepoExportDialogComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledOnce();
-    });
-
     it('should return exercise id', () => {
         expect(comp.trackId(0, programmingExercise)).toBe(456);
     });
