@@ -7,7 +7,7 @@ import { MessageInlineInputComponent } from 'app/shared/metis/message/message-in
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { throwError } from 'rxjs/internal/observable/throwError';
+import { throwError } from 'rxjs';
 
 describe('MessageInlineInputComponent', () => {
     let component: MessageInlineInputComponent;

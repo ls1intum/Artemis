@@ -219,7 +219,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 findBySubmissionIdStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
                 getIdentityStub = jest.spyOn(accountService, 'identity').mockReturnValue(new Promise((promise) => promise(user)));
                 getProgrammingSubmissionForExerciseWithoutAssessmentStub = jest
-                    .spyOn(programmingSubmissionService, 'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment')
+                    .spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment')
                     .mockReturnValue(of(unassessedSubmission));
 
                 findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
