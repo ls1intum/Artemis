@@ -376,7 +376,7 @@ describe('TextAssessment Service', () => {
 
         resolver = TestBed.inject(NewStudentParticipationResolver);
         textSubmissionService = TestBed.inject(TextSubmissionService);
-        newStudentParticipationStub = jest.spyOn(textSubmissionService, 'getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment').mockReturnValue(of(textSubmission));
+        newStudentParticipationStub = jest.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(textSubmission));
 
         const snapshot = {
             paramMap: convertToParamMap({ exerciseId: 1 }),
