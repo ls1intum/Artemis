@@ -1,5 +1,5 @@
 <div class="row justify-content-center">
-    <jhi-lecture-update-wizard [hidden]="!isShowingWizardMode"></jhi-lecture-update-wizard>
+    <jhi-lecture-update-wizard [hidden]="!isShowingWizardMode" [toggleModeFunction]="toggleModeFunction"></jhi-lecture-update-wizard>
     <div class="col-md-8" [hidden]="isShowingWizardMode">
         <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
             <div class="d-flex">

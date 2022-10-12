@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -19,6 +19,8 @@ import { faBan, faSave, faHandshakeAngle, faArrowRight } from '@fortawesome/free
     styleUrls: ['./lecture-update-wizard.component.scss'],
 })
 export class LectureUpdateWizardComponent implements OnInit {
+    @Input() toggleModeFunction: () => void;
+
     EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
@@ -66,12 +68,5 @@ export class LectureUpdateWizardComponent implements OnInit {
      */
     next() {
         this.currentStep++;
-    }
-
-    /**
-     * Leave the wizard mode and move back to the tradtional creation mode
-     */
-    toggleTraditionalMode() {
-        // this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture.course!.id!.toString(), 'lectures'], this.lecture.id?.toString());
     }
 }
