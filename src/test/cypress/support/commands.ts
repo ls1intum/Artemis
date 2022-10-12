@@ -124,7 +124,7 @@ Cypress.Commands.add('getSettled', (selector, opts = {}) => {
  * Periodically refreshes the page until an element with the specified selector is found. The command fails if the time exceeds the timeout.
  */
 Cypress.Commands.add('reloadUntilFound', (selector: string, interval = 2000, timeout = 20000) => {
-    return cy.reloadUntilFound([selector], interval, timeout);
+    return cy.reloadUntilFoundSome([selector], interval, timeout);
 });
 
 /**
