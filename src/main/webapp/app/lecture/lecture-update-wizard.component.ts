@@ -11,7 +11,7 @@ import { Course } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faSave, faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave, faHandshakeAngle, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-lecture-update-wizard',
@@ -22,6 +22,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
+    currentStep: number;
 
     courses: Course[];
     startDate: string;
@@ -33,6 +34,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     faSave = faSave;
     faBan = faBan;
     faHandShakeAngle = faHandshakeAngle;
+    faArrowRight = faArrowRight;
 
     constructor(
         protected alertService: AlertService,
@@ -48,6 +50,7 @@ export class LectureUpdateWizardComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
+        this.currentStep = 0;
         this.activatedRoute.parent!.data.subscribe((data) => {
             this.lecture = new Lecture();
 
@@ -56,5 +59,19 @@ export class LectureUpdateWizardComponent implements OnInit {
                 this.lecture.course = course;
             }
         });
+    }
+
+    /**
+     * Progress to the next step of the wizard mode
+     */
+    next() {
+        this.currentStep++;
+    }
+
+    /**
+     * Leave the wizard mode and move back to the tradtional creation mode
+     */
+    toggleTraditionalMode() {
+        // this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture.course!.id!.toString(), 'lectures'], this.lecture.id?.toString());
     }
 }

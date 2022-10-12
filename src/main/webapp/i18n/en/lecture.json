@@ -13,7 +13,9 @@
                     "filterUnspecifiedDates": "Unspecified Date(s)"
                 },
                 "createOrEditLabel": "Create or Edit Lecture",
-                "switchToGuidedModeLabel": "Switch to guided mode"
+                "switchToGuidedModeLabel": "Switch to guided mode",
+                "switchToTraditionalModeLabel": "Switch to normal mode",
+                "nextStepLabel": "Next"
             },
             "created": "Created new lecture with identifier {{ param }}",
             "updated": "Updated lecture with identifier {{ param }}",

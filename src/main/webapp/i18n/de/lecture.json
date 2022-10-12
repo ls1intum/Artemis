@@ -13,7 +13,9 @@
                     "filterUnspecifiedDates": "Ohne Zeitangaben"
                 },
                 "createOrEditLabel": "Vorlesung erstellen oder bearbeiten",
-                "switchToGuidedModeLabel": "Zum geführten Modus wechseln"
+                "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
+                "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
+                "nextStep": "Weiter"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",
             "updated": "Vorlesung aktualisiert mit ID {{ param }}",
