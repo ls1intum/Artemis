@@ -379,11 +379,18 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void submitExercise_tooLarge() throws Exception {
-        char[] chars = new char[(int) (Constants.MAX_SUBMISSION_TEXT_LENGTH + 1)];
+    void saveAndSubmitTextSubmission_tooLarge() throws Exception {
+        // should be ok
+        char[] chars = new char[(int) (Constants.MAX_SUBMISSION_TEXT_LENGTH)];
         Arrays.fill(chars, 'a');
         textSubmission.setText(new String(chars));
-        request.put("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.PAYLOAD_TOO_LARGE);
+        request.postWithResponseBody("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.OK);
+
+        // should be too large
+        char[] charsTooLarge = new char[(int) (Constants.MAX_SUBMISSION_TEXT_LENGTH + 1)];
+        Arrays.fill(charsTooLarge, 'a');
+        textSubmission.setText(new String(charsTooLarge));
+        request.put("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.BAD_REQUEST);
     }
 
     @Test

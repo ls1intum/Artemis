@@ -1,5 +1,5 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Data } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
@@ -19,7 +19,6 @@ import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { Course } from 'app/entities/course.model';
 
@@ -29,7 +28,6 @@ describe('Course Management Detail Component', () => {
     let courseService: CourseManagementService;
     let eventManager: EventManager;
 
-    const route = { params: of({ courseId: 1 }) };
     const course: Course = {
         id: 123,
         title: 'Course Title',
@@ -79,7 +77,21 @@ describe('Course Management Detail Component', () => {
                 MockComponent(CourseDetailLineChartComponent),
                 MockComponent(FullscreenComponent),
             ],
-            providers: [{ provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }, MockProvider(CourseManagementService)],
+            providers: [
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        data: {
+                            subscribe: (fn: (value: Data) => void) =>
+                                fn({
+                                    course,
+                                }),
+                        },
+                        params: of({ courseId: course.id }),
+                    },
+                },
+                MockProvider(CourseManagementService),
+            ],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
         component = fixture.componentInstance;
@@ -90,11 +102,6 @@ describe('Course Management Detail Component', () => {
     beforeEach(fakeAsync(() => {
         const statsStub = jest.spyOn(courseService, 'getCourseStatisticsForDetailView');
         statsStub.mockReturnValue(of(new HttpResponse({ body: dtoMock })));
-        const infoStub = jest.spyOn(courseService, 'find');
-        infoStub.mockReturnValue(of(new HttpResponse({ body: course })));
-
-        component.ngOnInit();
-        tick();
     }));
 
     afterEach(() => {
