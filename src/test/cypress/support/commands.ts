@@ -135,7 +135,7 @@ Cypress.Commands.add('reloadUntilFound', (selector: string, interval = 2000, tim
         {
             interval,
             timeout,
-            errorMsg: `Timed out finding an element matching the "${selectors}" selectors`,
+            errorMsg: `Timed out finding an element matching the "${selector}" selector`,
         },
     );
 });

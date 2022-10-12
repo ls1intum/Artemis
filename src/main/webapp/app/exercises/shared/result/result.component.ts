@@ -231,7 +231,7 @@ export class ResultComponent implements OnInit, OnChanges {
             this.textColorClass = this.getTextColorClass();
             this.resultIconClass = this.getResultIconClass();
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
-        } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
+        } else if (this.result && this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
             this.onlyShowSuccessfulCompileStatus = this.getOnlyShowSuccessfulCompileStatus();
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();

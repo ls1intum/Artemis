@@ -121,7 +121,7 @@ describe('Exam participation', () => {
         onlineEditor.deleteFile('MergeSort.java');
         onlineEditor.typeSubmission(submission, 'de.test');
         onlineEditor.submit();
-        onlineEditor.getResultScore().contains('100%').should('be.visible');
+        onlineEditor.getResultScore().contains('100%').and('be.visible');
     }
 
     function makeModelingExerciseSubmission() {
