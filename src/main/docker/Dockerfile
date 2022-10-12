@@ -1,4 +1,12 @@
-FROM eclipse-temurin:17 as base
+FROM eclipse-temurin:17
+
+ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
+    JHIPSTER_SLEEP=0 \
+    JAVA_OPTS=""
+
+# Specify profiles for Spring Boot
+ENV spring.profiles.active ""
+
 RUN echo "Installing needed dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
   && apt-get clean \
@@ -21,34 +29,14 @@ RUN echo "Installing gosu (needed for bootstrap.sh)" \
   && chmod +x /usr/local/bin/gosu \
   && gosu nobody true
 
-
-FROM base as builder
-WORKDIR /src
-COPY . .
-RUN chown -R 1000:1000 /src
-USER 1000
-ENV HOME=/src
-ENV NODE_OPTIONS=--max_old_space_size=6144
-RUN ./gradlew build -x test -x jacocoTestCoverageVerification -x spotlessJava -Pprod -Pwar bootWar
-RUN du .
-
-
-FROM base
-
-ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
-    JHIPSTER_SLEEP=0 \
-    JAVA_OPTS=""
-
-# Specify profiles for Spring Boot
-ENV spring.profiles.active ""
-
 # Copy default configuration to container
 WORKDIR /defaults/artemis
 COPY src/main/resources/config/application*.yml ./
 
 # Copy Artemis.war to execution location
 WORKDIR /opt/artemis
-COPY --from=builder /src/build/libs/*.war Artemis.war
+ARG WAR_PATH=build/libs
+COPY $WAR_PATH/*.war Artemis.war
 
 COPY bootstrap.sh /bootstrap.sh
 

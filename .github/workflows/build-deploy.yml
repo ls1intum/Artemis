@@ -51,7 +51,7 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
-        distribution: 'temurin'
+        distribution: 'zulu'
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Production Build
@@ -76,11 +76,16 @@ jobs:
 
   docker:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    needs: build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: Download Artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: Artemis.war
     - name: Build Docker Image
-      run: docker build -t artemis -f src/main/docker/Dockerfile .
+      run: docker build --build-arg WAR_PATH=. -t artemis -f src/main/docker/Dockerfile .
 
     - name: Compute Tag
       uses: actions/github-script@v6
