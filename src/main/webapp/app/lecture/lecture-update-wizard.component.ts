@@ -83,4 +83,12 @@ export class LectureUpdateWizardComponent implements OnInit {
     isCurrent(step: number) {
         return this.currentStep === step;
     }
+
+    getNextIcon() {
+        return this.currentStep < 5 ? faArrowRight : faSave;
+    }
+
+    getNextText() {
+        return this.currentStep < 5 ? 'artemisApp.lecture.home.nextStepLabel' : 'entity.action.save';
+    }
 }

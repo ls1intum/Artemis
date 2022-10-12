@@ -14,7 +14,7 @@
         </div>
         <div class="ms-3">
             <button type="button" id="next" [disabled]="isSaving" class="btn btn-primary" (click)="next()">
-                <fa-icon [icon]="faArrowRight"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lecture.home.nextStepLabel">Next</span>
+                <fa-icon [icon]="getNextIcon()"></fa-icon>&nbsp;<span [jhiTranslate]="getNextText()">Next</span>
             </button>
         </div>
     </div>
