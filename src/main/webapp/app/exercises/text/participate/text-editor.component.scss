@@ -62,4 +62,8 @@ div {
         color: var(--textblock-assessment-text-feedback-neutral-color);
         background-color: var(--textblock-assessment-text-feedback-neutral-background);
     }
+    &.missed-feedback {
+        color: var(--textblock-assessment-text-feedback-neutral-color);
+        background-color: lightblue;
+    }
 }

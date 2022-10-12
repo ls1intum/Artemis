@@ -39,6 +39,7 @@
             "createNewSubmission": "Create new example submission",
             "editExampleSubmission": "Edit example submission",
             "modelElementHint": "Hint: Model elements which assessment you missed are highlighted in blue.",
+            "textHint": "Hint: Text Blocks that you need to assess are highlighted in blue.",
             "editExampleSubmissionConfirmationQuestion": "Are you sure you want to edit the example submission? The current assessment will be permanently deleted and you have to assess the submission again.",
             "updateExampleSubmission": "Update example submission",
             "problemStatement": "Problem Statement",
