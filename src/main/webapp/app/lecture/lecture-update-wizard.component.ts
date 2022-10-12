@@ -20,17 +20,17 @@ import { faBan, faSave, faHandshakeAngle, faArrowRight } from '@fortawesome/free
 })
 export class LectureUpdateWizardComponent implements OnInit {
     @Input() toggleModeFunction: () => void;
-
-    EditorMode = EditorMode;
-    lecture: Lecture;
-    isSaving: boolean;
-    currentStep: number;
+    @Input() lecture: Lecture;
+    @Input() isSaving: boolean;
+    @Input() startDate: string;
+    @Input() endDate: string;
 
     courses: Course[];
-    startDate: string;
-    endDate: string;
+
+    currentStep: number;
 
     domainCommandsDescription = [new KatexCommand()];
+    EditorMode = EditorMode;
 
     // Icons
     faSave = faSave;
@@ -53,14 +53,6 @@ export class LectureUpdateWizardComponent implements OnInit {
     ngOnInit() {
         this.isSaving = false;
         this.currentStep = 1;
-        this.activatedRoute.parent!.data.subscribe((data) => {
-            this.lecture = new Lecture();
-
-            const course = data['course'];
-            if (course) {
-                this.lecture.course = course;
-            }
-        });
     }
 
     /**
