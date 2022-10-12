@@ -198,7 +198,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final var latestResult = submission.getLatestResult();
         if (latestResult != null) {
             latestResult.getFeedbacks().clear();
-            resultService.deleteResult(latestResult.getId());
+            resultService.deleteResult(latestResult, true);
             submission.setResults(List.of());
             submissionRepository.save(submission);
         }

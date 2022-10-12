@@ -156,16 +156,16 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     private void getTutorSpecificCallsTutor1(Exercise exercise) {
         database.changeUser("tutor1");
-        unassessedSubmissionCorrectionRound0Tutor1 = submissionService.getRandomSubmissionEligibleForNewAssessment(exercise, true, 0);
-        unassessedSubmissionCorrectionRound1Tutor1 = submissionService.getRandomSubmissionEligibleForNewAssessment(exercise, true, 1);
+        unassessedSubmissionCorrectionRound0Tutor1 = submissionService.getRandomAssessableSubmission(exercise, true, 0);
+        unassessedSubmissionCorrectionRound1Tutor1 = submissionService.getRandomAssessableSubmission(exercise, true, 1);
         submissionListTutor1CorrectionRound0 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exercise.getId(), tutor1, true, 0);
         submissionListTutor1CorrectionRound1 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exercise.getId(), tutor1, true, 1);
     }
 
     private void getTutorSpecificCallsTutor2(Exercise exercise) {
         database.changeUser("tutor2");
-        unassessedSubmissionCorrectionRound0Tutor2 = submissionService.getRandomSubmissionEligibleForNewAssessment(exercise, true, 0);
-        unassessedSubmissionCorrectionRound1Tutor2 = submissionService.getRandomSubmissionEligibleForNewAssessment(exercise, true, 1);
+        unassessedSubmissionCorrectionRound0Tutor2 = submissionService.getRandomAssessableSubmission(exercise, true, 0);
+        unassessedSubmissionCorrectionRound1Tutor2 = submissionService.getRandomAssessableSubmission(exercise, true, 1);
         submissionListTutor2CorrectionRound0 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exercise.getId(), tutor2, true, 0);
         submissionListTutor2CorrectionRound1 = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exercise.getId(), tutor2, true, 1);
     }

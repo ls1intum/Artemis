@@ -5,6 +5,7 @@ import { Course } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { CourseWideContext, DisplayPriority } from 'app/shared/metis/metis.util';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 export class Post extends Posting {
     public title?: string;
@@ -15,6 +16,7 @@ export class Post extends Posting {
     public lecture?: Lecture;
     public course?: Course;
     public plagiarismCase?: PlagiarismCase;
+    public conversation?: Conversation;
     public courseWideContext?: CourseWideContext;
     public displayPriority?: DisplayPriority;
 

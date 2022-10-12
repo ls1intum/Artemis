@@ -1,0 +1,78 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+$draggable-width: 15px;
+$thread-section-card-min-width: 420px;
+
+.postings-container {
+    display: flex;
+    height: 100%;
+    margin-left: auto;
+
+    .back-instruction {
+        font-size: 12px;
+    }
+}
+
+.expanded-thread {
+    width: calc(#{$draggable-width} + #{$thread-section-card-min-width});
+
+    .draggable-left {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: $draggable-width;
+    }
+
+    .card {
+        width: inherit;
+        min-width: $thread-section-card-min-width;
+
+        .card-header {
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            display: flex;
+
+            .card-title {
+                display: flex;
+            }
+
+            .row > .col-auto:last-child {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+        }
+    }
+}
+
+.collapsed-thread {
+    display: flex;
+    width: 38px;
+    justify-content: space-between;
+    flex-flow: column;
+    margin-left: auto;
+    cursor: pointer;
+
+    span {
+        writing-mode: vertical-rl;
+        margin: auto;
+    }
+
+    .expand-thread-icon {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        place-self: center;
+    }
+}
+
+@media screen and (max-width: 992px) {
+    .expanded-thread {
+        width: 94vw;
+
+        .draggable-left {
+            display: none;
+        }
+    }
+}
