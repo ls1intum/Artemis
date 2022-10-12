@@ -22,9 +22,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.saml2.core.Saml2X509Credential;
 import org.springframework.security.saml2.provider.service.registration.*;
-import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * This class describes the security configuration for SAML2.
@@ -36,7 +36,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @Order(1)
 @Profile("saml2")
-public class SAML2Configuration {
+public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
     private final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);
 
@@ -139,8 +139,8 @@ public class SAML2Configuration {
         }
     }
 
-    @Bean
-    protected SecurityFilterChain saml2FilterChain(final HttpSecurity http) throws Exception {
+    @Override
+    protected void configure(final HttpSecurity http) throws Exception {
         // @formatter:off
         http
             .requestMatchers()
@@ -167,8 +167,6 @@ public class SAML2Configuration {
                 // Redirect back to the root
                 .defaultSuccessUrl("/", true);
         // @formatter:on
-
-        return http.build();
     }
 
 }
