@@ -6,7 +6,7 @@
                 >{{ 'artemisApp.exampleSubmission.pageHeader' | artemisTranslate }}
                 {{ exercise?.title }}
             </h2>
-            <div *ngIf="state.ui === UIStates.ASSESSMENT && referencedBlocksInExampleSubmission && referencedBlocksInExampleSubmission.length > 0" class="col">
+            <div *ngIf="state.ui === UIStates.ASSESSMENT && toComplete && referencedBlocksInExampleSubmission && referencedBlocksInExampleSubmission.length > 0" class="col">
                 <div class="my-2 text-center hint">
                     <span>{{ 'artemisApp.exampleSubmission.textHint' | artemisTranslate }}</span>
                 </div>
