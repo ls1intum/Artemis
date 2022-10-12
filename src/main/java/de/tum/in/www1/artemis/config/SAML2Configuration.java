@@ -38,6 +38,10 @@ import org.springframework.security.saml2.provider.service.registration.RelyingP
 @Configuration
 @Order(1)
 @Profile("saml2")
+// ToDo: currently this cannot be replaced as recommended by
+//  https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter
+//  as that would break the SAML2 login functionality. For more information, see
+//  https://github.com/ls1intum/Artemis/pull/5721.
 public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
     private final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);

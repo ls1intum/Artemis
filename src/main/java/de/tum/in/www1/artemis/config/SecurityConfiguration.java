@@ -37,6 +37,10 @@ import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 @Import(SecurityProblemSupport.class)
+// ToDo: currently this cannot be replaced as recommended by
+//  https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter
+//  as that would break the SAML2 login functionality. For more information, see
+//  https://github.com/ls1intum/Artemis/pull/5721.
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
