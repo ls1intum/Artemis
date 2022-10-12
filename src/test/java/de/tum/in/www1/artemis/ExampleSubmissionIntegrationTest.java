@@ -203,10 +203,11 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void getExampleModelingAssessment_whenTutorAndUsedForTutorial_shouldSendCleanedResult() throws Exception {
-        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, modelingExercise, true, true));
+        ExampleSubmission exampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, modelingExercise, true, true));
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
-        Result cleanResult = request.get("/api/exercise/" + modelingExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment",
+        request.putWithResponseBody("/api/modeling-submissions/" + exampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
+
+        Result cleanResult = request.get("/api/exercise/" + modelingExercise.getId() + "/modeling-submissions/" + exampleSubmission.getSubmission().getId() + "/example-assessment",
                 HttpStatus.OK, Result.class);
         for (Feedback feedback : cleanResult.getFeedbacks()) {
             assertThat(feedback.getCredits()).isNull();
