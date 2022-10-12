@@ -232,8 +232,9 @@ export class ResultService implements IResultService {
 
     /**
      * Fetches all results for an exercise and returns them
+     * @param exercise of which the results with points should be fetched.
      */
-    getResults(exercise: Exercise) {
+    getResults(exercise: Exercise): Observable<HttpResponse<Result[]>> {
         return this.getResultsForExercise(exercise.id!, {
             withSubmissions: exercise.type === ExerciseType.MODELING,
         }).pipe(

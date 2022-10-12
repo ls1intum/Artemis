@@ -98,7 +98,7 @@ export class TextAssessmentDashboardComponent extends AbstractAssessmentDashboar
 
     private getSubmissions(): void {
         this.textSubmissionService
-            .getTextSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
+            .getSubmissions(this.exercise.id!, { submittedOnly: true })
             .pipe(
                 map((response: HttpResponse<TextSubmission[]>) =>
                     response.body!.map((submission: TextSubmission) => {
