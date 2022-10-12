@@ -1,5 +1,5 @@
 <div>
-    <div>
+    <div [hidden]="currentStep < 1">
         <h1>Title</h1>
         <p>Add a title and meaningful description to the new lecture.</p>
         <div class="form-group">
@@ -15,6 +15,40 @@
                 [editorMode]="EditorMode.LATEX"
             ></jhi-markdown-editor>
         </div>
+    </div>
+    <div [hidden]="currentStep < 2">
+        <h1>Period</h1>
+        <p>Specify the begin and end dates of the lecture.</p>
+        <div class="d-flex">
+            <div class="form-group flex-grow-1">
+                <jhi-date-time-picker
+                    labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
+                    [(ngModel)]="lecture.startDate"
+                    name="startDate"
+                    id="start-date"
+                ></jhi-date-time-picker>
+            </div>
+            <div class="form-group flex-grow-1 ms-3">
+                <jhi-date-time-picker
+                    labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
+                    [(ngModel)]="lecture.endDate"
+                    name="endDate"
+                    id="end-date"
+                ></jhi-date-time-picker>
+            </div>
+        </div>
+    </div>
+    <div [hidden]="currentStep < 3">
+        <h1>Attachments</h1>
+        <p>Upload attachments to this lecture.</p>
+    </div>
+    <div [hidden]="currentStep < 4">
+        <h1>Units</h1>
+        <p>Add content to the lecture by creating different kinds of lecture units.</p>
+    </div>
+    <div [hidden]="currentStep < 5">
+        <h1>Learning Goals</h1>
+        <p>Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to learning goals.</p>
     </div>
 
     <!-- Bottom Navigation Bar -->
