@@ -49,19 +49,23 @@
         box-shadow: 0 0 20px rgba(0, 0, 200, 0.04);
     }
 }
+
 div {
     &.positive-feedback {
         color: var(--textblock-assessment-text-feedback-positive-color);
         background-color: var(--textblock-assessment-text-feedback-positive-background);
     }
+
     &.negative-feedback {
         color: var(--textblock-assessment-text-feedback-negative-color);
         background-color: var(--textblock-assessment-text-feedback-negative-background);
     }
+
     &.neutral-feedback {
         color: var(--textblock-assessment-text-feedback-neutral-color);
         background-color: var(--textblock-assessment-text-feedback-neutral-background);
     }
+
     &.missed-feedback {
         color: var(--textblock-assessment-text-feedback-neutral-color);
         background-color: lightblue;
