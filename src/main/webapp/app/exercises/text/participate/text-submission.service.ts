@@ -41,11 +41,7 @@ export class TextSubmissionService {
             .pipe(map((res: HttpResponse<TextSubmission>) => res.body!));
     }
 
-    getTextSubmissionsForExerciseByCorrectionRound(
-        exerciseId: number,
-        req: { submittedOnly?: boolean; assessedByTutor?: boolean },
-        correctionRound = 0,
-    ): Observable<HttpResponse<TextSubmission[]>> {
+    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<TextSubmission[]>> {
         const url = `api/exercises/${exerciseId}/text-submissions`;
         let params = createRequestOption(req);
         if (correctionRound !== 0) {
@@ -63,7 +59,7 @@ export class TextSubmissionService {
      * @param option 'head': Do not optimize assessment order. Only used to check if assessments available.
      * @param correctionRound: The correction round for which we want to get a new assessment
      */
-    getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound = 0): Observable<TextSubmission> {
+    getSubmissionWithoutAssessment(exerciseId: number, option?: 'lock' | 'head', correctionRound = 0): Observable<TextSubmission> {
         const url = `api/exercises/${exerciseId}/text-submission-without-assessment`;
         let params = new HttpParams();
         if (correctionRound !== 0) {
