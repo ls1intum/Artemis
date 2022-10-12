@@ -6,7 +6,7 @@ import { CourseManagementPage } from '../../support/pageobjects/course/CourseMan
 import { NavigationBar } from '../../support/pageobjects/NavigationBar';
 import { ArtemisRequests } from '../../support/requests/ArtemisRequests';
 import { generateUUID } from '../../support/utils';
-import { Course } from '../../../../main/webapp/app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 
 // Requests
 const artemisRequests: ArtemisRequests = new ArtemisRequests();
