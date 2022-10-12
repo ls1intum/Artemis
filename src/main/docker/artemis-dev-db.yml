@@ -1,3 +1,4 @@
+# TODO: rename file also from db to mysql with psql maybe getting an alternative
 # Artemis-Dev-MySQL Setup
 services:
     artemis-app:

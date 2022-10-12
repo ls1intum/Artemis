@@ -1,5 +1,7 @@
 FROM openjdk:17-jdk-slim-bullseye as builder
 
+#ARG PROFILE=prod
+
 RUN echo "Installing needed build dependencies" \
   && apt-get update && apt-get install -y curl \
   && curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
@@ -7,12 +9,14 @@ RUN echo "Installing needed build dependencies" \
   && npm install --location=global npm@latest
 
 WORKDIR /opt/artemis
-# TODO: make this more secure/performant and don't copy everything
+# TODO: make this more secure/performant and don't copy everything? or let this be handled just by the .dockerignore?
+# maybe build dependencies before that could be more performant than copying everything at once
 # COPY src gradle gradlew  .
 COPY . .
+# TODO: would be obsolete after integration of PR5622
 ENV NODE_OPTIONS "--max_old_space_size=6144"
+# TODO: recheck why building -Pdev fails
 RUN ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
-RUN ls /opt/artemis/build/libs/*.war
 
 
 
@@ -39,10 +43,10 @@ ENV LC_ALL en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8
 
-# Create directories for volumes
-RUN mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content
-
-RUN useradd -Ums /bin/bash artemis \
+# Create directories for volumes, create artemis user and set right owners
+# also create an empty application-local.yml file as placeholder to be overwritten with a bind volume mount
+RUN mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content \
+  && useradd -Ums /bin/bash artemis \
   && chown -R artemis:artemis /opt/artemis
 USER artemis:artemis
 

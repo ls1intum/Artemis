@@ -1,3 +1,4 @@
+# TODO: check if we can use a symlink here?
 # Artemis-Dev-MySQL Setup (mirrored to the project root for a convenience start of docker-compose)
 # sync this file with src/main/docker/artemis-dev-mysql.yml
 services:
