@@ -194,6 +194,13 @@
                     </div>
                 </div>
             </ng-template>
+            <jhi-reset-repo-button
+                *ngIf="exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length"
+                [exercise]="exercise"
+                [participations]="exercise.studentParticipations"
+                [smallButtons]="false"
+            >
+            </jhi-reset-repo-button>
             <!-- PROBLEM STATEMENT END -->
             <ng-container *ngIf="exampleSolutionUML || exampleSolution || isProgrammingExerciseExampleSolutionPublished">
                 <div class="row mb-2 mt-2 align-items-baseline">

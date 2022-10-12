@@ -128,9 +128,8 @@ public class ParticipationService {
             participation.setExercise(exercise);
         }
 
-        if (exercise instanceof ProgrammingExercise) {
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
             // fetch again to get additional objects
-            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
             participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, initializationDate == null);
         }
         else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise

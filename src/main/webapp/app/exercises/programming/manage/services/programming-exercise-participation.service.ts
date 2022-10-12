@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Result } from 'app/entities/result.model';
@@ -34,6 +34,14 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
 
     checkIfParticipationHasResult(participationId: number): Observable<boolean> {
         return this.http.get<boolean>(this.resourceUrl + participationId + '/has-result');
+    }
+
+    resetRepository(participationId: number, gradedParticipationId?: number) {
+        let params = new HttpParams();
+        if (gradedParticipationId) {
+            params = params.set('gradedParticipationId', gradedParticipationId.toString());
+        }
+        return this.http.put<void>(`${this.resourceUrl}${participationId}/reset-repository`, null, { observe: 'response', params });
     }
 
     private sendTitlesToEntityTitleService(participation: Participation | undefined) {

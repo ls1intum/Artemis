@@ -1,0 +1,53 @@
+<ng-container>
+    <button
+        jhi-exercise-action-button
+        class="btn-danger"
+        [buttonIcon]="faBackward"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [buttonLabel]="'artemisApp.exerciseActions.resetRepository.label' | artemisTranslate"
+        [buttonLoading]="!!exercise.loading"
+        [smallButton]="smallButtons"
+        [hideLabelMobile]="false"
+        [hideLabelMobile]="false"
+        [ngbPopover]="popContent"
+        [autoClose]="'outside'"
+        placement="top-left"
+        container="body"
+        *ngIf="
+            (practiceParticipation?.initializationState === INITIALIZED && isStartPracticeAvailable()) ||
+            (gradedParticipation?.initializationState === INITIALIZED && isStartExerciseAvailable())
+        "
+    ></button>
+    <ng-template #popContent>
+        <form style="max-width: 660px" #resetForm="ngForm">
+            <h5>{{ 'artemisApp.exerciseActions.resetRepository.title' + (practiceParticipation ? 'Practice' : 'Graded') | artemisTranslate }}</h5>
+            <p>{{ 'artemisApp.exerciseActions.resetRepository.explanation' | artemisTranslate }}</p>
+            <p *ngIf="exercise.allowOfflineIde">{{ 'artemisApp.exerciseActions.resetRepository.offlineIDEExplanation' | artemisTranslate }}</p>
+            <p *ngIf="gradedParticipation && practiceParticipation">{{ 'artemisApp.exerciseActions.resetRepository.repositoryChoice' | artemisTranslate }}</p>
+            <p
+                [jhiTranslate]="'artemisApp.exerciseActions.resetRepository.question' + (practiceParticipation ? 'Practice' : 'Graded')"
+                [translateValues]="{ title: exercise.title }"
+            >
+                Are you sure you want to delete?
+            </p>
+            <div class="form-group">
+                <label class="text-danger" [jhiTranslate]="'artemisApp.exerciseActions.resetRepository.typeNameToConfirm'">Please type in the name to confirm</label>
+                <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
+            </div>
+            <div class="button-footer">
+                <button class="btn btn-danger" type="submit" [disabled]="resetForm.form.invalid || confirmEntityName !== exercise.title" (click)="resetRepository()">
+                    <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToTemplate">Reset</span>
+                </button>
+                <button
+                    class="btn btn-danger ms-2"
+                    type="submit"
+                    *ngIf="gradedParticipation && practiceParticipation"
+                    [disabled]="resetForm.form.invalid || confirmEntityName !== exercise.title"
+                    (click)="resetRepository(gradedParticipation?.id)"
+                >
+                    <span jhiTranslate="artemisApp.exerciseActions.resetRepository.resetToGradedParticipation">Reset</span>
+                </button>
+            </div>
+        </form>
+    </ng-template>
+</ng-container>

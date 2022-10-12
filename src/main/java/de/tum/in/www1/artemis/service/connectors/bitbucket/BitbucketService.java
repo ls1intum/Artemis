@@ -124,7 +124,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
         // Payload according to https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
         final var type = new BitbucketBranchProtectionDTO.TypeDTO("PATTERN", "Pattern");
-        // A wildcard (*) ist used to protect all branches
+        // A wildcard (*) is used to protect all branches
         final var matcher = new BitbucketBranchProtectionDTO.MatcherDTO("*", "*", type, true);
         // Prevent force-pushes
         final var fastForwardOnlyProtection = new BitbucketBranchProtectionDTO("fast-forward-only", matcher);

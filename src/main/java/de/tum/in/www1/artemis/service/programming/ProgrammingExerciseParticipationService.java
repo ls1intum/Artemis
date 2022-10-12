@@ -1,13 +1,17 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -250,5 +254,27 @@ public class ProgrammingExerciseParticipationService {
         else {
             log.warn("Cannot stash student repository for participation {} because the repository was not copied yet!", participation.getId());
         }
+    }
+
+    public void resetRepository(VcsRepositoryUrl targetURL, VcsRepositoryUrl sourceURL) throws GitAPIException, IOException {
+        Repository targetRepo = gitService.getOrCheckoutRepository(targetURL, true);
+        Repository sourceRepo = gitService.getOrCheckoutRepository(sourceURL, true);
+
+        // Replace everything but the .git folder
+        FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");
+        for (java.io.File file : targetRepo.getLocalPath().toFile().listFiles(filter)) {
+            FileSystemUtils.deleteRecursively(file);
+        }
+        for (java.io.File file : sourceRepo.getLocalPath().toFile().listFiles(filter)) {
+            if (file.isDirectory()) {
+                FileUtils.copyDirectory(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+            }
+            else {
+                FileUtils.copyFile(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
+            }
+        }
+
+        gitService.stageAllChanges(targetRepo);
+        gitService.commitAndPush(targetRepo, "Reset Exercise", true, null);
     }
 }
