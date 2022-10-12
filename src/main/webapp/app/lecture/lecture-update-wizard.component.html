@@ -1,5 +1,5 @@
 <div>
-    <div [hidden]="currentStep < 1">
+    <div class="form-step" [hidden]="currentStep < 1">
         <h1>Title</h1>
         <p>Add a title and meaningful description to the new lecture.</p>
         <div class="form-group">
@@ -16,7 +16,7 @@
             ></jhi-markdown-editor>
         </div>
     </div>
-    <div [hidden]="currentStep < 2">
+    <div class="form-step" [hidden]="currentStep < 2">
         <h1>Period</h1>
         <p>Specify the begin and end dates of the lecture.</p>
         <div class="d-flex">
@@ -38,15 +38,15 @@
             </div>
         </div>
     </div>
-    <div [hidden]="currentStep < 3">
+    <div class="form-step" [hidden]="currentStep < 3">
         <h1>Attachments</h1>
         <p>Upload attachments to this lecture.</p>
     </div>
-    <div [hidden]="currentStep < 4">
+    <div class="form-step" [hidden]="currentStep < 4">
         <h1>Units</h1>
         <p>Add content to the lecture by creating different kinds of lecture units.</p>
     </div>
-    <div [hidden]="currentStep < 5">
+    <div class="form-step" [hidden]="currentStep < 5">
         <h1>Learning Goals</h1>
         <p>Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to learning goals.</p>
     </div>

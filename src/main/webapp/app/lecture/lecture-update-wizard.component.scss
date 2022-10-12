@@ -15,3 +15,11 @@
     background: #3e8acc;
     opacity: 0.5;
 }
+
+.form-step + .form-step:before {
+    content: '';
+    display: block;
+    height: 1px;
+    background: gray;
+    margin-bottom: 1rem;
+}
