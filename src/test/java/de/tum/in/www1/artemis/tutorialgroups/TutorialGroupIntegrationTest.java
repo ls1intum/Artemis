@@ -183,25 +183,25 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void getOneOfCourse_asStudent_shouldHidePrivateInformation() throws Exception {
-        getOneOfCoursePrivateInfoHiddenTest();
+        oneOfCoursePrivateInfoHiddenTest();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void getOneOfCourse_asTutorOfGroup_shouldShowPrivateInformation() throws Exception {
-        getOneOfCoursePrivateInfoShownTest();
+        oneOfCoursePrivateInfoShownTest();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void getOneOfCourse_asEditor_shouldShowPrivateInformation() throws Exception {
-        getOneOfCoursePrivateInfoShownTest();
+        oneOfCoursePrivateInfoShownTest();
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
     void getOneOfCourse_asNotTutorOfGroup_shouldHidePrivateInformation() throws Exception {
-        getOneOfCoursePrivateInfoHiddenTest();
+        oneOfCoursePrivateInfoHiddenTest();
     }
 
     @Test
@@ -367,13 +367,13 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(tutorialGroup.getCourse()).isNotNull();
     }
 
-    private void getOneOfCoursePrivateInfoHiddenTest() throws Exception {
+    private void oneOfCoursePrivateInfoHiddenTest() throws Exception {
         var tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
         verifyPrivateInformationIsHidden(tutorialGroup);
     }
 
-    private void getOneOfCoursePrivateInfoShownTest() throws Exception {
+    private void oneOfCoursePrivateInfoShownTest() throws Exception {
         var tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
         verifyPrivateInformationIsShown(tutorialGroup, 5);
