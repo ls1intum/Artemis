@@ -7,7 +7,7 @@ import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-s
 import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
-import { throwError } from 'rxjs/internal/observable/throwError';
+import { throwError } from 'rxjs';
 
 describe('MessageReplyInlineInputComponent', () => {
     let component: MessageReplyInlineInputComponent;

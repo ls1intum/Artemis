@@ -117,11 +117,17 @@ export class CourseExerciseService {
         );
     }
 
+    requestFeedback(exerciseId: number): Observable<StudentParticipation> {
+        return this.http
+            .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/request-feedback`, {})
+            .pipe(map((participation: StudentParticipation) => participation));
+    }
+
     /**
      * handle the given student participation by adding in the participationWebsocketService
      * @param participation - the participation to be handled
      */
-    handleParticipation(participation: StudentParticipation) {
+    handleParticipation(participation: StudentParticipation): StudentParticipation {
         if (participation) {
             // convert date
             participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;

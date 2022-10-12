@@ -10,6 +10,8 @@
             "statistics": "Quiz Statistics",
             "startExercise": "Start exercise",
             "resumeExercise": "Resume exercise",
+            "requestFeedback": "Request feedback",
+            "requestFeedbackTooltip": "Send a manual feedback request before the deadline for review. This option is only possible if you reached 100% in the public tests.",
             "resumeExercisePractice": "Resume practice in exercise",
             "resumeExerciseError": "Error trying to resume the exercise",
             "openCodeEditor": "Open code editor",

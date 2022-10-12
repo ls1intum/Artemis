@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -105,6 +106,8 @@ public class ParticipationResource {
 
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
+    private final GroupNotificationService groupNotificationService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
@@ -112,7 +115,7 @@ public class ParticipationResource {
             AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
-            QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository) {
+            QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -135,6 +138,7 @@ public class ParticipationResource {
         this.quizBatchService = quizBatchService;
         this.quizScheduleService = quizScheduleService;
         this.submittedAnswerRepository = submittedAnswerRepository;
+        this.groupNotificationService = groupNotificationService;
     }
 
     /**
@@ -273,6 +277,57 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(participation);
     }
 
+    /**
+     * PUT exercises/:exerciseId/request-feedback: Requests manual feedback for the latest participation
+     *
+     * @param exerciseId of the exercise for which to resume participation
+     * @param principal  current user principal
+     * @return ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("exercises/{exerciseId}/request-feedback")
+    @PreAuthorize("hasRole('USER')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<ProgrammingExerciseStudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
+        log.debug("REST request for feedback request: {}", exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        checkAccessPermissionOwner(participation, user);
+        programmingExercise.validateManualFeedbackSettings();
+
+        var studentParticipation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
+        var result = studentParticipation.findLatestLegalResult();
+        if (Objects.isNull(result) || result.getScore() < 100) {
+            throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
+        }
+
+        var currentDate = now();
+        var participationIndividualDueDate = participation.getIndividualDueDate();
+        if (Objects.nonNull(participationIndividualDueDate) && currentDate.isAfter(participationIndividualDueDate)) {
+            throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
+        }
+
+        // The participations due date is a flag showing that a feedback request is sent
+        participation.setIndividualDueDate(currentDate);
+
+        participation = programmingExerciseStudentParticipationRepository.save(participation);
+        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+
+        // Set all past results to automatic to reset earlier feedback request assessments
+        var participationResults = studentParticipation.getResults();
+        participationResults.forEach(participationResult -> {
+            participationResult.setAssessmentType(AssessmentType.AUTOMATIC);
+            participationResult.setAssessor(null);
+            participationResult.setRated(false);
+        });
+        resultRepository.saveAll(participationResults);
+
+        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewFeedbackRequest(programmingExercise);
+
+        return ResponseEntity.ok().body(participation);
+    }
+
     private boolean isNotAllowedToStartProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable StudentParticipation participation) {
         return participation != null ? exerciseDateService.isAfterDueDate(participation)
                 : (programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate()));
@@ -296,10 +351,10 @@ public class ParticipationResource {
     /**
      * PUT /participations : Updates an existing participation.
      *
-     * @param exerciseId the id of the exercise, the participation belongs to
+     * @param exerciseId    the id of the exercise, the participation belongs to
      * @param participation the participation to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated participation, or with status 400 (Bad Request) if the participation is not valid, or with status
-     *         500 (Internal Server Error) if the participation couldn't be updated
+     * 500 (Internal Server Error) if the participation couldn't be updated
      */
     @PutMapping("exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('TA')")
@@ -336,10 +391,11 @@ public class ParticipationResource {
 
     /**
      * PUT /participations/update-individual-due-date : Updates the individual due dates for the given already existing participations.
-     *
+     * <p>
      * If the exercise is a programming exercise, also triggers a scheduling
      * update for the participations where the individual due date has changed.
-     * @param exerciseId of the exercise the participations belong to.
+     *
+     * @param exerciseId     of the exercise the participations belong to.
      * @param participations for which the individual due date should be updated.
      * @return all participations where the individual due date actually changed.
      */
@@ -383,7 +439,7 @@ public class ParticipationResource {
     /**
      * GET /exercises/:exerciseId/participations : get all the participations for an exercise
      *
-     * @param exerciseId The participationId of the exercise
+     * @param exerciseId       The participationId of the exercise
      * @param withLatestResult Whether the {@link Result results} for the participations should also be fetched
      * @return A list of all participations for the exercise
      */
@@ -532,7 +588,7 @@ public class ParticipationResource {
      * API consistency, it is not actually used
      *
      * @param exerciseId the participationId of the exercise for which to retrieve the participation
-     * @param principal The principal in form of the user's identity
+     * @param principal  The principal in form of the user's identity
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}/participation")
@@ -627,8 +683,8 @@ public class ParticipationResource {
     /**
      * DELETE /participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted here!
      *
-     * @param participationId the participationId of the participation to delete
-     * @param deleteBuildPlan True, if the build plan should also get deleted
+     * @param participationId  the participationId of the participation to delete
+     * @param deleteBuildPlan  True, if the build plan should also get deleted
      * @param deleteRepository True, if the repository should also get deleted
      * @return the ResponseEntity with status 200 (OK)
      */
@@ -649,8 +705,8 @@ public class ParticipationResource {
      * DELETE guided-tour/participations/:participationId : delete the "participationId" participation of student participations for guided tutorials (e.g. when restarting a tutorial)
      * Please note: all users can delete their own participation when it belongs to a guided tutorial
      *
-     * @param participationId the participationId of the participation to delete
-     * @param deleteBuildPlan True, if the build plan should also get deleted
+     * @param participationId  the participationId of the participation to delete
+     * @param deleteBuildPlan  True, if the build plan should also get deleted
      * @param deleteRepository True, if the repository should also get deleted
      * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
      */
@@ -679,10 +735,11 @@ public class ParticipationResource {
 
     /**
      * delete the participation, potentially including build plan and repository and log the event in the database audit
-     * @param participation the participation to be deleted
-     * @param deleteBuildPlan whether the build plan should be deleted as well, only relevant for programming exercises
+     *
+     * @param participation    the participation to be deleted
+     * @param deleteBuildPlan  whether the build plan should be deleted as well, only relevant for programming exercises
      * @param deleteRepository whether the repository should be deleted as well, only relevant for programming exercises
-     * @param user the currently logged-in user who initiated the delete operation
+     * @param user             the currently logged-in user who initiated the delete operation
      * @return the response to the client
      */
     @NotNull
@@ -702,7 +759,7 @@ public class ParticipationResource {
      * This only works for programming exercises.
      *
      * @param participationId the participationId of the ProgrammingExerciseStudentParticipation for which the build plan should be removed
-     * @param principal The identity of the user accessing this resource
+     * @param principal       The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("participations/{participationId}/cleanupBuildPlan")
@@ -744,6 +801,7 @@ public class ParticipationResource {
 
     /**
      * fetches all submissions of a specific participation
+     *
      * @param participationId the id of the participation
      * @return all submissions that belong to the participation
      */
@@ -786,7 +844,7 @@ public class ParticipationResource {
             // add the appropriate result
             Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
             if (result != null) {
-                // find the submitted answers (they are NOT loaded eagerly any more)
+                // find the submitted answers (they are NOT loaded eagerly anymore)
                 var quizSubmission = (QuizSubmission) result.getSubmission();
                 var submittedAnswers = submittedAnswerRepository.findBySubmission(quizSubmission);
                 quizSubmission.setSubmittedAnswers(submittedAnswers);

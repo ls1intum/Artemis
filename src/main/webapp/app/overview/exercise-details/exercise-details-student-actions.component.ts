@@ -11,8 +11,9 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { finalize } from 'rxjs/operators';
-import { faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faExternalLinkAlt, faUsers, faComment } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 @Component({
@@ -30,6 +31,7 @@ export class ExerciseDetailsStudentActionsComponent {
     @Input() @HostBinding('class.col-auto') smallColumns = false;
 
     @Input() exercise: Exercise;
+    @Input() studentParticipation?: StudentParticipation;
     @Input() courseId: number;
     @Input() actionsOnly: boolean;
     @Input() smallButtons: boolean;
@@ -40,6 +42,7 @@ export class ExerciseDetailsStudentActionsComponent {
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
     // Icons
+    faComment = faComment;
     faFolderOpen = faFolderOpen;
     faUsers = faUsers;
     faEye = faEye;
@@ -53,6 +56,7 @@ export class ExerciseDetailsStudentActionsComponent {
         private courseExerciseService: CourseExerciseService,
         private httpClient: HttpClient,
         private router: Router,
+        private translateService: TranslateService,
         private participationService: ParticipationService,
     ) {}
 
@@ -140,6 +144,43 @@ export class ExerciseDetailsStudentActionsComponent {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             });
+    }
+
+    isManualFeedbackRequestsAllowed(): boolean {
+        return this.exercise.allowManualFeedbackRequests ?? false;
+    }
+
+    private feedbackSent = false;
+
+    isFeedbackRequestButtonDisabled(): boolean {
+        const participation = this.studentParticipation ?? (this.exercise.studentParticipations && this.exercise.studentParticipations.first());
+
+        const showUngradedResults = true;
+        const latestResult = participation?.results && participation.results.find(({ rated }) => showUngradedResults || rated === true);
+        const allHiddenTestsPassed = latestResult?.score !== undefined && latestResult.score >= 100;
+
+        const requestAlreadySent = (participation?.individualDueDate && participation.individualDueDate.isBefore(Date.now())) ?? false;
+
+        return !allHiddenTestsPassed || requestAlreadySent || this.feedbackSent;
+    }
+
+    requestFeedback() {
+        const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
+        if (!window.confirm(confirmLockRepository)) {
+            return;
+        }
+
+        this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
+            next: (participation: StudentParticipation) => {
+                if (participation) {
+                    this.feedbackSent = true;
+                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+                }
+            },
+            error: (error) => {
+                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+            },
+        });
     }
 
     /**

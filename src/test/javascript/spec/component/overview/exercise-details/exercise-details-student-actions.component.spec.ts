@@ -26,6 +26,7 @@ import { Router } from '@angular/router';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { HttpClient } from '@angular/common/http';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import dayjs from 'dayjs/esm';
 
@@ -40,14 +41,20 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let getProfileInfoSub: jest.SpyInstance;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
-    const teamExerciseWithoutTeamAssigned = {
+    const programmingExercise: ProgrammingExercise = {
         id: 42,
         type: ExerciseType.PROGRAMMING,
+        studentParticipations: [],
+        numberOfAssessmentsOfCorrectionRounds: [],
+        secondCorrectionEnabled: false,
+        studentAssignedTeamIdComputed: false,
+    };
+    const teamExerciseWithoutTeamAssigned: ProgrammingExercise = {
+        ...programmingExercise,
         mode: ExerciseMode.TEAM,
         teamMode: true,
         studentAssignedTeamIdComputed: true,
-        studentParticipations: [],
-    } as unknown as ProgrammingExercise;
+    };
     const teamExerciseWithTeamAssigned = { ...teamExerciseWithoutTeamAssigned, studentAssignedTeamId: team.id, allowOfflineIde: true } as ProgrammingExercise;
 
     beforeEach(() => {
@@ -80,6 +87,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
                 getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
+
                 startExerciseStub = jest.spyOn(courseExerciseService, 'startExercise');
                 resumeStub = jest.spyOn(courseExerciseService, 'resumeProgrammingExercise');
             });
@@ -232,6 +240,42 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     it('should not allow to publish a build plan for text exercises', () => {
         comp.exercise = teamExerciseWithoutTeamAssigned;
         expect(comp.publishBuildPlanUrl()).toBeUndefined();
+    });
+
+    it('should hide the feedback request button', () => {
+        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: false };
+        expect(comp.isManualFeedbackRequestsAllowed()).toBeFalse();
+    });
+
+    it('should show the feedback request button', () => {
+        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
+        expect(comp.isManualFeedbackRequestsAllowed()).toBeTrue();
+    });
+
+    it('should disable the feedback request button', () => {
+        const result: Result = { score: 50, rated: true };
+        const participation: StudentParticipation = {
+            results: [result],
+            individualDueDate: undefined,
+        };
+
+        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
+        comp.studentParticipation = participation;
+
+        expect(comp.isFeedbackRequestButtonDisabled()).toBeTrue();
+    });
+
+    it('should enable the feedback request button', () => {
+        const result: Result = { score: 100, rated: true };
+        const participation: StudentParticipation = {
+            results: [result],
+            individualDueDate: undefined,
+        };
+
+        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
+        comp.studentParticipation = participation;
+
+        expect(comp.isFeedbackRequestButtonDisabled()).toBeFalse();
     });
 
     it('should show correct buttons in exam mode', fakeAsync(() => {
