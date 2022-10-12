@@ -6,11 +6,11 @@
             </button>
         </div>
         <div class="flex-grow-1 d-flex justify-content-center align-items-center stepContainer">
-            <div class="step"></div>
-            <div class="step"></div>
-            <div class="step"></div>
-            <div class="step"></div>
-            <div class="step"></div>
+            <div class="step" [class.completed]="isCompleted(1)" [class.current]="isCurrent(1)"></div>
+            <div class="step" [class.completed]="isCompleted(2)" [class.current]="isCurrent(2)"></div>
+            <div class="step" [class.completed]="isCompleted(3)" [class.current]="isCurrent(3)"></div>
+            <div class="step" [class.completed]="isCompleted(4)" [class.current]="isCurrent(4)"></div>
+            <div class="step" [class.completed]="isCompleted(5)" [class.current]="isCurrent(5)"></div>
         </div>
         <div class="ms-3">
             <button type="button" id="next" [disabled]="isSaving" class="btn btn-primary" (click)="next()">

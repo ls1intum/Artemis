@@ -52,7 +52,7 @@ export class LectureUpdateWizardComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        this.currentStep = 0;
+        this.currentStep = 1;
         this.activatedRoute.parent!.data.subscribe((data) => {
             this.lecture = new Lecture();
 
@@ -68,5 +68,19 @@ export class LectureUpdateWizardComponent implements OnInit {
      */
     next() {
         this.currentStep++;
+    }
+
+    /**
+     * Checks if the given step has already been completed
+     */
+    isCompleted(step: number) {
+        return this.currentStep > step;
+    }
+
+    /**
+     * Checks if the given step is the current one
+     */
+    isCurrent(step: number) {
+        return this.currentStep === step;
     }
 }
