@@ -214,8 +214,8 @@ describe('Exam assessment', () => {
             }
             cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
             // Sometimes the feedback fails to load properly on the first load...
-            const resultSelectors = ['#result-score', '#result-score-no-feedback'];
-            cy.reloadUntilFoundSome(resultSelectors);
+            const resultSelector = '#result-score';
+            cy.reloadUntilFound(resultSelector);
             editorPage.getResultScore().should('contain.text', '50%, 5 points').and('be.visible');
         });
     });
