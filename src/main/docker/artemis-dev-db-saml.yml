@@ -1,0 +1,36 @@
+# Artemis-Dev-MySQL Setup
+services:
+    artemis-app:
+        extends:
+            file: ./artemis/artemis.yml
+            service: artemis-app
+        # TODO: change this to dev for the dev profile build
+#        build:
+#            args:
+#                PROFILE: dev
+        ports:
+            - 5005:5005 # Java Remote Debugging port declared in the java cmd options
+        volumes:
+            - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml:ro
+        environment:
+            SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,athene,saml2,docker,local
+        depends_on:
+            - artemis-mysql
+    artemis-mysql:
+        extends:
+            file: mysql.yml
+            service: artemis-mysql
+    saml-test:
+        extends:
+            file: ./saml-test/saml-test.yml
+            service: saml-test
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+volumes:
+    artemis-mysql-data:
+        name: artemis-mysql-data
+    artemis-data:
+        name: artemis-data

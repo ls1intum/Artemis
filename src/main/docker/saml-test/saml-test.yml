@@ -1,0 +1,17 @@
+# SAML Testing service
+services:
+    saml-test:
+        container_name: saml-test
+        image: jamedjo/test-saml-idp
+        ports:
+            - 9980:8080
+        volumes:
+            - ./saml20-sp-remote.php:/var/www/simplesamlphp/metadata/saml20-sp-remote.php
+            - ./config.php:/var/www/simplesamlphp/config/config.php
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
