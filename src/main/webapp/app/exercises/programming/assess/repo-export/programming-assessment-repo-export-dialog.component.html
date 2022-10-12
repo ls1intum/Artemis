@@ -41,7 +41,7 @@
         <!--
         Only show download all checkbox for instructors & admins.
         -->
-        <ng-container *ngIf="exercise.isAtLeastInstructor && !singleParticipantMode && !isRepoExportForMultipleExercises">
+        <ng-container *ngIf="!isRepoExportForMultipleExercises && exercise.isAtLeastInstructor && !singleParticipantMode">
             <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
                 <label class="control-label">
                     <input class="form-check-input" type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
@@ -90,7 +90,7 @@
                 <strong jhiTranslate="artemisApp.programmingExercise.export.combineStudentCommits">Combine all changes after instructor into one commit</strong>
             </label>
         </div>
-        <ng-container *ngIf="exercise.isAtLeastInstructor">
+        <ng-container *ngIf="isRepoExportForMultipleExercises || exercise.isAtLeastInstructor">
             <div class="checkbox">
                 <label class="control-label">
                     <input class="form-check-input" type="checkbox" name="anonymizeStudentCommits" [(ngModel)]="this.repositoryExportOptions.anonymizeStudentCommits" checked />

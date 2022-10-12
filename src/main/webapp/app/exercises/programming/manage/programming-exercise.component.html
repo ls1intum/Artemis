@@ -287,10 +287,11 @@
                 <fa-icon [icon]="faWrench"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.editSelected">Edit selected</span>
             </button>
-            <button type="submit" *ngIf="course.isAtLeastInstructor" (click)="openRepoExportModal()" class="btn btn-info btn-sm me-1">
-                <fa-icon [icon]="faDownload"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.title">Download Repos</span>
-            </button>
+            <jhi-programming-assessment-repo-export
+                *ngIf="course.isAtLeastInstructor"
+                [selectedProgrammingExercises]="selectedProgrammingExercises"
+                class="me-1"
+            ></jhi-programming-assessment-repo-export>
             <jhi-exercise-scores-export-button *ngIf="course.isAtLeastInstructor" [exercises]="selectedProgrammingExercises"></jhi-exercise-scores-export-button>
             <button *ngIf="course.isAtLeastInstructor" (click)="checkConsistencies()" class="btn btn-outline-primary btn-sm me-1">
                 <fa-icon [icon]="faCheckDouble"></fa-icon>
