@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -187,7 +186,7 @@ public abstract class AssessmentResource {
         if (!Objects.isNull(result) && !(isAtLeastEditor || (isAtLeastTutor && !exampleSubmission.isUsedForTutorial()))) {
             Result freshResult = new Result();
             freshResult.setId(result.getId());
-            if (Hibernate.isInitialized(result.getFeedbacks())) {
+            if (result.getFeedbacks() != null) {
                 result.getFeedbacks().stream().filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
                         .forEach(feedback -> {
                             Feedback freshFeedback = new Feedback();
