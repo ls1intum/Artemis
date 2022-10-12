@@ -3,7 +3,7 @@ import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage
 export class CourseManagementOverviewStatisticsDto {
     public courseId?: number;
     public exerciseDTOS: CourseManagementOverviewExerciseStatisticsDTO[];
-    public activeStudents: number[];
+    public activeStudents?: number[];
 
     constructor() {}
 }

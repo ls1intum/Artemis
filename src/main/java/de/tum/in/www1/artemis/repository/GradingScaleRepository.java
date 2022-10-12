@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -8,6 +10,9 @@ import java.util.Set;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -49,6 +54,20 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
                 WHERE gradingScale.exam.id = :#{#examId}
             """)
     Optional<GradingScale> findByExamId(@Param("examId") Long examId);
+
+    /**
+     * Find a grading scale for exam by id with applied bonus
+     *
+     * @param examId the exam id
+     * @return an Optional with the grading scale if such scale exists and an empty Optional otherwise
+     */
+    @Query("""
+                SELECT gradingScale
+                FROM GradingScale gradingScale
+                LEFT JOIN FETCH gradingScale.bonusFrom
+                WHERE gradingScale.exam.id = :#{#examId}
+            """)
+    Optional<GradingScale> findByExamIdWithBonusFrom(@Param("examId") Long examId);
 
     /**
      * Finds a grading scale for course by id or throws an exception if no such grading scale exists.
@@ -105,6 +124,54 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     List<GradingScale> findAllByExamId(@Param("examId") Long examId);
 
     /**
+     * Query which fetches all the grading scales with BONUS grade type for which the user is instructor in the course and matching the search criteria.
+     *
+     * @param partialTitle course or exam title search term
+     * @param groups user groups
+     * @param pageable Pageable
+     * @return Page with search results
+     */
+    @Query("""
+                SELECT gs
+                FROM GradingScale gs
+                LEFT JOIN gs.course
+                LEFT JOIN gs.exam
+                LEFT JOIN gs.exam.course
+                WHERE gs.gradeType = 'BONUS' AND ((gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
+                    OR (gs.exam.course.instructorGroupName IN :groups AND gs.exam.title LIKE %:partialTitle%))
+            """)
+    // Note: Removing "LEFT JOIN gs.exam.course" part from the query above would cause the query to exclude GradingScales for Courses and just return the
+    // GradingScales for Exams. (It will do so by generating a CROSS JOIN and a WHERE clause which checks for exam.course_id = course.id)
+    Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups,
+            Pageable pageable);
+
+    /**
+     * Same as the linked method except instructor group check is skipped for ADMINs to allow them access to all eligible
+     * grading scales.
+     *
+     * @see #findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(String, Set, Pageable)
+     *
+     * @param partialTitle course or exam title search term
+     * @param pageable Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT gs
+            FROM GradingScale gs
+            LEFT JOIN gs.course
+            LEFT JOIN gs.exam
+            WHERE gs.gradeType = 'BONUS' AND (gs.course.title LIKE %:partialTitle%
+                OR gs.exam.title LIKE %:partialTitle%)
+            """)
+    Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(@Param("partialTitle") String partialTitle, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
+    Optional<GradingScale> findWithEagerBonusFromByBonusFromId(@Param("bonusId") Long bonusId);
+
+    @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
+    Optional<GradingScale> findWithEagerBonusFromByExamId(@Param("examId") Long examId);
+
+    /**
      * Maps a grade percentage to a valid grade step within the grading scale or throws an exception if no match was found
      *
      * @param percentage the grade percentage to be mapped
@@ -112,10 +179,21 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return grade step corresponding to the given percentage
      */
     default GradeStep matchPercentageToGradeStep(double percentage, Long gradingScaleId) {
+        Set<GradeStep> gradeSteps = findById(gradingScaleId).orElseThrow().getGradeSteps();
+        return this.matchPercentageToGradeStep(percentage, gradeSteps);
+    }
+
+    /**
+     * @see #matchPercentageToGradeStep(double, Long)
+     *
+     * @param percentage the grade percentage to be mapped
+     * @param gradeSteps the grade steps of a grading scale
+     * @return grade step corresponding to the given percentage
+     */
+    private GradeStep matchPercentageToGradeStep(double percentage, Set<GradeStep> gradeSteps) {
         if (percentage < 0) {
             throw new BadRequestAlertException("Grade percentages must be greater than 0", "gradeStep", "invalidGradePercentage");
         }
-        Set<GradeStep> gradeSteps = findById(gradingScaleId).orElseThrow().getGradeSteps();
         Optional<GradeStep> matchingGradeStep = gradeSteps.stream().filter(gradeStep -> gradeStep.matchingGradePercentage(percentage)).findFirst();
         if (matchingGradeStep.isPresent()) {
             return matchingGradeStep.get();
@@ -126,6 +204,27 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
             return highestGradeStep.orElseThrow(() -> new EntityNotFoundException("No grade steps available"));
         }
         throw new EntityNotFoundException("No grade step in selected grading scale matches given percentage");
+    }
+
+    /**
+     * Maps a grade point to a valid grade step within the grading scale or throws an exception if no match was found.
+     * The percentage is calculated by using the given points and the max points from the grading scale.
+     *
+     * @see #matchPercentageToGradeStep(double, Long)
+     *
+     * @param points the grade points to be mapped
+     * @param gradingScale the grading scale with the grade steps
+     * @return grade step corresponding to the given points
+     */
+    default GradeStep matchPointsToGradeStep(double points, GradingScale gradingScale) {
+        int maxPoints = gradingScale.getMaxPoints();
+        if (maxPoints <= 0) {
+            throw new BadRequestAlertException("Max points for the grading scale must be set to a value greater than 0", "gradingScale", "invalidMaxPoints");
+        }
+
+        double percentage = points / maxPoints * 100.0;
+
+        return this.matchPercentageToGradeStep(percentage, gradingScale.getGradeSteps());
     }
 
     /**

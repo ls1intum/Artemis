@@ -4,10 +4,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
+import javax.validation.Valid;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -30,9 +32,10 @@ public class QuizSubmission extends Submission {
     @Column(name = "quiz_batch")
     private Long quizBatch;
 
-    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
+    @Valid
     private Set<SubmittedAnswer> submittedAnswers = new HashSet<>();
 
     public Double getScoreInPoints() {
@@ -130,6 +133,7 @@ public class QuizSubmission extends Submission {
     }
 
     @Override
+    @JsonIgnore
     public boolean isEmpty() {
         return submittedAnswers == null || submittedAnswers.isEmpty();
     }

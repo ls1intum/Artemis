@@ -411,6 +411,66 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    void testGetFileWithRelevantPlagiarismCaseAfterExam() throws Exception {
+        programmingExercise = createProgrammingExerciseForExam();
+        Exam exam = programmingExercise.getExerciseGroup().getExam();
+
+        // The calculated exam end date (startDate of exam + workingTime of studentExam (7200 seconds))
+        // should be in the past for this test.
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        examRepository.save(exam);
+
+        addPlagiarismCaseToProgrammingExercise("student2", "student1");
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        assertThat(file).isNotEmpty();
+        assertThat(new String(file)).isEqualTo(currentLocalFileContent);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testGetFilesWithRelevantPlagiarismCaseAfterExam_forbidden() throws Exception {
+        programmingExercise = createProgrammingExerciseForExam();
+        Exam exam = programmingExercise.getExerciseGroup().getExam();
+
+        // The calculated exam end date (startDate of exam + workingTime of studentExam (7200 seconds))
+        // should be in the past for this test.
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        examRepository.save(exam);
+
+        // student1 is NOT notified yet.
+        addPlagiarismCaseToProgrammingExercise("student1", "student2");
+
+        request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testGetFilesWithRelevantPlagiarismCaseAfterExam() throws Exception {
+        programmingExercise = createProgrammingExerciseForExam();
+        Exam exam = programmingExercise.getExerciseGroup().getExam();
+
+        // The calculated exam end date (startDate of exam + workingTime of studentExam (7200 seconds))
+        // should be in the past for this test.
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        examRepository.save(exam);
+
+        // student1 is notified.
+        addPlagiarismCaseToProgrammingExercise("student2", "student1");
+
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).isNotEmpty();
+
+        // Check if all files exist
+        for (String key : files.keySet()) {
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void testGetFile_shouldThrowException() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
@@ -446,9 +506,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
         String newLocalFileName = "newFileName";
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFileName))).isFalse();
-        FileMove fileMove = new FileMove();
-        fileMove.setCurrentFilePath(currentLocalFileName);
-        fileMove.setNewFilename(newLocalFileName);
+        FileMove fileMove = new FileMove(currentLocalFileName, newLocalFileName);
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isFalse();
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFileName))).isTrue();
@@ -460,9 +518,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName))).isTrue();
         String newLocalFolderName = "newFolderName";
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFolderName))).isFalse();
-        FileMove fileMove = new FileMove();
-        fileMove.setCurrentFilePath(currentLocalFolderName);
-        fileMove.setNewFilename(newLocalFolderName);
+        FileMove fileMove = new FileMove(currentLocalFolderName, newLocalFolderName);
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName))).isFalse();
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFolderName))).isTrue();
@@ -482,10 +538,10 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = "student1", roles = "USER")
     void testCommitChanges() throws Exception {
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
         var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus).hasToString("CLEAN");
+        assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
         assertThat(database.getUserByLogin("student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
@@ -505,12 +561,12 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
 
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
 
         var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus).hasToString("CLEAN");
+        assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
         assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
 
@@ -563,14 +619,14 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Check status of git before the commit
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
         // Create a commit for the local and the remote repository
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
 
         // Check status of git after the commit
         var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus).hasToString("CLEAN");
+        assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
         // Create file in the local repository and commit it
         Path localFilePath = Path.of(studentRepository.localRepoFile + "/" + fileName);
@@ -604,7 +660,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(status.getConflicting()).isEmpty();
         assertThat(studentRepository.getAllLocalCommits().get(0)).isEqualTo(studentRepository.getAllOriginCommits().get(0));
         var receivedStatusAfterReset = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterReset.repositoryStatus).hasToString("CLEAN");
+        assertThat(receivedStatusAfterReset.repositoryStatus()).hasToString("CLEAN");
     }
 
     @Test
@@ -613,14 +669,14 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
 
         // The current status is "uncommited changes", since we added files and folders, but we didn't commit yet
-        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
         // Perform a commit to check if the status changes
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
 
         // Check if the status of git is "clean" after the commit
         var receivedStatusAfterCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus).hasToString("CLEAN");
+        assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
     }
 
     @Test
@@ -747,12 +803,15 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void testCommitChangesAllowedForAutomaticallyAssessedAfterDueDate() throws Exception {
+    void testCommitChangesAllowedForPracticeModeAfterDueDate() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise.setAssessmentType(AssessmentType.MANUAL);
         programmingExerciseRepository.save(programmingExercise);
+
+        participation.setTestRun(true);
+        studentParticipationRepository.save(participation);
 
         testCommitChanges();
     }
@@ -776,9 +835,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     private void assertUnchangedRepositoryStatusForForbiddenCommit() throws Exception {
         // Committing is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.FORBIDDEN, null);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
     }
 
     @Test
@@ -798,9 +857,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     private void assertUnchangedRepositoryStatusForForbiddenReset() throws Exception {
         // Reset the repo is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
     }
 
     @Test
@@ -832,8 +891,14 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void testResetNotAllowedForExamBeforeDueDate() throws Exception {
+        programmingExercise = createProgrammingExerciseForExam();
+        // A tutor is not allowed to reset the repository during the exam time
+        assertUnchangedRepositoryStatusForForbiddenReset();
+    }
+
+    private ProgrammingExercise createProgrammingExerciseForExam() {
         // Create an exam programming exercise
-        programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         programmingExerciseRepository.save(programmingExercise);
         participation.setExercise(programmingExercise);
         studentParticipationRepository.save(participation);
@@ -846,8 +911,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         studentExam.setUser(participation.getStudent().get());
         studentExam.addExercise(programmingExercise);
         studentExamRepository.save(studentExam);
-        // A tutor is not allowed to reset the repository during the exam time
-        assertUnchangedRepositoryStatusForForbiddenReset();
+        return programmingExercise;
     }
 
     @Test

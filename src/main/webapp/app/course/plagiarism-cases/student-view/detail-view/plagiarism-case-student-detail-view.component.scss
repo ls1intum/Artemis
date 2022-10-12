@@ -1,0 +1,18 @@
+.plagiarism-case {
+    display: flex;
+    flex-direction: column;
+    // JHipster's .card-body has default padding of 1.25
+    margin: -1.25rem;
+    margin-top: 0;
+
+    .case-header {
+        background-color: var(--artemis-dark);
+        color: white;
+        flex-shrink: 0;
+        padding: 1.5rem;
+    }
+
+    .case-body {
+        padding: 1.5rem;
+    }
+}

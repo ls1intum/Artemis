@@ -249,7 +249,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     void testPublicPathForActualTempFilePath() {
         Path actualPath = Path.of(FilePathService.getTempFilePath(), "test");
         String publicPath = fileService.publicPathForActualPath(actualPath.toString(), 1L);
-        assertThat(publicPath).isEqualTo("/api/files/temp/" + actualPath.getFileName());
+        assertThat(publicPath).isEqualTo(FileService.DEFAULT_FILE_SUBPATH + actualPath.getFileName());
     }
 
     @Test

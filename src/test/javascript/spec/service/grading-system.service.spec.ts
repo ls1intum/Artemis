@@ -7,6 +7,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { cloneDeep } from 'lodash-es';
 
 describe('Grading System Service', () => {
     let service: GradingSystemService;
@@ -246,11 +247,28 @@ describe('Grading System Service', () => {
     });
 
     it('should set grade points correctly', () => {
-        service.setGradePoints(gradeSteps, 100);
+        const gradeStepsForModification = cloneDeep(gradeSteps);
+        service.setGradePoints(gradeStepsForModification, 100);
 
-        for (const gradeStep of gradeSteps) {
+        for (const gradeStep of gradeStepsForModification) {
             expect(gradeStep.lowerBoundPoints).toEqual(gradeStep.lowerBoundPercentage);
             expect(gradeStep.upperBoundPoints).toEqual(gradeStep.upperBoundPercentage);
         }
+    });
+
+    it('should properly determine that points are not set', () => {
+        expect(service.hasPointsSet(gradeSteps)).toBeFalse();
+    });
+
+    it('should properly determine that points are set', () => {
+        const gradeStepWithPoints1 = Object.assign({}, gradeStep1);
+        gradeStepWithPoints1.lowerBoundPoints = 0;
+        gradeStepWithPoints1.upperBoundPoints = 50;
+        const gradeStepWithPoints2 = Object.assign({}, gradeStep2);
+        gradeStepWithPoints2.lowerBoundPoints = 50;
+        gradeStepWithPoints2.upperBoundPoints = 100;
+        const gradeStepsWithPoints = [gradeStepWithPoints1, gradeStepWithPoints2];
+
+        expect(service.hasPointsSet(gradeStepsWithPoints)).toBeTrue();
     });
 });

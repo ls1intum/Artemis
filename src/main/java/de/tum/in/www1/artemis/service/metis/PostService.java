@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -40,8 +39,8 @@ import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
-import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
 public class PostService extends PostingService {
@@ -49,8 +48,6 @@ public class PostService extends PostingService {
     private static final String METIS_POST_ENTITY_NAME = "metis.post";
 
     public static final int TOP_K_SIMILARITY_RESULTS = 5;
-
-    private final UserRepository userRepository;
 
     private final PostRepository postRepository;
 
@@ -66,8 +63,7 @@ public class PostService extends PostingService {
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
             PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, PlagiarismCaseService plagiarismCaseService,
             PlagiarismCaseRepository plagiarismCaseRepository) {
-        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
-        this.userRepository = userRepository;
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
         this.postRepository = postRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.groupNotificationService = groupNotificationService;
@@ -89,7 +85,7 @@ public class PostService extends PostingService {
 
         // checks
         if (post.getId() != null) {
-            throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idExists");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
         mayInteractWithPostElseThrow(post, user, course);
@@ -106,7 +102,7 @@ public class PostService extends PostingService {
             post.setDisplayPriority(DisplayPriority.PINNED);
             Post savedPost = postRepository.save(post);
             sendNotification(savedPost, course);
-            broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
+            broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course);
             return savedPost;
         }
         Post savedPost = postRepository.save(post);
@@ -116,7 +112,7 @@ public class PostService extends PostingService {
             plagiarismCaseService.savePostForPlagiarismCaseAndNotifyStudent(savedPost.getPlagiarismCase().getId(), savedPost);
         }
         else {
-            broadcastForPost(new MetisPostDTO(savedPost, MetisPostAction.CREATE_POST), course);
+            broadcastForPost(new PostDTO(savedPost, MetisCrudAction.CREATE), course);
             sendNotification(savedPost, course);
         }
 
@@ -137,12 +133,12 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         // check
         if (post.getId() == null || !Objects.equals(post.getId(), postId)) {
-            throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idNull");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
         mayInteractWithPostElseThrow(post, user, course);
 
-        Post existingPost = postRepository.findByIdElseThrow(postId);
+        Post existingPost = postRepository.findPostByIdElseThrow(postId);
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
@@ -151,7 +147,7 @@ public class PostService extends PostingService {
         if (contextHasChanged) {
             // in case the context changed, a post is moved from one context (page) to another
             // i.e., it has to be treated as deleted post in the old context
-            broadcastForPost(new MetisPostDTO(existingPost, MetisPostAction.DELETE_POST), course);
+            broadcastForPost(new PostDTO(existingPost, MetisCrudAction.DELETE), course);
         }
 
         // update: allow overwriting of values only for depicted fields if user is at least student
@@ -181,11 +177,11 @@ public class PostService extends PostingService {
         if (contextHasChanged) {
             // in case the context changed, a post is moved from one context (page) to another
             // i.e., it has to be treated as newly created post in the new context
-            broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.CREATE_POST), course);
+            broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.CREATE), course);
         }
         else {
             // in case the context did not change we emit with trigger a post update via websocket
-            broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+            broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
         }
         return updatedPost;
     }
@@ -199,7 +195,7 @@ public class PostService extends PostingService {
      * @return updated post that was persisted
      */
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
-        Post post = postRepository.findByIdElseThrow(postId);
+        Post post = postRepository.findPostByIdElseThrow(postId);
         post.setDisplayPriority(displayPriority);
         return updatePost(courseId, postId, post);
     }
@@ -215,7 +211,8 @@ public class PostService extends PostingService {
         final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
-        broadcastForPost(new MetisPostDTO(updatedPost, MetisPostAction.UPDATE_POST), course);
+        updatedPost.setConversation(post.getConversation());
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
     }
 
     /**
@@ -225,6 +222,11 @@ public class PostService extends PostingService {
      * @return page of posts that match the given context
      */
     public Page<Post> getPostsInCourse(boolean pagingEnabled, Pageable pageable, @Valid PostContextFilter postContextFilter) {
+        if (postContextFilter.getConversationId() != null) {
+            // we throw general exception without details to malicious requests that try to fetch messages, to not leak implementation details
+            // message posts should rather be fetched via the MessagePostService
+            throw new AccessForbiddenException();
+        }
 
         Page<Post> postsInCourse;
         // get all posts in course or filter by course-wide context
@@ -342,6 +344,7 @@ public class PostService extends PostingService {
      */
     public List<Post> getAllPlagiarismCasePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final Course course = preCheckUserAndCourse(user, postContextFilter.getCourseId());
         final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.getPlagiarismCaseId());
 
         // checks
@@ -353,6 +356,7 @@ public class PostService extends PostingService {
 
             // protect sample solution, grading instructions, etc.
             plagiarismCasePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+            plagiarismCasePosts.stream().forEach(post -> post.setCourse(course));
 
             return plagiarismCasePosts;
         }
@@ -373,14 +377,14 @@ public class PostService extends PostingService {
 
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
-        Post post = postRepository.findByIdElseThrow(postId);
+        Post post = postRepository.findPostByIdElseThrow(postId);
         mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
         mayUpdateOrDeletePostingElseThrow(post, user, course);
 
         // delete
         postRepository.deleteById(postId);
-        broadcastForPost(new MetisPostDTO(post, MetisPostAction.DELETE_POST), course);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
     }
 
     /**
@@ -410,7 +414,7 @@ public class PostService extends PostingService {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Exercise", METIS_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Exercise", METIS_POST_ENTITY_NAME, "idNull");
         }
     }
 
@@ -426,7 +430,7 @@ public class PostService extends PostingService {
         Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
         if (!lecture.getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Lecture", METIS_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Lecture", METIS_POST_ENTITY_NAME, "idNull");
         }
     }
 
@@ -497,7 +501,17 @@ public class PostService extends PostingService {
      * @return retrieved post
      */
     public Post findById(Long postId) {
-        return postRepository.findByIdElseThrow(postId);
+        return postRepository.findPostByIdElseThrow(postId);
+    }
+
+    /**
+     * Retrieve post or message post from database by id
+     *
+     * @param postOrMessageId ID of requested post or message
+     * @return retrieved post
+     */
+    public Post findPostOrMessagePostById(Long postOrMessageId) {
+        return postRepository.findPostOrMessagePostByIdElseThrow(postOrMessageId);
     }
 
     /**
@@ -530,32 +544,5 @@ public class PostService extends PostingService {
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT || post.getPlagiarismCase() != null) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         }
-    }
-
-    /**
-     * helper method that fetches groups and authorities of all posting authors in a list of Posts
-     * @param postsInCourse list of posts whose authors are populated with their groups, authorities, and authorRole
-     */
-    private void setAuthorRoleOfPostings(List<Post> postsInCourse) {
-        // prepares a unique set of userIds that authored the current list of postings
-        Set<Long> userIds = new HashSet<>();
-        postsInCourse.forEach(post -> {
-            userIds.add(post.getAuthor().getId());
-            post.getAnswers().forEach(answerPost -> userIds.add(answerPost.getAuthor().getId()));
-        });
-
-        // fetches and sets groups and authorities of all posting authors involved, which are used to display author role icon in the posting header
-        // converts fetched set to hashmap type for performant matching of authors
-        Map<Long, User> authors = userRepository.findAllWithGroupsAndAuthoritiesByIdIn(userIds).stream().collect(Collectors.toMap(user -> user.getId(), Function.identity()));
-
-        // sets respective author role to display user authority icon on posting headers
-        postsInCourse.forEach(post -> {
-            post.setAuthor(authors.get(post.getAuthor().getId()));
-            setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
-            post.getAnswers().forEach(answerPost -> {
-                answerPost.setAuthor(authors.get(answerPost.getAuthor().getId()));
-                setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
-            });
-        });
     }
 }

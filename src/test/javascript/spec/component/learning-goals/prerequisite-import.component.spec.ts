@@ -101,7 +101,7 @@ describe('PrerequisiteImportComponent', () => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForLearningGoalsStub).toHaveBeenCalledTimes(0);
+            expect(searchForLearningGoalsStub).not.toHaveBeenCalled();
             tick(290);
             expect(searchForLearningGoalsStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
             expect(comp.searchTerm).toEqual(givenSearchTerm);

@@ -14,4 +14,4 @@ database:
 - src/main/resources/config/liquibase/master.xml
 
 documentation:
-- docs/*
+- docs/**/*

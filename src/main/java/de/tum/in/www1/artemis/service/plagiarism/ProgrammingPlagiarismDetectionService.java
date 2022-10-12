@@ -6,9 +6,12 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -18,11 +21,11 @@ import org.springframework.stereotype.Service;
 
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
-import de.jplag.exceptions.BasecodeException;
+import de.jplag.Language;
+import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
-import de.jplag.options.LanguageOption;
-import de.jplag.reporting.Report;
+import de.jplag.reporting.reportobject.ReportObjectFactory;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
@@ -35,7 +38,6 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
@@ -54,8 +56,6 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ZipFileService zipFileService;
-
     private final GitService gitService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -72,13 +72,12 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final UrlService urlService;
 
-    public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, ZipFileService zipFileService,
-            GitService gitService, StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
+    public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
+            StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
             ProgrammingExerciseExportService programmingExerciseExportService, PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService,
             UrlService urlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
-        this.zipFileService = zipFileService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
@@ -92,7 +91,7 @@ public class ProgrammingPlagiarismDetectionService {
      * downloads all repos of the exercise and runs JPlag
      *
      * @param programmingExerciseId the id of the programming exercises which should be checked
-     * @param similarityThreshold   ignore comparisons whose similarity is below this threshold (%)
+     * @param similarityThreshold   ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
      * @return the text plagiarism result container with up to 500 comparisons with the highest similarity values
      * @throws ExitException is thrown if JPlag exits unexpectedly
@@ -113,8 +112,8 @@ public class ProgrammingPlagiarismDetectionService {
             }
             plagiarismCacheService.setActivePlagiarismCheck(courseId);
 
-            JPlagResult result = getJPlagResult(programmingExercise, similarityThreshold, minimumScore);
-            if (result == null) {
+            JPlagResult jPlagResult = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore);
+            if (jPlagResult == null) {
                 log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
                 TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
                 textPlagiarismResult.setExercise(programmingExercise);
@@ -127,10 +126,9 @@ public class ProgrammingPlagiarismDetectionService {
                 return textPlagiarismResult;
             }
 
-            log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", result.getComparisons().size(), programmingExerciseId);
+            log.info("JPlag programming comparison finished with {} comparisons for programming exercise {}", jPlagResult.getAllComparisons().size(), programmingExerciseId);
             TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-            textPlagiarismResult.convertJPlagResult(result);
-            textPlagiarismResult.setExercise(programmingExercise);
+            textPlagiarismResult.convertJPlagResult(jPlagResult, programmingExercise);
 
             log.info("JPlag programming comparison done in {}", TimeLogUtil.formatDurationFrom(start));
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
@@ -146,22 +144,17 @@ public class ProgrammingPlagiarismDetectionService {
      * downloads all repos of the exercise and runs JPlag
      *
      * @param programmingExerciseId the id of the programming exercises which should be checked
-     * @param similarityThreshold   ignore comparisons whose similarity is below this threshold (%)
+     * @param similarityThreshold   ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
      * @return a zip file that can be returned to the client
-     * @throws ExitException is thrown if JPlag exits unexpectedly
-     * @throws IOException   is created the zip failed
      */
-    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) throws ExitException, IOException {
+    public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore) {
         long start = System.nanoTime();
 
         final var programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExerciseId).get();
-        JPlagResult result = getJPlagResult(programmingExercise, similarityThreshold, minimumScore);
-        if (result == null) {
-            return null;
-        }
+        JPlagResult result = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore);
 
-        log.info("JPlag programming comparison finished with {} comparisons in {}", result.getComparisons().size(), TimeLogUtil.formatDurationFrom(start));
+        log.info("JPlag programming comparison finished with {} comparisons in {}", result.getAllComparisons().size(), TimeLogUtil.formatDurationFrom(start));
         return generateJPlagReportZip(result, programmingExercise);
     }
 
@@ -169,12 +162,12 @@ public class ProgrammingPlagiarismDetectionService {
      * Checks for plagiarism and returns a JPlag result
      *
      * @param programmingExercise the programming exercise to check
-     * @param similarityThreshold the similarity threshold
+     * @param similarityThreshold the similarity threshold (in % between 0 and 100)
      * @param minimumScore        the minimum score
      * @return the JPlag result or null if there are not enough participations
-     * @throws ExitException in case JPlag fails
      */
-    private JPlagResult getJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) throws ExitException {
+    @NotNull
+    private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore) {
         long programmingExerciseId = programmingExercise.getId();
 
         final var numberOfParticipations = programmingExercise.getStudentParticipations().size();
@@ -184,41 +177,48 @@ public class ProgrammingPlagiarismDetectionService {
         List<ProgrammingExerciseParticipation> participations = filterStudentParticipationsForComparison(programmingExercise, minimumScore);
 
         if (participations.size() < 2) {
-            return null;
+            throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
         }
 
         List<Repository> repositories = downloadRepositories(programmingExercise, participations, targetPath);
         log.info("Downloading repositories done for programming exercise {}", programmingExerciseId);
 
         final var projectKey = programmingExercise.getProjectKey();
-        final var repoFolder = Path.of(targetPath, projectKey).toString();
-        final LanguageOption programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
-
+        final var repoFolder = Path.of(targetPath, projectKey).toFile();
+        final var programmingLanguage = getJPlagProgrammingLanguage(programmingExercise);
         final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
 
-        JPlagOptions options = new JPlagOptions(repoFolder, programmingLanguage);
+        JPlagOptions options = new JPlagOptions(programmingLanguage, Set.of(repoFolder), Set.of())
+                // JPlag expects a value between 0.0 and 1.0
+                .withSimilarityThreshold(similarityThreshold / 100.0).withClusteringOptions(new ClusteringOptions().withEnabled(false));
         if (templateRepoName != null) {
-            options.setBaseCodeSubmissionName(templateRepoName);
+            var templateFolder = Path.of(targetPath, projectKey, templateRepoName).toFile();
+            options = options.withBaseCodeSubmissionDirectory(templateFolder);
         }
-
-        options.setSimilarityThreshold(similarityThreshold);
 
         log.info("Start JPlag programming comparison for programming exercise {}", programmingExerciseId);
         String topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExerciseId);
         plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of("Running JPlag..."));
 
         JPlag jplag = new JPlag(options);
-        JPlagResult result = null;
+        JPlagResult result;
         try {
             result = jplag.run();
         }
-        catch (BasecodeException e) {
+        catch (Exception e) {
             // Handling small or invalid base codes
             log.error(e.getMessage(), e);
-            log.info("Retrying JPlag Plagiarism Check without BaseCode");
-            options.setBaseCodeSubmissionName(null);
-            jplag = new JPlag(options);
-            result = jplag.run();
+            log.warn("Retrying JPlag Plagiarism Check without BaseCode");
+            try {
+                options = options.withBaseCodeSubmissionDirectory(null);
+                jplag = new JPlag(options);
+                result = jplag.run();
+            }
+            catch (Exception ex) {
+                log.info("FAILED: Retrying JPlag Plagiarism Check without BaseCode");
+                log.error(ex.getMessage(), ex);
+                throw new BadRequestAlertException(ex.getMessage(), "Plagiarism Check", "jplagException");
+            }
         }
 
         cleanupResourcesAsync(programmingExercise, repositories, targetPath);
@@ -244,50 +244,28 @@ public class ProgrammingPlagiarismDetectionService {
      * @param jPlagResult         The JPlag result
      * @param programmingExercise the programming exercise
      * @return the zip file
-     * @throws ExitException if JPlag fails
-     * @throws IOException   if the zip file cannot be created
      */
-    public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) throws ExitException, IOException {
+    public File generateJPlagReportZip(JPlagResult jPlagResult, ProgrammingExercise programmingExercise) {
         final var targetPath = fileService.getUniquePathString(repoDownloadClonePath);
-        final var outputFolder = Path.of(targetPath, programmingExercise.getProjectKey() + "-output").toString();
-        final var outputFolderFile = new File(outputFolder);
+        final var reportFolder = Path.of(targetPath, programmingExercise.getProjectKey() + " JPlag Report").toString();
+        final var reportFolderFile = new File(reportFolder);
 
         // Create directories.
-        if (!outputFolderFile.mkdirs()) {
-            log.error("Cannot generate JPlag report because directories couldn't be created: {}", outputFolder);
+        if (!reportFolderFile.mkdirs()) {
+            log.error("Cannot generate JPlag report because directories couldn't be created: {}", reportFolder);
             return null;
         }
 
         // Write JPlag report result to the file.
-        log.info("Write JPlag report to file system");
-        Report jplagReport = new Report(outputFolderFile, jPlagResult.getOptions());
-        jplagReport.writeResult(jPlagResult);
+        log.info("Write JPlag report to file system and zip it");
+        ReportObjectFactory reportObjectFactory = new ReportObjectFactory();
+        reportObjectFactory.createAndSaveReport(jPlagResult, reportFolder);
+        // JPlag automatically zips the report
 
-        // Zip the file
-        var zipFile = zipJPlagReport(programmingExercise, targetPath, Path.of(outputFolder));
-
+        var zipFile = new File(reportFolder + ".zip");
+        fileService.scheduleForDeletion(zipFile.getAbsoluteFile().toPath(), 1);
         fileService.scheduleForDirectoryDeletion(Path.of(targetPath), 2);
         return zipFile;
-    }
-
-    /**
-     * Zips a JPlag report.
-     *
-     * @param programmingExercise the programming exercise
-     * @param targetPath          the path where the zip file will be created
-     * @param outputFolderPath    the path of the Jplag report
-     * @return the zip file
-     * @throws IOException if the zip file cannot be created
-     */
-    private File zipJPlagReport(ProgrammingExercise programmingExercise, String targetPath, Path outputFolderPath) throws IOException {
-        log.info("JPlag report zipping to {}", targetPath);
-        final var courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        final var filename = courseShortName + "-" + programmingExercise.getShortName() + "-" + System.currentTimeMillis() + "-Jplag-Analysis-Output.zip";
-        final var zipFilePath = Path.of(targetPath, filename);
-        zipFileService.createZipFileWithFolderContent(zipFilePath, outputFolderPath, null);
-        log.info("JPlag report zipped. Schedule deletion of zip file in 1 minute");
-        fileService.scheduleForDeletion(zipFilePath, 1);
-        return new File(zipFilePath.toString());
     }
 
     private void cleanupResourcesAsync(final ProgrammingExercise programmingExercise, final List<Repository> repositories, final String targetPath) {
@@ -330,11 +308,13 @@ public class ProgrammingPlagiarismDetectionService {
         }
     }
 
-    private LanguageOption getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
+    private Language getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         return switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA -> LanguageOption.JAVA;
-            case C -> LanguageOption.C_CPP;
-            case PYTHON -> LanguageOption.PYTHON_3;
+            case JAVA -> new de.jplag.java.Language();
+            case C -> new de.jplag.cpp.Language();
+            case PYTHON -> new de.jplag.python3.Language();
+            case SWIFT -> new de.jplag.swift.Language();
+            case KOTLIN -> new de.jplag.kotlin.Language();
             default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
                     "ProgrammingExercise", "notSupported");
         };
@@ -370,7 +350,7 @@ public class ProgrammingPlagiarismDetectionService {
         var topic = plagiarismWebsocketService.getProgrammingExercisePlagiarismCheckTopic(programmingExercise.getId());
 
         List<Repository> downloadedRepositories = new ArrayList<>();
-        participations.forEach(participation -> {
+        participations.parallelStream().forEach(participation -> {
             try {
                 var progressMessage = "Downloading repositories: " + (downloadedRepositories.size() + 1) + "/" + participations.size();
                 plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.RUNNING, List.of(progressMessage));

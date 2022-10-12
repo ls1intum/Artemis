@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockLanguageHelper, MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
 import { CourseScoresComponent, HighlightType } from 'app/course/course-scores/course-scores.component';
-import { EMAIL_KEY, NAME_KEY, COURSE_OVERALL_POINTS_KEY, COURSE_OVERALL_SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
+import { COURSE_OVERALL_POINTS_KEY, COURSE_OVERALL_SCORE_KEY, EMAIL_KEY, NAME_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -295,7 +295,7 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         const errorSpy = jest.spyOn(component, 'logErrorOnSentry');
         fixture.detectChanges();
-        expect(errorSpy).toHaveBeenCalledTimes(0);
+        expect(errorSpy).not.toHaveBeenCalled();
     });
 
     it('should log error on sentry when missing participant score calculation', () => {

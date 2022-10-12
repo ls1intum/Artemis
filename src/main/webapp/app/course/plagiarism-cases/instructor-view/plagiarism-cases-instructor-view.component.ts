@@ -12,8 +12,9 @@ import { downloadFile } from 'app/shared/util/download.util';
 })
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
     courseId: number;
+    examId?: number;
     plagiarismCases: PlagiarismCase[] = [];
-    groupedPlagiarismCases: any;
+    groupedPlagiarismCases: any; // maybe? { [key: number]: PlagiarismCase[] }
     exercisesWithPlagiarismCases: Exercise[] = [];
     getIcon = getIcon;
 
@@ -21,7 +22,13 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.plagiarismCasesService.getPlagiarismCasesForInstructor(this.courseId).subscribe({
+        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+
+        const plagiarismCasesForInstructor$ = this.examId
+            ? this.plagiarismCasesService.getExamPlagiarismCasesForInstructor(this.courseId, this.examId)
+            : this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(this.courseId);
+
+        plagiarismCasesForInstructor$.subscribe({
             next: (res: HttpResponse<PlagiarismCase[]>) => {
                 this.plagiarismCases = res.body!;
                 this.groupedPlagiarismCases = this.plagiarismCases.reduce((acc, plagiarismCase) => {
@@ -42,8 +49,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
     /**
      * calculate the total number of plagiarism cases
-     * @param plagiarismCases plagiarismCases in the course
-     * @return number of plagiarism cases in course
+     * @param plagiarismCases plagiarismCases in the course or exam
+     * @return number of plagiarism cases in course or exam
      */
     numberOfCases(plagiarismCases: PlagiarismCase[]): number {
         return plagiarismCases.length;
@@ -51,8 +58,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
     /**
      * calculate the number of plagiarism cases with a verdict
-     * @param plagiarismCases plagiarismCases in the course
-     * @return number of plagiarism cases with a verdict in course
+     * @param plagiarismCases plagiarismCases in the course or exam
+     * @return number of plagiarism cases with a verdict in course or exam
      */
     numberOfCasesWithVerdict(plagiarismCases: PlagiarismCase[]): number {
         return plagiarismCases.filter((plagiarismCase) => !!plagiarismCase.verdict).length;
@@ -60,8 +67,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
     /**
      * calculate the percentage of plagiarism cases with a verdict
-     * @param plagiarismCases plagiarismCases in the course
-     * @return percentage of plagiarism cases with a verdict in course
+     * @param plagiarismCases plagiarismCases in the course or exam
+     * @return percentage of plagiarism cases with a verdict in course or exam
      */
     percentageOfCasesWithVerdict(plagiarismCases: PlagiarismCase[]): number {
         return (this.numberOfCasesWithVerdict(plagiarismCases) / this.numberOfCases(plagiarismCases)) * 100 || 0;
@@ -69,8 +76,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
     /**
      * calculate the number of plagiarism cases with a post
-     * @param plagiarismCases plagiarismCases in the course
-     * @return number of plagiarism cases with a post in course
+     * @param plagiarismCases plagiarismCases in the course or exam
+     * @return number of plagiarism cases with a post in course or exam
      */
     numberOfCasesWithPost(plagiarismCases: PlagiarismCase[]): number {
         return plagiarismCases.filter((plagiarismCase) => !!plagiarismCase.post).length;
@@ -78,26 +85,26 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
     /**
      * calculate the percentage of plagiarism cases with a post
-     * @param plagiarismCases plagiarismCases in the course
-     * @return percentage of plagiarism cases with a post in course
+     * @param plagiarismCases plagiarismCases in the course or exam
+     * @return percentage of plagiarism cases with a post in course or exam
      */
     percentageOfCasesWithPost(plagiarismCases: PlagiarismCase[]): number {
         return (this.numberOfCasesWithPost(plagiarismCases) / this.numberOfCases(plagiarismCases)) * 100 || 0;
     }
 
     /**
-     * calculate the number of plagiarism cases with an answer by the student in course
-     * @param plagiarismCases plagiarismCases in the course
-     * @return number of plagiarism cases with an answer by the student in course
+     * calculate the number of plagiarism cases with an answer by the student in course or exam
+     * @param plagiarismCases plagiarismCases in the course or exam
+     * @return number of plagiarism cases with an answer by the student in course or exam
      */
     numberOfCasesWithStudentAnswer(plagiarismCases: PlagiarismCase[]): number {
         return plagiarismCases.filter((plagiarismCase) => this.hasStudentAnswer(plagiarismCase)).length;
     }
 
     /**
-     * calculate the percentage of plagiarism cases with an answer by the student in course
-     * @param plagiarismCases plagiarismCases in the course
-     * @return percentage of plagiarism cases with an answer by the student in course
+     * calculate the percentage of plagiarism cases with an answer by the student in course or exam
+     * @param plagiarismCases plagiarismCases in the course or exam
+     * @return percentage of plagiarism cases with an answer by the student in course or exam
      */
     percentageOfCasesWithStudentAnswer(plagiarismCases: PlagiarismCase[]): number {
         return (this.numberOfCasesWithStudentAnswer(plagiarismCases) / this.numberOfCasesWithPost(plagiarismCases)) * 100 || 0;

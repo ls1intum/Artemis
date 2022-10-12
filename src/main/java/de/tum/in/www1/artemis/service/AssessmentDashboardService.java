@@ -104,7 +104,11 @@ public class AssessmentDashboardService {
             }
 
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
-            exercise.setTotalNumberOfAssessments(numberOfAssessmentsOfCorrectionRounds[0]);
+            // numberOfAssessmentsOfCorrectionRounds can be length 0 for test exams
+            if (numberOfAssessmentsOfCorrectionRounds.length > 0) {
+                exercise.setTotalNumberOfAssessments(numberOfAssessmentsOfCorrectionRounds[0]);
+            }
+
             start = System.nanoTime();
             Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
 
@@ -158,9 +162,9 @@ public class AssessmentDashboardService {
             lateSubmissionCounts = submissionRepository.countByExerciseIdsSubmittedAfterDueDate(nonProgrammingExerciseIds);
         }
         // convert the data from the queries
-        var programmingSubmissionMap = programmingSubmissionsCounts.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, ExerciseMapEntry::getValue));
-        var submissionMap = submissionCounts.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, ExerciseMapEntry::getValue));
-        var lateSubmissionMap = lateSubmissionCounts.stream().collect(Collectors.toMap(ExerciseMapEntry::getKey, ExerciseMapEntry::getValue));
+        var programmingSubmissionMap = programmingSubmissionsCounts.stream().collect(Collectors.toMap(ExerciseMapEntry::exerciseId, ExerciseMapEntry::value));
+        var submissionMap = submissionCounts.stream().collect(Collectors.toMap(ExerciseMapEntry::exerciseId, ExerciseMapEntry::value));
+        var lateSubmissionMap = lateSubmissionCounts.stream().collect(Collectors.toMap(ExerciseMapEntry::exerciseId, ExerciseMapEntry::value));
 
         // set the number of submissions for the exercises
         programmingExercises.forEach(exercise -> exercise.setNumberOfSubmissions(new DueDateStat(programmingSubmissionMap.getOrDefault(exercise.getId(), 0L), 0L)));

@@ -10,6 +10,7 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -773,7 +774,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
         programmingExerciseIntegrationTestService.testCheckPlagiarism();
     }
 
-    @Test
+    @RepeatedTest(10)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismJplagReport() throws Exception {
         programmingExerciseIntegrationTestService.testCheckPlagiarismJplagReport();
@@ -983,6 +984,16 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
         programmingExerciseIntegrationTestService.test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
             assertDoesNotThrow(() -> hestiaUtilTestService.setupSolution(files, exercise, localRepository));
+            return localRepository;
+        });
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testGetTemplateFilesWithContentShouldRedirect() throws Exception {
+        programmingExerciseIntegrationTestService.test_redirectGetTemplateRepositoryFilesWithContent((exercise, files) -> {
+            LocalRepository localRepository = new LocalRepository("main");
+            assertDoesNotThrow(() -> hestiaUtilTestService.setupTemplate(files, exercise, localRepository));
             return localRepository;
         });
     }

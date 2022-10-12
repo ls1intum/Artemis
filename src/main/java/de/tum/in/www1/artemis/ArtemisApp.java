@@ -18,7 +18,7 @@ import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.core.env.Environment;
 
-import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
@@ -75,6 +75,7 @@ public class ArtemisApp {
         String serverPort = env.getProperty("server.port");
         String version = buildProperties.getVersion();
         String gitCommitId = gitProperties.getShortCommitId();
+        String gitBranch = gitProperties.getBranch();
         String contextPath = env.getProperty("server.servlet.context-path");
         if (StringUtils.isBlank(contextPath)) {
             contextPath = "/";
@@ -95,9 +96,10 @@ public class ArtemisApp {
                 \tProfiles:   {}
                 \tVersion:    {}
                 \tGit Commit: {}
+                \tGit Branch: {}
                 ----------------------------------------------------------
 
                 """, env.getProperty("spring.application.name"), protocol, serverPort, contextPath, protocol, hostAddress, serverPort, contextPath,
-                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), version, gitCommitId);
+                env.getActiveProfiles().length == 0 ? env.getDefaultProfiles() : env.getActiveProfiles(), version, gitCommitId, gitBranch);
     }
 }

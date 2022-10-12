@@ -37,51 +37,75 @@
             [recent]="selectedCourseEmojis"
         ></jhi-emoji-picker>
     </ng-template>
-    <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.PINNED || currentUserIsAtLeastTutor">
-        <button
-            class="reaction-button pin"
-            [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
-            [class.reaction-button--reacted]="displayPriority === DisplayPriority.PINNED && currentUserIsAtLeastTutor"
-            [disabled]="!currentUserIsAtLeastTutor"
-            (click)="currentUserIsAtLeastTutor && togglePin()"
-        >
-            <jhi-emoji [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
-        </button>
-    </div>
-    <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.ARCHIVED || currentUserIsAtLeastTutor">
-        <button
-            class="reaction-button archive"
-            [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
-            [class.reaction-button--reacted]="displayPriority === DisplayPriority.ARCHIVED && currentUserIsAtLeastTutor"
-            [disabled]="!currentUserIsAtLeastTutor"
-            (click)="currentUserIsAtLeastTutor && toggleArchive()"
-        >
-            <jhi-emoji [emoji]="archiveEmojiId" [ngbTooltip]="archiveTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
-        </button>
-    </div>
-    <!-- start discussion -->
-    <div class="col-auto p-0" *ngIf="sortedAnswerPosts.length === 0">
-        <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()">
-            <jhi-emoji [emoji]="speechBalloonId"></jhi-emoji>
-            <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
-        </button>
-    </div>
-    <!-- expand answers -->
-    <div class="col-auto p-0" *ngIf="!showAnswers && sortedAnswerPosts.length > 0">
-        <button class="reaction-button clickable expand-answers-btn" (click)="showAnswersChange.emit(true)">
-            <jhi-emoji [emoji]="speechBalloonId"></jhi-emoji>
-            <span class="emoji-count">{{
-                sortedAnswerPosts.length === 1
-                    ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
-                    : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
-            }}</span>
-        </button>
-    </div>
-    <!-- collapse answers -->
-    <div class="col-auto p-0" *ngIf="showAnswers && sortedAnswerPosts.length > 0">
-        <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers" (click)="showAnswersChange.emit(false)">
-            <jhi-emoji [emoji]="closeCrossId"></jhi-emoji>
-            <span class="emoji-count">{{ 'artemisApp.metis.collapseAnswers' | artemisTranslate }}</span>
-        </button>
-    </div>
+    <ng-container *ngIf="!isCourseMessagesPage; else buttonsForMessagesPage">
+        <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.PINNED || currentUserIsAtLeastTutor">
+            <button
+                class="reaction-button pin"
+                [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
+                [class.reaction-button--reacted]="displayPriority === DisplayPriority.PINNED && currentUserIsAtLeastTutor"
+                [disabled]="!currentUserIsAtLeastTutor"
+                (click)="currentUserIsAtLeastTutor && togglePin()"
+            >
+                <jhi-emoji [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
+            </button>
+        </div>
+        <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.ARCHIVED || currentUserIsAtLeastTutor">
+            <button
+                class="reaction-button archive"
+                [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
+                [class.reaction-button--reacted]="displayPriority === DisplayPriority.ARCHIVED && currentUserIsAtLeastTutor"
+                [disabled]="!currentUserIsAtLeastTutor"
+                (click)="currentUserIsAtLeastTutor && toggleArchive()"
+            >
+                <jhi-emoji [emoji]="archiveEmojiId" [ngbTooltip]="archiveTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
+            </button>
+        </div>
+        <!-- start discussion -->
+        <div class="col-auto p-0" *ngIf="sortedAnswerPosts.length === 0">
+            <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()">
+                <jhi-emoji [emoji]="speechBalloonId"></jhi-emoji>
+                <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
+            </button>
+        </div>
+        <!-- expand answers -->
+        <div class="col-auto p-0" *ngIf="!showAnswers && sortedAnswerPosts.length > 0">
+            <button class="reaction-button clickable expand-answers-btn" (click)="showAnswersChange.emit(true)">
+                <jhi-emoji [emoji]="speechBalloonId"></jhi-emoji>
+                <span class="emoji-count">{{
+                    sortedAnswerPosts.length === 1
+                        ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
+                        : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
+                }}</span>
+            </button>
+        </div>
+        <!-- collapse answers -->
+        <div class="col-auto p-0" *ngIf="showAnswers && sortedAnswerPosts.length > 0">
+            <button class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers" (click)="showAnswersChange.emit(false)">
+                <jhi-emoji [emoji]="closeCrossId"></jhi-emoji>
+                <span class="emoji-count">{{ 'artemisApp.metis.collapseAnswers' | artemisTranslate }}</span>
+            </button>
+        </div>
+    </ng-container>
+    <ng-template #buttonsForMessagesPage>
+        <ng-container *ngIf="!isThreadSidebar">
+            <!-- start discussion -->
+            <div class="col-auto p-0" *ngIf="sortedAnswerPosts.length === 0">
+                <button class="reaction-button clickable reply-btn" (click)="openThread.emit()">
+                    <jhi-emoji [emoji]="speechBalloonId"></jhi-emoji>
+                    <span class="emoji-count">{{ 'artemisApp.messages.thread.reply' | artemisTranslate }}</span>
+                </button>
+            </div>
+            <!-- expand answers -->
+            <div class="col-auto p-0" *ngIf="!showAnswers && sortedAnswerPosts.length > 0">
+                <button class="reaction-button clickable expand-answers-btn" (click)="openThread.emit()">
+                    <jhi-emoji [emoji]="speechBalloonId"></jhi-emoji>
+                    <span class="emoji-count">{{
+                        sortedAnswerPosts.length === 1
+                            ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
+                            : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts.length })
+                    }}</span>
+                </button>
+            </div>
+        </ng-container>
+    </ng-template>
 </div>

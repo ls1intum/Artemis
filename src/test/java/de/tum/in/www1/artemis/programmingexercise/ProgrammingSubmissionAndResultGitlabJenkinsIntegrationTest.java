@@ -37,10 +37,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
@@ -59,6 +57,9 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     @Autowired
     private ResultRepository resultRepository;
@@ -104,8 +105,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         logs.add("[2021-05-10T15:19:49.740Z] [ERROR] BubbleSort.java:[15,9] not a statement");
         logs.add("[2021-05-10T15:19:49.740Z] [ERROR] BubbleSort.java:[15,10] ';' expected");
 
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of());
-        notification.setLogs(logs);
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
         var submissionWithLogsOptional = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
@@ -135,6 +135,128 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(receivedLogs).isNotEmpty();
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_noSca() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, false);
+
+        List<String> logs = new ArrayList<>();
+        logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
+        logs.add("[2021-05-10T15:00:00.000Z] docker exec"); // Job started
+        logs.add("[2021-05-10T15:00:05.000Z] Scanning for projects..."); // Build & test started
+        logs.add("[2021-05-10T15:00:10.000Z] Dependency 1 Downloaded from");
+        logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
+        logs.add("[2021-05-10T15:00:20.000Z] Everything finished"); // Job finished
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
+        postResult(notification, HttpStatus.OK);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        assertThat(statistics.getBuildCount()).isEqualTo(1);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.getTestDuration()).isEqualTo(10);
+        assertThat(statistics.getScaDuration()).isNull();
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(110);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_noSca_gradle() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        exercise.setProjectType(ProjectType.GRADLE_GRADLE);
+        programmingExerciseRepository.save(exercise);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, false);
+
+        List<String> logs = new ArrayList<>();
+        logs.add("[2021-05-10T15:00:00.000Z] Starting a Gradle Daemon"); // Job started
+        logs.add("[2021-05-10T15:00:20.000Z] BUILD SUCCESSFUL in 20 seconds"); // Build & test started
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
+        postResult(notification, HttpStatus.OK);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        assertThat(statistics.getBuildCount()).isEqualTo(1);
+        assertThat(statistics.getAgentSetupDuration()).isNull();
+        assertThat(statistics.getTestDuration()).isEqualTo(20);
+        assertThat(statistics.getScaDuration()).isNull();
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(20);
+        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_sca() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, false);
+
+        List<String> logs = new ArrayList<>();
+        logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
+        logs.add("[2021-05-10T15:00:00.000Z] docker exec"); // Job started
+        logs.add("[2021-05-10T15:00:05.000Z] Scanning for projects..."); // Build & test started
+        logs.add("[2021-05-10T15:00:20.000Z] Dependency 1 Downloaded from");
+        logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
+        logs.add("[2021-05-10T15:00:16.000Z] Scanning for projects..."); // SCA started
+        logs.add("[2021-05-10T15:00:20.000Z] Dependency 2 Downloaded from");
+        logs.add("[2021-05-10T15:00:27.000Z] Total time: Some time"); // SCA finished
+        logs.add("[2021-05-10T15:00:30.000Z] Everything finished"); // Job finished
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
+        postResult(notification, HttpStatus.OK);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        assertThat(statistics.getBuildCount()).isEqualTo(1);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
+        assertThat(statistics.getTestDuration()).isEqualTo(10);
+        assertThat(statistics.getScaDuration()).isEqualTo(11);
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(120);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_unsupportedProgrammingLanguage() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, false);
+
+        List<String> logs = new ArrayList<>();
+        logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
+        logs.add("[2021-05-10T15:00:00.000Z] docker exec"); // Job started
+        logs.add("[2021-05-10T15:00:05.000Z] Scanning for projects..."); // Build & test started
+        logs.add("[2021-05-10T15:00:20.000Z] Dependency 1 Downloaded from");
+        logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
+        logs.add("[2021-05-10T15:00:20.000Z] Everything finished"); // Job finished
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.PYTHON, List.of(), logs, null, new ArrayList<>());
+        postResult(notification, HttpStatus.OK);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        // Should not extract any statistics
+        assertThat(statistics.getBuildCount()).isEqualTo(0);
+        assertThat(statistics.getAgentSetupDuration()).isNull();
+        assertThat(statistics.getTestDuration()).isNull();
+        assertThat(statistics.getScaDuration()).isNull();
+        assertThat(statistics.getTotalJobDuration()).isNull();
+        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+    }
+
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {
         return Arrays.stream(ProgrammingLanguage.values())
                 .flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true), Arguments.of(programmingLanguage, false)));
@@ -151,7 +273,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of());
+        var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of(), new ArrayList<>(), null, new ArrayList<>());
         postResult(notification, HttpStatus.BAD_REQUEST);
 
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
@@ -183,23 +305,17 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         // Build result for first commit is received
         var firstBuildCompleteDate = ZonedDateTime.now();
-        var firstVcsDTO = new CommitDTO();
-        firstVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()));
-        firstVcsDTO.setHash(firstCommitHash);
-        var notificationDTOFirstCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of());
-        notificationDTOFirstCommit.setRunDate(firstBuildCompleteDate);
-        notificationDTOFirstCommit.setCommits(List.of(firstVcsDTO));
+        var firstVcsDTO = new CommitDTO(firstCommitHash, urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()), defaultBranch);
+        var notificationDTOFirstCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of(), new ArrayList<>(),
+                firstBuildCompleteDate, List.of(firstVcsDTO));
 
         postResult(notificationDTOFirstCommit, HttpStatus.OK);
 
         // Build result for second commit is received
         var secondBuildCompleteDate = ZonedDateTime.now();
-        var secondVcsDTO = new CommitDTO();
-        secondVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()));
-        secondVcsDTO.setHash(secondCommitHash);
-        var notificationDTOSecondCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of());
-        notificationDTOSecondCommit.setRunDate(secondBuildCompleteDate);
-        notificationDTOSecondCommit.setCommits(List.of(secondVcsDTO));
+        var secondVcsDTO = new CommitDTO(secondCommitHash, urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()), defaultBranch);
+        var notificationDTOSecondCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of(), new ArrayList<>(),
+                secondBuildCompleteDate, List.of(secondVcsDTO));
 
         postResult(notificationDTOSecondCommit, HttpStatus.OK);
 
@@ -218,7 +334,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var submission = database.createProgrammingSubmission(participation, false);
 
         // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), new ArrayList<>(), null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
         var result = assertBuildError(participation.getId(), userLogin, false);
@@ -240,7 +356,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), new ArrayList<>(), null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
         assertBuildError(participation.getId(), userLogin, true);
@@ -319,13 +435,12 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         request.postWithoutLocation("/api/" + NEW_RESULT_RESOURCE_PATH, alteredObj, status, httpHeaders);
     }
 
-    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests) {
+    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests,
+            List<String> logs, ZonedDateTime buildRunDate, List<CommitDTO> commits) {
         var repoName = (projectKey + "-" + loginName).toUpperCase();
         // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
         var fullName = exercise.getProjectKey() + " » " + repoName + " #3";
-        var notification = ModelFactory.generateTestResultDTO(repoName, successfulTests, List.of(), programmingLanguage, false);
-        notification.setFullName(fullName);
-        return notification;
+        return ModelFactory.generateTestResultDTO(fullName, repoName, buildRunDate, programmingLanguage, false, successfulTests, List.of(), logs, commits, null);
     }
 
 }

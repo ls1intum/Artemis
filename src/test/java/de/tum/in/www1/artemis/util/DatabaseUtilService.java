@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
+import static de.tum.in.www1.artemis.util.ModelFactory.DEFAULT_BRANCH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -64,6 +65,8 @@ import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
@@ -207,6 +210,12 @@ public class DatabaseUtilService {
 
     @Autowired
     private AnswerPostRepository answerPostRepository;
+
+    @Autowired
+    private ConversationRepository conversationRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     @Autowired
     private ModelingSubmissionService modelSubmissionService;
@@ -579,15 +588,18 @@ public class DatabaseUtilService {
 
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations, boolean withFiles) throws Exception {
         List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations, withFiles);
-        Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
-        Lecture lecture1 = course1.getLectures().stream().findFirst().get();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
-        VideoUnit videoUnit = createVideoUnit();
-        TextUnit textUnit = createTextUnit();
-        AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
-        ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
-        addLectureUnitsToLecture(lecture1, Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit));
-        return courses;
+        return courses.stream().peek(course -> {
+            List<Lecture> lectures = new ArrayList<>(course.getLectures());
+            for (int i = 0; i < lectures.size(); i++) {
+                TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().get();
+                VideoUnit videoUnit = createVideoUnit();
+                TextUnit textUnit = createTextUnit();
+                AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
+                ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
+                lectures.set(i, addLectureUnitsToLecture(lectures.get(i), Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit)));
+            }
+            course.setLectures(new HashSet<>(lectures));
+        }).toList();
     }
 
     public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
@@ -811,6 +823,7 @@ public class DatabaseUtilService {
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
                 CourseWideContext.ANNOUNCEMENT };
         posts.addAll(createBasicPosts(course1, courseWideContexts));
+        posts.addAll(createBasicPosts(createConversation(course1)));
 
         return posts;
     }
@@ -818,7 +831,7 @@ public class DatabaseUtilService {
     public List<Post> createPostsWithAnswerPostsWithinCourse() {
         List<Post> posts = createPostsWithinCourse();
 
-        // add answer for one post in each context (lecture, exercise, course-wide)
+        // add answer for one post in each context (lecture, exercise, course-wide, conversation)
         Post lecturePost = posts.stream().filter(coursePost -> coursePost.getLecture() != null).findFirst().orElseThrow();
         lecturePost.setAnswers(createBasicAnswers(lecturePost));
         postRepository.save(lecturePost);
@@ -831,6 +844,10 @@ public class DatabaseUtilService {
         Post courseWidePost = posts.stream().filter(coursePost -> coursePost.getCourseWideContext() != null).findFirst().orElseThrow();
         courseWidePost.setAnswers(createBasicAnswersThatResolves(courseWidePost));
         postRepository.save(courseWidePost);
+
+        Post conversationPost = posts.stream().filter(coursePost -> coursePost.getConversation() != null).findFirst().orElseThrow();
+        conversationPost.setAnswers(createBasicAnswers(conversationPost));
+        postRepository.save(conversationPost);
 
         return posts;
     }
@@ -872,6 +889,7 @@ public class DatabaseUtilService {
     private Post createBasicPost(PlagiarismCase plagiarismCase) {
         Post postToAdd = createBasicPost(0, "instructor");
         postToAdd.setPlagiarismCase(plagiarismCase);
+        postToAdd.getPlagiarismCase().setExercise(null);
         return postRepository.save(postToAdd);
     }
 
@@ -890,6 +908,17 @@ public class DatabaseUtilService {
 
         dayCount = (dayCount % 25) + 1;
         return post;
+    }
+
+    private List<Post> createBasicPosts(Conversation conversation) {
+        List<Post> posts = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            Post postToAdd = createBasicPost(i, "tutor");
+            postToAdd.setConversation(conversation);
+            postRepository.save(postToAdd);
+            posts.add(postToAdd);
+        }
+        return posts;
     }
 
     private Set<AnswerPost> createBasicAnswers(Post post) {
@@ -913,6 +942,37 @@ public class DatabaseUtilService {
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
         return answerPosts;
+    }
+
+    public void createMultipleCoursesWithAllExercisesAndLectures(int numberOfCoursesWithExercises, int numberOfCoursesWithLectures) throws Exception {
+        for (int i = 0; i < numberOfCoursesWithExercises; i++) {
+            createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(true);
+        }
+        for (int i = 0; i < numberOfCoursesWithLectures; i++) {
+            createCoursesWithExercisesAndLecturesAndLectureUnits(true, true);
+        }
+    }
+
+    public Conversation createConversation(Course course) {
+        Conversation conversation = new Conversation();
+        conversation.setCourse(course);
+        conversation = conversationRepository.save(conversation);
+
+        List<ConversationParticipant> conversationParticipants = new ArrayList<>();
+        conversationParticipants.add(createConversationParticipant(conversation, "tutor1"));
+        conversationParticipants.add(createConversationParticipant(conversation, "tutor2"));
+
+        conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
+        return conversationRepository.save(conversation);
+    }
+
+    private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
+        ConversationParticipant conversationParticipant = new ConversationParticipant();
+        conversationParticipant.setConversation(conversation);
+        conversationParticipant.setLastRead(conversation.getLastMessageDate());
+        conversationParticipant.setUser(getUserByLogin(userName));
+
+        return conversationParticipantRepository.save(conversationParticipant);
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
@@ -1499,7 +1559,8 @@ public class DatabaseUtilService {
      * @return eagerly loaded representation of the participation object stored in the database
      */
     public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login,
+                false);
         if (storedParticipation.isEmpty()) {
             User user = getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
@@ -1507,14 +1568,15 @@ public class DatabaseUtilService {
             participation.setParticipant(user);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
+            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
 
     public StudentParticipation createAndSaveParticipationForExerciseInTheFuture(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login,
+                false);
         storedParticipation.ifPresent(studentParticipation -> studentParticipationRepo.delete(studentParticipation));
         User user = getUserByLogin(login);
         StudentParticipation participation = new StudentParticipation();
@@ -1522,7 +1584,7 @@ public class DatabaseUtilService {
         participation.setParticipant(user);
         participation.setExercise(exercise);
         studentParticipationRepo.save(participation);
-        storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
+        storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
         assertThat(storedParticipation).isPresent();
         return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
@@ -2269,6 +2331,7 @@ public class DatabaseUtilService {
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
         programmingExercise.setShowTestNamesToStudents(false);
+        programmingExercise.setBranch(DEFAULT_BRANCH);
     }
 
     /**
@@ -2604,7 +2667,7 @@ public class DatabaseUtilService {
      * @param exercise - the exercise of which the submissions are assessed
      */
     public void addAutomaticAssessmentToExercise(Exercise exercise) {
-        var participations = studentParticipationRepo.findByExerciseIdWithEagerSubmissionsResultAssessor(exercise.getId());
+        var participations = studentParticipationRepo.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exercise.getId(), false);
         participations.forEach(participation -> {
             Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
             submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
@@ -2625,7 +2688,7 @@ public class DatabaseUtilService {
      * @param assessor - the assessor which is set for the results of the submission
      */
     public void addAssessmentToExercise(Exercise exercise, User assessor) {
-        var participations = studentParticipationRepo.findByExerciseIdWithEagerSubmissionsResultAssessor(exercise.getId());
+        var participations = studentParticipationRepo.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exercise.getId(), false);
         participations.forEach(participation -> {
             Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
             submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
@@ -3929,6 +3992,45 @@ public class DatabaseUtilService {
             gradeStep.setUpperBoundPercentage(intervals[i + 1]);
             gradeStep.setLowerBoundInclusive(i == 0 || lowerBoundInclusivity);
             gradeStep.setUpperBoundInclusive(i + 1 == gradeStepCount || !lowerBoundInclusivity);
+            gradeStep.setIsPassingGrade(i >= firstPassingIndex);
+            gradeStep.setGradeName(gradeNames.isPresent() ? gradeNames.get()[i] : "Step" + i);
+            gradeStep.setGradingScale(gradingScale);
+            gradeSteps.add(gradeStep);
+        }
+        gradingScale.setGradeSteps(gradeSteps);
+        gradingScale.setGradeType(GradeType.GRADE);
+        return gradingScale;
+    }
+
+    public GradingScale generateGradingScaleWithStickyStep(double[] intervalSizes, Optional<String[]> gradeNames, boolean lowerBoundInclusivity, int firstPassingIndex) {
+        // This method has a different signature from the one above to define intervals from sizes to be consistent with
+        // the instructor UI at interval-grading-system.component.ts and client tests at bonus.service.spec.ts.
+
+        int gradeStepCount = intervalSizes.length;
+        if (firstPassingIndex >= gradeStepCount || firstPassingIndex < 0) {
+            fail("Invalid grading scale parameters");
+        }
+        GradingScale gradingScale = new GradingScale();
+        Set<GradeStep> gradeSteps = new LinkedHashSet<>();
+        double currentLowerBoundPercentage = 0.0;
+        for (int i = 0; i < gradeStepCount; i++) {
+            GradeStep gradeStep = new GradeStep();
+            gradeStep.setLowerBoundPercentage(currentLowerBoundPercentage);
+            currentLowerBoundPercentage += intervalSizes[i];
+            gradeStep.setUpperBoundPercentage(currentLowerBoundPercentage);
+            gradeStep.setLowerBoundInclusive(i == 0 || lowerBoundInclusivity);
+            gradeStep.setUpperBoundInclusive(i + 1 == gradeStepCount || !lowerBoundInclusivity);
+
+            // Ensure 100 percent is not a part of the sticky grade step.
+            if (i == gradeStepCount - 2) {
+                gradeStep.setUpperBoundInclusive(true);
+
+            }
+            else if (i == gradeStepCount - 1) {
+                gradeStep.setLowerBoundInclusive(false);
+                gradeStep.setUpperBoundInclusive(true);
+            }
+
             gradeStep.setIsPassingGrade(i >= firstPassingIndex);
             gradeStep.setGradeName(gradeNames.isPresent() ? gradeNames.get()[i] : "Step" + i);
             gradeStep.setGradingScale(gradingScale);

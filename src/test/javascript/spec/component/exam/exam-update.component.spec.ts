@@ -562,7 +562,7 @@ describe('Exam Update Component', () => {
             component.save();
             expect(importSpy).toHaveBeenCalledOnce();
             expect(importSpy).toHaveBeenCalledWith(1, examForImport);
-            expect(alertSpy).toHaveBeenCalledTimes(0);
+            expect(alertSpy).not.toHaveBeenCalled();
         });
 
         it('should  trigger an alarm for a wrong user input in the examWithoutExercises exercises', () => {

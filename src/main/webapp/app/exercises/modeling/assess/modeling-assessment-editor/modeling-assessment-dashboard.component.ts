@@ -81,7 +81,7 @@ export class ModelingAssessmentDashboardComponent extends AbstractAssessmentDash
         this.submissions = [];
         this.filteredSubmissions = [];
         this.canOverrideAssessments = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
-        translateService.get('modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
+        translateService.get('artemisApp.modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
     ngOnInit() {
@@ -125,26 +125,24 @@ export class ModelingAssessmentDashboardComponent extends AbstractAssessmentDash
      *
      */
     getSubmissions() {
-        this.modelingSubmissionService
-            .getModelingSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
-            .subscribe((res: HttpResponse<ModelingSubmission[]>) => {
-                // only use submissions that have already been submitted (this makes sure that unsubmitted submissions are not shown
-                // the server should have filtered these submissions already
-                this.submissions = res.body!.filter((submission) => submission.submitted);
-                this.submissions.forEach((submission) => {
-                    const tmpResult = getLatestSubmissionResult(submission);
-                    if (tmpResult) {
-                        // reconnect some associations
-                        submission.latestResult = tmpResult;
-                        tmpResult!.submission = submission;
-                        tmpResult!.participation = submission.participation;
-                        if (submission.participation) {
-                            submission.participation.results = [tmpResult!];
-                        }
+        this.modelingSubmissionService.getSubmissions(this.exercise.id!, { submittedOnly: true }).subscribe((res: HttpResponse<ModelingSubmission[]>) => {
+            // only use submissions that have already been submitted (this makes sure that unsubmitted submissions are not shown
+            // the server should have filtered these submissions already
+            this.submissions = res.body!.filter((submission) => submission.submitted);
+            this.submissions.forEach((submission) => {
+                const tmpResult = getLatestSubmissionResult(submission);
+                if (tmpResult) {
+                    // reconnect some associations
+                    submission.latestResult = tmpResult;
+                    tmpResult!.submission = submission;
+                    tmpResult!.participation = submission.participation;
+                    if (submission.participation) {
+                        submission.participation.results = [tmpResult!];
                     }
-                });
-                this.applyChartFilter(this.submissions);
+                }
             });
+            this.applyChartFilter(this.submissions);
+        });
     }
 
     getAssessmentRouterLink(participationId: number, submissionId: number): string[] {

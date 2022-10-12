@@ -5,9 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -116,4 +116,33 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testStartPracticeMode() throws URISyntaxException {
+        Course course = database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise1 = (ProgrammingExercise) course.getExercises().iterator().next();
+        database.updateExerciseDueDate(programmingExercise1.getId(), ZonedDateTime.now().minusMinutes(2));
+        Participant participant = database.getUserByLogin("student1");
+
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise1);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(any());
+        var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
+        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(String.class), any(String.class), any(String.class), any(String.class));
+        doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
+        doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
+        doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
+        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
+        doNothing().when(versionControlService).addWebHookForParticipation(any());
+
+        StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise1, participant, Optional.empty());
+
+        assertTrue(studentParticipationReceived.isTestRun());
+        assertEquals(programmingExercise1, studentParticipationReceived.getExercise());
+        assertTrue(studentParticipationReceived.getStudent().isPresent());
+        assertEquals(participant, studentParticipationReceived.getStudent().get());
+        // Acceptance range, initializationDate is to be set to now()
+        assertTrue(ZonedDateTime.now().minusSeconds(10).isBefore(studentParticipationReceived.getInitializationDate()));
+        assertTrue(ZonedDateTime.now().plusSeconds(10).isAfter(studentParticipationReceived.getInitializationDate()));
+        assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
+    }
 }

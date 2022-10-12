@@ -19,7 +19,9 @@ import {
     faListAlt,
     faTable,
     faUserCheck,
+    faPersonChalkboard,
 } from '@fortawesome/free-solid-svg-icons';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-course-management-card',
@@ -69,6 +71,9 @@ export class CourseManagementCardComponent implements OnChanges {
     faGraduationCap = faGraduationCap;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
+    faPersonChalkboard = faPersonChalkboard;
+
+    readonly FeatureToggle = FeatureToggle;
 
     ngOnChanges() {
         // Only sort one time once loaded

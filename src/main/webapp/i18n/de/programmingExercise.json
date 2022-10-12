@@ -164,6 +164,7 @@
                     "couldNotBeUpdated": "Die folgenden Testfälle konnten nicht gespeichert werden: {{testCases}}.",
                     "weightSumError": "Die Summe aller Testfall-Gewichte beträgt 0 oder weniger. Bitte stelle mindestens ein Testfall-Gewicht größer als 0 ein.",
                     "showInactive": "Inaktive Testfälle anzeigen",
+                    "exercisePoints": "Aufgaben Punkte:",
                     "settingNull": "Der Testfall {{testCase}} darf keine leeren Einstellungen haben.",
                     "settingNegative": "Der Testfall {{testCase}} darf keine Einstellungen mit negativen Werten haben."
                 },
@@ -181,7 +182,8 @@
                     "preview": "Vorschau",
                     "resetFilter": "Filter zurücksetzen",
                     "testCaseWeights": {
-                        "title": "Gewichtungs-Verteilung",
+                        "title": "Testgewichtungen",
+                        "sumOfTestWeights": "Summe der Testgewichtungen:",
                         "description": "Die Verteilung der Gewichtungen der Testfälle auf die Aufgabe. Dies zeigt den Einfluss eines Testfalls auf das Ergebnis einer/s Studierenden. Der erste Balken betrachtet nur die Gewichtung eines Testfalls, während der zweite Balken auch die jeweiligen Bonuspunkte einbezieht.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",
                         "weight": "Gewichtung",
                         "weightTooltip": "Gewichtung: {{ percentage }}% aller Gewichtungen.",
@@ -199,6 +201,16 @@
                         "description": "Die Verteilung der Kategorien in Bezug auf 'Penalty', 'Issues' und 'Punkte'.<br/>Der <b>Penalty</b> Balken zeigt die Verteilung von Penalties in den Kategorien.<br/>Der <b>Issues</b> Balken zeigt wie viele Issues in der entsprechenden Kategorie erkannt wurden.<br/>Der <b>Punkte</b> Balken gibt an wie viele Punkte tatsächlich von den Ergebnissen abgezogen wurden durch eine Kategorie, was sich auch den vorherigen Balken ergibt.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen."
                     }
                 },
+                "gradingTableHeader": {
+                    "testName": "Testname",
+                    "weight": "Gewichtung",
+                    "bonusMultiplier": "Bonusmultiplikator",
+                    "bonusPoints": "Bonuspunkte",
+                    "visibility": "Sichtbarkeit",
+                    "resultingPoints": "Resultierende Punkte",
+                    "testType": "Type",
+                    "passedPercent": "Bestanden %"
+                },
                 "help": {
                     "state": "Gibt an, ob Issues in dieser Kategorie den Studierenden angezeigt und bewertet werden sollen.",
                     "penalty": "Punktabzüge werden auf jedes erkannte Issue in dieser Kategorie angewendet.",
@@ -208,6 +220,7 @@
                     "bonusMultiplier": "Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100% führen.",
                     "bonusPoints": "Bonuspunkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen.",
                     "visibility": "Feedback und Punkte für Testfälle, die mit „Nach Einreichungsfrist“ markiert sind, werden erst danach für Studierende angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
+                    "points": "Die Menge an Punkten, die die Studierenden für das Bestehen dieses Tests bekommen. Dieser Wert wird wie in den Kurseinstellungen festgelegt gerundet.",
                     "type": "Der Typ des Tests gibt an, ob dieser aus der test.json-Datei generiert wurde (STRUCTURAL), oder manuell geschrieben wurde (BEHAVIORAL)."
                 },
                 "updatedGradingConfigShort": "Veränderte Bewertung",
@@ -261,13 +274,13 @@
                 "automaticTests": "Automatische Tests",
                 "afterDueDate": "Testlauf nach der Einreichungsfrist",
                 "timelineLabel": "Zeitleiste des gesamten Programmieraufgabenzyklus",
-                "timelineTooltip": "Der gesamte zeitliche Ablauf der Programmieraufgabe. Es können verschiedene aufgabenkritische Zeitpunkte und unterschiedliche Test- und Buildzyklen definiert werden",
-                "automaticTestsMandatoryTooltip": "Jeder Commit eines Teilnehmenden löst alle in dem Test-Repository gespeicherten Tests aus (Ausgenommen sind Tests, welche nach der Einreichungsfrist ausgeführt werden sollen)",
+                "timelineTooltip": "Der gesamte zeitliche Ablauf der Programmieraufgabe. Es können verschiedene aufgabenkritische Zeitpunkte und unterschiedliche Test- und Buildzyklen definiert werden.",
+                "automaticTestsMandatoryTooltip": "Jeder Commit eines Teilnehmenden löst alle in dem Test-Repository gespeicherten Tests aus. Ausgenommen sind Tests, welche nach der Einreichungsfrist ausgeführt werden sollen.",
                 "automaticTestsAfterDueDateTooltip": "Sobald die Einreichungsfrist abgelaufen ist, wird der Build für alle Abgaben erneut durchgeführt und sie werden ein letztes Mal automatisch getestet unter Verwendung ALLER im Test-Repository gespeicherten Tests.",
                 "assessmentTypeTooltipAutomaticAssessment": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Keine manuelle Bewertung",
                 "assessmentTypeTooltipManualAssessment": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Eine manuelle Bewertung durch Tutor:innen und Beschwerden von Studierenden, falls möglich",
-                "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studierende können erst nach dem angegebenen Datum an der Aufgabe teilnehmen",
-                "dueDateTooltip": "Die finale Deadline, zu welcher alle Abgaben und Commits für Studierende gesperrt werden",
+                "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studierende können erst nach dem angegebenen Datum an der Aufgabe teilnehmen.",
+                "dueDateTooltip": "Die finale Deadline, zu welcher alle Abgaben und Commits für Studierende gesperrt werden.",
                 "afterDueDateTooltip": "Aktiviere diese Option, um alle Abgaben von Studierenden nach der Einreichungsfrist zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Abgaben von Studierenden ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
                 "alertNewDueDate": "Die Einreichungsfrist wurde auf das Veröffentlichungsdatum gesetzt!",
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
@@ -276,6 +289,11 @@
                 "assessmentDueDate": "Einreichungsfrist der Bewertung",
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
                 "notSet": "nicht gesetzt",
+                "allowFeedbackRequests": "Feedbackanfragen erlauben",
+                "feedbackRequestsEnabledTooltip": "Studierende können manuelle Korrekturen vor der Abgabefrist anfragen.",
+                "feedbackRequestsDisabledTooltip": "Studierende können keine manuelle Korrekturen vor der Abgabefrist anfragen.",
+                "feedbackRequestsEnabled": "Korrekturanfragen sind möglich",
+                "feedbackRequestsDisabled": "Korrekturanfragen sind nicht möglich",
                 "complaintOnAutomaticAssessment": "Beschwerden auf automatische Bewertung",
                 "allowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen eine Beschwerde nach einer automatischen Bewertung einlegen",
                 "disallowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen keine Beschwerde nach einer automatischen Bewertung einlegen",
@@ -396,6 +414,7 @@
                 "title": "Template-Lösungs-Diff",
                 "template": "Template",
                 "solution": "Lösung",
+                "errorWhileFetchingRepos": "Fehler beim Abrufen der Repositories. Bitte überprüfe deine Internetverbindung und öffne das Popup erneut.",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
                 "lineStatLabel": "Zeilen, die zwischen Vorlage und Lösung hinzugefügt/entfernt wurden",
                 "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
@@ -403,8 +422,8 @@
                 "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen."
             },
             "projectTypes": {
-                "PLAIN_MAVEN": "Maven",
                 "PLAIN_GRADLE": "Gradle",
+                "PLAIN_MAVEN": "Maven",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",
                 "FACT": "FACT",
@@ -423,6 +442,16 @@
                 "selectTests": "Wähle die Tests aus, für die die Test-abgedeckten Zeilen markiert werden:",
                 "filePath": "Datei-Pfad",
                 "coveredLines": "Abgedeckte Zeilen"
+            },
+            "buildLogStatistics": {
+                "title": "Durchschnittliche Statistiken der Build-Logs",
+                "numberOfBuilds": "# Builds",
+                "agentSetupDuration": "Einrichtung Buildagent",
+                "testDuration": "Testausführung",
+                "scaDuration": "Statische Codeanalyse",
+                "totalJobDuration": "kompletter Job",
+                "dependenciesDownloadedCount": "Anzahl heruntergeladener Abhängigkeiten",
+                "tooltip": "The durchschnittlichen Statistiken werden von allen Builds (Template-, Lösung- und Studierendenabgaben) berechnet. Die Anzahl der heruntergeladenen Abhängigkeiten kann durch Caching im Docker-Image verringert werden."
             }
         },
         "error": {

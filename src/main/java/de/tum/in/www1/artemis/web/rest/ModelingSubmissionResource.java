@@ -1,11 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.MAX_SUBMISSION_MODEL_LENGTH;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -15,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -86,10 +84,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @PostMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, @RequestBody ModelingSubmission modelingSubmission) {
+    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, @Valid @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create modeling submission: {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
-            throw new BadRequestAlertException("A new modeling submission cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new modeling submission cannot already have an ID", ENTITY_NAME, "idExists");
         }
         return handleModelingSubmission(exerciseId, modelingSubmission);
     }
@@ -106,7 +104,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, @RequestBody ModelingSubmission modelingSubmission) {
+    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, @Valid @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update modeling submission: {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() == null) {
             return createModelingSubmission(exerciseId, modelingSubmission);
@@ -117,7 +115,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @NotNull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, ModelingSubmission modelingSubmission) {
         long start = System.currentTimeMillis();
-        checkModelLength(modelingSubmission);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
@@ -336,15 +333,5 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         return ResponseEntity.ok(modelingSubmission);
-    }
-
-    /**
-     * Throws IllegalArgumentException if the model length is over 30000 characters.
-     * @param modelingSubmission the modeling submission
-     */
-    private void checkModelLength(ModelingSubmission modelingSubmission) {
-        if (modelingSubmission.getModel() != null && modelingSubmission.getModel().length() > MAX_SUBMISSION_MODEL_LENGTH) {
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "A modeling submission cannot contain more than 30000 characters");
-        }
     }
 }

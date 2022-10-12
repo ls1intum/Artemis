@@ -48,7 +48,7 @@ describe('Quiz Exercise Assessment', () => {
             courseManagementRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             cy.reloadUntilFound(resultSelector);
-            cy.contains('Score 50%').should('be.visible');
+            cy.contains('50%').should('be.visible');
         });
     });
 
@@ -63,7 +63,7 @@ describe('Quiz Exercise Assessment', () => {
             courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             cy.reloadUntilFound(resultSelector);
-            cy.contains('Score 66.7%').should('be.visible');
+            cy.contains('66.7%').should('be.visible');
         });
     });
 });

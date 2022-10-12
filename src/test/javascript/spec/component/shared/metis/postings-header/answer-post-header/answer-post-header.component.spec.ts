@@ -153,7 +153,7 @@ describe('AnswerPostHeaderComponent', () => {
         metisServiceUserPostingAuthorMock.mockReturnValue(true);
         fixture.detectChanges();
         getElement(debugElement, '.editIcon').click();
-        expect(openPostingCreateEditModalEmitSpy).toHaveBeenCalled();
+        expect(openPostingCreateEditModalEmitSpy).toHaveBeenCalledOnce();
     });
 
     it('should invoke metis service when delete icon is clicked', () => {
@@ -161,7 +161,7 @@ describe('AnswerPostHeaderComponent', () => {
         fixture.detectChanges();
         expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
         component.deletePosting();
-        expect(metisServiceDeleteAnswerPostMock).toHaveBeenCalled();
+        expect(metisServiceDeleteAnswerPostMock).toHaveBeenCalledOnce();
     });
 
     it('should invoke metis service when toggle resolve is clicked as tutor', () => {
@@ -172,7 +172,7 @@ describe('AnswerPostHeaderComponent', () => {
         const previousState = component.posting.resolvesPost;
         component.toggleResolvesPost();
         expect(component.posting.resolvesPost).toEqual(!previousState);
-        expect(metisServiceUpdateAnswerPostMock).toHaveBeenCalled();
+        expect(metisServiceUpdateAnswerPostMock).toHaveBeenCalledOnce();
     });
 
     it('should invoke metis service when toggle resolve is clicked as post author', () => {
@@ -180,6 +180,6 @@ describe('AnswerPostHeaderComponent', () => {
         fixture.detectChanges();
         expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
         component.deletePosting();
-        expect(metisServiceDeleteAnswerPostMock).toHaveBeenCalled();
+        expect(metisServiceDeleteAnswerPostMock).toHaveBeenCalledOnce();
     });
 });

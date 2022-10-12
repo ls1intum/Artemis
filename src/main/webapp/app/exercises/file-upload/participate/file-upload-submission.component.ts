@@ -119,10 +119,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     .join(',');
                 this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || dayjs().isAfter(this.fileUploadExercise.assessmentDueDate);
 
-                if (this.submission.submitted) {
+                if (this.submission?.submitted) {
                     this.setSubmittedFile();
                 }
-                if (this.submission.submitted && this.result && this.result.completionDate) {
+                if (this.submission?.submitted && this.result?.completionDate) {
                     this.fileUploadAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                         this.result = assessmentResult;
                     });
@@ -148,8 +148,8 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         }
         this.isSaving = true;
         this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id!, file).subscribe({
-            next: (response) => {
-                this.submission = response.body!;
+            next: (res) => {
+                this.submission = res.body!;
                 this.participation = this.submission.participation as StudentParticipation;
                 // reconnect so that the submission status is displayed correctly in the result.component
                 this.submission.participation!.submissions = [this.submission];
@@ -213,10 +213,14 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     private setSubmittedFile() {
         // clear submitted file so that it is not displayed in the input (this might be confusing)
         this.submissionFile = undefined;
-        const filePath = this.submission!.filePath!.split('/');
-        this.submittedFileName = filePath.last()!;
-        const fileName = this.submittedFileName.split('.');
-        this.submittedFileExtension = fileName.last()!;
+        this.submittedFileName = '';
+        this.submittedFileExtension = '';
+        if (this.submission?.filePath) {
+            const filePath = this.submission!.filePath!.split('/');
+            this.submittedFileName = filePath.last()!;
+            const fileName = this.submittedFileName.split('.');
+            this.submittedFileExtension = fileName.last()!;
+        }
     }
 
     downloadFile(filePath: string) {

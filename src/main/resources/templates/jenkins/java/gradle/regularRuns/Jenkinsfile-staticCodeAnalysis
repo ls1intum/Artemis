@@ -3,6 +3,7 @@
 pipeline {
         options {
             timeout(time: #jenkinsTimeout, unit: 'MINUTES')
+            timestamps()
         }
         agent {
             docker {
@@ -13,17 +14,15 @@ pipeline {
         stages {
             stage('Checkout') {
                 steps {
-                    checkout([$class: 'GitSCM', branches: [[name: '**']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'tests', url: '#testRepository']]])
+                    checkout([$class: 'GitSCM', branches: [[name: '#defaultBranch']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'tests', url: '#testRepository']]])
                     dir('#assignmentCheckoutPath') {
-                        checkout([$class: 'GitSCM', branches: [[name: '**']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'assignment', url: '#assignmentRepository']]])
+                        checkout([$class: 'GitSCM', branches: [[name: '#defaultBranch']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '#gitCredentials', name: 'assignment', url: '#assignmentRepository']]])
                     }
                 }
             }
             stage('Build') {
                 steps {
-                    timestamps {
-                        sh './gradlew clean test #testwiseCoverageGradleTask'
-                    }
+                    sh './gradlew clean test #testwiseCoverageGradleTask'
                 }
             }
         }

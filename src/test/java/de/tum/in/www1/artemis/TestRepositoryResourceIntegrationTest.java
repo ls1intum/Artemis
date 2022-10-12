@@ -189,9 +189,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         String newLocalFileName = "newFileName";
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
-        FileMove fileMove = new FileMove();
-        fileMove.setCurrentFilePath(currentLocalFileName);
-        fileMove.setNewFilename(newLocalFileName);
+        FileMove fileMove = new FileMove(currentLocalFileName, newLocalFileName);
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isFalse();
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFileName))).isTrue();
@@ -213,7 +211,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         programmingExerciseRepository.save(programmingExercise);
         FileMove fileMove = createRenameFileMove();
 
-        doReturn(Optional.of(testRepo.localRepoFile)).when(gitService).getFileByName(any(), eq(fileMove.getCurrentFilePath()));
+        doReturn(Optional.of(testRepo.localRepoFile)).when(gitService).getFileByName(any(), eq(fileMove.currentFilePath()));
 
         Repository mockRepository = mock(Repository.class);
         doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
@@ -228,10 +226,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
 
-        FileMove fileMove = new FileMove();
-        fileMove.setCurrentFilePath(currentLocalFileName);
-        fileMove.setNewFilename(newLocalFileName);
-        return fileMove;
+        return new FileMove(currentLocalFileName, newLocalFileName);
     }
 
     @Test
@@ -241,9 +236,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName))).isTrue();
         String newLocalFolderName = "newFolderName";
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFolderName))).isFalse();
-        FileMove fileMove = new FileMove();
-        fileMove.setCurrentFilePath(currentLocalFolderName);
-        fileMove.setNewFilename(newLocalFolderName);
+        FileMove fileMove = new FileMove(currentLocalFolderName, newLocalFolderName);
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName))).isFalse();
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFolderName))).isTrue();
@@ -315,10 +308,10 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     void testCommitChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus).hasToString("CLEAN");
+        assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
         var testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
         assertThat(database.getUserByLogin("instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
@@ -351,12 +344,12 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
 
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
         request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=true", getFileSubmissions(), HttpStatus.OK);
 
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus).hasToString("CLEAN");
+        assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
         Path filePath = Path.of(testRepo.localRepoFile + "/" + currentLocalFileName);
         assertThat(FileUtils.readFileToString(filePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
@@ -411,14 +404,14 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         // Check status of git before the commit
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
         // Create a commit for the local and the remote repository
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
 
         // Check status of git after the commit
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus).hasToString("CLEAN");
+        assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
         // Create file in the local repository and commit it
         Path localFilePath = Path.of(testRepo.localRepoFile + "/" + fileName);
@@ -452,7 +445,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(status.getConflicting()).isEmpty();
         assertThat(testRepo.getAllLocalCommits().get(0)).isEqualTo(testRepo.getAllOriginCommits().get(0));
         var receivedStatusAfterReset = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterReset.repositoryStatus).hasToString("CLEAN");
+        assertThat(receivedStatusAfterReset.repositoryStatus()).hasToString("CLEAN");
     }
 
     @Test
@@ -462,14 +455,14 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
 
         // The current status is "uncommited changes", since we added files and folders, but we didn't commit yet
-        assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
+        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
         // Perform a commit to check if the status changes
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
 
         // Check if the status of git is "clean" after the commit
         var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusAfterCommit.repositoryStatus).hasToString("CLEAN");
+        assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
     }
 
     @Test

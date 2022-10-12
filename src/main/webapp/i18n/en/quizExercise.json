@@ -13,6 +13,7 @@
             "created": "Created new Quiz Exercise with identifier {{ param }}",
             "updated": "Updated Quiz Exercise with identifier {{ param }}",
             "deleted": "Deleted Quiz Exercise with identifier {{ param }}",
+            "resetSuccessful": "The reset of the quiz exercise <strong>{{ title }}</strong> was successful",
             "delete": {
                 "question": "Are you sure you want to permanently delete the quiz <strong>{{ title }}</strong>? This action can NOT be undone!"
             },

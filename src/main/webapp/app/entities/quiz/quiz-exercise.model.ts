@@ -42,7 +42,7 @@ export class QuizExercise extends Exercise {
     public quizPointStatistic?: QuizPointStatistic;
     public quizQuestions?: QuizQuestion[];
     public status?: QuizStatus;
-    public quizMode?: QuizMode;
+    public quizMode?: QuizMode = QuizMode.INDIVIDUAL; // default value
     public quizBatches?: QuizBatch[];
 
     // helper attributes

@@ -49,7 +49,7 @@ services:
 
     artemis-cypress:
         # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
-        image: cypress/browsers:node16.14.0-chrome99-ff97
+        image: cypress/browsers:node18.6.0-chrome105-ff104
         depends_on:
             - artemis-app
             - artemis-mysql

@@ -1,24 +1,18 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.FileNameMap;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.activation.MimetypesFileTypeMap;
-import javax.validation.constraints.NotNull;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -45,6 +39,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.lecture.AttachmentUnitResource;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 
@@ -81,18 +76,6 @@ public class FileResource {
 
     private static final int FILE_ACCESS_TOKEN_VALIDITY = 30;
 
-    // NOTE: this list has to be the same as in file-uploader.service.ts
-    private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip", "doc", "docx", "csv", "xls", "xlsx", "ppt", "pptx",
-            "pages", "rtf", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odf"));
-
-    public void addAllowedFileExtension(String fileExtension) {
-        this.allowedFileExtensions.add(fileExtension);
-    }
-
-    public void addRemoveFileExtension(String fileExtension) {
-        this.allowedFileExtensions.remove(fileExtension);
-    }
-
     public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, TokenProvider tokenProvider,
             FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository, UserRepository userRepository) {
@@ -116,12 +99,20 @@ public class FileResource {
      * @param keepFileName specifies if original file name should be kept
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
+     * @deprecated Implement your own usage of {@link FileService#handleSaveFile(MultipartFile, boolean, boolean)} with a mixed multipart request instead. An example for this is
+     * * {@link AttachmentUnitResource#updateAttachmentUnit(Long, Long, AttachmentUnit, Attachment, MultipartFile, boolean, String)}
      */
+    @Deprecated
     @PostMapping("fileUpload")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
-        return handleSaveFile(file, keepFileName, false);
+        String responsePath = fileService.handleSaveFile(file, keepFileName, false);
+
+        // return path for getting the file
+        String responseBody = "{\"path\":\"" + responsePath + "\"}";
+
+        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
 
     }
 
@@ -151,7 +142,12 @@ public class FileResource {
     public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
             throws URISyntaxException {
         log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
-        return handleSaveFile(file, keepFileName, true);
+        String responsePath = fileService.handleSaveFile(file, keepFileName, true);
+
+        // return path for getting the file
+        String responseBody = "{\"path\":\"" + responsePath + "\"}";
+
+        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
     }
 
     /**
@@ -545,91 +541,6 @@ public class FileResource {
             return false;
         }
         return true;
-    }
-
-    /**
-     * Helper method which handles the file creation for both normal file uploads and for markdown
-     * @param file The file to be uploaded
-     * @param keepFileName specifies if original file name should be kept
-     * @param markdown boolean which is set to true, when we are uploading a file within the markdown editor
-     * @return The path of the file
-     * @throws URISyntaxException if response path can't be converted into URI
-     */
-    @NotNull
-    private ResponseEntity<String> handleSaveFile(MultipartFile file, boolean keepFileName, boolean markdown) throws URISyntaxException {
-        // NOTE: Maximum file size is set in resources/config/application.yml
-        // Currently set to 10 MB
-
-        // check for file type
-        String filename = file.getOriginalFilename();
-        if (filename == null) {
-            throw new IllegalArgumentException("Filename cannot be null");
-        }
-        // sanitize the filename and replace all invalid characters with "_"
-        filename = filename.replaceAll("[^a-zA-Z\\d\\.\\-]", "_");
-        String fileExtension = FilenameUtils.getExtension(filename);
-        if (this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
-            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions));
-        }
-
-        final String filePath;
-        final String fileNameAddition;
-        final StringBuilder responsePath = new StringBuilder();
-
-        // set the appropriate values depending on the use case
-        if (markdown) {
-            filePath = FilePathService.getMarkdownFilePath();
-            fileNameAddition = "Markdown_";
-            responsePath.append("/api/files/markdown/");
-        }
-        else {
-            filePath = FilePathService.getTempFilePath();
-            fileNameAddition = "Temp_";
-            responsePath.append("/api/files/temp/");
-        }
-
-        try {
-            // create folder if necessary
-            File folder;
-            folder = new File(filePath);
-            if (!folder.exists()) {
-                if (!folder.mkdirs()) {
-                    log.error("Could not create directory: {}", filePath);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                }
-            }
-
-            // create file (generate new filename, if file already exists)
-            boolean fileCreated;
-            File newFile;
-
-            do {
-                if (!keepFileName) {
-                    filename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8)
-                            + "." + fileExtension;
-                }
-                String path = Path.of(filePath, filename).toString();
-
-                newFile = new File(path);
-                if (keepFileName && newFile.exists()) {
-                    newFile.delete();
-                }
-                fileCreated = newFile.createNewFile();
-            }
-            while (!fileCreated);
-            responsePath.append(filename);
-
-            // copy contents of uploaded file into newly created file
-            Files.copy(file.getInputStream(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-            // return path for getting the file
-            String responseBody = "{\"path\":\"" + responsePath + "\"}";
-            return ResponseEntity.created(new URI(responsePath.toString())).body(responseBody);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
     }
 
     /**

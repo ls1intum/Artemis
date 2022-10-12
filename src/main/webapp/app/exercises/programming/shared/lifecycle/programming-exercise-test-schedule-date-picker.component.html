@@ -1,7 +1,7 @@
 <div class="test-schedule-date-content">
-    <div class="test-schedule-date-title">
-        <span class="text-bold" [jhiTranslate]="label"></span>
-        <jhi-help-icon *ngIf="tooltipText" placement="bottom" [text]="tooltipText"></jhi-help-icon>
+    <div class="mb-2 text-nowrap">
+        <span class="fw-bold" [jhiTranslate]="label"></span>
+        <jhi-help-icon *ngIf="tooltipText" placement="auto" [text]="tooltipText"></jhi-help-icon>
     </div>
     <div class="invisible-date-time-picker">
         <input class="form-control" [ngModel]="selectedDate" [min]="min" [max]="max" (ngModelChange)="writeValue($event)" [owlDateTime]="dt" />
@@ -32,10 +32,10 @@
         <fa-icon class="icon-static" [icon]="faCalendarCheck" size="2x"></fa-icon>
         <fa-icon class="icon-remove" [icon]="faCalendarMinus" size="2x"></fa-icon>
     </button>
-    <div *ngIf="selectedDate">
+    <div *ngIf="selectedDate" class="mt-2">
         {{ selectedDate | artemisDate: 'long-date' }}<br />
         {{ selectedDate | artemisDate: 'time' }}
     </div>
-    <div *ngIf="!selectedDate" class="text-danger" jhiTranslate="artemisApp.programmingExercise.timeline.notSet">not set</div>
+    <div *ngIf="!selectedDate" class="mt-2 text-danger" jhiTranslate="artemisApp.programmingExercise.timeline.notSet">not set</div>
     <owl-date-time [startAt]="startAt" #dt></owl-date-time>
 </div>

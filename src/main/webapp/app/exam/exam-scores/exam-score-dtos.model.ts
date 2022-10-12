@@ -1,6 +1,8 @@
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { BonusResult } from 'app/entities/bonus.model';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 
 export class ExamScoreDTO {
     public examId: number;
@@ -38,7 +40,7 @@ export class StudentResult {
     public userId: number;
     public name: string;
     public login: string;
-    public eMail: string;
+    public email: string;
     public registrationNumber: string;
     public overallPointsAchieved?: number;
     public overallScoreAchieved?: number;
@@ -47,7 +49,9 @@ export class StudentResult {
     public overallGradeInFirstCorrection?: string;
     public hasPassed?: boolean;
     public submitted: boolean;
+    public gradeWithBonus?: BonusResult;
     public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };
+    public mostSeverePlagiarismVerdict?: PlagiarismVerdict;
 
     constructor() {}
 }

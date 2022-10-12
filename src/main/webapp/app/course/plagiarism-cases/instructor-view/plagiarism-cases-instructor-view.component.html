@@ -53,7 +53,7 @@
                             {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
                         </a>
                     </div>
-                    <div class="col-2 text-center">
+                    <div *ngIf="plagiarismCase.plagiarismSubmissions" class="col-2 text-center">
                         {{ 'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissions.length } }}
                     </div>
                     <div *ngIf="plagiarismCase.post" class="col-3 text-center">
@@ -72,4 +72,4 @@
         </div>
     </div>
 </div>
-<ng-template #noPlagiarismCases>{{ 'artemisApp.plagiarism.plagiarismCases.noCases' | artemisTranslate }}</ng-template>
+<ng-template #noPlagiarismCases>{{ 'artemisApp.plagiarism.plagiarismCases.' + (this.examId ? 'noExamCases' : 'noCourseCases') | artemisTranslate }}</ng-template>

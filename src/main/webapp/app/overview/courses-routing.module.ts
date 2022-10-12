@@ -7,7 +7,6 @@ import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.com
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
-import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
 
 const routes: Routes = [
     {
@@ -60,7 +59,11 @@ const routes: Routes = [
             },
             {
                 path: 'discussion',
-                loadChildren: () => import('../overview/course-discussion/course-discussion.module').then((m) => m.CourseDiscussionModule),
+                loadChildren: () => import('./course-discussion/course-discussion.module').then((m) => m.CourseDiscussionModule),
+            },
+            {
+                path: 'messages',
+                loadChildren: () => import('./course-messages/course-messages.module').then((m) => m.CourseMessagesModule),
             },
             {
                 path: 'exams',
@@ -81,15 +84,6 @@ const routes: Routes = [
                 pathMatch: 'full',
             },
         ],
-    },
-    {
-        path: 'courses/:courseId/statistics/grading-key',
-        component: GradingKeyOverviewComponent,
-        data: {
-            authorities: [Authority.USER],
-            pageTitle: 'artemisApp.gradingSystem.title',
-        },
-        canActivate: [UserRouteAccessService],
     },
 ];
 
