@@ -1,11 +1,30 @@
-<div class="row justify-content-center">
-    <div class="d-flex">
+<div>
+    <div>
+        <h1>Title</h1>
+        <p>Add a title and meaningful description to the new lecture.</p>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
+            <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="lecture.title" />
+        </div>
+        <div class="form-group" id="field_description">
+            <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
+            <jhi-markdown-editor
+                class="markdown-editor"
+                [domainCommands]="domainCommandsDescription"
+                [(markdown)]="lecture.description"
+                [editorMode]="EditorMode.LATEX"
+            ></jhi-markdown-editor>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="d-flex align-items-center">
         <div class="me-3">
             <button type="button" id="back" [disabled]="isSaving" class="btn btn-secondary" (click)="toggleModeFunction()">
                 <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToTraditionalModeLabel">Switch to normal mode</span>
             </button>
         </div>
-        <div class="flex-grow-1 d-flex justify-content-center align-items-center stepContainer">
+        <div class="flex-grow-1 d-flex justify-content-center">
             <div class="step" [class.completed]="isCompleted(1)" [class.current]="isCurrent(1)"></div>
             <div class="step" [class.completed]="isCompleted(2)" [class.current]="isCurrent(2)"></div>
             <div class="step" [class.completed]="isCompleted(3)" [class.current]="isCurrent(3)"></div>
