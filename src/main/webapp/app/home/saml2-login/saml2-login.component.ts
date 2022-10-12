@@ -4,6 +4,7 @@ import { LoginService } from 'app/core/login/login.service';
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { Route, Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-saml2-login',
@@ -18,7 +19,7 @@ export class Saml2LoginComponent implements OnInit {
     @Input()
     saml2Profile: Saml2Config;
 
-    constructor(private loginService: LoginService, private eventManager: EventManager, private alertService: AlertService) {}
+    constructor(private loginService: LoginService, private eventManager: EventManager, private alertService: AlertService, private router: Router) {}
 
     ngOnInit(): void {
         // If SAML2 flow was started, retry login.
@@ -26,6 +27,19 @@ export class Saml2LoginComponent implements OnInit {
             // remove cookie
             document.cookie = 'SAML2flow=; expires=Thu, 01 Jan 1970 00:00:00 UTC; ; SameSite=Lax;';
             this.loginSAML2();
+        }
+
+        this.printpath('', this.router.config);
+    }
+
+    private printpath(parent: String, config: Route[]) {
+        for (const element of config) {
+            const route = element;
+            console.log(parent + '/' + route.path);
+            if (route.children) {
+                const currentPath = route.path ? parent + '/' + route.path : parent;
+                this.printpath(currentPath, route.children);
+            }
         }
     }
 
