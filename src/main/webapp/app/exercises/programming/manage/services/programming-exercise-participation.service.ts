@@ -44,7 +44,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         return this.http.put<void>(`${this.resourceUrl}${participationId}/reset-repository`, null, { observe: 'response', params });
     }
 
-    private sendTitlesToEntityTitleService(participation: Participation | undefined) {
+    sendTitlesToEntityTitleService(participation: Participation | undefined) {
         if (participation?.exercise) {
             const exercise = participation.exercise;
             this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise.id], exercise.title);

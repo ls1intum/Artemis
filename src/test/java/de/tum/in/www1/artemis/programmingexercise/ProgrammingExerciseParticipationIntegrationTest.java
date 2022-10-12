@@ -389,6 +389,36 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         assertThat(response).isFalse();
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void checkResetRepository_noAccess_forbidden() throws Exception {
+        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+
+        request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void checkResetRepository_noAccessToGradedParticipation_forbidden() throws Exception {
+        var gradedParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        var practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        practiceParticipation.setTestRun(true);
+        participationRepository.save(practiceParticipation);
+
+        request.put("/api/programming-exercise-participations/" + practiceParticipation.getId() + "/reset-repository?gradedParticipationId=" + gradedParticipation.getId(), null,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void checkResetRepository_afterDueDateGradedParticipation_forbidden() throws Exception {
+        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        programmingExerciseRepository.save(programmingExercise);
+
+        request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
+    }
+
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
         programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         Result r = database.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
