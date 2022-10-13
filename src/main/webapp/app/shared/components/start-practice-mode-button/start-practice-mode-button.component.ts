@@ -12,6 +12,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 @Component({
     selector: 'jhi-start-practice-mode-button',
     templateUrl: './start-practice-mode-button.component.html',
+    styleUrls: ['./start-practice-mode-button.component.scss'],
 })
 export class StartPracticeModeButtonComponent implements OnInit {
     readonly FeatureToggle = FeatureToggle;
