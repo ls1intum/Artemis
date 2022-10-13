@@ -122,6 +122,7 @@ public class CourseResource {
      * POST /courses : create a new course.
      *
      * @param course the course to create
+     * @param file the optional course icon file
      * @return the ResponseEntity with status 201 (Created) and with body the new course, or with status 400 (Bad Request) if the course has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -163,18 +164,20 @@ public class CourseResource {
     }
 
     /**
-     * PUT /courses/:id : Updates an existing updatedCourse.
+     * PUT /courses/:courseId : Updates an existing updatedCourse.
      *
+     * @param courseId the id of the course to update
      * @param courseUpdate the course to update
+     * @param file the optional course icon file
      * @return the ResponseEntity with status 200 (OK) and with body the updated course
      */
-    @PutMapping(value = "courses/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Course> updateCourse(@PathVariable Long id, @RequestPart("course") Course courseUpdate, @RequestPart(required = false) MultipartFile file) {
+    public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") Course courseUpdate, @RequestPart(required = false) MultipartFile file) {
         log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(id);
+        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(courseId);
         if (!Objects.equals(existingCourse.getShortName(), courseUpdate.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
@@ -226,6 +229,7 @@ public class CourseResource {
             courseUpdate.setCourseIcon(pathString);
         }
 
+        courseUpdate.setId(courseId); // Don't persist a wrong ID
         Course result = courseRepository.save(courseUpdate);
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
@@ -271,7 +275,7 @@ public class CourseResource {
         }
         if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationDisabled",
-                    "The course does not allow registration. Cannot register " + "user")).body(null);
+                    "The course does not allow registration. Cannot register user")).body(null);
         }
         if (course.getOrganizations() != null && !course.getOrganizations().isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationNotAllowed",

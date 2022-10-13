@@ -25,9 +25,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import dayjs from 'dayjs/esm';
-import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
-import { base64StringToBlob } from 'app/utils/blob-util';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
@@ -44,8 +42,6 @@ describe('Course Management Update Component', () => {
     let profileService: ProfileService;
     let organizationService: OrganizationManagementService;
     let course: Course;
-    let fileUploaderService: FileUploaderService;
-    let uploadStub: jest.SpyInstance;
 
     beforeEach(() => {
         course = new Course();
@@ -109,8 +105,6 @@ describe('Course Management Update Component', () => {
                 service = TestBed.inject(CourseManagementService);
                 profileService = TestBed.inject(ProfileService);
                 organizationService = TestBed.inject(OrganizationManagementService);
-                fileUploaderService = TestBed.inject(FileUploaderService);
-                uploadStub = jest.spyOn(fileUploaderService, 'uploadFile');
             });
     });
 
@@ -201,7 +195,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null });
+            expect(updateStub).toHaveBeenCalledWith(entity.id, { ...entity, onlineCourseConfiguration: null }, undefined);
             expect(comp.isSaving).toBeFalse();
         }));
 
@@ -234,7 +228,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
-            expect(createStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null });
+            expect(createStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null }, undefined);
             expect(comp.isSaving).toBeFalse();
         }));
     });
