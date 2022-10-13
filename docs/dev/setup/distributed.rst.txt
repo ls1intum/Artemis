@@ -89,11 +89,11 @@ Eureka can be configured like this within Artemis:
 ``{{ artemis_eureka_instance_id }}`` must be a unique identifier for this instance.
 You also have to setup the value ``jhipster.registry.password`` to the password of the registry (which you will set later).
 
-Note that Hazelcast (which requires Eureka) is by default binding to `127.0.0.1` to prevent other instances
+Note that Hazelcast (which requires Eureka) is by default binding to ``127.0.0.1`` to prevent other instances
 to form a cluster without manual intervention.
 If you set up the cluster on multiple machines (which you should do for a production setup),
 you have to set the value ``spring.hazelcast.interface`` to the ip-address of the machine.
-Hazelcast will then bind on this interface rather than `127.0.0.1`,
+Hazelcast will then bind on this interface rather than ``127.0.0.1``,
 which allows other instances to establish connections to the instance.
 This setting must be set for every instance, but you have to make sure to adjust the ip-address correspondingly.
 
