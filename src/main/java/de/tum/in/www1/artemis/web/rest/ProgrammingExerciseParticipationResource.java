@@ -198,6 +198,7 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @param participationId the id of the programming participation that should be resetted
      * @param gradedParticipationId optional parameter that specifies that the repository should be set to the graded participation instead of the exercise template
+     * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("/programming-exercise-participations/{participationId}/reset-repository")
     @PreAuthorize("hasRole('USER')")

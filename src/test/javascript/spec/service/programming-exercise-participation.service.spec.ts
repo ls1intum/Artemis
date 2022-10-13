@@ -40,9 +40,9 @@ describe('ProgrammingExerciseParticipation Service', () => {
                 const result = { id: 42, rated: true, submission: withSubmission ? ({ id: 43 } as Submission) : undefined, participation } as Result;
                 const expected = Object.assign({}, result);
 
-                service.getLatestResultWithFeedback(42, withSubmission).subscribe((resp) => expect(resp).toEqual(expected));
+                service.getLatestResultWithFeedback(participation.id, withSubmission).subscribe((resp) => expect(resp).toEqual(expected));
 
-                const expectedURL = `${resourceUrl}42/latest-result-with-feedbacks` + (withSubmission ? '?withSubmission=true' : '');
+                const expectedURL = `${resourceUrl}${participation.id}/latest-result-with-feedbacks?withSubmission=${withSubmission}`;
                 const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
                 req.flush(result);
                 tick();
