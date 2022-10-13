@@ -222,7 +222,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-row="row">
-                        {{ row.testRun }}
+                        {{ (row.testRun ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
                     </ng-template>
                 </ngx-datatable-column>
 
