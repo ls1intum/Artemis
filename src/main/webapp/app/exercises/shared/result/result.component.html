@@ -11,7 +11,7 @@
     </ng-container>
     <ng-container *ngSwitchCase="ResultTemplateStatus.HAS_RESULT">
         <ng-container *ngIf="result">
-            <fa-icon class="result-score-icon" [ngClass]="textColorClass" [icon]="resultIconClass" size="lg"></fa-icon>
+            <fa-icon *ngIf="showIcon" class="result-score-icon" [ngClass]="textColorClass" [icon]="resultIconClass" size="lg"></fa-icon>
             <span
                 *ngIf="resultIsPreliminary(result) || hasFeedback; else notPreliminaryAndNoFeedback"
                 [ngClass]="textColorClass"
@@ -40,7 +40,7 @@
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-graded" ngbTooltip="{{ badgeTooltip | artemisTranslate }}" container="body">
+            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-badge" ngbTooltip="{{ badgeTooltip | artemisTranslate }}" container="body">
                 {{ badgeText | artemisTranslate | uppercase }}
             </span>
         </ng-container>

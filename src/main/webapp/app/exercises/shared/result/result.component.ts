@@ -106,6 +106,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showUngradedResults = false;
     @Input() showBadge = false;
     @Input() showTestDetails = false;
+    @Input() showIcon = true;
     @Input() missingResultInfo = MissingResultInfo.NONE;
     @Input() exercise?: Exercise;
 

@@ -1,5 +1,5 @@
 <div class="result-history-wrapper ms-3">
-    <div class="result-history-element previous-history-element" *ngIf="showPreviousDivider">
+    <div class="result-history-element" [class.previous-history-element]="showPreviousDivider">
         <div class="result-divider"></div>
     </div>
     <div class="result-history-element" *ngFor="let result of displayedResults; let i = index">
@@ -9,12 +9,14 @@
             </div>
             <jhi-result
                 class="result-score-info text-center"
+                [style.gap]="'4px'"
                 [exercise]="exercise"
                 [result]="result"
                 [participation]="result.participation!"
                 [showUngradedResults]="true"
                 [showBadge]="true"
                 [short]="true"
+                [showIcon]="false"
             >
             </jhi-result>
         </div>
