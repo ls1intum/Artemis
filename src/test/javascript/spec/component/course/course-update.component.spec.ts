@@ -250,11 +250,9 @@ describe('Course Management Update Component', () => {
                 length: 1,
                 item: () => file,
             } as unknown as FileList;
-            const event = { target: { files: fileList } };
+            const event = { target: { files: fileList } } as unknown as Event;
             comp.setCourseImage(event);
-            expect(comp.courseImageFile).toEqual(file);
-            expect(comp.courseImageFileName).toBe('testFilename');
-            expect(comp.imageChangedEvent).toBe(event);
+            expect(comp.courseImageUploadFile).toEqual(file);
         });
     });
 

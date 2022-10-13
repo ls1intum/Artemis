@@ -39,11 +39,8 @@ export class CourseUpdateComponent implements OnInit {
     onlineCourseConfigurationForm: FormGroup;
     course: Course;
     isSaving: boolean;
-    courseImageFile?: Blob | File;
-    courseImageFileName: string;
-    isUploadingCourseImage: boolean;
-    imageChangedEvent: any = '';
-    croppedImage: any = '';
+    courseImageUploadFile?: File;
+    croppedImage?: string;
     showCropper = false;
     presentationScoreEnabled = false;
     complaintsEnabled = true; // default value
@@ -193,8 +190,7 @@ export class CourseUpdateComponent implements OnInit {
             },
             { validators: CourseValidator },
         );
-        this.courseImageFileName = this.course.courseIcon!;
-        this.croppedImage = this.course.courseIcon ? this.course.courseIcon : '';
+        this.croppedImage = this.course.courseIcon;
         this.presentationScoreEnabled = this.course.presentationScore !== 0;
     }
 
@@ -220,6 +216,11 @@ export class CourseUpdateComponent implements OnInit {
         const course = this.courseForm.getRawValue();
         course.onlineCourseConfiguration = this.isOnlineCourse() ? this.onlineCourseConfigurationForm.getRawValue() : null;
 
+        let file = undefined;
+        if (this.courseImageUploadFile && this.croppedImage) {
+            const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
+            file = base64StringToBlob(base64Data, 'image/*');
+        }
         if (this.course.id !== undefined) {
             this.subscribeToSaveResponse(this.courseService.update(this.course.id, course, file));
         } else {
@@ -258,12 +259,10 @@ export class CourseUpdateComponent implements OnInit {
      * @function set course icon
      * @param event {object} Event object which contains the uploaded file
      */
-    setCourseImage(event: any): void {
-        this.imageChangedEvent = event;
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
-            this.courseImageFile = fileList[0];
-            this.courseImageFileName = this.courseImageFile.name;
+    setCourseImage(event: Event): void {
+        const element = event.currentTarget as HTMLInputElement;
+        if (element.files && element.files[0]) {
+            this.courseImageUploadFile = element.files[0];
         }
     }
 
