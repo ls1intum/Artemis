@@ -46,7 +46,7 @@ export class LectureUpdateWizardComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        this.currentStep = 1;
+        this.currentStep = this.lecture.startDate !== undefined || this.lecture.endDate !== undefined ? 2 : 1;
     }
 
     /**
