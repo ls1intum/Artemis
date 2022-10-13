@@ -36,6 +36,7 @@ export class LectureUpdateComponent implements OnInit {
     faHandShakeAngle = faHandshakeAngle;
 
     toggleModeFunction = () => this.toggleWizardMode();
+    saveLectureFunction = () => this.save();
 
     constructor(
         protected alertService: AlertService,
