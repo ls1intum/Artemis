@@ -34,14 +34,14 @@ following dependencies/tools on your machine:
 4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=8.1.0) to
    manage client side dependencies. Npm is typically bundled with Node.js,
    but can also be installed separately.
-5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs.
+5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs within exercise task descriptions.
    It's not necessary for a successful build,
    but it's necessary for production setups as otherwise errors will show up during runtime. )
 6. ( A **version control** and **build** system is necessary for the **programming exercise** feature of Artemis.
    There are multiple stacks available for the integration with Artemis:
 
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
-   * GitLab and GitLab CI
+   * GitLab and GitLab CI (under development, not yet production ready)
    * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ following dependencies/tools on your machine:
 MySQL Setup
 ------------
 
-The required Artemis scheme will be created / updated automatically at startup time of the
+The required Artemis schema will be created / updated automatically at startup time of the
 server application.
 
 As an alternative to a native MySQL setup, you can run the MySQL Database Server inside a Docker container
@@ -274,7 +274,7 @@ The following parts might also be useful for other (production) setups, even if 
 
 
 The file should be placed at ``/etc/systemd/system/artemis.service`` and after running ``sudo systemctl daemon-reload``,
-you can start the service using ``sudo service artemis start``.
+you can start the service using ``sudo systemctl start artemis``.
 
 You can stop the service using ``sudo service artemis stop`` and restart it using ``sudo service artemis restart``.
 

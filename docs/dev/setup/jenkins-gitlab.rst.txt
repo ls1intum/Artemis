@@ -156,7 +156,7 @@ tokens instead of the predefined ones.
    If you want to generate a random password for the ``root`` user, remove the part before ``docker-compose`` from
    the command.
 
-   The file uses the `GITLAB_OMNIBUS_CONFIG` environment variable to configure the Gitlab instance after the container
+   The file uses the ``GITLAB_OMNIBUS_CONFIG`` environment variable to configure the Gitlab instance after the container
    is started.
    It disables prometheus monitoring, sets the ssh port to ``2222``, and adjusts the monitoring endpoint whitelist
    by default.
@@ -376,8 +376,8 @@ GitLab Access Token
     adjust the port above.
 
 14. Disable prometheus.
-    As we encountered issues with the prometheus log files not being deleted and therefore filling up the disk space,
-    we decided to disable prometheus within GitLab.
+    As we encountered issues with the Prometheus log files not being deleted and therefore filling up the disk space,
+    we decided to disable Prometheus within GitLab.
     If you also want to disable prometheus, edit the configuration again using
 
     ::
@@ -662,10 +662,10 @@ Start Jenkins
             -u root \
             jenkins/jenkins:lts
 
-    If you still need the old setup with python & maven installed locally, use `jenkins-artemis` instead of
-    `jenkins/jenkins:lts`.
+    If you still need the old setup with Python & Maven installed locally, use ``jenkins-artemis`` instead of
+    ``jenkins/jenkins:lts``.
     Also note that you can omit the ``-u root``, ``-v /var/run/docker.sock:/var/run/docker.sock`` and
-    ``-v /usr/bin/docker:/usr/bin/docker:ro`` parameters, if you do not want to run Docker builds on the Jenkins master
+    ``-v /usr/bin/docker:/usr/bin/docker:ro`` parameters, if you do not want to run Docker builds on the Jenkins controller
     (but e.g. use remote agents).
 
 9. Open Jenkins in your browser (e.g. ``localhost:8082``) and setup the
@@ -714,7 +714,7 @@ recommended ones that got installed during the setup process):
     **Note:** This is a suite of plugins that will install multiple plugins
 
 4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines. If you want to
-   use docker for your build agents you may also need to install `Docker Pipeline <https://plugins.jenkins.io/docker-workflow/>`__ .
+   use Docker for your build agents you may also need to install `Docker Pipeline <https://plugins.jenkins.io/docker-workflow/>`__ .
 
 5. `Matrix Authorization Strategy Plugin <https://plugins.jenkins.io/matrix-auth/>`__ for configuring permissions
    for users on a project and build plan level (Matrix Authorization Strategy might already be installed).
