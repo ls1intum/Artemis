@@ -83,4 +83,12 @@ export class LectureUpdateWizardComponent implements OnInit {
     getNextText() {
         return this.currentStep < 5 ? 'artemisApp.lecture.home.nextStepLabel' : 'entity.action.save';
     }
+
+    toggleWizardMode() {
+        if (this.currentStep <= 2) {
+            this.toggleModeFunction();
+        } else {
+            this.router.navigate(['course-management', this.lecture.course!.id, 'lectures', this.lecture.id]);
+        }
+    }
 }
