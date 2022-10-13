@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -12,6 +12,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faSave, faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
+import { LectureUpdateWizardComponent } from 'app/lecture/lecture-update-wizard.component';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -19,6 +20,8 @@ import { faBan, faSave, faHandshakeAngle } from '@fortawesome/free-solid-svg-ico
     styleUrls: ['./lecture-update.component.scss'],
 })
 export class LectureUpdateComponent implements OnInit {
+    @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
+
     EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
@@ -115,6 +118,7 @@ export class LectureUpdateComponent implements OnInit {
         if (this.isShowingWizardMode) {
             this.lecture = lecture;
             this.alertService.success(`Lecture with title ${lecture.title} was successfully created.`);
+            this.wizardComponent.onLectureCreationSucceeded();
         } else {
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
         }

@@ -55,10 +55,13 @@ export class LectureUpdateWizardComponent implements OnInit {
     next() {
         if (this.currentStep === 2) {
             this.saveLectureFunction();
-
             return;
         }
 
+        this.currentStep++;
+    }
+
+    onLectureCreationSucceeded() {
         this.currentStep++;
     }
 
