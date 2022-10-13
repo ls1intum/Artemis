@@ -28,6 +28,7 @@ import { CropperPosition } from 'app/shared/image-cropper/interfaces/cropper-pos
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 
 // Note: this component and all files in the image-cropper folder were taken from https://github.com/Mawi137/ngx-image-cropper because the framework was not maintained anymore
+// Note: Partially adapted to fit Artemis needs
 
 @Component({
     // tslint:disable-next-line:component-selector
@@ -52,10 +53,10 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('sourceImage', { static: false }) sourceImage: ElementRef<HTMLDivElement>;
 
-    @Input() imageChangedEvent: any;
-    @Input() imageURL: string;
-    @Input() imageBase64: string;
-    @Input() imageFile: File;
+    @Input() imageChangedEvent?: Event;
+    @Input() imageURL?: string;
+    @Input() imageBase64?: string;
+    @Input() imageFile?: File;
 
     @Input() format: OutputFormat = this.settings.format;
     @Input() transform: ImageTransform = {};
@@ -156,7 +157,9 @@ export class ImageCropperComponent implements OnChanges, OnInit {
             this.reset();
         }
         if (changes.imageChangedEvent && this.isValidImageChangedEvent()) {
-            this.loadImageFile(this.imageChangedEvent.target.files[0]);
+            const element = this.imageChangedEvent?.currentTarget as HTMLInputElement;
+            // @ts-ignore Ignore "is possibly null", checked before
+            this.loadImageFile(element.files[0]);
         }
         if (changes.imageURL && this.imageURL) {
             this.loadImageFromURL(this.imageURL);
@@ -170,7 +173,12 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     }
 
     private isValidImageChangedEvent(): boolean {
-        return this.imageChangedEvent?.target?.files?.length > 0;
+        if (!this.imageChangedEvent?.currentTarget) {
+            return false;
+        }
+        const element = this.imageChangedEvent.currentTarget as HTMLInputElement;
+
+        return !!element.files && element.files.length > 0;
     }
 
     private setCssTransform() {
