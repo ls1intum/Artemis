@@ -128,7 +128,7 @@ describe('QuizExercise Point Statistic Component', () => {
             comp.updateDisplayedTimes();
 
             // check
-            expect(comp.remainingTimeSeconds).toEqual(-1);
+            expect(comp.remainingTimeSeconds).toBe(-1);
             expect(comp.remainingTimeText).toEqual(translateService.instant('artemisApp.showStatistic.quizHasEnded'));
         });
 
