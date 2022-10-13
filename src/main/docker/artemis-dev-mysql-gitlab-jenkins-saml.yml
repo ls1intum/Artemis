@@ -12,14 +12,23 @@ services:
             - 5005:5005 # Java Remote Debugging port declared in the java cmd options
         volumes:
             - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml:ro
+            - ./specialized-local-configs/artemis-dev-mysql-gitlab-jenkins-local.yml:/opt/artemis/config/application-local.yml:ro
         environment:
-            SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,athene,saml2,docker,local
+            SPRING_PROFILES_ACTIVE: dev,jenkins,gitlab,artemis,scheduling,athene,saml2,docker,local
         depends_on:
             - artemis-mysql
     artemis-mysql:
         extends:
             file: mysql.yml
             service: artemis-mysql
+    gitlab:
+        extends:
+            file: ./gitlab/gitlab.yml
+            service: gitlab
+    jenkins:
+        extends:
+            file: ./jenkins/jenkins.yml
+            service: jenkins
     saml-test:
         extends:
             file: ./saml-test/saml-test.yml
@@ -30,6 +39,14 @@ networks:
         driver: "bridge"
         name: artemis
 volumes:
+    artemis-gitlab-data:
+        name: artemis-gitlab-data
+    artemis-gitlab-logs:
+        name: artemis-gitlab-logs
+    artemis-gitlab-config:
+        name: artemis-gitlab-config
+    artemis-jenkins-data:
+        name: artemis-jenkins-data
     artemis-mysql-data:
         name: artemis-mysql-data
     artemis-data:
