@@ -52,12 +52,6 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
-    findWithLatestResult(participationId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<StudentParticipation>(`${this.resourceUrl}/${participationId}/withLatestResult`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
-    }
-
     /*
      * Finds one participation for the currently logged-in user for the given exercise in the given course
      */

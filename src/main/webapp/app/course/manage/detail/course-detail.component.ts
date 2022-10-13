@@ -89,16 +89,29 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * On init load the course information and subscribe to listen for changes in courses.
      */
     ngOnInit() {
-        this.fetchData();
-        this.registerChangeInCourses();
+        this.route.data.subscribe(({ course }) => {
+            if (course) {
+                this.course = course;
+            }
+        });
+        // There is no course 0 -> will fetch no course if route does not provide different courseId
+        let courseId = 0;
+        this.paramSub = this.route.params.subscribe((params) => {
+            courseId = params['courseId'];
+        });
+        this.fetchCourseStatistics(courseId);
+        this.registerChangeInCourses(courseId);
     }
 
     /**
      * Subscribe to changes in courses and reload the course after a change.
      */
-    registerChangeInCourses() {
+    registerChangeInCourses(courseId: number) {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
-            this.fetchData();
+            this.courseService.find(courseId).subscribe((courseResponse) => {
+                this.course = courseResponse.body!;
+            });
+            this.fetchCourseStatistics(courseId);
         });
     }
 
@@ -113,19 +126,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * fetch the course and course specific statistics for the page
+     * fetch the course specific statistics separately because it takes quite long for larger courses
      */
-    private fetchData() {
-        // There is no course 0 -> will fetch no course if route does not provide different courseId
-        let courseId = 0;
-        this.paramSub = this.route.params.subscribe((params) => {
-            courseId = params['courseId'];
-        });
-        // Get course first for basic course information
-        this.courseService.find(courseId).subscribe((courseResponse) => {
-            this.course = courseResponse.body!;
-        });
-        // fetch statistics separately because it takes quite long for larger courses
+    private fetchCourseStatistics(courseId: number) {
         this.courseService.getCourseStatisticsForDetailView(courseId).subscribe({
             next: (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
                 this.courseDTO = courseResponse.body!;

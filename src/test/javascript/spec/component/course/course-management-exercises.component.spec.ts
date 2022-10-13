@@ -1,6 +1,5 @@
-import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
@@ -23,12 +22,12 @@ import { of } from 'rxjs';
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
     let fixture: ComponentFixture<CourseManagementExercisesComponent>;
-    let courseService: CourseManagementService;
     const course = new Course();
     course.id = 123;
-    const parentRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
+    const parentRoute = {
+        data: of({ course }),
+    } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
-    let findStub: jest.SpyInstance;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -57,19 +56,15 @@ describe('Course Management Exercises Component', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(CourseManagementExercisesComponent);
         comp = fixture.componentInstance;
-        courseService = TestBed.inject(CourseManagementService);
-        findStub = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should find course on on init', () => {
+    it('should get course on onInit', () => {
         comp.ngOnInit();
-        expect(comp.courseId).toBe(course.id);
-        expect(findStub).toHaveBeenCalledWith(course.id);
-        expect(findStub).toHaveBeenCalledOnce();
+        expect(comp.course).toBe(course);
     });
 
     it('should open search bar on button click', () => {

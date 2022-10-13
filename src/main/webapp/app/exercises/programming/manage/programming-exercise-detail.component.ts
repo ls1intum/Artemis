@@ -47,6 +47,7 @@ import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { ButtonSize } from 'app/shared/components/button.component';
+import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -79,6 +80,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     addedLineCount: number;
     removedLineCount: number;
     isLoadingDiffReport: boolean;
+
+    plagiarismCheckSupported = false; // default value
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -116,6 +119,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
         private codeHintService: CodeHintService,
         private router: Router,
+        private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
     ) {}
 
     ngOnInit() {
@@ -197,6 +201,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 });
 
                 this.setLatestCoveredLineRatio();
+
+                this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
+                    programmingExercise.programmingLanguage,
+                ).plagiarismCheckSupported;
             });
 
             this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
@@ -296,7 +304,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    public deleteProgrammingExercise(event: { [key: string]: boolean }) {
+    deleteProgrammingExercise(event: { [key: string]: boolean }) {
         this.programmingExerciseService.delete(this.programmingExercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
             next: () => {
                 this.eventManager.broadcast({
@@ -330,7 +338,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     /**
      * Unlocks all repositories that belong to the exercise
      */
-    private unlockAllRepositories() {
+    unlockAllRepositories() {
         this.lockingOrUnlockingRepositories = true;
         this.programmingExerciseService.unlockAllRepositories(this.programmingExercise.id!).subscribe({
             next: (res) => {

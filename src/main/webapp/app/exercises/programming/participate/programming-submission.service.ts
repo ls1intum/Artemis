@@ -560,11 +560,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param req request parameters
      * @param correctionRound for which to get the Submissions
      */
-    getProgrammingSubmissionsForExerciseByCorrectionRound(
-        exerciseId: number,
-        req: { submittedOnly?: boolean; assessedByTutor?: boolean },
-        correctionRound = 0,
-    ): Observable<HttpResponse<ProgrammingSubmission[]>> {
+    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<ProgrammingSubmission[]>> {
         const url = `api/exercises/${exerciseId}/programming-submissions`;
         let params = createRequestOption(req);
         if (correctionRound !== 0) {
@@ -584,8 +580,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param exerciseId the id of the exercise
      * @param lock
      * @param correctionRound for which to get the Submissions
+     * @return submission is empty if none are available
      */
-    getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock = false, correctionRound = 0): Observable<ProgrammingSubmission> {
+    getSubmissionWithoutAssessment(exerciseId: number, lock = false, correctionRound = 0): Observable<ProgrammingSubmission> {
         const url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
         let params = new HttpParams();
         if (correctionRound !== 0) {

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
@@ -8,6 +8,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 })
 export class SubmissionResultStatusComponent {
     readonly ExerciseType = ExerciseType;
+    readonly ParticipationStatus = ParticipationStatus;
 
     /**
      * @property exercise Exercise to which the submission's participation belongs
