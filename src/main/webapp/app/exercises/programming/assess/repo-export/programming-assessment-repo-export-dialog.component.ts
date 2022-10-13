@@ -32,6 +32,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     repositoryExportOptions: RepositoryExportOptions;
     isLoading = false;
     isRepoExportForMultipleExercises: boolean;
+    isAtLeastInstructor = false;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -62,6 +63,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                 .pipe(
                     tap(({ body: exercise }) => {
                         this.exercise = exercise!;
+                        this.isAtLeastInstructor = exercise!.isAtLeastInstructor ? exercise!.isAtLeastInstructor : false;
                     }),
                     catchError((err) => {
                         this.alertService.error(err);
@@ -73,6 +75,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                     this.isLoading = false;
                 });
         } else {
+            this.isAtLeastInstructor = this.selectedProgrammingExercises.filter((exercise) => !exercise.isAtLeastInstructor).length === 0;
             this.isLoading = false;
         }
     }
