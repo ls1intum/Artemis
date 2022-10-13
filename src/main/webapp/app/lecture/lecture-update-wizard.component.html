@@ -5,7 +5,7 @@
             <p>Add a title and meaningful description to the new lecture.</p>
             <div class="form-group">
                 <label class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
-                <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="lecture.title" />
+                <input required [disabled]="currentStep > 2" type="text" class="form-control" name="title" id="field_title" [(ngModel)]="lecture.title" />
             </div>
             <div class="form-group" id="field_description">
                 <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
@@ -14,6 +14,7 @@
                     [domainCommands]="domainCommandsDescription"
                     [(markdown)]="lecture.description"
                     [editorMode]="EditorMode.LATEX"
+                    [disabled]="currentStep > 2"
                 ></jhi-markdown-editor>
             </div>
         </div>
@@ -25,6 +26,7 @@
                     <jhi-date-time-picker
                         labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
                         [(ngModel)]="lecture.startDate"
+                        [disabled]="currentStep > 2"
                         name="startDate"
                         id="start-date"
                     ></jhi-date-time-picker>
@@ -33,6 +35,7 @@
                     <jhi-date-time-picker
                         labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
                         [(ngModel)]="lecture.endDate"
+                        [disabled]="currentStep > 2"
                         name="endDate"
                         id="end-date"
                     ></jhi-date-time-picker>
