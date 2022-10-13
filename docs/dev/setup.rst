@@ -74,14 +74,6 @@ You can achieve this e.g. by using a ``my.cnf`` file in the location ``/etc``.
 Make sure the configuration file is used by MySQL when you start the server.
 You can find more information on `<https://dev.mysql.com/doc/refman/8.0/en/option-files.html>`__
 
-MySQL 8 Docker Container for ARM64 processors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. TODO: check if this is still needed or if the other images already run with ARM64 processors
-
-In case you are using a computer with an arm64 processor you might want to change the used image
-in the ``src/main/docker/mysql.yml`` file. Using e.g. ``ubuntu/mysql:8.0-21.10_beta`` will let the MySQL database
-run natively on arm64 processors.
-
 Users for MySQL
 ^^^^^^^^^^^^^^^
 | For the development environment the default MySQL user is ‘root’ with an empty password.
