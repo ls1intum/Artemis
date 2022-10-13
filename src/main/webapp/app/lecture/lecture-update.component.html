@@ -1,14 +1,14 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <jhi-lecture-update-wizard
-            [hidden]="!isShowingWizardMode"
+            *ngIf="isShowingWizardMode"
             [toggleModeFunction]="toggleModeFunction"
             [lecture]="lecture"
             [isSaving]="isSaving"
             [startDate]="startDate"
             [endDate]="endDate"
         ></jhi-lecture-update-wizard>
-        <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm" [hidden]="isShowingWizardMode">
+        <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm" *ngIf="!isShowingWizardMode">
             <div class="d-flex">
                 <div class="flex-grow-1">
                     <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel">Create or edit a Lecture</h2>
