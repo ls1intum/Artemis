@@ -27,11 +27,14 @@ import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @RestController
 @RequestMapping("/api")
 public class ProgrammingExerciseParticipationResource {
+
+    private static final String ENTITY_NAME = "rogrammingExerciseParticipation";
 
     private final ParticipationRepository participationRepository;
 
@@ -190,6 +193,12 @@ public class ProgrammingExerciseParticipationResource {
         return ResponseEntity.ok(pendingSubmissions);
     }
 
+    /**
+     * Resets the specified repository to either the exercise template or graded participation
+     *
+     * @param participationId the id of the programming participation that should be resetted
+     * @param gradedParticipationId optional parameter that specifies that the repository should be set to the graded participation instead of the exercise template
+     */
     @PutMapping("/programming-exercise-participations/{participationId}/reset-repository")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> resetRepository(@PathVariable Long participationId, @RequestParam(required = false) Long gradedParticipationId)
@@ -200,6 +209,9 @@ public class ProgrammingExerciseParticipationResource {
         participation.setProgrammingExercise(exercise);
         if (!programmingExerciseParticipationService.canAccessParticipation(participation) || participation.isLocked()) {
             throw new AccessForbiddenException("participation", participationId);
+        }
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("Cannot reset repository in an exam", ENTITY_NAME, "noRepoResetInExam");
         }
 
         VcsRepositoryUrl sourceURL;

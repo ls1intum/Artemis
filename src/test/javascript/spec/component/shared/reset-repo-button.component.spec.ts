@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';

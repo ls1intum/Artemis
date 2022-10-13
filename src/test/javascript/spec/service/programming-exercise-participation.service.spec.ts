@@ -65,7 +65,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
         it('checkIfParticipationHasResult', fakeAsync(() => {
             const participation = { id: 42 };
 
-            service.checkIfParticipationHasResult(participation.id).subscribe((resp) => expect(resp).toBe(true));
+            service.checkIfParticipationHasResult(participation.id).subscribe((resp) => expect(resp).toBeTrue());
 
             const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}${participation.id}/has-result` });
             req.flush(true);

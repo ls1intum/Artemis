@@ -419,6 +419,15 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void checkResetRepository_exam_forbidden() throws Exception {
+        programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+
+        request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.BAD_REQUEST);
+    }
+
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
         programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         Result r = database.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
