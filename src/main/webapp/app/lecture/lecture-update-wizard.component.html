@@ -59,21 +59,21 @@
                     <span>{{ 'artemisApp.learningGoal.createLearningGoal.title' | artemisTranslate }}</span>
                 </button>
             </div>
-            <div *ngIf="isLoadingUnits" class="d-flex justify-content-center">
+            <div *ngIf="isLoadingLearningGoalForm" class="d-flex justify-content-center">
                 <div class="spinner-border" role="status">
                     <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
                 </div>
             </div>
             <jhi-learning-goal-form
-                *ngIf="isAddingLearningGoal && !isLoadingUnits"
+                *ngIf="isAddingLearningGoal && !isLoadingLearningGoalForm"
                 [isEditMode]="false"
+                (formSubmitted)="createLearningGoal($event)"
                 [hasCancelButton]="true"
                 (onCancel)="isAddingLearningGoal = !isAddingLearningGoal"
                 [courseId]="lecture.course!.id!"
                 [lecturesOfCourseWithLectureUnits]="[lecture]"
                 [isInSingleLectureMode]="true"
             >
-                <!--(formSubmitted)="createLearningGoal($event)"-->
             </jhi-learning-goal-form>
         </div>
 

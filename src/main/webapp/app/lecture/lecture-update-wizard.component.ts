@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from './lecture.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
@@ -11,6 +12,9 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faSave, faHandshakeAngle, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
+import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
+import { LearningGoal } from 'app/entities/learningGoal.model';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 
 @Component({
     selector: 'jhi-lecture-update-wizard',
@@ -27,7 +31,7 @@ export class LectureUpdateWizardComponent implements OnInit {
 
     currentStep: number;
     isAddingLearningGoal: boolean;
-    isLoadingUnits: boolean;
+    isLoadingLearningGoalForm: boolean;
 
     domainCommandsDescription = [new KatexCommand()];
     EditorMode = EditorMode;
@@ -40,6 +44,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     constructor(
         protected alertService: AlertService,
         protected lectureService: LectureService,
+        protected learningGoalService: LearningGoalService,
         protected courseService: CourseManagementService,
         protected activatedRoute: ActivatedRoute,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -101,7 +106,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     }
 
     showCreateLearningGoal() {
-        this.isLoadingUnits = true;
+        this.isLoadingLearningGoalForm = true;
         this.isAddingLearningGoal = !this.isAddingLearningGoal;
 
         this.subscribeToLoadUnitResponse(this.lectureService.findWithDetails(this.lecture.id!));
@@ -120,7 +125,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     protected onLoadUnitSuccess(lecture: Lecture) {
         this.lecture = lecture;
 
-        this.isLoadingUnits = false;
+        this.isLoadingLearningGoalForm = false;
     }
 
     /**
@@ -130,5 +135,37 @@ export class LectureUpdateWizardComponent implements OnInit {
     protected onLoadError(error: HttpErrorResponse) {
         this.isSaving = false;
         onError(this.alertService, error);
+    }
+
+    createLearningGoal(formData: LearningGoalFormData) {
+        if (!formData?.title) {
+            return;
+        }
+
+        const { title, description, taxonomy, connectedLectureUnits } = formData;
+        const learningGoalToCreate = new LearningGoal();
+
+        learningGoalToCreate.title = title;
+        learningGoalToCreate.description = description;
+        learningGoalToCreate.taxonomy = taxonomy;
+        learningGoalToCreate.lectureUnits = connectedLectureUnits;
+
+        this.isLoadingLearningGoalForm = true;
+
+        this.learningGoalService
+            .create(learningGoalToCreate!, this.lecture.course!.id!)
+            .pipe(
+                finalize(() => {
+                    this.isLoadingLearningGoalForm = false;
+                }),
+            )
+            .subscribe({
+                next: () => {
+                    this.isAddingLearningGoal = false;
+
+                    this.alertService.success(`Learning goal ${learningGoalToCreate.title} was successfully created.`);
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 }
