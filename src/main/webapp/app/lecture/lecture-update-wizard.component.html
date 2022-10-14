@@ -54,6 +54,54 @@
         <div class="form-step form-group" [hidden]="currentStep < 5">
             <h1>Learning Goals</h1>
             <p>Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to learning goals.</p>
+            <div class="row">
+                <div class="col-12">
+                    <td class="table-responsive" *ngIf="learningGoals && learningGoals.length > 0">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th><span>ID</span></th>
+                                    <th><span>Title</span></th>
+                                    <th><span>Connected Units</span></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let learningGoal of learningGoals; trackBy: trackLearningGoalId" class="position-relative">
+                                    <td>
+                                        {{ learningGoal.id }}
+                                        <div *ngIf="learningGoalToCreate?.id === learningGoal?.id" class="edit-overlay">
+                                            {{ 'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate }}
+                                        </div>
+                                    </td>
+                                    <td>{{ learningGoal.title }}</td>
+                                    <td>Testitest</td>
+                                    <td class="text-end">
+                                        <div class="flex-btn-group-container">
+                                            <button type="submit" (click)="editLearningGoal(learningGoal)" class="btn btn-primary btn-sm me-1">
+                                                <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                                            </button>
+                                            <button
+                                                *ngIf="lecture.isAtLeastInstructor"
+                                                jhiDeleteButton
+                                                [entityTitle]="learningGoal?.title || ''"
+                                                deleteQuestion="artemisApp.attachment.deleteQuestion"
+                                                (delete)="deleteLearningGoal(learningGoal)"
+                                            ></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </div>
+            </div>
+            <div *ngIf="isLoadingLearningGoals" class="d-flex justify-content-center">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+                </div>
+            </div>
             <div class="form-group">
                 <button id="addLearningGoalButton" class="btn btn-primary" type="button" [disabled]="isAddingLearningGoal" (click)="showCreateLearningGoal()">
                     <span>{{ 'artemisApp.learningGoal.createLearningGoal.title' | artemisTranslate }}</span>

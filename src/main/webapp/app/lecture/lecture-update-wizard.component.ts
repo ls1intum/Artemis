@@ -10,7 +10,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faSave, faHandshakeAngle, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faSave, faHandshakeAngle, faArrowRight, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { LearningGoal } from 'app/entities/learningGoal.model';
@@ -32,6 +32,10 @@ export class LectureUpdateWizardComponent implements OnInit {
     currentStep: number;
     isAddingLearningGoal: boolean;
     isLoadingLearningGoalForm: boolean;
+    isLoadingLearningGoals: boolean;
+
+    learningGoalToCreate: LearningGoal;
+    learningGoals: LearningGoal[] = [];
 
     domainCommandsDescription = [new KatexCommand()];
     EditorMode = EditorMode;
@@ -40,6 +44,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     faSave = faSave;
     faHandShakeAngle = faHandshakeAngle;
     faArrowRight = faArrowRight;
+    faPencilAlt = faPencilAlt;
 
     constructor(
         protected alertService: AlertService,
@@ -69,6 +74,10 @@ export class LectureUpdateWizardComponent implements OnInit {
         }
 
         this.currentStep++;
+
+        if (this.currentStep === 5) {
+            this.loadLearningGoals();
+        }
     }
 
     onLectureCreationSucceeded() {
@@ -119,6 +128,13 @@ export class LectureUpdateWizardComponent implements OnInit {
         });
     }
 
+    protected subscribeToLoadLearningGoalsResponse(result: Observable<HttpResponse<LearningGoal[]>>) {
+        result.subscribe({
+            next: (response: HttpResponse<LearningGoal[]>) => this.onLoadLearningGoalsSuccess(response.body!),
+            error: (error: HttpErrorResponse) => this.onLoadError(error),
+        });
+    }
+
     /**
      * Action on successful lecture unit fetch
      */
@@ -129,11 +145,23 @@ export class LectureUpdateWizardComponent implements OnInit {
     }
 
     /**
-     * Action on unsuccessful lecture unit fetch
+     * Action on successful learning goals fetch
+     */
+    protected onLoadLearningGoalsSuccess(learningGoals: LearningGoal[]) {
+        this.isLoadingLearningGoals = false;
+
+        this.learningGoals = learningGoals;
+    }
+
+    /**
+     * Action on unsuccessful fetch
      * @param error the error handed to the alert service
      */
     protected onLoadError(error: HttpErrorResponse) {
         this.isSaving = false;
+        this.isLoadingLearningGoalForm = false;
+        this.isLoadingLearningGoals = false;
+
         onError(this.alertService, error);
     }
 
@@ -143,17 +171,17 @@ export class LectureUpdateWizardComponent implements OnInit {
         }
 
         const { title, description, taxonomy, connectedLectureUnits } = formData;
-        const learningGoalToCreate = new LearningGoal();
+        this.learningGoalToCreate = new LearningGoal();
 
-        learningGoalToCreate.title = title;
-        learningGoalToCreate.description = description;
-        learningGoalToCreate.taxonomy = taxonomy;
-        learningGoalToCreate.lectureUnits = connectedLectureUnits;
+        this.learningGoalToCreate.title = title;
+        this.learningGoalToCreate.description = description;
+        this.learningGoalToCreate.taxonomy = taxonomy;
+        this.learningGoalToCreate.lectureUnits = connectedLectureUnits;
 
         this.isLoadingLearningGoalForm = true;
 
         this.learningGoalService
-            .create(learningGoalToCreate!, this.lecture.course!.id!)
+            .create(this.learningGoalToCreate!, this.lecture.course!.id!)
             .pipe(
                 finalize(() => {
                     this.isLoadingLearningGoalForm = false;
@@ -163,9 +191,23 @@ export class LectureUpdateWizardComponent implements OnInit {
                 next: () => {
                     this.isAddingLearningGoal = false;
 
-                    this.alertService.success(`Learning goal ${learningGoalToCreate.title} was successfully created.`);
+                    this.alertService.success(`Learning goal ${this.learningGoalToCreate.title} was successfully created.`);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
+
+    trackLearningGoalId(index: number, item: LearningGoal) {
+        return item.id;
+    }
+
+    loadLearningGoals() {
+        this.isLoadingLearningGoals = true;
+
+        this.subscribeToLoadLearningGoalsResponse(this.learningGoalService.getAllForCourse(this.lecture.course!.id!));
+    }
+
+    editLearningGoal(learningGoal: LearningGoal) {}
+
+    deleteLearningGoal(learningGoal: LearningGoal) {}
 }
