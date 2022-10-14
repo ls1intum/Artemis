@@ -1307,7 +1307,8 @@ public class DatabaseUtilService {
     }
 
     public Organization createOrganization() {
-        return createOrganization("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
+        return createOrganization(UUID.randomUUID().toString().replace("-", ""), UUID.randomUUID().toString().replace("-", ""), UUID.randomUUID().toString().replace("-", ""),
+                UUID.randomUUID().toString().replace("-", ""), null, "^.*@matching.*$");
     }
 
     public StudentExam setupTestRunForExamWithExerciseGroupsForInstructor(Exam exam, User instructor, List<ExerciseGroup> exerciseGroupsWithExercises) {
