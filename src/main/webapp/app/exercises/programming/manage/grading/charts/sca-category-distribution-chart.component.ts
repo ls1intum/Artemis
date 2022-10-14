@@ -38,7 +38,7 @@ enum ScaChartBarTitle {
                     [yAxis]="true"
                     [xAxisTickFormatting]="xAxisFormatting"
                     (select)="onSelect($event)"
-                >
+=                >
                     <ng-template #tooltipTemplate let-model="model">
                         <b>{{ model.name }}</b>
                         <br />
