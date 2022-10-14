@@ -191,8 +191,9 @@ export class LectureUpdateWizardComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: () => {
+                next: (response: HttpResponse<LearningGoal>) => {
                     this.isAddingLearningGoal = false;
+                    this.learningGoals = this.learningGoals.concat(response.body!);
 
                     this.alertService.success(`Learning goal ${this.learningGoalToCreate.title} was successfully created.`);
                 },
