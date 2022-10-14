@@ -23,6 +23,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     @Input() endDate: string;
 
     currentStep: number;
+    isAddingLearningGoal: boolean;
 
     domainCommandsDescription = [new KatexCommand()];
     EditorMode = EditorMode;

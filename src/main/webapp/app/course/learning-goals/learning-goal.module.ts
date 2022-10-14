@@ -27,6 +27,6 @@ import { NgxGraphModule } from '@swimlane/ngx-graph';
         LearningGoalCourseDetailModalComponent,
         PrerequisiteImportComponent,
     ],
-    exports: [LearningGoalCardComponent, LearningGoalsPopoverComponent],
+    exports: [LearningGoalCardComponent, LearningGoalsPopoverComponent, LearningGoalFormComponent],
 })
 export class ArtemisLearningGoalsModule {}
