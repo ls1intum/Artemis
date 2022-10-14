@@ -1,7 +1,7 @@
 <div class="btn-group flex-btn-group-container">
     <!-- Registered Students -->
     <a
-        *ngIf="isAtLeastEditor || tutorialGroup.isUserTutor"
+        *ngIf="isAtLeastInstructor || tutorialGroup.isUserTutor"
         [id]="'registrations-' + tutorialGroup.id"
         [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'registered-students']"
         class="btn btn-primary btn-sm me-1"
@@ -11,7 +11,7 @@
     </a>
     <!-- Edit -->
     <a
-        *ngIf="isAtLeastEditor"
+        *ngIf="isAtLeastInstructor"
         [id]="'edit-' + tutorialGroup.id"
         [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'edit']"
         class="btn btn-warning btn-sm me-1"
@@ -21,7 +21,7 @@
     </a>
     <!-- Delete -->
     <button
-        *ngIf="isAtLeastEditor"
+        *ngIf="isAtLeastInstructor"
         [id]="'delete-' + tutorialGroup.id"
         jhiDeleteButton
         [entityTitle]="tutorialGroup.title || ''"

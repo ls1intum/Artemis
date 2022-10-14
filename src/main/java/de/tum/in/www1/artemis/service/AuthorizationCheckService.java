@@ -499,7 +499,10 @@ public class AuthorizationCheckService {
             return true;
         }
         Course course = tutorialGroup.getCourse();
-        return isAtLeastEditorInCourse(course, user) || (tutorialGroup.getTeachingAssistant() != null && tutorialGroup.getTeachingAssistant().equals(user));
+        if (isAtLeastInstructorInCourse(course, user)) {
+            return true;
+        }
+        return (tutorialGroup.getTeachingAssistant() != null && tutorialGroup.getTeachingAssistant().equals(user));
     }
 
     /**

@@ -16,7 +16,7 @@ import { Course } from 'app/entities/course.model';
 export class TutorialGroupsManagementComponent implements OnInit {
     courseId: number;
     course: Course;
-    isAtLeastEditor = false;
+    isAtLeastInstructor = false;
 
     isLoading = false;
     tutorialGroups: TutorialGroup[] = [];
@@ -28,7 +28,7 @@ export class TutorialGroupsManagementComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ course }) => {
             if (course) {
                 this.courseId = course.id!;
-                this.isAtLeastEditor = course.isAtLeastEditor;
+                this.isAtLeastInstructor = course.isAtLeastInstructor;
                 this.loadTutorialGroups();
             }
         });

@@ -16,7 +16,7 @@ export class TutorialGroupManagementDetailComponent implements OnInit {
     tutorialGroup: TutorialGroup;
     courseId: number;
     tutorialGroupId: number;
-    isAtLeastEditor = false;
+    isAtLeastInstructor = false;
 
     constructor(private activatedRoute: ActivatedRoute, private router: Router, private tutorialGroupService: TutorialGroupsService, private alertService: AlertService) {}
 
@@ -29,7 +29,7 @@ export class TutorialGroupManagementDetailComponent implements OnInit {
                     this.tutorialGroupId = Number(params.get('tutorialGroupId'));
                     if (course) {
                         this.courseId = course.id;
-                        this.isAtLeastEditor = course.isAtLeastEditor;
+                        this.isAtLeastInstructor = course.isAtLeastInstructor;
                     }
                     return this.tutorialGroupService.getOneOfCourse(this.courseId, this.tutorialGroupId);
                 }),

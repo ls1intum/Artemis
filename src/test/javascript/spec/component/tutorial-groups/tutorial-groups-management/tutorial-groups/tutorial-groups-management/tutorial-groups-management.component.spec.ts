@@ -58,7 +58,6 @@ describe('TutorialGroupsManagementComponent', () => {
                     {
                         course: {
                             id: 1,
-                            isAtLeastEditor: true,
                             isAtLeastInstructor: true,
                         },
                     },

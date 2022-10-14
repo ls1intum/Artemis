@@ -155,6 +155,18 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    void getAllForCourse_asEditor_shouldHidePrivateInformation() throws Exception {
+        var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+        assertThat(tutorialGroupsOfCourse).hasSize(2);
+        assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
+                exampleTwoTutorialGroupId);
+        for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
+            verifyPrivateInformationIsHidden(tutorialGroup);
+        }
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void getAllForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup() throws Exception {
         var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
@@ -168,8 +180,8 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
-    void getAllForCourse_asEditorOfCourse_shouldShowPrivateInformation() throws Exception {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void getAllForCourse_asInstructorOfCourse_shouldShowPrivateInformation() throws Exception {
         var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
@@ -187,14 +199,20 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    void getOneOfCourse_asEditor_shouldHidePrivateInformation() throws Exception {
+        oneOfCoursePrivateInfoHiddenTest();
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void getOneOfCourse_asTutorOfGroup_shouldShowPrivateInformation() throws Exception {
         oneOfCoursePrivateInfoShownTest();
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    void getOneOfCourse_asEditor_shouldShowPrivateInformation() throws Exception {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void getOneOfCourse_asInstructor_shouldShowPrivateInformation() throws Exception {
         oneOfCoursePrivateInfoShownTest();
     }
 
@@ -276,8 +294,20 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = "student5", roles = "USER")
+    void registerStudent_asStudent_shouldForbidRegistration() throws Exception {
+        this.registerStudentForbiddenTest();
+    }
+
+    @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    void registerStudent_asEditorOfCourse_shouldAllowRegistration() throws Exception {
+    void registerStudent_asEditor_shouldForbidRegistration() throws Exception {
+        this.registerStudentForbiddenTest();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void registerStudent_asInstructor_shouldAllowRegistration() throws Exception {
         this.registerStudentAllowedTest();
     }
 
@@ -303,14 +333,26 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
-    void deregisterStudent_asEditorOfGroup_shouldAllowDeregistration() throws Exception {
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void deregisterStudent_asInstructor_shouldAllowDeregistration() throws Exception {
         this.deregisterStudentAllowedTest();
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
     void deregisterStudent_asNotTutorOfGroup_shouldForbidDeregistration() throws Exception {
+        this.deregisterStudentForbiddenTest();
+    }
+
+    @Test
+    @WithMockUser(username = "student5", roles = "USER")
+    void deregisterStudent_asStudent_shouldForbidDeregistration() throws Exception {
+        this.deregisterStudentForbiddenTest();
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    void deregisterStudent_asEditor_shouldForbidDeregistration() throws Exception {
         this.deregisterStudentForbiddenTest();
     }
 

@@ -3,7 +3,7 @@
         <div class="col-12 col-xl-8">
             <div class="d-flex justify-content-between">
                 <h4>{{ 'artemisApp.pages.tutorialGroupsManagement.title' | artemisTranslate }}</h4>
-                <div *ngIf="isAtLeastEditor">
+                <div *ngIf="isAtLeastInstructor">
                     <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'tutorial-groups-management', 'create']">
                         <fa-icon [icon]="faPlus"></fa-icon>
                         <span>{{ 'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate }}</span>
@@ -15,7 +15,7 @@
                     <ng-template let-tutorialGroup>
                         <jhi-tutorial-group-row-buttons
                             [courseId]="courseId"
-                            [isAtLeastEditor]="isAtLeastEditor"
+                            [isAtLeastInstructor]="isAtLeastInstructor"
                             [tutorialGroup]="tutorialGroup"
                             (tutorialGroupDeleted)="loadTutorialGroups()"
                         >

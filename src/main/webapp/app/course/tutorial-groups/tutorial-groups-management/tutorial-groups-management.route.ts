@@ -25,7 +25,7 @@ export const tutorialGroupManagementRoutes: Routes = [
         path: 'create',
         component: CreateTutorialGroupComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.pages.createTutorialGroup.title',
         },
         canActivate: [UserRouteAccessService],
@@ -34,7 +34,7 @@ export const tutorialGroupManagementRoutes: Routes = [
         path: ':tutorialGroupId/edit',
         component: EditTutorialGroupComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.pages.editTutorialGroup.title',
         },
         canActivate: [UserRouteAccessService],

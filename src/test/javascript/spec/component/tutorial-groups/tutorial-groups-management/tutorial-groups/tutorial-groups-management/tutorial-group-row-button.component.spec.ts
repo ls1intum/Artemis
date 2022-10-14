@@ -43,7 +43,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
     const setInputValues = () => {
         component.courseId = courseId;
         component.tutorialGroup = tutorialGroup;
-        component.isAtLeastEditor = true;
+        component.isAtLeastInstructor = true;
     };
 
     it('should navigate to registrations management', fakeAsync(() => {
