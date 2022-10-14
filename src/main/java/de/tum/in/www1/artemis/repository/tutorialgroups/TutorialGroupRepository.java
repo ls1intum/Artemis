@@ -65,6 +65,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
 
     @Modifying
     @Transactional
+    // ok because of delete
     void deleteAllByCourse(Course course);
 
     default TutorialGroup findByIdElseThrow(long tutorialGroupId) {
