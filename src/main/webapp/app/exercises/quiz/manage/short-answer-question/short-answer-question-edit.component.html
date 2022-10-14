@@ -189,6 +189,7 @@
                                 value="{{ element }}"
                                 size="{{ (element?.length || 0) + 1 }}"
                                 type="text"
+                                [maxLength]="maxCharacterCount"
                                 (change)="setQuestionText('element-' + i + '-' + j + '-textInput')"
                             />
                             <div *ngIf="shortAnswerQuestionUtil.isInputField(element || '')" class="short-answer-question-container">
