@@ -51,9 +51,14 @@
             <h1>Units</h1>
             <p>Add content to the lecture by creating different kinds of lecture units.</p>
         </div>
-        <div class="form-step" [hidden]="currentStep < 5">
+        <div class="form-step form-group" [hidden]="currentStep < 5">
             <h1>Learning Goals</h1>
             <p>Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to learning goals.</p>
+            <div>
+                <button id="addLearningGoalButton" class="btn btn-primary" type="button">
+                    <span>{{ 'artemisApp.learningGoal.createLearningGoal.title' | artemisTranslate }}</span>
+                </button>
+            </div>
         </div>
 
         <!-- Bottom Navigation Bar -->
