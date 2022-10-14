@@ -305,10 +305,8 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
     }
 
     const generateDummyFile = (name?: string) => {
-        const blob = new Blob(['']);
-        blob['lastModifiedDate'] = '';
-        blob['name'] = name ?? 'filename';
-
+        let blob = new Blob(['']);
+        blob = { ...blob, name: name ?? 'filename', lastModifiedDate: '' } as unknown as Blob;
         return <File>blob;
     };
 
