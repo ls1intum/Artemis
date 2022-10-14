@@ -7,8 +7,6 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeCo
 import java.util.Objects;
 import java.util.Set;
 
-import org.springframework.util.StringUtils;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -132,10 +130,7 @@ public class SingleUserNotificationFactory {
      * @return an instance of SingleUserNotification
      */
     public static SingleUserNotification createNotification(TutorialGroup tutorialGroup, NotificationType notificationType, Set<User> users, User responsibleForAction) {
-        var title = findCorrespondingNotificationTitle(notificationType);
-        if (!StringUtils.hasText(title)) {
-            throw new UnsupportedOperationException("No matching title found for: " + notificationType);
-        }
+        var title = findCorrespondingNotificationTitleOrThrow(notificationType);
         if (users.isEmpty()) {
             throw new IllegalArgumentException("No users provided for notification");
         }
@@ -148,7 +143,6 @@ public class SingleUserNotificationFactory {
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), false, true));
             }
             case TUTORIAL_GROUP_DEREGISTRATION_STUDENT -> {
-
                 var student = users.stream().findAny().orElseThrow();
                 notification = new SingleUserNotification(student, title,
                         "You have been deregistered from the tutorial group " + tutorialGroup.getTitle() + " by " + responsibleForAction.getName() + ".");

@@ -215,8 +215,8 @@ public class MailService {
             context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
         }
 
-        if (notificationSubject instanceof SingleUserNotificationService.TutorialGroupNotificationSubject) {
-            setContextForTutorialGroupNotifications(context, notificationType, (SingleUserNotificationService.TutorialGroupNotificationSubject) notificationSubject);
+        if (notificationSubject instanceof SingleUserNotificationService.TutorialGroupNotificationSubject tutorialGroupNotificationSubject) {
+            setContextForTutorialGroupNotifications(context, notificationType, tutorialGroupNotificationSubject);
         }
 
         if (notificationSubject instanceof Post post) {

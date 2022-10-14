@@ -22,7 +22,7 @@
                 "weeklySummary": "Wöchentliche Zusammenfassung",
                 "exerciseNotifications": "Aufgabenbenachrichtigungen",
                 "lectureNotifications": "Vorlesungsbenachrichtigungen",
-                "tutorialGroupNotifications": "Übungsbereichsbenachrichtigungen",
+                "tutorialGroupNotifications": "Übungsgruppenbenachrichtigungen",
                 "courseWideDiscussionNotifications": "Kursdiskussionsbenachrichtigungen",
                 "tutorNotifications": "Benachrichtigungen für Tutor:innen",
                 "editorNotifications": "Benachrichtigungen für Editor:innen",
@@ -64,7 +64,7 @@
                 "courseAndExamArchivingStartedDescription": "Erhalte eine Mitteilung, wenn das Archivieren eines Kurses oder einer Klausur angefangen hat",
                 "fileSubmissionSuccessfulDescription": "Erhalte eine Mitteilung nach dem erfolgreichen Einreichen von Dateiupload-Aufgaben",
                 "programmingTestCasesChangedDescription": "Erhalte eine Mitteilung bei Änderungen von Testfällen in Programmieraufgaben",
-                "registrationTutorialGroupTutorDescription": "Erhalte eine Mitteilung, wenn ein Student für deine Übungsgruppe registriert oder abgemeldet wurde",
+                "registrationTutorialGroupTutorDescription": "Erhalte eine Mitteilung, wenn ein:e Student:in für deine Übungsgruppe registriert oder abgemeldet wurde",
                 "registrationTutorialGroupStudentDescription": "Erhalte eine Mitteilung, wenn du für eine Übungsgruppe registriert oder abgemeldet wurdest",
                 "tutorialGroupUpdateDeleteDescription": "Erhalte eine Mitteilung, wenn eine Übungsgruppe aktualisiert oder gelöscht wurde in der du registriert oder Tutor:in bist",
                 "assignUnassignTutorialGroupDescription": "Erhalte eine Mitteilung, wenn du als Tutor:in der Leitung einer Übungsgruppe zugewiesen oder entzogen wurdest"
