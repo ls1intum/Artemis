@@ -6,7 +6,7 @@
 
 <div *ngIf="!isLoading && lecture">
     <!-- Lecture Unit Rows-->
-    <div class="w-100 d-flex justify-content-end" [class.justify-content-center]="!lectureUnits?.length">
+    <div class="w-100 d-flex justify-content-end" *ngIf="showCreationCard" [class.justify-content-center]="!lectureUnits?.length">
         <jhi-unit-creation-card></jhi-unit-creation-card>
     </div>
     <div class="component-container" cdkDropList (cdkDropListDropped)="drop($event)">
@@ -56,7 +56,7 @@
             </div>
             <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
                 <jhi-learning-goals-popover
-                    *ngIf="lecture.course?.id"
+                    *ngIf="lecture.course?.id && showLearningGoals"
                     [courseId]="lecture.course!.id!"
                     [learningGoals]="lectureUnit.learningGoals || []"
                     [navigateTo]="'learningGoalManagement'"

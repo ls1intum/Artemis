@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -21,6 +21,9 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
     styleUrls: ['./lecture-unit-management.component.scss'],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
+    @Input() showCreationCard = true;
+    @Input() showLearningGoals = true;
+
     lectureId: number;
     lectureUnits: LectureUnit[] = [];
     lecture: Lecture;

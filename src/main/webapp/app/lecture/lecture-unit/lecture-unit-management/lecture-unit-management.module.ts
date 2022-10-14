@@ -60,5 +60,6 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
         EditOnlineUnitComponent,
         OnlineUnitFormComponent,
     ],
+    exports: [LectureUnitManagementComponent],
 })
 export class ArtemisLectureUnitManagementModule {}
