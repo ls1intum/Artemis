@@ -461,7 +461,7 @@ public class Exam extends DomainObject {
      */
     public enum ExamSearchColumn {
 
-        ID("id"), TITLE("title"), COURSE_TITLE("course.title"), EXAM_MODE("exam.testExam");
+        ID("id"), TITLE("title"), EXAM_MODE("testExam");
 
         private final String mappedColumnName;
 
