@@ -3,6 +3,7 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import { AfterViewInit, Component, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { ExpandableSectionComponent } from 'app/assessment/assessment-instructions/expandable-section/expandable-section.component';
+import { delay, startWith } from 'rxjs';
 
 @Component({
     selector: 'jhi-structured-grading-instructions-assessment-layout',
@@ -29,10 +30,14 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     }
 
     ngAfterViewInit() {
-        this.collectCollapsableSections();
-        this.expandableSections.changes.subscribe(() => {
-            this.collectCollapsableSections();
-        });
+        this.expandableSections.changes
+            .pipe(
+                startWith([undefined]), // to catch the initial value
+                delay(0), // wait for all current async tasks to finish, which could change the query list using ngIf etc.
+            )
+            .subscribe(() => {
+                this.collectCollapsableSections();
+            });
     }
 
     collapseAll() {
@@ -95,10 +100,8 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     }
 
     collectCollapsableSections() {
-        setTimeout(() => {
-            if (this.expandableSections) {
-                this.collapseToggles = this.expandableSections.toArray();
-            }
-        }, 0);
+        if (this.expandableSections) {
+            this.collapseToggles = this.expandableSections.toArray();
+        }
     }
 }
