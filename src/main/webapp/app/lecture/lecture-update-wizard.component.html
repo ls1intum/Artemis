@@ -51,6 +51,9 @@
             <h1>Units</h1>
             <p>Add content to the lecture by creating different kinds of lecture units.</p>
             <jhi-lecture-unit-management [showCreationCard]="false" [showLearningGoals]="false"></jhi-lecture-unit-management>
+            <div class="form-group w-100 d-flex justify-content-start">
+                <jhi-unit-creation-card></jhi-unit-creation-card>
+            </div>
         </div>
         <div class="form-step form-group" [hidden]="currentStep < 5">
             <h1>Learning Goals</h1>
