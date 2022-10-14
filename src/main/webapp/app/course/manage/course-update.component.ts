@@ -250,7 +250,7 @@ export class CourseUpdateComponent implements OnInit {
         if (event.target.files.length) {
             const fileList: FileList = event.target.files;
             this.courseImageFile = fileList[0];
-            this.courseImageFileName = this.courseImageFile['name'];
+            this.courseImageFileName = this.courseImageFile.name;
         }
     }
 
@@ -273,10 +273,10 @@ export class CourseUpdateComponent implements OnInit {
         const contentType = 'image/*';
         const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
         const file = base64StringToBlob(base64Data, contentType);
-        file['name'] = this.courseImageFileName;
+        const fileName = this.courseImageFileName;
 
         this.isUploadingCourseImage = true;
-        this.fileUploaderService.uploadFile(file, file['name']).then(
+        this.fileUploaderService.uploadFile(file, fileName).then(
             (response) => {
                 this.courseForm.patchValue({ courseIcon: response.path });
                 this.isUploadingCourseImage = false;

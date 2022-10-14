@@ -583,7 +583,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         if (event.target.files.length) {
             const fileList: FileList = event.target.files;
             this.importFile = fileList[0];
-            this.importFileName = this.importFile['name'];
+            this.importFileName = this.importFile.name;
         }
         this.changeDetector.detectChanges();
     }

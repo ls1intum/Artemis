@@ -121,6 +121,7 @@ describe('LectureAttachmentsComponent', () => {
         addAttachmentButton.nativeElement.click();
         fixture.detectChanges();
         const fakeBlob = new Blob([''], { type: 'application/pdf' });
+        // @ts-ignore
         fakeBlob['name'] = 'Test-File.pdf';
         comp.attachmentFile = fakeBlob;
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
