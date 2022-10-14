@@ -59,10 +59,15 @@
                     <span>{{ 'artemisApp.learningGoal.createLearningGoal.title' | artemisTranslate }}</span>
                 </button>
             </div>
-            <jhi-learning-goal-form *ngIf="isAddingLearningGoal" [isEditMode]="false" [hasCancelButton]="true" (onCancel)="isAddingLearningGoal = !isAddingLearningGoal">
-                <!--(formSubmitted)="createLearningGoal($event)"
-                [courseId]="courseId"
-                [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits"-->
+            <jhi-learning-goal-form
+                *ngIf="isAddingLearningGoal"
+                [isEditMode]="false"
+                [hasCancelButton]="true"
+                (onCancel)="isAddingLearningGoal = !isAddingLearningGoal"
+                [courseId]="lecture.course!.id!"
+                [lecturesOfCourseWithLectureUnits]="[lecture]"
+            >
+                <!--(formSubmitted)="createLearningGoal($event)"-->
             </jhi-learning-goal-form>
         </div>
 
