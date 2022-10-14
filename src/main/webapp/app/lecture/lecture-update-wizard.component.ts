@@ -33,9 +33,11 @@ export class LectureUpdateWizardComponent implements OnInit {
     isAddingLearningGoal: boolean;
     isLoadingLearningGoalForm: boolean;
     isLoadingLearningGoals: boolean;
+    isEditingLearningGoal: boolean;
 
     learningGoalToCreate: LearningGoal;
     learningGoals: LearningGoal[] = [];
+    learningGoalFormData: LearningGoalFormData;
 
     domainCommandsDescription = [new KatexCommand()];
     EditorMode = EditorMode;
@@ -120,6 +122,13 @@ export class LectureUpdateWizardComponent implements OnInit {
     showCreateLearningGoal() {
         this.isLoadingLearningGoalForm = true;
         this.isAddingLearningGoal = !this.isAddingLearningGoal;
+        this.learningGoalFormData = {
+            id: undefined,
+            title: undefined,
+            description: undefined,
+            taxonomy: undefined,
+            connectedLectureUnits: undefined,
+        };
 
         this.subscribeToLoadUnitResponse(this.lectureService.findWithDetails(this.lecture.id!));
     }
@@ -221,7 +230,21 @@ export class LectureUpdateWizardComponent implements OnInit {
         return units.map((unit) => unit.name).join(', ');
     }
 
-    editLearningGoal(learningGoal: LearningGoal) {}
+    editLearningGoal(learningGoal: LearningGoal) {
+        this.learningGoalFormData = {
+            id: learningGoal.id,
+            title: learningGoal.title,
+            description: learningGoal.description,
+            taxonomy: learningGoal.taxonomy,
+            connectedLectureUnits: learningGoal.lectureUnits,
+        };
+
+        this.isLoadingLearningGoalForm = true;
+        this.isEditingLearningGoal = true;
+        this.learningGoalToCreate = learningGoal;
+
+        this.subscribeToLoadUnitResponse(this.lectureService.findWithDetails(this.lecture.id!));
+    }
 
     deleteLearningGoal(learningGoal: LearningGoal) {
         this.learningGoalService.delete(learningGoal.id!, this.lecture.course!.id!).subscribe({
@@ -231,5 +254,13 @@ export class LectureUpdateWizardComponent implements OnInit {
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
+    }
+
+    onLearningGoalFormCanceled() {
+        this.isAddingLearningGoal = false;
+        this.isEditingLearningGoal = false;
+        this.isLoadingLearningGoalForm = false;
+
+        this.learningGoalToCreate = new LearningGoal();
     }
 }

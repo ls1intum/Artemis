@@ -103,7 +103,7 @@
                     <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" *ngIf="!isEditingLearningGoal">
                 <button id="addLearningGoalButton" class="btn btn-primary" type="button" [disabled]="isAddingLearningGoal" (click)="showCreateLearningGoal()">
                     <span>{{ 'artemisApp.learningGoal.createLearningGoal.title' | artemisTranslate }}</span>
                 </button>
@@ -114,11 +114,12 @@
                 </div>
             </div>
             <jhi-learning-goal-form
-                *ngIf="isAddingLearningGoal && !isLoadingLearningGoalForm"
-                [isEditMode]="false"
+                *ngIf="(isAddingLearningGoal || isEditingLearningGoal) && !isLoadingLearningGoalForm"
+                [isEditMode]="isEditingLearningGoal"
+                [formData]="learningGoalFormData"
                 (formSubmitted)="createLearningGoal($event)"
                 [hasCancelButton]="true"
-                (onCancel)="isAddingLearningGoal = !isAddingLearningGoal"
+                (onCancel)="onLearningGoalFormCanceled()"
                 [courseId]="lecture.course!.id!"
                 [lecturesOfCourseWithLectureUnits]="[lecture]"
                 [isInSingleLectureMode]="true"

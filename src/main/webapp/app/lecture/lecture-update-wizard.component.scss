@@ -23,3 +23,18 @@
     background: gray;
     margin-bottom: 1rem;
 }
+
+.edit-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -1px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--lecture-attachment-edit-overlay-color);
+    z-index: 9;
+    font-size: 18px;
+    height: calc(100% + 1px);
+    border: none;
+}
