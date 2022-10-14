@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from './lecture.service';
@@ -39,6 +39,9 @@ export class LectureUpdateWizardComponent implements OnInit {
 
     domainCommandsDescription = [new KatexCommand()];
     EditorMode = EditorMode;
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
     faSave = faSave;
@@ -219,5 +222,13 @@ export class LectureUpdateWizardComponent implements OnInit {
 
     editLearningGoal(learningGoal: LearningGoal) {}
 
-    deleteLearningGoal(learningGoal: LearningGoal) {}
+    deleteLearningGoal(learningGoal: LearningGoal) {
+        this.learningGoalService.delete(learningGoal.id!, this.lecture.course!.id!).subscribe({
+            next: () => {
+                this.learningGoals = this.learningGoals.filter((existingLearningGoal) => existingLearningGoal.id !== learningGoal.id);
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
 }

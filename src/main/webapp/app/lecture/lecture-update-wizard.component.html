@@ -87,6 +87,7 @@
                                                 jhiDeleteButton
                                                 [entityTitle]="learningGoal?.title || ''"
                                                 deleteQuestion="artemisApp.attachment.deleteQuestion"
+                                                [dialogError]="dialogError$"
                                                 (delete)="deleteLearningGoal(learningGoal)"
                                             ></button>
                                         </div>
