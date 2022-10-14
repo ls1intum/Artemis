@@ -69,6 +69,8 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     @Input()
     isEditMode = false;
     @Input()
+    isInSingleLectureMode = false;
+    @Input()
     courseId: number;
     @Input()
     lecturesOfCourseWithLectureUnits: Lecture[] = [];
@@ -134,6 +136,10 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
         });
         this.selectedLectureUnitsInTable = [];
+
+        if (this.isInSingleLectureMode) {
+            this.selectLectureInDropdown(this.lecturesOfCourseWithLectureUnits.first()!);
+        }
     }
 
     private setFormValues(formData: LearningGoalFormData) {

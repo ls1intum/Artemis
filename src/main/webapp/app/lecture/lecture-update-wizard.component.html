@@ -55,17 +55,23 @@
             <h1>Learning Goals</h1>
             <p>Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to learning goals.</p>
             <div class="form-group">
-                <button id="addLearningGoalButton" class="btn btn-primary" type="button" [disabled]="isAddingLearningGoal" (click)="isAddingLearningGoal = !isAddingLearningGoal">
+                <button id="addLearningGoalButton" class="btn btn-primary" type="button" [disabled]="isAddingLearningGoal" (click)="showCreateLearningGoal()">
                     <span>{{ 'artemisApp.learningGoal.createLearningGoal.title' | artemisTranslate }}</span>
                 </button>
             </div>
+            <div *ngIf="isLoadingUnits" class="d-flex justify-content-center">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+                </div>
+            </div>
             <jhi-learning-goal-form
-                *ngIf="isAddingLearningGoal"
+                *ngIf="isAddingLearningGoal && !isLoadingUnits"
                 [isEditMode]="false"
                 [hasCancelButton]="true"
                 (onCancel)="isAddingLearningGoal = !isAddingLearningGoal"
                 [courseId]="lecture.course!.id!"
                 [lecturesOfCourseWithLectureUnits]="[lecture]"
+                [isInSingleLectureMode]="true"
             >
                 <!--(formSubmitted)="createLearningGoal($event)"-->
             </jhi-learning-goal-form>

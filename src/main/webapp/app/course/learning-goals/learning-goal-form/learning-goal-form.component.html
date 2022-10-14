@@ -48,7 +48,12 @@
             </div>
             <div>
                 <label>{{ 'artemisApp.learningGoal.createLearningGoal.connectWithLectureUnits' | artemisTranslate }}</label>
-                <div *ngIf="lecturesOfCourseWithLectureUnits && lecturesOfCourseWithLectureUnits.length > 0; else noLectures" ngbDropdown class="mb-2">
+                <div
+                    [hidden]="isInSingleLectureMode"
+                    *ngIf="lecturesOfCourseWithLectureUnits && lecturesOfCourseWithLectureUnits.length > 0; else noLectures"
+                    ngbDropdown
+                    class="mb-2"
+                >
                     <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
                         {{
                             selectedLectureInDropdown
