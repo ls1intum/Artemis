@@ -15,6 +15,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     selector: 'jhi-lecture-update-wizard',
@@ -35,7 +36,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     isLoadingLearningGoals: boolean;
     isEditingLearningGoal: boolean;
 
-    learningGoalToCreate: LearningGoal;
+    currentlyProcessedLearningGoal: LearningGoal;
     learningGoals: LearningGoal[] = [];
     learningGoalFormData: LearningGoalFormData;
 
@@ -177,23 +178,31 @@ export class LectureUpdateWizardComponent implements OnInit {
         onError(this.alertService, error);
     }
 
+    onLearningGoalFormSubmitted(formData: LearningGoalFormData) {
+        if (this.isEditingLearningGoal) {
+            this.editLearningGoal(formData);
+        } else {
+            this.createLearningGoal(formData);
+        }
+    }
+
     createLearningGoal(formData: LearningGoalFormData) {
         if (!formData?.title) {
             return;
         }
 
         const { title, description, taxonomy, connectedLectureUnits } = formData;
-        this.learningGoalToCreate = new LearningGoal();
+        this.currentlyProcessedLearningGoal = new LearningGoal();
 
-        this.learningGoalToCreate.title = title;
-        this.learningGoalToCreate.description = description;
-        this.learningGoalToCreate.taxonomy = taxonomy;
-        this.learningGoalToCreate.lectureUnits = connectedLectureUnits;
+        this.currentlyProcessedLearningGoal.title = title;
+        this.currentlyProcessedLearningGoal.description = description;
+        this.currentlyProcessedLearningGoal.taxonomy = taxonomy;
+        this.currentlyProcessedLearningGoal.lectureUnits = connectedLectureUnits;
 
         this.isLoadingLearningGoalForm = true;
 
         this.learningGoalService
-            .create(this.learningGoalToCreate!, this.lecture.course!.id!)
+            .create(this.currentlyProcessedLearningGoal!, this.lecture.course!.id!)
             .pipe(
                 finalize(() => {
                     this.isLoadingLearningGoalForm = false;
@@ -204,7 +213,41 @@ export class LectureUpdateWizardComponent implements OnInit {
                     this.isAddingLearningGoal = false;
                     this.learningGoals = this.learningGoals.concat(response.body!);
 
-                    this.alertService.success(`Learning goal ${this.learningGoalToCreate.title} was successfully created.`);
+                    this.alertService.success(`Learning goal ${this.currentlyProcessedLearningGoal.title} was successfully created.`);
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
+    editLearningGoal(formData: LearningGoalFormData) {
+        const { title, description, taxonomy, connectedLectureUnits } = formData;
+
+        this.currentlyProcessedLearningGoal.title = title;
+        this.currentlyProcessedLearningGoal.description = description;
+        this.currentlyProcessedLearningGoal.taxonomy = taxonomy;
+        this.currentlyProcessedLearningGoal.lectureUnits = connectedLectureUnits;
+
+        this.isLoadingLearningGoalForm = true;
+
+        this.learningGoalService
+            .update(this.currentlyProcessedLearningGoal, this.lecture.course!.id!)
+            .pipe(
+                finalize(() => {
+                    this.isLoadingLearningGoalForm = false;
+                }),
+            )
+            .subscribe({
+                next: (response: HttpResponse<LearningGoal>) => {
+                    this.isEditingLearningGoal = false;
+                    const index = this.learningGoals.findIndex((learningGoal) => learningGoal.id === this.currentlyProcessedLearningGoal.id);
+                    if (index === -1) {
+                        this.learningGoals = this.learningGoals.concat(response.body!);
+                    } else {
+                        this.learningGoals[index] = response.body!;
+                    }
+
+                    this.currentlyProcessedLearningGoal = new LearningGoal();
+                    this.alertService.success(`Learning goal ${this.currentlyProcessedLearningGoal.title} was successfully edited.`);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -230,18 +273,21 @@ export class LectureUpdateWizardComponent implements OnInit {
         return units.map((unit) => unit.name).join(', ');
     }
 
-    editLearningGoal(learningGoal: LearningGoal) {
+    startEditLearningGoal(learningGoal: LearningGoal) {
+        const connectedUnits: LectureUnit[] = [];
+        learningGoal.lectureUnits!.forEach((unit) => connectedUnits.push(Object.assign({}, unit)));
+
         this.learningGoalFormData = {
             id: learningGoal.id,
             title: learningGoal.title,
             description: learningGoal.description,
             taxonomy: learningGoal.taxonomy,
-            connectedLectureUnits: learningGoal.lectureUnits,
+            connectedLectureUnits: connectedUnits,
         };
 
         this.isLoadingLearningGoalForm = true;
         this.isEditingLearningGoal = true;
-        this.learningGoalToCreate = learningGoal;
+        this.currentlyProcessedLearningGoal = learningGoal;
 
         this.subscribeToLoadUnitResponse(this.lectureService.findWithDetails(this.lecture.id!));
     }
@@ -261,6 +307,6 @@ export class LectureUpdateWizardComponent implements OnInit {
         this.isEditingLearningGoal = false;
         this.isLoadingLearningGoalForm = false;
 
-        this.learningGoalToCreate = new LearningGoal();
+        this.currentlyProcessedLearningGoal = new LearningGoal();
     }
 }

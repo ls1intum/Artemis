@@ -70,7 +70,7 @@
                                 <tr *ngFor="let learningGoal of learningGoals; trackBy: trackLearningGoalId" class="position-relative">
                                     <td>
                                         {{ learningGoal.id }}
-                                        <div *ngIf="learningGoalToCreate?.id === learningGoal?.id" class="edit-overlay">
+                                        <div *ngIf="currentlyProcessedLearningGoal?.id === learningGoal?.id" class="edit-overlay">
                                             {{ 'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate }}
                                         </div>
                                     </td>
@@ -78,7 +78,7 @@
                                     <td>{{ getConnectedUnitsForLearningGoal(learningGoal) }}</td>
                                     <td class="text-end">
                                         <div class="flex-btn-group-container">
-                                            <button type="submit" (click)="editLearningGoal(learningGoal)" class="btn btn-primary btn-sm me-1">
+                                            <button type="submit" (click)="startEditLearningGoal(learningGoal)" class="btn btn-primary btn-sm me-1">
                                                 <fa-icon [icon]="faPencilAlt"></fa-icon>
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                             </button>
@@ -117,7 +117,7 @@
                 *ngIf="(isAddingLearningGoal || isEditingLearningGoal) && !isLoadingLearningGoalForm"
                 [isEditMode]="isEditingLearningGoal"
                 [formData]="learningGoalFormData"
-                (formSubmitted)="createLearningGoal($event)"
+                (formSubmitted)="onLearningGoalFormSubmitted($event)"
                 [hasCancelButton]="true"
                 (onCancel)="onLearningGoalFormCanceled()"
                 [courseId]="lecture.course!.id!"
