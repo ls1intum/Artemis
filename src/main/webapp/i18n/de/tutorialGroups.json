@@ -91,7 +91,7 @@
             },
             "registeredStudents": {
                 "title": "Registrierte Studierende",
-                "capacityWarning": "Die Kapazität der Übungsgruppe von {{ capacity }} ist erreicht! Are you sure you want to register more students?"
+                "capacityWarning": "Die Kapazität der Übungsgruppe von {{ capacity }} ist erreicht! Bist du sicher, dass du noch mehr Studierende hinzufügen möchtest?"
             }
         }
     }
