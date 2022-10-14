@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, Input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
@@ -18,7 +18,9 @@ import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants'
 })
 export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
-    lecture: Lecture;
+    @Input() lecture: Lecture;
+    @Input() showHeader = true;
+
     attachments: Attachment[] = [];
     attachmentToBeCreated?: Attachment;
     attachmentBackup?: Attachment;
@@ -55,7 +57,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.notificationText = undefined;
         this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
-            this.lecture = lecture;
+            this.lecture ??= lecture;
             this.attachmentService.findAllByLectureId(this.lecture.id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
                 this.attachments = attachmentsResponse.body!;
             });

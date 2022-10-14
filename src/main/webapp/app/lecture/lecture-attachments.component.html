@@ -1,32 +1,34 @@
 <div class="row justify-content-center">
     <div class="col-12">
         <div *ngIf="lecture">
-            <h2><span jhiTranslate="artemisApp.lecture.attachments.title">Lecture</span>: {{ lecture.title }} - {{ lecture.course?.shortName }}</h2>
-            <hr />
-            <div class="row">
-                <div class="col-6">
-                    <dt><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></dt>
-                    <dd>
-                        <span>{{ lecture.startDate | artemisDate }}</span>
-                    </dd>
+            <div *ngIf="showHeader">
+                <h2><span jhiTranslate="artemisApp.lecture.attachments.title">Lecture</span>: {{ lecture.title }} - {{ lecture.course?.shortName }}</h2>
+                <hr />
+                <div class="row">
+                    <div class="col-6">
+                        <dt><span jhiTranslate="artemisApp.lecture.startDate">Start Date</span></dt>
+                        <dd>
+                            <span>{{ lecture.startDate | artemisDate }}</span>
+                        </dd>
+                    </div>
+                    <div class="col-6">
+                        <dt><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></dt>
+                        <dd>
+                            <span>{{ lecture.endDate | artemisDate }}</span>
+                        </dd>
+                    </div>
                 </div>
-                <div class="col-6">
-                    <dt><span jhiTranslate="artemisApp.lecture.endDate">End Date</span></dt>
-                    <dd>
-                        <span>{{ lecture.endDate | artemisDate }}</span>
-                    </dd>
+                <div class="row">
+                    <div class="col-12">
+                        <dt><span jhiTranslate="artemisApp.lecture.description">Description</span></dt>
+                        <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></dd>
+                    </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-12">
-                    <dt><span jhiTranslate="artemisApp.lecture.description">Description</span></dt>
-                    <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></dd>
-                </div>
-            </div>
-            <hr class="mt-2 mb-2" />
-            <div class="row">
-                <div class="col-12">
-                    <h4 jhiTranslate="artemisApp.lecture.attachments.attachments">Attachments</h4>
+                <hr class="mt-2 mb-2" />
+                <div class="row">
+                    <div class="col-12">
+                        <h4 jhiTranslate="artemisApp.lecture.attachments.attachments">Attachments</h4>
+                    </div>
                 </div>
             </div>
 

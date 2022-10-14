@@ -42,9 +42,10 @@
                 </div>
             </div>
         </div>
-        <div class="form-step" [hidden]="currentStep < 3">
+        <div class="form-step form-group" [hidden]="currentStep < 3">
             <h1>Attachments</h1>
             <p>Upload attachments to this lecture.</p>
+            <jhi-lecture-attachments *ngIf="currentStep >= 3" [lecture]="lecture" [showHeader]="false"></jhi-lecture-attachments>
         </div>
         <div class="form-step" [hidden]="currentStep < 4">
             <h1>Units</h1>
