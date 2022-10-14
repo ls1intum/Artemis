@@ -207,6 +207,16 @@ export class LectureUpdateWizardComponent implements OnInit {
         this.subscribeToLoadLearningGoalsResponse(this.learningGoalService.getAllForCourse(this.lecture.course!.id!));
     }
 
+    getConnectedUnitsForLearningGoal(learningGoal: LearningGoal) {
+        const units = learningGoal.lectureUnits?.filter((unit) => unit.lecture?.id === this.lecture.id);
+
+        if (units === undefined || units.length === 0) {
+            return 'No connected units';
+        }
+
+        return units.map((unit) => unit.name).join(', ');
+    }
+
     editLearningGoal(learningGoal: LearningGoal) {}
 
     deleteLearningGoal(learningGoal: LearningGoal) {}

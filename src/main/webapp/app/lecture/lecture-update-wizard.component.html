@@ -75,7 +75,7 @@
                                         </div>
                                     </td>
                                     <td>{{ learningGoal.title }}</td>
-                                    <td>Testitest</td>
+                                    <td>{{ getConnectedUnitsForLearningGoal(learningGoal) }}</td>
                                     <td class="text-end">
                                         <div class="flex-btn-group-container">
                                             <button type="submit" (click)="editLearningGoal(learningGoal)" class="btn btn-primary btn-sm me-1">
