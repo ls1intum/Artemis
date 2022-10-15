@@ -39,4 +39,4 @@ import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module'
         TutorialGroupsCourseInformationComponent,
     ],
 })
-export class ArtemisTutorialGroupsInstructorViewModule {}
+export class ArtemisTutorialGroupsManagementModule {}
