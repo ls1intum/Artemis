@@ -33,7 +33,7 @@ on:
 # Keep in sync with codeql-analysis.yml and test.yml
 env:
   CI: true
-  node: 16.x
+  node: 16
   java: 17
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 
@@ -51,7 +51,7 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
-        distribution: 'zulu'
+        distribution: 'temurin'
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Production Build
