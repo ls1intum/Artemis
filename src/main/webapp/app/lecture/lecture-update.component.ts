@@ -113,13 +113,17 @@ export class LectureUpdateComponent implements OnInit {
      * Action on successful lecture creation or edit
      */
     protected onSaveSuccess(lecture: Lecture) {
-        this.isSaving = false;
-
         if (this.isShowingWizardMode) {
-            this.lecture = lecture;
-            this.alertService.success(`Lecture with title ${lecture.title} was successfully created.`);
-            this.wizardComponent.onLectureCreationSucceeded();
+            this.lectureService.findWithDetails(lecture.id!).subscribe({
+                next: (response: HttpResponse<Lecture>) => {
+                    this.isSaving = false;
+                    this.lecture = response.body!;
+                    this.alertService.success(`Lecture with title ${lecture.title} was successfully created.`);
+                    this.wizardComponent.onLectureCreationSucceeded();
+                },
+            });
         } else {
+            this.isSaving = false;
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
         }
     }
