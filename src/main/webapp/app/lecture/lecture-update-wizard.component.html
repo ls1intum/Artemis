@@ -69,18 +69,21 @@
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
                     (onCancel)="onCloseLectureUnitForms()"
+                    (formSubmitted)="createVideoUnit($event)"
                 ></jhi-video-unit-form>
                 <jhi-online-unit-form
                     *ngIf="isOnlineUnitFormOpen"
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
                     (onCancel)="onCloseLectureUnitForms()"
+                    (formSubmitted)="createOnlineUnit($event)"
                 ></jhi-online-unit-form>
                 <jhi-attachment-unit-form
                     *ngIf="isAttachmentUnitFormOpen"
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
                     (onCancel)="onCloseLectureUnitForms()"
+                    (formSubmitted)="createAttachmentUnit($event)"
                 ></jhi-attachment-unit-form>
                 <jhi-create-exercise-unit *ngIf="isExerciseUnitFormOpen" [hasCancelButton]="true" (onCancel)="onCloseLectureUnitForms()"></jhi-create-exercise-unit>
             </div>

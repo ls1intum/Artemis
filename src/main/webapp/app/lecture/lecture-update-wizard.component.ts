@@ -21,6 +21,18 @@ import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-manageme
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
+import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
+import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
+import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
+import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
+import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
+import { OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
+import { AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
+import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { objectToJsonBlob } from 'app/utils/blob-util';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-lecture-update-wizard',
@@ -50,6 +62,10 @@ export class LectureUpdateWizardComponent implements OnInit {
     isAttachmentUnitFormOpen: boolean;
 
     currentlyProcessedTextUnit: TextUnit;
+    currentlyProcessedVideoUnit: VideoUnit;
+    currentlyProcessedOnlineUnit: OnlineUnit;
+    currentlyProcessedAttachmentUnit: AttachmentUnit;
+
     currentlyProcessedLearningGoal: LearningGoal;
     learningGoals: LearningGoal[] = [];
     learningGoalFormData: LearningGoalFormData;
@@ -72,6 +88,9 @@ export class LectureUpdateWizardComponent implements OnInit {
         protected learningGoalService: LearningGoalService,
         protected courseService: CourseManagementService,
         protected textUnitService: TextUnitService,
+        protected videoUnitService: VideoUnitService,
+        protected onlineUnitService: OnlineUnitService,
+        protected attachmentUnitService: AttachmentUnitService,
         protected activatedRoute: ActivatedRoute,
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
@@ -374,15 +393,100 @@ export class LectureUpdateWizardComponent implements OnInit {
         this.currentlyProcessedTextUnit.releaseDate = releaseDate;
         this.currentlyProcessedTextUnit.content = content;
 
-        this.textUnitService
-            .create(this.currentlyProcessedTextUnit!, this.lecture.id!)
-            .pipe(finalize(() => {}))
-            .subscribe({
-                next: () => {
-                    this.onCloseLectureUnitForms();
-                    this.unitManagementComponent.loadData();
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+        this.textUnitService.create(this.currentlyProcessedTextUnit!, this.lecture.id!).subscribe({
+            next: () => {
+                this.onCloseLectureUnitForms();
+                this.unitManagementComponent.loadData();
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
+    }
+
+    createVideoUnit(formData: VideoUnitFormData) {
+        if (!formData?.name || !formData?.source) {
+            return;
+        }
+
+        const { name, description, releaseDate, source } = formData;
+
+        this.currentlyProcessedVideoUnit = new VideoUnit();
+        this.currentlyProcessedVideoUnit.name = name || undefined;
+        this.currentlyProcessedVideoUnit.releaseDate = releaseDate || undefined;
+        this.currentlyProcessedVideoUnit.description = description || undefined;
+        this.currentlyProcessedVideoUnit.source = source || undefined;
+
+        this.videoUnitService.create(this.currentlyProcessedVideoUnit!, this.lecture.id!).subscribe({
+            next: () => {
+                this.onCloseLectureUnitForms();
+                this.unitManagementComponent.loadData();
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
+    }
+
+    createOnlineUnit(formData: OnlineUnitFormData) {
+        if (!formData?.name || !formData?.source) {
+            return;
+        }
+
+        const { name, description, releaseDate, source } = formData;
+
+        this.currentlyProcessedOnlineUnit = new OnlineUnit();
+        this.currentlyProcessedOnlineUnit.name = name || undefined;
+        this.currentlyProcessedOnlineUnit.releaseDate = releaseDate || undefined;
+        this.currentlyProcessedOnlineUnit.description = description || undefined;
+        this.currentlyProcessedOnlineUnit.source = source || undefined;
+
+        this.onlineUnitService.create(this.currentlyProcessedOnlineUnit!, this.lecture.id!).subscribe({
+            next: () => {
+                this.onCloseLectureUnitForms();
+                this.unitManagementComponent.loadData();
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
+    }
+
+    createAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData): void {
+        if (!attachmentUnitFormData?.formProperties?.name || !attachmentUnitFormData?.fileProperties?.file || !attachmentUnitFormData?.fileProperties?.fileName) {
+            return;
+        }
+        const { description, name, releaseDate } = attachmentUnitFormData.formProperties;
+        const { file, fileName } = attachmentUnitFormData.fileProperties;
+
+        this.currentlyProcessedAttachmentUnit = new AttachmentUnit();
+        const attachmentToCreate = new Attachment();
+
+        if (name) {
+            attachmentToCreate.name = name;
+        }
+        if (releaseDate) {
+            attachmentToCreate.releaseDate = releaseDate;
+        }
+        attachmentToCreate.attachmentType = AttachmentType.FILE;
+        attachmentToCreate.version = 1;
+        attachmentToCreate.uploadDate = dayjs();
+
+        if (description) {
+            this.currentlyProcessedAttachmentUnit.description = description;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file, fileName);
+        formData.append('attachment', objectToJsonBlob(attachmentToCreate));
+        formData.append('attachmentUnit', objectToJsonBlob(this.currentlyProcessedAttachmentUnit));
+
+        this.attachmentUnitService.create(formData, this.lecture.id!).subscribe({
+            next: () => {
+                this.onCloseLectureUnitForms();
+                this.unitManagementComponent.loadData();
+            },
+            error: (res: HttpErrorResponse) => {
+                if (res.error.params === 'file' && res?.error?.title) {
+                    this.alertService.error(res.error.title);
+                } else {
+                    onError(this.alertService, res);
+                }
+            },
+        });
     }
 }
