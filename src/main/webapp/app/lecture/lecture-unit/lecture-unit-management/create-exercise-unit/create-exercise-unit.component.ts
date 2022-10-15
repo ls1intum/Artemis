@@ -21,6 +21,8 @@ export class CreateExerciseUnitComponent implements OnInit {
     @Input()
     hasCancelButton: boolean;
     @Input()
+    hasCreateExerciseButton: boolean;
+    @Input()
     shouldNavigateOnSubmit = true;
     @Input()
     lectureId: number | undefined;
@@ -126,5 +128,9 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     cancelForm() {
         this.onCancel.emit();
+    }
+
+    createNewExercise() {
+        this.router.navigate(['/course-management', this.courseId, 'exercises']);
     }
 }
