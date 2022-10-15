@@ -111,10 +111,10 @@ export class LectureUpdateWizardComponent implements OnInit {
                 this.onCreateLectureUnit(LectureUnitType.EXERCISE);
             }
 
-            if (params.lectureWizardStepForGoingBack) {
-                this.currentStep = params.lectureWizardStepForGoingBack;
+            if (params.step) {
+                this.currentStep = params.step;
             } else {
-                this.currentStep = this.lecture.startDate !== undefined || this.lecture.endDate !== undefined ? 2 : 1;
+                this.currentStep = this.lecture.id ? 5 : this.lecture.startDate !== undefined || this.lecture.endDate !== undefined ? 2 : 1;
             }
         });
     }
