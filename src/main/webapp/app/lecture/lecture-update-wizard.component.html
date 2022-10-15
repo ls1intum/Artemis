@@ -76,7 +76,7 @@
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
                     (onCancel)="onCloseLectureUnitForms()"
-                    (formSubmitted)="createVideoUnit($event)"
+                    (formSubmitted)="createEditVideoUnit($event)"
                     [formData]="videoUnitFormData"
                 ></jhi-video-unit-form>
                 <jhi-online-unit-form
@@ -84,7 +84,7 @@
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
                     (onCancel)="onCloseLectureUnitForms()"
-                    (formSubmitted)="createOnlineUnit($event)"
+                    (formSubmitted)="createEditOnlineUnit($event)"
                     [formData]="onlineUnitFormData"
                 ></jhi-online-unit-form>
                 <jhi-attachment-unit-form
@@ -92,7 +92,7 @@
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
                     (onCancel)="onCloseLectureUnitForms()"
-                    (formSubmitted)="createAttachmentUnit($event)"
+                    (formSubmitted)="createEditAttachmentUnit($event)"
                     [formData]="attachmentUnitFormData"
                 ></jhi-attachment-unit-form>
                 <jhi-create-exercise-unit *ngIf="isExerciseUnitFormOpen" [hasCancelButton]="true" (onCancel)="onCloseLectureUnitForms()"></jhi-create-exercise-unit>

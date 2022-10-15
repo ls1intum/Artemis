@@ -409,20 +409,23 @@ export class LectureUpdateWizardComponent implements OnInit {
         });
     }
 
-    createVideoUnit(formData: VideoUnitFormData) {
+    createEditVideoUnit(formData: VideoUnitFormData) {
         if (!formData?.name || !formData?.source) {
             return;
         }
 
         const { name, description, releaseDate, source } = formData;
 
-        this.currentlyProcessedVideoUnit = new VideoUnit();
+        this.currentlyProcessedVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedVideoUnit : new VideoUnit();
         this.currentlyProcessedVideoUnit.name = name || undefined;
         this.currentlyProcessedVideoUnit.releaseDate = releaseDate || undefined;
         this.currentlyProcessedVideoUnit.description = description || undefined;
         this.currentlyProcessedVideoUnit.source = source || undefined;
 
-        this.videoUnitService.create(this.currentlyProcessedVideoUnit!, this.lecture.id!).subscribe({
+        (this.isEditingLectureUnit
+            ? this.videoUnitService.update(this.currentlyProcessedVideoUnit, this.lecture.id!)
+            : this.videoUnitService.create(this.currentlyProcessedVideoUnit!, this.lecture.id!)
+        ).subscribe({
             next: () => {
                 this.onCloseLectureUnitForms();
                 this.unitManagementComponent.loadData();
@@ -431,20 +434,23 @@ export class LectureUpdateWizardComponent implements OnInit {
         });
     }
 
-    createOnlineUnit(formData: OnlineUnitFormData) {
+    createEditOnlineUnit(formData: OnlineUnitFormData) {
         if (!formData?.name || !formData?.source) {
             return;
         }
 
         const { name, description, releaseDate, source } = formData;
 
-        this.currentlyProcessedOnlineUnit = new OnlineUnit();
+        this.currentlyProcessedOnlineUnit = this.isEditingLectureUnit ? this.currentlyProcessedOnlineUnit : new OnlineUnit();
         this.currentlyProcessedOnlineUnit.name = name || undefined;
         this.currentlyProcessedOnlineUnit.releaseDate = releaseDate || undefined;
         this.currentlyProcessedOnlineUnit.description = description || undefined;
         this.currentlyProcessedOnlineUnit.source = source || undefined;
 
-        this.onlineUnitService.create(this.currentlyProcessedOnlineUnit!, this.lecture.id!).subscribe({
+        (this.isEditingLectureUnit
+            ? this.onlineUnitService.update(this.currentlyProcessedOnlineUnit, this.lecture.id!)
+            : this.onlineUnitService.create(this.currentlyProcessedOnlineUnit!, this.lecture.id!)
+        ).subscribe({
             next: () => {
                 this.onCloseLectureUnitForms();
                 this.unitManagementComponent.loadData();
@@ -453,25 +459,40 @@ export class LectureUpdateWizardComponent implements OnInit {
         });
     }
 
-    createAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData): void {
+    createEditAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData): void {
         if (!attachmentUnitFormData?.formProperties?.name || !attachmentUnitFormData?.fileProperties?.file || !attachmentUnitFormData?.fileProperties?.fileName) {
             return;
         }
-        const { description, name, releaseDate } = attachmentUnitFormData.formProperties;
+
+        console.log(attachmentUnitFormData.formProperties);
+
+        const { description, name, releaseDate, updateNotificationText } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
-        this.currentlyProcessedAttachmentUnit = new AttachmentUnit();
-        const attachmentToCreate = new Attachment();
+        this.currentlyProcessedAttachmentUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentUnit : new AttachmentUnit();
+        const attachmentToCreateOrEdit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentUnit.attachment! : new Attachment();
+
+        if (this.isEditingLectureUnit) {
+            // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
+            this.currentlyProcessedAttachmentUnit.attachment = undefined;
+            attachmentToCreateOrEdit.attachmentUnit = undefined;
+        }
+
+        let notificationText: string | undefined;
+
+        if (updateNotificationText) {
+            notificationText = updateNotificationText;
+        }
 
         if (name) {
-            attachmentToCreate.name = name;
+            attachmentToCreateOrEdit.name = name;
         }
         if (releaseDate) {
-            attachmentToCreate.releaseDate = releaseDate;
+            attachmentToCreateOrEdit.releaseDate = releaseDate;
         }
-        attachmentToCreate.attachmentType = AttachmentType.FILE;
-        attachmentToCreate.version = 1;
-        attachmentToCreate.uploadDate = dayjs();
+        attachmentToCreateOrEdit.attachmentType = AttachmentType.FILE;
+        attachmentToCreateOrEdit.version = 1;
+        attachmentToCreateOrEdit.uploadDate = dayjs();
 
         if (description) {
             this.currentlyProcessedAttachmentUnit.description = description;
@@ -479,10 +500,13 @@ export class LectureUpdateWizardComponent implements OnInit {
 
         const formData = new FormData();
         formData.append('file', file, fileName);
-        formData.append('attachment', objectToJsonBlob(attachmentToCreate));
+        formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
         formData.append('attachmentUnit', objectToJsonBlob(this.currentlyProcessedAttachmentUnit));
 
-        this.attachmentUnitService.create(formData, this.lecture.id!).subscribe({
+        (this.isEditingLectureUnit
+            ? this.attachmentUnitService.update(this.lecture.id!, this.currentlyProcessedAttachmentUnit.id!, formData, notificationText)
+            : this.attachmentUnitService.create(formData, this.lecture.id!)
+        ).subscribe({
             next: () => {
                 this.onCloseLectureUnitForms();
                 this.unitManagementComponent.loadData();
