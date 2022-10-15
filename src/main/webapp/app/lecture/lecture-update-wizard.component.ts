@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
@@ -17,6 +17,10 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { UnitType } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
+import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
 
 @Component({
     selector: 'jhi-lecture-update-wizard',
@@ -31,6 +35,8 @@ export class LectureUpdateWizardComponent implements OnInit {
     @Input() startDate: string;
     @Input() endDate: string;
 
+    @ViewChild(LectureUnitManagementComponent, { static: false }) unitManagementComponent: LectureUnitManagementComponent;
+
     currentStep: number;
     isAddingLearningGoal: boolean;
     isLoadingLearningGoalForm: boolean;
@@ -43,6 +49,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     isOnlineUnitFormOpen: boolean;
     isAttachmentUnitFormOpen: boolean;
 
+    currentlyProcessedTextUnit: TextUnit;
     currentlyProcessedLearningGoal: LearningGoal;
     learningGoals: LearningGoal[] = [];
     learningGoalFormData: LearningGoalFormData;
@@ -64,6 +71,7 @@ export class LectureUpdateWizardComponent implements OnInit {
         protected lectureService: LectureService,
         protected learningGoalService: LearningGoalService,
         protected courseService: CourseManagementService,
+        protected textUnitService: TextUnitService,
         protected activatedRoute: ActivatedRoute,
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
@@ -342,11 +350,35 @@ export class LectureUpdateWizardComponent implements OnInit {
         return this.isTextUnitFormOpen || this.isVideoUnitFormOpen || this.isOnlineUnitFormOpen || this.isAttachmentUnitFormOpen || this.isExerciseUnitFormOpen;
     }
 
-    onLectureUnitCanceled() {
+    onCloseLectureUnitForms() {
         this.isTextUnitFormOpen = false;
         this.isVideoUnitFormOpen = false;
         this.isOnlineUnitFormOpen = false;
         this.isAttachmentUnitFormOpen = false;
         this.isExerciseUnitFormOpen = false;
+    }
+
+    createTextUnit(formData: TextUnitFormData) {
+        if (!formData?.name) {
+            return;
+        }
+
+        const { name, releaseDate, content } = formData;
+
+        this.currentlyProcessedTextUnit = new TextUnit();
+        this.currentlyProcessedTextUnit.name = name;
+        this.currentlyProcessedTextUnit.releaseDate = releaseDate;
+        this.currentlyProcessedTextUnit.content = content;
+
+        this.textUnitService
+            .create(this.currentlyProcessedTextUnit!, this.lecture.id!)
+            .pipe(finalize(() => {}))
+            .subscribe({
+                next: () => {
+                    this.onCloseLectureUnitForms();
+                    this.unitManagementComponent.loadData();
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 }

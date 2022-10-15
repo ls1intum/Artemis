@@ -61,27 +61,28 @@
                     *ngIf="isTextUnitFormOpen"
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
-                    (onCancel)="onLectureUnitCanceled()"
+                    (onCancel)="onCloseLectureUnitForms()"
+                    (formSubmitted)="createTextUnit($event)"
                 ></jhi-text-unit-form>
                 <jhi-video-unit-form
                     *ngIf="isVideoUnitFormOpen"
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
-                    (onCancel)="onLectureUnitCanceled()"
+                    (onCancel)="onCloseLectureUnitForms()"
                 ></jhi-video-unit-form>
                 <jhi-online-unit-form
                     *ngIf="isOnlineUnitFormOpen"
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
-                    (onCancel)="onLectureUnitCanceled()"
+                    (onCancel)="onCloseLectureUnitForms()"
                 ></jhi-online-unit-form>
                 <jhi-attachment-unit-form
                     *ngIf="isAttachmentUnitFormOpen"
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
-                    (onCancel)="onLectureUnitCanceled()"
+                    (onCancel)="onCloseLectureUnitForms()"
                 ></jhi-attachment-unit-form>
-                <jhi-create-exercise-unit *ngIf="isExerciseUnitFormOpen" [hasCancelButton]="true" (onCancel)="onLectureUnitCanceled()"></jhi-create-exercise-unit>
+                <jhi-create-exercise-unit *ngIf="isExerciseUnitFormOpen" [hasCancelButton]="true" (onCancel)="onCloseLectureUnitForms()"></jhi-create-exercise-unit>
             </div>
         </div>
         <div class="form-step form-group" [hidden]="currentStep < 5">
