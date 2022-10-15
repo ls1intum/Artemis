@@ -145,7 +145,6 @@ describe('Course management', () => {
             courseManagementPage.openCourse(courseShortName);
             cy.get('#edit-course').click();
             cy.get('#delete-course-icon').click();
-            cy.get(modalDeleteButton).should('not.be.disabled').click();
             cy.get('#delete-course-icon').should('not.exist');
             cy.get('.no-image').should('exist');
             cy.intercept(PUT, BASE_API + 'courses').as('updateCourseQuery');

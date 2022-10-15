@@ -482,7 +482,7 @@ describe('Course Management Update Component', () => {
         it('should remove icon image and delete icon button from component', () => {
             setIcon();
             let deleteIconButton = getDeleteIconButton();
-            deleteIconButton.dispatchEvent(new Event('delete'));
+            deleteIconButton.dispatchEvent(new Event('click'));
             fixture.detectChanges();
             const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
             deleteIconButton = getDeleteIconButton();
