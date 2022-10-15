@@ -2,14 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { faCheck, faFileUpload, faLink, faScroll, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-
-export enum UnitType {
-    TEXT,
-    EXERCISE,
-    VIDEO,
-    ATTACHMENT,
-    ONLINE,
-}
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     selector: 'jhi-unit-creation-card',
@@ -19,9 +12,9 @@ export class UnitCreationCardComponent {
     @Input() emitEvents = false;
 
     @Output()
-    onUnitCreationCardClicked: EventEmitter<UnitType> = new EventEmitter<UnitType>();
+    onUnitCreationCardClicked: EventEmitter<LectureUnitType> = new EventEmitter<LectureUnitType>();
 
-    unitType = UnitType;
+    unitType = LectureUnitType;
 
     // Icons
     faCheck = faCheck;
@@ -32,7 +25,7 @@ export class UnitCreationCardComponent {
 
     constructor(protected activatedRoute: ActivatedRoute, private navigationUtilService: ArtemisNavigationUtilService, private router: Router) {}
 
-    onButtonClicked(type: UnitType) {
+    onButtonClicked(type: LectureUnitType) {
         if (this.emitEvents) {
             this.onUnitCreationCardClicked.emit(type);
             return;
@@ -41,19 +34,19 @@ export class UnitCreationCardComponent {
         let navigationTarget = [];
 
         switch (type) {
-            case UnitType.TEXT:
+            case LectureUnitType.TEXT:
                 navigationTarget = ['text-units', 'create'];
                 break;
-            case UnitType.EXERCISE:
+            case LectureUnitType.EXERCISE:
                 navigationTarget = ['exercise-units', 'create'];
                 break;
-            case UnitType.VIDEO:
+            case LectureUnitType.VIDEO:
                 navigationTarget = ['video-units', 'create'];
                 break;
-            case UnitType.ONLINE:
+            case LectureUnitType.ONLINE:
                 navigationTarget = ['online-units', 'create'];
                 break;
-            case UnitType.ATTACHMENT:
+            case LectureUnitType.ATTACHMENT:
                 navigationTarget = ['attachment-units', 'create'];
                 break;
         }

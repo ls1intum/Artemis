@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Input } from '@angular/core';
+import { Component, OnDestroy, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -23,8 +23,12 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     @Input() showCreationCard = true;
     @Input() showLearningGoals = true;
+    @Input() emitEditEvents = false;
 
     @Input() lectureId: number | undefined;
+
+    @Output()
+    onEditLectureUnitClicked: EventEmitter<LectureUnit> = new EventEmitter<LectureUnit>();
 
     lectureUnits: LectureUnit[] = [];
     lecture: Lecture;
@@ -181,6 +185,15 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             default:
                 return false;
         }
+    }
+
+    onEditButtonClicked(lectureUnit: LectureUnit) {
+        if (!this.emitEditEvents) {
+            this.router.navigate(this.editButtonRouterLink(lectureUnit)!, { relativeTo: this.activatedRoute });
+            return;
+        }
+
+        this.onEditLectureUnitClicked.emit(lectureUnit);
     }
 
     editButtonRouterLink(lectureUnit: LectureUnit) {

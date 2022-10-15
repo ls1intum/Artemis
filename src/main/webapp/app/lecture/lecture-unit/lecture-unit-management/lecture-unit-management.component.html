@@ -62,15 +62,15 @@
                     [navigateTo]="'learningGoalManagement'"
                 ></jhi-learning-goals-popover>
                 <div class="d-flex gap-1 w-100">
-                    <a
+                    <button
                         type="button"
                         *ngIf="editButtonAvailable(lectureUnit)"
                         class="btn btn-primary btn-sm edit flex-grow-1"
-                        [routerLink]="editButtonRouterLink(lectureUnit)"
+                        (click)="onEditButtonClicked(lectureUnit)"
                         [ngbTooltip]="'entity.action.edit' | artemisTranslate"
                     >
                         <fa-icon [icon]="faPencilAlt"></fa-icon>
-                    </a>
+                    </button>
                     <button
                         type="button"
                         class="btn btn-danger btn-sm flex-grow-1"

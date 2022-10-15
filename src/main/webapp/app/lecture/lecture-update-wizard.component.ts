@@ -15,8 +15,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import { UnitType } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
@@ -65,6 +64,10 @@ export class LectureUpdateWizardComponent implements OnInit {
     currentlyProcessedVideoUnit: VideoUnit;
     currentlyProcessedOnlineUnit: OnlineUnit;
     currentlyProcessedAttachmentUnit: AttachmentUnit;
+    textUnitFormData: TextUnitFormData;
+    videoUnitFormData: VideoUnitFormData;
+    onlineUnitFormData: OnlineUnitFormData;
+    attachmentUnitFormData: AttachmentUnitFormData;
 
     currentlyProcessedLearningGoal: LearningGoal;
     learningGoals: LearningGoal[] = [];
@@ -347,23 +350,24 @@ export class LectureUpdateWizardComponent implements OnInit {
 
         this.currentlyProcessedLearningGoal = new LearningGoal();
     }
-    onCreateLectureUnit(type: UnitType) {
+
+    onCreateLectureUnit(type: LectureUnitType) {
         this.isEditingLectureUnit = false;
 
         switch (type) {
-            case UnitType.TEXT:
+            case LectureUnitType.TEXT:
                 this.isTextUnitFormOpen = true;
                 break;
-            case UnitType.EXERCISE:
+            case LectureUnitType.EXERCISE:
                 this.isExerciseUnitFormOpen = true;
                 break;
-            case UnitType.VIDEO:
+            case LectureUnitType.VIDEO:
                 this.isVideoUnitFormOpen = true;
                 break;
-            case UnitType.ONLINE:
+            case LectureUnitType.ONLINE:
                 this.isOnlineUnitFormOpen = true;
                 break;
-            case UnitType.ATTACHMENT:
+            case LectureUnitType.ATTACHMENT:
                 this.isAttachmentUnitFormOpen = true;
                 break;
         }
@@ -489,4 +493,112 @@ export class LectureUpdateWizardComponent implements OnInit {
             },
         });
     }
+
+    startEditLectureUnit(lectureUnit: LectureUnit) {
+        this.isEditingLectureUnit = true;
+
+        switch (lectureUnit.type) {
+            case LectureUnitType.TEXT:
+                this.currentlyProcessedTextUnit = lectureUnit;
+                this.isTextUnitFormOpen = true;
+                this.isVideoUnitFormOpen = false;
+                this.isExerciseUnitFormOpen = false;
+                this.isOnlineUnitFormOpen = false;
+                this.isAttachmentUnitFormOpen = false;
+                this.textUnitFormData = {
+                    name: this.currentlyProcessedTextUnit.name,
+                    releaseDate: this.currentlyProcessedTextUnit.releaseDate,
+                    content: this.currentlyProcessedTextUnit.content,
+                };
+                break;
+            case LectureUnitType.VIDEO:
+                this.currentlyProcessedVideoUnit = lectureUnit;
+                this.isVideoUnitFormOpen = true;
+                this.isExerciseUnitFormOpen = false;
+                this.isOnlineUnitFormOpen = false;
+                this.isAttachmentUnitFormOpen = false;
+                this.isTextUnitFormOpen = false;
+                this.videoUnitFormData = {
+                    name: this.currentlyProcessedVideoUnit.name,
+                    description: this.currentlyProcessedVideoUnit.description,
+                    releaseDate: this.currentlyProcessedVideoUnit.releaseDate,
+                    source: this.currentlyProcessedVideoUnit.source,
+                };
+                break;
+            case LectureUnitType.ONLINE:
+                this.currentlyProcessedOnlineUnit = lectureUnit;
+                this.isOnlineUnitFormOpen = true;
+                this.isAttachmentUnitFormOpen = false;
+                this.isTextUnitFormOpen = false;
+                this.isVideoUnitFormOpen = false;
+                this.isExerciseUnitFormOpen = false;
+                this.onlineUnitFormData = {
+                    name: this.currentlyProcessedOnlineUnit.name,
+                    description: this.currentlyProcessedOnlineUnit.description,
+                    releaseDate: this.currentlyProcessedOnlineUnit.releaseDate,
+                    source: this.currentlyProcessedOnlineUnit.source,
+                };
+                break;
+            case LectureUnitType.ATTACHMENT:
+                this.currentlyProcessedAttachmentUnit = lectureUnit;
+                this.isAttachmentUnitFormOpen = true;
+                this.isTextUnitFormOpen = false;
+                this.isVideoUnitFormOpen = false;
+                this.isExerciseUnitFormOpen = false;
+                this.isOnlineUnitFormOpen = false;
+                this.attachmentUnitFormData = {
+                    formProperties: {
+                        name: this.currentlyProcessedAttachmentUnit.attachment!.name,
+                        description: this.currentlyProcessedAttachmentUnit.description,
+                        releaseDate: this.currentlyProcessedAttachmentUnit.attachment!.releaseDate,
+                        version: this.currentlyProcessedAttachmentUnit.attachment!.version,
+                    },
+                    fileProperties: {
+                        fileName: this.currentlyProcessedAttachmentUnit.attachment!.link,
+                    },
+                };
+                break;
+        }
+    }
+
+    // onLearningGoalFormSubmitted(formData: LearningGoalFormData) {
+    //     if (this.isEditingLearningGoal) {
+    //         this.editLearningGoal(formData);
+    //     } else {
+    //         this.createLearningGoal(formData);
+    //     }
+    // }
+    // editLearningGoal(formData: LearningGoalFormData) {
+    //     const { title, description, taxonomy, connectedLectureUnits } = formData;
+    //
+    //     this.currentlyProcessedLearningGoal.title = title;
+    //     this.currentlyProcessedLearningGoal.description = description;
+    //     this.currentlyProcessedLearningGoal.taxonomy = taxonomy;
+    //     this.currentlyProcessedLearningGoal.lectureUnits = connectedLectureUnits;
+    //
+    //     this.isLoadingLearningGoalForm = true;
+    //
+    //     this.learningGoalService
+    //         .update(this.currentlyProcessedLearningGoal, this.lecture.course!.id!)
+    //         .pipe(
+    //             finalize(() => {
+    //                 this.isLoadingLearningGoalForm = false;
+    //             }),
+    //         )
+    //         .subscribe({
+    //             next: (response: HttpResponse<LearningGoal>) => {
+    //                 this.isEditingLearningGoal = false;
+    //                 const index = this.learningGoals.findIndex((learningGoal) => learningGoal.id === this.currentlyProcessedLearningGoal.id);
+    //                 if (index === -1) {
+    //                     this.learningGoals = this.learningGoals.concat(response.body!);
+    //                 } else {
+    //                     this.learningGoals[index] = response.body!;
+    //                 }
+    //
+    //                 this.currentlyProcessedLearningGoal = new LearningGoal();
+    //                 this.alertService.success(`Learning goal ${this.currentlyProcessedLearningGoal.title} was successfully edited.`);
+    //             },
+    //             error: (res: HttpErrorResponse) => onError(this.alertService, res),
+    //         });
+    // }
 }
