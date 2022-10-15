@@ -10,7 +10,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faSave, faHandshakeAngle, faArrowRight, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faHandshakeAngle, faArrowRight, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { LearningGoal } from 'app/entities/learningGoal.model';
@@ -61,7 +61,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
-    faSave = faSave;
+    faCheck = faCheck;
     faHandShakeAngle = faHandshakeAngle;
     faArrowRight = faArrowRight;
     faPencilAlt = faPencilAlt;
@@ -99,6 +99,10 @@ export class LectureUpdateWizardComponent implements OnInit {
         if (this.currentStep === 5) {
             this.loadLearningGoals();
         }
+
+        if (this.currentStep > 5) {
+            this.toggleWizardMode();
+        }
     }
 
     onLectureCreationSucceeded() {
@@ -120,11 +124,11 @@ export class LectureUpdateWizardComponent implements OnInit {
     }
 
     getNextIcon() {
-        return this.currentStep < 5 ? faArrowRight : faSave;
+        return this.currentStep < 5 ? faArrowRight : faCheck;
     }
 
     getNextText() {
-        return this.currentStep < 5 ? 'artemisApp.lecture.home.nextStepLabel' : 'entity.action.save';
+        return this.currentStep < 5 ? 'artemisApp.lecture.home.nextStepLabel' : 'entity.action.finish';
     }
 
     toggleWizardMode() {
