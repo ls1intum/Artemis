@@ -10,6 +10,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { LectureService } from 'app/lecture/lecture.service';
 
 @Component({
     selector: 'jhi-lecture-attachments',
@@ -18,9 +19,10 @@ import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants'
 })
 export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
-    @Input() lecture: Lecture;
+    @Input() lectureId: number | undefined;
     @Input() showHeader = true;
 
+    lecture: Lecture;
     attachments: Attachment[] = [];
     attachmentToBeCreated?: Attachment;
     attachmentBackup?: Attachment;
@@ -49,6 +51,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     constructor(
         protected activatedRoute: ActivatedRoute,
         private attachmentService: AttachmentService,
+        private lectureService: LectureService,
         private httpClient: HttpClient,
         private fileUploaderService: FileUploaderService,
         private fileService: FileService,
@@ -57,10 +60,21 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.notificationText = undefined;
         this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
-            this.lecture ??= lecture;
-            this.attachmentService.findAllByLectureId(this.lecture.id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
-                this.attachments = attachmentsResponse.body!;
-            });
+            if (this.lectureId) {
+                this.lectureService.findWithDetails(this.lectureId).subscribe((lectureResponse: HttpResponse<Lecture>) => {
+                    this.lecture = lectureResponse.body!;
+                    this.loadAttachments();
+                });
+            } else {
+                this.lecture = lecture;
+                this.loadAttachments();
+            }
+        });
+    }
+
+    loadAttachments() {
+        this.attachmentService.findAllByLectureId(this.lecture.id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
+            this.attachments = attachmentsResponse.body!;
         });
     }
 
