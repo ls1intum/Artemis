@@ -385,19 +385,22 @@ export class LectureUpdateWizardComponent implements OnInit {
         this.isExerciseUnitFormOpen = false;
     }
 
-    createTextUnit(formData: TextUnitFormData) {
+    createEditTextUnit(formData: TextUnitFormData) {
         if (!formData?.name) {
             return;
         }
 
         const { name, releaseDate, content } = formData;
 
-        this.currentlyProcessedTextUnit = new TextUnit();
+        this.currentlyProcessedTextUnit = this.isEditingLectureUnit ? this.currentlyProcessedTextUnit : new TextUnit();
         this.currentlyProcessedTextUnit.name = name;
         this.currentlyProcessedTextUnit.releaseDate = releaseDate;
         this.currentlyProcessedTextUnit.content = content;
 
-        this.textUnitService.create(this.currentlyProcessedTextUnit!, this.lecture.id!).subscribe({
+        (this.isEditingLectureUnit
+            ? this.textUnitService.update(this.currentlyProcessedTextUnit, this.lecture.id!)
+            : this.textUnitService.create(this.currentlyProcessedTextUnit!, this.lecture.id!)
+        ).subscribe({
             next: () => {
                 this.onCloseLectureUnitForms();
                 this.unitManagementComponent.loadData();
@@ -497,6 +500,10 @@ export class LectureUpdateWizardComponent implements OnInit {
     startEditLectureUnit(lectureUnit: LectureUnit) {
         this.isEditingLectureUnit = true;
 
+        lectureUnit.lecture = new Lecture();
+        lectureUnit.lecture.id = this.lecture.id;
+        lectureUnit.lecture.course = this.lecture.course;
+
         switch (lectureUnit.type) {
             case LectureUnitType.TEXT:
                 this.currentlyProcessedTextUnit = lectureUnit;
@@ -560,45 +567,4 @@ export class LectureUpdateWizardComponent implements OnInit {
                 break;
         }
     }
-
-    // onLearningGoalFormSubmitted(formData: LearningGoalFormData) {
-    //     if (this.isEditingLearningGoal) {
-    //         this.editLearningGoal(formData);
-    //     } else {
-    //         this.createLearningGoal(formData);
-    //     }
-    // }
-    // editLearningGoal(formData: LearningGoalFormData) {
-    //     const { title, description, taxonomy, connectedLectureUnits } = formData;
-    //
-    //     this.currentlyProcessedLearningGoal.title = title;
-    //     this.currentlyProcessedLearningGoal.description = description;
-    //     this.currentlyProcessedLearningGoal.taxonomy = taxonomy;
-    //     this.currentlyProcessedLearningGoal.lectureUnits = connectedLectureUnits;
-    //
-    //     this.isLoadingLearningGoalForm = true;
-    //
-    //     this.learningGoalService
-    //         .update(this.currentlyProcessedLearningGoal, this.lecture.course!.id!)
-    //         .pipe(
-    //             finalize(() => {
-    //                 this.isLoadingLearningGoalForm = false;
-    //             }),
-    //         )
-    //         .subscribe({
-    //             next: (response: HttpResponse<LearningGoal>) => {
-    //                 this.isEditingLearningGoal = false;
-    //                 const index = this.learningGoals.findIndex((learningGoal) => learningGoal.id === this.currentlyProcessedLearningGoal.id);
-    //                 if (index === -1) {
-    //                     this.learningGoals = this.learningGoals.concat(response.body!);
-    //                 } else {
-    //                     this.learningGoals[index] = response.body!;
-    //                 }
-    //
-    //                 this.currentlyProcessedLearningGoal = new LearningGoal();
-    //                 this.alertService.success(`Learning goal ${this.currentlyProcessedLearningGoal.title} was successfully edited.`);
-    //             },
-    //             error: (res: HttpErrorResponse) => onError(this.alertService, res),
-    //         });
-    // }
 }

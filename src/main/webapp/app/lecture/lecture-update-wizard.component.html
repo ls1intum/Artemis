@@ -68,7 +68,7 @@
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
                     (onCancel)="onCloseLectureUnitForms()"
-                    (formSubmitted)="createTextUnit($event)"
+                    (formSubmitted)="createEditTextUnit($event)"
                     [formData]="textUnitFormData"
                 ></jhi-text-unit-form>
                 <jhi-video-unit-form
