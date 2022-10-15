@@ -7,18 +7,6 @@
                 <h4 *ngIf="!course.id" id="jhi-course-heading-create" jhiTranslate="artemisApp.course.home.createLabel">Create new Course</h4>
                 <h4 *ngIf="course.id" id="jhi-course-heading-edit" jhiTranslate="artemisApp.course.home.editLabel">Edit Course</h4>
             </div>
-            <button
-                *ngIf="croppedImage && course.courseIcon"
-                id="delete-course-icon"
-                class="btn"
-                [buttonSize]="ButtonSize.SMALL"
-                jhiDeleteButton
-                [actionType]="ActionType.Remove"
-                (delete)="deleteCourseIcon()"
-                [dialogError]="dialogError$"
-            >
-                <fa-icon [icon]="faTimes"></fa-icon>
-            </button>
             <hr />
             <div>
                 <div class="form-group" [hidden]="!course.id">
@@ -55,11 +43,23 @@
                         </div>
                     </ng-container>
                 </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.courseIcon" for="field_shortName">Course Icon</label>
-                    <div class="input-group background-file">
-                        <div class="custom-file">
-                            <input id="courseImageInput{{ course.id }}" type="file" accept="image/*" class="custom-file-input" (change)="setCourseImage($event)" />
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.courseIcon" for="field_shortName">Course Icon</label>
+                            <div class="input-group background-file">
+                                <div class="custom-file">
+                                    <input id="courseImageInput{{ course.id }}" type="file" accept="image/*" class="custom-file-input" (change)="setCourseImage($event)" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div style="position: relative; display: flex; justify-content: end">
+                            <button *ngIf="croppedImage && course.courseIcon" id="delete-course-icon" class="btn btn-danger btn-sm" (click)="deleteCourseIcon()">
+                                <fa-icon [icon]="faTimes"></fa-icon>
+                                <span jhiTranslate="artemisApp.course.delete.icon">Remove Icon</span>
+                            </button>
                         </div>
                     </div>
                 </div>

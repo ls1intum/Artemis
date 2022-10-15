@@ -46,7 +46,7 @@ export class CourseUpdateComponent implements OnInit {
     course: Course;
     isSaving: boolean;
     courseImageFile?: Blob | File;
-    courseImageFileName: string;
+    courseImageFileName: string | undefined;
     isUploadingCourseImage: boolean;
     imageChangedEvent: any = '';
     croppedImage: any = '';
@@ -492,7 +492,6 @@ export class CourseUpdateComponent implements OnInit {
 
     /**
      * Deletes the course icon
-     * @param courseId id the course that will be deleted
      */
     deleteCourseIcon() {
         this.course.courseIcon = undefined;

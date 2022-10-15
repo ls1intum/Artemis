@@ -150,7 +150,7 @@ describe('Course management', () => {
             cy.get('.no-image').should('exist');
             cy.intercept(PUT, BASE_API + 'courses').as('updateCourseQuery');
             cy.get('#save-entity').click();
-            cy.wait('@updateCourseQuery').then((_) => {
+            cy.wait('@updateCourseQuery').then(() => {
                 cy.get('#edit-course').click();
                 cy.get('#delete-course-icon').should('not.exist');
                 cy.get('.no-image').should('exist');
