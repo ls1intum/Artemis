@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 export interface TextUnitFormData {
     name?: string;
@@ -27,6 +28,13 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input() isEditMode = false;
     @Output() formSubmitted: EventEmitter<TextUnitFormData> = new EventEmitter<TextUnitFormData>();
+
+    @Input()
+    hasCancelButton: boolean;
+    @Output()
+    onCancel: EventEmitter<any> = new EventEmitter<any>();
+
+    faTimes = faTimes;
 
     form: FormGroup;
     // not included in reactive form
@@ -117,5 +125,9 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
             const cache = { markdown, date: dayjs().format('MMM DD YYYY, HH:mm:ss') };
             localStorage.setItem(this.router.url, JSON.stringify(cache));
         }
+    }
+
+    cancelForm() {
+        this.onCancel.emit();
     }
 }

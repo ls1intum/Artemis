@@ -15,6 +15,9 @@
             <p>{{ 'artemisApp.exerciseUnit.createExerciseUnit.description' | artemisTranslate }}</p>
         </div>
         <div class="col-sm-6 mx-auto text-end">
+            <button *ngIf="hasCancelButton" type="button" (click)="cancelForm()" class="btn btn-default">
+                <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            </button>
             <button id="createButton" type="button" class="btn btn-primary" [disabled]="exercisesToCreateUnitFor.length === 0" (click)="createExerciseUnits()">
                 {{ 'entity.action.submit' | artemisTranslate }}
             </button>

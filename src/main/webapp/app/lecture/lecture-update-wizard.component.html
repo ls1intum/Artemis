@@ -51,8 +51,37 @@
             <h1>Units</h1>
             <p>Add content to the lecture by creating different kinds of lecture units.</p>
             <jhi-lecture-unit-management [showCreationCard]="false" [showLearningGoals]="false"></jhi-lecture-unit-management>
-            <div class="form-group w-100 d-flex justify-content-start">
-                <jhi-unit-creation-card></jhi-unit-creation-card>
+            <div class="form-group w-100 d-flex justify-content-start" *ngIf="!isAnyUnitFormOpen()">
+                <jhi-unit-creation-card disabled [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)"></jhi-unit-creation-card>
+            </div>
+            <div *ngIf="isAnyUnitFormOpen()" class="form-group">
+                <h4 *ngIf="!isEditingLectureUnit">New Lecture Unit</h4>
+                <h4 *ngIf="isEditingLectureUnit">Edit Lecture Unit</h4>
+                <jhi-text-unit-form
+                    *ngIf="isTextUnitFormOpen"
+                    [isEditMode]="isEditingLectureUnit"
+                    [hasCancelButton]="true"
+                    (onCancel)="onLectureUnitCanceled()"
+                ></jhi-text-unit-form>
+                <jhi-video-unit-form
+                    *ngIf="isVideoUnitFormOpen"
+                    [isEditMode]="isEditingLectureUnit"
+                    [hasCancelButton]="true"
+                    (onCancel)="onLectureUnitCanceled()"
+                ></jhi-video-unit-form>
+                <jhi-online-unit-form
+                    *ngIf="isOnlineUnitFormOpen"
+                    [isEditMode]="isEditingLectureUnit"
+                    [hasCancelButton]="true"
+                    (onCancel)="onLectureUnitCanceled()"
+                ></jhi-online-unit-form>
+                <jhi-attachment-unit-form
+                    *ngIf="isAttachmentUnitFormOpen"
+                    [isEditMode]="isEditingLectureUnit"
+                    [hasCancelButton]="true"
+                    (onCancel)="onLectureUnitCanceled()"
+                ></jhi-attachment-unit-form>
+                <jhi-create-exercise-unit *ngIf="isExerciseUnitFormOpen" [hasCancelButton]="true" (onCancel)="onLectureUnitCanceled()"></jhi-create-exercise-unit>
             </div>
         </div>
         <div class="form-step form-group" [hidden]="currentStep < 5">

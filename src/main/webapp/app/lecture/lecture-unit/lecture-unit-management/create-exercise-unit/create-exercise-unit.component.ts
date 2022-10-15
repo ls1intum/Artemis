@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -10,7 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { forkJoin, combineLatest, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
@@ -18,6 +18,13 @@ import { faSort } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./create-exercise-unit.component.scss'],
 })
 export class CreateExerciseUnitComponent implements OnInit {
+    @Input()
+    hasCancelButton: boolean;
+    @Output()
+    onCancel: EventEmitter<any> = new EventEmitter<any>();
+
+    faTimes = faTimes;
+
     predicate = 'type';
     reverse = false;
     isLoading = false;
@@ -106,5 +113,9 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     isExerciseSelectedForUnitCreation(exercise: Exercise) {
         return this.exercisesToCreateUnitFor.includes(exercise);
+    }
+
+    cancelForm() {
+        this.onCancel.emit();
     }
 }

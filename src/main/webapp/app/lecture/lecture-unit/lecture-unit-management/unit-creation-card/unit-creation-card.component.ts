@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { faCheck, faFileUpload, faLink, faScroll, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -18,6 +18,9 @@ export enum UnitType {
 export class UnitCreationCardComponent {
     @Input() emitEvents = false;
 
+    @Output()
+    onUnitCreationCardClicked: EventEmitter<UnitType> = new EventEmitter<UnitType>();
+
     unitType = UnitType;
 
     // Icons
@@ -31,6 +34,7 @@ export class UnitCreationCardComponent {
 
     onButtonClicked(type: UnitType) {
         if (this.emitEvents) {
+            this.onUnitCreationCardClicked.emit(type);
             return;
         }
 

@@ -55,6 +55,9 @@
                 <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
                     <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
                 </button>
+                <button *ngIf="hasCancelButton" type="button" (click)="cancelForm()" class="btn btn-default">
+                    <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
             </div>
         </div>
     </form>

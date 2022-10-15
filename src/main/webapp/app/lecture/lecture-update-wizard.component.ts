@@ -16,6 +16,7 @@ import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-fo
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { UnitType } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 
 @Component({
     selector: 'jhi-lecture-update-wizard',
@@ -35,6 +36,12 @@ export class LectureUpdateWizardComponent implements OnInit {
     isLoadingLearningGoalForm: boolean;
     isLoadingLearningGoals: boolean;
     isEditingLearningGoal: boolean;
+    isEditingLectureUnit: boolean;
+    isTextUnitFormOpen: boolean;
+    isExerciseUnitFormOpen: boolean;
+    isVideoUnitFormOpen: boolean;
+    isOnlineUnitFormOpen: boolean;
+    isAttachmentUnitFormOpen: boolean;
 
     currentlyProcessedLearningGoal: LearningGoal;
     learningGoals: LearningGoal[] = [];
@@ -308,5 +315,38 @@ export class LectureUpdateWizardComponent implements OnInit {
         this.isLoadingLearningGoalForm = false;
 
         this.currentlyProcessedLearningGoal = new LearningGoal();
+    }
+    onCreateLectureUnit(type: UnitType) {
+        this.isEditingLectureUnit = false;
+
+        switch (type) {
+            case UnitType.TEXT:
+                this.isTextUnitFormOpen = true;
+                break;
+            case UnitType.EXERCISE:
+                this.isExerciseUnitFormOpen = true;
+                break;
+            case UnitType.VIDEO:
+                this.isVideoUnitFormOpen = true;
+                break;
+            case UnitType.ONLINE:
+                this.isOnlineUnitFormOpen = true;
+                break;
+            case UnitType.ATTACHMENT:
+                this.isAttachmentUnitFormOpen = true;
+                break;
+        }
+    }
+
+    isAnyUnitFormOpen(): boolean {
+        return this.isTextUnitFormOpen || this.isVideoUnitFormOpen || this.isOnlineUnitFormOpen || this.isAttachmentUnitFormOpen || this.isExerciseUnitFormOpen;
+    }
+
+    onLectureUnitCanceled() {
+        this.isTextUnitFormOpen = false;
+        this.isVideoUnitFormOpen = false;
+        this.isOnlineUnitFormOpen = false;
+        this.isAttachmentUnitFormOpen = false;
+        this.isExerciseUnitFormOpen = false;
     }
 }
