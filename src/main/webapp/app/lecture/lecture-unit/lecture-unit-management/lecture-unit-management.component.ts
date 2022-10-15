@@ -24,7 +24,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     @Input() showCreationCard = true;
     @Input() showLearningGoals = true;
 
-    lectureId: number;
+    @Input() lectureId: number | undefined;
+
     lectureUnits: LectureUnit[] = [];
     lecture: Lecture;
     isLoading = false;
@@ -62,7 +63,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
         this.updateOrderSubject = new Subject();
         this.activatedRoute.parent!.params.subscribe((params) => {
-            this.lectureId = +params['lectureId'];
+            this.lectureId ??= +params['lectureId'];
             if (this.lectureId) {
                 // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
                 this.loadData();
@@ -80,7 +81,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         // TODO: we actually would like to have the lecture with all units! Posts and learning goals are not required here
         // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
         this.lectureService
-            .findWithDetails(this.lectureId)
+            .findWithDetails(this.lectureId!)
             .pipe(
                 map((response: HttpResponse<Lecture>) => response.body!),
                 finalize(() => {
@@ -101,8 +102,12 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     updateOrder() {
+        if (this.lectureId === undefined || isNaN(this.lectureId)) {
+            return;
+        }
+
         this.lectureUnitService
-            .updateOrder(this.lectureId, this.lectureUnits)
+            .updateOrder(this.lectureId!, this.lectureUnits)
             .pipe(map((response: HttpResponse<LectureUnit[]>) => response.body!))
             .subscribe({
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -157,7 +162,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLectureUnit(lectureUnitId: number) {
-        this.lectureUnitService.delete(lectureUnitId, this.lectureId).subscribe({
+        this.lectureUnitService.delete(lectureUnitId, this.lectureId!).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();

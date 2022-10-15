@@ -50,7 +50,7 @@
         <div class="form-step" [hidden]="currentStep < 4">
             <h1>Units</h1>
             <p>Add content to the lecture by creating different kinds of lecture units.</p>
-            <jhi-lecture-unit-management [showCreationCard]="false" [showLearningGoals]="false"></jhi-lecture-unit-management>
+            <jhi-lecture-unit-management [lectureId]="this.lecture.id" [showCreationCard]="false" [showLearningGoals]="false"></jhi-lecture-unit-management>
             <div class="form-group w-100 d-flex justify-content-start" *ngIf="!isAnyUnitFormOpen()">
                 <jhi-unit-creation-card disabled [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)"></jhi-unit-creation-card>
             </div>
