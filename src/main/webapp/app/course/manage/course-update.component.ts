@@ -497,7 +497,7 @@ export class CourseUpdateComponent implements OnInit {
     deleteCourseIcon() {
         this.course.courseIcon = undefined;
         this.courseImageFile = undefined;
-        this.courseImageFileName = this.course.courseIcon!;
+        this.courseImageFileName = undefined;
         this.croppedImage = '';
         this.courseForm.controls['courseIcon'].setValue(undefined);
         this.dialogErrorSource.next('');
