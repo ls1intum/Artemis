@@ -11,8 +11,9 @@ import { Course } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faSave, faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faHandshakeAngle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardComponent } from 'app/lecture/lecture-update-wizard.component';
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -64,6 +65,12 @@ export class LectureUpdateComponent implements OnInit {
             const course = data['course'];
             if (course) {
                 this.lecture.course = course;
+            }
+        });
+
+        this.activatedRoute.queryParams.subscribe((params) => {
+            if (params.shouldBeInWizardMode) {
+                this.isShowingWizardMode = params.shouldBeInWizardMode;
             }
         });
     }

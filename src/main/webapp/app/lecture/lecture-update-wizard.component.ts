@@ -105,7 +105,18 @@ export class LectureUpdateWizardComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        this.currentStep = this.lecture.startDate !== undefined || this.lecture.endDate !== undefined ? 2 : 1;
+
+        this.activatedRoute.queryParams.subscribe((params) => {
+            if (params.shouldOpenCreateExercise) {
+                this.onCreateLectureUnit(LectureUnitType.EXERCISE);
+            }
+
+            if (params.lectureWizardStepForGoingBack) {
+                this.currentStep = params.lectureWizardStepForGoingBack;
+            } else {
+                this.currentStep = this.lecture.startDate !== undefined || this.lecture.endDate !== undefined ? 2 : 1;
+            }
+        });
     }
 
     /**

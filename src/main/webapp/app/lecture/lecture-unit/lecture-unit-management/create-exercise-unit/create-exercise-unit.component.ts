@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, Params } from '@angular/router';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -28,6 +28,8 @@ export class CreateExerciseUnitComponent implements OnInit {
     lectureId: number | undefined;
     @Input()
     courseId: number | undefined;
+    @Input()
+    currentWizardStep: number;
 
     @Output()
     onCancel: EventEmitter<any> = new EventEmitter<any>();
@@ -131,6 +133,9 @@ export class CreateExerciseUnitComponent implements OnInit {
     }
 
     createNewExercise() {
-        this.router.navigate(['/course-management', this.courseId, 'exercises']);
+        this.router.navigate(['/course-management', this.courseId, 'exercises'], {
+            queryParams: { shouldHaveBackButtonToWizard: 'true', lectureId: this.lectureId, step: this.currentWizardStep },
+            queryParamsHandling: '',
+        });
     }
 }
