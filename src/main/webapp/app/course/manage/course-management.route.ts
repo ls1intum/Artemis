@@ -73,8 +73,7 @@ export const courseManagementState: Routes = [
         resolve: {
             course: CourseManagementResolve,
         },
-        loadChildren: () =>
-            import('app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-instructor-view.module').then((m) => m.ArtemisTutorialGroupsInstructorViewModule),
+        loadChildren: () => import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
     },
     {
         path: ':courseId/plagiarism-cases',
