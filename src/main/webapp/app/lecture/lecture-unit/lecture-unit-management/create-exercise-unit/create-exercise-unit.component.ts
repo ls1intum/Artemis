@@ -2,7 +2,7 @@ import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
@@ -20,8 +20,17 @@ import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 export class CreateExerciseUnitComponent implements OnInit {
     @Input()
     hasCancelButton: boolean;
+    @Input()
+    shouldNavigateOnSubmit = true;
+    @Input()
+    lectureId: number | undefined;
+    @Input()
+    courseId: number | undefined;
+
     @Output()
     onCancel: EventEmitter<any> = new EventEmitter<any>();
+    @Output()
+    onExerciseUnitCreated: EventEmitter<ExerciseUnit> = new EventEmitter<ExerciseUnit>();
 
     faTimes = faTimes;
 
@@ -29,8 +38,6 @@ export class CreateExerciseUnitComponent implements OnInit {
     reverse = false;
     isLoading = false;
 
-    lectureId: number;
-    courseId: number;
     exercisesAvailableForUnitCreation: Exercise[] = [];
     exercisesToCreateUnitFor: Exercise[] = [];
 
@@ -53,8 +60,8 @@ export class CreateExerciseUnitComponent implements OnInit {
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
-                    this.lectureId = Number(params.get('lectureId'));
-                    this.courseId = Number(parentParams.get('courseId'));
+                    this.lectureId ??= Number(params.get('lectureId'));
+                    this.courseId ??= Number(parentParams.get('courseId'));
 
                     const courseObservable = this.courseManagementService.findWithExercises(this.courseId);
                     const exerciseUnitObservable = this.exerciseUnitService.findAllByLectureId(this.lectureId);
@@ -84,13 +91,15 @@ export class CreateExerciseUnitComponent implements OnInit {
         });
 
         from(exerciseUnitsToCreate)
-            .pipe(
-                concatMap((unit) => this.exerciseUnitService.create(unit, this.lectureId)),
-                finalize(() => {
-                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
-                }),
-            )
+            .pipe(concatMap((unit) => this.exerciseUnitService.create(unit, this.lectureId!)))
             .subscribe({
+                next: (response: HttpResponse<ExerciseUnit>) => {
+                    if (this.shouldNavigateOnSubmit) {
+                        this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                    } else {
+                        this.onExerciseUnitCreated.emit(response.body!);
+                    }
+                },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }

@@ -32,6 +32,7 @@ import { AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-ma
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import dayjs from 'dayjs/esm';
+import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 
 @Component({
     selector: 'jhi-lecture-update-wizard',
@@ -464,8 +465,6 @@ export class LectureUpdateWizardComponent implements OnInit {
             return;
         }
 
-        console.log(attachmentUnitFormData.formProperties);
-
         const { description, name, releaseDate, updateNotificationText } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
@@ -519,6 +518,11 @@ export class LectureUpdateWizardComponent implements OnInit {
                 }
             },
         });
+    }
+
+    onExerciseUnitCreated(exerciseUnit: ExerciseUnit) {
+        this.onCloseLectureUnitForms();
+        this.unitManagementComponent.loadData();
     }
 
     startEditLectureUnit(lectureUnit: LectureUnit) {

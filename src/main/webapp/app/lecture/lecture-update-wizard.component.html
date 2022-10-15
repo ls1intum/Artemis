@@ -95,7 +95,15 @@
                     (formSubmitted)="createEditAttachmentUnit($event)"
                     [formData]="attachmentUnitFormData"
                 ></jhi-attachment-unit-form>
-                <jhi-create-exercise-unit *ngIf="isExerciseUnitFormOpen" [hasCancelButton]="true" (onCancel)="onCloseLectureUnitForms()"></jhi-create-exercise-unit>
+                <jhi-create-exercise-unit
+                    *ngIf="isExerciseUnitFormOpen"
+                    [shouldNavigateOnSubmit]="false"
+                    (onExerciseUnitCreated)="onExerciseUnitCreated($event)"
+                    [lectureId]="lecture.id"
+                    [courseId]="lecture.course?.id"
+                    [hasCancelButton]="true"
+                    (onCancel)="onCloseLectureUnitForms()"
+                ></jhi-create-exercise-unit>
             </div>
         </div>
         <div class="form-step form-group" [hidden]="currentStep < 5">
