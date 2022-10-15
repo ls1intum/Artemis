@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -206,6 +206,22 @@ describe('ExamParticipationComponent', () => {
         expect(loadStudentExamWithExercisesForSummary).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExamWithExercises);
         expect(comp.studentExam).not.toEqual(studentExam);
+    });
+
+    it('should redirect to exam summary after test run is over', () => {
+        const studentExam = new StudentExam();
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', testRunId: '3' });
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        const loadTestRunWithExercisesForConductionSpy = jest.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
+        const submitStudentExamSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(studentExam));
+        comp.ngOnInit();
+        expect(loadTestRunWithExercisesForConductionSpy).toHaveBeenCalledOnce();
+        expect(comp.studentExam).toEqual(studentExam);
+        comp.onExamEndConfirmed();
+        expect(submitStudentExamSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'exams', 2, 'test-runs', 3, 'summary']);
     });
 
     it('should load new testExam if studentExam id is new', () => {

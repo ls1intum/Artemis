@@ -990,8 +990,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student2"), shortText);
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getPlagiarismOptions(50D, 0, 5));
-        assertThat(result.getComparisons()).isEmpty();
+        request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, database.getPlagiarismOptions(50D, 0, 5));
     }
 
     @Test
@@ -1001,8 +1000,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
-        assertThat(result.getComparisons()).isEmpty();
+        request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
     }
 
     @Test
