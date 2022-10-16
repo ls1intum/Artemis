@@ -90,11 +90,11 @@ export class CourseExerciseService {
     }
 
     /**
-     * resumes the programming exercise with the identifier exerciseId
+     * starts the exercise with the identifier exerciseId
      * @param exerciseId - the unique identifier of the exercise
      */
-    resumeProgrammingExercise(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation`, {}).pipe(
+    startPractice(exerciseId: number): Observable<StudentParticipation> {
+        return this.http.post<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),
@@ -102,10 +102,28 @@ export class CourseExerciseService {
     }
 
     /**
+     * resumes the programming exercise with the identifier exerciseId
+     * @param exerciseId - the unique identifier of the exercise
+     */
+    resumeProgrammingExercise(exerciseId: number, participationId: number): Observable<StudentParticipation> {
+        return this.http.put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation/${participationId}`, {}).pipe(
+            map((participation: StudentParticipation) => {
+                return this.handleParticipation(participation);
+            }),
+        );
+    }
+
+    requestFeedback(exerciseId: number): Observable<StudentParticipation> {
+        return this.http
+            .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/request-feedback`, {})
+            .pipe(map((participation: StudentParticipation) => participation));
+    }
+
+    /**
      * handle the given student participation by adding in the participationWebsocketService
      * @param participation - the participation to be handled
      */
-    handleParticipation(participation: StudentParticipation) {
+    handleParticipation(participation: StudentParticipation): StudentParticipation {
         if (participation) {
             // convert date
             participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;

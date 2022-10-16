@@ -5,7 +5,10 @@
             [posting]="posting"
             [(showAnswers)]="showAnswers"
             [sortedAnswerPosts]="sortedAnswerPosts"
+            [isCourseMessagesPage]="isCourseMessagesPage"
+            [isThreadSidebar]="isThreadSidebar"
             (openPostingCreateEditModal)="createAnswerPostModal.open()"
+            (openThread)="openThread.emit()"
         ></jhi-post-reactions-bar>
     </div>
     <!-- Post tags -->
@@ -20,6 +23,8 @@
         *ngFor="let answerPost of sortedAnswerPosts; let isLastAnswer = last; trackBy: answerPostTrackByFn"
         [posting]="answerPost"
         [isLastAnswer]="isLastAnswer"
+        [isCourseMessagesPage]="isCourseMessagesPage"
+        [isThreadSidebar]="isThreadSidebar"
         (openPostingCreateEditModal)="createAnswerPostModal.open()"
     >
     </jhi-answer-post>

@@ -293,7 +293,7 @@ public class StudentExamService {
      * @return returns the set of StudentExams of which the empty submissions were assessed
      */
     public Set<StudentExam> assessEmptySubmissionsOfStudentExams(final Exam exam, final User assessor, final Set<StudentExam> excludeStudentExams) {
-        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exam.getId());
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
         // remove student exams which should be excluded
         studentExams = studentExams.stream().filter(studentExam -> !excludeStudentExams.contains(studentExam)).collect(Collectors.toSet());
         Map<User, List<Exercise>> exercisesOfUser = getExercisesOfUserMap(studentExams);
@@ -428,7 +428,7 @@ public class StudentExamService {
     public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam, ZonedDateTime startedDate) {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         setUpExerciseParticipationsAndSubmissionsWithInitializationDate(studentExam, generatedParticipations, startedDate);
-        // TODO: Michael Allgaier: schedule an unlock operation for all involved student repositories of this student exam (test exam) at the end of the individual working
+        // TODO: Michael Allgaier: schedule a lock operation for all involved student repositories of this student exam (test exam) at the end of the individual working time
         studentParticipationRepository.saveAll(generatedParticipations);
     }
 
@@ -611,7 +611,7 @@ public class StudentExamService {
         for (final Exercise exercise : exercisesToBeDeleted) {
             // Only delete participations that exist (and were not deleted in some other way)
             if (!exercise.getStudentParticipations().isEmpty()) {
-                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true);
+                participationService.delete(exercise.getStudentParticipations().iterator().next().getId(), true, true, true);
             }
         }
 

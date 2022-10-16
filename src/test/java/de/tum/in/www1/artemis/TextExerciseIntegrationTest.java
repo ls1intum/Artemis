@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -338,7 +339,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             final TextSubmission submission2 = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
             databaseUtilService.saveTextSubmission(textExercise, submission2, "student2");
 
-            final var participations = studentParticipationRepository.findByExerciseId(textExercise.getId());
+            final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(textExercise.getId()));
             assertThat(participations).hasSize(2);
             participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
             participations.get(1).setIndividualDueDate(individualDueDate);
@@ -989,8 +990,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student2"), shortText);
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getPlagiarismOptions(50D, 0, 5));
-        assertThat(result.getComparisons()).isEmpty();
+        request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, database.getPlagiarismOptions(50D, 0, 5));
     }
 
     @Test
@@ -1000,8 +1000,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
-        assertThat(result.getComparisons()).isEmpty();
+        request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
     }
 
     @Test

@@ -22,6 +22,8 @@ public class PostContextFilter {
 
     private Long plagiarismCaseId;
 
+    private Long conversationId;
+
     private String searchText;
 
     private boolean filterToUnresolved = false;
@@ -72,6 +74,14 @@ public class PostContextFilter {
 
     public void setPlagiarismCaseId(Long plagiarismCaseId) {
         this.plagiarismCaseId = plagiarismCaseId;
+    }
+
+    public Long getConversationId() {
+        return conversationId;
+    }
+
+    public void setConversationId(Long conversationId) {
+        this.conversationId = conversationId;
     }
 
     public String getSearchText() {

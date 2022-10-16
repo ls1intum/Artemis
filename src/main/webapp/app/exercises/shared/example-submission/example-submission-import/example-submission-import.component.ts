@@ -58,6 +58,10 @@ export class ExampleSubmissionImportComponent implements OnInit {
         this.performSearch(this.search, 300);
     }
 
+    get searchTermEntered() {
+        return !!(this.state?.searchTerm?.length && this.state.searchTerm.length > 0);
+    }
+
     private performSearch(searchSubject: Subject<void>, debounce: number) {
         searchSubject
             .pipe(
