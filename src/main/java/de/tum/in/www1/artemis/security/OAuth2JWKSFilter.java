@@ -15,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.google.gson.GsonBuilder;
+
 /**
  * Filters requests to jwksUrl and serves the public JWKSet related to all OAuth2 clients.
  */
@@ -51,7 +53,8 @@ public class OAuth2JWKSFilter extends OncePerRequestFilter {
 
         response.setContentType("application/json;charset=utf-8");
         PrintWriter responseWriter = response.getWriter();
-        responseWriter.print(jwksService.getJwkSet().toPublicJWKSet().toJSONObject());
+        String keysAsJson = new GsonBuilder().setPrettyPrinting().create().toJson(jwksService.getJwkSet().toPublicJWKSet().toJSONObject());
+        responseWriter.print(keysAsJson);
         responseWriter.flush();
     }
 }
