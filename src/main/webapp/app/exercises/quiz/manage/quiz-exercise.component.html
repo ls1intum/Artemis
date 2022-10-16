@@ -10,6 +10,7 @@
             *ngIf="course && course.isAtLeastEditor"
             class="btn me-2 btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'new']"
+            queryParamsHandling="merge"
             id="create-quiz-button"
         >
             <fa-icon [icon]="faPlus"></fa-icon>

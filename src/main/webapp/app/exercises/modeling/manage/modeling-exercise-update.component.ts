@@ -53,6 +53,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     isImport: boolean;
     isExamMode: boolean;
     semiAutomaticAssessmentAvailable = true;
+    goBackAfterSaving = false;
 
     // Icons
     faSave = faSave;
@@ -159,6 +160,12 @@ export class ModelingExerciseUpdateComponent implements OnInit {
             )
             .subscribe();
 
+        this.activatedRoute.queryParams.subscribe((params) => {
+            if (params.shouldHaveBackButtonToWizard) {
+                this.goBackAfterSaving = true;
+            }
+        });
+
         this.isSaving = false;
         this.notificationText = undefined;
     }
@@ -203,6 +210,13 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     private onSaveSuccess(exercise: ModelingExercise): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
+
+        if (this.goBackAfterSaving) {
+            this.navigationUtilService.navigateBack();
+
+            return;
+        }
+
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
