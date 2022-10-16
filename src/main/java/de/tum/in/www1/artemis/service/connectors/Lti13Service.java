@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -14,15 +15,11 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lti.Lti13AgsClaim;
 import de.tum.in.www1.artemis.domain.lti.Lti13LaunchRequest;
 import de.tum.in.www1.artemis.domain.lti.Lti13ResourceLaunch;
@@ -113,23 +110,21 @@ public class Lti13Service {
                     return;
                 }
 
-                Optional<Result> result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
+                Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
                 if (result.isEmpty()) {
                     log.error("onNewResult triggered for participation " + participation.getId() + " but no result could be found");
                     return;
                 }
 
-                // Result.score is x if the score is x%
-                Double maxScore = 100d; // %
-                Double score = result.get().getScore();
+                String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(" "));
 
-                launches.forEach(launch -> submitScore(launch, score, maxScore));
+                launches.forEach(launch -> submitScore(launch, concatenatedFeedbacks, result.get().getScore()));
             });
         }
     }
 
-    protected void submitScore(Lti13ResourceLaunch launch, Double scoreGiven, Double maxScore) {
+    protected void submitScore(Lti13ResourceLaunch launch, String comment, Double score) {
         String scoreLineItemUrl = launch.getScoreLineItemUrl();
         if (scoreLineItemUrl == null) {
             return;
@@ -141,36 +136,47 @@ public class Lti13Service {
             return;
         }
 
-        OAuth2AccessTokenResponse token = tokenRetriever.getToken(client, launch.getTargetLinkUri(), Scopes.AGS_SCORE);
+        String token = tokenRetriever.getToken(client, Scopes.AGS_SCORE);
 
         if (token == null) {
             log.error("Could not transmit score to " + client.getClientId() + ": missing token");
             return;
         }
 
-        JSONObject requestBody = new JSONObject();
-        requestBody.put("userId", launch.getSub());
-        requestBody.put("timestamp", (new DateTime()).toString());
-        requestBody.put("activityProgress", "Submitted");
-        requestBody.put("gradingProgress", "FullyGraded");
-
-        // any score that is submitted is relative to a maxScore of 1.
-        // With that the LTI Platform can simply scale the score with its own max score value.
-        requestBody.put("scoreGiven", scoreGiven / maxScore);
-        requestBody.put("scoreMaximum", 1D);
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json"));
-        headers.setBearerAuth(token.getAccessToken().getTokenValue());
-        HttpEntity<String> httpRequest = new HttpEntity<>(requestBody.toJSONString(), headers);
+        headers.setBearerAuth(token);
+        String body = getScoreBody(launch.getSub(), comment, score);
+        HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
         try {
-            rest.postForEntity(new URI(launch.getScoreLineItemUrl()), httpRequest, Object.class);
+            rest.postForEntity(new URI(getScoresUrl(launch.getScoreLineItemUrl())), httpRequest, Object.class);
             log.info("Submitted score for " + launch.getUser().getLogin() + " to client" + client.getClientId());
         }
         catch (Exception e) {
             String message = "Could not submit score for " + launch.getUser().getLogin() + " to client " + client.getClientId() + ": " + e.getMessage();
             log.error(message);
         }
+    }
+
+    private String getScoresUrl(String lineItemUrl) {
+        StringBuilder builder = new StringBuilder(lineItemUrl);
+        int index = lineItemUrl.indexOf("?");
+        if (index == -1) {
+            return builder.append("/scores").toString();
+        }
+        return builder.insert(index, "/scores").toString(); // Adds "/scores" before the "?" in case there are query parameters
+    }
+
+    private String getScoreBody(String userId, String comment, Double score) {
+        JSONObject requestBody = new JSONObject();
+        requestBody.put("userId", userId);
+        requestBody.put("timestamp", (new DateTime()).toString());
+        requestBody.put("activityProgress", "Submitted");
+        requestBody.put("gradingProgress", "FullyGraded");
+        requestBody.put("comment", comment);
+        requestBody.put("scoreGiven", score);
+        requestBody.put("scoreMaximum", 100D);
+        return requestBody.toJSONString();
     }
 
     /**
@@ -245,7 +251,7 @@ public class Lti13Service {
         Lti13AgsClaim agsClaim = launchRequest.getAgsClaim();
         // we do support LTI 1.3 Assigment and Grading Services SCORE publish service
         if (agsClaim != null && agsClaim.getScope().contains(Lti13AgsClaim.Scope.SCORE)) {
-            launch.setScoreLineItemUrl(agsClaim.getLineItem() + "/scores");
+            launch.setScoreLineItemUrl(agsClaim.getLineItem());
         }
 
         launch.setExercise(exercise);

@@ -58,6 +58,12 @@ public class OAuth2JWKSService implements KeyPairService {
         }
     }
 
+    @Override
+    public String getKeyId(String clientRegistration) {
+        JWK jwk = this.getJWK(clientRegistrationRepository.findByRegistrationId(clientRegistration));
+        return jwk != null ? jwk.getKeyID() : null;
+    }
+
     public JWK getJWK(ClientRegistration clientRegistration) {
         return this.jwkSet.getKeyByKeyId(this.clientRegistrationIdToKeyId.get(clientRegistration.getRegistrationId()));
     }

@@ -1,73 +1,113 @@
 package de.tum.in.www1.artemis.security.lti;
 
+import java.net.URI;
+import java.security.KeyPair;
+import java.time.Instant;
+import java.util.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.*;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.domain.lti.Scopes;
+import com.google.gson.JsonParser;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
-import uk.ac.ox.ctl.lti13.TokenRetriever;
 
 /**
  * This class is responsible to retrieve access tokens from an LTI 1.3 platform of a specific ClientRegistration.
- *
- * Per default, the (correct) TokenRetriever Implementation of lti13-spring-security is used to query a token.
- * However, the token endpoint of OpenOLAT (v16.0.0) LTI 1.3 Beta behaves sightly different as specified in LTI 1.3.
- * The default TokenRetriever fails to query an access token from OpenOLAT in some cases. To handle this, a fallback
- * token retriever is used to deal with this special situation and query an access token from OpenOLAT.
  *
  */
 @Component
 public class Lti13TokenRetriever {
 
-    private TokenRetriever defaultRetriever;
+    private final OAuth2JWKSService oAuth2JWKSService;
 
-    private Lti13OLATFallbackTokenRetriever olatFallbackTokenRetriever;
+    private final RestTemplate restTemplate;
 
-    private Logger log = LoggerFactory.getLogger(Lti13TokenRetriever.class);
+    private final Logger log = LoggerFactory.getLogger(Lti13TokenRetriever.class);
+
+    private static final int JWT_LIFETIME = 60;
 
     public Lti13TokenRetriever(OAuth2JWKSService keyPairService) {
-        this.defaultRetriever = new TokenRetriever(keyPairService);
-        this.olatFallbackTokenRetriever = new Lti13OLATFallbackTokenRetriever(keyPairService);
+        this.oAuth2JWKSService = keyPairService;
+        this.restTemplate = new RestTemplate();
     }
 
     /**
      * Returns an access token for a specific client to be used to authenticate further communication with the related
      * LTI 1.3 platform of that client. The queried access token (if there is any) will be valid for the requested scopes.
      *
-     * As of LTI 1.3 specification there is no use for a LTI resource link (targetLinkUri) in the process of token retrieval.
-     * However, OpenOLAT requires this information (as of v16.0.0). For any other system the default TokenRetriever will be used
-     * to query a token - in this case the value of targetLinkUri won't change anything.
-     * @param client to query a token for.
-     * @param targetLinkUri of the related Lti13ResourceLaunch.
-     * @param scopes to ask access for.
+     * @param clientRegistration to query a token for
+     * @param scopes to ask access for
      * @return the access token to be used to authenticate requests to the client's LTI 1.3 platform.
      */
-    public OAuth2AccessTokenResponse getToken(ClientRegistration client, String targetLinkUri, String... scopes) {
-        OAuth2AccessTokenResponse token = null;
+    public String getToken(ClientRegistration clientRegistration, String... scopes) {
+        log.info("Trying to retrieve access token for client");
         try {
-            log.info("Trying to retrieve access token with default token retriever");
-            token = defaultRetriever.getToken(client, scopes);
+            if (scopes.length == 0) {
+                throw new IllegalArgumentException("You must supply some scopes to request.");
+            }
+            Objects.requireNonNull(clientRegistration, "You must supply a clientRegistration.");
+
+            SignedJWT signedJWT = createJWT(clientRegistration);
+            MultiValueMap<String, String> formData = buildFormData(signedJWT, scopes);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+            URI url = URI.create(clientRegistration.getProviderDetails().getTokenUri());
+            RequestEntity<MultiValueMap<String, String>> requestEntity = new RequestEntity<>(formData, headers, HttpMethod.POST, url);
+            ResponseEntity<String> exchange = restTemplate.exchange(requestEntity, String.class);
+            return JsonParser.parseString(exchange.getBody()).getAsJsonObject().get("access_token").getAsString(); // TODO: Need to parse this correctly to OAuthResponseToken
         }
         catch (Exception e) {
-            String message = "Could not retrieve access token for client " + client.getClientId() + " with default TokenRetriever: " + e.getMessage();
-            log.error(message);
+            log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());
+            return null;
+        }
+    }
+
+    private SignedJWT createJWT(ClientRegistration clientRegistration) throws JOSEException {
+        JWK jwk = oAuth2JWKSService.getJWK(clientRegistration);
+
+        if (jwk == null) {
+            throw new NullPointerException("Failed to get JWK for client registration: " + clientRegistration.getRegistrationId());
         }
 
-        if (token == null) {
-            try {
-                log.info("Aiming to retrieve access token with fallback token retriever");
-                token = olatFallbackTokenRetriever.getToken(client, targetLinkUri, Scopes.AGS_SCORE);
-            }
-            catch (Exception ex) {
-                String message = "Could not retrieve access token for client " + client.getClientId() + " with FallbackTokenRetriever: " + ex.getMessage();
-                log.error(message);
-                return null;
-            }
-        }
+        KeyPair keyPair = jwk.toRSAKey().toKeyPair();
 
-        return token;
+        RSASSASigner signer = new RSASSASigner(keyPair.getPrivate());
+
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder().issuer(clientRegistration.getClientId()).subject(clientRegistration.getClientId())
+                .audience(clientRegistration.getProviderDetails().getTokenUri()).issueTime(Date.from(Instant.now())).jwtID(UUID.randomUUID().toString())
+                .expirationTime(Date.from(Instant.now().plusSeconds(JWT_LIFETIME))).build();
+
+        JWSHeader jwt = new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).keyID(jwk.getKeyID()).build();
+        SignedJWT signedJWT = new SignedJWT(jwt, claimsSet);
+        signedJWT.sign(signer);
+
+        log.debug("Created signed token: {}", signedJWT.serialize());
+
+        return signedJWT;
+    }
+
+    private MultiValueMap<String, String> buildFormData(SignedJWT signedJWT, String[] scopes) {
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("grant_type", "client_credentials");
+        formData.add("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+        formData.add("scope", String.join(" ", scopes));
+        formData.add("client_assertion", signedJWT.serialize());
+        return formData;
     }
 }

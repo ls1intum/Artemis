@@ -192,9 +192,7 @@ dependencies {
 //    implementation "ch.qos.logback:logback-classic:1.4.1"
 
 
-
-    implementation "uk.ac.ox.ctl:spring-security-lti13:0.0.2"
-    implementation "org.springframework.security:spring-security-oauth2-client:5.4.8"
+    implementation "uk.ac.ox.ctl:spring-security-lti13:0.0.4"
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
