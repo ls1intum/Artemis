@@ -60,7 +60,7 @@ describe('FileUploadSubmission Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         service
-            .getFileUploadSubmissionsForExerciseByCorrectionRound(1, { submittedOnly: true })
+            .getSubmissions(1, { submittedOnly: true })
             .pipe(
                 take(1),
                 map((resp) => resp.body),
@@ -75,7 +75,7 @@ describe('FileUploadSubmission Service', () => {
     it('should return next submission with no assessment', fakeAsync(() => {
         const returnedFromService = Object.assign({}, elemDefault);
         service
-            .getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(123)
+            .getSubmissionWithoutAssessment(123)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject(elemDefault));
 

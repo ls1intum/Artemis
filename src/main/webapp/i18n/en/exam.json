@@ -56,14 +56,23 @@
                     "bonus": "Bonus Points",
                     "youAchievedWithBonus": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points and an additional {{bonusPoints}} bonus points",
                     "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points",
+                    "youAchievedFromBonus": {
+                        "GRADES_CONTINUOUS": "You got a grade bonus of {{achievedBonus}} from {{bonusFromTitle}}",
+                        "GRADES_DISCRETE": "You got a grade bonus of {{achievedBonus}} step(s) according to the grading scale which equals {{gradePointDiff}} from {{bonusFromTitle}}",
+                        "POINTS": "You got {{achievedBonus}} bonus points from {{bonusFromTitle}}"
+                    },
+                    "youAchievedPointsAfterBonus": "Your final points are {{finalPoints}} after the bonus",
                     "maxPointsNotSet": "The maximum number of points in the exam is not set."
                 },
                 "grade": "Grade",
+                "gradeBeforeBonus": "Grade before bonus",
+                "gradeAfterBonus": "Grade after bonus",
                 "bonus": "Bonus points for the final exam",
                 "interval": "Interval (%)",
                 "intervalPoints": "Interval (Points)",
                 "gradeKeyButton": "View Grading Key",
-                "gradeKeyButtonBonus": "View Bonus Rules"
+                "gradeKeyButtonBonus": "View Bonus Rules",
+                "bonusGradeKeyButton": "View Bonus Grading Key"
             },
             "title": "Exam",
             "startExam": "Start",
@@ -159,7 +168,12 @@
             "overallScoreColumn": "Overall Score (%)",
             "overallGradeColumn": "Overall Grade",
             "overallBonusColumn": "Overall Bonus Points",
+            "bonusGradeColumn": "Bonus Grade",
+            "finalGradeColumn": "Final Grade",
             "passedColumn": "Passed",
+            "mostSeverePlagiarismVerdictColumn": "Plagiarism Verdict",
+            "mostSeverePlagiarismVerdictInBonusColumn": "Plagiarism Verdict in Bonus",
+            "presentationScoreThresholdColumn": "Presentation Score Threshold: {{ threshold }}",
             "exportCSV": "Export Results as CSV",
             "filterForSubmittedExams": "Include only submitted exams",
             "filterForNonEmptySubmissions": "Include only exercises with at least one non-empty submission",
@@ -171,7 +185,9 @@
             "noExerciseGroups": "Exercise Groups",
             "submittedColumn": "Submitted",
             "totalColumn": "Total",
-            "exerciseGroupTitle": "Average scores of exercise group \"{{ groupTitle }}\" in comparison"
+            "exerciseGroupTitle": "Average scores of exercise group \"{{ groupTitle }}\" in comparison",
+            "gradesBeforeBonus": "Grades before bonus",
+            "gradesAfterBonus": "Grades after bonus"
         },
         "examParticipation": {
             "timer": "Time left: ",
@@ -246,6 +262,8 @@
             "submitted": "Submitted",
             "submissionDate": "Submission date",
             "grade": "Grade",
+            "gradeBeforeBonus": "Grade before bonus",
+            "gradeAfterBonus": "Grade after bonus",
             "bonus": "Bonus Points",
             "passed": "Passed",
             "participationStatus": "Participation status",

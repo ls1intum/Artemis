@@ -51,9 +51,11 @@ public class SubmissionResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
+
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, ResultService resultService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository) {
+            ExerciseRepository exerciseRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
@@ -61,6 +63,7 @@ public class SubmissionResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
+        this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
     }
 
     /**
@@ -84,8 +87,9 @@ public class SubmissionResource {
         checkAccessPermissionAtInstructor(submission.get());
         List<Result> results = submission.get().getResults();
         for (Result result : results) {
-            resultService.deleteResultWithComplaint(result.getId());
+            resultService.deleteResult(result, true);
         }
+        buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.get().getId());
         submissionRepository.deleteById(id);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();

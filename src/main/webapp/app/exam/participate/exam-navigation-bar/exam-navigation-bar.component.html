@@ -13,7 +13,7 @@
             <!-- exam overview item -->
             <div class="navigation-item overview">
                 <button
-                    class="btn w-100 synced"
+                    class="btn btn-primary w-100 synced"
                     [ngClass]="getOverviewStatus()"
                     [ngbTooltip]="'artemisApp.examParticipation.examOverview' | artemisTranslate"
                     (click)="changePage(true, -1)"
@@ -40,7 +40,7 @@
                 >
                     <button
                         id="exam-exercise-{{ i }}"
-                        class="btn w-100"
+                        class="btn btn-primary w-100"
                         [ngClass]="setExerciseButtonStatus(i)"
                         [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(exercise) | artemisTranslate"
                         (click)="changePage(false, i, false)"

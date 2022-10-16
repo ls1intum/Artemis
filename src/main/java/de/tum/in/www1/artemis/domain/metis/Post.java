@@ -63,6 +63,9 @@ public class Post extends Posting {
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
 
+    @ManyToOne
+    private Conversation conversation;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "display_priority")
     private DisplayPriority displayPriority;
@@ -168,6 +171,14 @@ public class Post extends Posting {
         this.courseWideContext = courseWideContext;
     }
 
+    public Conversation getConversation() {
+        return conversation;
+    }
+
+    public void setConversation(Conversation conversation) {
+        this.conversation = conversation;
+    }
+
     public DisplayPriority getDisplayPriority() {
         return displayPriority;
     }
@@ -217,6 +228,12 @@ public class Post extends Posting {
         }
         else if (this.exercise != null) {
             return this.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        }
+        else if (this.plagiarismCase != null) {
+            return this.plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        }
+        else if (this.conversation != null) {
+            return this.conversation.getCourse();
         }
 
         return null;

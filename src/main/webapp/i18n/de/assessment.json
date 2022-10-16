@@ -63,7 +63,8 @@
             "dashboard": {
                 "warning": "Achtung: Die Einreichungsfrist ist noch nicht abgelaufen und Studierende dürfen noch ihre Einreichungen abgeben. Bitte noch nicht mit der Korrektur anfangen.",
                 "warningIndividual": "Achtung: Die allgemeine Einreichungsfrist ist abgelaufen, aber manche Studierende mit verlängerter Bearbeitungszeit dürfen noch ihre Einreichungen abgeben. Bitte stelle vor Beginn einer Korrektur sicher, dass diese Studierenden nicht mehr abgeben können.",
-                "empty": "Keine Abgabe für diese Aufgabe!",
+                "empty": "Keine Abgabe gefunden!",
+                "emptySearch": "Bitte gib einen Studentennamen ein, um nach Abgaben zu suchen.",
                 "loading": "Laden..",
                 "columns": {
                     "submissionDate": "Einreichungsdatum",

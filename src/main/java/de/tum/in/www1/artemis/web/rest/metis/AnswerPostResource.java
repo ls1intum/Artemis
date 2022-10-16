@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.service.metis.AnswerPostService;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing AnswerPost.
@@ -72,6 +71,6 @@ public class AnswerPostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteAnswerPost(@PathVariable Long courseId, @PathVariable Long answerPostId) {
         answerPostService.deleteAnswerPostById(courseId, answerPostId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, answerPostService.getEntityName(), answerPostId.toString())).build();
+        return ResponseEntity.ok().build();
     }
 }

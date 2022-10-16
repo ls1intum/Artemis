@@ -66,17 +66,18 @@ public class BonusResource {
      *
      * @param courseId the course to which the exam belongs
      * @param examId   the exam to which the bonus belongs
+     * @param includeSourceGradeSteps flag to determine if the GradeSteps for the source grading scale should be included in the response. Default is false.
      * @return ResponseEntity with status 200 (Ok) with body the bonus if it exists and 404 (Not found) otherwise
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/bonus")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Bonus> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Bonus> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(required = false) boolean includeSourceGradeSteps) {
         log.debug("REST request to get bonus for exam: {}", examId);
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
 
         var bonus = bonusRepository.findAllByBonusToExamId(examId).stream().findAny().orElseThrow(() -> new EntityNotFoundException("BonusToGradingScale exam", examId));
         bonus.setBonusStrategy(bonus.getBonusToGradingScale().getBonusStrategy());
-        filterBonusForResponse(bonus);
+        filterBonusForResponse(bonus, includeSourceGradeSteps);
         return ResponseEntity.ok(bonus);
     }
 
@@ -150,7 +151,7 @@ public class BonusResource {
         Bonus savedBonus = bonusService.saveBonus(bonus, true);
         gradingScaleRepository.save(bonusToGradingScale);
 
-        filterBonusForResponse(savedBonus);
+        filterBonusForResponse(savedBonus, false);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
     }
@@ -162,7 +163,7 @@ public class BonusResource {
      *
      * @param bonus that will be modified
      */
-    private void filterBonusForResponse(Bonus bonus) {
+    private void filterBonusForResponse(Bonus bonus, boolean includeSourceGradeSteps) {
         if (bonus == null) {
             return;
         }
@@ -175,7 +176,7 @@ public class BonusResource {
         }
 
         GradingScale source = bonus.getSourceGradingScale();
-        if (source != null) {
+        if (source != null && !includeSourceGradeSteps) {
             source.setGradeSteps(null);
         }
     }
@@ -219,7 +220,7 @@ public class BonusResource {
         gradingScaleRepository.save(bonusToGradingScale);
         Bonus savedBonus = bonusService.saveBonus(bonus, isSourceGradeScaleUpdated);
 
-        filterBonusForResponse(savedBonus);
+        filterBonusForResponse(savedBonus, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
     }
 

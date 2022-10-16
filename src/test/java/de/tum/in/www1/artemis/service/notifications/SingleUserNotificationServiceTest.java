@@ -25,7 +25,9 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.NotificationRepository;
+import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -237,7 +239,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(testExercise);
 
-        assertThat(notificationRepository.findAll()).as("Only one notification should have been created (for the user with a valid paticipation, submission, and result)")
+        assertThat(notificationRepository.findAll()).as("Only one notification should have been created (for the user with a valid participation, submission, and result)")
                 .hasSize(1);
     }
 
@@ -252,7 +254,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         database.changeUser("student1");
         Post post = new Post();
         post.setPlagiarismCase(new PlagiarismCase());
-        post.setContent("You are a bad Plagiatuin!");
+        post.setContent("You plagiarized!");
         plagiarismCase.setPost(new Post());
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(NEW_PLAGIARISM_CASE_STUDENT_TITLE);
@@ -276,6 +278,6 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      * Checks if an email was created and send
      */
     private void verifyEmail() {
-        verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
+        verify(javaMailSender, timeout(1000).times(1)).send(any(MimeMessage.class));
     }
 }

@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.Set;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
@@ -72,6 +74,26 @@ public class PlagiarismCase extends AbstractAuditingEntity {
 
     public void setTeam(Team team) {
         this.team = team;
+    }
+
+    /**
+     * If {@link #student} is set, get that student in a set,
+     * otherwise get all students in {@link #team} in a set.
+     * <p>
+     * Note that the returned set only contains student(s) from the one side in the relevant plagiarism situation,
+     * you need to check other related {@link PlagiarismCase} instances to get all students involved.
+     *
+     * @return a set of users
+     */
+    @JsonIgnore
+    public Set<User> getStudents() {
+        if (student != null) {
+            return Set.of(student);
+        }
+        else if (team != null) {
+            return team.getStudents();
+        }
+        return Collections.emptySet();
     }
 
     public Post getPost() {
