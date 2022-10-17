@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 
-import de.tum.in.www1.artemis.service.user.PasswordService;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -32,15 +31,15 @@ import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 
-// @formatter:off
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 @Import(SecurityProblemSupport.class)
 // ToDo: currently this cannot be replaced as recommended by
-//  https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter
-//  as that would break the SAML2 login functionality. For more information, see
-//  https://github.com/ls1intum/Artemis/pull/5721.
+// https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter
+// as that would break the SAML2 login functionality. For more information, see
+// https://github.com/ls1intum/Artemis/pull/5721.
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
@@ -60,8 +59,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Value("${spring.prometheus.monitoringIp:#{null}}")
     private Optional<String> monitoringIpAddress;
 
-    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider, CorsFilter corsFilter, SecurityProblemSupport problemSupport,
-        PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
+    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
+            CorsFilter corsFilter, SecurityProblemSupport problemSupport, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
@@ -129,6 +128,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH);
         web.ignoring()
             .antMatchers(HttpMethod.POST, ATHENE_RESULT_API_PATH + "*");
+        // @formatter:on
     }
 
     @Override
@@ -144,7 +144,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .headers()
             .contentSecurityPolicy("script-src 'self' 'unsafe-inline' 'unsafe-eval'")
             // TODO: investigate exactly whether the following works in our setup or not
-//            .contentSecurityPolicy("default-src 'self'; connect-src: 'self' 'https://sentry.io' 'ws:' 'wss:'; frame-src * data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src * data:; font-src 'self' data:")
+            // .contentSecurityPolicy("default-src 'self'; connect-src: 'self' 'https://sentry.io' 'ws:' 'wss:'; frame-src * data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src * data:; font-src 'self' data:")
         .and()
             .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
         .and()
@@ -182,6 +182,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/time").permitAll()
         .and()
             .apply(securityConfigurerAdapter());
+        // @formatter:on
     }
 
     private JWTConfigurer securityConfigurerAdapter() {
