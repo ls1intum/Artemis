@@ -285,6 +285,7 @@ describe('Course Management Update Component', () => {
             uploadStub.mockResolvedValue({ path: 'testPath' } as FileUploadResponse);
             comp.uploadCourseImage();
             const file = base64StringToBlob(croppedImage, 'image/*');
+            // @ts-ignore
             file['name'] = comp.courseImageFileName;
             expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
             expect(comp.showCropper).toBeFalse();

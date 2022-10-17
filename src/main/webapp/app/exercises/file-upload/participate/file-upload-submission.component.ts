@@ -169,9 +169,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission!.submitted = false;
                 const serverError = error.headers.get('X-artemisApp-error');
                 if (serverError) {
-                    this.alertService.error(serverError, { fileName: file['name'] });
+                    this.alertService.error(serverError, { fileName: file.name });
                 } else {
-                    this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
+                    this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file.name });
                 }
                 this.fileInput.nativeElement.value = '';
                 this.submissionFile = undefined;
