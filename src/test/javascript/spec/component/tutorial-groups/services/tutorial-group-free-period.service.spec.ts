@@ -17,7 +17,7 @@ describe('TutorialGroupFreePeriodService', () => {
         service = TestBed.inject(TutorialGroupFreePeriodService);
         httpMock = TestBed.inject(HttpTestingController);
 
-        elemDefault = generateExampleTutorialGroupFreePeriod();
+        elemDefault = generateExampleTutorialGroupFreePeriod({});
     });
 
     afterEach(() => {

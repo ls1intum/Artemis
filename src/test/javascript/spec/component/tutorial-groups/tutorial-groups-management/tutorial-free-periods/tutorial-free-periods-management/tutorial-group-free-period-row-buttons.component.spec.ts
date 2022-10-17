@@ -44,7 +44,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
                 component = fixture.componentInstance;
                 periodService = TestBed.inject(TutorialGroupFreePeriodService);
                 configuration = generateExampleTutorialGroupsConfiguration();
-                tutorialFreePeriod = generateExampleTutorialGroupFreePeriod();
+                tutorialFreePeriod = generateExampleTutorialGroupFreePeriod({});
                 setInputValues();
             });
     });

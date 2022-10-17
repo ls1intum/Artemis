@@ -66,9 +66,24 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupFreePeriodsManagementComponent);
                 component = fixture.componentInstance;
-                firstOfJanuaryPeriod = generateExampleTutorialGroupFreePeriod(1, dayjs('2021-01-01T00:00:00.000Z'), dayjs('2021-01-01T23:59:59.000Z'), 'First of January');
-                secondOfJanuaryPeriod = generateExampleTutorialGroupFreePeriod(2, dayjs('2021-01-02T00:00:00.000Z'), dayjs('2021-01-02T23:59:59.000Z'), 'Second of January');
-                thirdOfJanuaryPeriod = generateExampleTutorialGroupFreePeriod(3, dayjs('2021-01-03T00:00:00.000Z'), dayjs('2021-01-03T23:59:59.000Z'), 'Third of January');
+                firstOfJanuaryPeriod = generateExampleTutorialGroupFreePeriod({
+                    id: 1,
+                    start: dayjs('2021-01-01T00:00:00.000Z'),
+                    end: dayjs('2021-01-01T23:59:59.000Z'),
+                    reason: 'First of January',
+                });
+                secondOfJanuaryPeriod = generateExampleTutorialGroupFreePeriod({
+                    id: 2,
+                    start: dayjs('2021-01-02T00:00:00.000Z'),
+                    end: dayjs('2021-01-02T23:59:59.000Z'),
+                    reason: 'Second of January',
+                });
+                thirdOfJanuaryPeriod = generateExampleTutorialGroupFreePeriod({
+                    id: 3,
+                    start: dayjs('2021-01-03T00:00:00.000Z'),
+                    end: dayjs('2021-01-03T23:59:59.000Z'),
+                    reason: 'Third of January',
+                });
 
                 configuration = generateExampleTutorialGroupsConfiguration();
                 configuration.tutorialGroupFreePeriods = [{ ...firstOfJanuaryPeriod }, { ...secondOfJanuaryPeriod }, { ...thirdOfJanuaryPeriod }];

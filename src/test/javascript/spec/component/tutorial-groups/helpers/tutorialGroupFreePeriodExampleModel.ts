@@ -3,13 +3,18 @@ import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-gr
 import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { TutorialGroupFreePeriodDTO } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 
-export const generateExampleTutorialGroupFreePeriod = (id?: number, start?: dayjs.Dayjs, end?: dayjs.Dayjs, reason?: string) => {
+export const generateExampleTutorialGroupFreePeriod = ({
+    id = 1,
+    start = dayjs.utc('2021-01-01T00:00:00'),
+    end = dayjs.utc('2021-01-01T23:59:59'),
+    reason = 'Example Reason',
+}: TutorialGroupFreePeriod) => {
     const examplePeriod = new TutorialGroupFreePeriod();
-    examplePeriod.id = id ?? 1;
+    examplePeriod.id = id;
     // we get utc from the server --> will be converted to time zone of configuration
-    examplePeriod.start = start ?? dayjs.utc('2021-01-01T00:00:00');
-    examplePeriod.end = end ?? dayjs.utc('2021-01-01T23:59:59');
-    examplePeriod.reason = reason ?? 'Holiday';
+    examplePeriod.start = start;
+    examplePeriod.end = end;
+    examplePeriod.reason = reason;
     return examplePeriod;
 };
 

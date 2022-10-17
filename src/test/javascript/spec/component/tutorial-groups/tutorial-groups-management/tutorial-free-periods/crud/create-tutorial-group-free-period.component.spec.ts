@@ -63,7 +63,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
 
     it('should send POST request upon form submission and navigate', () => {
         fixture.detectChanges();
-        const exampleFreePeriod = generateExampleTutorialGroupFreePeriod();
+        const exampleFreePeriod = generateExampleTutorialGroupFreePeriod({});
         delete exampleFreePeriod.id;
 
         const createResponse: HttpResponse<TutorialGroupSession> = new HttpResponse({

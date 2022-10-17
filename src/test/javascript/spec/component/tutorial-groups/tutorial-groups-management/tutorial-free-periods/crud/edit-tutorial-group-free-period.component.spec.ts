@@ -59,7 +59,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
                 fixture = TestBed.createComponent(EditTutorialGroupFreePeriodComponent);
                 component = fixture.componentInstance;
                 periodService = TestBed.inject(TutorialGroupFreePeriodService);
-                examplePeriod = generateExampleTutorialGroupFreePeriod();
+                examplePeriod = generateExampleTutorialGroupFreePeriod({});
                 findPeriodSpy = jest.spyOn(periodService, 'getOneOfConfiguration').mockReturnValue(of(new HttpResponse({ body: examplePeriod })));
             });
     });
