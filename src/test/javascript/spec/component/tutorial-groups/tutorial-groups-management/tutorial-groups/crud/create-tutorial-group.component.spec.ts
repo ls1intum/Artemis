@@ -28,12 +28,7 @@ describe('CreateTutorialGroupComponent', () => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [CreateTutorialGroupComponent, LoadingIndicatorContainerStubComponent, TutorialGroupFormStubComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                MockProvider(TutorialGroupsService),
-                MockProvider(AlertService),
-                { provide: Router, useValue: router },
-                mockedActivatedRoute({}, {}, { course }, { courseId: course.id }),
-            ],
+            providers: [MockProvider(TutorialGroupsService), MockProvider(AlertService), { provide: Router, useValue: router }, mockedActivatedRoute({}, {}, { course }, {})],
         })
             .compileComponents()
             .then(() => {

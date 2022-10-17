@@ -9,18 +9,20 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsConfigurationFormStubComponent } from '../../../stubs/tutorial-groups-configuration-form-sub.component';
 import { generateExampleTutorialGroupsConfiguration, tutorialsGroupsConfigurationToFormData } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 
 describe('CreateTutorialGroupsConfigurationComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupsConfigurationComponent>;
     let component: CreateTutorialGroupsConfigurationComponent;
     let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
-    const courseId = 1;
+    let courseManagementService: CourseManagementService;
+    const course = { id: 1, title: 'Example' };
     const router = new MockRouter();
 
     beforeEach(() => {
@@ -34,9 +36,10 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
             ],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
+                MockProvider(CourseManagementService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
-                simpleTwoLayerActivatedRouteProvider(new Map(), new Map([['courseId', courseId]])),
+                mockedActivatedRoute({}, {}, { course }, {}),
             ],
         })
             .compileComponents()
@@ -44,6 +47,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
                 fixture = TestBed.createComponent(CreateTutorialGroupsConfigurationComponent);
                 component = fixture.componentInstance;
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
+                courseManagementService = TestBed.inject(CourseManagementService);
             });
     });
 
@@ -68,6 +72,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
 
         const createStub = jest.spyOn(tutorialGroupsConfigurationService, 'create').mockReturnValue(of(createResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
+        const updateCourseSpy = jest.spyOn(courseManagementService, 'courseWasUpdated');
 
         const sessionForm: TutorialGroupsConfigurationFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormStubComponent)).componentInstance;
 
@@ -80,8 +85,10 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
         delete exampleConfiguration.tutorialPeriodEndInclusive;
 
         expect(createStub).toHaveBeenCalledOnce();
-        expect(createStub).toHaveBeenCalledWith(exampleConfiguration, courseId, formData.period);
+        expect(createStub).toHaveBeenCalledWith(exampleConfiguration, course.id, formData.period);
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups-management']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups-management']);
+        expect(updateCourseSpy).toHaveBeenCalledOnce();
+        expect(updateCourseSpy).toHaveBeenCalledWith(component.course);
     });
 });
