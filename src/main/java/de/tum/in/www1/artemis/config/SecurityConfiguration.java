@@ -196,8 +196,4 @@ public class SecurityConfiguration {
     private JWTConfigurer securityConfigurerAdapter() {
         return new JWTConfigurer(tokenProvider);
     }
-
-    private OAuth2JWKSService oAuth2JWKSService(HttpSecurity http) {
-        return http.getSharedObject(ApplicationContext.class).getBean(OAuth2JWKSService.class);
-    }
 }

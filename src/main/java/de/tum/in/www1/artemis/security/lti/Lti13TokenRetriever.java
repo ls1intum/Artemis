@@ -70,7 +70,10 @@ public class Lti13TokenRetriever {
             URI url = URI.create(clientRegistration.getProviderDetails().getTokenUri());
             RequestEntity<MultiValueMap<String, String>> requestEntity = new RequestEntity<>(formData, headers, HttpMethod.POST, url);
             ResponseEntity<String> exchange = restTemplate.exchange(requestEntity, String.class);
-            return JsonParser.parseString(exchange.getBody()).getAsJsonObject().get("access_token").getAsString(); // TODO: Need to parse this correctly to OAuthResponseToken
+            if (exchange.getBody() == null) {
+                return null;
+            }
+            return JsonParser.parseString(exchange.getBody()).getAsJsonObject().get("access_token").getAsString();
         }
         catch (Exception e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());
