@@ -89,4 +89,8 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     default TutorialGroup findByIdWithTeachingAssistantAndRegistrationsElseThrow(long tutorialGroupId) {
         return this.findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
     }
+
+    default TutorialGroup findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(long tutorialGroupId) {
+        return this.findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+    }
 }

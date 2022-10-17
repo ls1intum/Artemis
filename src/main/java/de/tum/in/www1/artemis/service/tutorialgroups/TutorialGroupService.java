@@ -122,10 +122,10 @@ public class TutorialGroupService {
      * @param tutorialGroupId The id of the tutorial group to retrieve.
      * @param user            The user for whom to set the transient properties of the tutorial group.
      * @param course          The course for which the tutorial group should be retrieved.
-     * @return The tutorial group of the course with the the transient properties set for the given user.
+     * @return The tutorial group of the course with the transient properties set for the given user.
      */
     public TutorialGroup getOneOfCourse(@NotNull Course course, @NotNull User user, @NotNull Long tutorialGroupId) {
-        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroupId);
         if (!course.equals(tutorialGroup.getCourse())) {
             throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial group", "tutorialGroup", "courseIdMismatch");
         }

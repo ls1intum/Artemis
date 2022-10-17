@@ -30,7 +30,8 @@
                 "language": "Language",
                 "teachingAssistant": "Tutor",
                 "registrations": "Registrations",
-                "schedule": "Schedule"
+                "schedule": "Schedule",
+                "sessions": "Sessions"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Day of Week",
@@ -206,7 +207,8 @@
                 "capacityNotSet": "Capacity not set",
                 "campusNotSet": "Campus not set",
                 "additionalInformationNotSet": "No additional Information set",
-                "scheduleNotSet": "No schedule set"
+                "scheduleNotSet": "No schedule set",
+                "sessionsNotFound": "No sessions found"
             },
             "tutorialFreePeriodsManagement": {
                 "title": "Tutorial Free Days Management",

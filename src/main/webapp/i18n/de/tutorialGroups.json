@@ -30,7 +30,8 @@
                 "language": "Sprache",
                 "teachingAssistant": "Tutor:in",
                 "registrations": "Registrierungen",
-                "schedule": "Sitzungsplan"
+                "schedule": "Sitzungsplan",
+                "sessions": "Sitzungen"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Wochentag",
@@ -206,7 +207,8 @@
                 "capacityNotSet": "Kapazität nicht eingestellt",
                 "campusNotSet": "Campus nicht gesetzt",
                 "additionalInformationNotSet": "Keine zusätzlichen Informationen festgelegt",
-                "scheduleNotSet": "Kein Sitzungsplan festgelegt"
+                "scheduleNotSet": "Kein Sitzungsplan festgelegt",
+                "sessionsNotFound": "Keine Sitzungen gefunden"
             },
             "tutorialFreePeriodsManagement": {
                 "title": "Freie Tage verwalten",
