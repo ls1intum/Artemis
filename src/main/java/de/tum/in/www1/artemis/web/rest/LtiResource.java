@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
@@ -173,6 +174,37 @@ public class LtiResource {
         String redirectUrl = redirectUrlComponentsBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);
         response.sendRedirect(redirectUrl);
+    }
+
+    /**
+     * POST lti13/auth-callback Redirects an LTI 1.3 Authorization Request Response to the client
+     *
+     * @param request       HTTP request
+     * @param response      HTTP response
+     * @throws IOException If an input or output exception occurs
+     */
+    @PostMapping(value = "/lti13/auth-callback", produces = MediaType.APPLICATION_JSON_VALUE)
+    public void lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String state = request.getParameter("state");
+        if (state == null) {
+            errorOnMissingParameter(response, "state");
+            return;
+        }
+
+        String idToken = request.getParameter("id_token");
+        if (idToken == null) {
+            errorOnMissingParameter(response, "id_token");
+            return;
+        }
+
+        String redirectUri = CustomLti13Configurer.LOGIN_REDIRECT_CLIENT_PATH + "?state=" + state + "&id_token=" + idToken;
+        response.sendRedirect(redirectUri);
+    }
+
+    private void errorOnMissingParameter(HttpServletResponse response, String missingParamName) throws IOException {
+        String message = "Missing parameter on oauth2 authorization response: " + missingParamName;
+        log.error(message);
+        response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
     }
 
     /**

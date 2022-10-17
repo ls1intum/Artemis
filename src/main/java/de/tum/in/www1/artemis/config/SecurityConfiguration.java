@@ -8,10 +8,8 @@ import javax.annotation.PostConstruct;
 
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
-import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
@@ -145,6 +143,7 @@ public class SecurityConfiguration {
             .antMatchers("/api/account/reset-password/init").permitAll()
             .antMatchers("/api/account/reset-password/finish").permitAll()
             .antMatchers("/api/lti/launch/*").permitAll()
+            .antMatchers("/api/lti13/auth-callback").permitAll()
             .antMatchers("/api/files/attachments/lecture/**").permitAll()
             .antMatchers("/api/files/attachments/attachment-unit/**").permitAll()
             .antMatchers("/api/files/file-upload-exercises/**").permitAll()
@@ -182,15 +181,11 @@ public class SecurityConfiguration {
         .and()
             .apply(securityConfigurerAdapter());
 
-        http.apply(lti13Configurer(http));
+        http.apply(new CustomLti13Configurer());
 
         // @formatter:on
 
         return http.build();
-    }
-
-    private CustomLti13Configurer lti13Configurer(HttpSecurity http) {
-        return http.getSharedObject(ApplicationContext.class).getBean(CustomLti13Configurer.class);
     }
 
     private JWTConfigurer securityConfigurerAdapter() {
