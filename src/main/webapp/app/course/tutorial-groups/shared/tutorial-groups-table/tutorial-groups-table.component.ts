@@ -3,6 +3,7 @@ import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Language } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
+import { getDayTranslationKey } from '../weekdays';
 
 @Component({
     selector: 'jhi-tutorial-groups-table',
@@ -29,6 +30,7 @@ export class TutorialGroupsTableComponent {
     faSort = faSort;
     GERMAN = Language.GERMAN;
     ENGLISH = Language.ENGLISH;
+    getDayTranslationKey = getDayTranslationKey;
 
     constructor(private sortService: SortService) {}
 

@@ -18,6 +18,14 @@
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.capacity' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
+                <th jhiSortBy="tutorialGroupSchedule.dayOfWeek">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.dayOfWeek' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="tutorialGroupSchedule.startTime">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.time' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
                 <th jhiSortBy="numberOfRegisteredUsers">
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.registrations' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
@@ -63,6 +71,10 @@
                 </td>
                 <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
                 <td>{{ tutorialGroup.capacity }}</td>
+                <td>{{ tutorialGroup.tutorialGroupSchedule ? (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) : '' }}</td>
+                <td>
+                    {{ tutorialGroup.tutorialGroupSchedule ? tutorialGroup.tutorialGroupSchedule?.startTime + '-' + tutorialGroup.tutorialGroupSchedule?.endTime : '' }}
+                </td>
                 <td>{{ tutorialGroup.numberOfRegisteredUsers }}</td>
                 <td>
                     {{ (tutorialGroup.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline') | artemisTranslate }}
