@@ -17,7 +17,7 @@ describe('TutorialGroupSessionService', () => {
         service = TestBed.inject(TutorialGroupSessionService);
         httpMock = TestBed.inject(HttpTestingController);
 
-        elemDefault = generateExampleTutorialGroupSession();
+        elemDefault = generateExampleTutorialGroupSession({});
     });
 
     afterEach(() => {

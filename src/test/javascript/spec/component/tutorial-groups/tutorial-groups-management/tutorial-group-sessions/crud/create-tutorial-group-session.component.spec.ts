@@ -70,7 +70,7 @@ describe('CreateTutorialGroupSessionComponent', () => {
 
     it('should send POST request upon form submission and navigate', () => {
         fixture.detectChanges();
-        const exampleSession = generateExampleTutorialGroupSession();
+        const exampleSession = generateExampleTutorialGroupSession({});
         delete exampleSession.id;
 
         const createResponse: HttpResponse<TutorialGroupSession> = new HttpResponse({

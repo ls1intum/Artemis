@@ -75,18 +75,18 @@ describe('TutorialGroupSessionsManagement', () => {
                 fixture = TestBed.createComponent(TutorialGroupSessionsManagementComponent);
                 component = fixture.componentInstance;
 
-                pastSession = generateExampleTutorialGroupSession(
-                    1,
-                    dayjs('2021-01-01T12:00:00.000Z').tz('Europe/Berlin'),
-                    dayjs('2021-01-01T13:00:00.000Z').tz('Europe/Berlin'),
-                    'Room 1',
-                );
-                upcomingSession = generateExampleTutorialGroupSession(
-                    2,
-                    dayjs('2021-01-03T12:00:00.000Z').tz('Europe/Berlin'),
-                    dayjs('2021-01-03T13:00:00.000Z').tz('Europe/Berlin'),
-                    'Room 1',
-                );
+                pastSession = generateExampleTutorialGroupSession({
+                    id: 1,
+                    start: dayjs('2021-01-01T12:00:00.000Z').tz('Europe/Berlin'),
+                    end: dayjs('2021-01-01T13:00:00.000Z').tz('Europe/Berlin'),
+                    location: 'Room 1',
+                });
+                upcomingSession = generateExampleTutorialGroupSession({
+                    id: 2,
+                    start: dayjs('2021-01-03T12:00:00.000Z').tz('Europe/Berlin'),
+                    end: dayjs('2021-01-03T13:00:00.000Z').tz('Europe/Berlin'),
+                    location: 'Room 1',
+                });
                 tutorialGroup = generateExampleTutorialGroup({ id: tutorialGroupId });
                 tutorialGroup.tutorialGroupSessions = [pastSession, upcomingSession];
 

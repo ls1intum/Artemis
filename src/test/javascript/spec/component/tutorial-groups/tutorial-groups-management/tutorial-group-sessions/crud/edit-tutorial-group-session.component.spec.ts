@@ -61,7 +61,7 @@ describe('EditTutorialGroupSessionComponent', () => {
                 fixture = TestBed.createComponent(EditTutorialGroupSessionComponent);
                 component = fixture.componentInstance;
                 sessionService = TestBed.inject(TutorialGroupSessionService);
-                exampleSession = generateExampleTutorialGroupSession();
+                exampleSession = generateExampleTutorialGroupSession({});
 
                 findSessionSpy = jest.spyOn(sessionService, 'getOneOfTutorialGroup').mockReturnValue(of(new HttpResponse({ body: exampleSession })));
             });

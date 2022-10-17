@@ -31,7 +31,7 @@ describe('TutorialGroupSessionRowComponent', () => {
 
         fixture = TestBed.createComponent(TutorialGroupSessionRowComponent);
         component = fixture.componentInstance;
-        session = generateExampleTutorialGroupSession();
+        session = generateExampleTutorialGroupSession({});
         component.session = session;
         component.courseId = 1;
         component.tutorialGroupId = 1;

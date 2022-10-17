@@ -44,7 +44,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
                 fixture = TestBed.createComponent(TutorialGroupSessionRowButtonsComponent);
                 component = fixture.componentInstance;
                 sessionService = TestBed.inject(TutorialGroupSessionService);
-                tutorialGroupSession = generateExampleTutorialGroupSession();
+                tutorialGroupSession = generateExampleTutorialGroupSession({});
                 setInputValues();
             });
     });

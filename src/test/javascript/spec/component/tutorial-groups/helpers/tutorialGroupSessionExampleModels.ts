@@ -3,14 +3,20 @@ import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/t
 import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { TutorialGroupSessionDTO } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 
-export const generateExampleTutorialGroupSession = (id?: number, start?: dayjs.Dayjs, end?: dayjs.Dayjs, location?: string, status?: TutorialGroupSessionStatus) => {
+export const generateExampleTutorialGroupSession = ({
+    id = 3,
+    start = dayjs.utc('2021-01-01T10:00:00'),
+    end = dayjs.utc('2021-01-01T11:00:00'),
+    location = 'Room 1',
+    status = TutorialGroupSessionStatus.ACTIVE,
+}: TutorialGroupSession) => {
     const exampleSession = new TutorialGroupSession();
-    exampleSession.id = id ?? 3;
+    exampleSession.id = id;
     // we get utc from the server --> will be converted to time zone of configuration
-    exampleSession.start = start ?? dayjs.utc('2021-01-01T10:00:00');
-    exampleSession.end = end ?? dayjs.utc('2021-01-01T11:00:00');
-    exampleSession.location = location ?? 'Room 1';
-    exampleSession.status = status ?? TutorialGroupSessionStatus.ACTIVE;
+    exampleSession.start = start;
+    exampleSession.end = end;
+    exampleSession.location = location;
+    exampleSession.status = status;
 
     return exampleSession;
 };

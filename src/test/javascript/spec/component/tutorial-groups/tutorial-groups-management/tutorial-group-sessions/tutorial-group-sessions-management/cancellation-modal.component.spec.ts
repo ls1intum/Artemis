@@ -17,7 +17,7 @@ describe('CancellationModalComponent', () => {
     const courseId = 1;
     const tutorialGroupId = 2;
     const tutorialGroupSessionId = 3;
-    const tutorialGroupSession = generateExampleTutorialGroupSession(tutorialGroupSessionId);
+    const tutorialGroupSession = generateExampleTutorialGroupSession({ id: tutorialGroupSessionId });
     let tutorialGroupSessionService: TutorialGroupSessionService;
     let modal: NgbActiveModal;
 
