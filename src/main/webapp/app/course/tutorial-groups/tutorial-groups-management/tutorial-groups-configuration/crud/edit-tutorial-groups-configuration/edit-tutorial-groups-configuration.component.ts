@@ -8,6 +8,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { combineLatest } from 'rxjs';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-edit-tutorial-groups-configuration',
@@ -17,25 +19,26 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
     isLoading = false;
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
     formData: TutorialGroupsConfigurationFormData;
-    courseId: number;
+    course: Course;
     tutorialGroupConfigurationId: number;
 
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
+        private courseManagementService: CourseManagementService,
         private alertService: AlertService,
     ) {}
 
     ngOnInit(): void {
         this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.paramMap])
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
-                switchMap(([params, parentParams]) => {
+                switchMap(([params, { course }]) => {
                     this.tutorialGroupConfigurationId = Number(params.get('tutorialGroupsConfigurationId'));
-                    this.courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.courseId, this.tutorialGroupConfigurationId);
+                    this.course = course;
+                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!, this.tutorialGroupConfigurationId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
@@ -62,14 +65,19 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
 
         this.isLoading = true;
         this.tutorialGroupsConfigurationService
-            .update(this.courseId, this.tutorialGroupConfigurationId, this.tutorialGroupsConfiguration, period ?? [])
+            .update(this.course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupsConfiguration, period ?? [])
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
-                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management']);
+                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups-management']);
                 }),
             )
             .subscribe({
+                next: (resp) => {
+                    const updatedConfiguration = resp.body!;
+                    this.course.tutorialGroupsConfiguration = updatedConfiguration;
+                    this.courseManagementService.courseWasUpdated(this.course);
+                },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
