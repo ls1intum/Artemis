@@ -83,6 +83,7 @@ describe('CreateAttachmentUnitComponent', () => {
         const attachmentUnitService = TestBed.inject(AttachmentUnitService);
 
         const fakeBlob = new Blob([''], { type: 'application/pdf' });
+        // @ts-ignore
         fakeBlob['name'] = 'Test-File.pdf';
 
         const attachmentUnitFormData: AttachmentUnitFormData = {
