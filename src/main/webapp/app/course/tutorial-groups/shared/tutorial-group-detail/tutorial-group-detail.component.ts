@@ -3,6 +3,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { Language } from 'app/entities/course.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { getDayTranslationKey } from '../weekdays';
 
 @Component({
     selector: 'jhi-tutorial-group-detail',
@@ -23,6 +24,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
     GERMAN = Language.GERMAN;
     ENGLISH = Language.ENGLISH;
     formattedAdditionalInformation?: SafeHtml;
+    getDayTranslationKey = getDayTranslationKey;
 
     constructor(private artemisMarkdownService: ArtemisMarkdownService) {}
 

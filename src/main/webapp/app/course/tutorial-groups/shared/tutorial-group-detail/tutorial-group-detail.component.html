@@ -98,5 +98,23 @@
         <ng-template #additionalInformationNotSet
             ><span>{{ 'artemisApp.pages.tutorialGroupDetail.additionalInformationNotSet' | artemisTranslate }}</span>
         </ng-template>
+        <!-- Schedule -->
+        <dt>
+            <span>{{ 'artemisApp.entities.tutorialGroup.schedule' | artemisTranslate }}</span>
+        </dt>
+        <dd>
+            <span *ngIf="tutorialGroup.tutorialGroupSchedule; else scheduleNotSet">
+                {{
+                    (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) +
+                        ' ' +
+                        tutorialGroup.tutorialGroupSchedule?.startTime +
+                        '-' +
+                        tutorialGroup.tutorialGroupSchedule?.endTime
+                }}
+            </span>
+            <ng-template #scheduleNotSet>
+                <span>{{ 'artemisApp.pages.tutorialGroupDetail.scheduleNotSet' | artemisTranslate }}</span></ng-template
+            >
+        </dd>
     </dl>
 </div>
