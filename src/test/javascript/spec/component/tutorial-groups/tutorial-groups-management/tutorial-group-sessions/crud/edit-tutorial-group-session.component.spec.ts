@@ -12,7 +12,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { TutorialGroupSessionFormStubComponent } from '../../../stubs/tutorial-group-session-form-stub.component';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
-import { simpleOneLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { Router } from '@angular/router';
 import {
@@ -20,6 +19,8 @@ import {
     generateExampleTutorialGroupSession,
     tutorialGroupSessionToTutorialGroupSessionFormData,
 } from '../../../helpers/tutorialGroupSessionExampleModels';
+import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { Course } from 'app/entities/course.model';
 
 describe('EditTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupSessionComponent>;
@@ -35,6 +36,13 @@ describe('EditTutorialGroupSessionComponent', () => {
     const sessionId = 3;
     const courseId = 5;
     const configurationId = 7;
+    const course = {
+        id: courseId,
+        tutorialGroupsConfiguration: {
+            id: configurationId,
+            timeZone,
+        },
+    } as Course;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -45,21 +53,7 @@ describe('EditTutorialGroupSessionComponent', () => {
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
-                simpleOneLayerActivatedRouteProvider(
-                    new Map([
-                        ['tutorialGroupId', tutorialGroupId],
-                        ['sessionId', sessionId],
-                    ]),
-                    {
-                        course: {
-                            id: courseId,
-                            tutorialGroupsConfiguration: {
-                                id: configurationId,
-                                timeZone,
-                            },
-                        },
-                    },
-                ),
+                mockedActivatedRoute({ tutorialGroupId, sessionId }, {}, { course }, {}),
             ],
         })
             .compileComponents()

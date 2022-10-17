@@ -12,7 +12,6 @@ import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/s
 import { Component, Input } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
-import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
@@ -21,6 +20,7 @@ import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tut
 import { generateExampleTutorialGroupFreePeriod } from '../../../helpers/tutorialGroupFreePeriodExampleModel';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
+import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 
 @Component({ selector: 'jhi-tutorial-group-free-period-row-buttons', template: '' })
 class TutorialGroupRowButtonsStubComponent {
@@ -59,7 +59,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
                 MockProvider(AlertService),
                 SortService,
                 { provide: Router, useValue: router },
-                simpleTwoLayerActivatedRouteProvider(new Map([['tutorialGroupsConfigurationId', tutorialGroupConfigurationId]]), new Map([['courseId', courseId]])),
+                mockedActivatedRoute({ tutorialGroupsConfigurationId: tutorialGroupConfigurationId }, {}, {}, { courseId }),
             ],
         })
             .compileComponents()

@@ -10,7 +10,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import {
@@ -21,6 +20,7 @@ import {
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSessionFormStubComponent } from '../../../stubs/tutorial-group-session-form-stub.component';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
+import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 
 describe('CreateTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupSessionComponent>;
@@ -43,7 +43,7 @@ describe('CreateTutorialGroupSessionComponent', () => {
                 MockProvider(TutorialGroupSessionService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
-                simpleTwoLayerActivatedRouteProvider(new Map([['tutorialGroupId', tutorialGroupId]]), new Map([['courseId', courseId]])),
+                mockedActivatedRoute({ tutorialGroupId }, {}, {}, { courseId }),
             ],
         })
             .compileComponents()

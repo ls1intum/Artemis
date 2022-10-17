@@ -10,7 +10,6 @@ import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/
 import { SortService } from 'app/shared/service/sort.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 import { Router } from '@angular/router';
 import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 import dayjs from 'dayjs/esm';
@@ -21,6 +20,8 @@ import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGr
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { By } from '@angular/platform-browser';
+import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { Course } from 'app/entities/course.model';
 
 @Component({ selector: '[jhi-session-row]', template: '' })
 class TutorialGroupSessionRowStubComponent {
@@ -45,6 +46,10 @@ describe('TutorialGroupSessionsManagement', () => {
     let upcomingSession: TutorialGroupSession;
     let tutorialGroup: TutorialGroup;
     const currentDate = dayjs(new Date(Date.UTC(2021, 0, 2, 12, 0, 0)));
+    const course = {
+        id: courseId,
+        tutorialGroupsConfiguration: generateExampleTutorialGroupsConfiguration(),
+    } as Course;
 
     const router = new MockRouter();
     beforeEach(() => {
@@ -62,12 +67,7 @@ describe('TutorialGroupSessionsManagement', () => {
                 MockProvider(AlertService),
                 SortService,
                 { provide: Router, useValue: router },
-                simpleTwoLayerActivatedRouteProvider(new Map([['tutorialGroupId', tutorialGroupId]]), new Map(), {
-                    course: {
-                        id: courseId,
-                        tutorialGroupsConfiguration: generateExampleTutorialGroupsConfiguration(),
-                    },
-                }),
+                mockedActivatedRoute({ tutorialGroupId }, {}, { course }, {}),
             ],
         })
             .compileComponents()
@@ -87,7 +87,7 @@ describe('TutorialGroupSessionsManagement', () => {
                     dayjs('2021-01-03T13:00:00.000Z').tz('Europe/Berlin'),
                     'Room 1',
                 );
-                tutorialGroup = generateExampleTutorialGroup(tutorialGroupId);
+                tutorialGroup = generateExampleTutorialGroup({ id: tutorialGroupId });
                 tutorialGroup.tutorialGroupSessions = [pastSession, upcomingSession];
 
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);

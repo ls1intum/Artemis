@@ -9,7 +9,6 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { simpleOneLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 import dayjs from 'dayjs/esm';
 import { Router } from '@angular/router';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
@@ -21,6 +20,8 @@ import {
     generateExampleTutorialGroupFreePeriod,
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
 } from '../../../helpers/tutorialGroupFreePeriodExampleModel';
+import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { Course } from 'app/entities/course.model';
 
 describe('EditTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupFreePeriodComponent>;
@@ -31,6 +32,13 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
     const courseId = 1;
     const configurationId = 2;
     const periodId = 3;
+    const course = {
+        id: courseId,
+        tutorialGroupsConfiguration: {
+            id: configurationId,
+            timeZone: 'Europe/Berlin',
+        },
+    } as Course;
 
     const router = new MockRouter();
 
@@ -43,15 +51,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
-                simpleOneLayerActivatedRouteProvider(new Map([['tutorialGroupFreePeriodId', periodId]]), {
-                    course: {
-                        id: courseId,
-                        tutorialGroupsConfiguration: {
-                            id: configurationId,
-                            timeZone: 'Europe/Berlin',
-                        },
-                    },
-                }),
+                mockedActivatedRoute({ tutorialGroupFreePeriodId: periodId }, {}, { course }, {}),
             ],
         })
             .compileComponents()
