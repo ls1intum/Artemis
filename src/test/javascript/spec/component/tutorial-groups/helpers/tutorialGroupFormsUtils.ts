@@ -1,5 +1,6 @@
 // util methods for testing tutorial group forms as they all follow the same patterns
 
+import { ComponentFixture } from '@angular/core/testing';
 import {
     TutorialGroupFreePeriodFormComponent,
     TutorialGroupFreePeriodFormData,
@@ -8,15 +9,14 @@ import {
     TutorialGroupSessionFormComponent,
     TutorialGroupSessionFormData,
 } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
-import { ComponentFixture } from '@angular/core/testing';
-import {
-    TutorialGroupsConfigurationFormComponent,
-    TutorialGroupsConfigurationFormData,
-} from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import {
     TutorialGroupFormComponent,
     TutorialGroupFormData,
 } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
+import {
+    TutorialGroupsConfigurationFormComponent,
+    TutorialGroupsConfigurationFormData,
+} from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 
 type SupportedForms = TutorialGroupFreePeriodFormComponent | TutorialGroupSessionFormComponent | TutorialGroupsConfigurationFormComponent | TutorialGroupFormComponent;
 type SupportedFixtures = ComponentFixture<SupportedForms>;

@@ -13,16 +13,13 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { By } from '@angular/platform-browser';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 import { generateExampleTutorialGroup, tutorialGroupToTutorialGroupFormData } from '../../../helpers/tutorialGroupExampleModels';
+import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 
 describe('CreateTutorialGroupComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupComponent>;
     let component: CreateTutorialGroupComponent;
-    const course = { id: 1, title: 'Example', isAtLeastInstructor: true };
-    let findCourseSpy: jest.SpyInstance;
-    let courseService: CourseManagementService;
+    const course = { id: 1, title: 'Example' };
     let tutorialGroupService: TutorialGroupsService;
 
     const router = new MockRouter();
@@ -34,17 +31,14 @@ describe('CreateTutorialGroupComponent', () => {
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
-                MockProvider(CourseManagementService),
                 { provide: Router, useValue: router },
-                simpleTwoLayerActivatedRouteProvider(new Map(), new Map([['courseId', course.id]])),
+                mockedActivatedRoute({}, {}, { course }, { courseId: course.id }),
             ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CreateTutorialGroupComponent);
                 component = fixture.componentInstance;
-                courseService = TestBed.inject(CourseManagementService);
-                findCourseSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
             });
     });
@@ -56,14 +50,18 @@ describe('CreateTutorialGroupComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(findCourseSpy).toHaveBeenCalledOnce();
-        expect(findCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should send POST request upon form submission and navigate', () => {
         fixture.detectChanges();
-        const exampleTutorialGroup = generateExampleTutorialGroup();
+        const exampleTutorialGroup = generateExampleTutorialGroup({});
         delete exampleTutorialGroup.id;
+        delete exampleTutorialGroup.isUserRegistered;
+        delete exampleTutorialGroup.isUserTutor;
+        delete exampleTutorialGroup.course;
+        delete exampleTutorialGroup.numberOfRegisteredUsers;
+        delete exampleTutorialGroup.courseTitle;
+        delete exampleTutorialGroup.teachingAssistantName;
         delete exampleTutorialGroup.tutorialGroupSchedule!.id;
 
         const createResponse: HttpResponse<TutorialGroup> = new HttpResponse({

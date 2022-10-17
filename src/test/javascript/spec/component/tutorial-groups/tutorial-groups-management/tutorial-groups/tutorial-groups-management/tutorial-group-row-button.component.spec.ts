@@ -36,13 +36,14 @@ describe('TutorialGroupRowButtonsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupRowButtonsComponent);
                 component = fixture.componentInstance;
-                tutorialGroup = generateExampleTutorialGroup();
+                tutorialGroup = generateExampleTutorialGroup({});
                 setInputValues();
             });
     });
     const setInputValues = () => {
         component.courseId = courseId;
         component.tutorialGroup = tutorialGroup;
+        component.isAtLeastInstructor = true;
     };
 
     it('should navigate to session management', fakeAsync(() => {

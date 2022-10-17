@@ -4,14 +4,13 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
 import { onError } from 'app/shared/util/global.utils';
 import { combineLatest } from 'rxjs';
-import { finalize, map, switchMap, take } from 'rxjs/operators';
+import { finalize, switchMap, take } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-edit-tutorial-group',
@@ -24,30 +23,18 @@ export class EditTutorialGroupComponent implements OnInit {
     formData: TutorialGroupFormData;
     tutorialGroupId: number;
     course: Course;
-    courseId: number;
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private courseManagementService: CourseManagementService,
-        private router: Router,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-    ) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private tutorialGroupService: TutorialGroupsService, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.paramMap])
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
-                switchMap(([params, parentParams]) => {
+                switchMap(([params, { course }]) => {
                     this.tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.courseId = Number(parentParams.get('courseId'));
-                    return this.courseManagementService.find(this.courseId);
-                }),
-                map((res: HttpResponse<Course>) => res.body),
-                switchMap((course: Course) => {
                     this.course = course;
-                    return this.tutorialGroupService.getOneOfCourse(this.courseId, this.tutorialGroupId);
+                    return this.tutorialGroupService.getOneOfCourse(this.course.id!, this.tutorialGroupId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
@@ -113,11 +100,11 @@ export class EditTutorialGroupComponent implements OnInit {
 
         this.isLoading = true;
         this.tutorialGroupService
-            .update(this.courseId, this.tutorialGroupId, updatedTutorialGroup)
+            .update(this.course.id!, this.tutorialGroupId, updatedTutorialGroup)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
-                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management']);
+                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups-management']);
                 }),
             )
             .subscribe({

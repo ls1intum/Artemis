@@ -18,6 +18,8 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -50,6 +52,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     // Icons
     faSync = faSync;
     faCircleNotch = faCircleNotch;
+    FeatureToggle = FeatureToggle;
 
     constructor(
         private courseService: CourseManagementService,
@@ -63,6 +66,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private alertService: AlertService,
         private changeDetectorRef: ChangeDetectorRef,
         private profileService: ProfileService,
+        private tutorialGroupService: TutorialGroupsService,
     ) {}
 
     async ngOnInit() {
@@ -71,12 +75,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
-        if (!this.course) {
+
+        if (this.course) {
+            // If the course is present but without learning goals or tutorial grouos (e.g. loaded in Artemis overview), we only need to fetch those
+            if (!this.course.learningGoals || !this.course.prerequisites || !this.course.tutorialGroups) {
+                this.loadLearningGoalsAndTutorialGroups();
+            }
+        } else {
             this.loadCourse();
-        } else if (!this.course.learningGoals || !this.course.prerequisites) {
-            // If the course is present but without learning goals (e.g. loaded in Artemis overview), we only need to fetch those
-            this.loadLearningGoals();
         }
+
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
     }
@@ -192,12 +200,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    loadLearningGoals() {
-        forkJoin([this.learningGoalService.getAllForCourse(this.courseId), this.learningGoalService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
-            next: ([learningGoals, prerequisites]) => {
+    loadLearningGoalsAndTutorialGroups() {
+        forkJoin([
+            this.learningGoalService.getAllForCourse(this.courseId),
+            this.learningGoalService.getAllPrerequisitesForCourse(this.courseId),
+            this.tutorialGroupService.getAllForCourse(this.courseId),
+        ]).subscribe({
+            next: ([learningGoals, prerequisites, tutorialGroups]) => {
                 if (this.course) {
                     this.course.learningGoals = learningGoals.body!;
                     this.course.prerequisites = prerequisites.body!;
+                    this.course.tutorialGroups = tutorialGroups.body!;
                     this.courseCalculationService.updateCourse(this.course);
                 }
             },
@@ -222,6 +235,13 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     hasLearningGoals(): boolean {
         return !!(this.course?.learningGoals?.length || this.course?.prerequisites?.length);
+    }
+
+    /**
+     * Check if the course has an tutorial groups
+     */
+    hasTutorialGroups(): boolean {
+        return !!this.course?.tutorialGroups?.length;
     }
 
     /**

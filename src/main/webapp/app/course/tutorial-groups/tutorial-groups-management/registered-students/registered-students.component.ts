@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { combineLatest } from 'rxjs';
-import { finalize, switchMap, take } from 'rxjs/operators';
+import { finalize, switchMap, take, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { Course, CourseGroup } from 'app/entities/course.model';
@@ -24,6 +24,18 @@ export class RegisteredStudentsComponent implements OnInit {
     courseGroup = CourseGroup.STUDENTS;
     isAdmin = false;
     filteredUsersSize = 0;
+    numberOfRegistrations = 0;
+
+    get capacityReached(): boolean {
+        if (!this.tutorialGroup) {
+            return false;
+        }
+        if (this.tutorialGroup.capacity === undefined || this.tutorialGroup.capacity === null) {
+            return false;
+        } else {
+            return this.numberOfRegistrations >= this.tutorialGroup.capacity;
+        }
+    }
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -40,9 +52,19 @@ export class RegisteredStudentsComponent implements OnInit {
 
     handleUsersSizeChange = (filteredUsersSize: number) => (this.filteredUsersSize = filteredUsersSize);
 
-    addToGroup = (login: string) => this.tutorialGroupService.registerStudent(this.course.id!, this.tutorialGroup.id!, login);
+    addToGroup = (login: string) =>
+        this.tutorialGroupService.registerStudent(this.course.id!, this.tutorialGroup.id!, login).pipe(
+            tap({
+                next: () => this.numberOfRegistrations++,
+            }),
+        );
 
-    removeFromGroup = (login: string) => this.tutorialGroupService.deregisterStudent(this.course.id!, this.tutorialGroup.id!, login);
+    removeFromGroup = (login: string) =>
+        this.tutorialGroupService.deregisterStudent(this.course.id!, this.tutorialGroup.id!, login).pipe(
+            tap({
+                next: () => this.numberOfRegistrations--,
+            }),
+        );
 
     userSearch = (loginOrName: string) => this.courseService.searchStudents(this.course.id!, loginOrName);
 
@@ -76,6 +98,7 @@ export class RegisteredStudentsComponent implements OnInit {
                             this.tutorialGroup.registrations = [];
                         }
                         this.registeredStudents = this.tutorialGroup.registrations.map((registration) => registration.student!);
+                        this.numberOfRegistrations = this.registeredStudents.length;
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

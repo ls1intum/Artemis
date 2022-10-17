@@ -8,6 +8,7 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 export const enum Language {
@@ -61,6 +62,7 @@ export class Course implements BaseEntity {
     public prerequisites?: LearningGoal[];
     public exams?: Exam[];
     public organizations?: Organization[];
+    public tutorialGroups?: TutorialGroup[];
 
     // helper attributes
     public isAtLeastTutor?: boolean;

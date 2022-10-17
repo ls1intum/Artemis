@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.repository.tutorialgroups;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.transaction.Transactional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -19,6 +22,9 @@ public interface TutorialGroupRegistrationRepository extends JpaRepository<Tutor
 
     Set<TutorialGroupRegistration> findAllByTutorialGroupAndType(TutorialGroup tutorialGroup, TutorialGroupRegistrationType type);
 
+    @Modifying
+    @Transactional
+    // ok because of delete
     void deleteAllByStudent(User student);
 
 }

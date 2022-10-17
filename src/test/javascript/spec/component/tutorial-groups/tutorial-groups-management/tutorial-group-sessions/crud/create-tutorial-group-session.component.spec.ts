@@ -53,7 +53,7 @@ describe('CreateTutorialGroupSessionComponent', () => {
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupSessionService = TestBed.inject(TutorialGroupSessionService);
 
-                findTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: generateExampleTutorialGroup() })));
+                findTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: generateExampleTutorialGroup({}) })));
             });
     });
 

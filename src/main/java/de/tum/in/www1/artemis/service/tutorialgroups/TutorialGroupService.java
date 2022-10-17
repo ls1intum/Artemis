@@ -3,26 +3,39 @@ package de.tum.in.www1.artemis.service.tutorialgroups;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class TutorialGroupService {
 
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
+    private final TutorialGroupRepository tutorialGroupRepository;
+
     private final UserRepository userRepository;
 
-    public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, UserRepository userRepository) {
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
+            UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
+        this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -83,6 +96,44 @@ public class TutorialGroupService {
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup, registrationType);
         return notFoundStudentDTOs;
+    }
+
+    /**
+     * Get all tutorial groups for a course, including setting the transient properties for the given user
+     *
+     * @param course The course for which the tutorial groups should be retrieved.
+     * @param user   The user for whom to set the transient properties of the tutorial groups.
+     * @return A list of tutorial groups for the given course with the transient properties set for the given user.
+     */
+    public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user) {
+        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(course.getId());
+        tutorialGroups.forEach(tutorialGroup -> tutorialGroup.setTransientPropertiesForUser(user));
+        tutorialGroups.forEach(tutorialGroup -> {
+            if (!authorizationCheckService.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+                tutorialGroup.hidePrivacySensitiveInformation();
+            }
+        });
+        return tutorialGroups;
+    }
+
+    /**
+     * Get one tutorial group of a course, including setting the transient properties for the given user
+     *
+     * @param tutorialGroupId The id of the tutorial group to retrieve.
+     * @param user            The user for whom to set the transient properties of the tutorial group.
+     * @param course          The course for which the tutorial group should be retrieved.
+     * @return The tutorial group of the course with the the transient properties set for the given user.
+     */
+    public TutorialGroup getOneOfCourse(@NotNull Course course, @NotNull User user, @NotNull Long tutorialGroupId) {
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
+        if (!course.equals(tutorialGroup.getCourse())) {
+            throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial group", "tutorialGroup", "courseIdMismatch");
+        }
+        tutorialGroup.setTransientPropertiesForUser(user);
+        if (!authorizationCheckService.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+            tutorialGroup.hidePrivacySensitiveInformation();
+        }
+        return tutorialGroup;
     }
 
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {

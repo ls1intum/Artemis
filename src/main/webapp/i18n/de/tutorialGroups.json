@@ -252,7 +252,8 @@
                 }
             },
             "registeredStudents": {
-                "title": "Registrierte Studierende"
+                "title": "Registrierte Studierende",
+                "capacityWarning": "Die Kapazität der Übungsgruppe von {{ capacity }} ist erreicht! Bist du sicher, dass du noch mehr Studierende hinzufügen möchtest?"
             },
             "createTutorialSession": {
                 "title": "Sitzung erstellen"

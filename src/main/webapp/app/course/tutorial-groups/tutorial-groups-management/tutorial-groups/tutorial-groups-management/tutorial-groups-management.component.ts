@@ -3,70 +3,67 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { map, finalize, combineLatest } from 'rxjs';
+import { map, finalize } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
-import { faPencil, faPlus, faSort, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
-import { SortService } from 'app/shared/service/sort.service';
-import { Course, Language } from 'app/entities/course.model';
-import { switchMap, take } from 'rxjs/operators';
+import { faPencil, faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
+import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
-import { getDayTranslationKey } from '../../../shared/weekdays';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
     templateUrl: './tutorial-groups-management.component.html',
-    styleUrls: ['./tutorial-groups.management.component.scss'],
 })
 export class TutorialGroupsManagementComponent implements OnInit {
     courseId: number;
     course: Course;
+    isAtLeastInstructor = false;
+
     isLoading = false;
-    tutorialGroups: TutorialGroup[];
-    GERMAN = Language.GERMAN;
-    ENGLISH = Language.ENGLISH;
-    faSort = faSort;
+    tutorialGroups: TutorialGroup[] = [];
     faPlus = faPlus;
     faPencil = faPencil;
     faUmbrellaBeach = faUmbrellaBeach;
-    getDayTranslationKey = getDayTranslationKey;
-    sortingPredicate = 'title';
-    ascending = true;
 
-    constructor(
-        private tutorialGroupService: TutorialGroupsService,
-        private sortService: SortService,
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private alertService: AlertService,
-    ) {}
+    constructor(private tutorialGroupService: TutorialGroupsService, private router: Router, private activatedRoute: ActivatedRoute, private alertService: AlertService) {}
 
     ngOnInit(): void {
-        this.loadAll();
+        this.activatedRoute.data.subscribe(({ course }) => {
+            if (course) {
+                this.course = course;
+                this.courseId = course.id!;
+                this.isAtLeastInstructor = course.isAtLeastInstructor;
+                this.checkIfTutorialGroupsConfigured();
+                this.loadTutorialGroups();
+            }
+        });
     }
 
-    public loadAll() {
+    onTutorialGroupSelected = (tutorialGroup: TutorialGroup) => {
+        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', tutorialGroup.id]);
+    };
+
+    loadTutorialGroups() {
         this.isLoading = true;
-        combineLatest([this.activatedRoute.data])
+        this.tutorialGroupService
+            .getAllForCourse(this.courseId)
             .pipe(
-                take(1),
-                switchMap(([data]) => {
-                    this.course = data['course'];
-                    this.courseId = this.course.id!;
-                    return this.tutorialGroupService.getAllOfCourse(this.course.id!).pipe(finalize(() => (this.isLoading = false)));
-                }),
-                map((res: HttpResponse<TutorialGroup[]>) => {
-                    return res.body;
+                map((res: HttpResponse<TutorialGroup[]>) => res.body),
+                finalize(() => {
+                    this.isLoading = false;
                 }),
             )
             .subscribe({
                 next: (tutorialGroups: TutorialGroup[]) => {
-                    this.tutorialGroups = tutorialGroups.map((tutorialGroup) => {
-                        if (!tutorialGroup.registrations) {
-                            tutorialGroup.registrations = [];
+                    tutorialGroups.sort((a, b) => {
+                        if (a.isUserTutor && !b.isUserTutor) {
+                            return -1;
+                        } else if (!a.isUserTutor && b.isUserTutor) {
+                            return 1;
+                        } else {
+                            return a.title!.localeCompare(b.title!);
                         }
-                        return tutorialGroup;
                     });
-                    this.checkIfTutorialGroupsConfigured();
+                    this.tutorialGroups = tutorialGroups;
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -76,13 +73,5 @@ export class TutorialGroupsManagementComponent implements OnInit {
         if (!this.course.tutorialGroupsConfiguration) {
             this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', 'configuration', 'create']);
         }
-    }
-
-    trackId(index: number, item: TutorialGroup) {
-        return item.id;
-    }
-
-    sortRows() {
-        this.sortService.sortByProperty(this.tutorialGroups, this.sortingPredicate, this.ascending);
     }
 }

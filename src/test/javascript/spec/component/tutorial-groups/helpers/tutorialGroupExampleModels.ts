@@ -1,29 +1,51 @@
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { Language } from 'app/entities/course.model';
+import { Course, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
-import dayjs from 'dayjs/esm';
 import { TutorialGroupFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
+import dayjs from 'dayjs/esm';
 
-export const generateExampleTutorialGroup = (id?: number) => {
+export const generateExampleTutorialGroup = ({
+    id = 1,
+    title = 'Example',
+    capacity = 10,
+    campus = 'Example Campus',
+    language = Language.ENGLISH,
+    additionalInformation = 'Example Additional Information',
+    isOnline = false,
+    teachingAssistant = { id: 1, login: 'Example TA' } as User,
+    isUserRegistered = false,
+    isUserTutor = false,
+    numberOfRegisteredUsers = 5,
+    course = { id: 1, title: 'Test Course' } as Course,
+    teachingAssistantName = 'Example TA',
+    courseTitle = 'Test Course',
+    tutorialGroupSchedule = {
+        id: 1,
+        dayOfWeek: 1,
+        startTime: '10:00',
+        endTime: '11:00',
+        repetitionFrequency: 1,
+        location: 'Example Location',
+        validFromInclusive: dayjs('2021-01-01'),
+        validToInclusive: dayjs('2021-01-01'),
+    },
+}: TutorialGroup) => {
     const exampleTutorialGroup = new TutorialGroup();
-    exampleTutorialGroup.id = id ?? 1;
-    exampleTutorialGroup.title = 'Example';
-    exampleTutorialGroup.capacity = 10;
-    exampleTutorialGroup.campus = 'Example Campus';
-    exampleTutorialGroup.language = Language.GERMAN;
-    exampleTutorialGroup.additionalInformation = 'Example Information';
-    exampleTutorialGroup.isOnline = true;
-    exampleTutorialGroup.teachingAssistant = { id: 1, login: 'Example' } as User;
-    exampleTutorialGroup.tutorialGroupSchedule = new TutorialGroupSchedule();
-    exampleTutorialGroup.tutorialGroupSchedule.id = 1;
-    exampleTutorialGroup.tutorialGroupSchedule.dayOfWeek = 1;
-    exampleTutorialGroup.tutorialGroupSchedule.startTime = '10:00:00';
-    exampleTutorialGroup.tutorialGroupSchedule.endTime = '11:00:00';
-    exampleTutorialGroup.tutorialGroupSchedule.repetitionFrequency = 1;
-    exampleTutorialGroup.tutorialGroupSchedule.location = 'Example Location';
-    exampleTutorialGroup.tutorialGroupSchedule.validFromInclusive = dayjs('2021-01-01');
-    exampleTutorialGroup.tutorialGroupSchedule.validToInclusive = dayjs('2021-01-31');
+    exampleTutorialGroup.id = id;
+    exampleTutorialGroup.title = title;
+    exampleTutorialGroup.capacity = capacity;
+    exampleTutorialGroup.campus = campus;
+    exampleTutorialGroup.language = language;
+    exampleTutorialGroup.additionalInformation = additionalInformation;
+    exampleTutorialGroup.isOnline = isOnline;
+    exampleTutorialGroup.teachingAssistant = teachingAssistant;
+    exampleTutorialGroup.isUserRegistered = isUserRegistered;
+    exampleTutorialGroup.isUserTutor = isUserTutor;
+    exampleTutorialGroup.numberOfRegisteredUsers = numberOfRegisteredUsers;
+    exampleTutorialGroup.course = course;
+    exampleTutorialGroup.teachingAssistantName = teachingAssistantName;
+    exampleTutorialGroup.courseTitle = courseTitle;
+    exampleTutorialGroup.tutorialGroupSchedule = tutorialGroupSchedule;
     return exampleTutorialGroup;
 };
 

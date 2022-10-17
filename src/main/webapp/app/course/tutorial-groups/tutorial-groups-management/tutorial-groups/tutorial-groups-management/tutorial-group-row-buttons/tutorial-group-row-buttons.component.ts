@@ -10,6 +10,7 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutor
     templateUrl: './tutorial-group-row-buttons.component.html',
 })
 export class TutorialGroupRowButtonsComponent {
+    @Input() isAtLeastInstructor = false;
     @Input() courseId: number;
     @Input() tutorialGroup: TutorialGroup;
 

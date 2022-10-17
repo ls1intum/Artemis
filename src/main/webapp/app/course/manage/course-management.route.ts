@@ -84,6 +84,13 @@ export const courseManagementState: Routes = [
         loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
     },
     {
+        path: ':courseId/tutorial-groups-management',
+        resolve: {
+            course: CourseManagementResolve,
+        },
+        loadChildren: () => import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
+    },
+    {
         // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered
         path: ':courseId',
         resolve: {
