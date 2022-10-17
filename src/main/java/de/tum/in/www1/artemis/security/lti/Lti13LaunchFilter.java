@@ -11,35 +11,33 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import de.tum.in.www1.artemis.domain.lti.Lti13LaunchRequest;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.Lti13Service;
 import net.minidev.json.JSONObject;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
 
 /**
- * Processes a LTI 1.3 Authorization Request response.
- *
+ * Processes an LTI 1.3 Authorization Request response.
  * Step 3. of OpenID Connect Third Party Initiated Login is handled solely by spring-security-lti13
  * OAuth2LoginAuthenticationFilter.
  *
  */
 public class Lti13LaunchFilter extends OncePerRequestFilter {
 
-    private OAuth2LoginAuthenticationFilter defaultFilter;
+    private final OAuth2LoginAuthenticationFilter defaultFilter;
 
-    private Lti13Service lti13Service;
+    private final Lti13Service lti13Service;
 
-    private AntPathRequestMatcher requestMatcher;
+    private final AntPathRequestMatcher requestMatcher;
 
-    private Logger log = LoggerFactory.getLogger(Lti13LaunchFilter.class);
+    private final Logger log = LoggerFactory.getLogger(Lti13LaunchFilter.class);
 
     public Lti13LaunchFilter(OAuth2LoginAuthenticationFilter defaultFilter, String filterProcessingUrl, Lti13Service lti13Service) {
         this.defaultFilter = defaultFilter;
@@ -55,7 +53,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         }
 
         // we do not permit anonymous launches
-        if (!isAuthenticated()) {
+        if (!SecurityUtils.isAuthenticated()) {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             return;
         }
@@ -115,13 +113,5 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         response.setCharacterEncoding("UTF-8");
         writer.print(json);
         writer.flush();
-    }
-
-    private boolean isAuthenticated() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return false;
-        }
-        return true;
     }
 }

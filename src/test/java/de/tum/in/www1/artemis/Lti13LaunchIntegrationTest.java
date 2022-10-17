@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
+import de.tum.in.www1.artemis.web.rest.LtiResource;
 
 /**
  * LTI 1.3 Exercise Launch
@@ -43,7 +44,7 @@ public class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkins
         URI header = request.post(CustomLti13Configurer.LTI_BASE_PATH + CustomLti13Configurer.LOGIN_REDIRECT_PROXY_PATH, requestBody, HttpStatus.FOUND,
                 MediaType.APPLICATION_FORM_URLENCODED, false);
 
-        assertEquals(CustomLti13Configurer.LOGIN_REDIRECT_CLIENT_PATH, header.getPath());
+        assertEquals(LtiResource.LOGIN_REDIRECT_CLIENT_PATH, header.getPath());
 
         List<NameValuePair> params = URLEncodedUtils.parse(header, StandardCharsets.UTF_8);
         assertUriParamsContain(params, "id_token", idToken);

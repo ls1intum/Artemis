@@ -18,7 +18,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
@@ -56,6 +55,8 @@ public class LtiResource {
     private final TokenProvider tokenProvider;
 
     private final AuthorizationCheckService authCheckService;
+
+    public static final String LOGIN_REDIRECT_CLIENT_PATH = "/lti/launch";
 
     public LtiResource(LtiService ltiService, UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, TokenProvider tokenProvider,
             AuthorizationCheckService authCheckService) {
@@ -197,7 +198,7 @@ public class LtiResource {
             return;
         }
 
-        String redirectUri = CustomLti13Configurer.LOGIN_REDIRECT_CLIENT_PATH + "?state=" + state + "&id_token=" + idToken;
+        String redirectUri = LOGIN_REDIRECT_CLIENT_PATH + "?state=" + state + "&id_token=" + idToken;
         response.sendRedirect(redirectUri);
     }
 

@@ -27,12 +27,15 @@ public class CustomLti13Configurer extends Lti13Configurer {
 
     public static final String LOGIN_PATH = "/auth-login";
 
-    public static final String LOGIN_REDIRECT_CLIENT_PATH = "/lti/launch";
+    public CustomLti13Configurer() {
+        super.ltiPath(LTI_BASE_PATH);
+        super.loginInitiationPath(LOGIN_INITIATION_PATH);
+        super.loginPath(LOGIN_PATH);
+        super.useState(true);
+    }
 
     @Override
     public void configure(HttpSecurity http) {
-        setupSuperClass();
-
         AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository = configureRequestRepository();
 
         // Step 1 of the IMS SEC
@@ -49,13 +52,6 @@ public class CustomLti13Configurer extends Lti13Configurer {
         OAuth2LoginAuthenticationFilter defaultLoginFilter = configureLoginFilter(clientRegistrationRepository(http), oidcLaunchFlowAuthenticationProvider,
                 authorizationRequestRepository);
         http.addFilterBefore(new Lti13LaunchFilter(defaultLoginFilter, LTI_BASE_PATH + LOGIN_PATH, lti13Service(http)), AnonymousAuthenticationFilter.class);
-    }
-
-    protected void setupSuperClass() {
-        super.ltiPath(LTI_BASE_PATH);
-        super.loginInitiationPath(LOGIN_INITIATION_PATH);
-        super.loginPath(LOGIN_PATH);
-        super.useState(true);
     }
 
     protected Lti13Service lti13Service(HttpSecurity http) {
