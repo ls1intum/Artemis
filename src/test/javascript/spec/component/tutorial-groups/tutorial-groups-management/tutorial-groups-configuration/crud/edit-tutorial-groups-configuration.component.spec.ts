@@ -56,8 +56,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
                 component = fixture.componentInstance;
                 configurationService = TestBed.inject(TutorialGroupsConfigurationService);
 
-                exampleConfiguration = generateExampleTutorialGroupsConfiguration();
-                exampleConfiguration.id = 2;
+                exampleConfiguration = generateExampleTutorialGroupsConfiguration({ id: 2 });
                 course.tutorialGroupsConfiguration = exampleConfiguration;
                 courseManagementService = TestBed.inject(CourseManagementService);
 

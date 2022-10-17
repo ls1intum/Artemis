@@ -43,7 +43,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
                 fixture = TestBed.createComponent(TutorialGroupFreePeriodRowButtonsComponent);
                 component = fixture.componentInstance;
                 periodService = TestBed.inject(TutorialGroupFreePeriodService);
-                configuration = generateExampleTutorialGroupsConfiguration();
+                configuration = generateExampleTutorialGroupsConfiguration({});
                 tutorialFreePeriod = generateExampleTutorialGroupFreePeriod({});
                 setInputValues();
             });

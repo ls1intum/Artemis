@@ -62,7 +62,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
 
     it('should send POST request upon form submission and navigate', () => {
         fixture.detectChanges();
-        const exampleConfiguration = generateExampleTutorialGroupsConfiguration();
+        const exampleConfiguration = generateExampleTutorialGroupsConfiguration({});
         delete exampleConfiguration.id;
 
         const createResponse: HttpResponse<TutorialGroupsConfiguration> = new HttpResponse({

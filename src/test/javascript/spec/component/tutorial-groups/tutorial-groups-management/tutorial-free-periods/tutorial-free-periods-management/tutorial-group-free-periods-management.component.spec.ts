@@ -85,7 +85,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
                     reason: 'Third of January',
                 });
 
-                configuration = generateExampleTutorialGroupsConfiguration();
+                configuration = generateExampleTutorialGroupsConfiguration({});
                 configuration.tutorialGroupFreePeriods = [{ ...firstOfJanuaryPeriod }, { ...secondOfJanuaryPeriod }, { ...thirdOfJanuaryPeriod }];
 
                 configurationService = TestBed.inject(TutorialGroupsConfigurationService);

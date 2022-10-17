@@ -18,7 +18,7 @@ describe('TutorialGroupsConfigurationService', () => {
         service = TestBed.inject(TutorialGroupsConfigurationService);
         httpMock = TestBed.inject(HttpTestingController);
 
-        elemDefault = generateExampleTutorialGroupsConfiguration();
+        elemDefault = generateExampleTutorialGroupsConfiguration({});
     });
 
     afterEach(() => {

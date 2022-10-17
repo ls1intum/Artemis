@@ -48,7 +48,7 @@ describe('TutorialGroupSessionsManagement', () => {
     const currentDate = dayjs(new Date(Date.UTC(2021, 0, 2, 12, 0, 0)));
     const course = {
         id: courseId,
-        tutorialGroupsConfiguration: generateExampleTutorialGroupsConfiguration(),
+        tutorialGroupsConfiguration: generateExampleTutorialGroupsConfiguration({}),
     } as Course;
 
     const router = new MockRouter();

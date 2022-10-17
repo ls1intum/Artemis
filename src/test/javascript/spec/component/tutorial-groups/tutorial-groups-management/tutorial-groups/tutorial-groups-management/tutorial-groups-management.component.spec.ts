@@ -29,7 +29,7 @@ class MockTutorialGroupsCourseInformationComponent {
 describe('TutorialGroupsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let component: TutorialGroupsManagementComponent;
-    const configuration = generateExampleTutorialGroupsConfiguration();
+    const configuration = generateExampleTutorialGroupsConfiguration({});
     const course = { id: 1, title: 'Example', isAtLeastInstructor: true, tutorialGroupsConfiguration: configuration } as Course;
 
     let tutorialGroupTwo: TutorialGroup;
