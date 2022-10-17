@@ -439,7 +439,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Set<Exercise> findAllByCourseIdAndSearchTermWithCategories(@Param("courseId") Long courseId, @Param("searchTerm") String searchTerm);
 
     /**
-     * Fetches exercises where learning outcome url exists by searchTerm and courseId
+     * Fetches exercises where lti outcome url exists by searchTerm and courseId
      * @param courseId the id of the course
      * @param searchTerm the search term of course title
      * @param login the login of the corresponding user
