@@ -30,6 +30,11 @@
             "requestUserEmailTooltip": "The user's email must be sent as it is required by Artemis to create or find the user",
             "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",
             "lookupUserByEmailTooltip": "If selected, Artemis will try to find an existing user with the provided email"
+        },
+        "lti13": {
+            "launch": {
+                "title": "Launch exercise"
+            }
         }
     }
 }

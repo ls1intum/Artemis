@@ -9,7 +9,6 @@ import org.springframework.security.web.authentication.AnonymousAuthenticationFi
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.stereotype.Component;
 
-import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.lti.Lti13LaunchFilter;
 import de.tum.in.www1.artemis.security.lti.Lti13RedirectProxyFilter;
 import de.tum.in.www1.artemis.service.connectors.Lti13Service;
@@ -64,10 +63,6 @@ public class CustomLti13Configurer extends Lti13Configurer {
         super.loginInitiationPath(LOGIN_INITIATION_PATH);
         super.loginPath(LOGIN_PATH);
         super.useState(true);
-    }
-
-    protected OAuth2JWKSService lti13KeyPairService(HttpSecurity http) {
-        return http.getSharedObject(ApplicationContext.class).getBean(OAuth2JWKSService.class);
     }
 
     protected Lti13Service lti13Service(HttpSecurity http) {

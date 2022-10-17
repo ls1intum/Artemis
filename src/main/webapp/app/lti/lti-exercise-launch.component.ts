@@ -23,7 +23,7 @@ export class ArtemisLtiExerciseLaunchComponent implements OnInit {
     }
 
     /**
-     * perform a LTI launch with state and id_token query parameters
+     * perform an LTI launch with state and id_token query parameters
      */
     ngOnInit(): void {
         const state = this.route.snapshot.queryParamMap.get('state');
@@ -36,11 +36,11 @@ export class ArtemisLtiExerciseLaunchComponent implements OnInit {
         }
 
         // 'state' was manually written into session storage by spring-security-lti13
-        // because of that it needs to be manually retrieven from there
+        // because of that it needs to be manually retrieved from there
         const storedState = window.sessionStorage.getItem('state');
 
         if (storedState !== state) {
-            console.error('LTI launch state missmatch');
+            console.error('LTI launch state mismatch');
             this.isLaunching = false;
             return;
         }

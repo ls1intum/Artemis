@@ -7,19 +7,19 @@ import com.nimbusds.jose.shaded.json.JSONObject;
 
 public class Lti13LaunchRequest {
 
-    private String iss;
+    private final String iss;
 
-    private String sub;
+    private final String sub;
 
-    private String deploymentId;
+    private final String deploymentId;
 
-    private String resourceLinkId;
+    private final String resourceLinkId;
 
-    private String targetLinkUri;
+    private final String targetLinkUri;
 
-    private Lti13AgsClaim agsClaim;
+    private final Lti13AgsClaim agsClaim;
 
-    private String clientRegistrationId;
+    private final String clientRegistrationId;
 
     public Lti13LaunchRequest(OidcIdToken ltiIdToken, String clientRegistrationId) {
         this.iss = ltiIdToken.getClaim("iss");

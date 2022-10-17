@@ -33,7 +33,7 @@ class ClientRegistrationRepositoryConfiguration {
     private static class FallbackClientRegistrationRepository implements ClientRegistrationRepository, Iterable<ClientRegistration> {
 
         @Override
-        public ClientRegistration findByRegistrationId(String s) {
+        public ClientRegistration findByRegistrationId(String registrationId) {
             return null;
         }
 

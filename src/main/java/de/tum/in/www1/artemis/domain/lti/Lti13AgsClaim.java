@@ -8,9 +8,7 @@ import com.nimbusds.jose.shaded.json.JSONArray;
 import com.nimbusds.jose.shaded.json.JSONObject;
 
 /**
- * A wrapper class for a LTI 1.3 Assignment and Grading Services Claim.
- *
- * Currently we support the Score Publishing Service in order to transmit scores.
+ * A wrapper class for an LTI 1.3 Assignment and Grading Services Claim. We support the Score Publishing Service in order to transmit scores.
  */
 public class Lti13AgsClaim {
 
@@ -36,8 +34,8 @@ public class Lti13AgsClaim {
             return Optional.empty();
         }
 
-        if (scopes.contains(Scope.SCORE)) {
-            agsClaim.setScope(new LinkedList<>(Collections.singletonList(Scope.SCORE)));
+        if (scopes.contains(Scopes.AGS_SCORE)) {
+            agsClaim.setScope(Collections.singletonList(Scopes.AGS_SCORE));
         }
 
         agsClaim.setLineItem((String) agsClaimJson.get("lineitem"));
@@ -59,10 +57,5 @@ public class Lti13AgsClaim {
 
     private void setLineItem(String lineItem) {
         this.lineItem = lineItem;
-    }
-
-    public static class Scope {
-
-        public static String SCORE = "https://purl.imsglobal.org/spec/lti-ags/scope/score";
     }
 }

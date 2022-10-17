@@ -34,27 +34,27 @@ import net.minidev.json.JSONObject;
 @Service
 public class Lti13Service {
 
-    private final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
+    private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
 
     private final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    private ExerciseRepository exerciseRepository;
+    private final ExerciseRepository exerciseRepository;
 
-    private CourseRepository courseRepository;
+    private final CourseRepository courseRepository;
 
-    private Lti13ResourceLaunchRepository launchRepository;
+    private final Lti13ResourceLaunchRepository launchRepository;
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private ResultRepository resultRepository;
+    private final ResultRepository resultRepository;
 
-    private Lti13TokenRetriever tokenRetriever;
+    private final Lti13TokenRetriever tokenRetriever;
 
-    private ClientRegistrationRepository clientRegistrationRepository;
+    private final ClientRegistrationRepository clientRegistrationRepository;
 
-    private RestTemplate rest;
+    private final RestTemplate restTemplate;
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository,
             ArtemisAuthenticationProvider authenticationProvider, Lti13ResourceLaunchRepository launchRepository, ResultRepository resultRepository,
@@ -67,14 +67,14 @@ public class Lti13Service {
         this.resultRepository = resultRepository;
         this.tokenRetriever = tokenRetriever;
         this.clientRegistrationRepository = clientRegistrationRepository;
-        this.rest = restTemplate;
+        this.restTemplate = restTemplate;
     }
 
     /**
-     * Performs an LTI 1.3 exercise launch with the LTI parameters contained in launchRequest
+     * Performs an LTI 1.3 exercise launch with the LTI parameters contained in launchRequest.
      * If the launch was successful the user is added to the target exercise group (e.g. the course).
      *
-     * @param launchRequest
+     * @param launchRequest the received launchRequest
      */
     public void performLaunch(Lti13LaunchRequest launchRequest) {
         Optional<Exercise> targetExercise = getExerciseFromTargetLink(launchRequest.getTargetLinkUri());
@@ -149,7 +149,7 @@ public class Lti13Service {
         String body = getScoreBody(launch.getSub(), comment, score);
         HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
         try {
-            rest.postForEntity(new URI(getScoresUrl(launch.getScoreLineItemUrl())), httpRequest, Object.class);
+            restTemplate.postForEntity(new URI(getScoresUrl(launch.getScoreLineItemUrl())), httpRequest, Object.class);
             log.info("Submitted score for " + launch.getUser().getLogin() + " to client" + client.getClientId());
         }
         catch (Exception e) {
@@ -250,7 +250,7 @@ public class Lti13Service {
 
         Lti13AgsClaim agsClaim = launchRequest.getAgsClaim();
         // we do support LTI 1.3 Assigment and Grading Services SCORE publish service
-        if (agsClaim != null && agsClaim.getScope().contains(Lti13AgsClaim.Scope.SCORE)) {
+        if (agsClaim != null) {
             launch.setScoreLineItemUrl(agsClaim.getLineItem());
         }
 

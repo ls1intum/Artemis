@@ -25,21 +25,20 @@ import uk.ac.ox.ctl.lti13.KeyPairService;
 
 /**
  * This Service is responsible to manage JWKs for all OAuth2 ClientRegistrations.
- *
  * On initialisation, each ClientRegistration gets assigned a fresh generated RSAKey.
  */
 @Component
 public class OAuth2JWKSService implements KeyPairService {
 
-    private ClientRegistrationRepository clientRegistrationRepository;
+    private final ClientRegistrationRepository clientRegistrationRepository;
 
-    private StringKeyGenerator kidGenerator = new Base64StringKeyGenerator(32);
+    private final StringKeyGenerator kidGenerator = new Base64StringKeyGenerator(32);
 
-    private Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
+    private final Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
 
-    private JWKSet jwkSet;
+    private final JWKSet jwkSet;
 
-    private Map<String, String> clientRegistrationIdToKeyId = new HashMap<>();
+    private final Map<String, String> clientRegistrationIdToKeyId = new HashMap<>();
 
     public OAuth2JWKSService(ClientRegistrationRepository clientRegistrationRepository) throws NoSuchAlgorithmException {
         this.clientRegistrationRepository = clientRegistrationRepository;
@@ -49,7 +48,7 @@ public class OAuth2JWKSService implements KeyPairService {
     @Override
     public KeyPair getKeyPair(String clientRegistrationId) {
         try {
-            JWK jwk = this.getJWK(clientRegistrationRepository.findByRegistrationId(clientRegistrationId));
+            JWK jwk = this.getJWK(clientRegistrationId);
             return jwk != null ? jwk.toRSAKey().toKeyPair() : null;
         }
         catch (JOSEException e) {
@@ -59,13 +58,14 @@ public class OAuth2JWKSService implements KeyPairService {
     }
 
     @Override
-    public String getKeyId(String clientRegistration) {
-        JWK jwk = this.getJWK(clientRegistrationRepository.findByRegistrationId(clientRegistration));
+    public String getKeyId(String clientRegistrationId) {
+        JWK jwk = this.getJWK(clientRegistrationId);
         return jwk != null ? jwk.getKeyID() : null;
     }
 
-    public JWK getJWK(ClientRegistration clientRegistration) {
-        return this.jwkSet.getKeyByKeyId(this.clientRegistrationIdToKeyId.get(clientRegistration.getRegistrationId()));
+    public JWK getJWK(String clientRegistrationId) {
+        return this.jwkSet.getKeyByKeyId(this.clientRegistrationIdToKeyId.get(clientRegistrationId));
+
     }
 
     public JWKSet getJwkSet() {

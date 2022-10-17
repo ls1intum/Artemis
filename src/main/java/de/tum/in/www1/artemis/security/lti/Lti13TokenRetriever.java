@@ -82,7 +82,7 @@ public class Lti13TokenRetriever {
     }
 
     private SignedJWT createJWT(ClientRegistration clientRegistration) throws JOSEException {
-        JWK jwk = oAuth2JWKSService.getJWK(clientRegistration);
+        JWK jwk = oAuth2JWKSService.getJWK(clientRegistration.getRegistrationId());
 
         if (jwk == null) {
             throw new NullPointerException("Failed to get JWK for client registration: " + clientRegistration.getRegistrationId());
