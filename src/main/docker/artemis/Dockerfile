@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-slim-bullseye as builder
+FROM ghcr.io/ls1intum/docker-jdk-node-yarn as builder
 
 #ARG PROFILE=prod
 
@@ -20,7 +20,7 @@ RUN ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
 
 
 
-FROM openjdk:17-jdk-slim-bullseye
+FROM eclipse-temurin:17-jre
 
 ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     JHIPSTER_SLEEP=0 \

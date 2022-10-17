@@ -21,6 +21,7 @@ services:
         extends:
             file: mysql.yml
             service: artemis-mysql
+    #TODO: add waiting for gitlab and jenkins command above in artemis
     gitlab:
         extends:
             file: ./gitlab/gitlab.yml
@@ -33,6 +34,10 @@ services:
         extends:
             file: ./saml-test/saml-test.yml
             service: saml-test
+    mailhog:
+        extends:
+            file: ./mailhog/mailhog.yml
+            service: mailhog
 
 networks:
     artemis:

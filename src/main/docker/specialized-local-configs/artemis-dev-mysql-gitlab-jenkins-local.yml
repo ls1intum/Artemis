@@ -1,8 +1,11 @@
+# TODO: not happy about using local profile at all ...
+# maybe sth here helps: https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config.files.optional-prefix
+
 artemis:
     user-management:
         use-external: false
     version-control:
-        url: http://localhost:8081
+        url: http://gitlab
         user: root
         password: artemis_admin # created in Gitlab Server Quickstart step 2
         token: artemis-gitlab-token # generated in Gitlab Server Quickstart steps 4 and 5
@@ -10,7 +13,7 @@ artemis:
     continuous-integration:
         user: artemis_admin
         password: artemis_admin
-        url: http://localhost:8082
+        url: http://jenkins:8080
         secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # generated in Automated Jenkins Server step 3
         vcs-credentials: artemis_gitlab_admin_credentials
         artemis-authentication-token-key: artemis_notification_plugin_token
@@ -18,9 +21,14 @@ artemis:
 jenkins:
     internal-urls:
         ci-url: http://jenkins:8080
-        vcs-url: http://gitlab:80
+        vcs-url: http://gitlab
     use-crumb: false
 server:
     port: 8080
-    #url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
-    url: http://localhost:8080 # `http://host.docker.internal:8080` for Windows
+    url: http://localhost:8080
+spring:
+    mail:
+        host: mailhog
+        port: 1025
+        username:
+        password:

@@ -18,6 +18,7 @@ services:
         environment:
             _JAVA_OPTIONS: -Xmx5120m -Xms2560m
             SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,athene,docker,local
+        #TODO: also wait for other services depending on image
         command: /bin/bash -c '/usr/local/bin/wait-for-it.sh -t 0 artemis-mysql:3306 -- /run_artemis.sh'
         ports:
             - 8080:8080
