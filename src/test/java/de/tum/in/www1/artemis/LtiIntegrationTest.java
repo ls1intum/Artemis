@@ -263,13 +263,11 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     private void assertParametersExistingStudent(MultiValueMap<String, String> parameters) {
-        assertThat(parameters.getFirst("jwt")).isEqualTo("");
         assertThat(parameters.getFirst("initialize")).isNull();
         assertThat(parameters.getFirst("ltiSuccessLoginRequired")).isNotNull();
     }
 
     private void assertParametersNewStudent(MultiValueMap<String, String> parameters) {
-        assertThat(parameters.getFirst("jwt")).isNotBlank();
         assertThat(parameters.getFirst("initialize")).isNotNull();
         assertThat(parameters.getFirst("ltiSuccessLoginRequired")).isNull();
     }
