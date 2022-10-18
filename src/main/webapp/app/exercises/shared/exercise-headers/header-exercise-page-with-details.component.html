@@ -113,7 +113,7 @@
                 {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
                 <span
                     class="badge bg-success"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate: { days: course.maxComplaintTimeDays }"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate: { days: course?.maxComplaintTimeDays }"
                 >
                     {{
                         (exercise.allowComplaintsForAutomaticAssessments || exercise.assessmentType !== AssessmentType.AUTOMATIC ? 'global.generic.yes' : 'global.generic.no')
