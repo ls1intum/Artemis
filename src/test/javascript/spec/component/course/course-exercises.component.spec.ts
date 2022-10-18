@@ -369,6 +369,6 @@ describe('CourseExercisesComponent', () => {
         exercise3.title = 'Introduction to Software Engineering';
         component.course!.exercises = [exercise1, exercise2, exercise3];
         searchButton.dispatchEvent(event);
-        expect(component.course!.exercises).toEqual([exercise1, exercise2]);
+        expect(component.weeklyExercisesGrouped['noDate'].exercises).toEqual([exercise1, exercise2]);
     });
 });
