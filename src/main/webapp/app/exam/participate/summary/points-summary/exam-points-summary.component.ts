@@ -4,8 +4,9 @@ import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { faClipboard } from '@fortawesome/free-solid-svg-icons';
+import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { BonusStrategy } from 'app/entities/bonus.model';
 
 @Component({
     selector: 'jhi-exam-points-summary',
@@ -14,6 +15,7 @@ import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.mo
 })
 export class ExamPointsSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly BonusStrategy = BonusStrategy;
     @Input() studentExamWithGrade: StudentExamWithGradeDTO;
 
     gradingScaleExists = false;
@@ -23,6 +25,7 @@ export class ExamPointsSummaryComponent implements OnInit {
 
     // Icons
     faClipboard = faClipboard;
+    faAward = faAward;
 
     constructor(private serverDateService: ArtemisServerDateService, public exerciseService: ExerciseService, private changeDetector: ChangeDetectorRef) {}
 

@@ -3,11 +3,12 @@ import { BehaviorSubject, of, pipe } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
+import { cloneDeep } from 'lodash-es';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 const PERSONAL_PARTICIPATION_TOPIC = `/user/topic/newResults`;
@@ -15,7 +16,7 @@ const EXERCISE_PARTICIPATION_TOPIC = (exerciseId: number) => `/topic/exercise/${
 
 export interface IParticipationWebsocketService {
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
-    getParticipationForExercise: (exerciseId: number) => StudentParticipation | undefined;
+    getParticipationsForExercise: (exerciseId: number) => StudentParticipation[] | undefined;
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | undefined>;
     subscribeForLatestResultOfParticipation: (participationId: number, personal: boolean, exerciseId?: number) => BehaviorSubject<Result | undefined>;
     unsubscribeForLatestResultOfParticipation: (participationId: number, exercise: Exercise) => void;
@@ -107,7 +108,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     public addParticipation = (newParticipation: StudentParticipation, exercise?: Exercise) => {
         // The participation needs to be cloned so that the original object is not modified
-        const participation = { ...newParticipation } as StudentParticipation;
+        const participation = cloneDeep(newParticipation);
         if (!participation.exercise && !exercise) {
             throw new Error('a link from the participation to the exercise is required. Please attach it manually or add exercise as function input');
         }
@@ -128,19 +129,17 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * Returns the student participation for the given exercise. The participation objects include the exercise data and all results.
      *
      * @param exerciseId ID of the exercise that the participations belong to.
-     * @return the cached student participation for the exercise or undefined
+     * @return the cached student participations separated between testRun and normal participation for the exercise or an empty array
      */
-    public getParticipationForExercise(exerciseId: number) {
+    public getParticipationsForExercise(exerciseId: number): StudentParticipation[] {
         const participationsForExercise = [...this.cachedParticipations.values()].filter((participation) => {
             return participation.exercise?.id === exerciseId;
         });
-        if (participationsForExercise && participationsForExercise.length === 1) {
-            return participationsForExercise[0];
-        }
-        if (participationsForExercise && participationsForExercise.length > 1) {
+        if (participationsForExercise?.length) {
             return this.participationService.mergeStudentParticipations(participationsForExercise);
+        } else {
+            return [];
         }
-        return undefined;
     }
 
     /**
@@ -261,7 +260,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     public unsubscribeForLatestResultOfParticipation(participationId: number, exercise: Exercise): void {
         // Only unsubscribe from websocket, if the exercise is not active any more
         let isInactiveProgrammingExercise = false;
-        if (exercise instanceof ProgrammingExercise) {
+        if (exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = exercise as ProgrammingExercise;
             isInactiveProgrammingExercise =
                 !!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate && dayjs(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate).isBefore(dayjs());

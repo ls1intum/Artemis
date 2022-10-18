@@ -412,6 +412,18 @@ describe('Course Management Service', () => {
         tick();
     }));
 
+    it('should search other users within course', fakeAsync(() => {
+        const users = [new User(1, 'user1')];
+        returnedFromService = [...users];
+        courseManagementService
+            .searchOtherUsersInCourse(course.id!, 'user1')
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(users));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users?nameOfUser=user1` });
+        req.flush(returnedFromService);
+        tick();
+    }));
+
     afterEach(() => {
         httpMock.verify();
         jest.restoreAllMocks();

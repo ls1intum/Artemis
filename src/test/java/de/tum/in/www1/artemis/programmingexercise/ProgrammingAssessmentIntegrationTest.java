@@ -868,8 +868,33 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void unlockFeedbackRequestAfterAssessment() throws Exception {
+        programmingExercise.setAllowManualFeedbackRequests(true);
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(programmingExercise);
+
+        var participation = programmingExerciseStudentParticipation;
+        participation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        studentParticipationRepository.save(participation);
+
+        Result result = participation.getResults().stream().findFirst().orElseThrow();
+        result.setScore(100D);
+        resultRepository.save(result);
+
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(programmingExercise, participation);
+
+        var response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
+
+        var responseParticipation = response.getParticipation();
+        assertThat(responseParticipation.getIndividualDueDate()).isNull();
+
+        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepository(programmingExercise, participation);
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testdeleteResult() throws Exception {
+    void testDeleteResult() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("modeling", 1, Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().findFirst().orElseThrow();
 

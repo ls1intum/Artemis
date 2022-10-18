@@ -14,9 +14,9 @@
             "tooltip": {
                 "null": "Es steht kein Bewertungsmodus fest.",
                 "undefined": "Es steht kein Bewertungsmodus fest.",
-                "AUTOMATIC": "Diese Aufgabe wird nur automatisch und nicht von Tutor:innen bewertet.",
-                "SEMI_AUTOMATIC": "Diese Aufgabe wird von Tutor:innen bewertet, jedoch werden Bewertungsvorschläge automatisch erstellt. Diese Vorschläge können zum Beispiel Testfälle bei Programmieraufgaben sein.",
-                "MANUAL": "Diese Aufgabe wird manuell von Tutor:innen bewertet."
+                "AUTOMATIC": "Von Lehrenden erstellte Testfälle korrigieren automatisch deine Abgabe für diese Aufgabe und geben sofortiges Feedback.",
+                "SEMI_AUTOMATIC": "Diese Aufgabe wird manuell bewertet, jedoch helfen von Lehrenden erstellte Testfälle bei der Bewertung und geben sofortiges Feedback.",
+                "MANUAL": "Diese Aufgabe wird manuell bewertet."
             }
         }
     }

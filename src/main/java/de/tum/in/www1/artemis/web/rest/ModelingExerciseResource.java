@@ -418,7 +418,7 @@ public class ModelingExerciseResource {
      * Start the automated plagiarism detection for the given exercise and return its result.
      *
      * @param exerciseId          for which all submission should be checked
-     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore        consider only submissions whose score is greater or equal to this
      *                            value
      * @param minimumSize         consider only submissions whose size is greater or equal to this

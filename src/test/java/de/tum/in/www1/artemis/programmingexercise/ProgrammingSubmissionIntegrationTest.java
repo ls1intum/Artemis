@@ -757,7 +757,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         if (isIndividualDueDateInFuture) {
             // the submission should not be returned as the due date is in the future
-            request.get(url, HttpStatus.NOT_FOUND, String.class);
+            request.get(url, HttpStatus.FORBIDDEN, String.class);
         }
         else {
             ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
@@ -777,7 +777,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
-        request.get(url, HttpStatus.NOT_FOUND, String.class);
+
+        var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
+        assertThat(storedSubmission).isNull();
     }
 
     private void createTenLockedSubmissionsForExercise(String assessor) {

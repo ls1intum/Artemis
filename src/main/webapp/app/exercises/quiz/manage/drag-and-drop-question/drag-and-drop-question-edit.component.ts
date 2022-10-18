@@ -246,7 +246,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (event.target.files.length) {
             const fileList: FileList = event.target.files;
             this.backgroundFile = fileList[0];
-            this.backgroundFileName = this.backgroundFile['name'];
+            this.backgroundFileName = this.backgroundFile.name;
         }
     }
 
@@ -257,7 +257,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const file = this.backgroundFile!;
 
         this.isUploadingBackgroundFile = true;
-        this.fileUploaderService.uploadFile(file, file['name']).then(
+        this.fileUploaderService.uploadFile(file, file.name).then(
             (result) => {
                 this.question.backgroundFilePath = result.path;
                 this.isUploadingBackgroundFile = false;
@@ -510,7 +510,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (event.target.files.length) {
             const fileList: FileList = event.target.files;
             this.dragItemFile = fileList[0];
-            this.dragItemFileName = this.dragItemFile['name'];
+            this.dragItemFileName = this.dragItemFile.name;
         }
     }
 
@@ -521,7 +521,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const file = this.dragItemFile!;
 
         this.isUploadingDragItemFile = true;
-        this.fileUploaderService.uploadFile(file, file['name']).then(
+        this.fileUploaderService.uploadFile(file, file.name).then(
             (result) => {
                 // Add drag item to question
                 if (!this.question.dragItems) {
@@ -551,7 +551,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const file = this.dragItemFile!;
 
         this.isUploadingDragItemFile = true;
-        this.fileUploaderService.uploadFile(file, file['name']).then(
+        this.fileUploaderService.uploadFile(file, file.name).then(
             (result) => {
                 this.dragItemPicture = result.path;
                 this.questionUpdated.emit();
@@ -746,7 +746,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const file = this.dragItemFile!;
 
         this.isUploadingDragItemFile = true;
-        this.fileUploaderService.uploadFile(file, file['name']).then(
+        this.fileUploaderService.uploadFile(file, file.name).then(
             (response) => {
                 this.dragItemPicture = response.path;
                 this.questionUpdated.emit();

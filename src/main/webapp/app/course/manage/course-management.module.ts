@@ -27,7 +27,6 @@ import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-score
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
-import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
@@ -56,6 +55,10 @@ import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
+import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
+import { CourseGroupMembershipComponent } from './course-group-membership/course-group-membership.component';
+import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+import { ArtemisTutorialGroupsInstructorViewModule } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-instructor-view.module';
 import { ProfileToggleModule } from 'app/shared/profile-toggle/profile-toggle.module';
 
 @NgModule({
@@ -103,6 +106,9 @@ import { ProfileToggleModule } from 'app/shared/profile-toggle/profile-toggle.mo
         ArtemisPlagiarismModule,
         ArtemisChartsModule,
         ArtemisCoursesModule,
+        ArtemisCourseGroupModule,
+        FeatureToggleModule,
+        ArtemisTutorialGroupsInstructorViewModule,
         ProfileToggleModule,
     ],
     declarations: [
@@ -113,13 +119,13 @@ import { ProfileToggleModule } from 'app/shared/profile-toggle/profile-toggle.mo
         CourseManagementExercisesComponent,
         OrionCourseManagementExercisesComponent,
         CourseManagementStatisticsComponent,
-        CourseGroupComponent,
         CourseManagementCardComponent,
         CourseManagementExerciseRowComponent,
         CourseManagementOverviewStatisticsComponent,
         CourseDetailDoughnutChartComponent,
         CourseDetailLineChartComponent,
         CourseManagementExercisesSearchComponent,
+        CourseGroupMembershipComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}

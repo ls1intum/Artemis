@@ -37,6 +37,9 @@
                     <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="discussion" routerLinkActive="active">
                         <b jhiTranslate="artemisApp.courseOverview.menu.communication">Communication</b>
                     </div>
+                    <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="messages" routerLinkActive="active">
+                        <b jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</b>
+                    </div>
                 </div>
                 <div class="controls">
                     <button class="btn btn-primary btn-md ms-1" (click)="loadCourse(true)" [disabled]="refreshingCourse">

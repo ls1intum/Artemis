@@ -14,7 +14,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     courseId: number;
     examId?: number;
     plagiarismCases: PlagiarismCase[] = [];
-    groupedPlagiarismCases: any;
+    groupedPlagiarismCases: any; // maybe? { [key: number]: PlagiarismCase[] }
     exercisesWithPlagiarismCases: Exercise[] = [];
     getIcon = getIcon;
 

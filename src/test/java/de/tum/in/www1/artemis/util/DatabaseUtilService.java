@@ -65,6 +65,8 @@ import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
@@ -208,6 +210,12 @@ public class DatabaseUtilService {
 
     @Autowired
     private AnswerPostRepository answerPostRepository;
+
+    @Autowired
+    private ConversationRepository conversationRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     @Autowired
     private ModelingSubmissionService modelSubmissionService;
@@ -815,6 +823,7 @@ public class DatabaseUtilService {
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
                 CourseWideContext.ANNOUNCEMENT };
         posts.addAll(createBasicPosts(course1, courseWideContexts));
+        posts.addAll(createBasicPosts(createConversation(course1)));
 
         return posts;
     }
@@ -822,7 +831,7 @@ public class DatabaseUtilService {
     public List<Post> createPostsWithAnswerPostsWithinCourse() {
         List<Post> posts = createPostsWithinCourse();
 
-        // add answer for one post in each context (lecture, exercise, course-wide)
+        // add answer for one post in each context (lecture, exercise, course-wide, conversation)
         Post lecturePost = posts.stream().filter(coursePost -> coursePost.getLecture() != null).findFirst().orElseThrow();
         lecturePost.setAnswers(createBasicAnswers(lecturePost));
         postRepository.save(lecturePost);
@@ -835,6 +844,10 @@ public class DatabaseUtilService {
         Post courseWidePost = posts.stream().filter(coursePost -> coursePost.getCourseWideContext() != null).findFirst().orElseThrow();
         courseWidePost.setAnswers(createBasicAnswersThatResolves(courseWidePost));
         postRepository.save(courseWidePost);
+
+        Post conversationPost = posts.stream().filter(coursePost -> coursePost.getConversation() != null).findFirst().orElseThrow();
+        conversationPost.setAnswers(createBasicAnswers(conversationPost));
+        postRepository.save(conversationPost);
 
         return posts;
     }
@@ -897,6 +910,17 @@ public class DatabaseUtilService {
         return post;
     }
 
+    private List<Post> createBasicPosts(Conversation conversation) {
+        List<Post> posts = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            Post postToAdd = createBasicPost(i, "tutor");
+            postToAdd.setConversation(conversation);
+            postRepository.save(postToAdd);
+            posts.add(postToAdd);
+        }
+        return posts;
+    }
+
     private Set<AnswerPost> createBasicAnswers(Post post) {
         Set<AnswerPost> answerPosts = new HashSet<>();
         AnswerPost answerPost = new AnswerPost();
@@ -927,6 +951,28 @@ public class DatabaseUtilService {
         for (int i = 0; i < numberOfCoursesWithLectures; i++) {
             createCoursesWithExercisesAndLecturesAndLectureUnits(true, true);
         }
+    }
+
+    public Conversation createConversation(Course course) {
+        Conversation conversation = new Conversation();
+        conversation.setCourse(course);
+        conversation = conversationRepository.save(conversation);
+
+        List<ConversationParticipant> conversationParticipants = new ArrayList<>();
+        conversationParticipants.add(createConversationParticipant(conversation, "tutor1"));
+        conversationParticipants.add(createConversationParticipant(conversation, "tutor2"));
+
+        conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
+        return conversationRepository.save(conversation);
+    }
+
+    private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
+        ConversationParticipant conversationParticipant = new ConversationParticipant();
+        conversationParticipant.setConversation(conversation);
+        conversationParticipant.setLastRead(conversation.getLastMessageDate());
+        conversationParticipant.setUser(getUserByLogin(userName));
+
+        return conversationParticipantRepository.save(conversationParticipant);
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
@@ -1513,7 +1559,8 @@ public class DatabaseUtilService {
      * @return eagerly loaded representation of the participation object stored in the database
      */
     public StudentParticipation createAndSaveParticipationForExercise(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login,
+                false);
         if (storedParticipation.isEmpty()) {
             User user = getUserByLogin(login);
             StudentParticipation participation = new StudentParticipation();
@@ -1521,14 +1568,15 @@ public class DatabaseUtilService {
             participation.setParticipant(user);
             participation.setExercise(exercise);
             studentParticipationRepo.save(participation);
-            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
+            storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
             assertThat(storedParticipation).isPresent();
         }
         return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
 
     public StudentParticipation createAndSaveParticipationForExerciseInTheFuture(Exercise exercise, String login) {
-        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
+        Optional<StudentParticipation> storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login,
+                false);
         storedParticipation.ifPresent(studentParticipation -> studentParticipationRepo.delete(studentParticipation));
         User user = getUserByLogin(login);
         StudentParticipation participation = new StudentParticipation();
@@ -1536,7 +1584,7 @@ public class DatabaseUtilService {
         participation.setParticipant(user);
         participation.setExercise(exercise);
         studentParticipationRepo.save(participation);
-        storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), login);
+        storedParticipation = studentParticipationRepo.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), login, false);
         assertThat(storedParticipation).isPresent();
         return studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(storedParticipation.get().getId()).get();
     }
@@ -2211,6 +2259,17 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
+    public OnlineCourseConfiguration addOnlineCourseConfigurationToCourse(Course course) {
+        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        onlineCourseConfiguration.setLtiKey("artemis_lti_key");
+        onlineCourseConfiguration.setLtiSecret("fake-secret");
+        onlineCourseConfiguration.setUserPrefix("prefix");
+        onlineCourseConfiguration.setCourse(course);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        courseRepo.save(course);
+        return onlineCourseConfiguration;
+    }
+
     /**
      * @param programmingExerciseTitle The name of programming exercise
      * @return A course with named exercise
@@ -2619,7 +2678,7 @@ public class DatabaseUtilService {
      * @param exercise - the exercise of which the submissions are assessed
      */
     public void addAutomaticAssessmentToExercise(Exercise exercise) {
-        var participations = studentParticipationRepo.findByExerciseIdWithEagerSubmissionsResultAssessor(exercise.getId());
+        var participations = studentParticipationRepo.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exercise.getId(), false);
         participations.forEach(participation -> {
             Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
             submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
@@ -2640,7 +2699,7 @@ public class DatabaseUtilService {
      * @param assessor - the assessor which is set for the results of the submission
      */
     public void addAssessmentToExercise(Exercise exercise, User assessor) {
-        var participations = studentParticipationRepo.findByExerciseIdWithEagerSubmissionsResultAssessor(exercise.getId());
+        var participations = studentParticipationRepo.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exercise.getId(), false);
         participations.forEach(participation -> {
             Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).get(0);
             submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());

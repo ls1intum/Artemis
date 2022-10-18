@@ -11,10 +11,6 @@
     vertical-align: initial;
 }
 
-.test-schedule-row {
-    display: table-row;
-}
-
 .test-schedule {
     display: table;
     width: 100%;
@@ -41,10 +37,6 @@
     text-align: center;
     position: relative;
     min-width: 150px;
-}
-
-.test-schedule-date-title {
-    white-space: nowrap;
 }
 
 .btn-lifecycle.btn-lifecycle {

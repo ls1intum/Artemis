@@ -140,7 +140,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadRandomSubmission(exerciseId: number): void {
-        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
+        this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
             next: (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
 
@@ -426,7 +426,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     assessNext() {
         this.isLoading = true;
         this.nextSubmissionBusy = true;
-        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe({
+        this.modelingSubmissionService.getSubmissionWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe({
             next: (unassessedSubmission: ModelingSubmission) => {
                 this.nextSubmissionBusy = false;
                 this.isLoading = false;

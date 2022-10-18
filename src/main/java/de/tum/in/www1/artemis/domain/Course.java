@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 
 import javax.persistence.*;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -103,6 +105,10 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse = false;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "online_course_configuration_id")
+    private OnlineCourseConfiguration onlineCourseConfiguration;
+
     @Column(name = "max_complaints")
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints;
@@ -176,9 +182,9 @@ public class Course extends DomainObject {
     private Set<LearningGoal> learningGoals = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("course")
-    private Set<TutorGroup> tutorGroups = new HashSet<>();
+    @JsonIgnoreProperties(value = "course", allowSetters = true)
+    @OrderBy("title")
+    private Set<TutorialGroup> tutorialGroups = new HashSet<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -343,6 +349,14 @@ public class Course extends DomainObject {
         this.onlineCourse = onlineCourse;
     }
 
+    public OnlineCourseConfiguration getOnlineCourseConfiguration() {
+        return Hibernate.isInitialized(onlineCourseConfiguration) ? onlineCourseConfiguration : null;
+    }
+
+    public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
+        this.onlineCourseConfiguration = onlineCourseConfiguration;
+    }
+
     public Integer getMaxComplaints() {
         return maxComplaints;
     }
@@ -483,14 +497,6 @@ public class Course extends DomainObject {
 
     public void setLectures(Set<Lecture> lectures) {
         this.lectures = lectures;
-    }
-
-    public Set<TutorGroup> getTutorGroups() {
-        return tutorGroups;
-    }
-
-    public void setTutorGroups(Set<TutorGroup> tutorGroups) {
-        this.tutorGroups = tutorGroups;
     }
 
     public Set<Exam> getExams() {
@@ -659,10 +665,34 @@ public class Course extends DomainObject {
         this.accuracyOfScores = accuracyOfScores;
     }
 
+    public Set<TutorialGroup> getTutorialGroups() {
+        return tutorialGroups;
+    }
+
+    public void setTutorialGroups(Set<TutorialGroup> tutorialGroups) {
+        this.tutorialGroups = tutorialGroups;
+    }
+
+    /**
+     * Validates that only one of onlineCourse and registrationEnabled is selected
+     */
     public void validateOnlineCourseAndRegistrationEnabled() {
         if (isOnlineCourse() && isRegistrationEnabled()) {
             throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
                     true);
+        }
+    }
+
+    /**
+     * Validates that there is an OnlineCourseConfiguration if the course is an online course
+     */
+    public void validateOnlineCourseConfiguration() {
+        if (isOnlineCourse()) {
+            OnlineCourseConfiguration ocConfiguration = getOnlineCourseConfiguration();
+            if (ocConfiguration == null) {
+                throw new BadRequestAlertException("Configuration must exist for online courses", ENTITY_NAME, "onlineCourseConfigurationMissing");
+            }
+            ocConfiguration.validate();
         }
     }
 
