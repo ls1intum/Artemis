@@ -219,6 +219,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     breadcrumbTranslation = {
         new: 'global.generic.create',
         create: 'global.generic.create',
+        start: 'global.generic.start',
         edit: 'global.generic.edit',
         audits: 'audits.title',
         configuration: 'configuration.title',
