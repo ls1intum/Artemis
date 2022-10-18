@@ -30,15 +30,12 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent } from 'app/shared/components/button.component';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
     let component: CourseExercisesComponent;
     let service: CourseManagementService;
-    let courseExerciseService: CourseExerciseService;
     let courseCalculation: CourseScoreCalculationService;
     let exerciseService: ExerciseService;
     let localStorageService: LocalStorageService;
@@ -81,7 +78,6 @@ describe('CourseExercisesComponent', () => {
                 fixture = TestBed.createComponent(CourseExercisesComponent);
                 component = fixture.componentInstance;
                 service = TestBed.inject(CourseManagementService);
-                courseExerciseService = TestBed.inject(CourseExerciseService);
                 courseCalculation = TestBed.inject(CourseScoreCalculationService);
                 exerciseService = TestBed.inject(ExerciseService);
                 localStorageService = TestBed.inject(LocalStorageService);

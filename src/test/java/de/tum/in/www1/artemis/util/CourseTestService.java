@@ -2200,5 +2200,4 @@ public class CourseTestService {
 
         assertThat(onlineCourseConfigurationRepository.findById(course.getOnlineCourseConfiguration().getId())).isNotPresent();
     }
-
 }

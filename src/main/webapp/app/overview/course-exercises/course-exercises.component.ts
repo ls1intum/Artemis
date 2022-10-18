@@ -17,7 +17,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
-import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
@@ -89,7 +89,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     faAngleDown = faAngleDown;
     faSortNumericUp = faSortNumericUp;
     faSortNumericDown = faSortNumericDown;
-    faCircleNotch = faCircleNotch;
 
     // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;

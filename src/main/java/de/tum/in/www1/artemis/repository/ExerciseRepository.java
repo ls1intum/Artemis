@@ -423,39 +423,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             """)
     List<Long> getExerciseIdsByCourseId(@Param("courseId") Long courseId);
 
-    /**
-     * Fetches exercises with categories by searchTerm and courseId
-     *
-     * @param courseId the id of the course the exercises are part of
-     * @param searchTerm the part of exercise title
-     * @return a set of exercises
-     */
-    @Query("""
-            SELECT e FROM Exercise e
-            LEFT JOIN FETCH e.categories
-            WHERE e.course.id = :#{#courseId}
-                AND (e.title LIKE %:searchTerm%)
-            """)
-    Set<Exercise> findAllByCourseIdAndSearchTermWithCategories(@Param("courseId") Long courseId, @Param("searchTerm") String searchTerm);
-
-    /**
-     * Fetches exercises where lti outcome url exists by searchTerm and courseId
-     * @param courseId the id of the course
-     * @param searchTerm the search term of course title
-     * @param login the login of the corresponding user
-     * @return list of exercises
-     */
-    @Query("""
-            SELECT e FROM Exercise e
-            WHERE e.course.id = :#{#courseId}
-                AND (e.title LIKE %:searchTerm%)
-            AND EXISTS (
-            	SELECT l FROM LtiOutcomeUrl l
-            	WHERE e = l.exercise
-            	AND l.user.login = :#{#login})
-            """)
-    Set<Exercise> findAllByCourseIdAndSearchTermWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("searchTerm") String searchTerm, @Param("login") String login);
-
     @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
