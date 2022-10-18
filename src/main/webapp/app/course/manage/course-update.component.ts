@@ -221,9 +221,9 @@ export class CourseUpdateComponent implements OnInit {
         course.onlineCourseConfiguration = this.isOnlineCourse() ? this.onlineCourseConfigurationForm.getRawValue() : null;
 
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseService.update(course));
+            this.subscribeToSaveResponse(this.courseService.update(this.course.id, course, file));
         } else {
-            this.subscribeToSaveResponse(this.courseService.create(course));
+            this.subscribeToSaveResponse(this.courseService.create(course, file));
         }
     }
 
@@ -276,33 +276,6 @@ export class CourseUpdateComponent implements OnInit {
 
     imageLoaded() {
         this.showCropper = true;
-    }
-
-    /**
-     * @function uploadBackground
-     * @desc Upload the selected file (from "Upload Background") and use it for the question's backgroundFilePath
-     */
-    uploadCourseImage(): void {
-        const contentType = 'image/*';
-        const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
-        const file = base64StringToBlob(base64Data, contentType);
-        const fileName = this.courseImageFileName;
-
-        this.isUploadingCourseImage = true;
-        this.fileUploaderService.uploadFile(file, fileName).then(
-            (response) => {
-                this.courseForm.patchValue({ courseIcon: response.path });
-                this.isUploadingCourseImage = false;
-                this.courseImageFile = undefined;
-                this.courseImageFileName = response.path!;
-            },
-            () => {
-                this.isUploadingCourseImage = false;
-                this.courseImageFile = undefined;
-                this.courseImageFileName = this.course.courseIcon!;
-            },
-        );
-        this.showCropper = false;
     }
 
     /**

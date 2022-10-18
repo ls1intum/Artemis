@@ -67,12 +67,6 @@
                                 [style.display]="showCropper ? null : 'none'"
                             ></image-cropper>
                         </div>
-                        <div *ngIf="showCropper" class="col-3">
-                            <button class="btn btn-outline-primary icon-upload" (click)="uploadCourseImage()" [disabled]="isUploadingCourseImage || !courseImageFileName">
-                                <span *ngIf="isUploadingCourseImage" jhiTranslate="artemisApp.course.uploading"></span>
-                                <span *ngIf="!isUploadingCourseImage" jhiTranslate="artemisApp.course.upload"></span>
-                            </button>
-                        </div>
                     </div>
                 </div>
                 <div class="form-group">

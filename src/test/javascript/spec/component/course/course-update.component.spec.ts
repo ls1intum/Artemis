@@ -272,35 +272,6 @@ describe('Course Management Update Component', () => {
         });
     });
 
-    describe('uploadCourseImage', () => {
-        let croppedImage: string;
-        beforeEach(() => {
-            croppedImage = 'testCroppedImage';
-            comp.croppedImage = 'data:image/png;base64,' + comp.croppedImage;
-            comp.courseImageFileName = 'testFilename';
-            comp.showCropper = true;
-            comp.ngOnInit();
-        });
-        it('should upload new image and update form', () => {
-            uploadStub.mockResolvedValue({ path: 'testPath' } as FileUploadResponse);
-            comp.uploadCourseImage();
-            const file = base64StringToBlob(croppedImage, 'image/*');
-            // @ts-ignore
-            file['name'] = comp.courseImageFileName;
-            expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
-            expect(comp.showCropper).toBeFalse();
-        });
-        it('should set image name to course icon if upload fails', () => {
-            uploadStub.mockRejectedValue({} as FileUploadResponse);
-            comp.course = new Course();
-            comp.course.courseIcon = 'testCourseIcon';
-            comp.uploadCourseImage();
-            expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
-            expect(comp.courseImageFileName).toBe(comp.course.courseIcon);
-            expect(comp.showCropper).toBeFalse();
-        });
-    });
-
     describe('changePresentationScoreInput', () => {
         it('should enabled if control is disabled', () => {
             const control = new FormControl(12);
