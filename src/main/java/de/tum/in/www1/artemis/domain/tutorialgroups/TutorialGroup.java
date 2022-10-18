@@ -66,6 +66,11 @@ public class TutorialGroup extends DomainObject {
         // Empty constructor needed for Jackson.
     }
 
+    public TutorialGroup(Course course, String title) {
+        this.course = course;
+        this.title = title;
+    }
+
     public TutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, Language language, User teachingAssistant,
             Set<TutorialGroupRegistration> registrations) {
         this.course = course;

@@ -41,6 +41,8 @@ export class ExerciseDetailsStudentActionsComponent {
     // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
+    startingPracticeMode = false;
+
     // Icons
     faComment = faComment;
     faFolderOpen = faFolderOpen;
@@ -103,7 +105,6 @@ export class ExerciseDetailsStudentActionsComponent {
                 next: (participation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
-                        this.exercise.participationStatus = participationStatus(this.exercise);
                         this.exercise.participationStatus = this.participationStatusWrapper();
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
