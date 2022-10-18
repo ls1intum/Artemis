@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -8,9 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -163,10 +164,13 @@ public class LtiResource {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String jwt = tokenProvider.createToken(authentication, true);
             log.debug("created jwt token: {}", jwt);
-            redirectUrlComponentsBuilder.queryParam("jwt", jwt);
+            Duration duration = Duration.of(tokenProvider.getTokenValidity(true), ChronoUnit.MILLIS);
+            ResponseCookie responseCookie = JWTFilter.buildJWTCookie(jwt, duration);
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
         }
         else {
-            redirectUrlComponentsBuilder.queryParam("jwt", "");
+            ResponseCookie responseCookie = JWTFilter.buildJWTCookie("", Duration.ZERO);
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
             redirectUrlComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }
 

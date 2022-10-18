@@ -128,11 +128,15 @@ public class LtiService {
      */
     private Optional<Authentication> authenticateLtiUser(LtiLaunchRequestDTO launchRequest, OnlineCourseConfiguration onlineCourseConfiguration)
             throws ArtemisAuthenticationException, AuthenticationException {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (SecurityUtils.isAuthenticated()) {
             // 1. Case: User is already signed in. We are done here.
-            return Optional.of(auth);
+            /*
+             * Authentication auth = SecurityContextHolder.getContext().getAuthentication(); return Optional.of(auth);
+             */
+            // TODO: Should use the authenticated user, but only in case it matches the user the launchRequest is intended for.
+            // For now we just remove the currently authenticated user
+            SecurityContextHolder.getContext().setAuthentication(null);
         }
 
         // If the LTI launch is used from edX studio, edX sends dummy data. (id="student")

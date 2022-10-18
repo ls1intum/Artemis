@@ -68,7 +68,7 @@ export class UserRouteAccessService implements CanActivate {
     }
 
     /**
-     * Deal with the redirect for LTI users: saves the received jwt and displays an alert. Removes the params so this only happens once.
+     * Deal with the redirect for LTI users: displays an alert. Removes the param so this only happens once.
      * @param route {ActivatedRouteSnapshot} The ActivatedRouteSnapshot of the route to activate.
      * @param state {RouterStateSnapshot} The current RouterStateSnapshot.
      */
@@ -76,16 +76,8 @@ export class UserRouteAccessService implements CanActivate {
         // Note: The following URL has to match the redirect URL in LtiResource.java in the method launch(...) shortly before the return
         const regexPattern = new RegExp(/\/courses\/\d+\/exercises\/\d+/g);
         if (regexPattern.test(state.url)) {
-            const hasJwtParam = route.queryParams['jwt'] != undefined;
-            const hasAlertParam = route.queryParams['ltiSuccessLoginRequired'] != undefined;
-            if (hasJwtParam) {
-                const jwt = route.queryParams['jwt'];
-                this.localStorage.store('authenticationToken', jwt);
-            }
-            if (hasAlertParam) {
+            if (route.queryParams['ltiSuccessLoginRequired'] != undefined) {
                 this.alertService.success('artemisApp.lti.ltiSuccessLoginRequired', { user: route.queryParams['ltiSuccessLoginRequired'] });
-            }
-            if (hasJwtParam || hasAlertParam) {
                 return state.url.split('?')[0]; // Removes the query parameters from the url so this is only done once
             }
         }

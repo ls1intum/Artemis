@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.security.jwt;
 
 import java.io.IOException;
+import java.time.Duration;
 
 import javax.servlet.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -37,5 +39,22 @@ public class JWTFilter extends GenericFilterBean {
             }
         }
         filterChain.doFilter(servletRequest, servletResponse);
+    }
+
+    /**
+     * Builds the cookie containing the jwt
+     * @param jwt      the token that will be used as the cookie's value
+     * @param duration the validity of the cookie
+     */
+    public static ResponseCookie buildJWTCookie(String jwt, Duration duration) {
+        // @formatter:off
+        return ResponseCookie.from(JWT_COOKIE_NAME, jwt)
+            .httpOnly(true)
+            .sameSite("Strict")
+            .secure(true)
+            .path("/")
+            .maxAge(duration)
+            .build();
+        // @formatter:on
     }
 }

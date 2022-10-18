@@ -19,7 +19,7 @@ import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 
 describe('UserRouteAccessService', () => {
-    const routeStateMock: any = { snapshot: {}, url: '/courses/20/exercises/4512?jwt=testToken' };
+    const routeStateMock: any = { snapshot: {}, url: '/courses/20/exercises/4512' };
     const route = 'courses/:courseId/exercises/:exerciseId';
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let service: UserRouteAccessService;
@@ -70,31 +70,29 @@ describe('UserRouteAccessService', () => {
 
     afterEach(() => jest.restoreAllMocks());
 
-    it('should store the JWT token and create alert for existing LTI users', () => {
+    it('should create alert for existing LTI users', () => {
         alertServiceStub = jest.spyOn(alertService, 'success');
 
         const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
         const routeConfig = snapshot.routeConfig as Route;
         routeConfig.path = route;
-        snapshot.queryParams = { ['jwt']: 'testToken', ['ltiSuccessLoginRequired']: '' };
+        snapshot.queryParams = { ['ltiSuccessLoginRequired']: '' };
         snapshot.data = { authorities: [Authority.USER] };
 
         service.canActivate(snapshot, routeStateMock);
-        expect(MockSyncStorage.retrieve('authenticationToken')).toBe('testToken');
         expect(alertServiceStub).toHaveBeenCalledOnce();
     });
 
-    it('should store the JWT token and not create alert for new LTI users', () => {
+    it('should not create alert for new LTI users', () => {
         alertServiceStub = jest.spyOn(alertService, 'success');
 
         const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
         const routeConfig = snapshot.routeConfig as Route;
         routeConfig.path = route;
-        snapshot.queryParams = { ['jwt']: 'testToken' };
+        snapshot.queryParams = {};
         snapshot.data = { authorities: [Authority.USER] };
 
         service.canActivate(snapshot, routeStateMock);
-        expect(MockSyncStorage.retrieve('authenticationToken')).toBe('testToken');
         expect(alertServiceStub).toHaveBeenCalledTimes(0);
     });
 

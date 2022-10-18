@@ -123,7 +123,8 @@ public class UserJWTController {
     @PostMapping("/logout")
     public void logout(HttpServletResponse response) {
         // Logout needs to build the same cookie (secure, httpOnly and sameSite='Strict') or browsers will ignore the header and not unset the cookie
-        buildAndSetCookie(response, "", Duration.ZERO);
+        ResponseCookie responseCookie = JWTFilter.buildJWTCookie("", Duration.ZERO);
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }
 
     /**
@@ -135,25 +136,7 @@ public class UserJWTController {
     private void buildAndSetCookieForLogin(HttpServletResponse response, Authentication authentication, boolean rememberMe) {
         String jwt = tokenProvider.createToken(authentication, rememberMe);
         Duration duration = Duration.of(tokenProvider.getTokenValidity(rememberMe), ChronoUnit.MILLIS);
-        buildAndSetCookie(response, jwt, duration);
-    }
-
-    /**
-     * Builds the cookie containing the jwt and sets it in the response
-     * @param response the body of the request. "true" to remember the user.
-     * @param jwt      the token that will be used as the cookie's value
-     * @param duration the validity of the cookie
-     */
-    private void buildAndSetCookie(HttpServletResponse response, String jwt, Duration duration) {
-        // @formatter:off
-        ResponseCookie responseCookie = ResponseCookie.from(JWTFilter.JWT_COOKIE_NAME, jwt)
-            .httpOnly(true)
-            .sameSite("Strict")
-            .secure(true)
-            .path("/")
-            .maxAge(duration)
-            .build();
-        // @formatter:on
+        ResponseCookie responseCookie = JWTFilter.buildJWTCookie(jwt, duration);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }
 }
