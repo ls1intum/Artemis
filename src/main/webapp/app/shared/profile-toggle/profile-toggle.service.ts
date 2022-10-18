@@ -5,13 +5,11 @@ import { distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
 /**
- * FeatureToggle, currently only supports PROGRAMMING_EXERCISES
+ * ProfileToggle, currently only supports LECTURE
  * @readonly
  * @enum {string}
  */
-// TODO: adjust
 export enum ProfileToggle {
-    Scheduling = 'scheduling',
     LECTURE = 'lecture',
 }
 export type ActiveProfileToggles = Array<ProfileToggle>;
@@ -90,14 +88,5 @@ export class ProfileToggleService {
             map((activeProfiles) => profiles.every((profile) => activeProfiles.includes(profile))),
             distinctUntilChanged(),
         );
-    }
-
-    /**
-     * Setter method for the state of a profile toggle.
-     */
-    setProfileToggleState(profileToggle: ProfileToggle, active: boolean) {
-        const url = '/api/management/profile-toggle';
-        const toggleParam = { [profileToggle]: active };
-        return this.http.put(url, toggleParam);
     }
 }
