@@ -165,7 +165,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
             const fileList: FileList = event.target.files;
             const attachmentFile = fileList[0];
             this.attachmentFile = attachmentFile;
-            this.attachmentToBeCreated!.link = attachmentFile['name'];
+            this.attachmentToBeCreated!.link = attachmentFile.name;
         }
     }
 
@@ -187,7 +187,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         this.isUploadingAttachment = true;
         this.erroredFile = undefined;
         this.errorMessage = undefined;
-        this.fileUploaderService.uploadFile(file, file['name'], { keepFileName: true }).then(
+        this.fileUploaderService.uploadFile(file, file.name, { keepFileName: true }).then(
             (result) => {
                 this.attachmentToBeCreated!.link = result.path;
                 this.isUploadingAttachment = false;

@@ -164,7 +164,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return a random modeling submission (potentially based on compass)
      */
     public ModelingSubmission findRandomSubmissionWithoutExistingAssessment(boolean lockSubmission, int correctionRound, ModelingExercise modelingExercise, boolean isExamMode) {
-        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(modelingExercise, isExamMode, correctionRound)
+        var submissionWithoutResult = super.getRandomAssessableSubmission(modelingExercise, isExamMode, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         ModelingSubmission modelingSubmission = (ModelingSubmission) submissionWithoutResult;
         if (lockSubmission) {

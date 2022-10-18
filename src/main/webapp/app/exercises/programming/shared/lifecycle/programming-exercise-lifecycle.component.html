@@ -19,6 +19,7 @@
                     <fa-icon [icon]="faCogs" size="lg"></fa-icon>
                 </div>
             </div>
+
             <jhi-programming-exercise-test-schedule-date-picker
                 *ngIf="!isExamMode"
                 [(ngModel)]="exercise.dueDate"
@@ -32,6 +33,7 @@
                 tooltipText="artemisApp.programmingExercise.timeline.dueDateTooltip"
             >
             </jhi-programming-exercise-test-schedule-date-picker>
+
             <div *ngIf="isExamMode || exercise.dueDate">
                 <jhi-programming-exercise-test-schedule-date-picker
                     class="test-schedule-date px-1"
@@ -69,8 +71,36 @@
                         }}
                     </div>
                 </div>
+
+                <div *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode" class="test-schedule-date px-1">
+                    <div class="mb-2 text-nowrap">
+                        <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests">requests</span>
+                        <jhi-help-icon
+                            placement="auto"
+                            [text]="
+                                'artemisApp.programmingExercise.timeline.' +
+                                (exercise.allowManualFeedbackRequests ? 'feedbackRequestsEnabledTooltip' : 'feedbackRequestsDisabledTooltip')
+                            "
+                        >
+                        </jhi-help-icon>
+                    </div>
+                    <div
+                        class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
+                        [class.btn-lifecycle--disabled]="readOnly"
+                        (click)="!readOnly && toggleManualFeedbackRequests()"
+                    >
+                        <fa-icon [icon]="exercise.allowManualFeedbackRequests ? faHandshake : faHandshakeSlash" size="lg"></fa-icon>
+                    </div>
+                    <div class="mt-2">
+                        {{
+                            'artemisApp.programmingExercise.timeline.' + (exercise.allowManualFeedbackRequests ? 'feedbackRequestsEnabled' : 'feedbackRequestsDisabled')
+                                | artemisTranslate
+                        }}
+                    </div>
+                </div>
+
                 <jhi-programming-exercise-test-schedule-date-picker
-                    *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode"
+                    *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode && !exercise.allowManualFeedbackRequests"
                     class="test-schedule-date"
                     [(ngModel)]="exercise.assessmentDueDate"
                     [startAt]="exercise.dueDate"

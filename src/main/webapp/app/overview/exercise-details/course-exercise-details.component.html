@@ -1,6 +1,6 @@
 <div *ngIf="exercise">
     <!-- HEADER INFORMATION START -->
-    <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" [submissionPolicy]="submissionPolicy">
+    <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" [submissionPolicy]="submissionPolicy" [course]="course">
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
@@ -14,6 +14,7 @@
             [showResult]="showResults && latestRatedResult != undefined"
         >
         </jhi-exercise-details-student-actions>
+
         <a
             *ngIf="plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM"
             class="col-auto btn btn-danger btn-sm me-2"
@@ -21,99 +22,104 @@
         >
             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
         </a>
-        <div class="col-auto">
-            <jhi-submission-result-status
-                [exercise]="exercise"
-                [studentParticipation]="gradedStudentParticipation"
-                updatingResultClass="me-2"
-                [showBadge]="true"
-                [showUngradedResults]="false"
-                [triggerLastGraded]="false"
-            >
-            </jhi-submission-result-status>
-        </div>
-        <div class="col-auto d-md-flex align-items-center" *ngIf="exercise.isAtLeastTutor">
-            <span class="ms-1 me-1">{{
-                'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise.isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate
-            }}</span>
-            <div class="btn-group flex-btn-group-container">
-                <!-- Actions for Tutors, Editors and Instructors -->
-                <a *ngIf="exercise.type !== QUIZ" [routerLink]="baseResource" class="btn btn-info btn-sm me-1">
-                    <fa-icon [icon]="faEye"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                </a>
-                <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1">
-                    <fa-icon [icon]="faTable"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                </a>
-                <a *ngIf="exercise.type !== QUIZ" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1">
-                    <fa-icon [icon]="faListAlt"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                </a>
-                <a
-                    *ngIf="exercise.type === QUIZ"
-                    [routerLink]="['/course-management', exercise.course?.id, 'quiz-exercises', exercise.id, 'preview']"
-                    class="btn btn-success btn-sm me-1"
+
+        <div class="d-flex flex-column gap-2 mt-2">
+            <div class="col-auto">
+                <jhi-submission-result-status
+                    class="d-flex justify-content-end"
+                    [exercise]="exercise"
+                    [studentParticipation]="gradedStudentParticipation"
+                    updatingResultClass="me-2"
+                    [showBadge]="true"
+                    [showUngradedResults]="false"
+                    [triggerLastGraded]="false"
                 >
-                    <fa-icon [icon]="faEye"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview">Preview</span>
-                </a>
-                <a
-                    *ngIf="exercise.type === QUIZ"
-                    [routerLink]="['/course-management', exercise.course?.id, 'quiz-exercises', exercise.id, 'solution']"
-                    class="btn btn-success btn-sm me-1"
-                >
-                    <fa-icon [icon]="faEye"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
-                </a>
-                <ng-container *ngIf="exercise.isAtLeastEditor">
-                    <!-- Actions for Editors and Instructors -->
+                </jhi-submission-result-status>
+            </div>
+            <div class="col-auto d-md-flex align-items-center" *ngIf="exercise.isAtLeastTutor">
+                <span class="ms-1 me-1">{{
+                    'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise.isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate
+                }}</span>
+                <div class="btn-group flex-btn-group-container">
+                    <!-- Actions for Tutors, Editors and Instructors -->
+                    <a *ngIf="exercise.type !== QUIZ" [routerLink]="baseResource" class="btn btn-info btn-sm me-1">
+                        <fa-icon [icon]="faEye"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                    </a>
+                    <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1">
+                        <fa-icon [icon]="faTable"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                    </a>
+                    <a *ngIf="exercise.type !== QUIZ" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1">
+                        <fa-icon [icon]="faListAlt"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                    </a>
                     <a
-                        *ngIf="exercise.type !== QUIZ && (exercise.isAtLeastInstructor || exercise.type === PROGRAMMING)"
-                        [routerLink]="baseResource + 'submissions'"
+                        *ngIf="exercise.type === QUIZ"
+                        [routerLink]="['/course-management', exercise.course?.id, 'quiz-exercises', exercise.id, 'preview']"
                         class="btn btn-success btn-sm me-1"
                     >
-                        <fa-icon [icon]="faBook"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
-                    </a>
-                    <a *ngIf="exercise.type === QUIZ" [routerLink]="baseResource + 'quiz-point-statistic'" class="btn btn-info btn-sm me-1">
-                        <fa-icon [icon]="faSignal"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
-                    </a>
-                    <a *ngIf="exercise.type === MODELING" [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm me-1">
-                        <fa-icon [icon]="faSignal"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
-                    </a>
-                    <a *ngIf="exercise.type === PROGRAMMING" [routerLink]="baseResource + 'grading/test-cases'" class="btn btn-info btn-sm me-1">
-                        <fa-icon [icon]="faFileSignature"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
+                        <fa-icon [icon]="faEye"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview">Preview</span>
                     </a>
                     <a
-                        *ngIf="!QUIZ_ENDED_STATUS.includes(quizExerciseStatus)"
-                        [class.disabled]="quizExerciseStatus === QuizStatus.ACTIVE"
-                        [routerLink]="baseResource + 'edit'"
-                        class="btn btn-warning btn-sm me-1"
+                        *ngIf="exercise.type === QUIZ"
+                        [routerLink]="['/course-management', exercise.course?.id, 'quiz-exercises', exercise.id, 'solution']"
+                        class="btn btn-success btn-sm me-1"
                     >
-                        <fa-icon [icon]="faWrench"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                        <fa-icon [icon]="faEye"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
                     </a>
-                    <a
-                        *ngIf="QUIZ_ENDED_STATUS.includes(quizExerciseStatus) && exercise.isAtLeastInstructor"
-                        [routerLink]="baseResource + 're-evaluate'"
-                        class="btn btn-warning btn-sm me-1"
-                    >
-                        <fa-icon [icon]="faWrench"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
-                    </a>
-                </ng-container>
+                    <ng-container *ngIf="exercise.isAtLeastEditor">
+                        <!-- Actions for Editors and Instructors -->
+                        <a
+                            *ngIf="exercise.type !== QUIZ && (exercise.isAtLeastInstructor || exercise.type === PROGRAMMING)"
+                            [routerLink]="baseResource + 'submissions'"
+                            class="btn btn-success btn-sm me-1"
+                        >
+                            <fa-icon [icon]="faBook"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
+                        </a>
+                        <a *ngIf="exercise.type === QUIZ" [routerLink]="baseResource + 'quiz-point-statistic'" class="btn btn-info btn-sm me-1">
+                            <fa-icon [icon]="faSignal"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
+                        </a>
+                        <a *ngIf="exercise.type === MODELING" [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm me-1">
+                            <fa-icon [icon]="faSignal"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
+                        </a>
+                        <a *ngIf="exercise.type === PROGRAMMING" [routerLink]="baseResource + 'grading/test-cases'" class="btn btn-info btn-sm me-1">
+                            <fa-icon [icon]="faFileSignature"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
+                        </a>
+                        <a
+                            *ngIf="!QUIZ_ENDED_STATUS.includes(quizExerciseStatus)"
+                            [class.disabled]="quizExerciseStatus === QuizStatus.ACTIVE"
+                            [routerLink]="baseResource + 'edit'"
+                            class="btn btn-warning btn-sm me-1"
+                        >
+                            <fa-icon [icon]="faWrench"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                        </a>
+                        <a
+                            *ngIf="QUIZ_ENDED_STATUS.includes(quizExerciseStatus) && exercise.isAtLeastInstructor"
+                            [routerLink]="baseResource + 're-evaluate'"
+                            class="btn btn-warning btn-sm me-1"
+                        >
+                            <fa-icon [icon]="faWrench"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
+                        </a>
+                    </ng-container>
+                </div>
             </div>
         </div>
     </div>
+
     <div class="row">
         <div class="col pe-0 flex-grow-1">
             <!-- EXERCISE ACTIONS END -->
             <!-- RESULTS START -->
-            <div class="row" *ngIf="this.sortedHistoryResults?.length && this.sortedHistoryResults.length > 1">
+            <div class="row" *ngIf="(this.sortedHistoryResults?.length && this.sortedHistoryResults.length > 1) || this.practiceStudentParticipation?.results?.length">
                 <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex">
                     <div class="col-auto">
                         <h3>{{ 'artemisApp.courseOverview.exerciseDetails.recentResults' | artemisTranslate }}</h3>
