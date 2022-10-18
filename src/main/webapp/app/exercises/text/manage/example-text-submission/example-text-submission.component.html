@@ -22,7 +22,7 @@
                         name="mode"
                         id="read-and-confirm-button"
                         autocomplete="off"
-                        [value]="'readConfirm'"
+                        [value]="ExampleSubmissionMode.READ_AND_CONFIRM"
                         [ngModel]="selectedMode"
                         (ngModelChange)="onModeChange($event)"
                     />
@@ -35,7 +35,7 @@
                         name="mode"
                         id="only-not-imported"
                         autocomplete="off"
-                        [value]="'assessCorrectly'"
+                        [value]="ExampleSubmissionMode.ASSESS_CORRECTLY"
                         [ngModel]="selectedMode"
                         (ngModelChange)="onModeChange($event)"
                     />
@@ -156,6 +156,7 @@
         *ngIf="exercise"
         [exercise]="exercise"
         [isAssessmentTraining]="toComplete"
+        [showAssessmentInstructions]="state.ui === UIStates.ASSESSMENT"
         class="markdown-preview"
     ></jhi-assessment-instructions>
     <!--endregion-->

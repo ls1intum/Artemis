@@ -701,7 +701,37 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
-        courseTestService.testCreateCourseWithInvalidStartAndEndDate();
+    void testCreateInvalidOnlineCourse() throws Exception {
+        courseTestService.testCreateInvalidOnlineCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateValidOnlineCourse() throws Exception {
+        courseTestService.testCreateValidOnlineCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
+        courseTestService.testOnlineCourseConfigurationIsLazyLoaded();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateOnlineCourseConfiguration() throws Exception {
+        courseTestService.testUpdateOnlineCourseConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateCourseRemoveOnlineCourseConfiguration() throws Exception {
+        courseTestService.testUpdateCourseRemoveOnlineCourseConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
+        courseTestService.testDeleteCourseDeletesOnlineConfiguration();
     }
 }

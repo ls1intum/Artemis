@@ -214,6 +214,7 @@ public class ProgrammingExerciseResource {
 
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
+        programmingExercise.validateManualFeedbackSettings();
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -588,7 +589,7 @@ public class ProgrammingExerciseResource {
         catch (Exception e) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName,
-                            "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": \n" + e.getMessage(),
+                            "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": " + e,
                             "errorStructureOracleGeneration"))
                     .body(null);
         }

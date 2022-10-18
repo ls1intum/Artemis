@@ -4,8 +4,11 @@ import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREF
 
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -332,17 +335,24 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
     @Override
     public Optional<String> getUsernameForEmail(String email) throws ArtemisAuthenticationException {
         try {
-            var authenticationResponse = restTemplate.exchange(jiraUrl + "/rest/api/2/user/search?username=" + email, HttpMethod.GET, null,
-                    new ParameterizedTypeReference<List<JiraUserDTO>>() {
-                    });
+            var uri = UriComponentsBuilder.fromUriString(jiraUrl + "/rest/api/2/user/search?username=" + URLEncoder.encode(email, StandardCharsets.UTF_8)).build(true).toUri();
+
+            var authenticationResponse = restTemplate.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<List<JiraUserDTO>>() {
+            });
 
             var results = authenticationResponse.getBody();
             if (results == null || results.isEmpty()) {
                 // no result
                 return Optional.empty();
             }
-            JiraUserDTO firstResult = results.get(0);
-            return Optional.of(firstResult.getName());
+
+            for (JiraUserDTO jiraUserDTO : results) {
+                if (Objects.equals(jiraUserDTO.getEmailAddress(), email)) {
+                    return Optional.of(jiraUserDTO.getName());
+                }
+            }
+            // no exact match for email address
+            return Optional.empty();
         }
         catch (HttpClientErrorException e) {
             log.error("Could not get JIRA username for email address {}", email, e);
