@@ -9,7 +9,7 @@ services:
     command: sh -c "(apt update && apt install -y fontconfig fonts-dejavu graphviz || true) && ./gradlew buildJarForDocker && java -jar --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED build/libs/Artemis-*.jar"
     depends_on:
       - artemis-mysql
-    image: eclipse-temurin:17-jdk-jammy
+    image: eclipse-temurin:17-jdk
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
       - SPRING_PROFILES_ACTIVE=dev,bamboo,bitbucket,jira,artemis,scheduling
