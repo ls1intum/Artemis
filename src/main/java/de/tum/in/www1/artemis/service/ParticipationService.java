@@ -370,15 +370,15 @@ public class ParticipationService {
         // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUrl() == null) {
             final var projectKey = programmingExercise.getProjectKey();
-            final var participantIdentifier = participation.getParticipantIdentifier() + (participation.isTestRun() ? "-practice" : "");
+            final var repoName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
             String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
-            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, templateBranch, projectKey, participantIdentifier);
+            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
-                newRepoUrl = newRepoUrl.withUser(participantIdentifier);
+                newRepoUrl = newRepoUrl.withUser(participation.getParticipantIdentifier());
             }
             participation.setRepositoryUrl(newRepoUrl.toString());
             participation.setInitializationState(REPO_COPIED);
@@ -408,11 +408,12 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED) || participation.getBuildPlanId() == null) {
             final var projectKey = participation.getProgrammingExercise().getProjectKey();
             final var planName = BuildPlanType.TEMPLATE.getName();
-            final var username = participation.getParticipantIdentifier() + (participation.isTestRun() ? "-practice" : "");
+            final var username = participation.getParticipantIdentifier();
             final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " "
                     + participation.getExercise().getTitle();
+            final var targetPlanName = participation.addPracticePrefixIfTestRun(username.toUpperCase());
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
-            final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase(), true);
+            final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, targetPlanName, true);
             participation.setBuildPlanId(buildPlanId);
             participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
