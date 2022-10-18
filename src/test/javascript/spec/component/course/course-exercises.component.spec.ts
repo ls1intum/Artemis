@@ -361,11 +361,11 @@ describe('CourseExercisesComponent', () => {
         fixture.detectChanges();
         const searchButton = fixture.debugElement.query(By.css('#search-exercises-button')).nativeElement;
         const event = new Event('click');
-        const exercise1 = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
+        const exercise1 = new ModelingExercise(UMLDiagramType.ActivityDiagram, undefined, undefined);
         exercise1.title = 'Patten in Software Engineering';
-        const exercise2 = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
+        const exercise2 = new ModelingExercise(UMLDiagramType.ActivityDiagram, undefined, undefined);
         exercise2.title = 'Patten in Software Engineering II';
-        const exercise3 = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
+        const exercise3 = new ModelingExercise(UMLDiagramType.ActivityDiagram, undefined, undefined);
         exercise3.title = 'Introduction to Software Engineering';
         component.course!.exercises = [exercise1, exercise2, exercise3];
         searchButton.dispatchEvent(event);
