@@ -33,13 +33,13 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     @Input() public studentParticipation?: StudentParticipation;
     @Input() public title: string;
     @Input() public exam?: Exam;
+    @Input() public course?: Course;
     @Input() public isTestRun = false;
     @Input() public submissionPolicy?: SubmissionPolicy;
 
     public exerciseCategories: ExerciseCategory[];
     public dueDate?: dayjs.Dayjs;
     public programmingExercise?: ProgrammingExercise;
-    public course: Course;
     public individualComplaintDeadline?: dayjs.Dayjs;
     public isNextDueDate: boolean[];
     public statusBadges: string[];
@@ -60,14 +60,15 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         this.setIcon(this.exercise.type);
 
         this.programmingExercise = this.exercise.type === ExerciseType.PROGRAMMING ? (this.exercise as ProgrammingExercise) : undefined;
-        this.course = getCourseFromExercise(this.exercise)!;
+        this.course = this.course ?? getCourseFromExercise(this.exercise);
 
         if (this.exam) {
             this.setIsNextDueDateExamMode();
         } else {
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
-            this.individualComplaintDeadline = this.complaintService.getIndividualComplaintDueDate(this.exercise, this.course, this.studentParticipation);
-
+            if (this.course) {
+                this.individualComplaintDeadline = this.complaintService.getIndividualComplaintDueDate(this.exercise, this.course, this.studentParticipation);
+            }
             // The student can either still submit or there is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
                 (dayjs().isBefore(this.exercise.dueDate) ||

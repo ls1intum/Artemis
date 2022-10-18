@@ -8,12 +8,15 @@
             </h3>
             <fa-icon [icon]="faChevronRight"></fa-icon>
         </div>
-        <jhi-assessment-instructions
-            [readOnly]="readOnly"
-            class="card-body markdown-preview"
-            [exercise]="exercise"
-            [isAssessmentTraining]="isAssessmentTraining"
-        ></jhi-assessment-instructions>
+        <div class="wrapper-scroll-y scrollbar vh-100">
+            <jhi-assessment-instructions
+                [readOnly]="readOnly"
+                class="card-body markdown-preview"
+                [exercise]="exercise"
+                [isAssessmentTraining]="isAssessmentTraining"
+                [showAssessmentInstructions]="showAssessmentInstructions"
+            ></jhi-assessment-instructions>
+        </div>
     </div>
 </div>
 <ng-template #collapsedInstructions>
