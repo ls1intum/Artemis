@@ -256,8 +256,8 @@ public class GroupNotificationService {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_EXERCISE_POST, post, course, answerPost.getAuthor());
     }
 
-    public void notifyTutorAndEditorAndInstructorGroupAboutNewFeedbackRequest(Exercise exercise) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_MANUAL_FEEDBACK_REQUEST, exercise, null, null);
+    public void notifyTutorGroupAboutNewFeedbackRequest(Exercise exercise) {
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA }, NEW_MANUAL_FEEDBACK_REQUEST, exercise, null, null);
     }
 
     /**

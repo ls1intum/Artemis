@@ -11,7 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
 import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -57,7 +57,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     SubmissionButtonStates = SubmissionButtonStates;
     AssessButtonStates = AssessButtonStates;
     UIStates = UIStates;
-    selectedMode: 'readConfirm' | 'assessCorrectly';
+    selectedMode: ExampleSubmissionMode;
+    ExampleSubmissionMode = ExampleSubmissionMode;
 
     // Icons
     faSave = faSave;
@@ -145,9 +146,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             // do this here to make sure everything is loaded before the guided tour step is loaded
             this.guidedTourService.componentPageLoaded();
             if (this.exampleSubmission.usedForTutorial) {
-                this.selectedMode = 'assessCorrectly';
+                this.selectedMode = ExampleSubmissionMode.ASSESS_CORRECTLY;
             } else {
-                this.selectedMode = 'readConfirm';
+                this.selectedMode = ExampleSubmissionMode.READ_AND_CONFIRM;
             }
         });
     }
@@ -181,7 +182,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         const newExampleSubmission = new ExampleSubmission();
         newExampleSubmission.submission = this.submission!;
         newExampleSubmission.exercise = this.exercise;
-        newExampleSubmission.usedForTutorial = this.selectedMode === 'assessCorrectly';
+        newExampleSubmission.usedForTutorial = this.selectedMode === ExampleSubmissionMode.ASSESS_CORRECTLY;
 
         this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe({
             next: (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
@@ -413,9 +414,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         });
     }
 
-    onModeChange(mode: 'readConfirm' | 'assessCorrectly') {
+    onModeChange(mode: ExampleSubmissionMode) {
         this.selectedMode = mode;
         this.unsavedSubmissionChanges = true;
-        this.exampleSubmission.usedForTutorial = mode === 'assessCorrectly';
+        this.exampleSubmission.usedForTutorial = mode === ExampleSubmissionMode.ASSESS_CORRECTLY;
     }
 }
