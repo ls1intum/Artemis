@@ -97,9 +97,11 @@ public final class Constants {
     public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
-    public static final long MAX_SUBMISSION_TEXT_LENGTH = 30 * 1000; // 30.000 characters
+    public static final int MAX_SUBMISSION_TEXT_LENGTH = 30 * 1000; // 30.000 characters
 
-    public static final long MAX_SUBMISSION_MODEL_LENGTH = 100 * 1000; // 100.000 characters
+    public static final int MAX_SUBMISSION_MODEL_LENGTH = 100 * 1000; // 100.000 characters
+
+    public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 
     public static final String TEST_CASES_DUPLICATE_NOTIFICATION = "There are duplicated test cases in this programming exercise. All test cases have to be unique and cannot have the same name. The following test cases are duplicated: ";
 

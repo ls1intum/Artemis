@@ -201,7 +201,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith({ ...entity });
+            expect(updateStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null });
             expect(comp.isSaving).toBeFalse();
         }));
 
@@ -234,7 +234,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
-            expect(createStub).toHaveBeenCalledWith({ ...entity });
+            expect(createStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null });
             expect(comp.isSaving).toBeFalse();
         }));
     });
@@ -285,6 +285,7 @@ describe('Course Management Update Component', () => {
             uploadStub.mockResolvedValue({ path: 'testPath' } as FileUploadResponse);
             comp.uploadCourseImage();
             const file = base64StringToBlob(croppedImage, 'image/*');
+            // @ts-ignore
             file['name'] = comp.courseImageFileName;
             expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
             expect(comp.showCropper).toBeFalse();

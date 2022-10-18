@@ -10,15 +10,12 @@ public class ExerciseLtiConfigurationDTO {
 
     private String launchUrl;
 
-    private String ltiId;
-
     private String ltiKey;
 
     private String ltiSecret;
 
-    public ExerciseLtiConfigurationDTO(String launchUrl, String ltiId, String ltiKey, String ltiSecret) {
+    public ExerciseLtiConfigurationDTO(String launchUrl, String ltiKey, String ltiSecret) {
         this.launchUrl = launchUrl;
-        this.ltiId = ltiId;
         this.ltiKey = ltiKey;
         this.ltiSecret = ltiSecret;
     }
@@ -29,14 +26,6 @@ public class ExerciseLtiConfigurationDTO {
 
     public void setLaunchUrl(String launchUrl) {
         this.launchUrl = launchUrl;
-    }
-
-    public String getLtiId() {
-        return ltiId;
-    }
-
-    public void setLtiId(String ltiId) {
-        this.ltiId = ltiId;
     }
 
     public String getLtiKey() {

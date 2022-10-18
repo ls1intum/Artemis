@@ -25,7 +25,7 @@
 
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course && !isExamExercise"
-                        [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
+                        [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
                         class="btn btn-warning btn-sm me-1 position-relative"
                         style="margin-bottom: 10px"
                     >
@@ -75,7 +75,7 @@
                         <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
                     </a>
                     <a
-                        *ngIf="programmingExercise.isAtLeastEditor"
+                        *ngIf="programmingExercise.isAtLeastEditor && plagiarismCheckSupported"
                         [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                         class="btn btn-outline-primary btn-sm me-1"
                         routerLink="plagiarism"

@@ -105,14 +105,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.textExercise.participationStatus = participationStatus(this.textExercise);
         this.checkIfSubmitAlwaysEnabled();
         this.isAfterAssessmentDueDate = !!this.textExercise.course && (!this.textExercise.assessmentDueDate || dayjs().isAfter(this.textExercise.assessmentDueDate));
-        this.isAfterPublishDate =
-            !!this.textExercise.exerciseGroup &&
-            !!this.textExercise.exerciseGroup.exam &&
-            !!this.textExercise.exerciseGroup.exam.publishResultsDate &&
-            dayjs().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
+        this.isAfterPublishDate = !!this.textExercise.exerciseGroup?.exam?.publishResultsDate && dayjs().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
         this.course = getCourseFromExercise(this.textExercise);
 
-        if (participation.submissions && participation.submissions.length > 0) {
+        if (participation.submissions?.length) {
             this.submission = participation.submissions[0] as TextSubmission;
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
             if (this.submission && this.submission.results && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
@@ -239,7 +235,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.textExercise.participationStatus = participationStatus(this.textExercise);
                 this.result = getLatestSubmissionResult(this.submission)!;
                 if (this.result) {
-                    this.result.participation = this.submission.participation;
+                    this.result.participation = this.participation;
                 }
                 this.isSaving = false;
 

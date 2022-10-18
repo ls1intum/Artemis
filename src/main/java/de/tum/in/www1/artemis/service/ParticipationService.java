@@ -102,7 +102,7 @@ public class ParticipationService {
 
     /**
      * This method is called when an StudentExam for a test exam is set up for conduction.
-     * It creates a Participation which connects the corresponding student and exercise. The test exam is linked with the iitializationDate = startedDate (StudentExam)
+     * It creates a Participation which connects the corresponding student and exercise. The test exam is linked with the initializationDate = startedDate (StudentExam)
      * Additionally, it configures repository / build plan related stuff for programming exercises.
      * In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
@@ -112,6 +112,8 @@ public class ParticipationService {
      * @param initializationDate      - the date which should be set as the initializationDate of the Participation. Links studentExam <-> participation
      * @return a new participation for the given exercise and user
      */
+    // TODO: Stephan Krusche: offer this method again like above "startExercise" without initializationDate which is not really necessary at the moment, because we only support on
+    // test exam per exam/student
     public StudentParticipation startExerciseWithInitializationDate(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime initializationDate) {
         // common for all exercises
         // Check if participation already exists
@@ -361,15 +363,15 @@ public class ParticipationService {
         // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUrl() == null) {
             final var projectKey = programmingExercise.getProjectKey();
-            final var participantIdentifier = participation.getParticipantIdentifier() + (participation.isTestRun() ? "-practice" : "");
+            final var repoName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
             String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
-            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, templateBranch, projectKey, participantIdentifier);
+            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
-                newRepoUrl = newRepoUrl.withUser(participantIdentifier);
+                newRepoUrl = newRepoUrl.withUser(participation.getParticipantIdentifier());
             }
             participation.setRepositoryUrl(newRepoUrl.toString());
             participation.setInitializationState(REPO_COPIED);
@@ -399,11 +401,12 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED) || participation.getBuildPlanId() == null) {
             final var projectKey = participation.getProgrammingExercise().getProjectKey();
             final var planName = BuildPlanType.TEMPLATE.getName();
-            final var username = participation.getParticipantIdentifier() + (participation.isTestRun() ? "-practice" : "");
+            final var username = participation.getParticipantIdentifier();
             final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " "
                     + participation.getExercise().getTitle();
+            final var targetPlanName = participation.addPracticePrefixIfTestRun(username.toUpperCase());
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
-            final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, username.toUpperCase(), true);
+            final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, targetPlanName, true);
             participation.setBuildPlanId(buildPlanId);
             participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
@@ -461,12 +464,20 @@ public class ParticipationService {
     /**
      * Get one participation (in any state) by its participant and exercise.
      *
-     * @param exercise    the exercise for which to find a participation
-     * @param participant the short name of the team
-     * @return the participation of the given team and exercise in any state
+     * @param exercise the exercise for which to find a participation
+     * @param participant the participant for which to find a participation
+     * @return the participation of the given participant and exercise in any state
      */
     public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyState(Exercise exercise, Participant participant) {
-        return findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
+        if (participant instanceof User user) {
+            return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+        }
+        else if (participant instanceof Team team) {
+            return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
+        }
+        else {
+            throw new Error("Unknown Participant type");
+        }
     }
 
     /**
@@ -521,7 +532,7 @@ public class ParticipationService {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
             return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, false);
+        return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**
