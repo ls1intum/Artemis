@@ -1,6 +1,6 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { Course } from 'app/entities/course.model';
-import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
+import { CypressExamBuilder, parseCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
@@ -23,7 +23,7 @@ describe('Exam creation/deletion', () => {
     before(() => {
         cy.login(artemis.users.getAdmin());
         courseManagementRequests.createCourse().then((response) => {
-            course = response.body;
+            course = parseCourseAfterMultiPart(response);
         });
     });
 

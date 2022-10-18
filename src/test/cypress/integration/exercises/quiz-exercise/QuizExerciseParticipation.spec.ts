@@ -3,6 +3,7 @@ import { Course } from 'app/entities/course.model';
 import { artemis } from '../../../support/ArtemisTesting';
 import multipleChoiceQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
+import { parseCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -26,7 +27,7 @@ describe('Quiz Exercise Participation', () => {
     before('Set up course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = response.body;
+            course = parseCourseAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, student);
         });
     });

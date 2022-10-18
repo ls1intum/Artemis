@@ -23,6 +23,11 @@ export function generateUUID() {
  * @returns a formatted string representing the date with utc timezone
  */
 export function dayjsToString(dayjs: day.Dayjs) {
-    // We need to add the Z at the end. Otherwise the server can't parse it.
+    // We need to add the Z at the end. Otherwise, the server can't parse it.
     return dayjs.utc().format(TIME_FORMAT) + 'Z';
+}
+
+export function parseArrayBufferAsJsonObject(buffer: ArrayBuffer) {
+    const bodyString = Cypress.Blob.arrayBufferToBinaryString(buffer);
+    return JSON.parse(bodyString);
 }
