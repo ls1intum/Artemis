@@ -1,6 +1,6 @@
 jib {
     from {
-        image = "eclipse-temurin:17-jdk-alpine"
+        image = "openjdk:16-jdk-alpine"
     }
     to {
         image = "artemis:latest"
