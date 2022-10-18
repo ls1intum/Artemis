@@ -24,7 +24,7 @@
         <div *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer" class="result-detail-container">
             <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
                 <span class="result-score-chart-title">
-                    <span *ngIf="!exercise || !exercise.maxPoints; else scoreWithPoints">
+                    <span *ngIf="!exercise?.maxPoints; else scoreWithPoints">
                         {{ 'artemisApp.result.score' | artemisTranslate: { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
                     </span>
                     <ng-template #scoreWithPoints>
