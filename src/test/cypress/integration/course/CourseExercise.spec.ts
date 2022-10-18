@@ -4,13 +4,11 @@ import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/mu
 
 // Accounts
 const admin = artemis.users.getAdmin();
-const student = artemis.users.getStudentOne();
 
 // Requests
 const courseManagementRequest = artemis.requests.courseManagement;
 
 // Page Objects
-const courseOverviewPage = artemis.pageobjects.course.overview;
 const courseExercisePage = artemis.pageobjects.course.exercise;
 
 describe('Course Exercise', () => {
@@ -29,7 +27,6 @@ describe('Course Exercise', () => {
         let exercise3: any;
 
         before('Create Exercises', () => {
-            cy.visit(`/courses/${course.id}`);
             courseManagementRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate], 'Course Exercise Quiz 1').then((response) => {
                 exercise1 = response.body;
             });
@@ -42,10 +39,14 @@ describe('Course Exercise', () => {
         });
 
         it('should filter exercises based on search term', function () {
+            cy.visit(`/courses/${course.id}/exercises`);
+            cy.get(`#exercise-card-${exercise1.id}`).should('be.visible');
+            cy.get(`#exercise-card-${exercise2.id}`).should('be.visible');
+            cy.get(`#exercise-card-${exercise3.id}`).should('be.visible');
             courseExercisePage.search('Course Exercise Quiz');
-            cy.get('#exercise-card-' + exercise1.id).should('be.visible');
-            cy.get('#exercise-card-' + exercise2.id).should('be.visible');
-            cy.get('#exercise-card-' + exercise3.id).should('not.exist');
+            cy.get(`#exercise-card-${exercise1.id}`).should('be.visible');
+            cy.get(`#exercise-card-${exercise2.id}`).should('be.visible');
+            cy.get(`#exercise-card-${exercise3.id}`).should('not.exist');
         });
 
         after('Delete Exercises', () => {

@@ -80,21 +80,22 @@
     <div class="col-12 col-lg-8 course-exercises">
         <div class="position-relative" *ngIf="course">
             <div class="search-exercises-container row mb-3">
-                <input
-                    id="search-exercises"
-                    type="text"
-                    class="form-control"
-                    [placeholder]="'artemisApp.courseOverview.exerciseList.search' | artemisTranslate"
-                    (keydown.enter)="onSearch($event)"
-                />
-                <div class="search-exercises-info" [class.active]="isSearching">
-                    <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                <div class="col-10">
+                    <input
+                        id="search-exercises-input"
+                        type="text"
+                        class="form-control"
+                        [placeholder]="'artemisApp.courseOverview.exerciseList.search' | artemisTranslate"
+                        [(ngModel)]="searchExercisesInput"
+                    />
                 </div>
-                <div class="search-exercises-info" [class.active]="searchFailed">
-                    <span class="badge bg-danger" jhiTranslate="artemisApp.dataTable.search.failed"> Search failed </span>
+                <div class="col-2">
+                    <button class="btn btn-primary btn-md" id="search-exercises-button" (click)="onSearch()">
+                        {{ 'artemisApp.course.exercise.search.searchButton' | artemisTranslate }}
+                    </button>
                 </div>
             </div>
-            <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise.exercise) && !isSearching">
+            <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise.exercise)">
                 <h3 class="text-primary">
                     <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
                         {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExercise.dueDate | artemisDate } }}

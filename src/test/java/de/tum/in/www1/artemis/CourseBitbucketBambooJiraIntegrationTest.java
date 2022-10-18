@@ -734,16 +734,4 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
         courseTestService.testDeleteCourseDeletesOnlineConfiguration();
     }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void testSearchExercisesInCourseFound() throws Exception {
-        courseTestService.testSearchExercisesInCourseFound();
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void testSearchExercisesInCourseNotFound() throws Exception {
-        courseTestService.testSearchExercisesInCourseNotFound();
-    }
 }

@@ -199,29 +199,3 @@ canvas#complete-chart {
 .course-exercises {
     padding-top: 29px;
 }
-
-.search-exercises-container {
-    position: relative;
-    flex: 1;
-}
-
-.search-exercises-info {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0 0.75rem;
-    font-size: 18px;
-    pointer-events: none;
-
-    opacity: 0;
-    transition: 0.1s ease-out opacity;
-
-    &.active {
-        opacity: 1;
-        transition: 0.2s ease-in opacity;
-    }
-}

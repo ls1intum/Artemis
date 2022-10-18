@@ -3,7 +3,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
@@ -30,8 +30,9 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { HttpResponse } from '@angular/common/http';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { FormsModule } from '@angular/forms';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -51,7 +52,7 @@ describe('CourseExercisesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, FormsModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 CourseExercisesComponent,
                 MockDirective(OrionFilterDirective),
@@ -357,35 +358,21 @@ describe('CourseExercisesComponent', () => {
         checkUpcomingExercises();
     });
 
-    it('should not perform any search if course is undefined', () => {
-        component.course = undefined;
-        const searchInput = fixture.debugElement.query(By.css('#search-exercises')).nativeElement;
-        searchInput.value = '';
-        const event = new KeyboardEvent('keydown', { key: 'Enter' });
-        searchInput.dispatchEvent(event);
-        expect(component.isSearching).toBeFalse();
-    });
-
-    it('should display search is failed when searching returns error', () => {
-        const searchInput = fixture.debugElement.query(By.css('#search-exercises')).nativeElement;
-        searchInput.value = 'tes';
-        const event = new KeyboardEvent('keydown', { key: 'Enter' });
-        jest.spyOn(courseExerciseService, 'findAllExercisesForCourseBySearchTerm').mockReturnValue(throwError(() => ({ status: 500 })));
-        searchInput.dispatchEvent(event);
-        expect(component.isSearching).toBeFalse();
-        expect(component.searchFailed).toBeTrue();
-    });
-
     it('should filter exercises based on search query', () => {
-        const searchInput = fixture.debugElement.query(By.css('#search-exercises')).nativeElement;
+        const searchInput = fixture.debugElement.query(By.css('#search-exercises-input')).nativeElement;
         searchInput.value = 'pat';
-        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        searchInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        const searchButton = fixture.debugElement.query(By.css('#search-exercises-button')).nativeElement;
+        const event = new Event('click');
         const exercise1 = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
+        exercise1.title = 'Patten in Software Engineering';
         const exercise2 = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
-        const exercises = [exercise1, exercise2];
-        jest.spyOn(courseExerciseService, 'findAllExercisesForCourseBySearchTerm').mockReturnValue(of(new HttpResponse({ body: exercises })));
-        searchInput.dispatchEvent(event);
-        expect(component.isSearching).toBeFalse();
-        expect(component.course?.exercises).toEqual(exercises);
+        exercise2.title = 'Patten in Software Engineering II';
+        const exercise3 = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
+        exercise3.title = 'Introduction to Software Engineering';
+        component.course!.exercises = [exercise1, exercise2, exercise3];
+        searchButton.dispatchEvent(event);
+        expect(component.course!.exercises).toEqual([exercise1, exercise2]);
     });
 });

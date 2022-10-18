@@ -21,8 +21,7 @@ import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSo
 import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseFilter as ExerciseFilterModel } from 'app/entities/exercise-filter.model';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -80,8 +79,8 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     exerciseForGuidedTour?: Exercise;
     nextRelevantExercise?: ExerciseWithDueDate;
     sortingAttribute: SortingAttribute;
-    isSearching = false;
-    searchFailed = false;
+    searchExercisesInput: string;
+    exerciseFilter: ExerciseFilterModel;
 
     // Icons
     faPlayCircle = faPlayCircle;
@@ -102,7 +101,6 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
 
     constructor(
         private courseService: CourseManagementService,
-        private courseExerciseService: CourseExerciseService,
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseManagementService,
         private translateService: TranslateService,
@@ -116,6 +114,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
+        this.exerciseFilter = new ExerciseFilterModel();
         this.numberOfExercises = 0;
         const filters = this.localStorage.retrieve(SortFilterStorageKey.FILTER);
         const filtersInStorage = filters
@@ -226,24 +225,11 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
 
     /**
      * Method is called when enter key is pressed on search input
-     * @param event The event of the enter key action
      */
-    onSearch(event: any) {
-        this.searchFailed = false;
-        if (this.course) {
-            this.isSearching = true;
-            this.courseExerciseService.findAllExercisesForCourseBySearchTerm(this.courseId, event.target.value).subscribe({
-                next: (httpResponse: HttpResponse<Exercise[]>) => {
-                    this.course!.exercises = httpResponse.body ? httpResponse.body : undefined;
-                    this.applyFiltersAndOrder();
-                    this.isSearching = false;
-                },
-                error: () => {
-                    this.searchFailed = true;
-                    this.isSearching = false;
-                },
-            });
-        }
+    onSearch() {
+        this.searchExercisesInput = this.searchExercisesInput.trim();
+        this.exerciseFilter = new ExerciseFilterModel(this.searchExercisesInput);
+        this.applyFiltersAndOrder();
     }
 
     /**
@@ -259,7 +245,8 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
      * Applies all selected activeFilters and orders and groups the user's exercises
      */
     private applyFiltersAndOrder() {
-        const filtered = this.course?.exercises?.filter(this.fulfillsCurrentFilter.bind(this));
+        let filtered = this.course?.exercises?.filter(this.fulfillsCurrentFilter.bind(this));
+        filtered = filtered?.filter((exercise) => this.exerciseFilter.matchesExercise(exercise));
         this.groupExercises(filtered);
     }
 

@@ -1076,21 +1076,4 @@ public class CourseResource {
         List<StudentDTO> notFoundStudentsDtos = courseService.registerUsersForCourseGroup(courseId, studentDtos, courseGroup);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
-
-    /**
-     * GET /courses/:courseId/exercises/search : Search all exercises of a course by a search term
-     *
-     * @param courseId    the id of the course
-     * @param searchTerm the search term by which to search title of exercises
-     * @return the ResponseEntity with status 200 (OK) and with matched exercises
-     */
-    @GetMapping("/courses/{courseId}/exercises/search")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Set<Exercise>> searchExercisesInCourse(@PathVariable Long courseId, @RequestParam("searchTerm") String searchTerm) {
-        log.debug("REST request to search for exercises in course : {} with searchTerm : {}", courseId, searchTerm);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
-        Set<Exercise> exercises = exerciseService.findAllForCourseBySearchTerm(course, searchTerm, user);
-        return ResponseEntity.ok(exercises);
-    }
 }

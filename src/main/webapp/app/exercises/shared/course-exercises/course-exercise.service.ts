@@ -8,7 +8,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { map, Observable } from 'rxjs';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { convertDateFromServer } from 'app/utils/date.utils';
@@ -61,20 +61,6 @@ export class CourseExerciseService {
         return this.http
             .get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises/`, { observe: 'response' })
             .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.processExercisesHttpResponses(res)));
-    }
-
-    /**
-     * Search exercises of a course by searchTerm
-     * @param courseId to which the exercises belong to.
-     * @param searchTerm the part of exercise title.
-     * @return exercises of the course that matches the searchTerm
-     */
-    findAllExercisesForCourseBySearchTerm(courseId: number, searchTerm: string): Observable<HttpResponse<Exercise[]>> {
-        let httpParams = new HttpParams();
-        httpParams = httpParams.append('searchTerm', searchTerm);
-        return this.http
-            .get<Exercise[]>(`${this.resourceUrl}/${courseId}/exercises/search`, { observe: 'response', params: httpParams })
-            .pipe(map((res: HttpResponse<Exercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
     /**
