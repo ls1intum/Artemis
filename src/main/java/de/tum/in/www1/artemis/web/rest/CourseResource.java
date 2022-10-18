@@ -141,6 +141,7 @@ public class CourseResource {
         course.validateRegistrationConfirmationMessage();
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndRegistrationEnabled();
+        course.validateOnlineCourseConfiguration();
         course.validateAccuracyOfScores();
         if (!course.isValidStartAndEndDate()) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
@@ -226,6 +227,7 @@ public class CourseResource {
         updatedCourse.validateRegistrationConfirmationMessage();
         updatedCourse.validateComplaintsAndRequestMoreFeedbackConfig();
         updatedCourse.validateOnlineCourseAndRegistrationEnabled();
+        updatedCourse.validateOnlineCourseConfiguration();
         updatedCourse.validateShortName();
         updatedCourse.validateAccuracyOfScores();
         if (!updatedCourse.isValidStartAndEndDate()) {
@@ -481,14 +483,20 @@ public class CourseResource {
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        }
+        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
             course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
             course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         }
+
         return ResponseEntity.ok(course);
     }
 

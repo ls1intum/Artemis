@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { StudentDTO } from 'app/entities/student-dto.model';
+import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
@@ -43,6 +44,12 @@ export class TutorialGroupsService {
 
     registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
         return this.httpClient.post<StudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register-multiple`, studentDtos, {
+            observe: 'response',
+        });
+    }
+
+    import(courseId: number, tutorialGroups: TutorialGroupRegistrationImportDTO[]): Observable<HttpResponse<TutorialGroupRegistrationImportDTO[]>> {
+        return this.httpClient.post<TutorialGroupRegistrationImportDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/import`, tutorialGroups, {
             observe: 'response',
         });
     }
