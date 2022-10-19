@@ -69,7 +69,9 @@
                     "titleStepTitle": "Title",
                     "titleStepMessage": "Add a title and meaningful description to the new lecture.",
                     "periodStepTitle": "Period",
-                    "periodStepMessage": "Specify the begin and end dates of the lecture."
+                    "periodStepMessage": "Specify the begin and end dates of the lecture.",
+                    "attachmentsStepTitle": "Attachments",
+                    "attachmentsStepMessage": "Upload attachments to this lecture."
                 }
             }
         },
