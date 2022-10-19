@@ -63,6 +63,12 @@
                 },
                 "searchLecture": "Nach Vorlesung suchen:",
                 "loading": "Lade..."
+            },
+            "wizardMode": {
+                "steps": {
+                    "titleStepTitle": "Titel",
+                    "titleStepMessage": "Gib einen Titel und eine aussagekräftige Beschreibung für die neue Vorlesung ein."
+                }
             }
         },
         "attachment": {

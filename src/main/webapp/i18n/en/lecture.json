@@ -56,13 +56,19 @@
             },
             "import": {
                 "table": {
-                    "title": "Titel",
+                    "title": "Title",
                     "course": "Course",
                     "semester": "Semester",
                     "doImport": "Import"
                 },
                 "searchLecture": "Search for lecture:",
                 "loading": "Loading..."
+            },
+            "wizardMode": {
+                "steps": {
+                    "titleStepTitle": "Title",
+                    "titleStepMessage": "Add a title and meaningful description to the new lecture."
+                }
             }
         },
         "attachment": {
