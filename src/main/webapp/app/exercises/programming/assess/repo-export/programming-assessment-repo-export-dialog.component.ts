@@ -75,7 +75,7 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
                     this.isLoading = false;
                 });
         } else {
-            this.isAtLeastInstructor = this.selectedProgrammingExercises.filter((exercise) => !exercise.isAtLeastInstructor).length === 0;
+            this.isAtLeastInstructor = this.selectedProgrammingExercises.every((exercise) => exercise.isAtLeastInstructor);
             this.isLoading = false;
         }
     }
