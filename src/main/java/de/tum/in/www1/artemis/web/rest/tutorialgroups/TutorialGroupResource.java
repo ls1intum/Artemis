@@ -256,20 +256,17 @@ public class TutorialGroupResource {
         }
 
         // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails
-        if (oldTutorialGroup.getTeachingAssistant() == null && updatedTutorialGroup.getTeachingAssistant() != null) {
+
+        var oldTA = oldTutorialGroup.getTeachingAssistant();
+        var newTA = updatedTutorialGroup.getTeachingAssistant();
+
+        if (newTA != null && (oldTA == null || !oldTA.equals(newTA))) {
             var newTAFromDatabase = userRepository.findOneByLogin(updatedTutorialGroup.getTeachingAssistant().getLogin());
             newTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser));
         }
-        else if (oldTutorialGroup.getTeachingAssistant() != null && updatedTutorialGroup.getTeachingAssistant() == null) {
+        if (oldTA != null && (newTA == null || !newTA.equals(oldTA))) {
             var oldTAFromDatabase = userRepository.findOneByLogin(oldTutorialGroup.getTeachingAssistant().getLogin());
             oldTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser));
-        }
-        else if (oldTutorialGroup.getTeachingAssistant() != null && updatedTutorialGroup.getTeachingAssistant() != null
-                && !oldTutorialGroup.getTeachingAssistant().equals(updatedTutorialGroup.getTeachingAssistant())) {
-            var oldTAFromDatabase = userRepository.findOneByLogin(oldTutorialGroup.getTeachingAssistant().getLogin());
-            oldTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser));
-            var newTAFromDatabase = userRepository.findOneByLogin(updatedTutorialGroup.getTeachingAssistant().getLogin());
-            newTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser));
         }
 
         if (StringUtils.hasText(tutorialGroupUpdateDTO.notificationText())) {
