@@ -64,22 +64,37 @@ public class TutorialGroup extends DomainObject {
 
     // ==== Transient fields ====
 
+    /**
+     * This transient field is set to true if the user who requested the entity is registered for this tutorial group
+     */
     @Transient
     @JsonSerialize
     private Boolean isUserRegistered;
 
+    /**
+     * This transient field is set to true if the user who requested the entity is the teaching assistant of this tutorial group
+     */
     @Transient
     @JsonSerialize
     private Boolean isUserTutor;
 
+    /**
+     * This transient fields is set to the number of registered students for this tutorial group
+     */
     @Transient
     @JsonSerialize
     private Integer numberOfRegisteredUsers;
 
+    /**
+     * This transient fields is set to the name of the teaching assistant of this tutorial group
+     */
     @Transient
     @JsonSerialize
     private String teachingAssistantName;
 
+    /**
+     * This transient fields is set to the course title to which this tutorial group belongs
+     */
     @Transient
     @JsonSerialize
     private String courseTitle;
