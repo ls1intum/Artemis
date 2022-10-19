@@ -52,7 +52,7 @@ public class JWTFilter extends GenericFilterBean {
         return ResponseCookie.from(JWT_COOKIE_NAME, jwt)
             .httpOnly(true)
             .sameSite("Strict")
-            .secure(true)
+            .secure(false)
             .path("/")
             .maxAge(duration)
             .build();
