@@ -1,7 +1,17 @@
+<div class="mb-2" *ngIf="criteria">
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="expandAll()">
+        <fa-icon [icon]="faExpand"></fa-icon> <span>{{ 'artemisApp.assessmentInstructions.expandAll' | artemisTranslate }}</span>
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="collapseAll()">
+        <fa-icon [icon]="faCompress"></fa-icon> <span>{{ 'artemisApp.assessmentInstructions.collapseAll' | artemisTranslate }}</span>
+    </button>
+</div>
+
 <div *ngIf="allowDrop" class="alert alert-info">
     <fa-icon [icon]="faInfoCircle"></fa-icon>
     <span>{{ 'artemisApp.exercise.dragDropInstruction' | artemisTranslate }}</span>
 </div>
+
 <div *ngFor="let criterion of criteria; let criterionIndex = index">
     <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
         <div

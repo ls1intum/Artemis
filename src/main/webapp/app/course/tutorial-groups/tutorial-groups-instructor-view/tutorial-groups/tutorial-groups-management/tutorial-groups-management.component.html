@@ -8,6 +8,7 @@
                         <fa-icon [icon]="faPlus"></fa-icon>
                         <span>{{ 'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate }}</span>
                     </a>
+                    <jhi-tutorial-groups-import-button [courseId]="courseId" (importFinished)="loadTutorialGroups()"></jhi-tutorial-groups-import-button>
                 </div>
             </div>
 
