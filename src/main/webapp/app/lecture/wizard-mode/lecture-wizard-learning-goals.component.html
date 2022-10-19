@@ -1,6 +1,10 @@
 <div class="form-step form-group" [hidden]="currentStep < 5">
-    <h1>Learning Goals</h1>
-    <p>Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to learning goals.</p>
+    <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.learningGoalsStepTitle">Learning Goals</span></h1>
+    <p>
+        <span jhiTranslate="artemisApp.lecture.wizardMode.steps.learningGoalsStepMessage"
+            >Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to learning goals.</span
+        >
+    </p>
     <div class="row">
         <div class="col-12">
             <td class="table-responsive" *ngIf="learningGoals && learningGoals.length > 0">
@@ -8,8 +12,12 @@
                     <thead>
                         <tr>
                             <th><span>ID</span></th>
-                            <th><span>Title</span></th>
-                            <th><span>Connected Units</span></th>
+                            <th>
+                                <span>{{ 'artemisApp.lecture.wizardMode.learningGoalTitle' | artemisTranslate }}</span>
+                            </th>
+                            <th>
+                                <span>{{ 'artemisApp.lecture.wizardMode.learningGoalConnectedUnits' | artemisTranslate }}</span>
+                            </th>
                             <th></th>
                         </tr>
                     </thead>

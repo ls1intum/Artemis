@@ -73,12 +73,17 @@
                     "attachmentsStepTitle": "Attachments",
                     "attachmentsStepMessage": "Upload attachments to this lecture.",
                     "unitsStepTitle": "Units",
-                    "unitsStepMessage": "Add content to the lecture by creating different kinds of lecture units."
+                    "unitsStepMessage": "Add content to the lecture by creating different kinds of lecture units.",
+                    "learningGoalsStepTitle": "Learning Goals",
+                    "learningGoalsStepMessage": "Make it easily visible what knowledge students will achieve when completing the units of this lecture by connecting them to learning goals."
                 },
                 "newLectureUnit": "New Lecture Unit",
                 "editLectureUnit": "Edit Lecture Unit",
                 "newExercise": "Create new exercise",
-                "backToWizard": "Back to lecture"
+                "backToWizard": "Back to lecture",
+                "learningGoalTitle": "Title",
+                "learningGoalConnectedUnits": "Connected Units",
+                "learningGoalNoConnectedUnits": "No connected units"
             }
         },
         "attachment": {

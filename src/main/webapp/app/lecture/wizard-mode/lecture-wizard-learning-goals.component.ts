@@ -11,6 +11,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { finalize } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-lecture-update-wizard-learning-goals',
@@ -35,7 +36,12 @@ export class LectureUpdateWizardLearningGoalsComponent {
 
     faPencilAlt = faPencilAlt;
 
-    constructor(protected alertService: AlertService, protected lectureService: LectureService, protected learningGoalService: LearningGoalService) {}
+    constructor(
+        protected alertService: AlertService,
+        protected lectureService: LectureService,
+        protected learningGoalService: LearningGoalService,
+        protected translateService: TranslateService,
+    ) {}
 
     showCreateLearningGoal() {
         this.isLoadingLearningGoalForm = true;
@@ -184,7 +190,7 @@ export class LectureUpdateWizardLearningGoalsComponent {
         const units = learningGoal.lectureUnits?.filter((unit) => unit.lecture?.id === this.lecture.id);
 
         if (units === undefined || units.length === 0) {
-            return 'No connected units';
+            return this.translateService.instant('artemisApp.lecture.wizardMode.learningGoalNoConnectedUnits');
         }
 
         return units.map((unit) => unit.name).join(', ');

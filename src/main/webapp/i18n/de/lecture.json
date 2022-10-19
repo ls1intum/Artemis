@@ -73,12 +73,17 @@
                     "attachmentsStepTitle": "Anhänge",
                     "attachmentsStepMessage": "Lade Anhänge für die Vorlesung hoch.",
                     "unitsStepTitle": "Vorlesungseinheiten",
-                    "unitsStepMessage": "Füge Inhalte zur Vorlesung hinzu durch Erstellung von Vorlesungseinheiten."
+                    "unitsStepMessage": "Füge Inhalte zur Vorlesung hinzu durch Erstellung von Vorlesungseinheiten.",
+                    "learningGoalsStepTitle": "Lernziele",
+                    "learningGoalsStepMessage": "Verknüpfe die Einheiten dieser Vorlesung mit Lernzielen, um zu zeigen, welche Lernziele Studenten erreichen werden, wenn sie sie absolvieren."
                 },
                 "newLectureUnit": "Neue Vorlesungseinheit",
                 "editLectureUnit": "Vorlesungseinheit bearbeiten",
                 "newExercise": "Neue Übung erstellen",
-                "backToWizard": "Zurück zur Vorlesung"
+                "backToWizard": "Zurück zur Vorlesung",
+                "learningGoalTitle": "Titel",
+                "learningGoalConnectedUnits": "Verknüpfte Einheiten",
+                "learningGoalNoConnectedUnits": "Keine verknüpften Einheiten"
             }
         },
         "attachment": {
