@@ -12,7 +12,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faHandshakeAngle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { LectureUpdateWizardComponent } from 'app/lecture/lecture-update-wizard.component';
+import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({

@@ -1,6 +1,6 @@
 <div>
     <form name="createForm" #createForm="ngForm" role="form">
-        <div class="form-step" [hidden]="currentStep < 1">
+        <!--<div class="form-step" [hidden]="currentStep < 1">
             <h1>Title</h1>
             <p>Add a title and meaningful description to the new lecture.</p>
             <div class="form-group">
@@ -17,7 +17,8 @@
                     [disabled]="currentStep > 2"
                 ></jhi-markdown-editor>
             </div>
-        </div>
+        </div>-->
+        <jhi-lecture-update-wizard-title [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-title>
         <div class="form-step" [hidden]="currentStep < 2">
             <h1>Period</h1>
             <p>Specify the begin and end dates of the lecture.</p>
