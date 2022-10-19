@@ -1,6 +1,6 @@
 <div class="form-step" [hidden]="currentStep < 4">
-    <h1>Units</h1>
-    <p>Add content to the lecture by creating different kinds of lecture units.</p>
+    <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.unitsStepTitle">Units</span></h1>
+    <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.unitsStepMessage">Add content to the lecture by creating different kinds of lecture units.</span></p>
     <jhi-lecture-unit-management
         [lectureId]="this.lecture.id"
         [emitEditEvents]="true"
@@ -12,8 +12,8 @@
         <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)"></jhi-unit-creation-card>
     </div>
     <div *ngIf="isAnyUnitFormOpen()" class="form-group">
-        <h4 *ngIf="!isEditingLectureUnit">New Lecture Unit</h4>
-        <h4 *ngIf="isEditingLectureUnit">Edit Lecture Unit</h4>
+        <h4 *ngIf="!isEditingLectureUnit"><span jhiTranslate="artemisApp.lecture.wizardMode.newLectureUnit">New Lecture Unit</span></h4>
+        <h4 *ngIf="isEditingLectureUnit"><span jhiTranslate="artemisApp.lecture.wizardMode.editLectureUnit">Edit Lecture Unit</span></h4>
         <jhi-text-unit-form
             *ngIf="isTextUnitFormOpen"
             [isEditMode]="isEditingLectureUnit"

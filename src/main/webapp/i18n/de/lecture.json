@@ -71,8 +71,14 @@
                     "periodStepTitle": "Zeitraum",
                     "periodStepMessage": "Lege das Start- und Enddatum der Vorlesung fest.",
                     "attachmentsStepTitle": "Anhänge",
-                    "attachmentsStepMessage": "Lade Anhänge für die Vorlesung hoch."
-                }
+                    "attachmentsStepMessage": "Lade Anhänge für die Vorlesung hoch.",
+                    "unitsStepTitle": "Vorlesungseinheiten",
+                    "unitsStepMessage": "Füge Inhalte zur Vorlesung hinzu durch Erstellung von Vorlesungseinheiten."
+                },
+                "newLectureUnit": "Neue Vorlesungseinheit",
+                "editLectureUnit": "Vorlesungseinheit bearbeiten",
+                "newExercise": "Neue Übung erstellen",
+                "backToWizard": "Zurück zur Vorlesung"
             }
         },
         "attachment": {

@@ -71,8 +71,14 @@
                     "periodStepTitle": "Period",
                     "periodStepMessage": "Specify the begin and end dates of the lecture.",
                     "attachmentsStepTitle": "Attachments",
-                    "attachmentsStepMessage": "Upload attachments to this lecture."
-                }
+                    "attachmentsStepMessage": "Upload attachments to this lecture.",
+                    "unitsStepTitle": "Units",
+                    "unitsStepMessage": "Add content to the lecture by creating different kinds of lecture units."
+                },
+                "newLectureUnit": "New Lecture Unit",
+                "editLectureUnit": "Edit Lecture Unit",
+                "newExercise": "Create new exercise",
+                "backToWizard": "Back to lecture"
             }
         },
         "attachment": {

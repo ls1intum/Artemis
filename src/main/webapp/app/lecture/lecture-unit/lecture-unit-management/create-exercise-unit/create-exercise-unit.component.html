@@ -19,8 +19,7 @@
                 <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             <button *ngIf="hasCreateExerciseButton" id="createExerciseButton" type="button" class="btn btn-primary" (click)="createNewExercise()">
-                Create new exercise
-                <!--{{ 'entity.action.submit' | artemisTranslate }}-->
+                {{ 'artemisApp.lecture.wizardMode.newExercise' | artemisTranslate }}
             </button>
             <button id="createButton" type="button" class="btn btn-primary" [disabled]="exercisesToCreateUnitFor.length === 0" (click)="createExerciseUnits()">
                 {{ 'entity.action.submit' | artemisTranslate }}
