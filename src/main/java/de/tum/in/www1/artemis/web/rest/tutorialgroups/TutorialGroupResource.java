@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.validation.Valid;
@@ -19,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -351,6 +350,26 @@ public class TutorialGroupResource {
         return ResponseEntity.ok().body(notFoundStudentDtos);
     }
 
+    /**
+     * POST /courses/:courseId/tutorial-groups/import: Import tutorial groups and student registrations
+     *
+     * @param courseId   the id of the course to which the tutorial groups belong
+     * @param importDTOs the list registration import DTOsd
+     * @return the list of registrations with information about the success of the import sorted by tutorial group title
+     */
+    @PostMapping("/courses/{courseId}/tutorial-groups/import")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<List<TutorialGroupRegistrationImportDTO>> importRegistrations(@PathVariable Long courseId,
+            @RequestBody @Valid Set<TutorialGroupRegistrationImportDTO> importDTOs) {
+        log.debug("REST request to import registrations {} to course {}", importDTOs, courseId);
+        var courseFromDatabase = this.courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseFromDatabase, null);
+        var registrations = tutorialGroupService.importRegistrations(courseFromDatabase, importDTOs);
+        var sortedRegistrations = registrations.stream().sorted(Comparator.comparing(TutorialGroupRegistrationImportDTO::title)).toList();
+        return ResponseEntity.ok().body(sortedRegistrations);
+    }
+
     private void trimStringFields(TutorialGroup tutorialGroup) {
         if (tutorialGroup.getTitle() != null) {
             tutorialGroup.setTitle(tutorialGroup.getTitle().trim());
@@ -393,4 +412,55 @@ public class TutorialGroupResource {
         });
     }
 
+    /**
+     * Describes the Errors that can lead to a failed import of a tutorial group registration
+     */
+    public enum TutorialGroupImportErrors {
+        NO_TITLE, NO_USER_FOUND, MULTIPLE_REGISTRATIONS
+    }
+
+    /**
+     * DTO used for client-server communication in the import of tutorial groups and student registrations from csv files
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record TutorialGroupRegistrationImportDTO(@Nullable String title, @Nullable StudentDTO student, @Nullable Boolean importSuccessful,
+            @Nullable TutorialGroupImportErrors error) {
+
+        public TutorialGroupRegistrationImportDTO withImportResult(boolean importSuccessful, TutorialGroupImportErrors error) {
+            return new TutorialGroupRegistrationImportDTO(title(), student(), importSuccessful, error);
+        }
+
+        public TutorialGroupRegistrationImportDTO(@Nullable String title, @Nullable StudentDTO student) {
+            this(title, student, null, null);
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) {
+                return true;
+            }
+            if (object == null || getClass() != object.getClass()) {
+                return false;
+            }
+
+            TutorialGroupRegistrationImportDTO that = (TutorialGroupRegistrationImportDTO) object;
+
+            if (!Objects.equals(title, that.title)) {
+                return false;
+            }
+            return Objects.equals(student, that.student);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = title != null ? title.hashCode() : 0;
+            result = 31 * result + (student != null ? student.hashCode() : 0);
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "TutorialGroupRegistrationImportDTO{" + "title='" + title + '\'' + ", student=" + student + ", importSuccessful=" + importSuccessful + ", error=" + error + '}';
+        }
+    }
 }
