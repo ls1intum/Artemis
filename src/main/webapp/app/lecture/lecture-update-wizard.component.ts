@@ -116,6 +116,12 @@ export class LectureUpdateWizardComponent implements OnInit {
             } else {
                 this.currentStep = this.lecture.id ? 5 : this.lecture.startDate !== undefined || this.lecture.endDate !== undefined ? 2 : 1;
             }
+
+            this.router.navigate([], {
+                relativeTo: this.activatedRoute,
+                queryParamsHandling: '',
+                replaceUrl: true,
+            });
         });
     }
 
