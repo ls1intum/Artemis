@@ -1,48 +1,7 @@
 <div>
     <form name="createForm" #createForm="ngForm" role="form">
-        <!--<div class="form-step" [hidden]="currentStep < 1">
-            <h1>Title</h1>
-            <p>Add a title and meaningful description to the new lecture.</p>
-            <div class="form-group">
-                <label class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
-                <input required [disabled]="currentStep > 2" type="text" class="form-control" name="title" id="field_title" [(ngModel)]="lecture.title" />
-            </div>
-            <div class="form-group" id="field_description">
-                <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
-                <jhi-markdown-editor
-                    class="markdown-editor"
-                    [domainCommands]="domainCommandsDescription"
-                    [(markdown)]="lecture.description"
-                    [editorMode]="EditorMode.LATEX"
-                    [disabled]="currentStep > 2"
-                ></jhi-markdown-editor>
-            </div>
-        </div>-->
         <jhi-lecture-update-wizard-title [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-title>
-        <div class="form-step" [hidden]="currentStep < 2">
-            <h1>Period</h1>
-            <p>Specify the begin and end dates of the lecture.</p>
-            <div class="d-flex">
-                <div class="form-group flex-grow-1">
-                    <jhi-date-time-picker
-                        labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
-                        [(ngModel)]="lecture.startDate"
-                        [disabled]="currentStep > 2"
-                        name="startDate"
-                        id="start-date"
-                    ></jhi-date-time-picker>
-                </div>
-                <div class="form-group flex-grow-1 ms-3">
-                    <jhi-date-time-picker
-                        labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
-                        [(ngModel)]="lecture.endDate"
-                        [disabled]="currentStep > 2"
-                        name="endDate"
-                        id="end-date"
-                    ></jhi-date-time-picker>
-                </div>
-            </div>
-        </div>
+        <jhi-lecture-update-wizard-period [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-period>
         <div class="form-step form-group" [hidden]="currentStep < 3">
             <h1>Attachments</h1>
             <p>Upload attachments to this lecture.</p>
