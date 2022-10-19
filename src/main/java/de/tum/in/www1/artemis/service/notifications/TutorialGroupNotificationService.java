@@ -58,11 +58,12 @@ public class TutorialGroupNotificationService {
     /**
      * Notify registered students about an updated tutorial group
      *
-     * @param tutorialGroup the updated tutorial group
-     * @param notifyTutor   whether the tutor should be notified about the update via email
+     * @param tutorialGroup    the updated tutorial group
+     * @param notifyTutor      whether the tutor should be notified about the update via email
+     * @param notificationText the notification text
      */
-    public void notifyAboutTutorialGroupUpdate(TutorialGroup tutorialGroup, boolean notifyTutor) {
-        saveAndSend(createTutorialGroupNotification(tutorialGroup, TUTORIAL_GROUP_UPDATED), notifyTutor);
+    public void notifyAboutTutorialGroupUpdate(TutorialGroup tutorialGroup, boolean notifyTutor, String notificationText) {
+        saveAndSend(createTutorialGroupNotification(tutorialGroup, TUTORIAL_GROUP_UPDATED, notificationText), notifyTutor);
     }
 
     private void saveAndSend(TutorialGroupNotification notification, boolean notifyTutor) {

@@ -7,13 +7,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -215,17 +219,28 @@ public class TutorialGroupResource {
     }
 
     /**
+     * A DTO representing an updated tutorial group with an optional notification text about the update
+     *
+     * @param updatedTutorialGroup the updated tutorial group
+     * @param notificationText     the optional notification text
+     */
+    public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup updatedTutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText) {
+    }
+
+    /**
      * PUT /courses/:courseId/tutorial-groups/:tutorialGroupId : Updates an existing tutorial group
      *
-     * @param courseId             the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId      the id of the tutorial group to update
-     * @param updatedTutorialGroup group the tutorial group to update
+     * @param courseId               the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId        the id of the tutorial group to update
+     * @param tutorialGroupUpdateDTO dto containing the tutorial group to update and the optional notification text
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group
      */
     @PutMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @RequestBody @Valid TutorialGroup updatedTutorialGroup) {
+    public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+            @RequestBody @Valid TutorialGroupUpdateDTO tutorialGroupUpdateDTO) {
+        TutorialGroup updatedTutorialGroup = tutorialGroupUpdateDTO.updatedTutorialGroup();
         log.debug("REST request to update TutorialGroup : {}", updatedTutorialGroup);
         if (updatedTutorialGroup.getId() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
@@ -257,8 +272,12 @@ public class TutorialGroupResource {
             newTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser));
         }
 
-        tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(oldTutorialGroup,
-                updatedTutorialGroup.getTeachingAssistant() == null || !updatedTutorialGroup.getTeachingAssistant().equals(responsibleUser));
+        if (StringUtils.hasText(tutorialGroupUpdateDTO.notificationText())) {
+            tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(oldTutorialGroup,
+                    updatedTutorialGroup.getTeachingAssistant() == null || !updatedTutorialGroup.getTeachingAssistant().equals(responsibleUser),
+                    StringUtils.trimWhitespace(tutorialGroupUpdateDTO.notificationText()));
+        }
+
         overrideValues(updatedTutorialGroup, oldTutorialGroup);
         return ResponseEntity.ok(tutorialGroupRepository.save(oldTutorialGroup));
     }

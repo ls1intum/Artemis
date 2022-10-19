@@ -11,6 +11,7 @@
             ${notificationSubject.getTitle()},
             ${notificationSubject.getCourse().getTitle()},
             )}"></span>
+        <th:block th:replace="mail/notification/fragments :: notificationText"/>
         <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
     </div>
     <th:block th:replace="mail/notification/fragments :: farewell"/>

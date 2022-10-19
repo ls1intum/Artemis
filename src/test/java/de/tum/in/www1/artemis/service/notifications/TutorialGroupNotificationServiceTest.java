@@ -96,7 +96,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
         prepareNotificationSettingForTest(student1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
         prepareNotificationSettingForTest(tutor1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
 
-        tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(tutorialGroup, contactTutor);
+        tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(tutorialGroup, contactTutor, "LoremIpsum");
         verifyRepositoryCallWithCorrectNotification(1, TUTORIAL_GROUP_UPDATED_TITLE);
         if (contactTutor) {
             verifyEmail(2);
