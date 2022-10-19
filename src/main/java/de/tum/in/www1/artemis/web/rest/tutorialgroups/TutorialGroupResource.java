@@ -221,10 +221,10 @@ public class TutorialGroupResource {
     /**
      * A DTO representing an updated tutorial group with an optional notification text about the update
      *
-     * @param updatedTutorialGroup the updated tutorial group
-     * @param notificationText     the optional notification text
+     * @param tutorialGroup    the updated tutorial group
+     * @param notificationText the optional notification text
      */
-    public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup updatedTutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText) {
+    public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText) {
     }
 
     /**
@@ -232,7 +232,7 @@ public class TutorialGroupResource {
      *
      * @param courseId               the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId        the id of the tutorial group to update
-     * @param tutorialGroupUpdateDTO dto containing the tutorial group to update and the optional notification text
+     * @param tutorialGroupUpdateDTO dto containing the t utorial group to update and the optional notification text
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group
      */
     @PutMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
@@ -240,7 +240,7 @@ public class TutorialGroupResource {
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
             @RequestBody @Valid TutorialGroupUpdateDTO tutorialGroupUpdateDTO) {
-        TutorialGroup updatedTutorialGroup = tutorialGroupUpdateDTO.updatedTutorialGroup();
+        TutorialGroup updatedTutorialGroup = tutorialGroupUpdateDTO.tutorialGroup();
         log.debug("REST request to update TutorialGroup : {}", updatedTutorialGroup);
         if (updatedTutorialGroup.getId() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
