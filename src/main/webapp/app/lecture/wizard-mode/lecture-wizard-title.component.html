@@ -3,7 +3,7 @@
     <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepMessage">Add a title and meaningful description to the new lecture.</span></p>
     <div class="form-group">
         <label class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
-        <input required [disabled]="currentStep > 2" type="text" class="form-control" name="title" id="field_title" [(ngModel)]="lecture.title" />
+        <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="lecture.title" />
     </div>
     <div class="form-group" id="field_description">
         <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
@@ -12,7 +12,6 @@
             [domainCommands]="domainCommandsDescription"
             [(markdown)]="lecture.description"
             [editorMode]="EditorMode.LATEX"
-            [disabled]="currentStep > 2"
         ></jhi-markdown-editor>
     </div>
 </div>

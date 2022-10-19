@@ -80,7 +80,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
-    @Input() disabled: boolean;
     @Input() markdown?: string;
     @Input() editorMode = EditorMode.NONE;
     @Input() showLineNumbers = false;

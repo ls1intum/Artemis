@@ -119,7 +119,7 @@ export class LectureUpdateComponent implements OnInit {
      * Action on successful lecture creation or edit
      */
     protected onSaveSuccess(lecture: Lecture) {
-        if (this.isShowingWizardMode) {
+        if (this.isShowingWizardMode && !this.lecture.id) {
             this.lectureService.findWithDetails(lecture.id!).subscribe({
                 next: (response: HttpResponse<Lecture>) => {
                     this.isSaving = false;

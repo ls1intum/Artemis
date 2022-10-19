@@ -10,7 +10,6 @@
                         [mode]="aceEditorOptions.mode"
                         [autoUpdateContent]="aceEditorOptions.autoUpdateContent"
                         [text]="markdown || ''"
-                        [readOnly]="disabled"
                         (textChange)="markdownTextChange($event)"
                         class="form-control markdown-editor__content"
                         [class.file-input]="enableFileUpload"
