@@ -12,10 +12,7 @@ import { Exercise, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { getExerciseDueDate, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { HttpResponse } from '@angular/common/http';
 
 @Component({
@@ -83,12 +80,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
                 this.dueDate = getExerciseDueDate(this.exercise, this.gradedStudentParticipation);
             }
         });
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                const programmingParticipations = this.exercise.studentParticipations as ProgrammingExerciseStudentParticipation[];
-                setBuildPlanUrlForProgrammingParticipations(profileInfo, programmingParticipations, (this.exercise as ProgrammingExercise).projectKey);
-            });
-        }
     }
 
     ngOnChanges(): void {
