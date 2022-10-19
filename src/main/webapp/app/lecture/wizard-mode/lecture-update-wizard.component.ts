@@ -71,6 +71,9 @@ export class LectureUpdateWizardComponent implements OnInit {
         this.currentStep++;
     }
 
+    /**
+     * Called when the lecture has been successfully created in the parent component to advance in the wizard
+     */
     onLectureCreationSucceeded() {
         this.currentStep++;
     }

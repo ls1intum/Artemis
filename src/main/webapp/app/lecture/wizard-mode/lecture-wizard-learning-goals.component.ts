@@ -141,6 +141,9 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
                 next: (response: HttpResponse<LearningGoal>) => {
                     this.isAddingLearningGoal = false;
 
+                    // The rest api is returning lecture units and exercises separately after creating/editing but we
+                    // need the unit to show it in the table as connected. Since it's only for showing it, as a
+                    // workaround we take the unit from the lecture which is the same one.
                     const newLearningGoal = response.body!;
                     const exerciseUnits = this.lecture.lectureUnits?.filter((unit: ExerciseUnit) =>
                         newLearningGoal.exercises?.find((exercise) => exercise.id === unit.exercise?.id),
@@ -176,6 +179,9 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
                 next: (response: HttpResponse<LearningGoal>) => {
                     this.isEditingLearningGoal = false;
 
+                    // The rest api is returning lecture units and exercises separately after creating/editing but we
+                    // need the unit to show it in the table as connected. Since it's only for showing it, as a
+                    // workaround we take the unit from the lecture which is the same one.
                     const editedLearningGoal = response.body!;
                     const exerciseUnits = this.lecture.lectureUnits?.filter((unit: ExerciseUnit) =>
                         editedLearningGoal.exercises?.find((exercise) => exercise.id === unit.exercise?.id),

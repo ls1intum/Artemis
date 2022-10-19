@@ -59,6 +59,7 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
 
     ngOnInit() {
         this.activatedRoute.queryParams.subscribe((params) => {
+            // Checks if the exercise unit form should be opened initially, i.e. coming back from the exercise creation
             if (params.shouldOpenCreateExercise) {
                 this.onCreateLectureUnit(LectureUnitType.EXERCISE);
             }
@@ -233,6 +234,9 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
         });
     }
 
+    /**
+     * Called when all selected exercises were linked from the component
+     */
     onExerciseUnitCreated() {
         this.onCloseLectureUnitForms();
         this.unitManagementComponent.loadData();
