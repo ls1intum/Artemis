@@ -152,14 +152,6 @@ You can override the following configuration options in this file.
            # Bamboo: The token value you use for the Server Notification Plugin
            # Jenkins: The token value you use for the Server Notification Plugin and is stored under the notification-token credential above
            authentication-token: <token>
-       lti:
-           id: artemis_lti
-           oauth-key: artemis_lti_key
-           oauth-secret: <secret>    # only important for online courses on the edX platform, can typically be ignored
-           user-prefix-edx: edx_
-           user-prefix-u4i: u4i_
-           user-group-name-edx: edx
-           user-group-name-u4i: u4i
        git:
            name: Artemis
            email: artemis@in.tum.de
