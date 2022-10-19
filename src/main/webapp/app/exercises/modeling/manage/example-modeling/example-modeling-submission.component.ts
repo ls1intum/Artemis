@@ -7,7 +7,7 @@ import { Result } from 'app/entities/result.model';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
 import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
@@ -19,7 +19,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entiti
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { FeedbackMarker, ExampleSubmissionAssessCommand } from 'app/exercises/shared/example-submission/example-submission-assess-command';
+import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faChalkboardTeacher, faCheck, faCircle, faCodeBranch, faExclamation, faExclamationTriangle, faInfoCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -39,7 +39,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     assessmentEditor: ModelingAssessmentComponent;
 
     isNewSubmission: boolean;
-    usedForTutorial = false;
     assessmentMode = false;
     exerciseId: number;
     exampleSubmission: ExampleSubmission;
@@ -57,6 +56,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     toComplete: boolean;
     assessmentExplanation: string;
     isExamMode: boolean;
+    selectedMode: ExampleSubmissionMode;
+    ExampleSubmissionMode = ExampleSubmissionMode;
 
     legend = [
         {
@@ -128,7 +129,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         }
 
         // if one of the flags is set, we navigated here from the assessment dashboard which means that we are not
-        // interested in the modeling editor, i.e. we only wanna use the assessment mode
+        // interested in the modeling editor, i.e. we only want to use the assessment mode
         if (this.readOnly || this.toComplete) {
             this.assessmentMode = true;
         }
@@ -153,7 +154,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                         // Updates the explanation text with example modeling submission's explanation
                         this.explanationText = this.modelingSubmission.explanationText ?? '';
                     }
-                    this.usedForTutorial = this.exampleSubmission.usedForTutorial!;
+
+                    if (this.exampleSubmission.usedForTutorial) {
+                        this.selectedMode = ExampleSubmissionMode.ASSESS_CORRECTLY;
+                    } else {
+                        this.selectedMode = ExampleSubmissionMode.READ_AND_CONFIRM;
+                    }
+
                     this.assessmentExplanation = this.exampleSubmission.assessmentExplanation!;
 
                     // Do not load the results when we have to assess the submission. The API will not provide it anyway
@@ -199,8 +206,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         const newExampleSubmission: ExampleSubmission = this.exampleSubmission;
         newExampleSubmission.submission = modelingSubmission;
         newExampleSubmission.exercise = this.exercise;
-        newExampleSubmission.usedForTutorial = this.usedForTutorial;
 
+        newExampleSubmission.usedForTutorial = this.selectedMode === ExampleSubmissionMode.ASSESS_CORRECTLY;
         this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe({
             next: (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body!;
@@ -245,7 +252,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         const exampleSubmission = this.exampleSubmission;
         exampleSubmission.submission = this.modelingSubmission;
         exampleSubmission.exercise = this.exercise;
-        exampleSubmission.usedForTutorial = this.usedForTutorial;
+        exampleSubmission.usedForTutorial = this.selectedMode === ExampleSubmissionMode.ASSESS_CORRECTLY;
+
         return this.exampleSubmissionService.update(exampleSubmission, this.exerciseId).pipe(
             tap((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body!;

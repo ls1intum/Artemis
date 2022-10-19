@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.websocket;
 
 import java.security.Principal;
 
+import javax.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -54,7 +56,7 @@ public class QuizSubmissionWebsocketService {
      * @param principal      refers to the user who initiated the request
      */
     @MessageMapping("/topic/quizExercise/{exerciseId}/submission")
-    public void saveSubmission(@DestinationVariable Long exerciseId, @Payload QuizSubmission quizSubmission, Principal principal) {
+    public void saveSubmission(@DestinationVariable Long exerciseId, @Valid @Payload QuizSubmission quizSubmission, Principal principal) {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
         try {

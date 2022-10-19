@@ -27,6 +27,8 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
             ORDER BY learningGoal.title""")
     Set<LearningGoal> findAllByCourseIdWithLectureUnitsUnidirectional(@Param("courseId") Long courseId);
 
+    Set<LearningGoal> findAllByExercises(Long exerciseId);
+
     @Query("""
             SELECT learningGoal
             FROM LearningGoal learningGoal

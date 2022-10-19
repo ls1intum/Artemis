@@ -133,11 +133,6 @@ public abstract class Participation extends DomainObject implements Participatio
         return individualDueDate;
     }
 
-    public Participation individualDueDate(ZonedDateTime individualDueDate) {
-        this.individualDueDate = individualDueDate;
-        return this;
-    }
-
     public void setIndividualDueDate(ZonedDateTime individualDueDate) {
         this.individualDueDate = individualDueDate;
     }
@@ -279,6 +274,15 @@ public abstract class Participation extends DomainObject implements Participatio
         }
 
         return (Optional<T>) submissions.stream().max(Comparator.naturalOrder());
+    }
+
+    /**
+     * Adds the prefix "-practice" to the given name, if this is a test run that might be used for practice
+     * @param string the string that might get "practice-" added its front
+     * @return the same string with "practice-" added to the front if this is a test run participation
+     */
+    public String addPracticePrefixIfTestRun(String string) {
+        return (isTestRun() ? "practice-" : "") + string;
     }
 
     @Override

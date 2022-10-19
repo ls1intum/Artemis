@@ -214,6 +214,7 @@ public class ProgrammingExerciseResource {
 
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
+        programmingExercise.validateManualFeedbackSettings();
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -467,7 +468,7 @@ public class ProgrammingExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithLatestResult(programmingExercise.getId(), user.getId());
+        var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithLatestResult(programmingExercise.getId(), user.getId(), false);
         Set<StudentParticipation> participations = new HashSet<>();
         assignmentParticipation.ifPresent(participations::add);
         programmingExercise.setStudentParticipations(participations);
@@ -588,7 +589,7 @@ public class ProgrammingExerciseResource {
         catch (Exception e) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName,
-                            "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": \n" + e.getMessage(),
+                            "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": " + e,
                             "errorStructureOracleGeneration"))
                     .body(null);
         }

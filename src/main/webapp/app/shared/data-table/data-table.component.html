@@ -1,6 +1,6 @@
 <div>
-    <div *ngIf="showPageSizeDropdownAndSearchField" class="d-flex mb-2 gap-1 flex-column flex-md-row">
-        <div ngbDropdown class="d-inline-block">
+    <div *ngIf="showPageSizeDropdown || showSearchField" class="d-flex mb-2 gap-1 flex-column flex-md-row">
+        <div *ngIf="showPageSizeDropdown" ngbDropdown class="d-inline-block me-2">
             <button class="btn btn-outline-primary w-100" id="dropdownBasic1" ngbDropdownToggle>
                 {{ perPageTranslation(pagingValue) | artemisTranslate: { number: pagingValue } }}
             </button>
@@ -33,7 +33,7 @@
                 <span class="badge bg-warning" [jhiTranslate]="searchNoResultsTranslation"> No results </span>
             </div>
             <div class="search-info" [class.active]="searchQueryTooShort">
-                <span class="badge bg-info" jhiTranslate="artemisApp.dataTable.search.minQueryLengthHint" [translateValues]="{ length: minSearchQueryLength }">
+                <span class="badge bg-info" [jhiTranslate]="minQueryLengthHintTranslation" [translateValues]="{ length: minSearchQueryLength }">
                     Please enter at least {{ minSearchQueryLength }} characters
                 </span>
             </div>
