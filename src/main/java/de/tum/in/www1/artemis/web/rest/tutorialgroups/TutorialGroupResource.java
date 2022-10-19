@@ -260,7 +260,7 @@ public class TutorialGroupResource {
         var newTA = updatedTutorialGroup.getTeachingAssistant();
 
         if (newTA != null && (oldTA == null || !oldTA.equals(newTA))) {
-            var newTAFromDatabase = userRepository.findOneByLogin(updatedTutorialGroup.getTeachingAssistant().getLogin());
+            var newTAFromDatabase = userRepository.findOneByLogin(newTA.getLogin());
             newTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser));
         }
         if (oldTA != null && (newTA == null || !newTA.equals(oldTA))) {
