@@ -196,14 +196,10 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
     return ParticipationStatus.INACTIVE;
 };
 
-/**
- * The start exercise button should be available for programming exercises when
- * - there is no due date
- * - now is before the due date
- * - test run after due date is deactivated and manual grading is deactivated
- */
-export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean => {
-    return exercise.dueDate == undefined || dayjs().isBefore(exercise.dueDate!);
+export const isStartExerciseAvailable = (exercise: ProgrammingExercise, studentParticipation?: StudentParticipation): boolean => {
+    const beforeExerciseDueDate = exercise.dueDate == undefined || dayjs().isBefore(exercise.dueDate!);
+    const beforeIndividualDueDate = studentParticipation?.individualDueDate == undefined || dayjs().isBefore(studentParticipation.individualDueDate);
+    return beforeExerciseDueDate && beforeIndividualDueDate;
 };
 
 /**
