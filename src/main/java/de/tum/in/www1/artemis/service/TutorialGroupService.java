@@ -52,6 +52,7 @@ public class TutorialGroupService {
      * @param student          The student to deregister.
      * @param tutorialGroup    The tutorial group to deregister from.
      * @param registrationType The type of registration that should be removed;
+     * @param responsibleUser  The user that is responsible for the deregistration.
      */
     public void deregisterStudent(User student, TutorialGroup tutorialGroup, TutorialGroupRegistrationType registrationType, User responsibleUser) {
         Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup,
