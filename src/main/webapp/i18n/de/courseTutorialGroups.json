@@ -5,7 +5,7 @@
         },
         "pages": {
             "courseTutorialGroups": {
-                "title": "Deine angemeldeten Übungsgruppen",
+                "title": "Deine Übungsgruppen",
                 "noRegistrations": "Du bist in keiner Übungsgruppe angemeldet.",
                 "allFilter": "Alle Übungsgruppen anzeigen",
                 "registeredFilter": "Angemeldete Übungsgruppen anzeigen"
