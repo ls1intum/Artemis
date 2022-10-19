@@ -241,7 +241,7 @@
         </a>
         <a
             *ngIf="course.isAtLeastTutor"
-            [routerLink]="['/course-management', course.id, 'tutorial-groups-management']"
+            [routerLink]="['/course-management', course.id, 'tutorial-groups']"
             [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
             class="btn btn-primary me-1 mb-1 hidden-if-mobile"
             [ngbTooltip]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate"

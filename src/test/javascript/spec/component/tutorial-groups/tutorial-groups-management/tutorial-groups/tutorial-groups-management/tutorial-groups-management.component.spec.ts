@@ -107,6 +107,6 @@ describe('TutorialGroupsManagementComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         component.onTutorialGroupSelected(tutorialGroupOne);
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-management', tutorialGroupOne.id]);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups', tutorialGroupOne.id]);
     });
 });

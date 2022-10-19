@@ -9,7 +9,7 @@ import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-grou
 import { Routes } from '@angular/router';
 
 /**
- * parent 'course-management/:courseId/tutorial-groups-management'
+ * parent 'course-management/:courseId/tutorial-groups'
  */
 export const tutorialGroupManagementRoutes: Routes = [
     {

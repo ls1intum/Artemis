@@ -35,7 +35,7 @@ export class TutorialGroupsManagementComponent implements OnInit {
     }
 
     onTutorialGroupSelected = (tutorialGroup: TutorialGroup) => {
-        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', tutorialGroup.id]);
+        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups', tutorialGroup.id]);
     };
 
     loadTutorialGroups() {
