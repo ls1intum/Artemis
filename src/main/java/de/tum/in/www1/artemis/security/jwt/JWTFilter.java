@@ -45,6 +45,7 @@ public class JWTFilter extends GenericFilterBean {
      * Builds the cookie containing the jwt
      * @param jwt      the token that will be used as the cookie's value
      * @param duration the validity of the cookie
+     * @return         the response cookie that should be set containing the jwt
      */
     public static ResponseCookie buildJWTCookie(String jwt, Duration duration) {
         // @formatter:off

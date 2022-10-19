@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.servlet.http.Cookie;
 import javax.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -256,7 +258,31 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        request.postWithoutResponseBody("/api/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+        assertThat(response.getCookie("jwt")).isNotNull();
+        cookieAssertions(response.getCookie("jwt"), false);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testJWTAuthenticationLogoutUnauthorized() throws Exception {
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        request.postWithoutResponseBody("/api/logout", HttpStatus.UNAUTHORIZED, httpHeaders);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testJWTAuthenticationLogout() throws Exception {
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/logout", HttpStatus.OK, httpHeaders);
+        assertThat(response.getCookie("jwt")).isNotNull();
+        cookieAssertions(response.getCookie("jwt"), true);
     }
 
     @Test
@@ -285,5 +311,20 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         assertThat(response).isNotNull();
         assertThat(student).as("Returned user is equal to sent update").isEqualTo(response);
         assertThat(student).as("Updated user in DB is equal to sent update").isEqualTo(updatedUserIndDB);
+    }
+
+    private void cookieAssertions(Cookie cookie, boolean logoutCookie) {
+        assertThat(cookie.isHttpOnly()).isTrue();
+        assertThat(cookie.getSecure()).isTrue();
+        assertThat(cookie.getPath()).isEqualTo("/");
+
+        if (logoutCookie) {
+            assertThat(cookie.getMaxAge()).isZero();
+            assertThat(cookie.getValue()).isEmpty();
+        }
+        else {
+            assertThat(cookie.getMaxAge()).isGreaterThan(0);
+            assertThat(cookie.getValue()).isNotEmpty();
+        }
     }
 }

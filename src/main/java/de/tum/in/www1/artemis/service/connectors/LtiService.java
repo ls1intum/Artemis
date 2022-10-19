@@ -131,12 +131,7 @@ public class LtiService {
 
         if (SecurityUtils.isAuthenticated()) {
             // 1. Case: User is already signed in. We are done here.
-            /*
-             * Authentication auth = SecurityContextHolder.getContext().getAuthentication(); return Optional.of(auth);
-             */
-            // TODO: Should use the authenticated user, but only in case it matches the user the launchRequest is intended for.
-            // For now we just remove the currently authenticated user
-            SecurityContextHolder.getContext().setAuthentication(null);
+            return Optional.of(SecurityContextHolder.getContext().getAuthentication());
         }
 
         // If the LTI launch is used from edX studio, edX sends dummy data. (id="student")

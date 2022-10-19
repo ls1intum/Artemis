@@ -143,7 +143,6 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         else {
             jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(email);
         }
-
         jiraRequestMockProvider.mockAddUserToGroup("tumuser", false);
     }
 
@@ -208,6 +207,8 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithMockUser(username = "student1", roles = "USER")
     void launchAsRecentlyCreatedStudent(String requestBody) throws Exception {
+        addJiraMocks(requestBody, true);
+
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
@@ -221,6 +222,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithMockUser(username = "student1", roles = "USER")
     void launchAsExistingStudent(String requestBody) throws Exception {
+        addJiraMocks(requestBody, true);
 
         var nowIn20Minutes = ZonedDateTime.now().plus(20, ChronoUnit.MINUTES);
 
