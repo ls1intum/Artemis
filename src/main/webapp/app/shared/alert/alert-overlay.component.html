@@ -1,4 +1,3 @@
-<!-- <jhi-single-alert *ngFor="let alert of alerts" [alert]="alert"></jhi-single-alert> -->
 <div class="alert-wrap" *ngFor="let alert of alerts" @alertAnimation>
     <div class="alert-inner" [ngClass]="alert.type.containerClassName">
         <div class="left">
@@ -9,4 +8,8 @@
         <jhi-close-circle *ngIf="alert.dismissible" (click)="alert.close()"></jhi-close-circle>
         <div class="time-bar" *ngIf="(alert?.timeout || 0) > 0" [ngStyle]="{ animationDuration: alert.timeout + 'ms' }"></div>
     </div>
+</div>
+<div class="btn btn-secondary dismiss-all" *ngIf="(alerts?.length ?? 0) >= 2" (click)="alertService.closeAll()" @dismissAllAnimation>
+    <fa-icon [icon]="times"></fa-icon>
+    <span jhiTranslate="artemisApp.alerts.dismissAll">Dismiss all</span>
 </div>
