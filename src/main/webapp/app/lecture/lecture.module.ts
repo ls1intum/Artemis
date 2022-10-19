@@ -19,6 +19,7 @@ import { LectureUpdateWizardTitleComponent } from 'app/lecture/wizard-mode/lectu
 import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
+import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mode/lecture-wizard-learning-goals.component';
 
 const ENTITY_STATES = [...lectureRoute];
 
@@ -44,6 +45,7 @@ const ENTITY_STATES = [...lectureRoute];
         LectureUpdateWizardPeriodComponent,
         LectureUpdateWizardAttachmentsComponent,
         LectureUpdateWizardUnitsComponent,
+        LectureUpdateWizardLearningGoalsComponent,
     ],
 })
 export class ArtemisLectureModule {}
