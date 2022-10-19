@@ -32,6 +32,10 @@ describe('TutorialGroupRowButtonsComponent', () => {
             });
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should call delete and emit deleted event', () => {
         const tutorialGroupService = TestBed.inject(TutorialGroupsService);
         const httpResponse: HttpResponse<void> = new HttpResponse({});

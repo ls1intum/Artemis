@@ -1,25 +1,59 @@
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { Component, Input, OnInit } from '@angular/core';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { AfterViewInit, Component, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { faCompress, faExpand, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { ExpandableSectionComponent } from 'app/assessment/assessment-instructions/expandable-section/expandable-section.component';
+import { delay, startWith } from 'rxjs';
 
 @Component({
     selector: 'jhi-structured-grading-instructions-assessment-layout',
     templateUrl: './structured-grading-instructions-assessment-layout.component.html',
     styleUrls: ['./structured-grading-instructions-assessment-layout.component.scss'],
 })
-export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
+export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit, AfterViewInit {
     @Input() public criteria: GradingCriterion[];
     @Input() readonly: boolean;
     allowDrop: boolean;
     // Icons
     faInfoCircle = faInfoCircle;
+    faExpand = faExpand;
+    faCompress = faCompress;
+
+    @ViewChildren(ExpandableSectionComponent) expandableSections: QueryList<ExpandableSectionComponent>;
+    collapseToggles: ExpandableSectionComponent[] = [];
 
     /**
      * OnInit set the allowDrop property to allow drop of SGI if not in readOnly mode
      */
     ngOnInit(): void {
         this.allowDrop = !this.readonly;
+    }
+
+    ngAfterViewInit() {
+        this.expandableSections.changes
+            .pipe(
+                startWith([undefined]), // to catch the initial value
+                delay(0), // wait for all current async tasks to finish, which could change the query list using ngIf etc.
+            )
+            .subscribe(() => {
+                this.collectCollapsableSections();
+            });
+    }
+
+    collapseAll() {
+        this.collapseToggles.forEach((section) => {
+            if (!section.isCollapsed) {
+                section.toggleCollapsed();
+            }
+        });
+    }
+
+    expandAll() {
+        this.collapseToggles.forEach((section) => {
+            if (section.isCollapsed) {
+                section.toggleCollapsed();
+            }
+        });
     }
 
     /**
@@ -63,5 +97,11 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      */
     disableDrag() {
         return this.allowDrop;
+    }
+
+    collectCollapsableSections() {
+        if (this.expandableSections) {
+            this.collapseToggles = this.expandableSections.toArray();
+        }
     }
 }
