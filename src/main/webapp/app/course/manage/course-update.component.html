@@ -44,7 +44,7 @@
                     </ng-container>
                 </div>
                 <div class="row">
-                    <div class="col">
+                    <div class="col-sm-9 col-xl-10">
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.courseIcon" for="field_shortName">Course Icon</label>
                             <div class="input-group background-file">
@@ -54,8 +54,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-2">
-                        <div style="position: relative; display: flex; justify-content: end">
+                    <div class="delete-course-icon col-sm-3 col-xl-2 mt-sm-3 mb-3">
+                        <div>
                             <button *ngIf="croppedImage && course.courseIcon" id="delete-course-icon" class="btn btn-danger btn-sm" (click)="deleteCourseIcon()">
                                 <fa-icon [icon]="faTimes"></fa-icon>
                                 <span jhiTranslate="artemisApp.course.delete.icon">Remove Icon</span>
