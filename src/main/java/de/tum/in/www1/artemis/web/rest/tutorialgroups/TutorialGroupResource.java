@@ -264,7 +264,7 @@ public class TutorialGroupResource {
             newTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser));
         }
         if (oldTA != null && (newTA == null || !newTA.equals(oldTA))) {
-            var oldTAFromDatabase = userRepository.findOneByLogin(oldTutorialGroup.getTeachingAssistant().getLogin());
+            var oldTAFromDatabase = userRepository.findOneByLogin(oldTA.getLogin());
             oldTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser));
         }
 
