@@ -231,7 +231,7 @@ public class TutorialGroupResource {
      *
      * @param courseId               the id of the course to which the tutorial group belongs to
      * @param tutorialGroupId        the id of the tutorial group to update
-     * @param tutorialGroupUpdateDTO dto containing the t utorial group to update and the optional notification text
+     * @param tutorialGroupUpdateDTO dto containing the tutorial group to update and the optional notification text
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group
      */
     @PutMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
