@@ -8,7 +8,7 @@
                 "title": "Your Tutorial Groups",
                 "noRegistrations": "You are not registered to any tutorial group in this course.",
                 "allFilter": "Show all Tutorial Groups",
-                "registeredFilter": "Show registered Tutorial Groups"
+                "registeredFilter": "Show my Tutorial Groups"
             },
             "courseTutorialGroupDetail": {
                 "title": "Tutorial Group Details"
