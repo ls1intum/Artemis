@@ -77,7 +77,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.course = this.courseCalculationService.getCourse(this.courseId);
 
         if (this.course) {
-            // If the course is present but without learning goals or tutorial grouos (e.g. loaded in Artemis overview), we only need to fetch those
+            // If the course is present but without learning goals or tutorial groups (e.g. loaded in Artemis overview), we only need to fetch those
             if (!this.course.learningGoals || !this.course.prerequisites || !this.course.tutorialGroups) {
                 this.loadLearningGoalsAndTutorialGroups();
             }
