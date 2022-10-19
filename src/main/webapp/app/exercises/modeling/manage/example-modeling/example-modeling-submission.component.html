@@ -15,10 +15,26 @@
                     <jhi-help-icon placement="auto" [text]="'artemisApp.exampleSubmission.selectModelExplanation'"></jhi-help-icon>
                 </div>
                 <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check" name="mode" id="read-and-confirm-button" autocomplete="off" [value]="'readConfirm'" [(ngModel)]="selectedMode" />
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="mode"
+                        id="read-and-confirm-button"
+                        autocomplete="off"
+                        [value]="ExampleSubmissionMode.READ_AND_CONFIRM"
+                        [(ngModel)]="selectedMode"
+                    />
                     <label class="btn btn-outline-secondary" for="read-and-confirm-button">{{ 'artemisApp.exampleSubmission.readAndConfirm' | artemisTranslate }}</label>
 
-                    <input type="radio" class="btn-check" name="mode" id="only-not-imported" autocomplete="off" [value]="'assessCorrectly'" [(ngModel)]="selectedMode" />
+                    <input
+                        type="radio"
+                        class="btn-check"
+                        name="mode"
+                        id="only-not-imported"
+                        autocomplete="off"
+                        [value]="ExampleSubmissionMode.ASSESS_CORRECTLY"
+                        [(ngModel)]="selectedMode"
+                    />
                     <label class="btn btn-outline-secondary" for="only-not-imported">{{ 'artemisApp.exampleSubmission.assessCorrectly' | artemisTranslate }}</label>
                 </div>
             </div>
@@ -133,9 +149,12 @@
                     </jhi-modeling-assessment>
                 </div>
 
-                <!--The explanation field is only visible a) in assessment mode, b) for example submissions not used for tutorial and c) when in assessment dashboard (readonly = true)
+                <!--The explanation field is only visible a) in assessment mode, b) for example submissions in read and confirm mode and c) when in assessment dashboard (readonly = true)
                 only if an explanation text is there-->
-                <h3 class="mt-3" *ngIf="assessmentMode && !exampleSubmission?.usedForTutorial && (!readOnly || (assessmentExplanation && assessmentExplanation.length > 0))">
+                <h3
+                    class="mt-3"
+                    *ngIf="assessmentMode && selectedMode === ExampleSubmissionMode.READ_AND_CONFIRM && (!readOnly || (assessmentExplanation && assessmentExplanation.length > 0))"
+                >
                     {{ 'artemisApp.exampleSubmission.assessmentExplanation' | artemisTranslate }}
                     <sup>
                         <small>
@@ -147,10 +166,10 @@
                         </small>
                     </sup>
                 </h3>
-                <!--The explanation field is only visible a) in assessment mode, b) for example submissions not used for tutorial and c) when in assessment dashboard (readonly = true)
+                <!--The explanation field is only visible a) in assessment mode, b) for example submissions in read and confirm mode and c) when in assessment dashboard (readonly = true)
                 only if an explanation text is there-->
                 <textarea
-                    *ngIf="assessmentMode && !exampleSubmission?.usedForTutorial && (!readOnly || (assessmentExplanation && assessmentExplanation.length > 0))"
+                    *ngIf="assessmentMode && selectedMode === ExampleSubmissionMode.READ_AND_CONFIRM && (!readOnly || (assessmentExplanation && assessmentExplanation.length > 0))"
                     class="form-control"
                     rows="4"
                     maxLength="2000"
@@ -174,6 +193,7 @@
                 [exercise]="exercise"
                 [collapsed]="!readOnly && !toComplete"
                 [isAssessmentTraining]="toComplete"
+                [showAssessmentInstructions]="assessmentMode"
             >
             </jhi-collapsable-assessment-instructions>
         </div>
