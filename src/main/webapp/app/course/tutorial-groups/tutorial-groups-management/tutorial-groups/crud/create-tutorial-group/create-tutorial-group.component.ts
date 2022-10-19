@@ -66,7 +66,7 @@ export class CreateTutorialGroupComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups-management']);
+                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

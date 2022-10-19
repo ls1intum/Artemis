@@ -18,6 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.google.common.collect.ImmutableSet;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
@@ -98,6 +99,15 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         userRepository.save(ModelFactory.generateActivatedUser("tutor42"));
         userRepository.save(ModelFactory.generateActivatedUser("editor42"));
         userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
+
+        // Add registration number to student 8
+        User student8 = userRepository.findOneByLogin("student8").get();
+        student8.setRegistrationNumber("123456");
+        userRepository.save(student8);
+        // Add registration number to student 9
+        User student9 = userRepository.findOneByLogin("student9").get();
+        student9.setRegistrationNumber("654321");
+        userRepository.save(student9);
 
         var course = this.database.createCourse();
         exampleCourseId = course.getId();

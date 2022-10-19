@@ -86,7 +86,7 @@ export class EditTutorialGroupSessionComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', this.tutorialGroupId, 'sessions']);
+                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups', this.tutorialGroupId, 'sessions']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

@@ -87,7 +87,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
         expect(createStub).toHaveBeenCalledOnce();
         expect(createStub).toHaveBeenCalledWith(exampleConfiguration, course.id, formData.period);
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups-management']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups']);
         expect(updateCourseSpy).toHaveBeenCalledOnce();
         expect(updateCourseSpy).toHaveBeenCalledWith(component.course);
     });

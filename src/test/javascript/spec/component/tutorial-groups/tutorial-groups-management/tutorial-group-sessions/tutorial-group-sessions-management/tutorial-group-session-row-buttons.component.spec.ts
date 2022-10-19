@@ -73,7 +73,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
 
         fixture.whenStable().then(() => {
             expect(navigateSpy).toHaveBeenCalledOnce();
-            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups-management', tutorialGroupId, 'sessions', tutorialGroupSession.id, 'edit']);
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups', tutorialGroupId, 'sessions', tutorialGroupSession.id, 'edit']);
         });
     }));
 

@@ -7,30 +7,24 @@
                     <a
                         class="btn btn-primary"
                         *ngIf="course?.tutorialGroupsConfiguration"
-                        [routerLink]="[
-                            '/course-management',
-                            courseId,
-                            'tutorial-groups-management',
-                            'configuration',
-                            course!.tutorialGroupsConfiguration!.id,
-                            'tutorial-free-days'
-                        ]"
+                        [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'tutorial-free-days']"
                     >
                         <fa-icon [icon]="faUmbrellaBeach"></fa-icon>
                         <span>{{ 'artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons' | artemisTranslate }}</span>
                     </a>
-                    <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'tutorial-groups-management', 'create']">
+                    <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'tutorial-groups', 'create']">
                         <fa-icon [icon]="faPlus"></fa-icon>
                         <span>{{ 'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate }}</span>
                     </a>
                     <a
                         *ngIf="course?.tutorialGroupsConfiguration"
                         class="btn btn-secondary"
-                        [routerLink]="['/course-management', courseId, 'tutorial-groups-management', 'configuration', course!.tutorialGroupsConfiguration!.id, 'edit']"
+                        [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'edit']"
                     >
                         <fa-icon [icon]="faPencil"></fa-icon>
                         <span>{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
                     </a>
+                    <jhi-tutorial-groups-import-button [courseId]="courseId" (importFinished)="loadTutorialGroups()"></jhi-tutorial-groups-import-button>
                 </div>
             </div>
             <ng-container *ngIf="tutorialGroups?.length">

@@ -63,6 +63,18 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             """)
     Optional<TutorialGroup> findByIdWithTeachingAssistantAndRegistrationsAndSessions(@Param("tutorialGroupId") long tutorialGroupId);
 
+    @Query("""
+            SELECT tutorialGroup
+            FROM TutorialGroup tutorialGroup
+            LEFT JOIN FETCH tutorialGroup.teachingAssistant
+            LEFT JOIN FETCH tutorialGroup.registrations
+            WHERE tutorialGroup.title = :#{#title}
+            AND tutorialGroup.course.id = :#{#courseId}
+            """)
+    Optional<TutorialGroup> findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(String title, Long courseId);
+
+    boolean existsByTitleAndCourseId(String title, Long courseId);
+
     Set<TutorialGroup> findAllByTeachingAssistant(User teachingAssistant);
 
     @Modifying

@@ -69,7 +69,7 @@ export const courseManagementState: Routes = [
         loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
     },
     {
-        path: ':courseId/tutorial-groups-management',
+        path: ':courseId/tutorial-groups',
         resolve: {
             course: CourseManagementResolve,
         },
@@ -84,7 +84,7 @@ export const courseManagementState: Routes = [
         loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
     },
     {
-        path: ':courseId/tutorial-groups-management',
+        path: ':courseId/tutorial-groups',
         resolve: {
             course: CourseManagementResolve,
         },

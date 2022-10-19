@@ -39,7 +39,7 @@ export class TutorialGroupsManagementComponent implements OnInit {
     }
 
     onTutorialGroupSelected = (tutorialGroup: TutorialGroup) => {
-        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', tutorialGroup.id]);
+        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups', tutorialGroup.id]);
     };
 
     loadTutorialGroups() {
@@ -71,7 +71,7 @@ export class TutorialGroupsManagementComponent implements OnInit {
 
     private checkIfTutorialGroupsConfigured() {
         if (!this.course.tutorialGroupsConfiguration) {
-            this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', 'configuration', 'create']);
+            this.router.navigate(['/course-management', this.courseId, 'tutorial-groups', 'configuration', 'create']);
         }
     }
 }

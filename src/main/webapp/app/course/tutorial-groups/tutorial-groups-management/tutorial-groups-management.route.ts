@@ -1,5 +1,5 @@
 /**
- * parent 'course-management/:courseId/tutorial-groups-management'
+ * parent 'course-management/:courseId/tutorial-groups'
  */
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';

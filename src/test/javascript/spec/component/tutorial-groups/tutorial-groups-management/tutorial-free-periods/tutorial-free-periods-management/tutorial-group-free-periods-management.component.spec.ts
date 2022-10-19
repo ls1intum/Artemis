@@ -108,15 +108,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         const createButton = fixture.debugElement.nativeElement.querySelector('#create-tutorial-free-day');
         createButton.click();
         fixture.whenStable().then(() => {
-            expect(navigateSpy).toHaveBeenCalledWith([
-                '/course-management',
-                courseId,
-                'tutorial-groups-management',
-                'configuration',
-                configuration.id,
-                'tutorial-free-days',
-                'create',
-            ]);
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups', 'configuration', configuration.id, 'tutorial-free-days', 'create']);
         });
     }));
 

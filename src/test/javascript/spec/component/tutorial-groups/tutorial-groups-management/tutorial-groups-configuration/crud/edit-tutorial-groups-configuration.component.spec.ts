@@ -114,7 +114,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
         expect(updatedStub).toHaveBeenCalledOnce();
         expect(updatedStub).toHaveBeenCalledWith(course.id, exampleConfiguration.id, changedConfiguration, formData.period);
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups-management']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups']);
         expect(updateCourseSpy).toHaveBeenCalledOnce();
         expect(updateCourseSpy).toHaveBeenCalledWith(component.course);
     });

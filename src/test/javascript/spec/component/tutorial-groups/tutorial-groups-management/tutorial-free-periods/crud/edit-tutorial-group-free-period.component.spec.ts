@@ -116,6 +116,6 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         expect(updatedStub).toHaveBeenCalledOnce();
         expect(updatedStub).toHaveBeenCalledWith(courseId, configurationId, periodId, formDataToTutorialGroupFreePeriodDTO(formData));
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups-management', 'configuration', configurationId, 'tutorial-free-days']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups', 'configuration', configurationId, 'tutorial-free-days']);
     });
 });

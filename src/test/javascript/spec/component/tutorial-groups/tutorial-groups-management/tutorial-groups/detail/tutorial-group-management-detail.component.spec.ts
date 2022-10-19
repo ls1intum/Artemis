@@ -89,7 +89,7 @@ describe('TutorialGroupManagementDetailComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         fixture.detectChanges();
         component.onRegistrationsClicked();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 2, 'tutorial-groups-management', 1, 'registered-students']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 2, 'tutorial-groups', 1, 'registered-students']);
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
@@ -98,7 +98,7 @@ describe('TutorialGroupManagementDetailComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         fixture.detectChanges();
         component.onTutorialGroupDeleted();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 2, 'tutorial-groups-management']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 2, 'tutorial-groups']);
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 });

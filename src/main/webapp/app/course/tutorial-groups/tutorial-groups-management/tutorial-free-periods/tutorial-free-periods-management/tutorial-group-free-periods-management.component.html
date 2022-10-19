@@ -7,15 +7,7 @@
                     <a
                         class="btn btn-primary"
                         id="create-tutorial-free-day"
-                        [routerLink]="[
-                            '/course-management',
-                            courseId,
-                            'tutorial-groups-management',
-                            'configuration',
-                            tutorialGroupsConfiguration.id,
-                            'tutorial-free-days',
-                            'create'
-                        ]"
+                        [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'tutorial-free-days', 'create']"
                     >
                         <fa-icon [icon]="faPlus"></fa-icon>
                         <span>{{ 'artemisApp.pages.tutorialFreePeriodsManagement.createFreePeriodButton' | artemisTranslate }}</span>

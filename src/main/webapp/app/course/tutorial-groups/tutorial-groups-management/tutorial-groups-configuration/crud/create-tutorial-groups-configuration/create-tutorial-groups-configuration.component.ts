@@ -52,7 +52,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit {
                     const createdConfiguration = resp.body!;
                     this.course.tutorialGroupsConfiguration = createdConfiguration;
                     this.courseManagementService.courseWasUpdated(this.course);
-                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups-management']);
+                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

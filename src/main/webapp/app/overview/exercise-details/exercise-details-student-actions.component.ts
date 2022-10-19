@@ -41,6 +41,8 @@ export class ExerciseDetailsStudentActionsComponent {
     // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
+    startingPracticeMode = false;
+
     // Icons
     faComment = faComment;
     faFolderOpen = faFolderOpen;
@@ -103,7 +105,6 @@ export class ExerciseDetailsStudentActionsComponent {
                 next: (participation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
-                        this.exercise.participationStatus = participationStatus(this.exercise);
                         this.exercise.participationStatus = this.participationStatusWrapper();
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -121,23 +122,33 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     startPractice(): void {
-        this.courseExerciseService.startPractice(this.exercise.id!).subscribe({
-            next: (participation) => {
-                if (participation) {
-                    this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
-                }
-                if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                    if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
-                        this.alertService.success('artemisApp.exercise.personalRepositoryClone');
-                    } else {
-                        this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
+        this.startingPracticeMode = true;
+        this.courseExerciseService
+            .startPractice(this.exercise.id!)
+            .pipe(finalize(() => (this.startingPracticeMode = false)))
+            .subscribe({
+                next: (participation) => {
+                    if (participation) {
+                        if (this.exercise.studentParticipations?.some((studentParticipation) => studentParticipation.id === participation.id)) {
+                            this.exercise.studentParticipations = this.exercise.studentParticipations?.map((studentParticipation) =>
+                                studentParticipation.id === participation.id ? participation : studentParticipation,
+                            );
+                        } else {
+                            this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
+                        }
                     }
-                }
-            },
-            error: () => {
-                this.alertService.warning('artemisApp.exercise.startError');
-            },
-        });
+                    if (this.exercise.type === ExerciseType.PROGRAMMING) {
+                        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+                            this.alertService.success('artemisApp.exercise.personalRepositoryClone');
+                        } else {
+                            this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
+                        }
+                    }
+                },
+                error: () => {
+                    this.alertService.warning('artemisApp.exercise.startError');
+                },
+            });
     }
 
     /**

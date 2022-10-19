@@ -16,7 +16,8 @@ import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/s
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { TutorialGroupsTableStubComponent } from '../../../stubs/tutorial-groups-table-stub.component';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 import { Course } from 'app/entities/course.model';
 
@@ -24,6 +25,14 @@ import { Course } from 'app/entities/course.model';
 class MockTutorialGroupsCourseInformationComponent {
     @Input()
     tutorialGroups: TutorialGroup[] = [];
+}
+@Component({
+    selector: 'jhi-tutorial-groups-import-button',
+    template: '',
+})
+class MockTutorialGroupsImportButtonComponent {
+    @Input() courseId: number;
+    @Output() importFinished: EventEmitter<void> = new EventEmitter();
 }
 
 describe('TutorialGroupsManagementComponent', () => {
@@ -52,6 +61,7 @@ describe('TutorialGroupsManagementComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
+                MockTutorialGroupsImportButtonComponent,
             ],
             providers: [
                 MockProvider(TutorialGroupsService),
@@ -108,11 +118,21 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
     });
 
+    it('should get all tutorial groups for course if import is done', () => {
+        fixture.detectChanges();
+        getAllOfCourseSpy.mockClear();
+        expect(getAllOfCourseSpy).not.toHaveBeenCalled();
+        const mockTutorialGroupImportButtonComponent = fixture.debugElement.query(By.directive(MockTutorialGroupsImportButtonComponent)).componentInstance;
+        mockTutorialGroupImportButtonComponent.importFinished.emit();
+        expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
+    });
+
     it('should navigate to configuration creation page if course has no configuration', () => {
         course.tutorialGroupsConfiguration = undefined;
         fixture.detectChanges();
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups-management', 'configuration', 'create']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups', 'configuration', 'create']);
         course.tutorialGroupsConfiguration = configuration;
     });
 
@@ -120,6 +140,6 @@ describe('TutorialGroupsManagementComponent', () => {
         component.courseId = 1;
         component.onTutorialGroupSelected(tutorialGroupOne);
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups-management', tutorialGroupOne.id]);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups', tutorialGroupOne.id]);
     });
 });

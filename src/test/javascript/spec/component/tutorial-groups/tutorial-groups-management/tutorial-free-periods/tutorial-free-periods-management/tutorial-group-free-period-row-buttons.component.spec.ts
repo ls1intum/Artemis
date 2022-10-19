@@ -76,7 +76,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
             expect(navigateSpy).toHaveBeenCalledWith([
                 '/course-management',
                 courseId,
-                'tutorial-groups-management',
+                'tutorial-groups',
                 'configuration',
                 configuration.id,
                 'tutorial-free-days',

@@ -47,16 +47,20 @@ describe('TutorialGroupRowButtonsComponent', () => {
     };
 
     it('should navigate to session management', fakeAsync(() => {
-        testButtonLeadsToRouting('sessions-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id!, 'sessions']);
+        testButtonLeadsToRouting('sessions-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups', tutorialGroup.id!, 'sessions']);
     }));
 
     it('should navigate to registrations management', fakeAsync(() => {
-        testButtonLeadsToRouting('registrations-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id!, 'registered-students']);
+        testButtonLeadsToRouting('registrations-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups', tutorialGroup.id!, 'registered-students']);
     }));
 
     it('should navigate to edit', fakeAsync(() => {
-        testButtonLeadsToRouting('edit-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id!, 'edit']);
+        testButtonLeadsToRouting('edit-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups', tutorialGroup.id!, 'edit']);
     }));
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
 
     it('should call delete and emit deleted event', () => {
         const tutorialGroupService = TestBed.inject(TutorialGroupsService);

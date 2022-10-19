@@ -143,7 +143,7 @@ describe('TutorialGroupSessionsManagement', () => {
 
         fixture.whenStable().then(() => {
             expect(navigateSpy).toHaveBeenCalledOnce();
-            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'sessions', 'create']);
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups', tutorialGroup.id, 'sessions', 'create']);
         });
     }));
 });

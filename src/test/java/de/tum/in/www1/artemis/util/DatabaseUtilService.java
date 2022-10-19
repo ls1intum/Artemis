@@ -2279,6 +2279,17 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
+    public OnlineCourseConfiguration addOnlineCourseConfigurationToCourse(Course course) {
+        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        onlineCourseConfiguration.setLtiKey("artemis_lti_key");
+        onlineCourseConfiguration.setLtiSecret("fake-secret");
+        onlineCourseConfiguration.setUserPrefix("prefix");
+        onlineCourseConfiguration.setCourse(course);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        courseRepo.save(course);
+        return onlineCourseConfiguration;
+    }
+
     /**
      * @param programmingExerciseTitle The name of programming exercise
      * @return A course with named exercise

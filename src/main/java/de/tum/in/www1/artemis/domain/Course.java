@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 
 import javax.persistence.*;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -104,6 +105,10 @@ public class Course extends DomainObject {
     @Column(name = "online_course")
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse = false;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "online_course_configuration_id")
+    private OnlineCourseConfiguration onlineCourseConfiguration;
 
     @Column(name = "max_complaints")
     @JsonView(QuizView.Before.class)
@@ -347,6 +352,14 @@ public class Course extends DomainObject {
 
     public void setOnlineCourse(Boolean onlineCourse) {
         this.onlineCourse = onlineCourse;
+    }
+
+    public OnlineCourseConfiguration getOnlineCourseConfiguration() {
+        return Hibernate.isInitialized(onlineCourseConfiguration) ? onlineCourseConfiguration : null;
+    }
+
+    public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
+        this.onlineCourseConfiguration = onlineCourseConfiguration;
     }
 
     public Integer getMaxComplaints() {
@@ -665,10 +678,26 @@ public class Course extends DomainObject {
         this.tutorialGroups = tutorialGroups;
     }
 
+    /**
+     * Validates that only one of onlineCourse and registrationEnabled is selected
+     */
     public void validateOnlineCourseAndRegistrationEnabled() {
         if (isOnlineCourse() && isRegistrationEnabled()) {
             throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
                     true);
+        }
+    }
+
+    /**
+     * Validates that there is an OnlineCourseConfiguration if the course is an online course
+     */
+    public void validateOnlineCourseConfiguration() {
+        if (isOnlineCourse()) {
+            OnlineCourseConfiguration ocConfiguration = getOnlineCourseConfiguration();
+            if (ocConfiguration == null) {
+                throw new BadRequestAlertException("Configuration must exist for online courses", ENTITY_NAME, "onlineCourseConfigurationMissing");
+            }
+            ocConfiguration.validate();
         }
     }
 
