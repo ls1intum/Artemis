@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { ActivatedRoute, Router, Params } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';

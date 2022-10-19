@@ -1,0 +1,61 @@
+<div class="form-step" [hidden]="currentStep < 4">
+    <h1>Units</h1>
+    <p>Add content to the lecture by creating different kinds of lecture units.</p>
+    <jhi-lecture-unit-management
+        [lectureId]="this.lecture.id"
+        [emitEditEvents]="true"
+        (onEditLectureUnitClicked)="startEditLectureUnit($event)"
+        [showCreationCard]="false"
+        [showLearningGoals]="false"
+    ></jhi-lecture-unit-management>
+    <div class="form-group w-100 d-flex justify-content-start" *ngIf="!isAnyUnitFormOpen()">
+        <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)"></jhi-unit-creation-card>
+    </div>
+    <div *ngIf="isAnyUnitFormOpen()" class="form-group">
+        <h4 *ngIf="!isEditingLectureUnit">New Lecture Unit</h4>
+        <h4 *ngIf="isEditingLectureUnit">Edit Lecture Unit</h4>
+        <jhi-text-unit-form
+            *ngIf="isTextUnitFormOpen"
+            [isEditMode]="isEditingLectureUnit"
+            [hasCancelButton]="true"
+            (onCancel)="onCloseLectureUnitForms()"
+            (formSubmitted)="createEditTextUnit($event)"
+            [formData]="textUnitFormData"
+        ></jhi-text-unit-form>
+        <jhi-video-unit-form
+            *ngIf="isVideoUnitFormOpen"
+            [isEditMode]="isEditingLectureUnit"
+            [hasCancelButton]="true"
+            (onCancel)="onCloseLectureUnitForms()"
+            (formSubmitted)="createEditVideoUnit($event)"
+            [formData]="videoUnitFormData"
+        ></jhi-video-unit-form>
+        <jhi-online-unit-form
+            *ngIf="isOnlineUnitFormOpen"
+            [isEditMode]="isEditingLectureUnit"
+            [hasCancelButton]="true"
+            (onCancel)="onCloseLectureUnitForms()"
+            (formSubmitted)="createEditOnlineUnit($event)"
+            [formData]="onlineUnitFormData"
+        ></jhi-online-unit-form>
+        <jhi-attachment-unit-form
+            *ngIf="isAttachmentUnitFormOpen"
+            [isEditMode]="isEditingLectureUnit"
+            [hasCancelButton]="true"
+            (onCancel)="onCloseLectureUnitForms()"
+            (formSubmitted)="createEditAttachmentUnit($event)"
+            [formData]="attachmentUnitFormData"
+        ></jhi-attachment-unit-form>
+        <jhi-create-exercise-unit
+            *ngIf="isExerciseUnitFormOpen"
+            [shouldNavigateOnSubmit]="false"
+            (onExerciseUnitCreated)="onExerciseUnitCreated()"
+            [lectureId]="lecture.id"
+            [courseId]="lecture.course?.id"
+            [currentWizardStep]="currentStep"
+            [hasCancelButton]="true"
+            [hasCreateExerciseButton]="true"
+            (onCancel)="onCloseLectureUnitForms()"
+        ></jhi-create-exercise-unit>
+    </div>
+</div>
