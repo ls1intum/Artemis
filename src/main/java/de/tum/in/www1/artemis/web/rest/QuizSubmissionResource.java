@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.time.ZonedDateTime;
 
+import javax.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -83,7 +85,7 @@ public class QuizSubmissionResource {
      */
     @PostMapping("/exercises/{exerciseId}/submissions/live")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<QuizSubmission> submitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for live mode : {}", quizSubmission);
         String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
         try {
@@ -107,7 +109,7 @@ public class QuizSubmissionResource {
      */
     @PostMapping("/exercises/{exerciseId}/submissions/practice")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
 
         // recreate pointers back to submission in each submitted answer
@@ -169,7 +171,7 @@ public class QuizSubmissionResource {
      */
     @PostMapping("exercises/{exerciseId}/submissions/preview")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> submitForPreview(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<Result> submitForPreview(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for preview : {}", quizSubmission);
 
         if (quizSubmission.getId() != null) {
@@ -208,7 +210,7 @@ public class QuizSubmissionResource {
      */
     @PutMapping("exercises/{exerciseId}/submissions/exam")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<QuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<QuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         long start = System.currentTimeMillis();
         log.debug("REST request to submit QuizSubmission for exam : {}", quizSubmission);
 

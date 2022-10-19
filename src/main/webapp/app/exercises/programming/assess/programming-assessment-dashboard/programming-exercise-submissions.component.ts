@@ -101,7 +101,7 @@ export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentD
 
     private getSubmissions(): void {
         this.programmingSubmissionService
-            .getProgrammingSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
+            .getSubmissions(this.exercise.id!, { submittedOnly: true })
             .pipe(
                 map((response: HttpResponse<ProgrammingSubmission[]>) =>
                     response.body!.map((submission: ProgrammingSubmission) => {

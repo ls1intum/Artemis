@@ -1,10 +1,11 @@
 import { Component, Input, OnChanges, OnInit, ViewEncapsulation } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { Exercise, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, getCourseFromExercise, getIcon, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-header-participation-page',
@@ -21,11 +22,10 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
 
     public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
+    public achievedPoints?: number;
 
     dueDate?: dayjs.Dayjs;
     getIcon = getIcon;
-
-    constructor() {}
 
     /**
      * Sets the status badge and categories of the exercise on init
@@ -56,6 +56,12 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
             this.exerciseStatusBadge = hasExerciseDueDatePassed(this.exercise, this.participation) ? 'bg-danger' : 'bg-success';
             this.exerciseCategories = this.exercise.categories || [];
             this.dueDate = getExerciseDueDate(this.exercise, this.participation);
+            if (this.participation?.results?.[0]?.rated) {
+                this.achievedPoints = roundValueSpecifiedByCourseSettings(
+                    (this.participation.results?.[0].score! * this.exercise.maxPoints!) / 100,
+                    getCourseFromExercise(this.exercise),
+                );
+            }
         }
     }
 }

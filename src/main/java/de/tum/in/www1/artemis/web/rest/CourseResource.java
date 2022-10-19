@@ -141,6 +141,7 @@ public class CourseResource {
         course.validateRegistrationConfirmationMessage();
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndRegistrationEnabled();
+        course.validateOnlineCourseConfiguration();
         course.validateAccuracyOfScores();
         if (!course.isValidStartAndEndDate()) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
@@ -226,6 +227,7 @@ public class CourseResource {
         updatedCourse.validateRegistrationConfirmationMessage();
         updatedCourse.validateComplaintsAndRequestMoreFeedbackConfig();
         updatedCourse.validateOnlineCourseAndRegistrationEnabled();
+        updatedCourse.validateOnlineCourseConfiguration();
         updatedCourse.validateShortName();
         updatedCourse.validateAccuracyOfScores();
         if (!updatedCourse.isValidStartAndEndDate()) {
@@ -481,14 +483,20 @@ public class CourseResource {
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
+            course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        }
+        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
             course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
             course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         }
+
         return ResponseEntity.ok(course);
     }
 
@@ -784,6 +792,27 @@ public class CourseResource {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         return courseService.getAllUsersInGroup(course, course.getInstructorGroupName());
+    }
+
+    /**
+     * GET /courses/:courseId/search-users : search users for a given course within all groups.
+     *
+     * @param courseId    the id of the course for which to search users
+     * @param nameOfUser  the name by which to search users
+     * @return the ResponseEntity with status 200 (OK) and with body all users
+     */
+    @GetMapping("/courses/{courseId}/search-other-users")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<User>> searchOtherUsersInCourse(@PathVariable long courseId, @RequestParam("nameOfUser") String nameOfUser) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        // restrict result size by only allowing reasonable searches
+        if (nameOfUser.length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'name' must be three characters or longer.");
+        }
+
+        return ResponseEntity.ok().body(courseService.searchOtherUsersNameInCourse(course, nameOfUser));
     }
 
     /**

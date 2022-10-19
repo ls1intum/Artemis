@@ -194,7 +194,14 @@ The following universities are actively using Artemis or are currently evaluatin
 * https://artemis.cs.hm.edu
 * Main contact person: [Michael Eggers](mailto:michael.eggers@hm.edu)
 
+##### TU Dresden
+
+* Main contact person: [Martin Morgenstern](mailto:martin.morgenstern1@tu-dresden.de)
+
+##### Hochschule Heilbronn
+
+* Main contact person: [Jörg Winckler](mailto:joerg.winckler@hs-heilbronn.de)
+
 ##### Interested universities
 
-* TU Dresden
 * HU Berlin

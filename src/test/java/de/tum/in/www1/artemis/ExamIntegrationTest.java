@@ -1626,14 +1626,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositories(programmingExercise2);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "tutor1", roles = "TA")
-    void testGetExamForExamAssessmentDashboard() throws Exception {
+    @ValueSource(ints = { 0, 1, 2 })
+    void testGetExamForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
         User user = userRepo.findOneByLogin("student1").get();
         // we need an exam from the past, otherwise the tutor won't have access
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user, now().minusHours(3), now().minusHours(2), now().minusHours(1));
-        Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/exam-for-assessment-dashboard",
-                HttpStatus.OK, Exam.class);
+        Exam exam = course.getExams().iterator().next();
+
+        // Ensure the API endpoint works for all number of correctionRounds
+        exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRounds);
+        examRepository.save(exam);
+
+        Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-for-assessment-dashboard", HttpStatus.OK, Exam.class);
 
         // Test that the received exam has two text exercises
         assertThat(receivedExam.getExerciseGroups().get(0).getExercises()).as("Two exercises are returned").hasSize(2);
@@ -1846,7 +1852,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
         for (var exercise : exercisesInExam) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId());
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false);
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }
@@ -2408,18 +2414,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(expectedFilenames).contains(Path.of(filename));
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(ints = { 0, 1, 2 })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetStatsForExamAssessmentDashboardOneCorrectionRound() throws Exception {
-        testGetStatsForExamAssessmentDashboard(1);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetStatsForExamAssessmentDashboardTwoCorrectionRounds() throws Exception {
-        testGetStatsForExamAssessmentDashboard(2);
-    }
-
     void testGetStatsForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
@@ -2438,11 +2435,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfSubmissions()).isInstanceOf(DueDateStat.class);
         assertThat(stats.getTutorLeaderboardEntries()).isInstanceOf(List.class);
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isInstanceOf(DueDateStat[].class);
+        if (numberOfCorrectionRounds != 0) {
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isInstanceOf(DueDateStat[].class);
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
+        }
+        else {
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isNull();
+        }
         assertThat(stats.getNumberOfAssessmentLocks()).isZero();
         assertThat(stats.getNumberOfSubmissions().inTime()).isZero();
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
+
+        if (numberOfCorrectionRounds == 0) {
+            // We do not need any more assertions, as numberOfCorrectionRounds is only 0 for test exams (no manual assessment)
+            return;
+        }
 
         var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).isEmpty();
@@ -2473,7 +2480,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
         for (var exercise : exercisesInExam) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId());
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false);
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }

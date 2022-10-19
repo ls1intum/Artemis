@@ -670,6 +670,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         participationService.deleteAllByExerciseId(idOfModelingExercise, true, true);
         participationService.deleteAllByExerciseId(idOfTeamTextExercise, true, true);
         await().until(() -> participantScoreRepository.findAll().isEmpty());
+        await().until(() -> participantScoreSchedulerService.isIdle());
     }
 
     @Test
