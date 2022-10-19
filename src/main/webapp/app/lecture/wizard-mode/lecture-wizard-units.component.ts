@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input, ViewChild, OnInit } from '@angular/core';
 import { Lecture } from 'app/entities/lecture.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
@@ -20,12 +20,13 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import dayjs from 'dayjs/esm';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-lecture-update-wizard-units',
     templateUrl: './lecture-wizard-units.component.html',
 })
-export class LectureUpdateWizardUnitsComponent {
+export class LectureUpdateWizardUnitsComponent implements OnInit {
     @Input() currentStep: number;
     @Input() lecture: Lecture;
 
@@ -48,12 +49,21 @@ export class LectureUpdateWizardUnitsComponent {
     attachmentUnitFormData: AttachmentUnitFormData;
 
     constructor(
+        protected activatedRoute: ActivatedRoute,
         protected alertService: AlertService,
         protected textUnitService: TextUnitService,
         protected videoUnitService: VideoUnitService,
         protected onlineUnitService: OnlineUnitService,
         protected attachmentUnitService: AttachmentUnitService,
     ) {}
+
+    ngOnInit() {
+        this.activatedRoute.queryParams.subscribe((params) => {
+            if (params.shouldOpenCreateExercise) {
+                this.onCreateLectureUnit(LectureUnitType.EXERCISE);
+            }
+        });
+    }
 
     onCreateLectureUnit(type: LectureUnitType) {
         this.isEditingLectureUnit = false;

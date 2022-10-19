@@ -4,9 +4,9 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Lecture } from 'app/entities/lecture.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faCheck, faHandshakeAngle, faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mode/lecture-wizard-learning-goals.component';
+import { take } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-lecture-update-wizard',
@@ -44,13 +44,9 @@ export class LectureUpdateWizardComponent implements OnInit {
     ngOnInit() {
         this.isSaving = false;
 
-        this.activatedRoute.queryParams.subscribe((params) => {
-            if (params.shouldOpenCreateExercise) {
-                this.unitsComponent.onCreateLectureUnit(LectureUnitType.EXERCISE);
-            }
-
-            if (params.step) {
-                this.currentStep = params.step;
+        this.activatedRoute.queryParams.pipe(take(1)).subscribe((params) => {
+            if (params.step && !isNaN(+params.step)) {
+                this.currentStep = +params.step;
             } else {
                 this.currentStep = this.lecture.id ? 5 : this.lecture.startDate !== undefined || this.lecture.endDate !== undefined ? 2 : 1;
             }
