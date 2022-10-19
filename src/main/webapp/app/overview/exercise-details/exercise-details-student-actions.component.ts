@@ -66,7 +66,7 @@ export class ExerciseDetailsStudentActionsComponent {
      * Starting an exercise is not possible in the exam, otherwise see exercise.utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
-        return !this.examMode && isStartExerciseAvailable(this.exercise as ProgrammingExercise);
+        return !this.examMode && isStartExerciseAvailable(this.exercise as ProgrammingExercise, this.studentParticipation);
     }
 
     /**
@@ -231,11 +231,9 @@ export class ExerciseDetailsStudentActionsComponent {
     public shouldDisplayIDEButtons(): boolean {
         return !!this.exercise.studentParticipations?.some((participation) => {
             const status = participationStatus(this.exercise, participation.testRun);
-            return (
-                status === ParticipationStatus.INITIALIZED ||
-                (status === ParticipationStatus.INACTIVE &&
-                    ((!isStartExerciseAvailable(this.exercise) && !participation.testRun) || (!isStartPracticeAvailable(this.exercise) && participation.testRun)))
-            );
+            const startExerciseNotAvailable = !isStartExerciseAvailable(this.exercise) && !participation.testRun;
+            const startPracticeNotAvailable = !isStartPracticeAvailable(this.exercise) && participation.testRun;
+            return status === ParticipationStatus.INITIALIZED || (status === ParticipationStatus.INACTIVE && (startExerciseNotAvailable || startPracticeNotAvailable));
         });
     }
 
