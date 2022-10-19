@@ -1,10 +1,15 @@
 <div>
     <form name="createForm" #createForm="ngForm" role="form">
-        <jhi-lecture-update-wizard-title [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-title>
-        <jhi-lecture-update-wizard-period [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-period>
-        <jhi-lecture-update-wizard-attachments [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-attachments>
-        <jhi-lecture-update-wizard-units [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-units>
-        <jhi-lecture-update-wizard-learning-goals [currentStep]="currentStep" [lecture]="lecture" [isSaving]="isSaving"></jhi-lecture-update-wizard-learning-goals>
+        <jhi-lecture-update-wizard-title *ngIf="currentStep >= 1" [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-title>
+        <jhi-lecture-update-wizard-period *ngIf="currentStep >= 2" [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-period>
+        <jhi-lecture-update-wizard-attachments *ngIf="currentStep >= 3" [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-attachments>
+        <jhi-lecture-update-wizard-units *ngIf="currentStep >= 4" [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-units>
+        <jhi-lecture-update-wizard-learning-goals
+            *ngIf="currentStep >= 5"
+            [currentStep]="currentStep"
+            [lecture]="lecture"
+            [isSaving]="isSaving"
+        ></jhi-lecture-update-wizard-learning-goals>
 
         <!-- Bottom Navigation Bar -->
         <div class="d-flex align-items-center">

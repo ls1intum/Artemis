@@ -1,4 +1,4 @@
-<div class="form-step form-group" [hidden]="currentStep < 3">
+<div class="form-step form-group">
     <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.attachmentsStepTitle">Attachments</span></h1>
     <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.attachmentsStepMessage">Upload attachments to this lecture.</span></p>
     <jhi-lecture-attachments *ngIf="currentStep >= 3" [lectureId]="lecture.id" [showHeader]="false"></jhi-lecture-attachments>
