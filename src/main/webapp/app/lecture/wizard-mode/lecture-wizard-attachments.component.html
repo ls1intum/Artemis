@@ -1,0 +1,5 @@
+<div class="form-step form-group" [hidden]="currentStep < 3">
+    <h1>Attachments</h1>
+    <p>Upload attachments to this lecture.</p>
+    <jhi-lecture-attachments *ngIf="currentStep >= 3" [lectureId]="lecture.id" [showHeader]="false"></jhi-lecture-attachments>
+</div>

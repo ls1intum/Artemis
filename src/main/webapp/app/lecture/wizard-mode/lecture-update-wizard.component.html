@@ -2,11 +2,7 @@
     <form name="createForm" #createForm="ngForm" role="form">
         <jhi-lecture-update-wizard-title [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-title>
         <jhi-lecture-update-wizard-period [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-period>
-        <div class="form-step form-group" [hidden]="currentStep < 3">
-            <h1>Attachments</h1>
-            <p>Upload attachments to this lecture.</p>
-            <jhi-lecture-attachments *ngIf="currentStep >= 3" [lectureId]="lecture.id" [showHeader]="false"></jhi-lecture-attachments>
-        </div>
+        <jhi-lecture-update-wizard-attachments [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-attachments>
         <div class="form-step" [hidden]="currentStep < 4">
             <h1>Units</h1>
             <p>Add content to the lecture by creating different kinds of lecture units.</p>
