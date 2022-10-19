@@ -54,6 +54,10 @@ describe('TutorialGroupRowButtonsComponent', () => {
         testButtonLeadsToRouting('edit-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups', tutorialGroup.id!, 'edit']);
     }));
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should call delete and emit deleted event', () => {
         const tutorialGroupService = TestBed.inject(TutorialGroupsService);
         const deleteSpy = jest.spyOn(tutorialGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>({})));

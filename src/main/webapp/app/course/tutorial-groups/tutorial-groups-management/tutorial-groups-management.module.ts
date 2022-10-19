@@ -16,6 +16,8 @@ import { TutorialGroupRowButtonsComponent } from 'app/course/tutorial-groups/tut
 import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/detail/tutorial-group-management-detail.component';
 import { TutorialGroupsCourseInformationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-course-information/tutorial-groups-course-information.component';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
+import { TutorialGroupsRegistrationImportDialog } from './tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
+import { TutorialGroupsImportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
 
 @NgModule({
     imports: [
@@ -37,6 +39,8 @@ import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module'
         TutorialGroupRowButtonsComponent,
         TutorialGroupManagementDetailComponent,
         TutorialGroupsCourseInformationComponent,
+        TutorialGroupsImportButtonComponent,
+        TutorialGroupsRegistrationImportDialog,
     ],
 })
 export class ArtemisTutorialGroupsManagementModule {}

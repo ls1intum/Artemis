@@ -16,6 +16,7 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { MockProvider } from 'ng-mocks';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('UserRouteAccessService', () => {
     const routeStateMock: any = { snapshot: {}, url: '/courses/20/exercises/4512?jwt=testToken' };
@@ -26,6 +27,9 @@ describe('UserRouteAccessService', () => {
     let accountService: AccountService;
     let storageService: StateStorageService;
     let router: Router;
+
+    let alertServiceStub: jest.SpyInstance;
+    let alertService: AlertService;
 
     const url = 'test';
 
@@ -60,11 +64,29 @@ describe('UserRouteAccessService', () => {
                 storageService = TestBed.inject(StateStorageService);
                 router = TestBed.inject(Router);
             });
+
+        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => jest.restoreAllMocks());
 
-    it('should store the JWT token for LTI users', () => {
+    it('should store the JWT token and create alert for existing LTI users', () => {
+        alertServiceStub = jest.spyOn(alertService, 'success');
+
+        const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
+        const routeConfig = snapshot.routeConfig as Route;
+        routeConfig.path = route;
+        snapshot.queryParams = { ['jwt']: 'testToken', ['ltiSuccessLoginRequired']: '' };
+        snapshot.data = { authorities: [Authority.USER] };
+
+        service.canActivate(snapshot, routeStateMock);
+        expect(MockSyncStorage.retrieve('authenticationToken')).toBe('testToken');
+        expect(alertServiceStub).toHaveBeenCalledOnce();
+    });
+
+    it('should store the JWT token and not create alert for new LTI users', () => {
+        alertServiceStub = jest.spyOn(alertService, 'success');
+
         const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
         const routeConfig = snapshot.routeConfig as Route;
         routeConfig.path = route;
@@ -73,6 +95,7 @@ describe('UserRouteAccessService', () => {
 
         service.canActivate(snapshot, routeStateMock);
         expect(MockSyncStorage.retrieve('authenticationToken')).toBe('testToken');
+        expect(alertServiceStub).toHaveBeenCalledTimes(0);
     });
 
     it('should return true if authorities are omitted', async () => {
