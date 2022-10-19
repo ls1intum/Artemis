@@ -14,7 +14,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { LOGIN_PATTERN, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -43,6 +43,7 @@ export class CourseUpdateComponent implements OnInit {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     courseForm: FormGroup;
+    onlineCourseConfigurationForm: FormGroup;
     course: Course;
     isSaving: boolean;
     courseImageFile?: Blob | File;
@@ -127,6 +128,14 @@ export class CourseUpdateComponent implements OnInit {
                     }
                 }
             }
+        });
+
+        this.onlineCourseConfigurationForm = new FormGroup({
+            id: new FormControl(this.course.onlineCourseConfiguration?.id),
+            course: new FormControl(this.course),
+            ltiKey: new FormControl(this.course.onlineCourseConfiguration?.ltiKey),
+            ltiSecret: new FormControl(this.course.onlineCourseConfiguration?.ltiSecret),
+            userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
         });
 
         this.courseForm = new FormGroup(
@@ -214,10 +223,14 @@ export class CourseUpdateComponent implements OnInit {
         if (this.courseForm.controls['organizations'] !== undefined) {
             this.courseForm.controls['organizations'].setValue(this.courseOrganizations);
         }
+
+        const course = this.courseForm.getRawValue();
+        course.onlineCourseConfiguration = this.isOnlineCourse() ? this.onlineCourseConfigurationForm.getRawValue() : null;
+
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseService.update(this.courseForm.getRawValue()));
+            this.subscribeToSaveResponse(this.courseService.update(course));
         } else {
-            this.subscribeToSaveResponse(this.courseService.create(this.courseForm.getRawValue()));
+            this.subscribeToSaveResponse(this.courseService.create(course));
         }
     }
 
@@ -319,6 +332,10 @@ export class CourseUpdateComponent implements OnInit {
 
     get shortName() {
         return this.courseForm.get('shortName')!;
+    }
+
+    get userPrefix() {
+        return this.onlineCourseConfigurationForm.get('userPrefix')!;
     }
 
     /**
@@ -463,6 +480,13 @@ export class CourseUpdateComponent implements OnInit {
      */
     updateRegistrationConfirmationMessage(message: string) {
         this.courseForm.controls['registrationConfirmationMessage'].setValue(message);
+    }
+
+    /**
+     * Auxiliary method checking if online course is currently true
+     */
+    isOnlineCourse(): boolean {
+        return this.courseForm.controls['onlineCourse'].value === true;
     }
 
     /**
