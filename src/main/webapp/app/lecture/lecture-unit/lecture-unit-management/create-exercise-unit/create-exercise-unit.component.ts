@@ -34,7 +34,7 @@ export class CreateExerciseUnitComponent implements OnInit {
     @Output()
     onCancel: EventEmitter<any> = new EventEmitter<any>();
     @Output()
-    onExerciseUnitCreated: EventEmitter<ExerciseUnit> = new EventEmitter<ExerciseUnit>();
+    onExerciseUnitCreated: EventEmitter<any> = new EventEmitter<any>();
 
     faTimes = faTimes;
 
@@ -95,15 +95,17 @@ export class CreateExerciseUnitComponent implements OnInit {
         });
 
         from(exerciseUnitsToCreate)
-            .pipe(concatMap((unit) => this.exerciseUnitService.create(unit, this.lectureId!)))
-            .subscribe({
-                next: (response: HttpResponse<ExerciseUnit>) => {
+            .pipe(
+                concatMap((unit) => this.exerciseUnitService.create(unit, this.lectureId!)),
+                finalize(() => {
                     if (this.shouldNavigateOnSubmit) {
                         this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                     } else {
-                        this.onExerciseUnitCreated.emit(response.body!);
+                        this.onExerciseUnitCreated.emit();
                     }
-                },
+                }),
+            )
+            .subscribe({
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
