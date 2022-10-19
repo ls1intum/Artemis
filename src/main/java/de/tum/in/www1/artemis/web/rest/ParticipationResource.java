@@ -318,7 +318,7 @@ public class ParticipationResource {
         });
         resultRepository.saveAll(participationResults);
 
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewFeedbackRequest(programmingExercise);
+        groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
 
         return ResponseEntity.ok().body(participation);
     }

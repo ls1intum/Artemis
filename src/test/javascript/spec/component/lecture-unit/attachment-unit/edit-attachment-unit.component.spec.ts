@@ -102,6 +102,7 @@ describe('EditAttachmentUnitComponent', () => {
                 attachmentUnit.attachment = attachment;
 
                 fakeBlob = new Blob([''], { type: 'application/pdf' });
+                // @ts-ignore
                 fakeBlob['name'] = 'Test-File.pdf';
 
                 baseFormData = new FormData();

@@ -90,7 +90,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         if (event.target.files.length) {
             const fileList = event.target.files;
             this.file = fileList[0];
-            this.fileName = this.file['name'];
+            this.fileName = this.file.name;
         }
     }
 
