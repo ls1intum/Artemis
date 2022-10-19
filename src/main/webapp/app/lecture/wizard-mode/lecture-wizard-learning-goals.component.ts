@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
@@ -16,8 +16,9 @@ import { TranslateService } from '@ngx-translate/core';
 @Component({
     selector: 'jhi-lecture-update-wizard-learning-goals',
     templateUrl: './lecture-wizard-learning-goals.component.html',
+    styleUrls: ['./lecture-wizard-learning-goals.component.scss'],
 })
-export class LectureUpdateWizardLearningGoalsComponent {
+export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
     @Input() currentStep: number;
     @Input() lecture: Lecture;
     @Input() isSaving: boolean;
@@ -42,6 +43,10 @@ export class LectureUpdateWizardLearningGoalsComponent {
         protected learningGoalService: LearningGoalService,
         protected translateService: TranslateService,
     ) {}
+
+    ngOnInit() {
+        this.loadLearningGoals();
+    }
 
     showCreateLearningGoal() {
         this.isLoadingLearningGoalForm = true;
@@ -198,7 +203,7 @@ export class LectureUpdateWizardLearningGoalsComponent {
 
     startEditLearningGoal(learningGoal: LearningGoal) {
         const connectedUnits: LectureUnit[] = [];
-        learningGoal.lectureUnits!.forEach((unit) => connectedUnits.push(Object.assign({}, unit)));
+        learningGoal.lectureUnits?.forEach((unit) => connectedUnits.push(Object.assign({}, unit)));
 
         this.learningGoalFormData = {
             id: learningGoal.id,

@@ -74,10 +74,6 @@ export class LectureUpdateWizardComponent implements OnInit {
 
         this.currentStep++;
 
-        if (this.currentStep === 5) {
-            this.learningGoalsComponent.loadLearningGoals();
-        }
-
         if (this.currentStep > 5) {
             this.toggleWizardMode();
         }
