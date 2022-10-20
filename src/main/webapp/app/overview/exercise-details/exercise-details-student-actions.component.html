@@ -260,7 +260,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="participationStatusWrapper(false) === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
+                *ngIf="participationStatusWrapper(false) === ParticipationStatus.INACTIVE && isResumeExerciseAvailable()"
                 (click)="resumeProgrammingExercise(false)"
             ></button>
             <button

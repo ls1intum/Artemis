@@ -196,10 +196,13 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
     return ParticipationStatus.INACTIVE;
 };
 
-export const isStartExerciseAvailable = (exercise: ProgrammingExercise, studentParticipation?: StudentParticipation): boolean => {
-    const beforeExerciseDueDate = exercise.dueDate == undefined || dayjs().isBefore(exercise.dueDate!);
-    const beforeIndividualDueDate = studentParticipation?.individualDueDate == undefined || dayjs().isBefore(studentParticipation.individualDueDate);
-    return beforeExerciseDueDate && beforeIndividualDueDate;
+export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean => {
+    return exercise.dueDate == undefined || dayjs().isBefore(exercise.dueDate!);
+};
+
+export const isResumeExerciseAvailable = (studentParticipation?: StudentParticipation): boolean => {
+    // Having no individual due date implies that it hasn't been started yet.
+    return studentParticipation?.individualDueDate != undefined && dayjs().isBefore(studentParticipation.individualDueDate);
 };
 
 /**
