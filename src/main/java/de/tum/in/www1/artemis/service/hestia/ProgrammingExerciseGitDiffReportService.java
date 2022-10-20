@@ -125,7 +125,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @param programmingExercise The programming exercise
      * @return The report or null if none exists
      */
-    public ProgrammingExerciseGitDiffReport getReportOfExercise(ProgrammingExercise programmingExercise) {
+    private ProgrammingExerciseGitDiffReport getReportOfExercise(ProgrammingExercise programmingExercise) {
         var reports = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
         if (reports.isEmpty()) {
             return null;
