@@ -3,7 +3,7 @@ import { Course } from 'app/entities/course.model';
 import { artemis } from '../../../support/ArtemisTesting';
 import shortAnswerQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/shortAnswerQuiz_template.json';
 import multipleChoiceQuizTemplate from '../../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
-import { parseCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
 // Accounts
 const admin = artemis.users.getAdmin();
@@ -23,7 +23,7 @@ describe('Quiz Exercise Assessment', () => {
     before('Set up course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = parseCourseAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, student);
             courseManagementRequest.addTutorToCourse(course, tutor);
         });

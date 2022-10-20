@@ -2,7 +2,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { artemis } from '../../../support/ArtemisTesting';
 import day from 'dayjs/esm';
-import { parseCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
 // pageobjects
 const assessmentEditor = artemis.pageobjects.assessment.modeling;
@@ -86,7 +86,7 @@ describe('Modeling Exercise Assessment Spec', () => {
     function createCourseWithModelingExercise() {
         cy.login(admin);
         return courseManagementRequests.createCourse(true).then((response) => {
-            course = parseCourseAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
             courseManagementRequests.addStudentToCourse(course, student);
             courseManagementRequests.addTutorToCourse(course, tutor);
             courseManagementRequests.addInstructorToCourse(course, instructor);

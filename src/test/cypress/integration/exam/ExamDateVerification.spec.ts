@@ -1,7 +1,7 @@
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { CypressExamBuilder, parseCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import { artemis } from '../../support/ArtemisTesting';
 import { generateUUID } from '../../support/utils';
@@ -22,7 +22,7 @@ describe('Exam date verification', () => {
     before(() => {
         cy.login(artemis.users.getAdmin());
         courseManagementRequests.createCourse().then((response) => {
-            course = parseCourseAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
             courseManagementRequests.addStudentToCourse(course, artemis.users.getStudentOne());
         });
     });

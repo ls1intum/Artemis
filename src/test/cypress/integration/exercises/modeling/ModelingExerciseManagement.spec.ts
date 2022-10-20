@@ -6,7 +6,7 @@ import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/m
 
 // https://day.js.org/docs is a tool for date/time
 import dayjs from 'dayjs/esm';
-import { parseCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
 // pageobjects
 const createModelingExercise = artemis.pageobjects.exercise.modeling.creation;
@@ -29,7 +29,7 @@ describe('Modeling Exercise Management Spec', () => {
     before('Create a course', () => {
         cy.login(admin);
         courseManagementRequests.createCourse().then((response: Cypress.Response<Course>) => {
-            course = parseCourseAfterMultiPart(response);
+            course = convertCourseAfterMultiPart(response);
             courseManagementRequests.addInstructorToCourse(course, instructor);
             courseManagementRequests.addStudentToCourse(course, student);
         });
