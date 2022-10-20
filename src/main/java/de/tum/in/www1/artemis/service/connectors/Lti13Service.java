@@ -158,7 +158,7 @@ public class Lti13Service {
             students.forEach(student -> {
                 // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
                 // to launch the exercise (for example multiple lms)
-                Collection<Lti13ResourceLaunch> launches = launchRepository.findByUserAndExercise(student, participation.getExercise());
+                Collection<LtiResourceLaunch> launches = launchRepository.findByUserAndExercise(student, participation.getExercise());
 
                 if (launches.isEmpty()) {
                     return;
@@ -178,7 +178,7 @@ public class Lti13Service {
         }
     }
 
-    protected void submitScore(Lti13ResourceLaunch launch, String comment, Double score) {
+    protected void submitScore(LtiResourceLaunch launch, String comment, Double score) {
         String scoreLineItemUrl = launch.getScoreLineItemUrl();
         if (scoreLineItemUrl == null) {
             return;
@@ -270,10 +270,10 @@ public class Lti13Service {
     }
 
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {
-        Optional<Lti13ResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.getIss(), launchRequest.getSub(),
+        Optional<LtiResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.getIss(), launchRequest.getSub(),
                 launchRequest.getDeploymentId(), launchRequest.getResourceLinkId());
 
-        Lti13ResourceLaunch launch = launchOpt.orElse(Lti13ResourceLaunch.from(launchRequest));
+        LtiResourceLaunch launch = launchOpt.orElse(LtiResourceLaunch.from(launchRequest));
 
         Lti13AgsClaim agsClaim = launchRequest.getAgsClaim();
         // we do support LTI 1.3 Assigment and Grading Services SCORE publish service

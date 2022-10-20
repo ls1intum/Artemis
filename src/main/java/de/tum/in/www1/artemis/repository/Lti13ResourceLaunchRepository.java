@@ -9,12 +9,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.lti.Lti13ResourceLaunch;
+import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 
-public interface Lti13ResourceLaunchRepository extends JpaRepository<Lti13ResourceLaunch, Long> {
+public interface Lti13ResourceLaunchRepository extends JpaRepository<LtiResourceLaunch, Long> {
 
-    Optional<Lti13ResourceLaunch> findByIssAndSubAndDeploymentIdAndResourceLinkId(@NotNull String iss, @NotNull String sub, @NotNull String deploymentId,
+    Optional<LtiResourceLaunch> findByIssAndSubAndDeploymentIdAndResourceLinkId(@NotNull String iss, @NotNull String sub, @NotNull String deploymentId,
             @NotNull String resourceLinkId);
 
-    Collection<Lti13ResourceLaunch> findByUserAndExercise(User user, Exercise exercise);
+    Collection<LtiResourceLaunch> findByUserAndExercise(User user, Exercise exercise);
 }

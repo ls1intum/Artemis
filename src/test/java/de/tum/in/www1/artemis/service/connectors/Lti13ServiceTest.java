@@ -24,7 +24,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lti.Lti13LaunchRequest;
-import de.tum.in.www1.artemis.domain.lti.Lti13ResourceLaunch;
+import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.lti.Scopes;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -174,7 +174,7 @@ public class Lti13ServiceTest {
 
         State state = getValidStateForNewResult(result);
 
-        Lti13ResourceLaunch launch = state.getLti13ResourceLaunch();
+        LtiResourceLaunch launch = state.getLti13ResourceLaunch();
         User user = state.getUser();
         Exercise exercise = state.getExercise();
         StudentParticipation participation = state.getParticipation();
@@ -237,7 +237,7 @@ public class Lti13ServiceTest {
         ClientRegistration clientRegistration = Mockito.mock(ClientRegistration.class);
         doReturn(clientRegistrationId).when(clientRegistration).getRegistrationId();
 
-        Lti13ResourceLaunch launch = new Lti13ResourceLaunch();
+        LtiResourceLaunch launch = new LtiResourceLaunch();
         launch.setTargetLinkUri(targetLinkUri);
         launch.setUser(user);
         launch.setSub("some-sub");
@@ -263,7 +263,7 @@ public class Lti13ServiceTest {
      */
     private static class State {
 
-        private Lti13ResourceLaunch lti13ResourceLaunch;
+        private LtiResourceLaunch ltiResourceLaunch;
 
         private Exercise exercise;
 
@@ -275,9 +275,8 @@ public class Lti13ServiceTest {
 
         private ClientRegistration clientRegistration;
 
-        public State(Lti13ResourceLaunch lti13ResourceLaunch, Exercise exercise, User user, StudentParticipation participation, Result result,
-                ClientRegistration clientRegistration) {
-            this.lti13ResourceLaunch = lti13ResourceLaunch;
+        public State(LtiResourceLaunch ltiResourceLaunch, Exercise exercise, User user, StudentParticipation participation, Result result, ClientRegistration clientRegistration) {
+            this.ltiResourceLaunch = ltiResourceLaunch;
             this.exercise = exercise;
             this.user = user;
             this.participation = participation;
@@ -285,8 +284,8 @@ public class Lti13ServiceTest {
             this.clientRegistration = clientRegistration;
         }
 
-        public Lti13ResourceLaunch getLti13ResourceLaunch() {
-            return lti13ResourceLaunch;
+        public LtiResourceLaunch getLti13ResourceLaunch() {
+            return ltiResourceLaunch;
         }
 
         public Exercise getExercise() {

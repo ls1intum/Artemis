@@ -13,8 +13,8 @@ import de.tum.in.www1.artemis.domain.User;
  * Represents an LTI 1.3 Resource Link Launch.
  */
 @Entity
-@Table(name = "lti13resourcelaunch")
-public class Lti13ResourceLaunch extends DomainObject {
+@Table(name = "lti_resource_launch")
+public class LtiResourceLaunch extends DomainObject {
 
     @NotNull
     private String iss;
@@ -44,8 +44,8 @@ public class Lti13ResourceLaunch extends DomainObject {
     @NotNull
     private String clientRegistrationId;
 
-    public static Lti13ResourceLaunch from(Lti13LaunchRequest launchRequest) {
-        Lti13ResourceLaunch launch = new Lti13ResourceLaunch();
+    public static LtiResourceLaunch from(Lti13LaunchRequest launchRequest) {
+        LtiResourceLaunch launch = new LtiResourceLaunch();
         launch.iss = launchRequest.getIss();
         launch.sub = launchRequest.getSub();
         launch.deploymentId = launchRequest.getDeploymentId();
