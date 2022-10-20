@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -120,7 +122,12 @@ public class LtiResource {
         log.debug("Oauth Verification succeeded");
 
         try {
-            ltiService.handleLaunchRequest(launchRequest, exercise, onlineCourseConfiguration);
+            ltiService.authenticateLtiUser(launchRequest.getLis_person_contact_email_primary(), launchRequest.getUser_id(),
+                    createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration), getUserFirstNameFromLaunchRequest(launchRequest),
+                    getUserLastNameFromLaunchRequest(launchRequest), launchRequest.getCustom_require_existing_user(), launchRequest.getCustom_lookup_user_by_email());
+            User user = userRepository.getUserWithGroupsAndAuthorities();
+            ltiService.onSuccessfulLtiAuthentication(user, launchRequest.getUser_id(), exercise);
+            ltiService.saveLtiOutcomeUrl(user, exercise, launchRequest.getLis_outcome_service_url(), launchRequest.getLis_result_sourcedid());
         }
         catch (InternalAuthenticationServiceException ex) {
             log.error("Error during LTI launch request of exercise {} for launch request: {}", exercise.getTitle(), launchRequest, ex);
@@ -233,5 +240,59 @@ public class LtiResource {
                 (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/api/lti/launch/" + exercise.getId();
 
         return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ocConfiguration.getLtiKey(), ocConfiguration.getLtiSecret()), HttpStatus.OK);
+    }
+
+    /**
+     * Gets the username for the LTI user prefixed with the configured user prefix
+     *
+     * @param launchRequest             the LTI launch request
+     * @param onlineCourseConfiguration the configuration for the online course
+     * @return the username for the LTI user
+     */
+    @NotNull
+    private String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest, OnlineCourseConfiguration onlineCourseConfiguration) {
+        String username;
+
+        if (!StringUtils.isEmpty(launchRequest.getExt_user_username())) {
+            username = launchRequest.getExt_user_username();
+        }
+        else if (!StringUtils.isEmpty(launchRequest.getLis_person_sourcedid())) {
+            username = launchRequest.getLis_person_sourcedid();
+        }
+        else if (!StringUtils.isEmpty(launchRequest.getUser_id())) {
+            username = launchRequest.getUser_id();
+        }
+        else {
+            String userEmail = launchRequest.getLis_person_contact_email_primary();
+            username = userEmail.substring(0, userEmail.indexOf('@')); // Get the initial part of the user's email
+        }
+
+        return onlineCourseConfiguration.getUserPrefix() + "_" + username;
+    }
+
+    /**
+     * Gets the first name for the user based on the LTI launch request
+     *
+     * @param launchRequest the LTI launch request
+     * @return the first name for the LTI user
+     */
+    private String getUserFirstNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
+        return launchRequest.getLis_person_name_given() != null ? launchRequest.getLis_person_name_given() : "";
+    }
+
+    /**
+     * Gets the last name for the user considering the requests sent by the different LTI consumers
+     *
+     * @param launchRequest the LTI launch request
+     * @return the last name for the LTI user
+     */
+    private String getUserLastNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
+        if (!StringUtils.isEmpty(launchRequest.getLis_person_name_family())) {
+            return launchRequest.getLis_person_name_family();
+        }
+        else if (!StringUtils.isEmpty(launchRequest.getLis_person_sourcedid())) {
+            return launchRequest.getLis_person_sourcedid();
+        }
+        return "";
     }
 }

@@ -6,29 +6,28 @@ import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.client.RestTemplate;
+import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.lti.Lti13AgsClaim;
-import de.tum.in.www1.artemis.domain.lti.Lti13LaunchRequest;
-import de.tum.in.www1.artemis.domain.lti.Lti13ResourceLaunch;
-import de.tum.in.www1.artemis.domain.lti.Scopes;
+import de.tum.in.www1.artemis.domain.lti.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import net.minidev.json.JSONObject;
 
 @Service
@@ -46,7 +45,7 @@ public class Lti13Service {
 
     private final Lti13ResourceLaunchRepository launchRepository;
 
-    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
+    private final LtiService ltiService;
 
     private final ResultRepository resultRepository;
 
@@ -56,13 +55,13 @@ public class Lti13Service {
 
     private final RestTemplate restTemplate;
 
-    public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository,
-            ArtemisAuthenticationProvider authenticationProvider, Lti13ResourceLaunchRepository launchRepository, ResultRepository resultRepository,
-            Lti13TokenRetriever tokenRetriever, ClientRegistrationRepository clientRegistrationRepository, RestTemplate restTemplate) {
+    public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository,
+            LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever, ClientRegistrationRepository clientRegistrationRepository,
+            RestTemplate restTemplate) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
-        this.artemisAuthenticationProvider = authenticationProvider;
+        this.ltiService = ltiService;
         this.launchRepository = launchRepository;
         this.resultRepository = resultRepository;
         this.tokenRetriever = tokenRetriever;
@@ -74,22 +73,77 @@ public class Lti13Service {
      * Performs an LTI 1.3 exercise launch with the LTI parameters contained in launchRequest.
      * If the launch was successful the user is added to the target exercise group (e.g. the course).
      *
-     * @param launchRequest the received launchRequest
+     * @param ltiIdToken the id token for the user launching the request
+     * @param clientRegistrationId the clientRegistrationId of the source LMS
      */
-    public void performLaunch(Lti13LaunchRequest launchRequest) {
-        Optional<Exercise> targetExercise = getExerciseFromTargetLink(launchRequest.getTargetLinkUri());
+    public void performLaunch(OidcIdToken ltiIdToken, String clientRegistrationId) {
+
+        String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
+        Optional<Exercise> targetExercise = getExerciseFromTargetLink(targetLinkUrl);
         if (targetExercise.isEmpty()) {
-            String message = "No exercise to launch at " + launchRequest.getTargetLinkUri();
+            String message = "No exercise to launch at " + targetLinkUrl;
             log.error(message);
-            throw new InternalAuthenticationServiceException(message);
+            throw new BadRequestAlertException("Exercise not found", "LTI", "ltiExerciseNotFound");
+        }
+        Exercise exercise = targetExercise.get();
+
+        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        if (!course.getId().equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+            String message = "Exercise is not related to course for target link url: " + targetLinkUrl;
+            log.error(message);
+            throw new BadRequestAlertException("Course not found", "LTI", "ltiCourseNotFound");
         }
 
-        Course course = targetExercise.get().getCourseViaExerciseGroupOrCourseMember();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
+        if (onlineCourseConfiguration == null) {
+            String message = "Exercise is not related to course for target link url: " + targetLinkUrl;
+            log.error(message);
+            throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
+        }
 
-        addUserToExerciseGroup(user, course);
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), ltiIdToken.getSubject(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration),
+                ltiIdToken.getGivenName(), ltiIdToken.getFamilyName(), false, true);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        ltiService.onSuccessfulLtiAuthentication(user, ltiIdToken.getSubject(), targetExercise.get());
+
+        Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
         createOrUpdateResourceLaunch(launchRequest, user, targetExercise.get());
+    }
+
+    /**
+     * Gets the username for the LTI user prefixed with the configured user prefix
+     *
+     * @param ltiIdToken             the token holding the launch information
+     * @param onlineCourseConfiguration the configuration for the online course
+     * @return the username for the LTI user
+     */
+    @NotNull
+    private String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
+        String username;
+
+        if (!StringUtils.isEmpty(ltiIdToken.getPreferredUsername())) {
+            username = ltiIdToken.getPreferredUsername();
+        }
+        else if (!StringUtils.isEmpty(ltiIdToken.getGivenName()) && !StringUtils.isEmpty(ltiIdToken.getFamilyName())) {
+            username = ltiIdToken.getGivenName() + ltiIdToken.getFamilyName();
+        }
+        else {
+            String userEmail = ltiIdToken.getEmail();
+            username = userEmail.substring(0, userEmail.indexOf('@')); // Get the initial part of the user's email
+        }
+        username = username.replace(" ", "");
+
+        return onlineCourseConfiguration.getUserPrefix() + "_" + username;
+    }
+
+    private Lti13LaunchRequest launchRequestFrom(OidcIdToken ltiIdToken, String clientRegistrationId) {
+        try {
+            return new Lti13LaunchRequest(ltiIdToken, clientRegistrationId);
+        }
+        catch (IllegalArgumentException ex) {
+            throw new RuntimeException("Could not create LTI 1.3 launch request with provided idToken: " + ex.getMessage());
+        }
     }
 
     /**
@@ -203,43 +257,16 @@ public class Lti13Service {
         }
         Map<String, String> pathVariables = matcher.extractUriTemplateVariables(EXERCISE_PATH_PATTERN, targetLinkPath);
 
-        String courseId = pathVariables.get("courseId");
         String exerciseId = pathVariables.get("exerciseId");
 
         Optional<Exercise> exerciseOpt = exerciseRepository.findById(Long.valueOf(exerciseId));
-        Optional<Course> courseOpt = courseRepository.findById(Long.valueOf(courseId));
 
-        if (exerciseOpt.isEmpty() || courseOpt.isEmpty()) {
+        if (exerciseOpt.isEmpty()) {
             log.info("Could not find exercise or course for target link url: " + targetLinkUrl);
             return Optional.empty();
         }
 
-        Exercise exercise = exerciseOpt.get();
-        Course course = courseOpt.get();
-
-        if (!course.equals(exercise.getCourseViaExerciseGroupOrCourseMember())) {
-            log.info("Exercise is not related to course for target link url: " + targetLinkUrl);
-            return Optional.empty();
-        }
-
         return exerciseOpt;
-    }
-
-    private void addUserToExerciseGroup(User user, Course course) {
-        String courseStudentGroupName = course.getStudentGroupName();
-        if (!user.getGroups().contains(courseStudentGroupName)) {
-            Set<String> groups = user.getGroups();
-            groups.add(courseStudentGroupName);
-            user.setGroups(groups);
-            userRepository.save(user);
-
-            try {
-                artemisAuthenticationProvider.addUserToGroup(user, courseStudentGroupName);
-            }
-            catch (ArtemisAuthenticationException e) {
-                // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
-            }
-        }
     }
 
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {

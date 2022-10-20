@@ -11,13 +11,19 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.lti.Lti13LaunchRequest;
-import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.lti.Claims;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.connectors.Lti13Service;
 import net.minidev.json.JSONObject;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
@@ -35,13 +41,20 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
     private final Lti13Service lti13Service;
 
+    private final TokenProvider tokenProvider;
+
+    private final UserRepository userRepository;
+
     private final AntPathRequestMatcher requestMatcher;
 
     private final Logger log = LoggerFactory.getLogger(Lti13LaunchFilter.class);
 
-    public Lti13LaunchFilter(OAuth2LoginAuthenticationFilter defaultFilter, String filterProcessingUrl, Lti13Service lti13Service) {
+    public Lti13LaunchFilter(OAuth2LoginAuthenticationFilter defaultFilter, String filterProcessingUrl, Lti13Service lti13Service, TokenProvider tokenProvider,
+            UserRepository userRepository) {
         this.defaultFilter = defaultFilter;
         this.lti13Service = lti13Service;
+        this.tokenProvider = tokenProvider;
+        this.userRepository = userRepository;
         this.requestMatcher = new AntPathRequestMatcher(filterProcessingUrl);
     }
 
@@ -52,20 +65,14 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             return;
         }
 
-        // we do not permit anonymous launches
-        if (!SecurityUtils.isAuthenticated()) {
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            return;
-        }
-
         try {
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
 
-            Lti13LaunchRequest launchRequest = launchRequestFrom(authToken);
+            OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
+            lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
 
-            lti13Service.performLaunch(launchRequest);
-
-            writeResponse(launchRequest, response);
+            User user = userRepository.getUserWithGroupsAndAuthorities();
+            writeResponse(user, ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
         }
         catch (IOException ex) {
             throw ex;
@@ -92,22 +99,25 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         return ltiAuthToken;
     }
 
-    private Lti13LaunchRequest launchRequestFrom(OidcAuthenticationToken authToken) {
-        try {
-            var idToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
-            var clientRegistrationId = authToken.getAuthorizedClientRegistrationId();
-            return new Lti13LaunchRequest(idToken, clientRegistrationId);
-        }
-        catch (IllegalArgumentException ex) {
-            throw new RuntimeException("Could not create LTI 1.3 launch request with provided idToken: " + ex.getMessage());
-        }
-    }
-
-    private void writeResponse(Lti13LaunchRequest launchRequest, HttpServletResponse response) throws IOException {
+    private void writeResponse(User user, String targetLinkUri, HttpServletResponse response) throws IOException {
         PrintWriter writer = response.getWriter();
 
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLinkUri);
+        if (!user.getActivated()) {
+            uriBuilder.queryParam("initialize", "");
+
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String jwt = tokenProvider.createToken(authentication, true);
+            log.debug("created jwt token: {}", jwt);
+            uriBuilder.queryParam("jwt", jwt);
+        }
+        else {
+            uriBuilder.queryParam("jwt", "");
+            uriBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
+        }
+
         JSONObject json = new JSONObject();
-        json.put("targetLinkUri", launchRequest.getTargetLinkUri());
+        json.put("targetLinkUri", uriBuilder.build().toUriString());
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");

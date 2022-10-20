@@ -5,9 +5,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
-import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
+import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13LaunchFilter;
 import de.tum.in.www1.artemis.service.connectors.Lti13Service;
 import uk.ac.ox.ctl.lti13.Lti13Configurer;
@@ -37,6 +39,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
     @Override
     public void configure(HttpSecurity http) {
         AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository = configureRequestRepository();
+        OidcLaunchFlowAuthenticationProvider oidcLaunchFlowAuthenticationProvider = configureAuthenticationProvider(http);
 
         // Step 1 of the IMS SEC
         // https://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
@@ -45,17 +48,22 @@ public class CustomLti13Configurer extends Lti13Configurer {
 
         // Step 3 of the IMS SEC
         // https://www.imsglobal.org/spec/security/v1p0/#step-3-authentication-response
-
-        // Anonymous (unauthenticated) LTI login requests are not supported.
-        // Because of that, the Lti13LaunchFilter is placed in the filter chain after any other login filter (e.g. before AnonymousAuthenticationFilter)
-        OidcLaunchFlowAuthenticationProvider oidcLaunchFlowAuthenticationProvider = configureAuthenticationProvider(http);
         OAuth2LoginAuthenticationFilter defaultLoginFilter = configureLoginFilter(clientRegistrationRepository(http), oidcLaunchFlowAuthenticationProvider,
                 authorizationRequestRepository);
-        http.addFilterBefore(new Lti13LaunchFilter(defaultLoginFilter, LTI_BASE_PATH + LOGIN_PATH, lti13Service(http)), AnonymousAuthenticationFilter.class);
+        http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, LTI_BASE_PATH + LOGIN_PATH, lti13Service(http), tokenProvider(http), userRepository(http)),
+                AbstractPreAuthenticatedProcessingFilter.class);
     }
 
     protected Lti13Service lti13Service(HttpSecurity http) {
         return http.getSharedObject(ApplicationContext.class).getBean(Lti13Service.class);
+    }
+
+    protected UserRepository userRepository(HttpSecurity http) {
+        return http.getSharedObject(ApplicationContext.class).getBean(UserRepository.class);
+    }
+
+    protected TokenProvider tokenProvider(HttpSecurity http) {
+        return http.getSharedObject(ApplicationContext.class).getBean(TokenProvider.class);
     }
 
     protected ClientRegistrationRepository clientRegistrationRepository(HttpSecurity http) {
