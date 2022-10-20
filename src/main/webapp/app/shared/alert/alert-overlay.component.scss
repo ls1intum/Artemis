@@ -31,7 +31,7 @@
             border: 1px solid;
             padding: 15px 20px;
             border-radius: 0.3rem;
-            box-shadow: rgba(0, 0, 0, 0.55) 0 5px 15px;
+            box-shadow: var(--artemis-alerts-shadow) 0 5px 15px;
 
             flex: 0 auto;
             display: flex;
@@ -88,7 +88,7 @@
     .dismiss-all {
         pointer-events: all;
         border-radius: 0.3rem;
-        box-shadow: rgba(0, 0, 0, 0.55) 0 5px 15px;
+        box-shadow: var(--artemis-alerts-shadow) 0 5px 15px;
         width: 100%;
     }
 
