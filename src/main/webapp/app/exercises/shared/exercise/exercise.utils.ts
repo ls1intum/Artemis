@@ -201,8 +201,9 @@ export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean
 };
 
 export const isResumeExerciseAvailable = (studentParticipation?: StudentParticipation): boolean => {
-    // Having no individual due date implies that it hasn't been started yet.
-    return studentParticipation?.individualDueDate != undefined && dayjs().isBefore(studentParticipation.individualDueDate);
+    // Having no studentParticipation implies that it hasn't been started yet -> Resuming not possible
+    if (studentParticipation == undefined) return false;
+    return studentParticipation.individualDueDate != undefined && dayjs().isBefore(studentParticipation.individualDueDate);
 };
 
 /**
