@@ -50,7 +50,9 @@ public abstract class Participation extends DomainObject implements Participatio
     @Column(name = "individual_due_date")
     private ZonedDateTime individualDueDate;
 
-    // information whether this participation belongs to an exam test run or practice mode.
+    /**
+     * Whether this participation belongs to an exam test run or practice mode.
+     */
     @Column(name = "test_run")
     private Boolean testRun = false;
 
