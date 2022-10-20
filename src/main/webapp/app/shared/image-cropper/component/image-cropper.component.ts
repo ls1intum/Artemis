@@ -178,7 +178,7 @@ export class ImageCropperComponent implements OnChanges, OnInit {
         }
         const element = this.imageChangedEvent.currentTarget as HTMLInputElement;
 
-        return !!element.files && element.files.length > 0;
+        return !!element.files?.length;
     }
 
     private setCssTransform() {

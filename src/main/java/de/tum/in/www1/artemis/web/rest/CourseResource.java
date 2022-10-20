@@ -453,8 +453,7 @@ public class CourseResource {
 
     /**
      * GET /courses/:courseId/stats-for-assessment-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course -
-     * number of
-     * assessments - number of assessments assessed by the tutor - number of complaints
+     * number of assessments - number of assessments assessed by the tutor - number of complaints
      * <p>
      * all timestamps were measured when calling this method from the PGdP assessment-dashboard
      *
