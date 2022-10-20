@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.*;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsBuildLogParseUtils;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -146,15 +148,16 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return commits;
     }
 
-    public List<TestSuiteDTO> getResults() {
-        return results;
+    public List<BuildJobDTOInterface> getResults() {
+        return results.stream().map(testSuiteDTO -> (BuildJobDTOInterface) testSuiteDTO).collect(Collectors.toList());
     }
 
-    public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
+    public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports(BuildJobDTOInterface job) {
         return staticCodeAnalysisReports;
     }
 
-    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReport() {
+    @Override
+    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports(BuildJobDTOInterface job) {
         return testwiseCoverageReport;
     }
 
@@ -173,6 +176,11 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
         var buildLogs = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(getLogs());
         return filterBuildLogs(buildLogs);
+    }
+
+    @Override
+    public List<BuildJobDTOInterface> getBuildJobs() {
+        return getResults();
     }
 
     /**

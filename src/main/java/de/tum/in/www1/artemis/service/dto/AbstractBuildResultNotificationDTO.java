@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -51,4 +52,10 @@ public abstract class AbstractBuildResultNotificationDTO {
     public abstract boolean hasLogs();
 
     public abstract List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage);
+
+    public abstract List<BuildJobDTOInterface> getBuildJobs();
+
+    public abstract List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports(BuildJobDTOInterface job);
+
+    public abstract List<TestwiseCoverageReportDTO> getTestwiseCoverageReports(BuildJobDTOInterface job);
 }

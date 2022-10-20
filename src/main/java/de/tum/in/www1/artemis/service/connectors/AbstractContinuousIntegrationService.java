@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 public abstract class AbstractContinuousIntegrationService implements ContinuousIntegrationService {
 
@@ -40,15 +42,18 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
 
     protected final RestTemplate shortTimeoutRestTemplate;
 
+    protected final TestwiseCoverageService testwiseCoverageService;
+
     public AbstractContinuousIntegrationService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
             BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, RestTemplate restTemplate,
-            RestTemplate shortTimeoutRestTemplate) {
+            RestTemplate shortTimeoutRestTemplate, TestwiseCoverageService testwiseCoverageService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.buildLogService = buildLogService;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
+        this.testwiseCoverageService = testwiseCoverageService;
     }
 
     @Override
@@ -69,7 +74,48 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * @param result      the result for which the feedback should be added
      * @param buildResult The build result
      */
-    protected abstract void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult);
+    private void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
+        final var jobs = buildResult.getBuildJobs();
+        final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
+        final var programmingLanguage = programmingExercise.getProgrammingLanguage();
+        final var projectType = programmingExercise.getProjectType();
+
+        for (final var job : jobs) {
+            // 1) add feedback for failed test cases
+            for (final var failedTest : job.getFailedTests()) {
+                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(failedTest.getName(), failedTest.getMessage(), false, programmingLanguage, projectType));
+            }
+            result.setTestCaseCount(result.getTestCaseCount() + job.getFailedTests().size());
+
+            // 2) add feedback for passed test cases
+            for (final var successfulTest : job.getSuccessfulTests()) {
+                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getMessage(), true, programmingLanguage, projectType));
+            }
+            result.setTestCaseCount(result.getTestCaseCount() + job.getSuccessfulTests().size());
+            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.getSuccessfulTests().size());
+
+            // 3) process static code analysis feedback
+            final var staticCodeAnalysisReports = buildResult.getStaticCodeAnalysisReports(job);
+            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
+                var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
+                result.addFeedbacks(scaFeedbackList);
+                result.setCodeIssueCount(scaFeedbackList.size());
+            }
+
+            // 4) process testwise coverage analysis report
+            if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled())) {
+                var report = buildResult.getTestwiseCoverageReports(job);
+                if (report != null) {
+                    // since the test cases are not saved to the database yet, the test case is null for the entries
+                    var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(report);
+                    result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
+                }
+            }
+
+            // Relevant feedback is negative
+            result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive()));
+        }
+    }
 
     /**
      * Find the ZonedDateTime of the first BuildLogEntry that contains the searchString in the log message.

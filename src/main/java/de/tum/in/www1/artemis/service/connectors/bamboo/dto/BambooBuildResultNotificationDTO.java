@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -14,7 +15,9 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -111,6 +114,21 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         return buildLogEntries;
     }
 
+    @Override
+    public List<BuildJobDTOInterface> getBuildJobs() {
+        return getBuild().jobs().stream().map(job -> (BuildJobDTOInterface) job).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports(BuildJobDTOInterface job) {
+        return ((BambooJobDTO) job).staticCodeAnalysisReports();
+    }
+
+    @Override
+    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports(BuildJobDTOInterface job) {
+        return ((BambooJobDTO) job).testwiseCoverageReport();
+    }
+
     private Optional<String> getCommitHashFromRepo(String repoName) {
         var repo = getBuild().vcs().stream().filter(vcs -> vcs.repositoryName().equalsIgnoreCase(repoName)).findFirst();
         return repo.map(BambooVCSDTO::id);
@@ -167,7 +185,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record BambooJobDTO(int id, List<BambooTestJobDTO> failedTests, List<BambooTestJobDTO> successfulTests, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
-            List<TestwiseCoverageReportDTO> testwiseCoverageReport, List<BambooBuildLogDTO> logs) {
+            List<TestwiseCoverageReportDTO> testwiseCoverageReport, List<BambooBuildLogDTO> logs) implements BuildJobDTOInterface {
 
         // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
         @JsonCreator
@@ -183,11 +201,21 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
             this.testwiseCoverageReport = testwiseCoverageReport;
             this.logs = logs;
         }
+
+        @Override
+        public List<TestCaseDTOInterface> getFailedTests() {
+            return failedTests.stream().map(test -> (TestCaseDTOInterface) test).collect(Collectors.toList());
+        }
+
+        @Override
+        public List<TestCaseDTOInterface> getSuccessfulTests() {
+            return failedTests.stream().map(test -> (TestCaseDTOInterface) test).collect(Collectors.toList());
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record BambooTestJobDTO(String name, String methodName, String className, List<String> errors) {
+    public record BambooTestJobDTO(String name, String methodName, String className, List<String> errors) implements TestCaseDTOInterface {
 
         // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
         @JsonCreator
@@ -196,6 +224,16 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
             this.methodName = methodName;
             this.className = className;
             this.errors = errors;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public List<String> getMessage() {
+            return errors;
         }
     }
 }
