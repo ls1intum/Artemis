@@ -126,6 +126,9 @@ public class CourseTestService {
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
 
+    @Autowired
+    private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
     private final static int numberOfStudents = 8;
 
     private final static int numberOfTutors = 5;
@@ -2102,5 +2105,101 @@ public class CourseTestService {
     public void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+    }
+
+    // Test
+    public void testCreateInvalidOnlineCourse() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+
+        // with RegistrationEnabled
+        course.setOnlineCourse(true);
+        course.setRegistrationEnabled(true);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+
+        // without onlinecourseconfiguration
+        course.setRegistrationEnabled(false);
+        course.setOnlineCourseConfiguration(null);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+
+        // with invalid online course configuration - no key and secret
+        ModelFactory.generateOnlineCourseConfiguration(course, null, null, null, null);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+
+        // with invalid user prefix - not matching regex
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "with space", null);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+    }
+
+    // Test
+    public void testCreateValidOnlineCourse() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+        Course courseWithOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
+    }
+
+    public void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+        course = courseRepo.save(course);
+        var courseId = course.getId();
+
+        List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
+
+        Course receivedCourse = courses.stream().filter(c -> courseId.equals(c.getId())).findFirst().get();
+        assertThat(receivedCourse.getOnlineCourseConfiguration()).as("Online course configuration is lazily loaded").isNull();
+    }
+
+    // Test
+    public void testUpdateOnlineCourseConfiguration() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+
+        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+
+        OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
+        onlineCourseConfiguration.setLtiKey("changedKey");
+        onlineCourseConfiguration.setLtiSecret("changedSecret");
+        onlineCourseConfiguration.setUserPrefix("changedUserPrefix");
+
+        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        course = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+
+        assertThat(course.getOnlineCourseConfiguration().getLtiKey()).isEqualTo("changedKey");
+        assertThat(course.getOnlineCourseConfiguration().getLtiSecret()).isEqualTo("changedSecret");
+        assertThat(course.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo("changedUserPrefix");
+    }
+
+    // Test
+    public void testUpdateCourseRemoveOnlineCourseConfiguration() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+
+        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+
+        course.setOnlineCourse(false);
+        course.setOnlineCourseConfiguration(null);
+        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        assertThat(courseWithoutOnlineConfiguration.getOnlineCourseConfiguration()).isNull();
+    }
+
+    // Test
+    public void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+        course = courseRepo.save(course);
+
+        request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
+
+        assertThat(onlineCourseConfigurationRepository.findById(course.getOnlineCourseConfiguration().getId())).isNotPresent();
     }
 }

@@ -135,9 +135,6 @@ public class ProgrammingExerciseTestService {
     @Autowired(required = false)
     private AutomaticProgrammingExerciseCleanupService automaticProgrammingExerciseCleanupService;
 
-    @Value("${artemis.lti.user-prefix-edx:#{null}}")
-    private Optional<String> userPrefixEdx;
-
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
@@ -1496,7 +1493,7 @@ public class ProgrammingExerciseTestService {
         setupTeamExercise();
 
         // create a team for the user (necessary condition before starting an exercise)
-        final String edxUsername = userPrefixEdx.get() + "student";
+        final String edxUsername = "edx_student";
         User edxStudent = ModelFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).get(0);
         edxStudent.setInternal(true);
         edxStudent.setPassword(passwordService.hashPassword(edxStudent.getPassword()));
