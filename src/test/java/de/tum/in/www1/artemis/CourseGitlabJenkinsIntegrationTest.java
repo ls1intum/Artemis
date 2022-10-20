@@ -166,6 +166,30 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateAndUpdateCourseWithCourseImage() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithCourseImage();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateAndUpdateCourseWithSetNewImageDespiteRemoval() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithSetNewImageDespiteRemoval();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateOldMembersInCourse() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
         var oldInstructorGroup = course.getInstructorGroupName();

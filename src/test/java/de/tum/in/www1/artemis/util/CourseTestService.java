@@ -488,6 +488,68 @@ public class CourseTestService {
     }
 
     // Test
+    public void testCreateAndUpdateCourseWithCourseImage() throws Exception {
+        var createdCourse = createCourseWithCourseImageAndReturn();
+        var courseIcon = createdCourse.getCourseIcon();
+        createdCourse.setDescription("new description"); // do additional update
+
+        // Update course
+        request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse, "newTestIcon")).andExpect(status().isOk());
+
+        List<Course> updatedCourses = courseRepo.findAll();
+        assertThat(updatedCourses).hasSize(1);
+        var updatedCourse = updatedCourses.get(0);
+        assertThat(updatedCourse.getId()).isEqualTo(createdCourse.getId());
+        assertThat(updatedCourse.getCourseIcon()).isNotEqualTo(courseIcon).isNotNull();
+        assertThat(updatedCourse.getDescription()).isEqualTo("new description");
+    }
+
+    // Test
+    public void testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate() throws Exception {
+        Course createdCourse = createCourseWithCourseImageAndReturn();
+
+        // Update course
+        request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk());
+
+        List<Course> updatedCourses = courseRepo.findAll();
+        assertThat(updatedCourses).hasSize(1);
+        var updatedCourse = updatedCourses.get(0);
+        assertThat(updatedCourse.getId()).isEqualTo(createdCourse.getId());
+        assertThat(updatedCourse.getCourseIcon()).isEqualTo(createdCourse.getCourseIcon());
+    }
+
+    // Test
+    public void testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate() throws Exception {
+        Course createdCourse = createCourseWithCourseImageAndReturn();
+        createdCourse.setCourseIcon(null);
+
+        // Update course
+        request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk());
+
+        List<Course> updatedCourses = courseRepo.findAll();
+        assertThat(updatedCourses).hasSize(1);
+        var updatedCourse = updatedCourses.get(0);
+        assertThat(updatedCourse.getId()).isEqualTo(createdCourse.getId());
+        assertThat(updatedCourse.getCourseIcon()).isNull();
+    }
+
+    // Test
+    public void testCreateAndUpdateCourseWithSetNewImageDespiteRemoval() throws Exception {
+        Course createdCourse = createCourseWithCourseImageAndReturn();
+        var courseIcon = createdCourse.getCourseIcon();
+        createdCourse.setCourseIcon(null);
+
+        // Update course
+        request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse, "newTestIcon")).andExpect(status().isOk());
+
+        List<Course> updatedCourses = courseRepo.findAll();
+        assertThat(updatedCourses).hasSize(1);
+        var updatedCourse = updatedCourses.get(0);
+        assertThat(updatedCourse.getId()).isEqualTo(createdCourse.getId());
+        assertThat(updatedCourse.getCourseIcon()).isNotNull().isNotEqualTo(courseIcon);
+    }
+
+    // Test
     public void testUpdateCourseGroups_InExternalCiUserManagement_failToRemoveUser() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
         var oldInstructorGroup = course.getInstructorGroupName();
@@ -2207,7 +2269,7 @@ public class CourseTestService {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/courses").file(coursePart);
         if (fileContent != null) {
-            var filePart = new MockMultipartFile("file", "test.zip", MediaType.APPLICATION_OCTET_STREAM_VALUE, fileContent.getBytes());
+            var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
             builder.file(filePart);
         }
         return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
@@ -2221,9 +2283,26 @@ public class CourseTestService {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/courses/" + id).file(coursePart);
         if (fileContent != null) {
-            var filePart = new MockMultipartFile("file", "test.zip", MediaType.APPLICATION_OCTET_STREAM_VALUE, fileContent.getBytes());
+            var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
             builder.file(filePart);
         }
         return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+    }
+
+    private Course createCourseWithCourseImageAndReturn() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
+
+        request.getMvc().perform(buildCreateCourse(course, "testIcon")).andExpect(status().isCreated());
+
+        List<Course> courses = courseRepo.findAll();
+        assertThat(courses).as("Course got stored").hasSize(1);
+        var createdCourse = courses.get(0);
+        assertThat(createdCourse.getCourseIcon()).as("Course icon got stored").isNotNull();
+
+        return createdCourse;
     }
 }

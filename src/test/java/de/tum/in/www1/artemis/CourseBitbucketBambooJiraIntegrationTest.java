@@ -162,6 +162,30 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateAndUpdateCourseWithCourseImage() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithCourseImage();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testCreateAndUpdateCourseWithSetNewImageDespiteRemoval() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithSetNewImageDespiteRemoval();
+    }
+
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetCourseWithoutPermission() throws Exception {
         courseTestService.testGetCourseWithoutPermission();
