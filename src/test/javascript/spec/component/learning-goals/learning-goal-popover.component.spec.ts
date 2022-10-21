@@ -1,14 +1,14 @@
 import { Location } from '@angular/common';
-import { Component } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { RouterTestingModule } from '@angular/router/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
-import { LearningGoalsPopoverComponent } from 'app/course/learning-goals/learning-goals-popover/learning-goals-popover.component';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterTestingModule } from '@angular/router/testing';
+import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
+import { LearningGoalsPopoverComponent } from 'app/course/learning-goals/learning-goals-popover/learning-goals-popover.component';
+import { By } from '@angular/platform-browser';
+import { LearningGoal } from 'app/entities/learningGoal.model';
+import { Component } from '@angular/core';
 
 @Component({
     template: '',

@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MetricsComponent } from 'app/admin/metrics/metrics.component';
-import { Metrics, ThreadDump } from 'app/admin/metrics/metrics.model';
-import { MetricsService } from 'app/admin/metrics/metrics.service';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
+import { MetricsComponent } from 'app/admin/metrics/metrics.component';
+import { MetricsService } from 'app/admin/metrics/metrics.service';
+import { Metrics, ThreadDump } from 'app/admin/metrics/metrics.model';
 
 describe('MetricsComponent', () => {
     let comp: MetricsComponent;

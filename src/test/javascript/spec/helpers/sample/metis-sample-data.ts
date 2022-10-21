@@ -1,16 +1,16 @@
-import { User } from 'app/core/user/user.model';
-import { Attachment } from 'app/entities/attachment.model';
 import { Course } from 'app/entities/course.model';
+import { User } from 'app/core/user/user.model';
+import { CourseWideContext, DisplayPriority, MetisPostAction, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { Reaction } from 'app/entities/metis/reaction.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-details.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation-dto.model';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
-import { Reaction } from 'app/entities/metis/reaction.model';
-import { CourseWideContext, DisplayPriority, MetisPostAction, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
+import { Attachment } from 'app/entities/attachment.model';
+import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-details.model';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation-dto.model';
 
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/Metis-Attachment.pdf' } as Attachment;
 

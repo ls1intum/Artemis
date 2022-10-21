@@ -1,6 +1,6 @@
 import { DELETE } from '../../../constants';
 import { artemis } from '../../../ArtemisTesting';
-import { BASE_API, GET, POST } from '../../../constants';
+import { GET, BASE_API, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 
 /**

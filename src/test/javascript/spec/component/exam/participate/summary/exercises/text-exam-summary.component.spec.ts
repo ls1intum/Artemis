@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextExamSummaryComponent } from 'app/exam/participate/summary/exercises/text-exam-summary/text-exam-summary.component';
+import { TextSubmission } from 'app/entities/text-submission.model';
 
 describe('TextExamSummaryComponent', () => {
     let fixture: ComponentFixture<TextExamSummaryComponent>;

@@ -1,9 +1,9 @@
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
-import { Observable, Subscription, of } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/build-log.model';
-import { Participation, getExercise } from 'app/entities/participation/participation.model';
+import { getExercise, Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
 import { CodeEditorBuildLogService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';

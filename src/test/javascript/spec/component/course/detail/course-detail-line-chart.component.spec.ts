@@ -1,16 +1,16 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { LineChartModule } from '@swimlane/ngx-charts';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { LineChartModule } from '@swimlane/ngx-charts';
+import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import dayjs from 'dayjs/esm';
 
 describe('CourseDetailLineChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailLineChartComponent>;

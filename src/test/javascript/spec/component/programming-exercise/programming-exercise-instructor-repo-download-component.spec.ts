@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { MockComponent } from 'ng-mocks';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { MockComponent } from 'ng-mocks';
+import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 
 describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
     let component: ProgrammingExerciseInstructorRepoDownloadComponent;

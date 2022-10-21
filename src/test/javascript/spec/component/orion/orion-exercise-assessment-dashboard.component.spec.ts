@@ -1,21 +1,21 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
-import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
-import { OrionState } from 'app/shared/orion/orion';
-import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
+import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { OrionState } from 'app/shared/orion/orion';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
+import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 
 describe('OrionExerciseAssessmentDashboardComponent', () => {
     let comp: OrionExerciseAssessmentDashboardComponent;

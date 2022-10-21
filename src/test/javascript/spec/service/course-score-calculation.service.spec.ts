@@ -1,13 +1,13 @@
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Result } from 'app/entities/result.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
 import dayjs from 'dayjs/esm';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ParticipationType } from 'app/entities/participation/participation.model';
+import { Result } from 'app/entities/result.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('CourseScoreCalculationService', () => {
     let courseScoreCalculationService: CourseScoreCalculationService;

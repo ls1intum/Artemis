@@ -4,8 +4,8 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { FullscreenCommand } from 'app/shared/markdown-editor/commands/fullscreen.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import * as FullscreenUtil from 'app/shared/util/fullscreen.util';
 import { ArtemisTestModule } from '../../test.module';
+import * as FullscreenUtil from 'app/shared/util/fullscreen.util';
 
 describe('FullscreenCommand', () => {
     let comp: MarkdownEditorComponent;

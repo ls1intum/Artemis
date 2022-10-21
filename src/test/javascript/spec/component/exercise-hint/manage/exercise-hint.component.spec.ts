@@ -1,15 +1,15 @@
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 import { ExerciseHintComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint.component';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
-import { of } from 'rxjs';
-import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { ArtemisTestModule } from '../../../test.module';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('ExerciseHint Management Component', () => {
     let comp: ExerciseHintComponent;

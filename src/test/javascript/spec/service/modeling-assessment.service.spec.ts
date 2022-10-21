@@ -1,18 +1,18 @@
-import { HttpResponse } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { TranslateService } from '@ngx-translate/core';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { Feedback } from 'app/entities/feedback.model';
-import { Result } from 'app/entities/result.model';
-import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { getNamesForAssessments } from 'app/exercises/modeling/assess/modeling-assessment.util';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpResponse } from '@angular/common/http';
 import { take } from 'rxjs/operators';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../test.module';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { Result } from 'app/entities/result.model';
+import { Feedback } from 'app/entities/feedback.model';
+import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { getNamesForAssessments } from 'app/exercises/modeling/assess/modeling-assessment.util';
 
 describe('Modeling Assessment Service', () => {
     let httpMock: HttpTestingController;

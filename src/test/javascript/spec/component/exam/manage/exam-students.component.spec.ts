@@ -1,25 +1,25 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, UrlSegment } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { TranslateService } from '@ngx-translate/core';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { StudentDTO } from 'app/entities/student-dto.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { StudentDTO } from 'app/entities/student-dto.model';
+import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;

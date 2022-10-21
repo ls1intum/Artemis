@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgModel } from '@angular/forms';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
-import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
-import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
-import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
-import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
-import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
-import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
+import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
+import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
+import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
+import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
+import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
+import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
+import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe, MockDirective } from 'ng-mocks';
+import { NgModel } from '@angular/forms';
 
 describe('Grading Instruction Command', () => {
     let comp: MarkdownEditorComponent;

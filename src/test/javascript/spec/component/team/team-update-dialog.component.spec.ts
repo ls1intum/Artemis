@@ -1,23 +1,23 @@
+import * as ace from 'brace';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { ArtemisTestModule } from '../../test.module';
+import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
 import { By } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, MockTeamService, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
+import { TeamService } from 'app/exercises/shared/team/team.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { MockComponent, MockPipe } from 'ng-mocks';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TeamOwnerSearchComponent } from 'app/exercises/shared/team/team-owner-search/team-owner-search.component';
 import { TeamStudentSearchComponent } from 'app/exercises/shared/team/team-student-search/team-student-search.component';
-import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
-import { TeamService } from 'app/exercises/shared/team/team.service';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import * as ace from 'brace';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTeamService, mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('TeamUpdateDialogComponent', () => {
     // needed to make sure ace is defined

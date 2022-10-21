@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
+import { combineLatest, merge, Observable, of, Subject } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { Course, CourseGroup } from 'app/entities/course.model';

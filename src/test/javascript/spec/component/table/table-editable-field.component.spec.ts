@@ -1,10 +1,10 @@
-import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
-import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
-import { ArtemisTableModule } from 'app/shared/table/table.module';
+import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTableModule } from 'app/shared/table/table.module';
+import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 
 describe('TableEditableFieldComponent', () => {
     let comp: TableEditableFieldComponent;

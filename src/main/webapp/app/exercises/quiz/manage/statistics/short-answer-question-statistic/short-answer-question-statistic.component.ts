@@ -11,7 +11,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-question-statistic.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuestionStatisticComponent, blueColor, greenColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
+import { blueColor, greenColor, QuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({

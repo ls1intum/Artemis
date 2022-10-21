@@ -1,23 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockPipe } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
+import { ArtemisTestModule } from '../../../test.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Result } from 'app/entities/result.model';
-import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
-import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
+import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 
 describe('Quiz Scoring Info Student Modal Component', () => {
     let fixture: ComponentFixture<QuizScoringInfoStudentModalComponent>;

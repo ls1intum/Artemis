@@ -1,21 +1,21 @@
-import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { PageType } from 'app/shared/metis/metis.util';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { DebugElement } from '@angular/core';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
-import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { getElement } from '../../../../helpers/utils/general.utils';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
-import { getElement } from '../../../../helpers/utils/general.utils';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('PostComponent', () => {
     let component: PostComponent;

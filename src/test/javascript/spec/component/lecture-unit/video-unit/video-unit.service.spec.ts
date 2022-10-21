@@ -1,13 +1,13 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TestBed, fakeAsync } from '@angular/core/testing';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
+import { fakeAsync, TestBed } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
-import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import dayjs from 'dayjs/esm';
+import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
+import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 
 describe('VideoUnitService', () => {
     let service: VideoUnitService;

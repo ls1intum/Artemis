@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ArtemisTestModule } from '../../../test.module';
+import { CodeHintContainerComponent } from 'app/exercises/shared/exercise-hint/shared/code-hint-container.component';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
-import { CodeHintContainerComponent } from 'app/exercises/shared/exercise-hint/shared/code-hint-container.component';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExerciseHint Management Component', () => {
     let comp: CodeHintContainerComponent;

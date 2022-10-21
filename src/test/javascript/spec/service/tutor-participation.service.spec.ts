@@ -1,14 +1,14 @@
+import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course.model';
+import { take, isEmpty } from 'rxjs/operators';
+import { ArtemisTestModule } from '../test.module';
+import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
+import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
-import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
-import { isEmpty, take } from 'rxjs/operators';
+import { Course } from 'app/entities/course.model';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { ArtemisTestModule } from '../test.module';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('Rating Service', () => {
     let service: TutorParticipationService;

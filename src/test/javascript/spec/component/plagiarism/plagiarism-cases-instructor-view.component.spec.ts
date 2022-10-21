@@ -1,17 +1,17 @@
-import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { PlagiarismCasesInstructorViewComponent } from 'app/course/plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.component';
+import { ArtemisTestModule } from '../../test.module';
+import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { TranslateService } from '@ngx-translate/core';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import * as DownloadUtil from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
-import { Observable, of } from 'rxjs';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),

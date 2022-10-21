@@ -1,14 +1,14 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 
 describe('Profile Service', () => {
     let service: ProfileService;

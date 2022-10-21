@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
-import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { ReferenceType } from 'app/shared/metis/metis.util';
-import { MockComponent } from 'ng-mocks';
-import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
-import { metisExercise, metisLecture } from '../../helpers/sample/metis-sample-data';
 import { ArtemisTestModule } from '../../test.module';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent } from 'ng-mocks';
+import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
+import { metisExercise, metisLecture } from '../../helpers/sample/metis-sample-data';
+import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
+import { ReferenceType } from 'app/shared/metis/metis.util';
 
 describe('Exercise Lecture Attachment Reference Commands', () => {
     let comp: MarkdownEditorComponent;

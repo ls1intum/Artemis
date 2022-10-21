@@ -13,7 +13,7 @@ import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
-import { Submission, reconnectSubmissions } from 'app/entities/submission.model';
+import { reconnectSubmissions, Submission } from 'app/entities/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';

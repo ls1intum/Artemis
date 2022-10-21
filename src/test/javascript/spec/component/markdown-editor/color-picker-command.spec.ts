@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import { ColorPickerCommand } from 'app/shared/markdown-editor/commands/colorPicker.command';
-import { Command } from 'app/shared/markdown-editor/commands/command';
+import { MockComponent } from 'ng-mocks';
+import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { MockComponent } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
+import { ColorPickerCommand } from 'app/shared/markdown-editor/commands/colorPicker.command';
+import { Command } from 'app/shared/markdown-editor/commands/command';
 
 describe('ColorPickerCommand', () => {
     let comp: MarkdownEditorComponent;

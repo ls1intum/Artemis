@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbActiveModal, NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings, ExportModalComponent } from 'app/shared/export/export-modal.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { CsvDecimalSeparator, ExportModalComponent, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { By } from '@angular/platform-browser';
 
 describe('ExportModalComponent', () => {
     let component: ExportModalComponent;

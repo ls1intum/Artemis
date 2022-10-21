@@ -1,17 +1,17 @@
-import { HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
-import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
-import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-online-unit/edit-online-unit.component';
+import dayjs from 'dayjs/esm';
 import { OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
-import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-online-unit/edit-online-unit.component';
+import { MockProvider } from 'ng-mocks';
+import { AlertService } from 'app/core/util/alert.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { of } from 'rxjs';
+import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
+import { HttpResponse } from '@angular/common/http';
+import { By } from '@angular/platform-browser';
 
 @Component({ selector: 'jhi-online-unit-form', template: '' })
 class OnlineUnitFormStubComponent {

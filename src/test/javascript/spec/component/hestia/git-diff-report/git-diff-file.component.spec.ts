@@ -1,11 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
-import { GitDiffFileComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file.component';
-import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import * as ace from 'brace';
 import { ArtemisTestModule } from '../../../test.module';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
+import { GitDiffFileComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file.component';
+import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import * as ace from 'brace';
+import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
+import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 
 function createDiffEntry(
     id: number,

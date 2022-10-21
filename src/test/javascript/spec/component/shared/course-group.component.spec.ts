@@ -1,32 +1,32 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseGroup } from 'app/entities/course.model';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
-import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
-import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable, of, throwError } from 'rxjs';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/core/util/alert.service';
+import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 
 jest.mock('export-to-csv', () => ({
     ExportToCsv: jest.fn().mockImplementation(() => ({

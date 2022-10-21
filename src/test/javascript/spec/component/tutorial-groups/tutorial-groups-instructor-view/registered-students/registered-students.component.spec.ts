@@ -1,18 +1,18 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
+import { Course, CourseGroup } from 'app/entities/course.model';
+import { MockDirective, MockProvider } from 'ng-mocks';
+import { Observable, of } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/registered-students/registered-students.component';
-import { Course, CourseGroup } from 'app/entities/course.model';
-import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/entities/tutorial-group/tutorial-group-registration.model';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective, MockProvider } from 'ng-mocks';
-import { Observable, of } from 'rxjs';
 import { ArtemisTestModule } from '../../../../test.module';
+import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/entities/tutorial-group/tutorial-group-registration.model';
 
 @Component({ selector: 'jhi-course-group', template: '' })
 class CourseGroupStubComponent {

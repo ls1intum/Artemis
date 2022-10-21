@@ -1,17 +1,17 @@
-import { HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CreateTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-text-unit/create-text-unit.component';
 import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
-import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
-import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { of } from 'rxjs';
+import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
+import { MockProvider } from 'ng-mocks';
+import { AlertService } from 'app/core/util/alert.service';
+import dayjs from 'dayjs/esm';
+import { By } from '@angular/platform-browser';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({ selector: 'jhi-text-unit-form', template: '' })
 class TextUnitFormStubComponent {

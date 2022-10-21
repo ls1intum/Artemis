@@ -1,7 +1,7 @@
+import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeHintGenerationStep } from 'app/entities/hestia/code-hint-model';
 import { CodeHintGenerationStatusComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-status/code-hint-generation-status.component';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('CodeHintGenerationStatus Component', () => {
     let comp: CodeHintGenerationStatusComponent;

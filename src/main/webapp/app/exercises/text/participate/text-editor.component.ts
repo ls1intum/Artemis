@@ -8,7 +8,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import dayjs from 'dayjs/esm';
-import { Subject, merge } from 'rxjs';
+import { merge, Subject } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';

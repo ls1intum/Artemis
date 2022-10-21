@@ -1,24 +1,24 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+    GradingInstructionsDetailsComponent,
+    GradingInstructionTableColumn,
+} from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ArtemisTestModule } from '../../test.module';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import {
-    GradingInstructionTableColumn,
-    GradingInstructionsDetailsComponent,
-} from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
-import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
-import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
-import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
-import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
-import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
 import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
+import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
+import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
+import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
+import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
+import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 
 describe('Grading Instructions Management Component', () => {
     let component: GradingInstructionsDetailsComponent;

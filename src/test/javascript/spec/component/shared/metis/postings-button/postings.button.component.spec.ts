@@ -1,7 +1,7 @@
-import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DebugElement } from '@angular/core';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
 import { getElement } from '../../../../helpers/utils/general.utils';
 

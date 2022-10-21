@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { ArtemisTestModule } from '../../test.module';
+import { ParticipantScoreDTO } from 'app/shared/participant-scores/participant-scores.service';
+import { By } from '@angular/platform-browser';
+import { ParticipantScoresTableComponent } from 'app/shared/participant-scores/participant-scores-table/participant-scores-table.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ParticipantScoresTableComponent } from 'app/shared/participant-scores/participant-scores-table/participant-scores-table.component';
-import { ParticipantScoreDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('ParticipantScoresTable', () => {
     let fixture: ComponentFixture<ParticipantScoresTableComponent>;

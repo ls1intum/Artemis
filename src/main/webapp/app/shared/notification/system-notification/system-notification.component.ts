@@ -7,7 +7,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Subscription, filter } from 'rxjs';
+import { filter, Subscription } from 'rxjs';
 import { convertDateFromServer } from 'app/utils/date.utils';
 
 export const WEBSOCKET_CHANNEL = '/topic/system-notification';

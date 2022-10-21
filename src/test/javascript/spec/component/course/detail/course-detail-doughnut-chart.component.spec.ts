@@ -1,12 +1,12 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { PieChartModule } from '@swimlane/ngx-charts';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ArtemisTestModule } from '../../../test.module';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
-import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
-import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../test.module';
+import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
+import { Course } from 'app/entities/course.model';
+import { PieChartModule } from '@swimlane/ngx-charts';
 
 describe('CourseDetailDoughnutChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailDoughnutChartComponent>;

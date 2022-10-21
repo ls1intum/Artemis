@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { Course } from 'app/entities/course.model';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { ArtemisTestModule } from '../../test.module';
+import { Course } from 'app/entities/course.model';
 
 describe('Header Course Component', () => {
     let component: HeaderCourseComponent;

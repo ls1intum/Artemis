@@ -1,20 +1,20 @@
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import dayjs from 'dayjs/esm';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { map, take } from 'rxjs/operators';
-import { MockRouter } from '../helpers/mocks/mock-router';
+import dayjs from 'dayjs/esm';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockRouter } from '../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('Participation Service', () => {
     let service: ParticipationService;

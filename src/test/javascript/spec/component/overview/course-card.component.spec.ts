@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { PieChartModule } from '@swimlane/ngx-charts';
-import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
-import { CourseCardComponent } from 'app/overview/course-card.component';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTestModule } from '../../test.module';
+import { CourseCardComponent } from 'app/overview/course-card.component';
+import { Course } from 'app/entities/course.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { Exercise } from 'app/entities/exercise.model';
+import { MockComponent, MockPipe, MockDirective, MockModule } from 'ng-mocks';
+import dayjs from 'dayjs/esm';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { SubmissionExerciseType } from 'app/entities/submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { PieChartModule } from '@swimlane/ngx-charts';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('CourseCardComponent', () => {
     let fixture: ComponentFixture<CourseCardComponent>;

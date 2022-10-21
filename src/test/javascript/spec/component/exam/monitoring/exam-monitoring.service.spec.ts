@@ -1,20 +1,20 @@
-import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { ArtemisTestModule } from '../../../test.module';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { ExamAction, ExamActionType, ExamActivity } from 'app/entities/exam-user-activity.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { EXAM_MONITORING_UPDATE_URL, ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
+import { createActions } from './exam-monitoring-helper';
 import * as Sentry from '@sentry/browser';
 import { CaptureContext } from '@sentry/types';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { Course } from 'app/entities/course.model';
-import { ExamAction, ExamActionType, ExamActivity } from 'app/entities/exam-user-activity.model';
-import { Exam } from 'app/entities/exam.model';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
-import { EXAM_MONITORING_UPDATE_URL, ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { BehaviorSubject, of } from 'rxjs';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
-import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisTestModule } from '../../../test.module';
-import { createActions } from './exam-monitoring-helper';
+import { HttpClient } from '@angular/common/http';
 
 describe('ExamMonitoringService', () => {
     let examMonitoringService: ExamMonitoringService;

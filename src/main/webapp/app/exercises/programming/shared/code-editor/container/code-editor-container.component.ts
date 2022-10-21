@@ -1,6 +1,6 @@
 import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
+import { fromPairs, isEmpty as _isEmpty, toPairs, uniq } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';

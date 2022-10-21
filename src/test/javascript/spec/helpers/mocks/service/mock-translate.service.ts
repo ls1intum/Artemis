@@ -1,9 +1,9 @@
 import { Injectable, NgModule, Pipe, PipeTransform } from '@angular/core';
-import { ActivatedRouteSnapshot } from '@angular/router';
 import { LangChangeEvent, TranslateLoader, TranslateModule, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { LANGUAGES } from 'app/core/language/language.constants';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
+import { LANGUAGES } from 'app/core/language/language.constants';
+import { ActivatedRouteSnapshot } from '@angular/router';
 
 export const TRANSLATED_STRING = '';
 

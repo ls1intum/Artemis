@@ -6,7 +6,7 @@ import { EventManager, EventWithContent } from 'app/core/util/event-manager.serv
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { Subscription } from 'rxjs';
 import { captureException } from '@sentry/browser';
-import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 

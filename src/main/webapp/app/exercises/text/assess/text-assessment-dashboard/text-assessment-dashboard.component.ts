@@ -5,7 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Result } from 'app/entities/result.model';
 import { TextAssessmentService } from '../text-assessment.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
-import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';

@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import { Command } from 'app/shared/markdown-editor/commands/command';
-import { OrderedListCommand } from 'app/shared/markdown-editor/commands/orderedListCommand';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTestModule } from '../../test.module';
+import { OrderedListCommand } from 'app/shared/markdown-editor/commands/orderedListCommand';
+import { Command } from 'app/shared/markdown-editor/commands/command';
 
 describe('OrderedListCommand', () => {
     let comp: MarkdownEditorComponent;

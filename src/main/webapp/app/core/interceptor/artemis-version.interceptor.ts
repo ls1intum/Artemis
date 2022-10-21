@@ -1,6 +1,6 @@
 import { ApplicationRef, Inject, Injectable, InjectionToken } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
-import { Observable, concat, interval, of } from 'rxjs';
+import { concat, interval, Observable, of } from 'rxjs';
 import { catchError, first, tap, timeout } from 'rxjs/operators';
 import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';

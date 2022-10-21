@@ -1,15 +1,15 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { Course } from 'app/entities/course.model';
-import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
+import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { Course } from 'app/entities/course.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 describe('ExerciseUnitService', () => {
     let service: ExerciseUnitService;

@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ArtemisTestModule } from '../../../test.module';
+import { MockModule, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
-import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam.model';
+import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockModule, MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../test.module';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 
 describe('Exam Exercise Import Component', () => {
     let component: ExamExerciseImportComponent;

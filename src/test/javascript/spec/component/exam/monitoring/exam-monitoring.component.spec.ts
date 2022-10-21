@@ -1,24 +1,24 @@
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
+import { ArtemisTestModule } from '../../../test.module';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
+import { MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ExamMonitoringComponent, TableContent } from 'app/exam/monitoring/exam-monitoring.component';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockPipe } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { createTestExercises } from './exam-monitoring-helper';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Exam Monitoring Component', () => {
     // Course

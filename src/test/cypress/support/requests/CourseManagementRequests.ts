@@ -5,7 +5,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { BASE_API, DELETE, GET, POST, PUT } from '../constants';
+import { BASE_API, DELETE, POST, PUT, GET } from '../constants';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
 import { dayjsToString, generateUUID } from '../utils';
 import examTemplate from '../../fixtures/requests/exam_template.json';

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
 
 /**
  * filters for all or only locked submissions

@@ -1,4 +1,4 @@
-import { EXERCISE_BASE, POST } from '../../../constants';
+import { POST, EXERCISE_BASE } from '../../../constants';
 
 export class DragAndDropQuiz {
     dragItemIntoDragArea(itemIndex: number) {

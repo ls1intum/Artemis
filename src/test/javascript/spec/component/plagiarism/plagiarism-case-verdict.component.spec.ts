@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { ArtemisTestModule } from '../../test.module';
+import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
+import { NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Plagiarism Case Verdict Component', () => {
     let comp: PlagiarismCaseVerdictComponent;

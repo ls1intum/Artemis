@@ -7,8 +7,8 @@ import { Team } from 'app/entities/team.model';
 import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { unparse } from 'papaparse';
 import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
+import { unparse } from 'papaparse';
 
 describe('TeamsImportFromFileFormComponent', () => {
     let comp: TeamsImportFromFileFormComponent;

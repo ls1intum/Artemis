@@ -3,13 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { AlertService } from 'app/core/util/alert.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
-import { GradeStep } from 'app/entities/grade-step.model';
-import { GradingScale } from 'app/entities/grading-scale.model';
 import {
     AggregatedExamResult,
     AggregatedExerciseGroupResult,
@@ -19,14 +14,32 @@ import {
     ExerciseResult,
     StudentResult,
 } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
 import { ExamScoresComponent, MedianType } from 'app/exam/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { ExportButtonComponent } from 'app/shared/export/export-button.component';
+import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SortService } from 'app/shared/service/sort.service';
+import { cloneDeep } from 'lodash-es';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { EMPTY, of } from 'rxjs';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradeStep } from 'app/entities/grade-step.model';
+import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { AlertService } from 'app/core/util/alert.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { AccountService } from 'app/core/auth/account.service';
+import { Course } from 'app/entities/course.model';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
+import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import {
     BONUS_GRADE_KEY,
     EMAIL_KEY,
@@ -43,21 +56,8 @@ import {
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
-import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { SortService } from 'app/shared/service/sort.service';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { cloneDeep } from 'lodash-es';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { EMPTY, of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { ExportButtonComponent } from 'app/shared/export/export-button.component';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;

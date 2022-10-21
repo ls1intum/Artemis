@@ -1,34 +1,34 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
 import { Course } from 'app/entities/course.model';
-import { Organization } from 'app/entities/organization.model';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { base64StringToBlob } from 'app/utils/blob-util';
-import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { Organization } from 'app/entities/organization.model';
+import dayjs from 'dayjs/esm';
+import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
+import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
+import { base64StringToBlob } from 'app/utils/blob-util';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {

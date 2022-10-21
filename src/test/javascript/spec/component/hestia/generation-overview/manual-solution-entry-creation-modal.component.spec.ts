@@ -1,12 +1,12 @@
+import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ManualSolutionEntryCreationModalComponent } from 'app/exercises/programming/hestia/generation-overview/manual-solution-entry-creation-modal/manual-solution-entry-creation-modal.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/services/programming-exercise-solution-entry.service';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ManualSolutionEntryCreationModal Component', () => {
     let comp: ManualSolutionEntryCreationModalComponent;

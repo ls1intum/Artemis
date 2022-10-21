@@ -1,11 +1,8 @@
-import { HttpClient } from '@angular/common/http';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { Result } from 'app/entities/result.model';
-import { Submission } from 'app/entities/submission.model';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import dayjs from 'dayjs/esm';
+import { BehaviorSubject, lastValueFrom, of, Subject } from 'rxjs';
+import { range as _range } from 'lodash-es';
+import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
+import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import {
     ExerciseSubmissionState,
     ProgrammingSubmissionService,
@@ -13,13 +10,16 @@ import {
     ProgrammingSubmissionStateObj,
 } from 'app/exercises/programming/participate/programming-submission.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import dayjs from 'dayjs/esm';
-import { range as _range } from 'lodash-es';
-import { BehaviorSubject, Subject, lastValueFrom, of } from 'rxjs';
-import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
+import { Result } from 'app/entities/result.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { Submission } from 'app/entities/submission.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';
+import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
+import { HttpClient } from '@angular/common/http';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 describe('ProgrammingSubmissionService', () => {
     let websocketService: JhiWebsocketService;

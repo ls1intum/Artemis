@@ -1,10 +1,10 @@
+import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExpandableSectionComponent } from 'app/assessment/assessment-instructions/expandable-section/expandable-section.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
+import { ExpandableSectionComponent } from 'app/assessment/assessment-instructions/expandable-section/expandable-section.component';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { ArtemisTestModule } from '../../test.module';
+import { LocalStorageService } from 'ngx-webstorage';
 
 describe('ExpandableSectionComponent', () => {
     let component: ExpandableSectionComponent;

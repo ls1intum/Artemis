@@ -1,15 +1,15 @@
-import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DebugElement } from '@angular/core';
+import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
+import { triggerChanges } from '../../helpers/utils/general.utils';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
-import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockProgrammingExerciseInstructionAnalysisService } from '../../helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
-import { triggerChanges } from '../../helpers/utils/general.utils';
 
 describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     let comp: ProgrammingExerciseInstructionAnalysisComponent;

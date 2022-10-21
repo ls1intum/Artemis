@@ -1,23 +1,23 @@
-import { HttpResponse } from '@angular/common/http';
-import { Component, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { of } from 'rxjs';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 import { ActivatedRoute } from '@angular/router';
-import * as Sentry from '@sentry/browser';
-import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { IndividualLearningGoalProgress, IndividualLectureUnitProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
-import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { Course } from 'app/entities/course.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { Component, Input } from '@angular/core';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HttpResponse } from '@angular/common/http';
+import { By } from '@angular/platform-browser';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
 import { cloneDeep } from 'lodash-es';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import * as Sentry from '@sentry/browser';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
 class LearningGoalCardStubComponent {

@@ -1,24 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { faCheckCircle, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { ResultComponent, ResultTemplateStatus } from 'app/exercises/shared/result/result.component';
+import { Result } from 'app/entities/result.model';
+import { ArtemisTestModule } from '../../../test.module';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { cloneDeep } from 'lodash-es';
+import { Submission } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { faCheckCircle, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Result } from 'app/entities/result.model';
-import { Submission } from 'app/entities/submission.model';
-import { ResultComponent, ResultTemplateStatus } from 'app/exercises/shared/result/result.component';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { cloneDeep } from 'lodash-es';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
+import { ParticipationType } from 'app/entities/participation/participation.model';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;

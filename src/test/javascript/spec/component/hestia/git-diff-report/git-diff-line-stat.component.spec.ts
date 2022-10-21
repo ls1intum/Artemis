@@ -1,8 +1,8 @@
+import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../test.module';
 
 describe('Git-Diff line-stat Component', () => {
     let comp: GitDiffLineStatComponent;

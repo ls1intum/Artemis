@@ -1,28 +1,28 @@
-import { HttpResponse } from '@angular/common/http';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
-import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { ConversationService } from 'app/shared/metis/conversation.service';
-import { MessagingService } from 'app/shared/metis/messaging.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { MockConversationService } from '../../../helpers/mocks/service/mock-conversation.service';
-import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { ConversationService } from 'app/shared/metis/conversation.service';
+import { MockConversationService } from '../../../helpers/mocks/service/mock-conversation.service';
+import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
 
 import { conversationBetweenUser1User2, conversationsOfUser1, metisCourse, metisUser2, metisUser3 } from '../../../helpers/sample/metis-sample-data';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { MessagingService } from 'app/shared/metis/messaging.service';
 
 describe('ConversationSidebarComponent', () => {
     let component: ConversationSidebarComponent;

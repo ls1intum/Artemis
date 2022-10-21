@@ -1,16 +1,15 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-export-button.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { mockTeams } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
-
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 describe('TeamsExportButtonComponent', () => {
     let comp: TeamsExportButtonComponent;
     let fixture: ComponentFixture<TeamsExportButtonComponent>;

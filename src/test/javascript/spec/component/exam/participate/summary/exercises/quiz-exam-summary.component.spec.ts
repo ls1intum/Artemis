@@ -26,7 +26,8 @@ import { ArtemisQuizQuestionTypesModule } from 'app/exercises/quiz/shared/questi
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockModule, MockProvider } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 
 const multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
 const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQuestion } as AnswerOption;

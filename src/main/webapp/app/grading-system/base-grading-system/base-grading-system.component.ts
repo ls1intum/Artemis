@@ -4,7 +4,7 @@ import { GradeStep } from 'app/entities/grade-step.model';
 import { ActivatedRoute } from '@angular/router';
 import { EntityResponseType, GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { Observable, Subject, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { catchError, finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';

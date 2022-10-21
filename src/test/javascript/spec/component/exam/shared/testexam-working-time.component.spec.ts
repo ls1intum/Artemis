@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockPipe } from 'ng-mocks';
+import dayjs from 'dayjs/esm';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { TestexamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/testexam-working-time.component';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { round } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
-import { MockPipe } from 'ng-mocks';
 
 describe('TestExamWorkingTimeComponent', () => {
     let fixture: ComponentFixture<TestexamWorkingTimeComponent>;

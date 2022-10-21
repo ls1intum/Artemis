@@ -1,19 +1,19 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
+import { of } from 'rxjs';
+import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
+import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
+import { MockFeatureToggleService } from '../helpers/mocks/service/mock-feature-toggle.service';
 import { User } from 'app/core/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { Authority } from 'app/shared/constants/authority.constants';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Team } from 'app/entities/team.model';
-import { Authority } from 'app/shared/constants/authority.constants';
-import { of } from 'rxjs';
-import { MockFeatureToggleService } from '../helpers/mocks/service/mock-feature-toggle.service';
-import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 
 describe('AccountService', () => {
     let accountService: AccountService;

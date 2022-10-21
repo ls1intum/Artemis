@@ -5,7 +5,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { TeamImportStrategyType as ImportStrategy, Team } from 'app/entities/team.model';
+import { Team, TeamImportStrategyType as ImportStrategy } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { flatMap } from 'lodash-es';

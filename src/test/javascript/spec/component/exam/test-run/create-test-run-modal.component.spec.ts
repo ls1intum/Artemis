@@ -1,16 +1,16 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { By } from '@angular/platform-browser';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { Exam } from 'app/entities/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { Course } from 'app/entities/course.model';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import dayjs from 'dayjs/esm';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { By } from '@angular/platform-browser';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('Create Test Run Modal Component', () => {

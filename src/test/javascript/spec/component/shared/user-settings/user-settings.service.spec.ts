@@ -1,14 +1,14 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { NotificationSetting, notificationSettingsStructure } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
-import { Setting, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
+import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
-import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { Setting, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
+import { notificationSettingsStructure, NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 
 const notificationSettingA: NotificationSetting = {
     settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,

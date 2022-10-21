@@ -9,7 +9,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { Participation, ParticipationType, getExercise } from 'app/entities/participation/participation.model';
+import { getExercise, Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';

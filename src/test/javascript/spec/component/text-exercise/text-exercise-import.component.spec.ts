@@ -1,17 +1,17 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { of, Subject } from 'rxjs';
+import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
-import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
+import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
+import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SearchResult } from 'app/shared/table/pageable-table';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { Subject, of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('TextExercise Import Component', () => {
     let comp: TextExerciseImportComponent;

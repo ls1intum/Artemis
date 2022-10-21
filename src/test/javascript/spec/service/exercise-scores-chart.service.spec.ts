@@ -1,12 +1,12 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
-import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
-import { SessionStorageService } from 'ngx-webstorage';
-import { take } from 'rxjs/operators';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { ArtemisTestModule } from '../test.module';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../test.module';
+import { SessionStorageService } from 'ngx-webstorage';
+import { TranslateService } from '@ngx-translate/core';
+import { take } from 'rxjs/operators';
+import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 
 describe('Exercise Scores Chart Service', () => {
     let service: ExerciseScoresChartService;

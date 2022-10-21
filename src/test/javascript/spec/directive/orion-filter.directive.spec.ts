@@ -1,8 +1,8 @@
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { isOrion } from 'app/shared/orion/orion';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+import { isOrion } from 'app/shared/orion/orion';
 
 @Component({
     selector: 'jhi-test-component',

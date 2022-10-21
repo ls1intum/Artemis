@@ -1,9 +1,9 @@
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { AccountService } from 'app/core/auth/account.service';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { map, take } from 'rxjs/operators';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
+import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 describe('FileUploadSubmission Service', () => {

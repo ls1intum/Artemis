@@ -1,11 +1,11 @@
+import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning/orion-outdated.component';
+import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 
 describe('OrionOutdatedComponent', () => {
     let comp: OrionOutdatedComponent;

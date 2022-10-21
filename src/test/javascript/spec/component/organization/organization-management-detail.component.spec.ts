@@ -1,23 +1,23 @@
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { TranslateService } from '@ngx-translate/core';
 
 import { OrganizationManagementDetailComponent } from 'app/admin/organization-management/organization-management-detail.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { User } from 'app/core/user/user.model';
-import { UserService } from 'app/core/user/user.service';
-import { Course } from 'app/entities/course.model';
-import { Organization } from 'app/entities/organization.model';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { iconsAsHTML } from 'app/utils/icons.utils';
-import { MockComponent } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of, throwError } from 'rxjs';
+import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { TranslateService } from '@ngx-translate/core';
+import { ActivatedRoute } from '@angular/router';
+import { Organization } from 'app/entities/organization.model';
+import { User } from 'app/core/user/user.model';
+import { Course } from 'app/entities/course.model';
+import { UserService } from 'app/core/user/user.service';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { MockComponent } from 'ng-mocks';
+import { iconsAsHTML } from 'app/utils/icons.utils';
 
 describe('OrganizationManagementDetailComponent', () => {
     let component: OrganizationManagementDetailComponent;

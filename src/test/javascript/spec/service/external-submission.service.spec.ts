@@ -1,13 +1,13 @@
+import { ArtemisTestModule } from '../test.module';
+import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { User } from 'app/core/user/user.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
-import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
+import { User } from 'app/core/user/user.model';
 import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../test.module';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('External Submission Service', () => {
     let httpMock: HttpTestingController;

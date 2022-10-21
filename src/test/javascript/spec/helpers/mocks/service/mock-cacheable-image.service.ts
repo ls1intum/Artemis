@@ -1,5 +1,5 @@
-import { ICacheableImageService } from 'app/shared/image/cacheable-image.service';
 import { Observable, of } from 'rxjs';
+import { ICacheableImageService } from 'app/shared/image/cacheable-image.service';
 
 export class MockCacheableImageService implements ICacheableImageService {
     loadCachedLocalStorage(url: string): Observable<any> {

@@ -1,20 +1,20 @@
-import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { Result } from 'app/entities/result.model';
-import { Submission } from 'app/entities/submission.model';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
-import { MissingResultInfo, ResultComponent } from 'app/exercises/shared/result/result.component';
-import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import dayjs from 'dayjs/esm';
-import { MockComponent } from 'ng-mocks';
+import { DebugElement } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
+import { ArtemisTestModule } from '../../test.module';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
-import { ArtemisTestModule } from '../../test.module';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
+import { MissingResultInfo, ResultComponent } from 'app/exercises/shared/result/result.component';
+import { Result } from 'app/entities/result.model';
+import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockComponent } from 'ng-mocks';
+import { Submission } from 'app/entities/submission.model';
 
 describe('UpdatingResultComponent', () => {
     let comp: UpdatingResultComponent;

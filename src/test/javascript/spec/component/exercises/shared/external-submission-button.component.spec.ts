@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgForm, NgModel } from '@angular/forms';
-import { By } from '@angular/platform-browser';
-import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise } from 'app/entities/exercise.model';
-import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
+import { ArtemisTestModule } from '../../../test.module';
 import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
+import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective } from 'ng-mocks';
+import { NgForm, NgModel } from '@angular/forms';
+import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
+import { Exercise } from 'app/entities/exercise.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
+import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockDirective } from 'ng-mocks';
-import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
+import { By } from '@angular/platform-browser';
 
 describe('External Submission Dialog', () => {
     let fixture: ComponentFixture<ExternalSubmissionButtonComponent>;

@@ -1,11 +1,11 @@
+import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CodeHint } from 'app/entities/hestia/code-hint-model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { of } from 'rxjs';
 import { CodeHintGenerationStepComponent } from 'app/exercises/programming/hestia/generation-overview/steps/code-hint-generation-step/code-hint-generation-step.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
-import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
+import { CodeHint } from 'app/entities/hestia/code-hint-model';
 
 describe('CodeHintGenerationStep Component', () => {
     let comp: CodeHintGenerationStepComponent;

@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
@@ -8,9 +8,9 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../../../test.module';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('SystemNotificationManagementDetailComponent', () => {
     let detailComponentFixture: ComponentFixture<SystemNotificationManagementDetailComponent>;

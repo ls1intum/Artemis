@@ -1,13 +1,13 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs/operators';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 describe('QuizExercise Paging Service', () => {
     let service: QuizExercisePagingService;

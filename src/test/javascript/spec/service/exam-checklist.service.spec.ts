@@ -3,11 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { Exam } from 'app/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockProvider } from 'ng-mocks';
 import { of, take } from 'rxjs';
 import { ArtemisTestModule } from '../test.module';
+import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];

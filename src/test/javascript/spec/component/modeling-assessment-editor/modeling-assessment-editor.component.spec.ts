@@ -1,9 +1,8 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,7 +13,6 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
@@ -26,14 +24,8 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
-import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
-import dayjs from 'dayjs/esm';
-import { MockComponent } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
@@ -41,6 +33,14 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { MockComponent } from 'ng-mocks';
+import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
+import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { ExampleSubmission } from 'app/entities/example-submission.model';
+import dayjs from 'dayjs/esm';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;

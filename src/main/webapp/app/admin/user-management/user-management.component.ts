@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, Subscription, combineLatest } from 'rxjs';
+import { combineLatest, Subject, Subscription } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';

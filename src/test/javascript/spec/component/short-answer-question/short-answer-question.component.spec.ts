@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
-import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
-import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
+import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
+import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
+import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
+import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;

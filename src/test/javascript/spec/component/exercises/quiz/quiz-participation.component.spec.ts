@@ -1,19 +1,14 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
 import { Result } from 'app/entities/result.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
@@ -24,8 +19,6 @@ import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/question
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
@@ -36,8 +29,15 @@ import { of } from 'rxjs';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
+import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/core/util/alert.service';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 
 // Store a copy of now to avoid timing issues
 const now = dayjs();

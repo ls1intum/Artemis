@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { MockComponent } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { Exam } from 'app/entities/exam.model';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
-import { MockComponent } from 'ng-mocks';
-import { of } from 'rxjs';
 
 describe('StudentExamSummaryComponent', () => {
     let fixture: ComponentFixture<StudentExamSummaryComponent>;

@@ -1,20 +1,20 @@
-import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, Directive, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
+import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, Directive, EventEmitter, Input, Output } from '@angular/core';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
+import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
+import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
+import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.command';
 import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
+import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
+import { getElement } from '../../../../helpers/utils/general.utils';
+import { By } from '@angular/platform-browser';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
-import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
-import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
-import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.command';
-import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
-import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
-import { getElement } from '../../../../helpers/utils/general.utils';
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: 'jhi-markdown-editor' })

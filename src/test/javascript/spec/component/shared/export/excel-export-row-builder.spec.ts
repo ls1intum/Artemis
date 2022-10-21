@@ -1,7 +1,7 @@
-import { ExerciseType } from 'app/entities/exercise.model';
-import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
 import { POINTS_KEY, SCORE_KEY } from 'app/shared/export/export-constants';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { ExportRowBuilder } from 'app/shared/export/export-row-builder';
+import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
 
 describe('The ExcelExportRowBuilder', () => {
     let excelRowBuilder: ExportRowBuilder;

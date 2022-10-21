@@ -1,13 +1,7 @@
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { Result } from 'app/entities/result.model';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import {
     createBuildPlanUrl,
     createCommitUrl,
@@ -17,6 +11,12 @@ import {
     isProgrammingExerciseStudentParticipation,
     isResultPreliminary,
 } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { Result } from 'app/entities/result.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
 
 describe('ProgrammingExerciseUtils URL utils', () => {

@@ -1,19 +1,19 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SortDirective } from 'app/shared/sort/sort.directive';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../../../test.module';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('SystemNotificationManagementComponent', () => {
     let managementComponentFixture: ComponentFixture<SystemNotificationManagementComponent>;

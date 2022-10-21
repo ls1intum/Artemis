@@ -1,22 +1,22 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { ChangeDetectorRef, Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/core/util/alert.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
-import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
+import { ChangeDetectorRef, Component } from '@angular/core';
+import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { MockProvider } from 'ng-mocks';
 import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
-import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 /**
  * needed for testing the abstract UserSettingsDirective

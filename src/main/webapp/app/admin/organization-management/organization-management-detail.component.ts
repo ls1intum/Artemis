@@ -5,7 +5,7 @@ import { Organization } from 'app/entities/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
-import { Observable, Subject, Subscription, of } from 'rxjs';
+import { Observable, of, Subject, Subscription } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { iconsAsHTML } from 'app/utils/icons.utils';

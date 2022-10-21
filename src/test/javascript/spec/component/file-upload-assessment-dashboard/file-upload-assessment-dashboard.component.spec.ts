@@ -1,28 +1,28 @@
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { AssessmentFiltersComponent } from 'app/assessment/assessment-filters/assessment-filters.component';
-import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { BehaviorSubject, of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { FileUploadAssessmentDashboardComponent } from 'app/exercises/file-upload/assess/file-upload-assessment-dashboard.component';
-import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SortService } from 'app/shared/service/sort.service';
+import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
+import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of } from 'rxjs';
+import { AssessmentFiltersComponent } from 'app/assessment/assessment-filters/assessment-filters.component';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const fileUploadExercise1 = {
     id: 22,

@@ -1,17 +1,17 @@
-import { HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
-import { GradingScale } from 'app/entities/grading-scale.model';
-import { ExamParticipantScoresComponent } from 'app/exam/manage/exam-participant-scores/exam-participant-scores.component';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { ParticipantScoreAverageDTO, ParticipantScoreDTO, ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { AlertService } from 'app/core/util/alert.service';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ParticipantScoreAverageDTO, ParticipantScoreDTO, ParticipantScoresService } from 'app/shared/participant-scores/participant-scores.service';
+import { HttpResponse } from '@angular/common/http';
+import { ExamParticipantScoresComponent } from 'app/exam/manage/exam-participant-scores/exam-participant-scores.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingScale } from 'app/entities/grading-scale.model';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({ selector: 'jhi-participant-scores-tables-container', template: '<div></div>' })
 class ParticipantScoresTableContainerStubComponent {

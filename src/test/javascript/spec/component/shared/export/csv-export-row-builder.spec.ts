@@ -1,10 +1,10 @@
-import { User } from 'app/core/user/user.model';
 import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
+import { User } from 'app/core/user/user.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
-import { CsvDecimalSeparator } from 'app/shared/export/export-modal.component';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { ExportRowBuilder } from 'app/shared/export/export-row-builder';
+import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
+import { CsvDecimalSeparator } from 'app/shared/export/export-modal.component';
 
 describe('The CsvExportRowBuilder', () => {
     let csvRow: ExportRowBuilder;

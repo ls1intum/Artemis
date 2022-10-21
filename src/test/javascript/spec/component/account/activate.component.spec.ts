@@ -1,14 +1,15 @@
-import { TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
+import { fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { ActivateComponent } from 'app/account/activate/activate.component';
-import { ActivateService } from 'app/account/activate/activate.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+
 import { ArtemisTestModule } from '../../test.module';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivateService } from 'app/account/activate/activate.service';
+import { ActivateComponent } from 'app/account/activate/activate.component';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('ActivateComponent', () => {
     let comp: ActivateComponent;

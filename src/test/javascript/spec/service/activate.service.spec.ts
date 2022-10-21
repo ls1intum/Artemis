@@ -1,6 +1,6 @@
-import { HttpParams } from '@angular/common/http';
 import { ActivateService } from 'app/account/activate/activate.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
+import { HttpParams } from '@angular/common/http';
 
 describe('ActivateService', () => {
     let activateService: ActivateService;

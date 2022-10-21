@@ -1,8 +1,8 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 
 describe('TutorialGroupsNotificationService', () => {

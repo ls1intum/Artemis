@@ -1,20 +1,20 @@
-import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { BarChartModule } from '@swimlane/ngx-charts';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { GraphColors } from 'app/entities/statistics.model';
-import { AggregatedExerciseGroupResult, AggregatedExerciseResult } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { HttpResponse } from '@angular/common/http';
+import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
 import { ArtemisTestModule } from '../../../test.module';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { AggregatedExerciseGroupResult, AggregatedExerciseResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { GraphColors } from 'app/entities/statistics.model';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;

@@ -1,5 +1,5 @@
-import { Params } from '@angular/router';
 import { Subject } from 'rxjs';
+import { Params } from '@angular/router';
 
 export class MockActivatedRouteWithSubjects {
     private subject = new Subject<Params>();

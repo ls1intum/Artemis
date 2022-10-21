@@ -1,21 +1,21 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgbAccordion, NgbModal, NgbModalRef, NgbPanel } from '@ng-bootstrap/ng-bootstrap';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { CourseWideContext, PageType } from 'app/shared/metis/metis.util';
-import { PostComponent } from 'app/shared/metis/post/post.component';
-import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
-import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { metisCourse, metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
+import { CourseWideContext, PageType } from 'app/shared/metis/metis.util';
+import { NgbAccordion, NgbModal, NgbModalRef, NgbPanel } from '@ng-bootstrap/ng-bootstrap';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../../../../test.module';
+import { PostComponent } from 'app/shared/metis/post/post.component';
+import { metisCourse, metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;

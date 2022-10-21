@@ -1,16 +1,16 @@
-import { HttpResponse } from '@angular/common/http';
+import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management-resolve.service';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/manage/file-upload-exercise-management-resolve.service';
 import { EntityResponseType, FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
+import { fileUploadExercise, MockFileUploadExerciseService } from '../helpers/mocks/service/mock-file-upload-exercise.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockCourseManagementService } from '../helpers/mocks/service/mock-course-management.service';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { MockProvider } from 'ng-mocks';
 import { Observable, of, take } from 'rxjs';
-import { MockCourseManagementService } from '../helpers/mocks/service/mock-course-management.service';
-import { MockFileUploadExerciseService, fileUploadExercise } from '../helpers/mocks/service/mock-file-upload-exercise.service';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { Course } from 'app/entities/course.model';
+import { HttpResponse } from '@angular/common/http';
 
 describe('FileUploadExerciseManagementResolve', () => {
     let service: FileUploadExerciseManagementResolve;

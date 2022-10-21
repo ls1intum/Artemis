@@ -1,16 +1,16 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
-import { FeedbackType } from 'app/entities/feedback.model';
-import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
-import { TextBlockRefGroup } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
-import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
-import { MockProvider } from 'ng-mocks';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
+import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
+import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { FeedbackType } from 'app/entities/feedback.model';
+import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
+import { MockProvider } from 'ng-mocks';
+import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import { ActivatedRoute } from '@angular/router';
+import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { TextBlockRefGroup } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 
 describe('ManualTextSelectionComponent', () => {
     let component: ManualTextSelectionComponent;

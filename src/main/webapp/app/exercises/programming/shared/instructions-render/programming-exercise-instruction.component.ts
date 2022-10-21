@@ -3,7 +3,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { Observable, Subscription, merge, of } from 'rxjs';
+import { merge, Observable, of, Subscription } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';

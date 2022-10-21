@@ -1,7 +1,7 @@
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 describe('Markdown Service', () => {
     const hintText = 'Add an explanation here (only visible in feedback after quiz has ended)';

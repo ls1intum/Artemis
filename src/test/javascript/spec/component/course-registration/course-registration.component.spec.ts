@@ -1,21 +1,21 @@
-import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
-import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-prerequisites-modal.component';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MockProvider } from 'ng-mocks';
+import { Course } from 'app/entities/course.model';
+import { ArtemisTestModule } from '../../test.module';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { User } from 'app/core/user/user.model';
+import { MockProvider } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-prerequisites-modal.component';
 
 describe('CourseRegistrationComponent', () => {
     let fixture: ComponentFixture<CourseRegistrationComponent>;

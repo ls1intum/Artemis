@@ -1,19 +1,19 @@
-import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { By } from '@angular/platform-browser';
-import { RouterTestingModule } from '@angular/router/testing';
-import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { AlertService } from 'app/core/util/alert.service';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { Course } from 'app/entities/course.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
+import { RouterTestingModule } from '@angular/router/testing';
+import { AlertService } from 'app/core/util/alert.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { FormsModule } from '@angular/forms';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { By } from '@angular/platform-browser';
+import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { Course } from 'app/entities/course.model';
 
 // Mock getCourseFromExercise(exercise) to get a course even if there isn't a course.
 jest.mock('app/entities/exercise.model', () => ({

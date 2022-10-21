@@ -1,10 +1,7 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
@@ -23,8 +20,6 @@ import { ExamParticipationCoverComponent } from 'app/exam/participate/exam-cover
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
-import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
 import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
 import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
 import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
@@ -33,19 +28,24 @@ import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
+import { By } from '@angular/platform-browser';
+import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
+import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;

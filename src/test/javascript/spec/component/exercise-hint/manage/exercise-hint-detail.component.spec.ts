@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { of } from 'rxjs';
 
 import { ExerciseHintDetailComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-detail.component';
-import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 describe('ExerciseHint Management Detail Component', () => {
     let comp: ExerciseHintDetailComponent;

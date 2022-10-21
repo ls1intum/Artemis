@@ -1,6 +1,6 @@
 import { GradeStep } from 'app/entities/grade-step.model';
-import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 
 describe('GradeStepBoundsPipe', () => {
     const pipe = new GradeStepBoundsPipe();

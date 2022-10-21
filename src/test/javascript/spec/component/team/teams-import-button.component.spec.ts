@@ -1,17 +1,16 @@
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { mockExercise, mockSourceTeams, mockTeams } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
-
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 describe('TeamsImportButtonComponent', () => {
     let comp: TeamsImportButtonComponent;
     let fixture: ComponentFixture<TeamsImportButtonComponent>;

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
+import { BehaviorSubject, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';

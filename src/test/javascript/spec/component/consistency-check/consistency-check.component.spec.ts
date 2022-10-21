@@ -1,18 +1,18 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
-import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
-import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Course } from 'app/entities/course.model';
+import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
 import { ArtemisTestModule } from '../../test.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/core/util/alert.service';
+import { of } from 'rxjs';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('ConsistencyCheckComponent', () => {
     let component: ConsistencyCheckComponent;

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -11,7 +11,6 @@ import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseLecturesComponent } from 'app/overview/course-lectures/course-lectures.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
@@ -19,6 +18,7 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({ selector: 'jhi-course-lecture-row', template: '' })
 class CourseLectureRowStubComponent {

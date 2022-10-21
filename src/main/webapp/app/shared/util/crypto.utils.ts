@@ -1,4 +1,4 @@
-import { SHA1, enc } from 'crypto-js';
+import { enc, SHA1 } from 'crypto-js';
 
 /**
  * Generates and returns the hash digest using 'hex' algorithm.

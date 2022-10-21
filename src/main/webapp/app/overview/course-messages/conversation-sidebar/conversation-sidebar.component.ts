@@ -5,7 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical, faMessage } from '@fortawesome/free-solid-svg-icons';
 
 import { MessagingService } from 'app/shared/metis/messaging.service';
-import { Observable, Subscription, combineLatest, of } from 'rxjs';
+import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

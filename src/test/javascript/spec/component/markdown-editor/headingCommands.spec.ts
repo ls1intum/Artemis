@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import { HeadingOneCommand } from 'app/shared/markdown-editor/commands/headingOne.command';
-import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
-import { HeadingTwoCommand } from 'app/shared/markdown-editor/commands/headingTwo.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTestModule } from '../../test.module';
+import { HeadingOneCommand } from 'app/shared/markdown-editor/commands/headingOne.command';
+import { HeadingTwoCommand } from 'app/shared/markdown-editor/commands/headingTwo.command';
+import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
 
 describe('HeadingOneCommand', () => {
     let comp: MarkdownEditorComponent;

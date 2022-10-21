@@ -1,15 +1,15 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { TextBlock } from 'app/entities/text-block.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ArtemisTestModule } from '../../test.module';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
-import { ManualTextSelectionComponent, wordSelection } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
-import { TextSelectDirective } from 'app/exercises/text/shared/text-select.directive';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
+import { By } from '@angular/platform-browser';
+import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { ManualTextSelectionComponent, wordSelection } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
+import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextBlock } from 'app/entities/text-block.model';
+import { TextSelectDirective } from 'app/exercises/text/shared/text-select.directive';
 
 describe('ManualTextblockSelectionComponent', () => {
     let component: ManualTextblockSelectionComponent;

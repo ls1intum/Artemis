@@ -1,17 +1,17 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { Lecture } from 'app/entities/lecture.model';
-import { LectureImportComponent, TableColumn } from 'app/lecture/lecture-import.component';
-import { LecturePagingService } from 'app/lecture/lecture-paging.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { SortService } from 'app/shared/service/sort.service';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { Lecture } from 'app/entities/lecture.model';
+import { LecturePagingService } from 'app/lecture/lecture-paging.service';
+import { LectureImportComponent, TableColumn } from 'app/lecture/lecture-import.component';
 
 describe('LectureImportComponent', () => {
     let fixture: ComponentFixture<LectureImportComponent>;

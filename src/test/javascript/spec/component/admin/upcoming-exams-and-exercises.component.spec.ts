@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UpcomingExamsAndExercisesComponent } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { MockExamManagementService } from '../../helpers/mocks/service/mock-exam-management.service';
-import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { MockExamManagementService } from '../../helpers/mocks/service/mock-exam-management.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('UpcomingExamsAndExercisesComponent', () => {
     let component: UpcomingExamsAndExercisesComponent;

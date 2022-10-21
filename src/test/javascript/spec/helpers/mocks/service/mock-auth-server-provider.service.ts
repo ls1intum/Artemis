@@ -1,5 +1,6 @@
 import { Credentials, IAuthServerProvider } from 'app/core/auth/auth-jwt.service';
-import { EMPTY, of } from 'rxjs';
+import { EMPTY } from 'rxjs';
+import { of } from 'rxjs';
 
 export class MockAuthServerProviderService implements IAuthServerProvider {
     getToken = () => 'abc';

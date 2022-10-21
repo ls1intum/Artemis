@@ -1,4 +1,4 @@
-import { BASE_API, POST } from '../../../constants';
+import { POST, BASE_API } from '../../../constants';
 
 export class QuizExerciseCreationPage {
     setTitle(title: string) {

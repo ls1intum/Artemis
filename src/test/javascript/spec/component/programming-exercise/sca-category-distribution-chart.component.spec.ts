@@ -1,15 +1,15 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
-import { BarChartModule } from '@swimlane/ngx-charts';
-import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
-import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { BarChartModule } from '@swimlane/ngx-charts';
+import { TranslateService } from '@ngx-translate/core';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { CategoryIssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 describe('SCA category distribution chart', () => {
     let component: ScaCategoryDistributionChartComponent;

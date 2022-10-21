@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import { Command } from 'app/shared/markdown-editor/commands/command';
-import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTestModule } from '../../test.module';
+import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
+import { Command } from 'app/shared/markdown-editor/commands/command';
 
 describe('LinkCommand', () => {
     let comp: MarkdownEditorComponent;

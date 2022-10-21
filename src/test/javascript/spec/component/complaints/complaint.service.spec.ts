@@ -1,18 +1,18 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ComplaintService } from 'app/complaints/complaint.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { Course } from 'app/entities/course.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { User } from 'app/core/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import dayjs from 'dayjs/esm';
+import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import dayjs from 'dayjs/esm';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { Course } from 'app/entities/course.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('ComplaintService', () => {
     let complaintService: ComplaintService;

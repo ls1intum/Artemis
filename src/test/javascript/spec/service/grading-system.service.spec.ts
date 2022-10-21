@@ -1,13 +1,13 @@
-import { HttpResponse } from '@angular/common/http';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { take } from 'rxjs/operators';
 import { RouterTestingModule } from '@angular/router/testing';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { cloneDeep } from 'lodash-es';
 import { of } from 'rxjs';
-import { take } from 'rxjs/operators';
+import { HttpResponse } from '@angular/common/http';
+import { cloneDeep } from 'lodash-es';
 
 describe('Grading System Service', () => {
     let service: GradingSystemService;

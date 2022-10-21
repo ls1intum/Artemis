@@ -2,7 +2,7 @@ import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Ou
 import { AlertService } from 'app/core/util/alert.service';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { TestCaseCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/testCase.command';

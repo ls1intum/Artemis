@@ -1,18 +1,18 @@
-import { HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
-import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-video-unit/edit-video-unit.component';
+import dayjs from 'dayjs/esm';
 
 import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
-import dayjs from 'dayjs/esm';
-import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-video-unit/edit-video-unit.component';
+import { MockProvider } from 'ng-mocks';
+import { AlertService } from 'app/core/util/alert.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { of } from 'rxjs';
+import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
+import { HttpResponse } from '@angular/common/http';
+import { By } from '@angular/platform-browser';
 
 @Component({ selector: 'jhi-video-unit-form', template: '' })
 class VideoUnitFormStubComponent {

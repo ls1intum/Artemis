@@ -8,7 +8,7 @@ import { catchError, finalize, tap } from 'rxjs/operators';
 import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { Subject, forkJoin, of } from 'rxjs';
+import { forkJoin, of, Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';

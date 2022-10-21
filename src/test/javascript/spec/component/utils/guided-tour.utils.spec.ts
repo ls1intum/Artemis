@@ -1,12 +1,12 @@
 import { Orientation } from 'app/guided-tour/guided-tour.constants';
 import {
-    calculateLeftOffset,
-    calculateTopOffset,
-    checkPageUrlEnding,
     clickOnElement,
+    calculateTopOffset,
+    calculateLeftOffset,
+    isElementInViewPortHorizontally,
+    checkPageUrlEnding,
     determineUrlMatching,
     getUrlParams,
-    isElementInViewPortHorizontally,
 } from 'app/guided-tour/guided-tour.utils';
 
 describe('GuidedTourUtils', () => {

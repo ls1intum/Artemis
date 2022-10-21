@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
-import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
-import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { of } from 'rxjs';
 
 describe('EmojiComponent', () => {
     let fixture: ComponentFixture<EmojiComponent>;

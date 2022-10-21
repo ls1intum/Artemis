@@ -1,4 +1,4 @@
-import { UndoManager, acequire } from 'brace';
+import { acequire, UndoManager } from 'brace';
 import 'brace/ext/language_tools';
 import 'brace/ext/modelist';
 import 'brace/mode/java';
@@ -17,7 +17,7 @@ import 'brace/theme/dreamweaver';
 import 'brace/theme/dracula';
 import { AceEditorComponent, MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
-import { Subscription, fromEvent, of } from 'rxjs';
+import { fromEvent, of, Subscription } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';

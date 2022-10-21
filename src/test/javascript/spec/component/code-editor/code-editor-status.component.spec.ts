@@ -1,13 +1,13 @@
 import { DebugElement } from '@angular/core/';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
-import { MockDirective } from 'ng-mocks';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { By } from '@angular/platform-browser';
+import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
+import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockDirective } from 'ng-mocks';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CodeEditorStatusComponent', () => {
     let comp: CodeEditorStatusComponent;
