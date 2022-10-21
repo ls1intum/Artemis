@@ -9,8 +9,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
 import { ExportToCsv } from 'export-to-csv';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 const NAME_KEY = 'Name';

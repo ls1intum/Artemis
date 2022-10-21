@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild, ViewChildren, ViewEncapsulation, Renderer2, QueryList } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, QueryList, Renderer2, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
 import { fromEvent, Subscription } from 'rxjs';
 import { take, tap } from 'rxjs/operators';
 import { Direction, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';

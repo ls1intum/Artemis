@@ -13,7 +13,7 @@ import { isEqual } from 'lodash-es';
 import { faPencilAlt, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
-import { Node, Edge, ClusterNode } from '@swimlane/ngx-graph';
+import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({

@@ -21,7 +21,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faEdit, faBan, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
 
 @Component({

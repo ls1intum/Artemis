@@ -1,10 +1,10 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { faMagnifyingGlass, faCirclePlay, faFileCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCirclePlay, faFileCircleXmark, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { StudentExam } from 'app/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
-import { Subscription, interval } from 'rxjs';
+import { interval, Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-exam-attempt-review-detail',

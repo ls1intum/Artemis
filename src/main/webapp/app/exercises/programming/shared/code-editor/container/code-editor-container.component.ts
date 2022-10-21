@@ -1,6 +1,6 @@
 import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { fromPairs, toPairs, uniq, isEmpty as _isEmpty } from 'lodash-es';
+import { fromPairs, isEmpty as _isEmpty, toPairs, uniq } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -20,7 +20,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
-import { CodeEditorAceComponent, Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { Annotation, CodeEditorAceComponent } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { Feedback } from 'app/entities/feedback.model';
