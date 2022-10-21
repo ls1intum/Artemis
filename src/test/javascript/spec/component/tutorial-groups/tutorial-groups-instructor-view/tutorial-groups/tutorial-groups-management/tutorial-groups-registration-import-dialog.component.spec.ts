@@ -11,7 +11,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
-import { parse, ParseError, ParseResult, ParseWorkerConfig } from 'papaparse';
+import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 jest.mock('papaparse', () => {

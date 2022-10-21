@@ -1,7 +1,7 @@
-import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { FormBuilder, NgForm, NgModel } from '@angular/forms';
 
 import { ArtemisTestModule } from '../../test.module';

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment, Feedback } from 'app/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { TextResultBlock } from './text-result-block';

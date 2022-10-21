@@ -4,7 +4,7 @@ import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { faBook, faCalendarDay, faCirclePlay, faCircleStop, faMagnifyingGlass, faPenAlt, faPlay, faUserClock } from '@fortawesome/free-solid-svg-icons';
-import { interval, Subscription } from 'rxjs';
+import { Subscription, interval } from 'rxjs';
 
 // Enum to dynamically change the template-content
 export const enum ExamState {

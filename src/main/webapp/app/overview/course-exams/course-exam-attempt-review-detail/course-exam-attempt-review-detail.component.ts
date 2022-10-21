@@ -4,7 +4,7 @@ import { faCirclePlay, faFileCircleXmark, faMagnifyingGlass } from '@fortawesome
 import { StudentExam } from 'app/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
-import { interval, Subscription } from 'rxjs';
+import { Subscription, interval } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-exam-attempt-review-detail',

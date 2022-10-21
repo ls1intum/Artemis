@@ -6,7 +6,7 @@ import { LearningGoal, LearningGoalRelation } from 'app/entities/learningGoal.mo
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
-import { forkJoin, Subject } from 'rxjs';
+import { Subject, forkJoin } from 'rxjs';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { captureException } from '@sentry/browser';
 import { isEqual } from 'lodash-es';
