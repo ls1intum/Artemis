@@ -60,6 +60,12 @@
                 },
                 "isOnlineInput": {
                     "label": "Trifft sich sich diese Übungsgruppe online oder offline?"
+                },
+                "notificationInput": {
+                    "label": "Optional: Benachrichtigung über Änderungen",
+                    "placeholder": "Benachrichtigungstext",
+                    "maxLengthValidationError": "Der Benachrichtigungstext is limitiert auf {{ max }} Zeichen!",
+                    "help": "Wenn du die eingeschriebenen Studierenden und den zugewiesenen Tutor über Änderungen in dieser Übungsgruppe informieren möchtest, kannst du hier einen Benachrichtigungstext eingeben. Es wird eine Benachrichtigung mit dem Text versendet."
                 }
             }
         },

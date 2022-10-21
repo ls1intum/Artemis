@@ -123,6 +123,24 @@
                     [enableResize]="true"
                 ></jhi-markdown-editor>
             </div>
+            <!-- Optional Notification Message -->
+            <div class="form-group border border-info rounded p-3" *ngIf="isEditMode">
+                <label for="notificationText">{{ 'artemisApp.forms.tutorialGroupForm.notificationInput.label' | artemisTranslate }}</label>
+                <textarea
+                    class="form-control"
+                    id="notificationText"
+                    formControlName="notificationText"
+                    [placeholder]="'artemisApp.forms.tutorialGroupForm.notificationInput.placeholder' | artemisTranslate"
+                    rows="3"
+                ></textarea>
+                <small id="notificationHelp" class="form-text text-muted">{{ 'artemisApp.forms.tutorialGroupForm.notificationInput.help' | artemisTranslate }}</small>
+
+                <div *ngIf="notificationControl?.invalid && (notificationControl?.dirty || notificationControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="notificationControl?.errors?.maxlength">
+                        {{ 'artemisApp.forms.tutorialGroupForm.notificationInput.maxLengthValidationError' | artemisTranslate: { max: '1000' } }}
+                    </div>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-12">
                     <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
