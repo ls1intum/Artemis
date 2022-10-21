@@ -8,8 +8,6 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequ
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13LaunchFilter;
 import de.tum.in.www1.artemis.service.connectors.Lti13Service;
 import uk.ac.ox.ctl.lti13.Lti13Configurer;
@@ -50,20 +48,11 @@ public class CustomLti13Configurer extends Lti13Configurer {
         // https://www.imsglobal.org/spec/security/v1p0/#step-3-authentication-response
         OAuth2LoginAuthenticationFilter defaultLoginFilter = configureLoginFilter(clientRegistrationRepository(http), oidcLaunchFlowAuthenticationProvider,
                 authorizationRequestRepository);
-        http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, LTI_BASE_PATH + LOGIN_PATH, lti13Service(http), tokenProvider(http), userRepository(http)),
-                AbstractPreAuthenticatedProcessingFilter.class);
+        http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, LTI_BASE_PATH + LOGIN_PATH, lti13Service(http)), AbstractPreAuthenticatedProcessingFilter.class);
     }
 
     protected Lti13Service lti13Service(HttpSecurity http) {
         return http.getSharedObject(ApplicationContext.class).getBean(Lti13Service.class);
-    }
-
-    protected UserRepository userRepository(HttpSecurity http) {
-        return http.getSharedObject(ApplicationContext.class).getBean(UserRepository.class);
-    }
-
-    protected TokenProvider tokenProvider(HttpSecurity http) {
-        return http.getSharedObject(ApplicationContext.class).getBean(TokenProvider.class);
     }
 
     protected ClientRegistrationRepository clientRegistrationRepository(HttpSecurity http) {

@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.authentication;
 
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
 import java.util.HashMap;
 import java.util.List;
@@ -85,7 +87,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addOnlineCourseConfigurationToCourse(course);
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
-        // TODO doReturn(null).when(ltiService).verifyRequest(any(), any());
+        doReturn(null).when(lti10Service).verifyRequest(any(), any());
 
         final var userAuthority = new Authority(Role.STUDENT.getAuthority());
         final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
