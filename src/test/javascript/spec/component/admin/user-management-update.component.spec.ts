@@ -3,7 +3,6 @@ import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { FormBuilder, NgForm, NgModel } from '@angular/forms';
-
 import { ArtemisTestModule } from '../../test.module';
 import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
 import { User } from 'app/core/user/user.model';
@@ -24,7 +23,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
 import * as Sentry from '@sentry/browser';
-
 import { LANGUAGES } from 'app/core/language/language.constants';
 
 describe('User Management Update Component', () => {
