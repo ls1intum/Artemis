@@ -51,10 +51,6 @@ class Lti10ServiceTest {
 
     private User user;
 
-    private LtiUserId ltiUserId;
-
-    private final String courseStudentGroupName = "courseStudentGroupName";
-
     private LtiOutcomeUrl ltiOutcomeUrl;
 
     @BeforeEach
@@ -64,7 +60,6 @@ class Lti10ServiceTest {
         lti10Service = new Lti10Service(userRepository, ltiOutcomeUrlRepository, resultRepository, courseRepository, ltiService);
         course = new Course();
         course.setId(100L);
-        course.setStudentGroupName(courseStudentGroupName);
         course.setOnlineCourse(true);
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setCourse(course);
@@ -76,8 +71,6 @@ class Lti10ServiceTest {
         user.setLogin("login");
         user.setPassword("password");
         user.setGroups(new HashSet<>(Collections.singleton(LtiService.LTI_GROUP_NAME)));
-        ltiUserId = new LtiUserId();
-        ltiUserId.setUser(user);
         ltiOutcomeUrl = new LtiOutcomeUrl();
     }
 
@@ -95,10 +88,8 @@ class Lti10ServiceTest {
 
     @Test
     void verifyRequest_onlineCourseConfigurationNotSpecified() {
-        onlineCourseConfiguration = null;
-
         HttpServletRequest request = mock(HttpServletRequest.class);
-        String message = lti10Service.verifyRequest(request, onlineCourseConfiguration);
+        String message = lti10Service.verifyRequest(request, null);
         assertThat("verifyRequest for LTI is not supported for this course").isEqualTo(message);
     }
 

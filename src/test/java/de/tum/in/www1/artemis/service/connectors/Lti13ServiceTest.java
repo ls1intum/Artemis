@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 
-public class Lti13ServiceTest {
+class Lti13ServiceTest {
 
     private Lti13Service lti13Service;
 

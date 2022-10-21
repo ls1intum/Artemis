@@ -16,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
 import org.springframework.http.HttpStatus;
@@ -83,13 +82,13 @@ class Lti13LaunchFilterTest {
         doReturn(CustomLti13Configurer.LTI_BASE_PATH + CustomLti13Configurer.LOGIN_PATH).when(httpRequest).getServletPath();
 
         doReturn(idTokenClaims).when(idToken).getClaims();
-        OidcUser oidcUser = Mockito.mock(OidcUser.class);
+        OidcUser oidcUser = mock(OidcUser.class);
         doReturn(idToken).when(oidcUser).getIdToken();
         doReturn(idTokenClaims).when(oidcUser).getClaims();
 
         Answer<Object> getClaimAnswer = invocation -> idTokenClaims.get((String) invocation.getArguments()[0]);
-        Mockito.doAnswer(getClaimAnswer).when(idToken).getClaim(any());
-        Mockito.doAnswer(getClaimAnswer).when(oidcUser).getClaim(any());
+        doAnswer(getClaimAnswer).when(idToken).getClaim(any());
+        doAnswer(getClaimAnswer).when(oidcUser).getClaim(any());
         oidcToken = new OidcAuthenticationToken(oidcUser, null, "some-registration", "some-state");
     }
 

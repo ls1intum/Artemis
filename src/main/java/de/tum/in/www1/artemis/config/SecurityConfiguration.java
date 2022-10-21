@@ -118,7 +118,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/content/**")
             .antMatchers("/api-docs/**")
             .antMatchers("/api.html")
-            .antMatchers("/test/**");
+            .antMatchers("/test/**")
+            .antMatchers("/.well-known/jwks.json");
         web.ignoring()
             .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
         web.ignoring()
@@ -182,13 +183,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
             .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/time").permitAll()
-            .antMatchers("/app/**/*.{js,html}").permitAll()
-            .antMatchers("/i18n/**").permitAll()
-            .antMatchers("/content/**").permitAll()
-            .antMatchers("/test/**").permitAll()
-            .antMatchers("/api.html").permitAll()
-            .antMatchers("/api-docs/**").permitAll()
-            .antMatchers("/.well-known/jwks.json").permitAll()
         .and()
             .apply(securityConfigurerAdapter());
 
