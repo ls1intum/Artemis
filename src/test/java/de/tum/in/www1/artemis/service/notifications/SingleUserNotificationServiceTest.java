@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
 import javax.mail.internet.MimeMessage;
 
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
@@ -47,6 +49,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     private User user;
 
+    private User userTwo;
+
+    private User userThree;
+
     private FileUploadExercise fileUploadExercise;
 
     private Post post;
@@ -59,6 +65,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     private Result result;
 
+    private TutorialGroup tutorialGroup;
+
     /**
      * Sets up all needed mocks and their wanted behavior
      */
@@ -70,6 +78,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         List<User> users = database.addUsers(3, 0, 0, 0);
         user = users.get(0);
+
+        userTwo = users.get(1);
+
+        userThree = users.get(2);
 
         exercise = new TextExercise();
         exercise.setCourse(course);
@@ -103,6 +115,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         result = new Result();
         result.setScore(1D);
         result.setCompletionDate(ZonedDateTime.now().minusMinutes(1));
+
+        tutorialGroup = new TutorialGroup();
+        tutorialGroup.setCourse(course);
+        tutorialGroup.setTeachingAssistant(userTwo);
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
@@ -271,6 +287,70 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         plagiarismCase.setVerdict(PlagiarismVerdict.NO_PLAGIARISM);
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
+        verifyEmail();
+    }
+
+    // Tutorial Group related
+
+    @Test
+    void testTutorialGroupNotifications_studentRegistration() {
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+        singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, user, userTwo);
+        verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE);
+        verifyEmail();
+    }
+
+    @Test
+    void testTutorialGroupNotifications_studentDeregistration() {
+        notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+        singleUserNotificationService.notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, user, userTwo);
+        verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE);
+        verifyEmail();
+    }
+
+    @Test
+    void testTutorialGroupNotifications_tutorRegistration() {
+        notificationSettingRepository
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+        singleUserNotificationService.notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, user, userThree);
+        verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE);
+        verifyEmail();
+
+    }
+
+    @Test
+    void testTutorialGroupNotifications_tutorRegistrationMultiple() {
+        notificationSettingRepository
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+        singleUserNotificationService.notifyTutorAboutMultipleRegistrationsToTutorialGroup(tutorialGroup, Set.of(user), userThree);
+        verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE);
+        verifyEmail();
+    }
+
+    @Test
+    void testTutorialGroupNotifications_tutorDeregistration() {
+        notificationSettingRepository
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+        singleUserNotificationService.notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, user, userThree);
+        verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE);
+        verifyEmail();
+    }
+
+    @Test
+    void testTutorialGroupNotifications_groupAssigned() {
+        notificationSettingRepository
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
+        singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), userThree);
+        verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_ASSIGNED_TITLE);
+        verifyEmail();
+    }
+
+    @Test
+    void testTutorialGroupNotifications_groupUnassigned() {
+        notificationSettingRepository
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
+        singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), userThree);
+        verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_UNASSIGNED_TITLE);
         verifyEmail();
     }
 
