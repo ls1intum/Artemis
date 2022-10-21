@@ -4,6 +4,7 @@
     </div>
     <div #containerRef class="col-xl-9">
         <ngx-charts-bar-vertical
+            [roundEdges]="false"
             [view]="[containerRef.offsetWidth, 250]"
             [results]="ngxData"
             [scheme]="ngxColor"
