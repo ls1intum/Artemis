@@ -12,7 +12,6 @@ import { Exercise, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { getExerciseDueDate, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-course-exercise-row',
@@ -51,7 +50,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
         private exerciseService: ExerciseService,
         private httpClient: HttpClient,
         private participationWebsocketService: ParticipationWebsocketService,
-        private profileService: ProfileService,
     ) {}
 
     ngOnInit() {

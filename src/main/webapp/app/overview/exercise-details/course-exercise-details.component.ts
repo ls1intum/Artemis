@@ -32,7 +32,6 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -215,11 +214,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
-            if (this.exercise?.studentParticipations && programmingExercise.projectKey) {
-                this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                    setBuildPlanUrlForProgrammingParticipations(profileInfo, this.exercise?.studentParticipations!, (this.exercise as ProgrammingExercise).projectKey);
-                });
-            }
             this.hasSubmissionPolicy = false;
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
                 this.submissionPolicy = submissionPolicy;
