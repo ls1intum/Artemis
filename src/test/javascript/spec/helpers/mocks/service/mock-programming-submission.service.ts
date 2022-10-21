@@ -1,6 +1,6 @@
-import { IProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
-import { of, Observable, EMPTY } from 'rxjs';
 import { Exercise } from 'app/entities/exercise.model';
+import { IProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
+import { EMPTY, Observable, of } from 'rxjs';
 
 export class MockProgrammingSubmissionService implements IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId = (participationId: number) =>

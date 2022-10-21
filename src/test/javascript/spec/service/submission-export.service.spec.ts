@@ -1,8 +1,8 @@
-import { TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../test.module';
-import { SubmissionExportService } from 'app/exercises/shared/submission-export/submission-export.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { SubmissionExportService } from 'app/exercises/shared/submission-export/submission-export.service';
+import { ArtemisTestModule } from '../test.module';
 
 describe('Submission Export Service', () => {
     let service: SubmissionExportService;

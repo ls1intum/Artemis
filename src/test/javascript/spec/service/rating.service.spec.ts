@@ -1,10 +1,10 @@
-import { TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { take } from 'rxjs/operators';
-import { ArtemisTestModule } from '../test.module';
-import { RatingService } from 'app/exercises/shared/rating/rating.service';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Rating } from 'app/entities/rating.model';
 import { Result } from 'app/entities/result.model';
+import { RatingService } from 'app/exercises/shared/rating/rating.service';
+import { take } from 'rxjs/operators';
+import { ArtemisTestModule } from '../test.module';
 
 describe('Rating Service', () => {
     let service: RatingService;

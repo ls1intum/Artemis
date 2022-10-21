@@ -1,21 +1,21 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
-import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
-import { ArtemisTestModule } from '../../test.module';
-import { Exercise } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
-import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateService } from '@ngx-translate/core';
+import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
+import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
+import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('ComplaintsFormComponent', () => {
     const teamComplaints = 42;

@@ -1,21 +1,21 @@
-import { ArtemisTestModule } from '../../../test.module';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { of, throwError } from 'rxjs';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { AlertService } from 'app/core/util/alert.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { ExampleSubmissionsComponent } from 'app/exercises/shared/example-submission/example-submissions.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { HttpResponse } from '@angular/common/http';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { of, throwError } from 'rxjs';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('Example Submission Component', () => {
     let component: ExampleSubmissionsComponent;

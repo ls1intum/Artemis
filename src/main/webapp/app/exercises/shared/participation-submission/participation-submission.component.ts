@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { combineLatest, of, Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, combineLatest, of } from 'rxjs';
 import { catchError, map, take, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Submission } from 'app/entities/submission.model';

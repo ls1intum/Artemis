@@ -1,11 +1,11 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/services/programming-exercise-solution-entry.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
-import { of } from 'rxjs';
-import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { SolutionEntryDetailsModalComponent } from 'app/exercises/programming/hestia/generation-overview/solution-entry-details-modal/solution-entry-details-modal.component';
+import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/services/programming-exercise-solution-entry.service';
+import { of } from 'rxjs';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('SolutionEntryDetailsModal Component', () => {
     let comp: SolutionEntryDetailsModalComponent;

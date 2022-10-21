@@ -1,9 +1,9 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { MockDirective } from 'ng-mocks';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('OrionButtonComponent', () => {
     let comp: OrionButtonComponent;

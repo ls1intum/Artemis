@@ -1,10 +1,10 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { Log, LoggersResponse } from 'app/admin/logs/log.model';
 
 import { LogsComponent } from 'app/admin/logs/logs.component';
 import { LogsService } from 'app/admin/logs/logs.service';
-import { Log, LoggersResponse } from 'app/admin/logs/log.model';
+import { of } from 'rxjs';
 
 describe('Component Tests', () => {
     describe('LogsComponent', () => {

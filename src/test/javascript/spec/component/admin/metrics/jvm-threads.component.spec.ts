@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { ArtemisTestModule } from '../../../test.module';
-import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
+import { By } from '@angular/platform-browser';
+import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { JvmThreadsComponent } from 'app/admin/metrics/blocks/jvm-threads/jvm-threads.component';
 import { MetricsModalThreadsComponent } from 'app/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
-import { By } from '@angular/platform-browser';
-import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
 import { MockComponent } from 'ng-mocks';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
+
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('JvmThreadsComponent', () => {
     let comp: JvmThreadsComponent;

@@ -1,10 +1,10 @@
-import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { ArtemisTestModule } from '../test.module';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
+import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
+import { ArtemisTestModule } from '../test.module';
 
 @Component({
     template: '<form name="editForm" #editForm="ngForm">' + '<input type="text" name="pattern" validPattern #patternModel="ngModel" [(ngModel)]="pattern"/>' + '</form>',

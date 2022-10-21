@@ -1,34 +1,33 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { CourseWideContext, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
-import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { HttpResponse } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { getElement } from '../../../helpers/utils/general.utils';
-import { NgbPaginationModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { AnswerPostService } from 'app/shared/metis/answer-post.service';
-import { MockAnswerPostService } from '../../../helpers/mocks/service/mock-answer-post.service';
-import { PostService } from 'app/shared/metis/post.service';
-import { MockPostService } from '../../../helpers/mocks/service/mock-post.service';
-import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
-import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbPaginationModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { AnswerPostService } from 'app/shared/metis/answer-post.service';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { CourseWideContext, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { PostService } from 'app/shared/metis/post.service';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Observable, of } from 'rxjs';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockAnswerPostService } from '../../../helpers/mocks/service/mock-answer-post.service';
+import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { MockPostService } from '../../../helpers/mocks/service/mock-post.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import {
     metisCourse,
     metisCoursePosts,
@@ -41,6 +40,7 @@ import {
     metisLecturePosts,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
+import { getElement } from '../../../helpers/utils/general.utils';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;

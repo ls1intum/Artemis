@@ -1,19 +1,19 @@
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
+import { AlertService } from 'app/core/util/alert.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/detail/tutorial-group-detail.component';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
+import { Course } from 'app/entities/course.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { of } from 'rxjs';
+import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { HttpResponse } from '@angular/common/http';
+import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-group-row-buttons-stub.component';
-import { Course } from 'app/entities/course.model';
 
 describe('TutorialGroupDetailComponent', () => {
     let tutorialGroupDetailComponentFixture: ComponentFixture<TutorialGroupDetailComponent>;

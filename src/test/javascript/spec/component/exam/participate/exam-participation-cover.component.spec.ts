@@ -1,11 +1,12 @@
 import { HttpClientModule } from '@angular/common/http';
 import { EventEmitter } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -14,21 +15,20 @@ import { ExamParticipationCoverComponent } from 'app/exam/participate/exam-cover
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('ExamParticipationCoverComponent', () => {
     const course = { id: 456 } as Course;

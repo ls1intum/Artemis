@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
 
 describe('PresentationScoreComponent', () => {
     let component: PresentationScoreComponent;

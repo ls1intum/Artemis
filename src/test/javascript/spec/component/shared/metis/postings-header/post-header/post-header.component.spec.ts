@@ -1,21 +1,21 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { getElement } from '../../../../../helpers/utils/general.utils';
-import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
-import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
-import { metisAnnouncement, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { MetisService } from 'app/shared/metis/metis.service';
 import { UserRole } from 'app/shared/metis/metis.util';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
+import { metisAnnouncement, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { getElement } from '../../../../../helpers/utils/general.utils';
 
 describe('PostHeaderComponent', () => {
     let component: PostHeaderComponent;

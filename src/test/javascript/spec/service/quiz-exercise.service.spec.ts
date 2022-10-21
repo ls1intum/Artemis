@@ -1,18 +1,18 @@
-import { TranslateService } from '@ngx-translate/core';
-import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
-import { SessionStorageService } from 'ngx-webstorage';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { QuizBatch, QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../test.module';
-import * as downloadUtil from 'app/shared/util/download.util';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { QuizBatch, QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import * as downloadUtil from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
+import { SessionStorageService } from 'ngx-webstorage';
 import { firstValueFrom } from 'rxjs';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../test.module';
 
 /**
  * create a QuizExercise that when used as an HTTP response can be deserialized as an equal object

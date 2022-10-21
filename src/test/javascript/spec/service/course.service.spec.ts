@@ -1,16 +1,16 @@
-import { TranslateService } from '@ngx-translate/core';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { map, take } from 'rxjs/operators';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import dayjs from 'dayjs/esm';
-import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
+import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { DATE_TIME_FORMAT } from 'app/shared/constants/input.constants';
+import dayjs from 'dayjs/esm';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { map, take } from 'rxjs/operators';
 import { MockRouter } from '../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 describe('Course Service', () => {
     let service: CourseManagementService;

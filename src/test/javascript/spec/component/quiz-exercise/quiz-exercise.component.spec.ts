@@ -1,22 +1,22 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../../test.module';
-import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { AlertService } from 'app/core/util/alert.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
-import { AlertService } from 'app/core/util/alert.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseImportComponent } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
+import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of, throwError } from 'rxjs';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('QuizExercise Management Component', () => {
     let comp: QuizExerciseComponent;

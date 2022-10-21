@@ -1,17 +1,17 @@
-import { TestBed } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Injector } from '@angular/core';
-import { MockRouter } from '../../helpers/mocks/mock-router';
+import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { ExerciseView, OrionBuildConnector, OrionExerciseConnector, OrionSharedUtilConnector, OrionState, OrionVCSConnector } from 'app/shared/orion/orion';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { Feedback } from 'app/entities/feedback.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
+import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/code-editor-ace.component';
+import { ExerciseView, OrionBuildConnector, OrionExerciseConnector, OrionSharedUtilConnector, OrionState, OrionVCSConnector } from 'app/shared/orion/orion';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('OrionConnectorService', () => {
     let serviceUnderTest: OrionConnectorService;

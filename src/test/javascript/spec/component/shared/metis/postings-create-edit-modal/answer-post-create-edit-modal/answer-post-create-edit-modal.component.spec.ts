@@ -1,14 +1,14 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ViewContainerRef } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
-import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
-import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ViewContainerRef } from '@angular/core';
+import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { MockViewContainerRef } from '../../../../../helpers/mocks/service/mock-view-container-ref.service';
 import { metisAnswerPostToCreateUser1, metisAnswerPostUser2, metisResolvingAnswerPostUser1 } from '../../../../../helpers/sample/metis-sample-data';
 

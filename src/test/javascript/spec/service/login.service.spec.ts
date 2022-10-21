@@ -1,18 +1,18 @@
+import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
+import { LoginService } from 'app/core/login/login.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { MockAuthServerProviderService } from '../helpers/mocks/service/mock-auth-server-provider.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { LoginService } from 'app/core/login/login.service';
-import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import { MockNotificationService } from '../helpers/mocks/service/mock-notification.service';
-import { TestBed } from '@angular/core/testing';
-import { AlertService } from 'app/core/util/alert.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
-import { Router } from '@angular/router';
-import { MockProvider } from 'ng-mocks';
+import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 
 describe('LoginService', () => {
     let accountService: AccountService;

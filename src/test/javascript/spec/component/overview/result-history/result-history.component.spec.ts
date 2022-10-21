@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result.model';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
-import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
-import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 describe('ResultHistoryComponent', () => {
     let component: ResultHistoryComponent;

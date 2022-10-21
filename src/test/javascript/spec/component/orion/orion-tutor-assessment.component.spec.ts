@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
-import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
+import { AlertService } from 'app/core/util/alert.service';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { OrionAssessmentInstructionsComponent } from 'app/orion/assessment/orion-assessment-instructions.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
+import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
+import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('OrionTutorAssessmentComponent', () => {
     let comp: OrionTutorAssessmentComponent;

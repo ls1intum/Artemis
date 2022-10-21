@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
-import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 
 describe('Team Config Form Group Component', () => {

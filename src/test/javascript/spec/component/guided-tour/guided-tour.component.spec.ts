@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ArtemisTestModule } from '../../test.module';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { Orientation, OverlayPosition, ResetParticipation } from 'app/guided-tour/guided-tour.constants';
 import { By } from '@angular/platform-browser';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
+import { Orientation, OverlayPosition, ResetParticipation } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTour } from 'app/guided-tour/guided-tour.model';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
-import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('GuidedTourComponent', () => {
     const tourStep = new TextTourStep({

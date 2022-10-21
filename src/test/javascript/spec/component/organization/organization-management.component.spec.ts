@@ -1,18 +1,18 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { OrganizationCountDto } from 'app/admin/organization-management/organization-count-dto.model';
 
 import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { ArtemisTestModule } from '../../test.module';
+import { Organization } from 'app/entities/organization.model';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute } from '@angular/router';
-import { Organization } from 'app/entities/organization.model';
-import { OrganizationCountDto } from 'app/admin/organization-management/organization-count-dto.model';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('OrganizationManagementComponent', () => {
     let component: OrganizationManagementComponent;

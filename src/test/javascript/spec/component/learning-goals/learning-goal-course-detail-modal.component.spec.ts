@@ -1,19 +1,19 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { SortService } from 'app/shared/service/sort.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
-import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { LearningGoalCourseDetailModalComponent } from 'app/course/learning-goals/learning-goal-course-detail-modal/learning-goal-course-detail-modal.component';
 import { CourseLearningGoalProgress, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
+import { LearningGoal } from 'app/entities/learningGoal.model';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 
 describe('LearningGoalCourseDetailModalComponent', () => {
     let learningGoalCourseDetailModalFixture: ComponentFixture<LearningGoalCourseDetailModalComponent>;

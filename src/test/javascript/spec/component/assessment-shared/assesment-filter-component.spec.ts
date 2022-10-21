@@ -1,12 +1,12 @@
-import { ArtemisTestModule } from '../../test.module';
-import { AssessmentFiltersComponent } from 'app/assessment/assessment-filters/assessment-filters.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
 import { NgModel } from '@angular/forms';
-import { Submission } from 'app/entities/submission.model';
+import { AssessmentFiltersComponent } from 'app/assessment/assessment-filters/assessment-filters.component';
 import { Result } from 'app/entities/result.model';
+import { Submission } from 'app/entities/submission.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('AssessmentFiltersComponent', () => {
     let component: AssessmentFiltersComponent;

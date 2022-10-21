@@ -1,25 +1,25 @@
+import { HttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../../test.module';
+import { ActivatedRoute } from '@angular/router';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { BehaviorSubject, of } from 'rxjs';
+import { AverageActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/average-actions-chart.component';
+import { CategoryActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/category-actions-chart.component';
+import { TotalActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/total-actions-chart.component';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
-import { ActivatedRoute } from '@angular/router';
-import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MonitoringActivityLogComponent } from 'app/exam/monitoring/subpages/activity-log/monitoring-activity-log.component';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
-import { MockHttpService } from '../../../../helpers/mocks/service/mock-http.service';
-import { HttpClient } from '@angular/common/http';
+import { MonitoringCardComponent } from 'app/exam/monitoring/subpages/monitoring-card.component';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { MonitoringCardComponent } from 'app/exam/monitoring/subpages/monitoring-card.component';
-import { TotalActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/total-actions-chart.component';
-import { AverageActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/average-actions-chart.component';
-import { CategoryActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/category-actions-chart.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, of } from 'rxjs';
+import { MockHttpService } from '../../../../helpers/mocks/service/mock-http.service';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ArtemisTestModule } from '../../../../test.module';
 
 describe('Monitoring Activity Log Component', () => {
     // Course

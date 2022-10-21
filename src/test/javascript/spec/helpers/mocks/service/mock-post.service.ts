@@ -1,7 +1,7 @@
-import { Observable, of } from 'rxjs';
-import { Post } from 'app/entities/metis/post.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { Post } from 'app/entities/metis/post.model';
 import { CourseWideContext, DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
+import { Observable, of } from 'rxjs';
 import {
     messagesBetweenUser1User2,
     metisCoursePosts,

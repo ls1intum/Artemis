@@ -1,14 +1,14 @@
-import { EMPTY, of, Subject } from 'rxjs';
-import { ServerDateService } from 'app/shared/server-date.service';
+import { HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
+import { ApplicationRef } from '@angular/core';
+import { discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
+import { SwUpdate } from '@angular/service-worker';
+import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
 import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.interceptor';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { ServerDateService } from 'app/shared/server-date.service';
 import { MockService } from 'ng-mocks';
+import { EMPTY, Subject, of } from 'rxjs';
 import { MockArtemisServerDateService } from '../helpers/mocks/service/mock-server-date.service';
-import { discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
-import { HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
-import { SwUpdate } from '@angular/service-worker';
-import { ApplicationRef } from '@angular/core';
-import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
 
 describe(`ArtemisVersionInterceptor`, () => {
     let appRef: ApplicationRef;

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MetricsSystemComponent } from 'app/admin/metrics/blocks/metrics-system/metrics-system.component';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { MetricsSystemComponent } from 'app/admin/metrics/blocks/metrics-system/metrics-system.component';
 
 describe('MetricsSystemComponent', () => {
     let comp: MetricsSystemComponent;

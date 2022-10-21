@@ -1,4 +1,9 @@
-import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
+import { AbstractControl, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import {
     AuthorityFilter,
     OriginFilter,
@@ -8,34 +13,29 @@ import {
     UserManagementComponent,
     UserStorageKey,
 } from 'app/admin/user-management/user-management.component';
-import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
-import { of, Subscription } from 'rxjs';
-import { AbstractControl, ReactiveFormsModule } from '@angular/forms';
-import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { ArtemisTestModule } from '../../test.module';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { UserService } from 'app/core/user/user.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { Course } from 'app/entities/course.model';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Subscription, of } from 'rxjs';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;

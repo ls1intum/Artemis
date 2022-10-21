@@ -1,15 +1,15 @@
-import { inject, TestBed } from '@angular/core/testing';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { TranslateService } from '@ngx-translate/core';
-import { SessionStorageService } from 'ngx-webstorage';
-import { Router } from '@angular/router';
+import { Renderer2, RendererFactory2 } from '@angular/core';
+import { TestBed, inject } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
+import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { MockProvider } from 'ng-mocks';
-import { Renderer2, RendererFactory2 } from '@angular/core';
+import { SessionStorageService } from 'ngx-webstorage';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('Language Helper', () => {
     const renderer2: Renderer2 = {

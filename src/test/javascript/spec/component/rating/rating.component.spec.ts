@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { ArtemisTestModule } from '../../test.module';
-import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
-import { RatingService } from 'app/exercises/shared/rating/rating.service';
-import { MockRatingService } from '../../helpers/mocks/service/mock-rating.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Rating } from 'app/entities/rating.model';
 import { Result } from 'app/entities/result.model';
 import { Submission } from 'app/entities/submission.model';
-import { Rating } from 'app/entities/rating.model';
-import { of } from 'rxjs';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { Participation } from 'app/entities/participation/participation.model';
+import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
+import { RatingService } from 'app/exercises/shared/rating/rating.service';
+import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { MockComponent } from 'ng-mocks';
+import { of } from 'rxjs';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockRatingService } from '../../helpers/mocks/service/mock-rating.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('RatingComponent', () => {
     let ratingComponent: RatingComponent;

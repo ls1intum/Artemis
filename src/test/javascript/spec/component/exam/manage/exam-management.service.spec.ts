@@ -1,18 +1,18 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { Course } from 'app/entities/course.model';
-import { ArtemisTestModule } from '../../../test.module';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Exam } from 'app/entities/exam.model';
-import dayjs from 'dayjs/esm';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { AccountService } from 'app/core/auth/account.service';
+import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import dayjs from 'dayjs/esm';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('Exam Management Service Tests', () => {
     let service: ExamManagementService;

@@ -1,22 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { IntervalGradingSystemComponent } from 'app/grading-system/interval-grading-system/interval-grading-system.component';
-import { ArtemisTestModule } from '../../test.module';
+import { NgModel, NgSelectOption } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/entities/exam.model';
+import { GradeStep } from 'app/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
+import { IntervalGradingSystemComponent } from 'app/grading-system/interval-grading-system/interval-grading-system.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
-import { NgModel, NgSelectOption } from '@angular/forms';
-import { GradeStep } from 'app/entities/grade-step.model';
 import { cloneDeep } from 'lodash-es';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
-import { Exam } from 'app/entities/exam.model';
-import { Course } from 'app/entities/course.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
-import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ArtemisTestModule } from '../../test.module';
 
 const generateCsv = jest.fn();
 

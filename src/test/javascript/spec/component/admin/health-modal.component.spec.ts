@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HealthModalComponent } from 'app/admin/health/health-modal.component';
+import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
 import { MockProvider } from 'ng-mocks';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
-import { By } from '@angular/platform-browser';
 
 describe('HealthModalComponentTest', () => {
     let fixture: ComponentFixture<HealthModalComponent>;

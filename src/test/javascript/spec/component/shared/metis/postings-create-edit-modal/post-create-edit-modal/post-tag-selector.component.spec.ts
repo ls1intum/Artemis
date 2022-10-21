@@ -1,15 +1,15 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { FormsModule } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSelectModule } from '@angular/material/select';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
-import { FormsModule } from '@angular/forms';
+import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { metisTags } from '../../../../../helpers/sample/metis-sample-data';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatIconModule } from '@angular/material/icon';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatSelectModule } from '@angular/material/select';
 
 describe('PostTagSelectorComponent', () => {
     let component: PostTagSelectorComponent;

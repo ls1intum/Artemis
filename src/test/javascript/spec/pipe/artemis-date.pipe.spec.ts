@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import dayjs from 'dayjs/esm';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 const GERMAN_SHORT_DATE_FORMAT = 'DD. MMM. YYYY';

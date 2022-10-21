@@ -1,22 +1,22 @@
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TestBed } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
-import { Result } from 'app/entities/result.model';
-import { BehaviorSubject, of } from 'rxjs';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { Result } from 'app/entities/result.model';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { ArtemisTestModule } from '../../test.module';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockProvider } from 'ng-mocks';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, of } from 'rxjs';
+import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
+import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
+import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('OrionBuildAndTestService', () => {
     let serviceUnderTest: OrionBuildAndTestService;

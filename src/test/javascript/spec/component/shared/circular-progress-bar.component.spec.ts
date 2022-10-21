@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CircularProgressBarComponent } from 'app/shared/circular-progress-bar/circular-progress-bar.component';
+
 describe('CircularProgressBarComponent', () => {
     let circularProgressBarComponentFixture: ComponentFixture<CircularProgressBarComponent>;
     let circularProgressBarComponent: CircularProgressBarComponent;

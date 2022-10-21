@@ -1,24 +1,24 @@
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/entities/lecture.model';
+import { LectureImportComponent } from 'app/lecture/lecture-import.component';
+import { LectureComponent, LectureDateFilter } from 'app/lecture/lecture.component';
+import { LectureService } from 'app/lecture/lecture.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import dayjs from 'dayjs/esm';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LectureComponent, LectureDateFilter } from 'app/lecture/lecture.component';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { LectureService } from 'app/lecture/lecture.service';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../test.module';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { LectureImportComponent } from 'app/lecture/lecture-import.component';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;

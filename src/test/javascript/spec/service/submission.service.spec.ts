@@ -1,19 +1,19 @@
-import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
-import { TestBed, tick, fakeAsync } from '@angular/core/testing';
-import { take } from 'rxjs/operators';
-import { ArtemisTestModule } from '../test.module';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { Result } from 'app/entities/result.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
-import { getLatestSubmissionResult, Submission, SubmissionType } from 'app/entities/submission.model';
-import dayjs from 'dayjs/esm';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { Complaint } from 'app/entities/complaint.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Result } from 'app/entities/result.model';
+import { Submission, SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
+import dayjs from 'dayjs/esm';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { take } from 'rxjs/operators';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../test.module';
 
 describe('Submission Service', () => {
     let service: SubmissionService;

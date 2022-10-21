@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ParticipantScoresAverageTableComponent } from 'app/shared/participant-scores/participant-scores-average-table/participant-scores-average-table.component';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { TranslateModule } from '@ngx-translate/core';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ArtemisTestModule } from '../../test.module';
-import { ParticipantScoreAverageDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { By } from '@angular/platform-browser';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateModule } from '@ngx-translate/core';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { BaseEntity } from 'app/shared/model/base-entity';
+import { ParticipantScoresAverageTableComponent } from 'app/shared/participant-scores/participant-scores-average-table/participant-scores-average-table.component';
+import { ParticipantScoreAverageDTO } from 'app/shared/participant-scores/participant-scores.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('ParticipantScoresAverageTable', () => {
     let fixture: ComponentFixture<ParticipantScoresAverageTableComponent>;

@@ -1,17 +1,15 @@
-import { Observable, of } from 'rxjs';
-import { Injectable } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
-import { ITeamService } from 'app/exercises/shared/team/team.service';
-import { Exercise } from 'app/entities/exercise.model';
-import { Team, TeamImportStrategyType } from 'app/entities/team.model';
-import { StudentWithTeam } from 'app/entities/team.model';
-import { Course } from 'app/entities/course.model';
-import { TeamSearchUser } from 'app/entities/team-search-user.model';
+import { Injectable } from '@angular/core';
 import { User } from 'app/core/user/user.model';
+import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
-import { TeamService } from 'app/exercises/shared/team/team.service';
+import { TeamSearchUser } from 'app/entities/team-search-user.model';
+import { StudentWithTeam, Team, TeamImportStrategyType } from 'app/entities/team.model';
+import { ITeamService, TeamService } from 'app/exercises/shared/team/team.service';
 import dayjs from 'dayjs/esm';
+import { Observable, of } from 'rxjs';
 
 export const mockTeamStudents = [
     { id: 1, firstName: 'John', lastName: 'Doe', name: 'John Doe', login: 'ga12abc', email: 'john.doe@example.com', visibleRegistrationNumber: '01234567' },

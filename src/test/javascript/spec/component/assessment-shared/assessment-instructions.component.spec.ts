@@ -1,17 +1,17 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { MockComponent, MockProvider, MockDirective } from 'ng-mocks';
 import { ExpandableSectionComponent } from 'app/assessment/assessment-instructions/expandable-section/expandable-section.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('AssessmentInstructionsComponent', () => {
     let comp: AssessmentInstructionsComponent;

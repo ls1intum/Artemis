@@ -1,7 +1,7 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { LogsService } from 'app/admin/logs/logs.service';
-import { Log } from 'app/admin/logs/log.model';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Log } from 'app/admin/logs/log.model';
+import { LogsService } from 'app/admin/logs/logs.service';
 
 describe('Logs Service', () => {
     let service: LogsService;

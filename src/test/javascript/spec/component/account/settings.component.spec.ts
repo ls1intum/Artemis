@@ -1,17 +1,17 @@
-import { fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { HttpResponse } from '@angular/common/http';
+import { TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
+import { SettingsComponent } from 'app/account/settings/settings.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 
 import { ArtemisTestModule } from '../../test.module';
-import { AccountService } from 'app/core/auth/account.service';
-import { SettingsComponent } from 'app/account/settings/settings.component';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { User } from 'app/core/user/user.model';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { HttpResponse } from '@angular/common/http';
 
 describe('SettingsComponent', () => {
     let comp: SettingsComponent;

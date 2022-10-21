@@ -1,21 +1,21 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe, MockDirective, MockModule, MockComponent } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { TutorEffortStatisticsComponent } from 'app/exercises/text/manage/tutor-effort/tutor-effort-statistics.component';
-import { ArtemisTestModule } from '../../test.module';
-import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { TutorEffort } from 'app/entities/tutor-effort.model';
-import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { BarChartModule } from '@swimlane/ngx-charts';
+import { TutorEffort } from 'app/entities/tutor-effort.model';
+import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import { TutorEffortStatisticsComponent } from 'app/exercises/text/manage/tutor-effort/tutor-effort-statistics.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { MockRouter } from '../../helpers/mocks/mock-router';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('TutorEffortStatisticsComponent', () => {
     let fixture: ComponentFixture<TutorEffortStatisticsComponent>;

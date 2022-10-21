@@ -1,18 +1,18 @@
-import { ComponentFixture, inject, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, inject } from '@angular/core/testing';
 import { FormBuilder, NgModel } from '@angular/forms';
-import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
+import { By } from '@angular/platform-browser';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
 import { PasswordResetInitComponent } from 'app/account/password-reset/init/password-reset-init.component';
 import { PasswordResetInitService } from 'app/account/password-reset/init/password-reset-init.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockDirective, MockProvider } from 'ng-mocks';
-import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
+import { of, throwError } from 'rxjs';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { By } from '@angular/platform-browser';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('PasswordResetInitComponent', () => {
     let fixture: ComponentFixture<PasswordResetInitComponent>;

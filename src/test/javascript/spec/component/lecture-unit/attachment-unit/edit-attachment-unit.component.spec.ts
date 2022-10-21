@@ -1,19 +1,19 @@
-import dayjs from 'dayjs/esm';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { HttpResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { AlertService } from 'app/core/util/alert.service';
+import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { EditAttachmentUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-attachment-unit/edit-attachment-unit.component';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { HttpResponse } from '@angular/common/http';
-import { By } from '@angular/platform-browser';
 import { objectToJsonBlob } from 'app/utils/blob-util';
+import dayjs from 'dayjs/esm';
+import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 @Component({ selector: 'jhi-attachment-unit-form', template: '' })
 class AttachmentUnitFormStubComponent {

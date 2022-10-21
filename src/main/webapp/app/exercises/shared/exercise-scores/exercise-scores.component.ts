@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { forkJoin, of, Subscription, zip } from 'rxjs';
+import { Subscription, forkJoin, of, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';

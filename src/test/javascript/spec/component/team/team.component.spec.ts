@@ -1,11 +1,13 @@
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
+import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
 import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
@@ -19,10 +21,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import { mockExercise, mockTeam, mockTeams, TeamRequestInterceptorMock } from '../../helpers/mocks/service/mock-team.service';
+import { TeamRequestInterceptorMock, mockExercise, mockTeam, mockTeams } from '../../helpers/mocks/service/mock-team.service';
 import { ArtemisTestModule } from '../../test.module';
-import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { AlertService } from 'app/core/util/alert.service';
 
 describe('TeamComponent', () => {
     let comp: TeamComponent;

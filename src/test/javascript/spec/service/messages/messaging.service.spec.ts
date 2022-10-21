@@ -1,16 +1,21 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { Course } from 'app/entities/course.model';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockProvider } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Course } from 'app/entities/course.model';
+import { ConversationService } from 'app/shared/metis/conversation.service';
+import { MessagingService } from 'app/shared/metis/messaging.service';
+import { MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
+import { MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { last, of } from 'rxjs';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockConversationService } from '../../helpers/mocks/service/mock-conversation.service';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import {
     conversationBetweenUser1Tutor,
     conversationBetweenUser1User2,
@@ -20,11 +25,6 @@ import {
     conversationUser1,
     metisCourse,
 } from '../../helpers/sample/metis-sample-data';
-import { MessagingService } from 'app/shared/metis/messaging.service';
-import { ConversationService } from 'app/shared/metis/conversation.service';
-import { MockConversationService } from '../../helpers/mocks/service/mock-conversation.service';
-import { MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
-import { last, of } from 'rxjs';
 
 describe('Messaging Service', () => {
     let messagingService: MessagingService;

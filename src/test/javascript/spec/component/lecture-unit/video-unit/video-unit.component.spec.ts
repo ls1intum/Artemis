@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { BrowserModule } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
-import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { BrowserModule } from '@angular/platform-browser';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 
 describe('VideoUnitComponent', () => {
     const exampleName = 'Test';

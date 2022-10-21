@@ -1,15 +1,15 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import dayjs from 'dayjs/esm';
+import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;

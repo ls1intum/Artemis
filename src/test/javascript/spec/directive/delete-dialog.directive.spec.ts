@@ -1,19 +1,19 @@
-import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../test.module';
-import { By } from '@angular/platform-browser';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { AlertService } from 'app/core/util/alert.service';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockComponent, MockDirective } from 'ng-mocks';
+import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../test.module';
 
 @Component({
     selector: 'jhi-test-component',

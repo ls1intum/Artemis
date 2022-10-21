@@ -1,19 +1,19 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
-
-import { ArtemisTestModule } from '../../test.module';
-import { FileUploadExerciseComponent } from 'app/exercises/file-upload/manage/file-upload-exercise.component';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExerciseComponent } from 'app/exercises/file-upload/manage/file-upload-exercise.component';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+
+import { ArtemisTestModule } from '../../test.module';
 
 describe('FileUploadExercise Management Component', () => {
     let comp: FileUploadExerciseComponent;

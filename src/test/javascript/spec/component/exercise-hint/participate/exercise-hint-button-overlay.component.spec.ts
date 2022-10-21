@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-button-overlay.component';
+import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 
 import { ArtemisTestModule } from '../../../test.module';
-import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-button-overlay.component';
-import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { ExerciseHintStudentDialogComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 
 describe('Exercise Hint Button Overlay Component', () => {
     let comp: ExerciseHintButtonOverlayComponent;

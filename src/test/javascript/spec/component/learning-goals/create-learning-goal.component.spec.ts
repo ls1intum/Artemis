@@ -1,20 +1,20 @@
+import { HttpResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { AlertService } from 'app/core/util/alert.service';
 import { CreateLearningGoalComponent } from 'app/course/learning-goals/create-learning-goal/create-learning-goal.component';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { LectureService } from 'app/lecture/lecture.service';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { Lecture } from 'app/entities/lecture.model';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { HttpResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { By } from '@angular/platform-browser';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureService } from 'app/lecture/lecture.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 @Component({ selector: 'jhi-learning-goal-form', template: '' })
 class LearningGoalFormStubComponent {

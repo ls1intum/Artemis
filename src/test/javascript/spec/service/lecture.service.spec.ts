@@ -1,16 +1,16 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
-import { take } from 'rxjs/operators';
-import { ArtemisTestModule } from '../test.module';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { LectureService } from 'app/lecture/lecture.service';
-import { Lecture } from 'app/entities/lecture.model';
 import { Course } from 'app/entities/course.model';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureService } from 'app/lecture/lecture.service';
 import dayjs from 'dayjs/esm';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { take } from 'rxjs/operators';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../test.module';
 
 describe('Lecture Service', () => {
     let httpMock: HttpTestingController;

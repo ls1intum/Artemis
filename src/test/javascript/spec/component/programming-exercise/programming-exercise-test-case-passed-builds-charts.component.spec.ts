@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockDirective } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
 
 import { TestCasePassedBuildsChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-passed-builds-chart.component';
-import { TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { MockDirective } from 'ng-mocks';
 
 describe('TestCasePassedBuildsChartComponent', () => {
     let comp: TestCasePassedBuildsChartComponent;

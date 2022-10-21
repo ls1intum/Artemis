@@ -1,8 +1,8 @@
-import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { Observable, of } from 'rxjs';
 
 import { conversationsOfUser1 } from '../../sample/metis-sample-data';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 export class MockConversationService {
     create(courseId: number, conversation: Conversation): Observable<HttpResponse<Conversation>> {

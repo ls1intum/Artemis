@@ -1,29 +1,30 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { Post } from 'app/entities/metis/post.model';
-import { Course } from 'app/entities/course.model';
-import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
-import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { PostService } from 'app/shared/metis/post.service';
-import { AnswerPostService } from 'app/shared/metis/answer-post.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { ReactionService } from 'app/shared/metis/reaction.service';
-import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
-import { Reaction } from 'app/entities/metis/reaction.model';
-import { CourseWideContext, DisplayPriority, MetisPostAction, MetisWebsocketChannelPrefix, PageType } from 'app/shared/metis/metis.util';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockProvider } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { Course } from 'app/entities/course.model';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { Post } from 'app/entities/metis/post.model';
+import { Reaction } from 'app/entities/metis/reaction.model';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { AnswerPostService } from 'app/shared/metis/answer-post.service';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { CourseWideContext, DisplayPriority, MetisPostAction, MetisWebsocketChannelPrefix, PageType } from 'app/shared/metis/metis.util';
+import { PostService } from 'app/shared/metis/post.service';
+import { ReactionService } from 'app/shared/metis/reaction.service';
+import { MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
+import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import {
     metisCourse,
     metisCoursePostsWithCourseWideContext,
@@ -37,7 +38,6 @@ import {
     metisUser1,
     metisUser2,
 } from '../../helpers/sample/metis-sample-data';
-import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 describe('Metis Service', () => {
     let metisService: MetisService;

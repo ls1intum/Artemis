@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import dayjs from 'dayjs/esm';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import dayjs from 'dayjs/esm';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('AssessmentWarningComponent', function () {
     let component: AssessmentWarningComponent;

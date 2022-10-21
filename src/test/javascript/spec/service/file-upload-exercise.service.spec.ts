@@ -1,17 +1,17 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { map, take } from 'rxjs/operators';
-
-import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ArtemisTestModule } from '../test.module';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+
+import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { map, take } from 'rxjs/operators';
 import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../test.module';
 
 describe('FileUploadExercise Service', () => {
     let service: FileUploadExerciseService;

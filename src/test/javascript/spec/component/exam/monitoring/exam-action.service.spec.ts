@@ -1,17 +1,17 @@
-import { TestBed } from '@angular/core/testing';
-import { Exam } from 'app/entities/exam.model';
-import { ArtemisTestModule } from '../../../test.module';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
-import { createActions } from './exam-monitoring-helper';
-import { BehaviorSubject, of } from 'rxjs';
-import { EXAM_MONITORING_ACTION_TOPIC, EXAM_MONITORING_ACTIONS_TOPIC, EXAM_MONITORING_STATUS_TOPIC, ExamActionService } from 'app/exam/monitoring/exam-action.service';
-import dayjs from 'dayjs/esm';
-import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
+import { TestBed } from '@angular/core/testing';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { Exam } from 'app/entities/exam.model';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
+import { EXAM_MONITORING_ACTIONS_TOPIC, EXAM_MONITORING_ACTION_TOPIC, EXAM_MONITORING_STATUS_TOPIC, ExamActionService } from 'app/exam/monitoring/exam-action.service';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import dayjs from 'dayjs/esm';
+import { BehaviorSubject, of } from 'rxjs';
+import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
+import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
+import { ArtemisTestModule } from '../../../test.module';
+import { createActions } from './exam-monitoring-helper';
 
 describe('ExamActionService', () => {
     let examActionService: ExamActionService;

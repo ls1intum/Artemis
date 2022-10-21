@@ -1,23 +1,22 @@
-import { Course } from 'app/entities/course.model';
-import { By } from '@angular/platform-browser';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of, Subject } from 'rxjs';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { UMLModel } from '@ls1intum/apollon';
-import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
-import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { ArtemisTestModule } from '../../test.module';
-import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ApollonEditor, UMLModel } from '@ls1intum/apollon';
+import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
+import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { Course } from 'app/entities/course.model';
+import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
-import { ApollonEditor } from '@ls1intum/apollon';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
+import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { cloneDeep } from 'lodash-es';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { Subject, of } from 'rxjs';
+import { ArtemisTestModule } from '../../test.module';
+import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {

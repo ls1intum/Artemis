@@ -1,13 +1,13 @@
+import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { Result } from 'app/entities/result.model';
-import { HttpClient } from '@angular/common/http';
+import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { Subject, of } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
+import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 
 describe('ProgrammingExerciseGradingService', () => {
     let websocketService: JhiWebsocketService;

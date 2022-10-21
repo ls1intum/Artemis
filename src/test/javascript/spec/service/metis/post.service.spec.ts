@@ -1,9 +1,9 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { take } from 'rxjs/operators';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Post } from 'app/entities/metis/post.model';
-import { PostService } from 'app/shared/metis/post.service';
 import { CourseWideContext, DisplayPriority, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { PostService } from 'app/shared/metis/post.service';
+import { take } from 'rxjs/operators';
 import {
     metisCourse,
     metisCoursePosts,

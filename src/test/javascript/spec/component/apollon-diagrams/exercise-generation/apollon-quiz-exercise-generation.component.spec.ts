@@ -1,30 +1,30 @@
-import { Course } from 'app/entities/course.model';
+import { HttpResponse } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { SpyLocation } from '@angular/common/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of } from 'rxjs';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { HttpResponse } from '@angular/common/http';
-import { TranslateService } from '@ngx-translate/core';
-import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
+import { ApollonEditor, ApollonMode, Locale } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ApollonQuizExerciseGenerationComponent } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/apollon-quiz-exercise-generation.component';
+import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { Course } from 'app/entities/course.model';
+import { UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { ApollonQuizExerciseGenerationComponent } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/apollon-quiz-exercise-generation.component';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { SpyLocation } from '@angular/common/testing';
-import { ApollonEditor, ApollonMode, Locale } from '@ls1intum/apollon';
+import { of } from 'rxjs';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {

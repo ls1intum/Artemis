@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
-import { ArtemisTestModule } from '../../test.module';
-import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { lastValueFrom, of } from 'rxjs';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Result } from 'app/entities/result.model';
-import { Rating } from 'app/entities/rating.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { Participation } from 'app/entities/participation/participation.model';
+import { Rating } from 'app/entities/rating.model';
+import { Result } from 'app/entities/result.model';
+import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
+import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
-import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortService } from 'app/shared/service/sort.service';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { lastValueFrom, of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTestModule } from '../../test.module';
 
 describe('RatingListComponent', () => {
     let component: RatingListComponent;

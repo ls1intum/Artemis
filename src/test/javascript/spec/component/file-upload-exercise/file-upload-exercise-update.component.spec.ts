@@ -1,20 +1,20 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
-
-import { ArtemisTestModule } from '../../test.module';
+import { TranslateService } from '@ngx-translate/core';
+import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseUpdateComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-update.component';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockFileUploadExerciseService } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Course } from 'app/entities/course.model';
-import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of } from 'rxjs';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { MockFileUploadExerciseService } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+
+import { ArtemisTestModule } from '../../test.module';
 
 describe('FileUploadExercise Management Update Component', () => {
     let comp: FileUploadExerciseUpdateComponent;

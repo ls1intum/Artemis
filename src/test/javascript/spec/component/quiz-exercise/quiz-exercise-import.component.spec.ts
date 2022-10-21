@@ -1,18 +1,18 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExerciseImportComponent, TableColumn } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
+import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 import { SortService } from 'app/shared/service/sort.service';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { QuizExerciseImportComponent, TableColumn } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
-import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 describe('QuizExerciseImportComponent', () => {
     let fixture: ComponentFixture<QuizExerciseImportComponent>;

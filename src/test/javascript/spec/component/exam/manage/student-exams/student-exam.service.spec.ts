@@ -1,11 +1,11 @@
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
-import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Router } from '@angular/router';
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { of } from 'rxjs';
+import { MockRouter } from '../../../../helpers/mocks/mock-router';
 
 describe('Student Exam Service', () => {
     let httpClient: any;

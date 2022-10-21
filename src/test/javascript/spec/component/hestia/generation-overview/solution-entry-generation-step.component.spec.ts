@@ -1,18 +1,18 @@
-import { ArtemisTestModule } from '../../../test.module';
+import { EventEmitter } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { SolutionEntryGenerationStepComponent } from 'app/exercises/programming/hestia/generation-overview/steps/solution-entry-generation-step/solution-entry-generation-step.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/services/programming-exercise-solution-entry.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { EventEmitter } from '@angular/core';
 import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { SolutionEntryGenerationStepComponent } from 'app/exercises/programming/hestia/generation-overview/steps/solution-entry-generation-step/solution-entry-generation-step.component';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/services/programming-exercise-solution-entry.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortingOrder } from 'app/shared/table/pageable-table';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { Observable, of } from 'rxjs';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('SolutionEntryGenerationStep Component', () => {
     let comp: SolutionEntryGenerationStepComponent;
