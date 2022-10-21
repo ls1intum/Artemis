@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -374,7 +375,6 @@ public class ProgrammingExerciseExportImportResource {
 
     private ResponseEntity<Resource> provideZipForParticipations(@NotNull List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations,
             ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-
         long start = System.nanoTime();
 
         // TODO: in case we do not find participations for the given ids, we should inform the user in the client, that the student did not participate in the exercise.
@@ -399,21 +399,25 @@ public class ProgrammingExerciseExportImportResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/export-solution-repository : sends a solution repository as a zip file without .git directory.
+     * GET /programming-exercises/:exerciseId/export-student-requested-repository : sends a solution repository as a zip file without .git directory.
      *
      * @param exerciseId The id of the programming exercise
+     * @param includeTests flag that indicates whether the tests should also be exported
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
     @GetMapping(EXPORT_SOLUTION_REPOSITORY)
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
-    public ResponseEntity<Resource> exportSolutionRepository(@PathVariable long exerciseId, @RequestParam() boolean includeTests) throws IOException {
+    public ResponseEntity<Resource> exportStudentRequestedRepository(@PathVariable long exerciseId, @RequestParam() boolean includeTests) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         Role atLeastRole = programmingExercise.isExampleSolutionPublished() ? Role.STUDENT : Role.TEACHING_ASSISTANT;
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(atLeastRole, programmingExercise, null);
+        if (includeTests && !programmingExercise.isReleaseTestsAfterDueDate()) {
+            throw new AccessForbiddenException(RepositoryType.SOLUTION.getName(), programmingExercise.getId());
+        }
         long start = System.nanoTime();
-        Optional<File> zipFile = programmingExerciseExportService.exportStudentRepositoryForExercise(programmingExercise.getId(), includeTests, new ArrayList<>());
+        Optional<File> zipFile = programmingExerciseExportService.exportStudentRequestedRepository(programmingExercise.getId(), includeTests, new ArrayList<>());
 
         return returnZipFileForRepositoryExport(zipFile, RepositoryType.SOLUTION.getName(), programmingExercise, start);
     }

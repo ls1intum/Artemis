@@ -257,12 +257,13 @@ public class ProgrammingExerciseExportService {
      *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      * @param exerciseId The id of the programming exercise that has the repository
+     * @param includeTests flag that indicates whether the tests should also be exported
      * @param exportErrors List of failures that occurred during the export
      * @return a zipped file
      */
-    public Optional<File> exportStudentRepositoryForExercise(long exerciseId, boolean includeTests, List<String> exportErrors) {
+    public Optional<File> exportStudentRequestedRepository(long exerciseId, boolean includeTests, List<String> exportErrors) {
         Path uniquePath = fileService.getUniquePath(repoDownloadClonePath);
-        return exportStudentRepositoryForExercise(exerciseId, includeTests, uniquePath, exportErrors);
+        return exportStudentRequestedRepository(exerciseId, includeTests, uniquePath, exportErrors);
     }
 
     /**
@@ -325,11 +326,12 @@ public class ProgrammingExerciseExportService {
      * Removes the ".git" directory from the resulting zip file to prevent leaking unintended information to students.
      *
      * @param exerciseId   the id of the programming exercise that has the repository
+     * @param includeTests flag that indicates whether the tests should also be exported
      * @param uniquePath   the directory used for store the zip file
      * @param exportErrors list of failures that occurred during the export
      * @return a zipped file
      */
-    public Optional<File> exportStudentRepositoryForExercise(long exerciseId, boolean includeTests, Path uniquePath, List<String> exportErrors) {
+    public Optional<File> exportStudentRequestedRepository(long exerciseId, boolean includeTests, Path uniquePath, List<String> exportErrors) {
         RepositoryType repositoryType = includeTests ? RepositoryType.TESTS : RepositoryType.SOLUTION;
         var exerciseOrEmpty = loadExerciseForRepoExport(exerciseId, exportErrors);
         if (exerciseOrEmpty.isEmpty()) {

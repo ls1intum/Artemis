@@ -376,11 +376,12 @@ export class ProgrammingExerciseService {
     /**
      * Exports the example solution repository for a given exercise, suitable for distributing to students.
      * @param exerciseId
+     * @param includeTests flag that indicates whether the tests should also be exported
      */
-    exportSolutionRepository(exerciseId: number, includeTests: boolean): Observable<HttpResponse<Blob>> {
+    exportStudentRequestedRepository(exerciseId: number, includeTests: boolean): Observable<HttpResponse<Blob>> {
         let params = new HttpParams();
         params = params.set('includeTests', includeTests.toString());
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-solution-repository`, {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-requested-repository`, {
             params,
             observe: 'response',
             responseType: 'blob',

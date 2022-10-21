@@ -11,7 +11,7 @@ export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends Pro
 
     exportRepository() {
         if (this.exerciseId) {
-            this.programmingExerciseService.exportSolutionRepository(this.exerciseId, this.includeTests).subscribe((response) => {
+            this.programmingExerciseService.exportStudentRequestedRepository(this.exerciseId, this.includeTests).subscribe((response) => {
                 downloadZipFileFromResponse(response);
                 this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
             });
