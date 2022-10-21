@@ -19,7 +19,6 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "3.3.0"
     id "com.github.node-gradle.node" version "3.4.0"
     id "com.diffplug.spotless" version "6.11.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
@@ -37,7 +36,6 @@ description = "Interactive Learning with Individual Feedback"
 sourceCompatibility=17
 targetCompatibility=17
 
-apply from: "gradle/docker.gradle"
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
 apply from: "gradle/liquibase.gradle"
 

@@ -204,7 +204,7 @@
                 [buttonIcon]="faRedo"
                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                 [buttonLabel]="'artemisApp.exerciseActions.practice' | artemisTranslate"
-                [buttonLoading]="!!exercise.loading"
+                [buttonLoading]="!!exercise.loading || startingPracticeMode"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
                 [ngbTooltip]="'artemisApp.exerciseActions.practiceModeTooltip' | artemisTranslate"
