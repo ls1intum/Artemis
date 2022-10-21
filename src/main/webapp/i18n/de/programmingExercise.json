@@ -299,7 +299,11 @@
                 "disallowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen keine Beschwerde nach einer automatischen Bewertung einlegen",
                 "complaintOnAutomaticAssessmentEnabled": "Beschwerden sind möglich",
                 "complaintOnAutomaticAssessmentDisabled": "Beschwerden sind nicht möglich",
-                "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studenten zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen."
+                "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studenten zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen.",
+                "releaseTestsAfterDueDate": "Tests veröffentlichen",
+                "releaseTestsAfterDueDateTooltip": "Die automatischen Tests veröffentlichen können zusätzlich zu dem Lösungsvorschlag nach der Deadline zum Download bereit gestellt werden.",
+                "releaseTestsAfterDueDateEnabled": "Veröffentlichen",
+                "releaseTestsAfterDueDateDisabled": "Nicht veröffentlichen"
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",
@@ -452,7 +456,8 @@
                 "totalJobDuration": "kompletter Job",
                 "dependenciesDownloadedCount": "Anzahl heruntergeladener Abhängigkeiten",
                 "tooltip": "The durchschnittlichen Statistiken werden von allen Builds (Template-, Lösung- und Studierendenabgaben) berechnet. Die Anzahl der heruntergeladenen Abhängigkeiten kann durch Caching im Docker-Image verringert werden."
-            }
+            },
+            "studentDownloadTestsTooltip": "Hier kannst du die Tests runterladen. Die Beispiellösung wird automatisch an der Stelle eingefügt an der du deine Lösung platzieren musst, um diese zu testen."
         },
         "error": {
             "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."

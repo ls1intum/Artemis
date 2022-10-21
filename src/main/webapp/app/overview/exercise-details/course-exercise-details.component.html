@@ -213,9 +213,21 @@
                         ></jhi-modeling-editor>
                     </dd>
                     <dd *ngIf="exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolution"></dd>
-                    <dd *ngIf="isProgrammingExerciseExampleSolutionPublished" class="editor-outline-background">
-                        <jhi-programming-exercise-example-solution-repo-download class="ms-2" [exerciseId]="exercise.id!"></jhi-programming-exercise-example-solution-repo-download>
-                    </dd>
+                    <ng-container *ngIf="isProgrammingExerciseExampleSolutionPublished">
+                        <dd class="editor-outline-background">
+                            <jhi-programming-exercise-example-solution-repo-download
+                                class="ms-2"
+                                [exerciseId]="exercise.id!"
+                            ></jhi-programming-exercise-example-solution-repo-download>
+                        </dd>
+                        <dd *ngIf="programmingExercise?.releaseTestsAfterDueDate" class="editor-outline-background">
+                            <jhi-programming-exercise-example-solution-repo-download
+                                class="ms-2"
+                                [exerciseId]="exercise.id!"
+                            ></jhi-programming-exercise-example-solution-repo-download>
+                            <jhi-help-icon placement="top" text="artemisApp.programmingExercise.studentDownloadTestsTooltip"></jhi-help-icon>
+                        </dd>
+                    </ng-container>
                 </dl>
             </ng-container>
             <jhi-complaint-student-view

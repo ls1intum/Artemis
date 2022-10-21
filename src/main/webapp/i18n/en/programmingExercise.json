@@ -299,7 +299,11 @@
                 "disallowComplaintOnAutomaticAssessmentTooltip": "Students cannot complain after receiving an automatic assessment",
                 "complaintOnAutomaticAssessmentEnabled": "Complaints are possible",
                 "complaintOnAutomaticAssessmentDisabled": "Complaints are not possible",
-                "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable."
+                "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
+                "releaseTestsAfterDueDate": "Public tests",
+                "releaseTestsAfterDueDateTooltip": "Additionally to the example solution the automatic tests can be published after the deadline.",
+                "releaseTestsAfterDueDateEnabled": "Publish",
+                "releaseTestsAfterDueDateDisabled": "Don't publish"
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
@@ -453,7 +457,8 @@
                 "totalJobDuration": "Total Job",
                 "dependenciesDownloadedCount": "Number of downloaded dependencies",
                 "tooltip": "The average build duration is calculated based on all builds (template, solution and student submissions). The number of downloaded dependencies can be reduced by caching dependencies in the Docker image."
-            }
+            },
+            "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing."
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."

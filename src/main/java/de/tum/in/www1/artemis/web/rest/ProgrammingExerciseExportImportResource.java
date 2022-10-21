@@ -408,12 +408,12 @@ public class ProgrammingExerciseExportImportResource {
     @GetMapping(EXPORT_SOLUTION_REPOSITORY)
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
-    public ResponseEntity<Resource> exportSolutionRepository(@PathVariable long exerciseId) throws IOException {
+    public ResponseEntity<Resource> exportSolutionRepository(@PathVariable long exerciseId, @RequestParam() boolean includeTests) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         Role atLeastRole = programmingExercise.isExampleSolutionPublished() ? Role.STUDENT : Role.TEACHING_ASSISTANT;
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(atLeastRole, programmingExercise, null);
         long start = System.nanoTime();
-        Optional<File> zipFile = programmingExerciseExportService.exportSolutionRepositoryForExercise(programmingExercise.getId(), new ArrayList<>());
+        Optional<File> zipFile = programmingExerciseExportService.exportStudentRepositoryForExercise(programmingExercise.getId(), includeTests, new ArrayList<>());
 
         return returnZipFileForRepositoryExport(zipFile, RepositoryType.SOLUTION.getName(), programmingExercise, start);
     }

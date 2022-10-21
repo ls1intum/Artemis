@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { faCogs, faUserCheck, faUserSlash, faHandshake, faHandshakeSlash } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faUserCheck, faUserSlash, faHandshake, faHandshakeSlash, faLink, faLinkSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
@@ -26,6 +26,8 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
     faUserSlash = faUserSlash;
     faHandshake = faHandshake;
     faHandshakeSlash = faHandshakeSlash;
+    faLink = faLink;
+    faLinkSlash = faLinkSlash;
 
     constructor(private translator: TranslateService, private exerciseService: ExerciseService) {}
 
@@ -80,6 +82,13 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
      */
     toggleComplaintsType() {
         this.exercise.allowComplaintsForAutomaticAssessments = !this.exercise.allowComplaintsForAutomaticAssessments;
+    }
+
+    /**
+     * Toggles the value for allowing complaints for automatic assessment between true and false
+     */
+    toggleReleaseTests() {
+        this.exercise.releaseTestsAfterDueDate = !this.exercise.releaseTestsAfterDueDate;
     }
 
     /**

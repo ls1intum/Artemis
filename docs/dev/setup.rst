@@ -644,7 +644,7 @@ Enable the ``apollon`` Spring profile:
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Apollon conversion service is running on a dedicated machine and is adressed via
+The Apollon conversion service is running on a dedicated machine and is addressed via
 HTTP. We need to extend the configuration in the file
 ``src/main/resources/config/application-artemis.yml`` like so:
 

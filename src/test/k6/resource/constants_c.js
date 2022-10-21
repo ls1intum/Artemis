@@ -9,7 +9,7 @@ export const programmingExerciseProblemStatementC =
     '2. [task][Rückgabewert == 0](TestReturnCode)\n' +
     '3. [task][Ausgabe prüfen](TestOutput)\n' +
     '\n' +
-    '#### Adress Sanitizer\n' +
+    '#### Address Sanitizer\n' +
     '1. [task][Kompilieren mit Address Sanitizer](TestCompileASan)\n' +
     '2. [task][Ausgabe prüfen mit Address Sanitizer](TestOutputASan)\n' +
     '\n' +

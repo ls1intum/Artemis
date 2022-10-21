@@ -137,17 +137,36 @@
                     </div>
                 </div>
             </div>
-            <jhi-programming-exercise-test-schedule-date-picker
-                *ngIf="!isExamMode"
-                [(ngModel)]="exercise.exampleSolutionPublicationDate"
-                [readOnly]="readOnly"
-                [startAt]="exercise.dueDate || exercise.releaseDate"
-                [min]="(exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED ? exercise.dueDate : undefined) || exercise.releaseDate"
-                class="test-schedule-date px-1"
-                label="artemisApp.exercise.exampleSolutionPublicationDate"
-                tooltipText="artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltip"
-            >
-            </jhi-programming-exercise-test-schedule-date-picker>
+
+            <div *ngIf="!isExamMode">
+                <jhi-programming-exercise-test-schedule-date-picker
+                    [(ngModel)]="exercise.exampleSolutionPublicationDate"
+                    [readOnly]="readOnly"
+                    [startAt]="exercise.dueDate || exercise.releaseDate"
+                    [min]="(exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED ? exercise.dueDate : undefined) || exercise.releaseDate"
+                    class="test-schedule-date px-1"
+                    label="artemisApp.exercise.exampleSolutionPublicationDate"
+                    tooltipText="artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltip"
+                >
+                </jhi-programming-exercise-test-schedule-date-picker>
+
+                <div class="test-schedule-date px-1" *ngIf="exercise.exampleSolutionPublicationDate">
+                    <div class="mb-2 text-nowrap">
+                        <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsAfterDueDate"> Assessment Type </span>
+                        <jhi-help-icon placement="auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsAfterDueDateTooltip'"> </jhi-help-icon>
+                    </div>
+                    <div
+                        class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
+                        [class.btn-lifecycle--disabled]="readOnly"
+                        (click)="!readOnly && toggleReleaseTests()"
+                    >
+                        <fa-icon [icon]="exercise.releaseTestsAfterDueDate ? faLink : faLinkSlash" size="lg"></fa-icon>
+                    </div>
+                    <div class="mt-2">
+                        {{ 'artemisApp.programmingExercise.timeline.releaseTestsAfterDueDate' + (exercise.releaseTestsAfterDueDate ? 'Enabled' : 'Disabled') | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
