@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.authentication;
 import static de.tum.in.www1.artemis.domain.Authority.*;
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -101,7 +99,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
-        doReturn(null).when(ltiService).verifyRequest(any(), any());
+        // TODO doReturn(null).when(ltiService).verifyRequest(any(), any());
 
         final var userAuthority = new Authority(Role.STUDENT.getAuthority());
         final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());

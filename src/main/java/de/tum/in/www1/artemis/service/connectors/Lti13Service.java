@@ -20,6 +20,7 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -285,5 +286,9 @@ public class Lti13Service {
         launch.setUser(user);
         launch.setTargetLinkUri(launchRequest.getTargetLinkUri());
         launchRepository.save(launch);
+    }
+
+    public void addLtiQueryParams(UriComponentsBuilder uriComponentsBuilder) {
+        ltiService.addLtiQueryParams(uriComponentsBuilder);
     }
 }
