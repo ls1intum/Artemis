@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.security.jgitServlet;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.*;
@@ -14,14 +12,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Base64;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * Filters incoming requests and installs a Spring Security principal if a header corresponding to a valid user is found.
+ * Filters incoming fetch requests reaching the jgitServlet at /git/*.
  */
-@Component
 public class JGitFetchFilter extends OncePerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(JGitFetchFilter.class);
@@ -40,6 +34,8 @@ public class JGitFetchFilter extends OncePerRequestFilter {
     @Override
     public void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
+        log.debug("Trying to fetch repository {}", servletRequest.getRequestURI());
+
         servletResponse.setHeader("WWW-Authenticate", "Basic");
 
         if (servletRequest.getHeader(AUTHORIZATION_HEADER) == null) {
@@ -56,6 +52,8 @@ public class JGitFetchFilter extends OncePerRequestFilter {
         String basicAuthCredentials = new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
         String login = basicAuthCredentials.split(":")[0];
         String password = basicAuthCredentials.split(":")[1];
+
+        log.debug("Found user with login {} and password {} in fetch request.", login, password);
 
         // Zum testen wird hier erstmal einfach der Nutzer gefetcht, ohne das Passwort zu prüfen. Eventuell muss man das später über Spring-Security machen.
         User user = userRepository.findOneByLogin(login).orElse(null);

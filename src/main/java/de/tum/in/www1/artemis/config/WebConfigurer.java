@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 
@@ -13,8 +14,11 @@ import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.ServletContext;
 
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.jgitServlet.JGitFetchFilter;
 import de.tum.in.www1.artemis.security.jgitServlet.JGitPushFilter;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import org.apache.commons.compress.utils.Lists;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RemoteRepositoryException;
@@ -57,17 +61,22 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final JHipsterProperties jHipsterProperties;
 
-    private final JGitFetchFilter jGitFetchFilter;
-    private final JGitPushFilter jGitPushFilter;
+    //private final JGitFetchFilter jGitFetchFilter;
+    //private final JGitPushFilter jGitPushFilter;
+    private final UserRepository userRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
 
     @Value("${artemis.local-git-server-path}")
     private String localGitPath;
 
-    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties, JGitFetchFilter jGitFetchFilter, JGitPushFilter jGitPushFilter) {
+    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties, UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
-        this.jGitFetchFilter = jGitFetchFilter;
-        this.jGitPushFilter = jGitPushFilter;
+        //this.jGitFetchFilter = jGitFetchFilter;
+        //this.jGitPushFilter = jGitPushFilter;
+        this.userRepository = userRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     @Override
@@ -114,14 +123,14 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
                 // Returns the opened repository instance, never null.
 
                 // Find the local repository depending on the name and return an opened instance. Must be closed later on.
-                log.debug("Path to resolve repository from: " + localGitPath + File.separator + name);
-                if (!new File(localGitPath + File.separator + name).exists()) {
+                String projectKey = name.split("-")[0].toUpperCase();
+                File gitDir = new File(localGitPath + File.separator + projectKey + File.separator + name + ".git");
+
+                log.debug("Path to resolve repository from: {}", gitDir.getPath());
+                if (!gitDir.exists()) {
                     log.error("Could not find local repository with name {}", name);
                     throw new RepositoryNotFoundException(name);
                 }
-                //String projectKey = name.split("-")[0].toUpperCase();
-                //File gitDir = new File(localGitPath + "/" + projectKey + "/" + name + ".git");
-                File gitDir = new File(localGitPath + File.separator + name + File.separator + ".git");
 
                 Repository repository = null;
 
@@ -139,21 +148,27 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
                     }
                 }
 
-                // Enable pushing without credentials
+                // Enable pushing without credentials, authentication is handled by the JGitPushFilter.
                 repository.getConfig().setString("http", null, "receivepack", "true");
 
-                repository.incrementOpen();
+                repository.incrementOpen(); // hier nochmal checken ob ein close() notwendig ist.
                 return repository;
             });
 
-            gs.addUploadPackFilter(jGitFetchFilter);
-            gs.addReceivePackFilter(jGitPushFilter);
+            gs.addUploadPackFilter(new JGitFetchFilter(userRepository, authorizationCheckService));
+            gs.addReceivePackFilter(new JGitPushFilter(userRepository, authorizationCheckService));
 
-            return new ServletRegistrationBean<>(gs, "/git/*");
+//            ServletRegistrationBean<GitServlet> gitServletRegistrationBean = new ServletRegistrationBean<>();
+//            gitServletRegistrationBean.setServlet(gs);
+//            gitServletRegistrationBean.setUrlMappings(Collections.singletonList("/git/*"));
+//            gitServletRegistrationBean.setLoadOnStartup(1);
+
+            log.info("Registering GitServlet");
+            return new ServletRegistrationBean<GitServlet>(gs,"/git/*");
 
 
         } catch (Exception e) {
-            System.out.println("Something went wrong creating the test repository.");
+            System.out.println("Something went wrong creating the JGit Servlet.");
         }
         return null;
     }

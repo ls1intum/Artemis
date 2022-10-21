@@ -1,70 +1,75 @@
 package de.tum.in.www1.artemis.security.jgitServlet;
 
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Filters incoming requests and installs a Spring Security principal if a header corresponding to a valid user is found.
+ * Filters incoming push requests reaching the jgitServlet at /git/*.
  */
-@Component
 public class JGitPushFilter extends OncePerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(JGitPushFilter.class);
 
+    public static final String AUTHORIZATION_HEADER = "Authorization";
+
+    private final UserRepository userRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
-    public JGitPushFilter(AuthorizationCheckService authorizationCheckService) {
+    public JGitPushFilter(UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
+        this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
 
 
     public void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
-        Map<String, String> map = new HashMap<String, String>();
-        Enumeration headerNames = servletRequest.getHeaderNames();
-        while (headerNames.hasMoreElements()) {
-            String key = (String) headerNames.nextElement();
-            String value = servletRequest.getHeader(key);
-            map.put("header:" + key, value);
-        }
-        map.put("getRemoteUser", servletRequest.getRemoteUser());
-        map.put("getMethod", servletRequest.getMethod());
-        map.put("getQueryString", servletRequest.getQueryString());
-        map.put("getAuthType", servletRequest.getAuthType());
-        map.put("getContextPath", servletRequest.getContextPath());
-        map.put("getPathInfo", servletRequest.getPathInfo());
-        map.put("getPathTranslated", servletRequest.getPathTranslated());
-        map.put("getRequestedSessionId", servletRequest.getRequestedSessionId());
-        map.put("getRequestURI", servletRequest.getRequestURI());
-        map.put("getRequestURL", servletRequest.getRequestURL().toString());
-        map.put("getMethod", servletRequest.getMethod());
-        map.put("getServletPath", servletRequest.getServletPath());
-        map.put("getContentType", servletRequest.getContentType());
-        map.put("getLocalName", servletRequest.getLocalName());
-        map.put("getProtocol", servletRequest.getProtocol());
-        map.put("getRemoteAddr", servletRequest.getRemoteAddr());
-        map.put("getServerName", servletRequest.getServerName());
+        log.debug("Trying to push to repository {}", servletRequest.getRequestURI());
 
-        log.debug("httpServletRequest when pushing. {}", map);
+        servletResponse.setHeader("WWW-Authenticate", "Basic");
 
-        if (servletRequest.getHeader("Authorization") == null) {
+        if (servletRequest.getHeader(AUTHORIZATION_HEADER) == null) {
             servletResponse.setStatus(401);
             return;
         }
 
+        String[] basicAuthCredentialsEncoded = servletRequest.getHeader(AUTHORIZATION_HEADER).split(" ");
+        if (!basicAuthCredentialsEncoded[0].equals("Basic")) {
+            servletResponse.setStatus(401);
+            return;
+        }
 
+        String basicAuthCredentials = new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
+        String login = basicAuthCredentials.split(":")[0];
+        String password = basicAuthCredentials.split(":")[1];
+
+        log.debug("Found user with login {} and password {} in push request.", login, password);
+
+        // Zum testen wird hier erstmal einfach der Nutzer gefetcht, ohne das Passwort zu prüfen. Eventuell muss man das später über Spring-Security machen.
+        User user = userRepository.findOneByLogin(login).orElse(null);
+
+        if (user == null) {
+            servletResponse.setStatus(401);
+            return;
+        }
+
+        //Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        //boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
 
         filterChain.doFilter(servletRequest, servletResponse);
+
     }
 }

@@ -573,8 +573,7 @@ public class LocalGitService extends AbstractVersionControlService {
 
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
-        // Check if the folder already exists in the file system to make sure the new
-        // project key is unique.
+        // Check if the folder already exists in the file system to make sure the new project key is unique.
 
         try {
             var project = getLocalGitProject(projectKey, projectName);
@@ -610,39 +609,15 @@ public class LocalGitService extends AbstractVersionControlService {
             // Langfristig wird es wahrscheinlich eher sowas wie das hier:
             // https://spring.io/guides/gs/uploading-files/
             // Nachschauen wie langfristig die Dateien damit gespeichert sind!
-            File localPath = new File(localGitPath + "/" + projectKey);
+            File localPath = new File(localGitPath + File.separator + projectKey);
 
             if(!localPath.mkdirs()) {
                 throw new IOException("Could not create directory " + localPath);
             }
-
-            // nur für Bitbucket implementiert
-           // grantGroupPermissionToProject(projectKey, adminGroupName, BitbucketPermission.PROJECT_ADMIN); // admins get administrative permissions
-
-            // Get course via exerciseGroup in exam mode
-            Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-
-            if (StringUtils.hasText(course.getInstructorGroupName())) {
-                // grantGroupPermissionToProject(projectKey, course.getInstructorGroupName(),
-                // BitbucketPermission.PROJECT_ADMIN); // instructors get administrative
-                // permissions
-            }
-
-            // editors get write permissions
-            if (StringUtils.hasText(course.getEditorGroupName())) {
-                // grantGroupPermissionToProject(projectKey, course.getEditorGroupName(),
-                // BitbucketPermission.PROJECT_WRITE);
-            }
-            // tutors get read permissions
-            if (StringUtils.hasText(course.getTeachingAssistantGroupName())) {
-                // grantGroupPermissionToProject(projectKey,
-                // course.getTeachingAssistantGroupName(),
-                // BitbucketPermission.PROJECT_READ);
-            }
-
-        } catch (Exception e) { log.error("Could not create local git project {} with key {}", projectName, projectKey, e); throw new
-         LocalGitException("Error while creating local git project."); }
-
+        } catch (Exception e) {
+            log.error("Could not create local git project {} with key {}", projectName, projectKey, e);
+            throw new LocalGitException("Error while creating local git project.");
+        }
     }
 
     @Override
