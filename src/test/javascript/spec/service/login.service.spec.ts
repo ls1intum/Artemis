@@ -1,4 +1,3 @@
-import { throwError } from 'rxjs';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';

@@ -48,14 +48,12 @@ public class JWTFilter extends GenericFilterBean {
      * @return         the response cookie that should be set containing the jwt
      */
     public static ResponseCookie buildJWTCookie(String jwt, Duration duration) {
-        // @formatter:off
-        return ResponseCookie.from(JWT_COOKIE_NAME, jwt)
-            .httpOnly(true)
-            .sameSite("Strict")
-            .secure(false)
-            .path("/")
-            .maxAge(duration)
-            .build();
-        // @formatter:on
+
+        return ResponseCookie.from(JWT_COOKIE_NAME, jwt).httpOnly(true) // Must be httpOnly
+                .sameSite("Strict") // Must be Strict
+                .secure(false) // TODO: Must be secure in production, but if secure breaks non-https environments. Set it based on env?
+                .path("/") // Must be "/" to be sent in ALL request
+                .maxAge(duration) // Duration should match the duration of the jwt
+                .build(); // Build cookie
     }
 }

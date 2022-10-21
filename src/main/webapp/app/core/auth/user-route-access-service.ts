@@ -76,7 +76,7 @@ export class UserRouteAccessService implements CanActivate {
         // Note: The following URL has to match the redirect URL in LtiResource.java in the method launch(...) shortly before the return
         const regexPattern = new RegExp(/\/courses\/\d+\/exercises\/\d+/g);
         if (regexPattern.test(state.url)) {
-            if (route.queryParams['ltiSuccessLoginRequired'] != undefined) {
+            if (route.queryParams['ltiSuccessLoginRequired']) {
                 this.alertService.success('artemisApp.lti.ltiSuccessLoginRequired', { user: route.queryParams['ltiSuccessLoginRequired'] });
                 return state.url.split('?')[0]; // Removes the query parameters from the url so this is only done once
             }
