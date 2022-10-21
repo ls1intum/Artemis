@@ -54,7 +54,7 @@ public abstract class Participation extends DomainObject implements Participatio
     @Column(name = "test_run")
     private Boolean testRun = false;
 
-    // NOTE: Keep default of FetchType. EAGER because most of the time we want
+    // NOTE: Keep default of FetchType.EAGER because most of the time we want
     // to get a student participation, we also need the exercise. Dealing with Proxy
     // objects would cause more issues (Subclasses don't work properly for Proxy objects)
     // and the gain from fetching lazy here is minimal
