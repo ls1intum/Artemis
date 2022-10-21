@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,23 +21,20 @@ import org.imsglobal.lti.launch.LtiVerifier;
 import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 @Service
 public class Lti10Service {
-
-    public static final String LTI_GROUP_NAME = "lti";
-
-    protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
 
     private final Logger log = LoggerFactory.getLogger(Lti10Service.class);
 
@@ -102,32 +102,32 @@ public class Lti10Service {
      * @return a string with all debug information
      */
     private String httpServletRequestToString(HttpServletRequest request) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder requestString = new StringBuilder();
 
-        sb.append("Request Method = [").append(request.getMethod()).append("], ");
-        sb.append("Request URL Path = [").append(request.getRequestURL()).append("], ");
+        requestString.append("Request Method = [").append(request.getMethod()).append("], ");
+        requestString.append("Request URL Path = [").append(request.getRequestURL()).append("], ");
 
         String headers = Collections.list(request.getHeaderNames()).stream().map(headerName -> headerName + " : " + Collections.list(request.getHeaders(headerName)))
                 .collect(Collectors.joining(", "));
 
         if (headers.isEmpty()) {
-            sb.append("Request headers: NONE,");
+            requestString.append("Request headers: NONE,");
         }
         else {
-            sb.append("Request headers: [").append(headers).append("],");
+            requestString.append("Request headers: [").append(headers).append("],");
         }
 
         String parameters = Collections.list(request.getParameterNames()).stream().map(p -> p + " : " + Arrays.asList(request.getParameterValues(p)))
                 .collect(Collectors.joining(", "));
 
         if (parameters.isEmpty()) {
-            sb.append("Request parameters: NONE.");
+            requestString.append("Request parameters: NONE.");
         }
         else {
-            sb.append("Request parameters: [").append(parameters).append("].");
+            requestString.append("Request parameters: [").append(parameters).append("].");
         }
 
-        return sb.toString();
+        return requestString.toString();
     }
 
     /**
@@ -211,7 +211,7 @@ public class Lti10Service {
      * @param url       the service url given by the LTI request
      * @param sourcedId the sourcedId given by the LTI request
      */
-    public void saveLtiOutcomeUrl(User user, Exercise exercise, String url, String sourcedId) {
+    private void saveLtiOutcomeUrl(User user, Exercise exercise, String url, String sourcedId) {
 
         if (url == null || url.isEmpty()) {
             return;
@@ -228,6 +228,11 @@ public class Lti10Service {
         ltiOutcomeUrlRepository.save(ltiOutcomeUrl);
     }
 
+    /**
+     * Adds the necessary query params for an LTI launch.
+     *
+     * @param uriComponentsBuilder the uri builder to add the query params to
+     */
     public void addLtiQueryParams(UriComponentsBuilder uriComponentsBuilder) {
         ltiService.addLtiQueryParams(uriComponentsBuilder);
     }

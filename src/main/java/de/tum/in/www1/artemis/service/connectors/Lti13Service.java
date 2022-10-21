@@ -172,7 +172,7 @@ public class Lti13Service {
                     return;
                 }
 
-                String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(" "));
+                String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
 
                 launches.forEach(launch -> submitScore(launch, concatenatedFeedbacks, result.get().getScore()));
             });
@@ -240,7 +240,7 @@ public class Lti13Service {
      * @param targetLinkUrl to retrieve an Exercise
      * @return the Exercise or nothing otherwise
      */
-    protected Optional<Exercise> getExerciseFromTargetLink(String targetLinkUrl) {
+    private Optional<Exercise> getExerciseFromTargetLink(String targetLinkUrl) {
         AntPathMatcher matcher = new AntPathMatcher();
 
         String targetLinkPath;
@@ -288,6 +288,11 @@ public class Lti13Service {
         launchRepository.save(launch);
     }
 
+    /**
+     * Adds the necessary query params for an LTI launch.
+     *
+     * @param uriComponentsBuilder the uri builder to add the query params to
+     */
     public void addLtiQueryParams(UriComponentsBuilder uriComponentsBuilder) {
         ltiService.addLtiQueryParams(uriComponentsBuilder);
     }

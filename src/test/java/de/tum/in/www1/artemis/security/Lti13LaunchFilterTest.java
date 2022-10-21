@@ -37,7 +37,7 @@ import uk.ac.ox.ctl.lti13.lti.Claims;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
 
-public class Lti13LaunchFilterTest {
+class Lti13LaunchFilterTest {
 
     private final String targetLinkUri = "https://any-artemis-domain.org/course/123/exercise/1234";
 
@@ -75,7 +75,7 @@ public class Lti13LaunchFilterTest {
     private final Map<String, Object> idTokenClaims = new HashMap<>();
 
     @BeforeEach
-    public void init() {
+    void init() {
         MockitoAnnotations.openMocks(this);
         launchFilter = new Lti13LaunchFilter(defaultFilter, CustomLti13Configurer.LTI_BASE_PATH + CustomLti13Configurer.LOGIN_PATH, lti13Service);
         SecurityContextHolder.setContext(securityContext);

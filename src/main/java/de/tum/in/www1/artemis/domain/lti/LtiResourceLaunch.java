@@ -44,6 +44,12 @@ public class LtiResourceLaunch extends DomainObject {
     @NotNull
     private String clientRegistrationId;
 
+    /**
+     * Creates an LtiResourceLaunch entity from an LTI1.3 launch request to be saved in the database
+     *
+     * @param launchRequest The launch request
+     * @return the resource launch entity
+     */
     public static LtiResourceLaunch from(Lti13LaunchRequest launchRequest) {
         LtiResourceLaunch launch = new LtiResourceLaunch();
         launch.iss = launchRequest.getIss();

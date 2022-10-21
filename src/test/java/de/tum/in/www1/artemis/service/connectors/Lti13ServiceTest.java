@@ -4,33 +4,36 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpEntity;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.client.RestTemplate;
 
+import com.nimbusds.jose.shaded.json.JSONObject;
+import com.nimbusds.jose.shaded.json.parser.JSONParser;
+import com.nimbusds.jose.shaded.json.parser.ParseException;
+
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.lti.Lti13LaunchRequest;
 import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.lti.Scopes;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
-import net.minidev.json.JSONObject;
-import net.minidev.json.parser.JSONParser;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import uk.ac.ox.ctl.lti13.lti.Claims;
 
 public class Lti13ServiceTest {
 
@@ -63,15 +66,18 @@ public class Lti13ServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    private String clientRegistrationId;
+
     @BeforeEach
-    public void init() {
+    void init() {
         MockitoAnnotations.openMocks(this);
         lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
                 clientRegistrationRepository, restTemplate);
+        clientRegistrationId = "clientId";
     }
 
     @Test
-    public void performLaunch_exerciseFound() {
+    void performLaunch_exerciseFound() {
         long exerciseId = 134;
         Exercise exercise = new TextExercise();
         exercise.setId(exerciseId);
@@ -79,34 +85,72 @@ public class Lti13ServiceTest {
         long courseId = 12;
         Course course = new Course();
         course.setId(courseId);
+        course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
         exercise.setCourse(course);
         doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
-        doReturn(Optional.of(course)).when(courseRepository).findById(Long.valueOf(courseId));
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
 
-        Lti13LaunchRequest launchRequest = Mockito.mock(Lti13LaunchRequest.class);
-        doReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId).when(launchRequest).getTargetLinkUri();
+        OidcIdToken oidcIdToken = mock(OidcIdToken.class);
+        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
+        when(oidcIdToken.getClaim("sub")).thenReturn("1");
+        when(oidcIdToken.getClaim("iss")).thenReturn("http://otherDomain.com");
+        when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("id", "resourceLinkUrl");
+        when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
+
         User user = new User();
         doReturn(user).when(userRepository).getUserWithGroupsAndAuthorities();
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any(), any());
 
-        // TODO lti13Service.performLaunch(launchRequest);
+        lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
 
-        assertTrue(user.getGroups().contains(course.getStudentGroupName()), "User was not added to exercise course group");
-        verify(userRepository).save(user);
-        // TODO verify(authenticationProvider).addUserToGroup(user, course.getStudentGroupName());
+        verify(launchRepository).findByIssAndSubAndDeploymentIdAndResourceLinkId("http://otherDomain.com", "1", "1", "resourceLinkUrl");
+        verify(launchRepository).save(any());
     }
 
     @Test
-    public void performLaunch_exerciseNotFound() {
-        Lti13LaunchRequest launchRequest = Mockito.mock(Lti13LaunchRequest.class);
-        doReturn("https://some-artemis-domain.org/with/invalid/path/to/exercise/11").when(launchRequest).getTargetLinkUri();
+    void performLaunch_exerciseNotFound() {
+        OidcIdToken oidcIdToken = mock(OidcIdToken.class);
+        doReturn("https://some-artemis-domain.org/with/invalid/path/to/exercise/11").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        // TODO assertThrows(InternalAuthenticationServiceException.class, () -> lti13Service.performLaunch(launchRequest));
+        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
         verify(userRepository, never()).save(any());
-        // TODO verify(authenticationProvider, never()).addUserToGroup(any(), any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "https://some-artemis-domain.org/courses/234", "https://some-artemis-domain.org/courses/234/exercises",
+            "https://some-artemis-domain.org/exericses/123", "https://some-artemis-domain.org/something/courses/234/exercises/123" })
+    void performLaunch_invalidPath(String invalidPath) {
+        OidcIdToken oidcIdToken = mock(OidcIdToken.class);
+        doReturn(invalidPath).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
+
+        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
     }
 
     @Test
-    public void getExerciseFromTargetLink_valid() {
+    void performLaunch_courseNotFound() {
+        long exerciseId = 134;
+        Exercise exercise = new TextExercise();
+        exercise.setId(exerciseId);
+        Course course = new Course();
+        course.setId(1000L);
+        exercise.setCourse(course);
+
+        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(any());
+        doThrow(EntityNotFoundException.class).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(1000L);
+
+        OidcIdToken oidcIdToken = mock(OidcIdToken.class);
+        String target = "https://some-artemis-domain.org/courses/12/exercises/123";
+        doReturn(target).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
+
+        assertThrows(EntityNotFoundException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+    }
+
+    @Test
+    void performLaunch_notOnlineCourse() {
         long exerciseId = 134;
         Exercise exercise = new TextExercise();
         exercise.setId(exerciseId);
@@ -114,63 +158,29 @@ public class Lti13ServiceTest {
         long courseId = 12;
         Course course = new Course();
         course.setId(courseId);
-
         exercise.setCourse(course);
-
-        String target = "https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId;
-
-        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(Long.valueOf(exerciseId));
-        doReturn(Optional.of(course)).when(courseRepository).findById(Long.valueOf(courseId));
-
-        Optional<Exercise> exerciseOpt = lti13Service.getExerciseFromTargetLink(target);
-        assertFalse(exerciseOpt.isEmpty(), "TargetLink " + target + " could not be resolved to an exercise");
-        assertEquals(exercise, exerciseOpt.get(), "TargetLink " + target + " was not resolved to the intended exercise");
-    }
-
-    @Test
-    public void getExerciseFromTargetLink_invalidPath() {
-        doReturn(Optional.of(new TextExercise())).when(exerciseRepository).findById(any());
-        doReturn(Optional.of(new Course())).when(courseRepository).findById(any());
-
-        String[] invalidTargets = new String[] { "https://some-artemis-domain.org/courses/234", "https://some-artemis-domain.org/courses/234/exercises",
-                "https://some-artemis-domain.org/exericses/123", "https://some-artemis-domain.org/something/courses/234/exercises/123" };
-        Arrays.stream(invalidTargets)
-                .forEach(target -> assertTrue(lti13Service.getExerciseFromTargetLink(target).isEmpty(), "Could retrieve an exercise from an invalid target link: " + target));
-    }
-
-    @Test
-    public void getExerciseFromTargetLink_exerciseCourseMismatch() {
-        long exerciseId = 123;
-        Exercise exercise = new TextExercise();
-        exercise.setId(exerciseId);
-
-        Course exerciseCourse = new Course();
-        exercise.setCourse(exerciseCourse);
-
-        long unrelatedCourseId = 12;
-        String target = "https://some-artemis-domain.org/courses/" + unrelatedCourseId + "/exercises/" + exerciseId;
-
         doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
-        doReturn(Optional.of(new Course())).when(courseRepository).findById(unrelatedCourseId);
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
 
-        assertTrue(lti13Service.getExerciseFromTargetLink(target).isEmpty(), "Could retrieve an exercise although the course was wrong: " + target);
+        OidcIdToken oidcIdToken = mock(OidcIdToken.class);
+        doReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
+
+        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
     }
 
     @Test
-    public void getExerciseFromTargetLink_courseNotFound() {
-        String target = "https://some-artemis-domain.org/courses/12/exercises/123";
-
-        doReturn(Optional.of(new TextExercise())).when(exerciseRepository).findById(any());
-        doReturn(Optional.empty()).when(courseRepository).findById(any());
-
-        assertTrue(lti13Service.getExerciseFromTargetLink(target).isEmpty(), "Exercise was returned although course was not found: " + target);
-    }
-
-    @Test
-    public void onNewResult() throws net.minidev.json.parser.ParseException {
+    void onNewResult() throws ParseException {
         Result result = new Result();
-        double scoreGiven = 60D;// 60%
+        double scoreGiven = 60D;
         result.setScore(scoreGiven);
+
+        Feedback feedback1 = new Feedback();
+        Feedback feedback2 = new Feedback();
+        feedback1.setDetailText("Good job");
+        feedback2.setDetailText("Not so good");
+
+        result.addFeedback(feedback1);
+        result.addFeedback(feedback2);
 
         State state = getValidStateForNewResult(result);
 
@@ -181,13 +191,12 @@ public class Lti13ServiceTest {
         ClientRegistration clientRegistration = state.getClientRegistration();
         String clientRegistrationId = clientRegistration.getRegistrationId();
 
-        OAuth2AccessTokenResponse accessTokenResponse = getSampleAccessTokenResponse();
-
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
-        doReturn(Optional.of(result)).when(resultRepository).findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
         doReturn(clientRegistration).when(clientRegistrationRepository).findByRegistrationId(clientRegistrationId);
 
-        doReturn(accessTokenResponse).when(tokenRetriever).getToken(eq(clientRegistration), eq(launch.getTargetLinkUri()), eq(Scopes.AGS_SCORE));
+        String accessToken = "accessToken";
+        doReturn(accessToken).when(tokenRetriever).getToken(eq(clientRegistration), eq(Scopes.AGS_SCORE));
 
         lti13Service.onNewResult(participation);
 
@@ -200,8 +209,7 @@ public class Lti13ServiceTest {
 
         List<String> authHeaders = httpEntity.getHeaders().get("Authorization");
         assertNotNull(authHeaders, "Score publish request must contain an Authorization header");
-        assertTrue(authHeaders.contains("Bearer " + accessTokenResponse.getAccessToken().getTokenValue()),
-                "Score publish request must contain the corresponding Authorization Bearer token");
+        assertTrue(authHeaders.contains("Bearer " + accessToken), "Score publish request must contain the corresponding Authorization Bearer token");
 
         JSONParser jsonParser = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
         JSONObject body = (JSONObject) jsonParser.parse(httpEntity.getBody());
@@ -210,13 +218,12 @@ public class Lti13ServiceTest {
         assertNotNull(body.get("activityProgress"), "Parameter missing in score publish request: activityProgress");
         assertNotNull(body.get("gradingProgress"), "Parameter missing in score publish request: gradingProgress");
 
-        // any score that is submitted is relative to a maxScore of 1. With that the LTI Platform can simply scale the
-        // score with its own max score value.
-        assertEquals(scoreGiven / 100D, body.get("scoreGiven"), "Invalid parameter in score publish request: scoreGiven");
-        assertEquals((1D), body.get("scoreMaximum"), "Invalid parameter in score publish request: scoreMaximum");
+        assertEquals("Good job. Not so good", body.get("comment"), "Invalid parameter in score publish request: comment");
+        assertEquals(scoreGiven, body.get("scoreGiven"), "Invalid parameter in score publish request: scoreGiven");
+        assertEquals(100d, body.get("scoreMaximum"), "Invalid parameter in score publish request: scoreMaximum");
 
         URI scoreUri = uriCapture.getValue();
-        assertEquals(launch.getScoreLineItemUrl(), scoreUri.toString(), "Score publish request was sent to a wrong URI");
+        assertEquals(launch.getScoreLineItemUrl() + "/scores", scoreUri.toString(), "Score publish request was sent to a wrong URI");
     }
 
     private State getValidStateForNewResult(Result result) {
@@ -225,6 +232,7 @@ public class Lti13ServiceTest {
 
         Exercise exercise = new ProgrammingExercise() {
         };
+        exercise.setMaxPoints(80d);
 
         StudentParticipation participation = new StudentParticipation();
         participation.setExercise(exercise);
@@ -234,7 +242,7 @@ public class Lti13ServiceTest {
         String targetLinkUri = "https://some-artemis-domain.org/courses/12/exercises/123";
 
         String clientRegistrationId = "some-client-registration";
-        ClientRegistration clientRegistration = Mockito.mock(ClientRegistration.class);
+        ClientRegistration clientRegistration = mock(ClientRegistration.class);
         doReturn(clientRegistrationId).when(clientRegistration).getRegistrationId();
 
         LtiResourceLaunch launch = new LtiResourceLaunch();
@@ -243,19 +251,9 @@ public class Lti13ServiceTest {
         launch.setSub("some-sub");
         launch.setClientRegistrationId(clientRegistration.getRegistrationId());
         launch.setExercise(exercise);
-        launch.setScoreLineItemUrl("https://some-lti-platform/some/lineitem/scores");
+        launch.setScoreLineItemUrl("https://some-lti-platform/some/lineitem");
 
         return new State(launch, exercise, user, participation, result, clientRegistration);
-    }
-
-    private OAuth2AccessTokenResponse getSampleAccessTokenResponse() {
-        OAuth2AccessTokenResponse accessTokenResponse = Mockito.mock(OAuth2AccessTokenResponse.class);
-        OAuth2AccessToken accessToken = Mockito.mock(OAuth2AccessToken.class);
-        doReturn(accessToken).when(accessTokenResponse).getAccessToken();
-        String accessTokenValue = "some-bearer-token";
-        doReturn(accessTokenValue).when(accessToken).getTokenValue();
-
-        return accessTokenResponse;
     }
 
     /**

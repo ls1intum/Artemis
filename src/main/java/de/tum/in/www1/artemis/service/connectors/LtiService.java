@@ -63,6 +63,14 @@ public class LtiService {
 
     /**
      * Signs in the LTI user into the exercise app. If necessary, it will create a user.
+     *
+     * @param email the user's email
+     * @param userId the user's id in the external LMS
+     * @param username the user's username if we create a new user
+     * @param firstName the user's firstname if we create a new user
+     * @param lastName the user's lastname if we create a new user
+     * @param requireExistingUser false if it's not allowed to create new users
+     * @param lookupUserByEmail false if it's not allowed to find existing users with the provided email
      * @throws InternalAuthenticationServiceException if no email is provided, this exception will be thrown
      * @throws ArtemisAuthenticationException if the user cannot be authenticated, this exception will be thrown
      * @throws AuthenticationException        internal Spring exception that might be thrown as well
@@ -136,7 +144,7 @@ public class LtiService {
      *
      * @param user The user that is authenticated
      * @param userId The userId in the external LMS
-     * @param exercise      Exercise to launch
+     * @param exercise Exercise to launch
      */
     public void onSuccessfulLtiAuthentication(User user, String userId, Exercise exercise) {
         // Make sure user is added to group for this exercise
@@ -191,6 +199,11 @@ public class LtiService {
         ltiUserIdRepository.save(ltiUserId);
     }
 
+    /**
+     * Adds the necessary query params for an LTI launch.
+     *
+     * @param uriComponentsBuilder the uri builder to add the query params to
+     */
     public void addLtiQueryParams(UriComponentsBuilder uriComponentsBuilder) {
         User user = userRepository.getUser();
 

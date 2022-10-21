@@ -16,9 +16,11 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 class Lti10ServiceTest {
 
@@ -45,6 +47,8 @@ class Lti10ServiceTest {
 
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
+    private LtiLaunchRequestDTO launchRequest;
+
     private User user;
 
     private LtiUserId ltiUserId;
@@ -67,7 +71,7 @@ class Lti10ServiceTest {
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         exercise = new TextExercise();
         exercise.setCourse(course);
-        // TODO launchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
+        launchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         user = new User();
         user.setLogin("login");
         user.setPassword("password");
@@ -77,8 +81,16 @@ class Lti10ServiceTest {
         ltiOutcomeUrl = new LtiOutcomeUrl();
     }
 
-    private void ltiOutcomeUrlRepositorySetup(User user) {
-        when(ltiOutcomeUrlRepository.findByUserAndExercise(user, exercise)).thenReturn(Optional.of(ltiOutcomeUrl));
+    @Test
+    void performLaunch() {
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any(), any());
+
+        lti10Service.performLaunch(launchRequest, exercise, onlineCourseConfiguration);
+
+        verify(ltiOutcomeUrlRepository, times(1)).findByUserAndExercise(user, exercise);
+        verify(ltiOutcomeUrlRepository, times(1)).save(any());
     }
 
     @Test
@@ -121,6 +133,9 @@ class Lti10ServiceTest {
         lti10Service.onNewResult(participation);
         verify(resultRepository, times(1)).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
         verify(courseRepository, times(1)).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+    }
 
+    private void ltiOutcomeUrlRepositorySetup(User user) {
+        when(ltiOutcomeUrlRepository.findByUserAndExercise(user, exercise)).thenReturn(Optional.of(ltiOutcomeUrl));
     }
 }

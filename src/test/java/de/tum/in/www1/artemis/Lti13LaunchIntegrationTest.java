@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.LtiResource;
  * see https://www.imsglobal.org/spec/lti/v1p3/#lti-message-general-details
  * see https://www.imsglobal.org/spec/security/v1p0/#openid_connect_launch_flow
  */
-public class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Test
     @WithAnonymousUser

@@ -66,7 +66,6 @@ class LtiServiceTest {
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         exercise = new TextExercise();
         exercise.setCourse(course);
-        // TODO launchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         user = new User();
         user.setLogin("login");
         user.setPassword("password");

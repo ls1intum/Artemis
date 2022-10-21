@@ -1,15 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 
 @Service
 public class LtiNewResultService {
-
-    private final Logger log = LoggerFactory.getLogger(LtiNewResultService.class);
 
     private final Lti10Service lti10Service;
 
