@@ -25,6 +25,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
@@ -109,7 +110,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @BeforeEach
     void init() {
         /* We mock the following method because we don't have the OAuth secret for edx */
-        // doReturn(null).when(ltiService).verifyRequest(any(), any());
+        doReturn(null).when(lti10Service).verifyRequest(any(), any());
 
         database.addUsers(1, 1, 0, 1);
 
@@ -194,11 +195,11 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId() + 1, requestBody.getBytes(), HttpStatus.NOT_FOUND, new HttpHeaders(),
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
 
-        // TODO doThrow(ArtemisAuthenticationException.class).when(ltiService).handleLaunchRequest(any(), any(), any());
+        doThrow(ArtemisAuthenticationException.class).when(lti10Service).performLaunch(any(), any(), any());
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.INTERNAL_SERVER_ERROR, new HttpHeaders(),
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
 
-        // doReturn("error").when(ltiService).verifyRequest(any(), any());
+        doReturn("error").when(lti10Service).verifyRequest(any(), any());
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.UNAUTHORIZED, new HttpHeaders(),
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
     }

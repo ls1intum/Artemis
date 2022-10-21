@@ -14,13 +14,12 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
-import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 class LtiServiceTest {
 
@@ -45,11 +44,12 @@ class LtiServiceTest {
     @Mock
     private LtiUserIdRepository ltiUserIdRepository;
 
+    @Mock
+    private TokenProvider tokenProvider;
+
     private Exercise exercise;
 
     private LtiService ltiService;
-
-    private LtiLaunchRequestDTO launchRequest;
 
     private Course course;
 
@@ -67,7 +67,7 @@ class LtiServiceTest {
     void init() {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, artemisAuthenticationProvider, ltiUserIdRepository);
+        ltiService = new LtiService(userCreationService, userRepository, artemisAuthenticationProvider, tokenProvider, ltiUserIdRepository);
         course = new Course();
         course.setId(100L);
         course.setStudentGroupName(courseStudentGroupName);
@@ -77,7 +77,7 @@ class LtiServiceTest {
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         exercise = new TextExercise();
         exercise.setCourse(course);
-        launchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
+        // TODO launchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         user = new User();
         user.setLogin("login");
         user.setPassword("password");
