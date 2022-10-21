@@ -76,5 +76,23 @@ export const NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE = 'New possible plagiari
 
 export const PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE = 'Final state for plagiarism case';
 
+export const TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE = 'You have been registered to a tutorial group';
+
+export const TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE = 'You have been deregistered from a tutorial group';
+
+export const TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE = 'A student has been registered to your tutorial group';
+
+export const TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE = 'A student has been deregistered from your tutorial group';
+
+export const TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE = 'Multiple students have been registered to your tutorial group';
+
+export const TUTORIAL_GROUP_DELETED_TITLE = 'Tutorial Group deleted';
+
+export const TUTORIAL_GROUP_UPDATED_TITLE = 'Tutorial Group updated';
+
+export const TUTORIAL_GROUP_ASSIGNED_TITLE = 'You have been assigned to lead a tutorial group';
+
+export const TUTORIAL_GROUP_UNASSIGNED_TITLE = 'You have been unassigned from leading a tutorial group';
+
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'Live Exam Exercise Update';

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="mail/notification/fragments :: head"/>
+<body>
+<th:block th:replace="mail/notification/fragments :: header"/>
+<!-- Message Body Start -->
+<div id="message-body">
+    <th:block th:replace="mail/notification/fragments :: greetingsFullName"/>
+    <div class="notification-content">
+        <div th:switch="${notificationType}">
+            <span th:case="'studentRegistration'" th:text="#{email.notification.title.tutorialGroup.registrationStudent(
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
+            )}"></span>
+            <span th:case="'tutorRegistration'" th:text="#{email.notification.title.tutorialGroup.registrationTutor(
+            ${student.getName()},
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
+            )}"></span>
+            <span th:case="'studentDeregistration'" th:text="#{email.notification.title.tutorialGroup.deregistrationStudent(
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
+            )}"></span>
+            <span th:case="'tutorDeregistration'" th:text="#{email.notification.title.tutorialGroup.deregistrationTutor(
+            ${student.getName()},
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
+            )}"></span>
+            <span th:case="'tutorRegistrationMultiple'" th:text="#{email.notification.title.tutorialGroup.registrationMultipleTutor(
+            ${numberOfStudents},
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
+            )}"></span>
+            <span th:case="'tutorialGroupAssigned'" th:text="#{email.notification.title.tutorialGroup.assigned(
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
+            )}"></span>
+            <span th:case="'tutorialGroupUnassigned'" th:text="#{email.notification.title.tutorialGroup.unassigned(
+            ${notificationSubject.tutorialGroup.getTitle()},
+            ${notificationSubject.tutorialGroup.getCourse().getTitle()},
+            ${notificationSubject.responsibleUser.getName()}
+            )}"></span>
+        </div>
+        <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
+    </div>
+    <th:block th:replace="mail/notification/fragments :: farewell"/>
+</div>
+<!-- Message Body End -->
+<th:block th:replace="mail/notification/fragments :: footer"/>
+</body>
+</html>

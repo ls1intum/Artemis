@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
@@ -57,6 +58,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected GroupNotificationService groupNotificationService;
+
+    @SpyBean
+    protected TutorialGroupNotificationService tutorialGroupNotificationService;
 
     @SpyBean
     protected SingleUserNotificationService singleUserNotificationService;
@@ -123,9 +127,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     public void resetSpyBeans() {
-        Mockito.reset(lti10Service, gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, messagingTemplate, examAccessService,
-                mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scheduleService,
-                participantScoreSchedulerService, javaMailSender, programmingTriggerService);
+        Mockito.reset(lti10Service, gitService, groupNotificationService, tutorialGroupNotificationService, singleUserNotificationService, websocketMessagingService,
+                messagingTemplate, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
+                urlService, scheduleService, participantScoreSchedulerService, javaMailSender, programmingTriggerService);
     }
 
     @Override

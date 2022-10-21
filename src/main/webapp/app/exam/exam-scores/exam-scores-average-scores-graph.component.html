@@ -2,6 +2,7 @@
     <div #containerRef class="col-md-8 col-11 align-items-center px-0">
         <h6 class="text-center">{{ 'artemisApp.examScores.exerciseGroupTitle' | artemisTranslate: { groupTitle: this.averageScores.title } }}</h6>
         <ngx-charts-bar-horizontal
+            [roundEdges]="false"
             [view]="[containerRef.offsetWidth, 100]"
             [results]="ngxData"
             [scheme]="ngxColor"
