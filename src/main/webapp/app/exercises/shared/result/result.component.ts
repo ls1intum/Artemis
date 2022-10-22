@@ -103,9 +103,10 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() isBuilding: boolean;
     @Input() short = false;
     @Input() result?: Result;
-    @Input() showUngradedResults: boolean;
+    @Input() showUngradedResults = false;
     @Input() showBadge = false;
     @Input() showTestDetails = false;
+    @Input() showIcon = true;
     @Input() missingResultInfo = MissingResultInfo.NONE;
     @Input() exercise?: Exercise;
 
@@ -119,8 +120,7 @@ export class ResultComponent implements OnInit, OnChanges {
     badgeClass: string;
     badgeText: string;
     badgeTooltip: string;
-
-    resultTooltip: string;
+    resultTooltip?: string;
 
     latestIndividualDueDate?: dayjs.Dayjs;
 
@@ -232,7 +232,7 @@ export class ResultComponent implements OnInit, OnChanges {
             this.textColorClass = this.getTextColorClass();
             this.resultIconClass = this.getResultIconClass();
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
-        } else if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
+        } else if (this.result && this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
             this.onlyShowSuccessfulCompileStatus = this.getOnlyShowSuccessfulCompileStatus();
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
@@ -327,7 +327,7 @@ export class ResultComponent implements OnInit, OnChanges {
     /**
      * Gets the tooltip text that should be displayed next to the result string. Not required.
      */
-    buildResultTooltip() {
+    buildResultTooltip(): string | undefined {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         const programmingExercise = this.exercise as ProgrammingExercise;
         if (
@@ -337,9 +337,9 @@ export class ResultComponent implements OnInit, OnChanges {
             isResultPreliminary(this.result!, programmingExercise)
         ) {
             if (programmingExercise?.assessmentType !== AssessmentType.AUTOMATIC) {
-                return this.translate.instant('artemisApp.result.preliminaryTooltipSemiAutomatic');
+                return 'artemisApp.result.preliminaryTooltipSemiAutomatic';
             }
-            return this.translate.instant('artemisApp.result.preliminaryTooltip');
+            return 'artemisApp.result.preliminaryTooltip';
         }
     }
 
@@ -455,11 +455,11 @@ export class ResultComponent implements OnInit, OnChanges {
             return result.successful ? 'text-success' : 'text-danger';
         }
 
-        if (result.score > MIN_SCORE_GREEN) {
+        if (result.score >= MIN_SCORE_GREEN) {
             return 'text-success';
         }
 
-        if (result.score > MIN_SCORE_ORANGE) {
+        if (result.score >= MIN_SCORE_ORANGE) {
             return 'result-orange';
         }
 
@@ -492,7 +492,7 @@ export class ResultComponent implements OnInit, OnChanges {
             }
             return faTimesCircle;
         }
-        if (result.score > 80) {
+        if (result.score >= MIN_SCORE_GREEN) {
             return faCheckCircle;
         }
         return faTimesCircle;

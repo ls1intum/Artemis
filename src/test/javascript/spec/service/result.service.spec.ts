@@ -146,52 +146,81 @@ describe('ResultService', () => {
             translateServiceSpy = jest.spyOn(translateService, 'instant');
         });
 
-        it('should return correct string for non programming exercise', () => {
-            expect(resultService.getResultString(modelingResult, modelingExercise)).toBe('artemisApp.result.resultStringNonProgramming');
+        it('should return correct string for non programming exercise long format', () => {
+            expect(resultService.getResultString(modelingResult, modelingExercise)).toBe('artemisApp.result.resultString.nonProgramming');
             expect(translateServiceSpy).toHaveBeenCalledOnce();
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringNonProgramming', { relativeScore: 42, points: 21 });
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.nonProgramming', { relativeScore: 42, points: 21 });
         });
 
-        it('should return correct string for programming exercise with build failure', () => {
-            expect(resultService.getResultString(result1, programmingExercise)).toBe('artemisApp.result.resultStringProgramming');
-            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildFailed');
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
-                relativeScore: 0,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildFailed',
-                points: 0,
-            });
+        it('should return correct string for non programming exercise short format', () => {
+            expect(resultService.getResultString(modelingResult, modelingExercise, true)).toBe('artemisApp.result.resultString.short');
+            expect(translateServiceSpy).toHaveBeenCalledOnce();
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.short', { relativeScore: 42 });
         });
 
-        it('should return correct string for programming exercise with no tests', () => {
-            expect(resultService.getResultString(result2, programmingExercise)).toBe('artemisApp.result.resultStringProgramming');
+        it.each([true, false])('should return correct string for programming exercise with build failure', (short: boolean) => {
+            const expectedProgrammingString = short ? 'artemisApp.result.resultString.programmingShort' : 'artemisApp.result.resultString.programming';
+            expect(resultService.getResultString(result1, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulNoTests');
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
-                relativeScore: 20,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulNoTests',
-                points: 40,
-            });
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildFailed');
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 0,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildFailed',
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 0,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildFailed',
+                    points: 0,
+                });
+            }
         });
 
-        it('should return correct string for programming exercise with tests', () => {
-            expect(resultService.getResultString(result3, programmingExercise)).toBe('artemisApp.result.resultStringProgramming');
+        it.each([true, false])('should return correct string for programming exercise with no tests', (short: boolean) => {
+            const expectedProgrammingString = short ? 'artemisApp.result.resultString.programmingShort' : 'artemisApp.result.resultString.programming';
+            expect(resultService.getResultString(result2, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
-                relativeScore: 60,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulTests',
-                points: 120,
-            });
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulNoTests');
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 20,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulNoTests',
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 20,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulNoTests',
+                    points: 40,
+                });
+            }
+        });
+
+        it.each([true, false])('should return correct string for programming exercise with tests', (short: boolean) => {
+            const expectedProgrammingString = short ? 'artemisApp.result.resultString.short' : 'artemisApp.result.resultString.programming';
+            expect(resultService.getResultString(result3, programmingExercise, short)).toBe(expectedProgrammingString);
+            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 60,
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 60,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulTests',
+                    points: 120,
+                });
+            }
         });
 
         it('should return correct string for programming exercise with code issues', () => {
-            expect(resultService.getResultString(result4, programmingExercise)).toBe('artemisApp.result.resultStringProgrammingCodeIssues');
+            expect(resultService.getResultString(result4, programmingExercise)).toBe('artemisApp.result.resultString.programmingCodeIssues');
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgrammingCodeIssues`, {
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
+            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultString.programmingCodeIssues`, {
                 relativeScore: 50,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulTests',
+                buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulTests',
                 numberOfIssues: 1,
                 points: 100,
             });
@@ -200,12 +229,12 @@ describe('ResultService', () => {
         it('should return correct string for programming exercise preliminary', () => {
             programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
 
-            expect(resultService.getResultString(result5, programmingExercise)).toBe('artemisApp.result.resultStringProgramming (artemisApp.result.preliminary)');
+            expect(resultService.getResultString(result5, programmingExercise)).toBe('artemisApp.result.resultString.programming (artemisApp.result.preliminary)');
             expect(translateServiceSpy).toHaveBeenCalledTimes(3);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulNoTests');
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulNoTests');
+            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultString.programming`, {
                 relativeScore: 80,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulNoTests',
+                buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulNoTests',
                 points: 160,
             });
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.preliminary');

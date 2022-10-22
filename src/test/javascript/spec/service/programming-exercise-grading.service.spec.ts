@@ -33,8 +33,8 @@ describe('ProgrammingExerciseGradingService', () => {
         { testName: 'otherTest', active: true },
     ] as ProgrammingExerciseTestCase[];
 
-    const exercise1Topic = `/topic/programming-exercise/${exercise1.id}/test-cases`;
-    const exercise2Topic = `/topic/programming-exercise/${exercise2.id}/test-cases`;
+    const exercise1Topic = `/topic/programming-exercises/${exercise1.id}/test-cases`;
+    const exercise2Topic = `/topic/programming-exercises/${exercise2.id}/test-cases`;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
