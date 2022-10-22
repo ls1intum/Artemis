@@ -165,7 +165,7 @@ class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBamb
         // Add two events with two different tutor ids
         textAssessmentEventRepository.saveAll(List.of(event1, event2));
 
-        int numberOfTutorsInvolved = request.get("/api/analytics/text-assessment/courses/" + course.getId() + "/text-exercises/" + exercise.getId() + "/tutors-involved",
+        int numberOfTutorsInvolved = request.get("/api/event-insights/text-assessment/courses/" + course.getId() + "/text-exercises/" + exercise.getId() + "/tutors-involved",
                 HttpStatus.OK, Integer.class);
 
         assertThat(numberOfTutorsInvolved).isNotNull().isEqualTo(2);
