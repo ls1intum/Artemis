@@ -172,26 +172,22 @@ public class ProgrammingExerciseGradingService {
      * For all other cases (template/solution or student participation without a branch) it falls back to check the default branch of the programming exercise.
      *
      * @param participation The programming exercise participation in which the submission was made (including a reference to the programming exercise)
-     * @param buildResult The build result received from the CI system.
+     * @param buildResult   The build result received from the CI system.
      * @throws IllegalArgumentException Thrown if the result does not belong to the default branch of the exercise.
      */
     private void checkCorrectBranchElseThrow(final ProgrammingExerciseParticipation participation, final AbstractBuildResultNotificationDTO buildResult)
             throws IllegalArgumentException {
         // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
         buildResult.getBranchNameFromAssignmentRepo().ifPresent(branchName -> {
-            if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
-                final String participationDefaultBranch = programmingExerciseStudentParticipation.getBranch();
-                // only check it, in case the branch is defined in the student participation
-                if (!Strings.isNullOrEmpty(participationDefaultBranch)) {
-                    if (!Objects.equals(branchName, participationDefaultBranch)) {
-                        throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
-                    }
-                    return;
-                }
+            String participationDefaultBranch = null;
+            if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+                participationDefaultBranch = studentParticipation.getBranch();
             }
-            final String exerciseDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+            if (Strings.isNullOrEmpty(participationDefaultBranch)) {
+                participationDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+            }
 
-            if (!Objects.equals(branchName, exerciseDefaultBranch)) {
+            if (!Objects.equals(branchName, participationDefaultBranch)) {
                 throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
             }
         });
