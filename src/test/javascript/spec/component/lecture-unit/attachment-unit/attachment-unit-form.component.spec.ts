@@ -43,9 +43,7 @@ describe('AttachmentUnitFormComponent', () => {
     });
 
     it('should correctly set form values in edit mode', () => {
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        // @ts-ignore
-        fakeBlob['name'] = 'Test-File.pdf';
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
         attachmentUnitFormComponent.isEditMode = true;
         const formData: AttachmentUnitFormData = {
@@ -57,7 +55,7 @@ describe('AttachmentUnitFormComponent', () => {
                 updateNotificationText: 'lorem ipsum',
             },
             fileProperties: {
-                file: fakeBlob,
+                file: fakeFile,
                 fileName: 'lorem ipsum',
             },
         };
@@ -86,10 +84,8 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        // @ts-ignore
-        fakeBlob['name'] = 'Test-File.pdf';
-        attachmentUnitFormComponent.file = fakeBlob;
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        attachmentUnitFormComponent.file = fakeFile;
         const exampleFileName = 'lorem Ipsum';
         attachmentUnitFormComponent.fileName = exampleFileName;
 
@@ -112,7 +108,7 @@ describe('AttachmentUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
             },
             fileProperties: {
-                file: fakeBlob,
+                file: fakeFile,
                 fileName: exampleFileName,
             },
         });
@@ -130,10 +126,8 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        // @ts-ignore
-        fakeBlob['name'] = 'Test-File.pdf';
-        attachmentUnitFormComponent.file = fakeBlob;
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        attachmentUnitFormComponent.file = fakeFile;
         attachmentUnitFormComponent.fileName = 'lorem Ipsum';
 
         expect(attachmentUnitFormComponent.form.invalid).toBeTrue();
