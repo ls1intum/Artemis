@@ -1,7 +1,7 @@
 export const PROGRAMMING_EXERCISES_SETUP = '/programming-exercises/setup';
 export const PROGRAMMING_EXERCISES = '/programming-exercises';
 export const PROGRAMMING_EXERCISE = (exerciseId) => `${PROGRAMMING_EXERCISES}/${exerciseId}`;
-export const SCA_CATEGORIES = (exerciseId) => `/programming-exercise/${exerciseId}/static-code-analysis-categories`;
+export const SCA_CATEGORIES = (exerciseId) => `/programming-exercises/${exerciseId}/static-code-analysis-categories`;
 export const QUIZ_EXERCISES = '/quiz-exercises';
 export const QUIZ_EXERCISE = (exerciseId) => `${QUIZ_EXERCISES}/${exerciseId}`;
 export const COURSES = '/courses';
