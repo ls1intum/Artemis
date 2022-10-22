@@ -33,7 +33,6 @@ export class TutorialGroupsManagementComponent implements OnInit {
                 this.courseId = course.id!;
                 this.isAtLeastInstructor = course.isAtLeastInstructor;
                 this.loadTutorialGroups();
-                Tut;
             }
         });
     }
