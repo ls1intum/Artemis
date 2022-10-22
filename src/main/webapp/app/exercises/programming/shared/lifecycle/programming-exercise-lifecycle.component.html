@@ -11,7 +11,7 @@
                 tooltipText="artemisApp.programmingExercise.timeline.releaseDateTooltip"
             ></jhi-programming-exercise-test-schedule-date-picker>
             <div class="test-schedule-date px-1">
-                <div class="mb-2 text-nowrap">
+                <div class="test-schedule-date-title test-schedule-date-title-small-button">
                     <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
                     <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
                 </div>
@@ -20,22 +20,23 @@
                 </div>
             </div>
 
-            <jhi-programming-exercise-test-schedule-date-picker
-                *ngIf="!isExamMode"
-                [(ngModel)]="exercise.dueDate"
-                (ngModelChange)="updateExampleSolutionPublicationDate($event)"
-                (onDateReset)="exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined"
-                [startAt]="exercise.releaseDate"
-                [min]="exercise.releaseDate"
-                [readOnly]="readOnly"
-                class="test-schedule-date px-1"
-                label="artemisApp.exercise.dueDate"
-                tooltipText="artemisApp.programmingExercise.timeline.dueDateTooltip"
-            >
-            </jhi-programming-exercise-test-schedule-date-picker>
-
-            <div *ngIf="isExamMode || exercise.dueDate">
+            <div>
                 <jhi-programming-exercise-test-schedule-date-picker
+                    *ngIf="!isExamMode"
+                    [(ngModel)]="exercise.dueDate"
+                    (ngModelChange)="updateExampleSolutionPublicationDate($event)"
+                    (onDateReset)="exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined"
+                    [startAt]="exercise.releaseDate"
+                    [min]="exercise.releaseDate"
+                    [readOnly]="readOnly"
+                    class="test-schedule-date px-1"
+                    label="artemisApp.exercise.dueDate"
+                    tooltipText="artemisApp.programmingExercise.timeline.dueDateTooltip"
+                >
+                </jhi-programming-exercise-test-schedule-date-picker>
+
+                <jhi-programming-exercise-test-schedule-date-picker
+                    *ngIf="isExamMode || exercise.dueDate"
                     class="test-schedule-date px-1"
                     [(ngModel)]="exercise.buildAndTestStudentSubmissionsAfterDueDate"
                     [startAt]="exercise.dueDate"
@@ -45,8 +46,11 @@
                     tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
                 >
                 </jhi-programming-exercise-test-schedule-date-picker>
+            </div>
+
+            <div *ngIf="isExamMode || exercise.dueDate">
                 <div class="test-schedule-date px-1">
-                    <div class="mb-2 text-nowrap">
+                    <div class="test-schedule-date-title test-schedule-date-title-small-button">
                         <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.assessmentType"> Assessment Type </span>
                         <jhi-help-icon
                             placement="auto"
@@ -73,7 +77,7 @@
                 </div>
 
                 <div *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode" class="test-schedule-date px-1">
-                    <div class="mb-2 text-nowrap">
+                    <div class="test-schedule-date-title test-schedule-date-title-small-button">
                         <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests">requests</span>
                         <jhi-help-icon
                             placement="auto"
@@ -110,7 +114,7 @@
                     tooltipText="artemisApp.programmingExercise.timeline.assessmentDueDateTooltip"
                 ></jhi-programming-exercise-test-schedule-date-picker>
                 <div *ngIf="exercise.assessmentType === assessmentType.AUTOMATIC && (isExamMode || exercise.course?.complaintsEnabled)" class="test-schedule-date px-1">
-                    <div class="mb-2 text-nowrap">
+                    <div class="test-schedule-date-title test-schedule-date-title-small-button">
                         <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"> Complaints </span>
                         <jhi-help-icon
                             placement="auto"
@@ -151,7 +155,7 @@
                 </jhi-programming-exercise-test-schedule-date-picker>
 
                 <div class="test-schedule-date px-1" *ngIf="exercise.exampleSolutionPublicationDate">
-                    <div class="mb-2 text-nowrap">
+                    <div class="test-schedule-date-title test-schedule-date-title-small-button">
                         <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsAfterDueDate"> Assessment Type </span>
                         <jhi-help-icon placement="auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsAfterDueDateTooltip'"> </jhi-help-icon>
                     </div>
