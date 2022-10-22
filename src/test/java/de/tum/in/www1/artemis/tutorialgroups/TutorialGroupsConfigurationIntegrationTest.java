@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.*;
 
@@ -21,7 +22,7 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
 
     @Override
     void testJustForInstructorEndpoints() throws Exception {
-        var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, exampleTimeZone, firstAugustMonday, firstSeptemberMonday);
+        var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, firstAugustMonday, firstSeptemberMonday);
         request.get(this.getTutorialGroupsConfigurationPath() + configuration.getId(), HttpStatus.FORBIDDEN, TutorialGroupsConfiguration.class);
         request.putWithResponseBody(getTutorialGroupsConfigurationPath() + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
         tutorialGroupsConfigurationRepository.deleteAll();
@@ -32,7 +33,7 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void getOneOfCourse_asInstructor_shouldReturnTutorialGroupsConfiguration() throws Exception {
         // given
-        var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, exampleTimeZone, firstAugustMonday, firstSeptemberMonday);
+        var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, firstAugustMonday, firstSeptemberMonday);
         // when
         var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath() + configuration.getId(), HttpStatus.OK, TutorialGroupsConfiguration.class);
         // then
@@ -47,14 +48,14 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
                 HttpStatus.CREATED);
         // then
         assertThat(configurationFromRequest).isNotNull();
-        this.assertConfigurationStructure(configurationFromRequest, firstAugustMonday, firstSeptemberMonday, exampleTimeZone);
+        this.assertConfigurationStructure(configurationFromRequest, firstAugustMonday, firstSeptemberMonday);
     }
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void create_configurationAlreadyExists_shouldReturnBadRequest() throws Exception {
         // given
-        var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, exampleTimeZone, firstAugustMonday, firstSeptemberMonday);
+        var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, firstAugustMonday, firstSeptemberMonday);
         // when
         request.postWithResponseBody(getTutorialGroupsConfigurationPath(), buildExampleConfiguration(), TutorialGroupsConfiguration.class, HttpStatus.BAD_REQUEST);
         // then
@@ -63,9 +64,23 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    void update_timeZoneChange_deleteTutorialGroupFreePeriodsAndIndividualSessionsAndRecreateScheduledSessions() throws Exception {
+    void update_periodChange_deleteTutorialGroupFreePeriodsAndIndividualSessionsAndRecreateScheduledSessions() throws Exception {
         // given
-        var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, exampleTimeZone, firstAugustMonday, firstSeptemberMonday);
+        var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, firstAugustMonday, firstSeptemberMonday);
+
+        // when
+        configuration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath() + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
+        // then
+        configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
+        this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void updateCourse_timeZoneChange_deleteTutorialGroupFreePeriodsAndIndividualSessionsAndRecreateScheduledSessions() throws Exception {
+        // given
+        var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, firstAugustMonday, firstSeptemberMonday);
         var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule();
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroup_Id(tutorialGroupWithSchedule.getId()).get();
         this.buildAndSaveExampleIndividualTutorialGroupSession(tutorialGroupWithSchedule.getId(), firstSeptemberMonday);
@@ -83,11 +98,10 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
 
         // when
         // change time zone to berlin and change end period
-        configuration.setTimeZone("Europe/Berlin");
-        configuration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
-        request.putWithResponseBody(getTutorialGroupsConfigurationPath() + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
-        configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
-        this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday, "Europe/Berlin");
+        var course = courseRepository.findByIdElseThrow(exampleCourseId);
+        course.setTimeZone("Europe/Berlin");
+        course.setTutorialGroupsConfiguration(null);
+        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
 
         sessions = this.getTutorialGroupSessionsAscending(tutorialGroupWithSchedule.getId());
         assertThat(sessions).hasSize(2);

@@ -10,6 +10,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, finalize, map, switchMap, take } from 'rxjs';
 import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-free-period',
@@ -21,7 +22,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnInit {
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
     formData: TutorialGroupFreePeriodFormData;
 
-    courseId: number;
+    course: Course;
     tutorialGroupConfigurationId: number;
     tutorialGroupFreePeriodId: number;
 
@@ -39,12 +40,12 @@ export class EditTutorialGroupFreePeriodComponent implements OnInit {
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
-                switchMap(([params, data]) => {
-                    this.courseId = data['course'].id;
-                    this.tutorialGroupsConfiguration = data['course'].tutorialGroupsConfiguration;
+                switchMap(([params, { course }]) => {
+                    this.course = course;
+                    this.tutorialGroupsConfiguration = course.tutorialGroupsConfiguration;
                     this.tutorialGroupConfigurationId = this.tutorialGroupsConfiguration.id!;
                     this.tutorialGroupFreePeriodId = Number(params.get('tutorialGroupFreePeriodId'));
-                    return this.tutorialGroupFreePeriodService.getOneOfConfiguration(this.courseId, this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodId);
+                    return this.tutorialGroupFreePeriodService.getOneOfConfiguration(course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodId);
                 }),
                 map((res: HttpResponse<TutorialGroupFreePeriod>) => res.body),
                 finalize(() => (this.isLoading = false)),
@@ -54,7 +55,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnInit {
                     if (tutorialGroupFreePeriod) {
                         this.freePeriod = tutorialGroupFreePeriod;
                         this.formData = {
-                            date: tutorialGroupFreePeriod.start?.tz(this.tutorialGroupsConfiguration.timeZone).toDate(),
+                            date: tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
                             reason: tutorialGroupFreePeriod.reason,
                         };
                     }
@@ -73,7 +74,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnInit {
         this.isLoading = true;
 
         this.tutorialGroupFreePeriodService
-            .update(this.courseId, this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodId, tutorialGroupFreePeriodDto)
+            .update(this.course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodId, tutorialGroupFreePeriodDto)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -81,7 +82,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups', 'configuration', this.tutorialGroupConfigurationId, 'tutorial-free-days']);
+                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups', 'configuration', this.tutorialGroupConfigurationId, 'tutorial-free-days']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

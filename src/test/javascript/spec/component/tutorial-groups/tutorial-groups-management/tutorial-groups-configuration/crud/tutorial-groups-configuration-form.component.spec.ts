@@ -16,7 +16,6 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsConfigurationFormComponent>;
     let component: TutorialGroupsConfigurationFormComponent;
 
-    const validTimeZone = 'Europe/Berlin';
     const validPeriodStart = new Date(Date.UTC(2021, 1, 1));
     const validPeriodEnd = new Date(Date.UTC(2021, 2, 1));
     const validPeriod = [validPeriodStart, validPeriodEnd];
@@ -31,13 +30,11 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                (Intl as any).supportedValuesOf = () => [validTimeZone];
                 fixture = TestBed.createComponent(TutorialGroupsConfigurationFormComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
 
                 clickSubmit = generateClickSubmitButton(component, fixture, {
-                    timeZone: validTimeZone,
                     period: validPeriod,
                 });
 
@@ -58,7 +55,6 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     it('should correctly set form values in edit mode', () => {
         component.isEditMode = true;
         const formData: TutorialGroupsConfigurationFormData = {
-            timeZone: validTimeZone,
             period: validPeriod,
         };
         fixture.detectChanges();
@@ -66,7 +62,7 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
         component.formData = formData;
         component.ngOnChanges();
 
-        const formControlNames = ['period', 'timeZone'];
+        const formControlNames = ['period'];
         formControlNames.forEach((control) => {
             expect(component.form.get(control)!.value).toEqual(formData[control]);
         });
@@ -82,7 +78,7 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     }));
 
     it('should block submit when required property is missing', fakeAsync(() => {
-        const requiredControlNames = ['timeZone', 'period'];
+        const requiredControlNames = ['period'];
         for (const controlName of requiredControlNames) {
             testFormIsInvalidOnMissingRequiredProperty(controlName);
         }
@@ -90,7 +86,6 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
 
     // === helper functions ===
     const setValidFormValues = () => {
-        component.form.get('timeZone')!.setValue(validTimeZone);
         component.form.get('period')!.setValue(validPeriod);
     };
 });

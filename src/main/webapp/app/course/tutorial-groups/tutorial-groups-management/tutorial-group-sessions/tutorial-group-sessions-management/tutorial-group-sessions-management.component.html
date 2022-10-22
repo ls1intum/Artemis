@@ -7,7 +7,7 @@
                     <a
                         id="create-session-button"
                         class="btn btn-primary"
-                        [routerLink]="['/course-management', courseId, 'tutorial-groups', tutorialGroup.id, 'sessions', 'create']"
+                        [routerLink]="['/course-management', course.id!, 'tutorial-groups', tutorialGroup.id, 'sessions', 'create']"
                     >
                         <fa-icon [icon]="faPlus"></fa-icon>
                         <span>{{ 'artemisApp.pages.tutorialGroupSessionManagement.createSessionButton' | artemisTranslate }}</span>
@@ -17,7 +17,7 @@
         </div>
         <div class="col-12 mb-2">
             <div class="alert alert-info">
-                {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate: { timeZone: tutorialGroupsConfiguration.timeZone } }}
+                {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate: { timeZone: course.timeZone } }}
             </div>
         </div>
         <div class="table-responsive">
@@ -35,7 +35,7 @@
                         jhi-session-row
                         *ngFor="let session of upcomingSessions"
                         [session]="session"
-                        [courseId]="courseId"
+                        [courseId]="course.id!"
                         [tutorialGroupId]="tutorialGroup!.id!"
                         (actionPerformed)="loadAll()"
                     ></tr>
@@ -46,7 +46,7 @@
                         jhi-session-row
                         *ngFor="let session of pastSessions"
                         [session]="session"
-                        [courseId]="courseId"
+                        [courseId]="course.id!"
                         [tutorialGroupId]="tutorialGroup!.id!"
                         (actionPerformed)="loadAll()"
                     ></tr>

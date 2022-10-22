@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.interpretInTimeZoneOfConfiguration;
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.interpretInTimeZone;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -112,6 +112,9 @@ public class TutorialGroupSessionResource {
             throw new BadRequestException("The course has no tutorial groups configuration");
         }
         var configuration = configurationOptional.get();
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
 
         var updatedSession = tutorialGroupSessionDTO.toEntity(configuration);
         sessionToUpdate.setStart(updatedSession.getStart());
@@ -186,6 +189,9 @@ public class TutorialGroupSessionResource {
             throw new BadRequestException("The course has no tutorial groups configuration");
         }
         var configuration = configurationOptional.get();
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
 
         TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(configuration);
         newSession.setTutorialGroup(tutorialGroup);
@@ -305,8 +311,8 @@ public class TutorialGroupSessionResource {
 
         public TutorialGroupSession toEntity(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
             TutorialGroupSession tutorialGroupSession = new TutorialGroupSession();
-            tutorialGroupSession.setStart(interpretInTimeZoneOfConfiguration(date, startTime, tutorialGroupsConfiguration));
-            tutorialGroupSession.setEnd(interpretInTimeZoneOfConfiguration(date, endTime, tutorialGroupsConfiguration));
+            tutorialGroupSession.setStart(interpretInTimeZone(date, startTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));
+            tutorialGroupSession.setEnd(interpretInTimeZone(date, endTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));
             tutorialGroupSession.setLocation(location);
             return tutorialGroupSession;
         }

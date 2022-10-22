@@ -5,13 +5,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-tutorial-group-free-period-row-buttons',
     templateUrl: './tutorial-group-free-period-row-buttons.component.html',
 })
 export class TutorialGroupFreePeriodRowButtonsComponent {
-    @Input() courseId: number;
+    @Input() course: Course;
     @Input() tutorialGroupConfiguration: TutorialGroupsConfiguration;
     @Input() tutorialFreePeriod: TutorialGroupFreePeriod;
 
@@ -27,7 +28,7 @@ export class TutorialGroupFreePeriodRowButtonsComponent {
     constructor(private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService) {}
 
     deleteTutorialFreePeriod = () => {
-        this.tutorialGroupFreePeriodService.delete(this.courseId, this.tutorialGroupConfiguration.id!, this.tutorialFreePeriod.id!).subscribe({
+        this.tutorialGroupFreePeriodService.delete(this.course.id!, this.tutorialGroupConfiguration.id!, this.tutorialFreePeriod.id!).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.tutorialFreePeriodDeleted.emit();

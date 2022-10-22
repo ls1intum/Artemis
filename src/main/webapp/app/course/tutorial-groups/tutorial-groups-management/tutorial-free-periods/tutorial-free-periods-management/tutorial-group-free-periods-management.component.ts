@@ -9,6 +9,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-tutorial-free-periods',
@@ -19,7 +20,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
     isLoading = false;
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
     tutorialGroupFreePeriods: TutorialGroupFreePeriod[] = [];
-    courseId: number;
+    course: Course;
     faTimes = faTimes;
     faPlus = faPlus;
 
@@ -40,13 +41,13 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
 
     loadAll() {
         this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.paramMap])
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
-                switchMap(([params, parentParams]) => {
+                switchMap(([params, { course }]) => {
                     const tutorialGroupConfigurationId = Number(params.get('tutorialGroupsConfigurationId'));
-                    this.courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.courseId, tutorialGroupConfigurationId);
+                    this.course = course;
+                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!, tutorialGroupConfigurationId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )

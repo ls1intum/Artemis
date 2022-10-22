@@ -17,6 +17,9 @@ import { isOrion } from 'app/shared/orion/orion';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
+import { TutorialGroupManagementResolve } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-management-resolve.service';
+import { TutorialGroupsChecklistComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-checklist/tutorial-groups-checklist.component';
+import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 
 export const courseManagementState: Routes = [
     {
@@ -71,7 +74,7 @@ export const courseManagementState: Routes = [
     {
         path: ':courseId/tutorial-groups',
         resolve: {
-            course: CourseManagementResolve,
+            course: TutorialGroupManagementResolve,
         },
         loadChildren: () => import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
     },
@@ -84,11 +87,22 @@ export const courseManagementState: Routes = [
         loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
     },
     {
-        path: ':courseId/tutorial-groups',
-        resolve: {
-            course: CourseManagementResolve,
+        path: ':courseId/tutorial-groups-checklist',
+        component: TutorialGroupsChecklistComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.pages.checklist.title',
         },
-        loadChildren: () => import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/create-tutorial-groups-configuration',
+        component: CreateTutorialGroupsConfigurationComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered

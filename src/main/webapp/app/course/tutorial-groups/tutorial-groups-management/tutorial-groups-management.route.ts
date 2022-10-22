@@ -8,7 +8,6 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
 import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
-import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
 import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/detail/tutorial-group-management-detail.component';
 import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
@@ -34,15 +33,6 @@ export const tutorialGroupManagementRoutes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.pages.tutorialGroupsManagement.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'configuration/create',
-        component: CreateTutorialGroupsConfigurationComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
         },
         canActivate: [UserRouteAccessService],
     },

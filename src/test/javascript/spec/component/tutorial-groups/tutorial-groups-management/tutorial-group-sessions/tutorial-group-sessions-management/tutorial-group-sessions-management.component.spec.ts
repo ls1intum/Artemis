@@ -11,7 +11,6 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Router } from '@angular/router';
-import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
@@ -48,7 +47,7 @@ describe('TutorialGroupSessionsManagement', () => {
     const currentDate = dayjs(new Date(Date.UTC(2021, 0, 2, 12, 0, 0)));
     const course = {
         id: courseId,
-        tutorialGroupsConfiguration: generateExampleTutorialGroupsConfiguration({}),
+        timeZone: 'Europe/Berlin',
     } as Course;
 
     const router = new MockRouter();
@@ -106,7 +105,7 @@ describe('TutorialGroupSessionsManagement', () => {
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(courseId, tutorialGroupId);
         expect(component.tutorialGroup).toEqual(tutorialGroup);
         expect(component.tutorialGroupSchedule).toEqual(tutorialGroup.tutorialGroupSchedule);
-        expect(component.courseId).toEqual(courseId);
+        expect(component.course.id).toEqual(courseId);
     });
 
     it('should spit sessions into upcoming and past', () => {

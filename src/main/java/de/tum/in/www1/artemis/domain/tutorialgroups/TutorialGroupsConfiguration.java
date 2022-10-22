@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
@@ -28,10 +27,6 @@ public class TutorialGroupsConfiguration extends DomainObject {
     @JoinColumn(name = "course_id")
     @JsonIgnoreProperties(value = "tutorialGroupsConfiguration", allowSetters = true)
     private Course course;
-
-    @Column(name = "time_zone")
-    @NotEmpty
-    private String timeZone;
 
     /**
      * Note: String to prevent Hibernate from converting it to UTC
@@ -57,14 +52,6 @@ public class TutorialGroupsConfiguration extends DomainObject {
 
     public void setCourse(Course course) {
         this.course = course;
-    }
-
-    public String getTimeZone() {
-        return timeZone;
-    }
-
-    public void setTimeZone(String timeZone) {
-        this.timeZone = timeZone;
     }
 
     public String getTutorialPeriodStartInclusive() {

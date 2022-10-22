@@ -7,7 +7,7 @@
                     <a
                         class="btn btn-primary"
                         id="create-tutorial-free-day"
-                        [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'tutorial-free-days', 'create']"
+                        [routerLink]="['/course-management', course.id!, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'tutorial-free-days', 'create']"
                     >
                         <fa-icon [icon]="faPlus"></fa-icon>
                         <span>{{ 'artemisApp.pages.tutorialFreePeriodsManagement.createFreePeriodButton' | artemisTranslate }}</span>
@@ -17,7 +17,7 @@
         </div>
         <div class="col-12 mb-2">
             <div class="alert alert-info">
-                {{ 'artemisApp.pages.tutorialFreePeriodsManagement.timeZoneExplanation' | artemisTranslate: { timeZone: tutorialGroupsConfiguration.timeZone } }}
+                {{ 'artemisApp.pages.tutorialFreePeriodsManagement.timeZoneExplanation' | artemisTranslate: { timeZone: course.timeZone } }}
             </div>
         </div>
         <div class="table-responsive" *ngIf="tutorialGroupFreePeriods && tutorialGroupFreePeriods.length > 0">
@@ -37,14 +37,14 @@
                         </td>
                         <!-- Only support for one day right now, so only show "start" date -->
                         <td>
-                            {{ freePeriod.start | artemisDate: 'long-date':false:tutorialGroupsConfiguration.timeZone }}
+                            {{ freePeriod.start | artemisDate: 'long-date':false:course.timeZone }}
                         </td>
                         <td>
                             <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>
                         </td>
                         <td>
                             <jhi-tutorial-group-free-period-row-buttons
-                                [courseId]="courseId"
+                                [course]="course"
                                 [tutorialGroupConfiguration]="tutorialGroupsConfiguration"
                                 [tutorialFreePeriod]="freePeriod"
                                 (tutorialFreePeriodDeleted)="loadAll()"

@@ -32,8 +32,8 @@ export class TutorialGroupsManagementComponent implements OnInit {
                 this.course = course;
                 this.courseId = course.id!;
                 this.isAtLeastInstructor = course.isAtLeastInstructor;
-                this.checkIfTutorialGroupsConfigured();
                 this.loadTutorialGroups();
+                Tut;
             }
         });
     }
@@ -67,11 +67,5 @@ export class TutorialGroupsManagementComponent implements OnInit {
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
-    }
-
-    private checkIfTutorialGroupsConfigured() {
-        if (!this.course.tutorialGroupsConfiguration) {
-            this.router.navigate(['/course-management', this.courseId, 'tutorial-groups', 'configuration', 'create']);
-        }
     }
 }

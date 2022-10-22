@@ -85,7 +85,6 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
         expect(findConfigurationSpy).toHaveBeenCalledWith(course.id, exampleConfiguration.id);
 
         expect(component.formData.period).toEqual([exampleConfiguration.tutorialPeriodStartInclusive?.toDate(), exampleConfiguration.tutorialPeriodEndInclusive?.toDate()]);
-        expect(component.formData.timeZone).toEqual(exampleConfiguration.timeZone);
         expect(formStub.formData).toEqual(component.formData);
     });
 
@@ -94,7 +93,6 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
 
         const changedConfiguration: TutorialGroupsConfiguration = {
             ...exampleConfiguration,
-            timeZone: 'Europe/Belgrade',
         };
 
         const updateResponse: HttpResponse<TutorialGroupsConfiguration> = new HttpResponse({

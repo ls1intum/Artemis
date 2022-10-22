@@ -2,7 +2,7 @@
     <!-- Edit -->
     <a
         [id]="'edit-' + tutorialFreePeriod.id"
-        [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', tutorialGroupConfiguration.id!, 'tutorial-free-days', tutorialFreePeriod.id!, 'edit']"
+        [routerLink]="['/course-management', course.id, 'tutorial-groups', 'configuration', tutorialGroupConfiguration.id!, 'tutorial-free-days', tutorialFreePeriod.id!, 'edit']"
         class="btn btn-warning btn-sm me-1"
     >
         <fa-icon [icon]="faWrench"></fa-icon>
@@ -12,7 +12,7 @@
     <button
         [id]="'delete-' + tutorialFreePeriod.id"
         jhiDeleteButton
-        entityTitle="{{ tutorialFreePeriod.start | artemisDate: 'long-date':false:tutorialGroupConfiguration.timeZone }}"
+        entityTitle="{{ tutorialFreePeriod.start | artemisDate: 'long-date':false:course.timeZone }}"
         deleteQuestion="artemisApp.pages.tutorialFreePeriodsManagement.deleteDialog.question"
         (delete)="deleteTutorialFreePeriod()"
         [dialogError]="dialogError$"

@@ -433,6 +433,32 @@
                     <input type="number" class="form-control" [defaultValue]="0" name="presentationScore" id="field_presentationScore" formControlName="presentationScore" />
                 </div>
             </div>
+            <!-- timezone -->
+            <div *ngIf="tutorialGroupsFeatureActivated" class="col-auto border border-warning p-3">
+                <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
+                <label class="form-label" for="timeZone">{{ 'artemisApp.forms.configurationForm.timeZoneInput.label' | artemisTranslate }}</label>
+                <div *ngIf="timeZoneChanged" class="alert alert-danger" role="alert">
+                    {{ 'artemisApp.forms.configurationForm.timeZoneInput.changeWarning' | artemisTranslate }}
+                </div>
+                <div>{{ 'artemisApp.forms.configurationForm.timeZoneInput.beta' | artemisTranslate }}</div>
+                <input
+                    id="timeZone"
+                    type="text"
+                    class="form-control"
+                    formControlName="timeZone"
+                    [placeholder]="'Europe/Berlin'"
+                    [resultFormatter]="tzResultFormatter"
+                    [inputFormatter]="tzInputFormatter"
+                    [ngbTypeahead]="tzSearch"
+                    [editable]="false"
+                    #timeZoneInput="ngbTypeahead"
+                    (focus)="tzFocus$.next($any($event).target.value)"
+                    (click)="tzClick$.next($any($event).target.value)"
+                />
+                <div class="form-text">
+                    {{ 'artemisApp.forms.configurationForm.timeZoneInput.explanation' | artemisTranslate }}
+                </div>
+            </div>
             <div class="mt-3 d-flex">
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>

@@ -4289,13 +4289,14 @@ public class DatabaseUtilService {
 
     public TutorialGroupFreePeriod addTutorialGroupFreeDay(Long tutorialGroupsConfigurationId, LocalDate date, String reason) {
         var tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
+        var course = tutorialGroupsConfiguration.getCourse();
 
         TutorialGroupFreePeriod newTutorialGroupFreePeriod = new TutorialGroupFreePeriod();
         newTutorialGroupFreePeriod.setTutorialGroupsConfiguration(tutorialGroupsConfiguration);
         newTutorialGroupFreePeriod.setReason(reason);
 
-        newTutorialGroupFreePeriod.setStart(interpretInTimeZoneOfConfiguration(date, START_OF_DAY, tutorialGroupsConfiguration));
-        newTutorialGroupFreePeriod.setEnd(interpretInTimeZoneOfConfiguration(date, END_OF_DAY, tutorialGroupsConfiguration));
+        newTutorialGroupFreePeriod.setStart(interpretInTimeZone(date, START_OF_DAY, course.getTimeZone()));
+        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(date, END_OF_DAY, course.getTimeZone()));
 
         return tutorialGroupFreePeriodRepository.save(newTutorialGroupFreePeriod);
     }
@@ -4318,9 +4319,9 @@ public class DatabaseUtilService {
         return persistedTutorialGroup;
     }
 
-    public TutorialGroupsConfiguration createTutorialGroupConfiguration(Long courseId, String timeZone, LocalDate start, LocalDate end) {
+    public TutorialGroupsConfiguration createTutorialGroupConfiguration(Long courseId, LocalDate start, LocalDate end) {
         var course = courseRepo.findByIdElseThrow(courseId);
-        var tutorialGroupConfiguration = ModelFactory.generateTutorialGroupsConfiguration(timeZone, start, end);
+        var tutorialGroupConfiguration = ModelFactory.generateTutorialGroupsConfiguration(start, end);
         tutorialGroupConfiguration.setCourse(course);
         return tutorialGroupsConfigurationRepository.saveAndFlush(tutorialGroupConfiguration);
     }

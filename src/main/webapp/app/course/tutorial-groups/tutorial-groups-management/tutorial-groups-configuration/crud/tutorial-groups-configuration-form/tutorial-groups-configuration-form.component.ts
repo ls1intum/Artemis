@@ -1,13 +1,9 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { merge, Observable, OperatorFunction, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 
 export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
-    timeZone?: string;
 }
 
 @Component({
@@ -18,26 +14,15 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     @Input()
     formData: TutorialGroupsConfigurationFormData = {
         period: undefined,
-        timeZone: undefined,
     };
     @Input() isEditMode = false;
     @Output() formSubmitted: EventEmitter<TutorialGroupsConfigurationFormData> = new EventEmitter<TutorialGroupsConfigurationFormData>();
 
-    originalTimeZone?: string;
-    timeZones: string[] = [];
-
-    @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
-    tzFocus$ = new Subject<string>();
-    tzClick$ = new Subject<string>();
     faCalendarAlt = faCalendarAlt;
 
     form: FormGroup;
 
     constructor(private fb: FormBuilder) {}
-
-    get timeZoneControl() {
-        return this.form.get('timeZone');
-    }
 
     get periodControl() {
         return this.form.get('period');
@@ -47,12 +32,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
         return !this.form.invalid;
     }
 
-    get timeZoneChanged() {
-        return this.isEditMode && this.originalTimeZone !== this.form.value.timeZone;
-    }
-
     ngOnInit(): void {
-        this.timeZones = (Intl as any).supportedValuesOf('timeZone');
         this.initializeForm();
     }
     ngOnChanges(): void {
@@ -61,22 +41,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
             this.setFormValues(this.formData);
         }
     }
-
-    tzResultFormatter = (timeZone: string) => timeZone;
-    tzInputFormatter = (timeZone: string) => timeZone;
-
-    tzSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
-        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead.isPopupOpen()));
-        const inputFocus$ = this.tzFocus$;
-
-        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
-            map((term) => (term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().indexOf(term.toLowerCase()) > -1))),
-        );
-    };
-
     private setFormValues(formData: TutorialGroupsConfigurationFormData) {
-        this.originalTimeZone = formData.timeZone;
         this.form.patchValue(formData);
     }
 
@@ -86,7 +51,6 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
         }
 
         this.form = this.fb.group({
-            timeZone: ['Europe/Berlin', [Validators.required]],
             period: [undefined, Validators.required],
         });
     }

@@ -34,15 +34,13 @@ public class TutorialGroupsConfigurationService {
     }
 
     /**
-     * Update/Delete tutorial group entities when the user has requested a time zone change
+     * Update/Delete tutorial group entities when the user has requested a time zone change on the course
      *
-     * @param course           affected course
-     * @param newConfiguration configuration containing the new time zone
+     * @param course affected course
      */
     @Transactional // ok because of delete
-    public void onTimeZoneUpdate(Course course, TutorialGroupsConfiguration newConfiguration) {
+    public void onTimeZoneUpdate(Course course) {
         // ToDo: Think about smarter way to handle time zone change then just deleting the entities
-
         // delete all sessions and tutorial free periods of course
         tutorialGroupSessionRepository.deleteByTutorialGroup_Course(course);
         tutorialGroupFreePeriodRepository.deleteByTutorialGroupsConfiguration_Course(course);
@@ -51,7 +49,9 @@ public class TutorialGroupsConfigurationService {
         var schedules = tutorialGroupScheduleRepository.getAllByTutorialGroup_Course(course);
         var newSessions = new ArrayList<TutorialGroupSession>();
         for (TutorialGroupSchedule schedule : schedules) {
-            newSessions.addAll(tutorialGroupScheduleService.generateSessions(newConfiguration, schedule));
+            var tutorialGroupConfiguration = new TutorialGroupsConfiguration();
+            tutorialGroupConfiguration.setCourse(course);
+            newSessions.addAll(tutorialGroupScheduleService.generateSessions(tutorialGroupConfiguration, schedule));
         }
         tutorialGroupSessionRepository.saveAll(newSessions);
     }

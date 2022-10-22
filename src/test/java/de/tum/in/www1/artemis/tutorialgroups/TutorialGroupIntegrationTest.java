@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.tutorialgroups;
 
+import static de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
@@ -11,9 +12,14 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import com.google.common.collect.ImmutableSet;
 
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource;
+import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
 
 class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
@@ -39,7 +45,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void getAllForCourse_asStudent_shouldHidePrivateInformation() throws Exception {
-        var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+        var tutorialGroupsOfCourse = request.getList(getTutorialGroupsPath(), HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
@@ -51,7 +57,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     void getAllForCourse_asEditor_shouldHidePrivateInformation() throws Exception {
-        var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+        var tutorialGroupsOfCourse = request.getList(getTutorialGroupsPath(), HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
@@ -63,7 +69,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void getAllForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup() throws Exception {
-        var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+        var tutorialGroupsOfCourse = request.getList(getTutorialGroupsPath(), HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
@@ -76,7 +82,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void getAllForCourse_asInstructorOfCourse_shouldShowPrivateInformation() throws Exception {
-        var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+        var tutorialGroupsOfCourse = request.getList(getTutorialGroupsPath(), HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
@@ -359,8 +365,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void importRegistrations_tutorialGroupTitleAndStudents_shouldCreateTutorialAndRegisterStudents() throws Exception {
         // given
-        var existingGroup1 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrations(exampleOneTutorialGroupId).get();
-        var existingGroup2 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrations(exampleTwoTutorialGroupId).get();
+        var existingGroup1 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
+        var existingGroup2 = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleTwoTutorialGroupId).get();
 
         // we test with student1 that the student will be deregistered from the old tutorial group
         var student1 = userRepository.findOneByLogin("student1").get();
@@ -495,8 +501,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     private List<TutorialGroupRegistrationImportDTO> sendImportRequest(List<TutorialGroupRegistrationImportDTO> tutorialGroupRegistrations) throws Exception {
-        return request.postListWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/import", tutorialGroupRegistrations, TutorialGroupRegistrationImportDTO.class,
-                HttpStatus.OK);
+        return request.postListWithResponseBody(getTutorialGroupsPath() + "import", tutorialGroupRegistrations, TutorialGroupRegistrationImportDTO.class, HttpStatus.OK);
     }
 
     private void assertTutorialWithTitleDoesNotExistInDb(String title) {
@@ -508,19 +513,16 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     private void assertUserIsRegisteredInTutorialWithTitle(String expectedTitle, User expectedStudent) {
-        assertThat(tutorialGroupRegistrationRepository.countByStudentAndTutorialGroupCourseIdAndType(expectedStudent, exampleCourseId,
-                TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)).isEqualTo(1);
-        assertThat(tutorialGroupRegistrationRepository.existsByTutorialGroupTitleAndStudentAndType(expectedTitle, expectedStudent,
-                TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)).isTrue();
+        assertThat(tutorialGroupRegistrationRepository.countByStudentAndTutorialGroupCourseIdAndType(expectedStudent, exampleCourseId, INSTRUCTOR_REGISTRATION)).isEqualTo(1);
+        assertThat(tutorialGroupRegistrationRepository.existsByTutorialGroupTitleAndStudentAndType(expectedTitle, expectedStudent, INSTRUCTOR_REGISTRATION)).isTrue();
     }
 
     private void assertUserIsNotRegisteredInATutorialGroup(User expectedStudent) {
-        assertThat(tutorialGroupRegistrationRepository.countByStudentAndTutorialGroupCourseIdAndType(expectedStudent, exampleCourseId,
-                TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)).isEqualTo(0);
+        assertThat(tutorialGroupRegistrationRepository.countByStudentAndTutorialGroupCourseIdAndType(expectedStudent, exampleCourseId, INSTRUCTOR_REGISTRATION)).isEqualTo(0);
     }
 
     private void assertImportedTutorialGroupWithTitleInDB(String expectedTitle, Set<User> expectedRegisteredStudents) {
-        assertTutorialGroupWithTitleInDB(expectedTitle, expectedRegisteredStudents, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, false, null, null, null, null, null);
+        assertTutorialGroupWithTitleInDB(expectedTitle, expectedRegisteredStudents, INSTRUCTOR_REGISTRATION, false, null, null, null, null, null);
     }
 
     private void assertTutorialGroupWithTitleInDB(String expectedTitle, Set<User> expectedRegisteredStudents, TutorialGroupRegistrationType expectedRegistrationType,
@@ -552,41 +554,41 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     private void oneOfCoursePrivateInfoHiddenTest() throws Exception {
-        var tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+        var tutorialGroup = request.get(getTutorialGroupsPath() + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
         verifyPrivateInformationIsHidden(tutorialGroup);
     }
 
     private void oneOfCoursePrivateInfoShownTest() throws Exception {
-        var tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+        var tutorialGroup = request.get(getTutorialGroupsPath() + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
         verifyPrivateInformationIsShown(tutorialGroup, 5);
     }
 
     private void registerStudentAllowedTest() throws Exception {
         var student6 = userRepository.findOneByLogin("student6").get();
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + student6.getLogin(),
-                HttpStatus.NO_CONTENT, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody(getTutorialGroupsPath() + exampleOneTutorialGroupId + "/register/" + student6.getLogin(), HttpStatus.NO_CONTENT,
+                new LinkedMultiValueMap<>());
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student6);
     }
 
     private void registerStudentForbiddenTest() throws Exception {
         var student6 = userRepository.findOneByLogin("student6").get();
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + student6.getLogin(),
-                HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody(getTutorialGroupsPath() + exampleOneTutorialGroupId + "/register/" + student6.getLogin(), HttpStatus.FORBIDDEN,
+                new LinkedMultiValueMap<>());
     }
 
     private void deregisterStudentAllowedTest() throws Exception {
         var student1 = userRepository.findOneByLogin("student1").get();
-        request.delete("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT);
+        request.delete(getTutorialGroupsPath() + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT);
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(student1);
     }
 
     private void deregisterStudentForbiddenTest() throws Exception {
         var student1 = userRepository.findOneByLogin("student1").get();
-        request.delete("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.FORBIDDEN);
+        request.delete(getTutorialGroupsPath() + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.FORBIDDEN);
     }
 
 }

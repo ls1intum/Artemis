@@ -46,6 +46,7 @@ describe('Course Management Update Component', () => {
     let course: Course;
     let fileUploaderService: FileUploaderService;
     let uploadStub: jest.SpyInstance;
+    const validTimeZone = 'Europe/Berlin';
 
     beforeEach(() => {
         course = new Course();
@@ -73,6 +74,7 @@ describe('Course Management Update Component', () => {
         course.presentationScore = 16;
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
+        course.timeZone = 'Europe/London';
 
         const parentRoute = {
             data: of({ course }),
@@ -104,6 +106,7 @@ describe('Course Management Update Component', () => {
         })
             .compileComponents()
             .then(() => {
+                (Intl as any).supportedValuesOf = () => [validTimeZone];
                 fixture = TestBed.createComponent(CourseUpdateComponent);
                 comp = fixture.componentInstance;
                 service = TestBed.inject(CourseManagementService);
@@ -116,6 +119,7 @@ describe('Course Management Update Component', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        (Intl as any).supportedValuesOf = undefined;
     });
 
     describe('ngOnInit', () => {

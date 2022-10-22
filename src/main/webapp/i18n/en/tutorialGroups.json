@@ -166,6 +166,7 @@
             "configurationForm": {
                 "timeZoneInput": {
                     "label": "Timezone",
+                    "beta": "The time zone is currently only used in conjunction with the tutorial group feature. It currently has no influence on other areas of Artemis",
                     "changeWarning": "You have changed the timezone. All individually created sessions and tutorial free days will be deleted. Only schedules sessions will be recreated in the new time zone. Are you absolutely sure you want to do this?",
                     "placeholder": "Select a time zone",
                     "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field.",
@@ -194,6 +195,17 @@
                     "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
                     "confirm": "Please enter the title of the tutorial group to confirm."
                 }
+            },
+            "checklist": {
+                "title": "Tutorial Group Checklist",
+                "explanation": "Before you can start using the tutorial groups feature, you must perform some configuration steps",
+                "timeZone": "The course has a time zone configured",
+                "timeZoneExplanation": "The course needs a time zone configured so that the tutorial groups can be scheduled correctly according to that time zone.",
+                "editCourse": "Edit Course",
+                "configurationExplanation": "The course needs a course wide configuration for the tutorial groups. This configuration contains default settings for all tutorial groups.",
+                "configuration": "The course has a tutorial group configuration",
+                "createConfiguration": "Create Configuration",
+                "continueToManagement": "Continue to Tutorial Group Management"
             },
             "createTutorialGroup": {
                 "title": "Create Tutorial Group"

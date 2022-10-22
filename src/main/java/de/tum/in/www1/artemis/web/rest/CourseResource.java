@@ -46,6 +46,7 @@ import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -96,10 +97,13 @@ public class CourseResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
             AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService,
-            ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService) {
+            ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
+            TutorialGroupsConfigurationService tutorialGroupsConfigurationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -112,6 +116,7 @@ public class CourseResource {
         this.assessmentDashboardService = assessmentDashboardService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
+        this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
     }
 
     /**
@@ -174,6 +179,9 @@ public class CourseResource {
         }
 
         var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(updatedCourse.getId());
+
+        var timeZoneChanged = !existingCourse.getTimeZone().equals(updatedCourse.getTimeZone());
+
         if (!Objects.equals(existingCourse.getShortName(), updatedCourse.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
@@ -245,6 +253,9 @@ public class CourseResource {
                 .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+        if (timeZoneChanged) {
+            tutorialGroupsConfigurationService.onTimeZoneUpdate(result);
+        }
         return ResponseEntity.ok(result);
     }
 

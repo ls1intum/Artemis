@@ -9,10 +9,10 @@ import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
-import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-session-management',
@@ -32,8 +32,7 @@ export class TutorialGroupSessionsManagementComponent implements OnInit {
 
     faPlus = faPlus;
 
-    courseId: number;
-    tutorialGroupsConfiguration: TutorialGroupsConfiguration;
+    course: Course;
     tutorialGroup: TutorialGroup;
     tutorialGroupSchedule: TutorialGroupSchedule;
     upcomingSessions: TutorialGroupSession[] = [];
@@ -48,11 +47,10 @@ export class TutorialGroupSessionsManagementComponent implements OnInit {
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
-                switchMap(([params, data]) => {
+                switchMap(([params, { course }]) => {
                     const tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.courseId = data['course'].id;
-                    this.tutorialGroupsConfiguration = data['course'].tutorialGroupsConfiguration;
-                    return this.tutorialGroupService.getOneOfCourse(this.courseId, tutorialGroupId).pipe(finalize(() => (this.isLoading = false)));
+                    this.course = course;
+                    return this.tutorialGroupService.getOneOfCourse(this.course.id!, tutorialGroupId).pipe(finalize(() => (this.isLoading = false)));
                 }),
                 map((res: HttpResponse<TutorialGroup>) => {
                     return res.body;
@@ -70,8 +68,8 @@ export class TutorialGroupSessionsManagementComponent implements OnInit {
                         }
                         // convert sessions to the configured timezone to not be confusing for the user
                         this.upcomingSessions.forEach((session) => {
-                            session.start = session.start?.tz(this.tutorialGroupsConfiguration.timeZone);
-                            session.end = session.end?.tz(this.tutorialGroupsConfiguration.timeZone);
+                            session.start = session.start?.tz(this.course.timeZone);
+                            session.end = session.end?.tz(this.course.timeZone);
                         });
                     }
                     this.isLoading = false;

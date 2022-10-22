@@ -166,6 +166,7 @@
             "configurationForm": {
                 "timeZoneInput": {
                     "label": "Zeitzone",
+                    "beta": "Die Zeitzone wird momentan nur in Verbindung mit dem Übungsgruppen-Feature verwendet. Sie hat momentan keinen Einfluss auf andere Bereiche von Artemis",
                     "changeWarning": "Die Zeitzone wurde geändert. Alle individuell erstellten Sitzungen und freien Tage werden gelöscht. In der neuen Zeitzone werden nur Sitzungen, die einem Zeitplan folgen neu erstellt. Soll das wirklich gemacht werden?",
                     "placeholder": "Wähle eine Zeitzone aus",
                     "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen um nach einer Zeitzone zu suchen.",
@@ -194,6 +195,17 @@
                     "question": "Sicher, dass die Übungsgruppe mit dem Titel {{ title }} gelöscht werden soll?",
                     "confirm": "Bitte den Titel der Übungsgruppe zur Bestätigung eingeben"
                 }
+            },
+            "checklist": {
+                "title": "Checkliste für Übungsgruppen",
+                "explanation": "Bevor du mit der Nutzung der Übungsgruppenfunktion beginnen kannst, musst du einige Konfigurationsschritte durchführen",
+                "timeZone": "Der Kurs hat eine Zeitzone konfiguriert",
+                "timeZoneExplanation": "Für den Kurs muss eine Zeitzone konfiguriert werden, damit die Übungsgruppen-Termine entsprechend dieser Zeitzone korrekt geplant werden können.",
+                "editCourse": "Kurs bearbeiten",
+                "configurationExplanation": "Der Kurs benötigt eine kursweite Konfiguration für die Übungsgruppen. Diese Konfiguration enthält Standardeinstellungen für alle Übungsgruppen.",
+                "configuration": "Der Kurs hat eine Konfiguration für die Übungsgruppen",
+                "createConfiguration": "Konfiguration erstellen",
+                "continueToManagement": "Weiter zur Übungsgruppenverwaltung"
             },
             "createTutorialGroup": {
                 "title": "Übungsgruppe erstellen"
@@ -266,7 +278,7 @@
                 "title": "Sitzung bearbeiten"
             },
             "createTutorialGroupsConfiguration": {
-                "title": "Globalen Konfiguration erstellen",
+                "title": "Globalen Übungsgruppen Konfiguration erstellen",
                 "explanation": "Bevor Übungsgruppen erstellt werden können, müssen einige Eigenschaften angeben werden, die alle Übungsgruppen betreffen. Dies kann auch später geändert werden."
             },
             "editTutorialGroupsConfiguration": {

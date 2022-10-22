@@ -1330,9 +1330,8 @@ public class ModelFactory {
         return tutorialGroup;
     }
 
-    public static TutorialGroupsConfiguration generateTutorialGroupsConfiguration(String timeZone, LocalDate start, LocalDate end) {
+    public static TutorialGroupsConfiguration generateTutorialGroupsConfiguration(LocalDate start, LocalDate end) {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
-        tutorialGroupsConfiguration.setTimeZone(timeZone);
         tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(start.format(DateTimeFormatter.ISO_LOCAL_DATE));
         tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(end.format(DateTimeFormatter.ISO_LOCAL_DATE));
         return tutorialGroupsConfiguration;

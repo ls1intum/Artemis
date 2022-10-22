@@ -50,6 +50,8 @@ export class Course implements BaseEntity {
     public maxPoints?: number;
     public accuracyOfScores?: number;
     public tutorialGroupsConfiguration?: TutorialGroupsConfiguration;
+    // Note: Currently just used in the scope of the tutorial groups feature
+    public timeZone?: string;
 
     // the following values are only used in course administration
     public numberOfStudents?: number;

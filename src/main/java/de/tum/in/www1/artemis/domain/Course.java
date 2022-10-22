@@ -168,6 +168,12 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Integer accuracyOfScores;
 
+    /**
+     * Note: Currently just used in the scope of the tutorial groups feature
+     */
+    @Column(name = "time_zone")
+    private String timeZone;
+
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -676,6 +682,14 @@ public class Course extends DomainObject {
 
     public void setTutorialGroups(Set<TutorialGroup> tutorialGroups) {
         this.tutorialGroups = tutorialGroups;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
     }
 
     /**

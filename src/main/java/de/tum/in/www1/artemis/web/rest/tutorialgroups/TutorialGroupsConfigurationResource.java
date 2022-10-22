@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Optional;
 
 import javax.validation.Valid;
@@ -68,10 +67,10 @@ public class TutorialGroupsConfigurationResource {
     }
 
     /**
-     * POST /courses/:courseId/tutorial-groups-configuration : creates a new tutorial group configuration for the specified course.
+     * POST /courses/:courseId/tutorial-groups-configuration : creates a new tutorial group configuration for the specified course and sets the timeZone on the course.
      *
-     * @param courseId                    the id of the course to which the tutorial group configuration should be added
-     * @param tutorialGroupsConfiguration the tutorial group configuration that should be created
+     * @param courseId                       the id of the course to which the tutorial group configuration should be added
+     * @param tutorialGroupsConfigurationDTO the tutorial group configuration that should be created and time zone that should be updated on the course
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group configuration
      */
     @PostMapping("/courses/{courseId}/tutorial-groups-configuration")
@@ -95,7 +94,7 @@ public class TutorialGroupsConfigurationResource {
     }
 
     /**
-     * PUT /courses/:courseId/tutorial-groups-configurations/:tutorialGroupsConfigurationId :Upups configuration.
+     * PUT /courses/:courseId/tutorial-groups-configurations/:tutorialGroupsConfigurationId : Update tutorial groups configuration.
      *
      * @param courseId                          the id of the course to which the tutorial groups configuration belongs
      * @param updatedTutorialGroupConfiguration the configuration to update
@@ -112,18 +111,16 @@ public class TutorialGroupsConfigurationResource {
         }
         isValidTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
         var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfiguration.getId());
+        if (configurationFromDatabase.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
         checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
 
-        var timeZoneChanged = !configurationFromDatabase.getTimeZone().equals(updatedTutorialGroupConfiguration.getTimeZone());
         configurationFromDatabase.setTutorialPeriodEndInclusive(updatedTutorialGroupConfiguration.getTutorialPeriodEndInclusive());
         configurationFromDatabase.setTutorialPeriodStartInclusive(updatedTutorialGroupConfiguration.getTutorialPeriodStartInclusive());
-        configurationFromDatabase.setTimeZone(updatedTutorialGroupConfiguration.getTimeZone());
 
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configurationFromDatabase);
-        if (timeZoneChanged) {
-            tutorialGroupConfigurationService.onTimeZoneUpdate(configurationFromDatabase.getCourse(), persistedConfiguration);
-        }
         return ResponseEntity.ok(persistedConfiguration);
     }
 
@@ -133,12 +130,6 @@ public class TutorialGroupsConfigurationResource {
         }
         if (LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive()).isAfter(LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive()))) {
             throw new BadRequestException("Tutorial period start must be before tutorial period end");
-        }
-        try {
-            ZoneId.of(tutorialGroupsConfiguration.getTimeZone());
-        }
-        catch (Exception e) {
-            throw new BadRequestException("Invalid time zone code");
         }
     }
 

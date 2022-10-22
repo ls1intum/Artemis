@@ -1,36 +1,6 @@
 <div class="row">
     <div class="col-12">
         <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
-            <!-- timezone -->
-            <div class="col-auto">
-                <div *ngIf="timeZoneChanged" class="alert alert-danger" role="alert">
-                    {{ 'artemisApp.forms.configurationForm.timeZoneInput.changeWarning' | artemisTranslate }}
-                </div>
-                <label class="form-label" for="timeZone">{{ 'artemisApp.forms.configurationForm.timeZoneInput.label' | artemisTranslate }}</label>
-                <input
-                    required
-                    id="timeZone"
-                    type="text"
-                    class="form-control"
-                    formControlName="timeZone"
-                    [placeholder]="'artemisApp.forms.configurationForm.timeZoneInput.placeholder' | artemisTranslate"
-                    [resultFormatter]="tzResultFormatter"
-                    [inputFormatter]="tzInputFormatter"
-                    [ngbTypeahead]="tzSearch"
-                    [editable]="false"
-                    #timeZoneInput="ngbTypeahead"
-                    (focus)="tzFocus$.next($any($event).target.value)"
-                    (click)="tzClick$.next($any($event).target.value)"
-                />
-                <div class="form-text">
-                    {{ 'artemisApp.forms.configurationForm.timeZoneInput.explanation' | artemisTranslate }}
-                </div>
-                <div *ngIf="timeZoneControl?.invalid && (timeZoneControl?.dirty || timeZoneControl?.touched)" class="alert alert-danger">
-                    <div *ngIf="timeZoneControl?.errors?.required">
-                        {{ 'artemisApp.forms.configurationForm.timeZoneInput.requiredValidationError' | artemisTranslate }}
-                    </div>
-                </div>
-            </div>
             <!-- Period -->
             <div class="col-auto">
                 <label class="form-label" for="period">{{ 'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate }}</label>

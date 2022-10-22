@@ -128,14 +128,6 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
     });
 
-    it('should navigate to configuration creation page if course has no configuration', () => {
-        course.tutorialGroupsConfiguration = undefined;
-        fixture.detectChanges();
-        expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups', 'configuration', 'create']);
-        course.tutorialGroupsConfiguration = configuration;
-    });
-
     it('should navigate to tutorial group detail page when tutorial group click callback is called', () => {
         component.courseId = 1;
         component.onTutorialGroupSelected(tutorialGroupOne);

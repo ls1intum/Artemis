@@ -11,6 +11,7 @@ import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
@@ -51,7 +52,7 @@ public class TutorialGroupScheduleService {
             }
         }
         if (!overlappingIndividualSessions.isEmpty()) {
-            throw new ScheduleOverlapsWithSessionException(overlappingIndividualSessions, ZoneId.of(tutorialGroupsConfiguration.getTimeZone()));
+            throw new ScheduleOverlapsWithSessionException(overlappingIndividualSessions, ZoneId.of(tutorialGroupsConfiguration.getCourse().getTimeZone()));
         }
         tutorialGroupSchedule.setTutorialGroup(tutorialGroup);
         if (tutorialGroupSchedule.getId() != null) {
@@ -67,7 +68,11 @@ public class TutorialGroupScheduleService {
     }
 
     public List<TutorialGroupSession> generateSessions(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroupSchedule tutorialGroupSchedule) {
-        ZoneId timeZone = ZoneId.of(tutorialGroupsConfiguration.getTimeZone());
+        return this.generateSessions(tutorialGroupsConfiguration.getCourse(), tutorialGroupSchedule);
+    }
+
+    public List<TutorialGroupSession> generateSessions(Course course, TutorialGroupSchedule tutorialGroupSchedule) {
+        ZoneId timeZone = ZoneId.of(course.getTimeZone());
         List<TutorialGroupSession> sessions = new ArrayList<>();
         ZonedDateTime periodEnd = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidToInclusive()), TutorialGroupDateUtil.END_OF_DAY, timeZone);
 
@@ -78,7 +83,7 @@ public class TutorialGroupScheduleService {
                 LocalTime.parse(tutorialGroupSchedule.getEndTime()), timeZone);
 
         while (sessionEnd.isBefore(periodEnd) || sessionEnd.isEqual(periodEnd)) {
-            TutorialGroupSession session = generateScheduledSession(tutorialGroupsConfiguration, tutorialGroupSchedule, sessionStart, sessionEnd);
+            TutorialGroupSession session = generateScheduledSession(course, tutorialGroupSchedule, sessionStart, sessionEnd);
             sessions.add(session);
             // add desired number of weeks to the session start and end to find the next session
             sessionStart = sessionStart.plusWeeks(tutorialGroupSchedule.getRepetitionFrequency());
@@ -88,15 +93,14 @@ public class TutorialGroupScheduleService {
     }
 
     @NotNull
-    private TutorialGroupSession generateScheduledSession(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroupSchedule tutorialGroupSchedule,
-            ZonedDateTime sessionStart, ZonedDateTime sessionEnd) {
+    private TutorialGroupSession generateScheduledSession(Course course, TutorialGroupSchedule tutorialGroupSchedule, ZonedDateTime sessionStart, ZonedDateTime sessionEnd) {
         TutorialGroupSession session = new TutorialGroupSession();
         session.setStart(sessionStart);
         session.setEnd(sessionEnd);
         session.setTutorialGroupSchedule(tutorialGroupSchedule);
         session.setTutorialGroup(tutorialGroupSchedule.getTutorialGroup());
 
-        var overlappingPeriod = tutorialGroupFreePeriodService.findOverlappingPeriod(tutorialGroupsConfiguration.getCourse(), session);
+        var overlappingPeriod = tutorialGroupFreePeriodService.findOverlappingPeriod(course, session);
         if (overlappingPeriod.isPresent()) {
             session.setStatus(TutorialGroupSessionStatus.CANCELLED);
             session.setStatusExplanation(overlappingPeriod.get().getReason());

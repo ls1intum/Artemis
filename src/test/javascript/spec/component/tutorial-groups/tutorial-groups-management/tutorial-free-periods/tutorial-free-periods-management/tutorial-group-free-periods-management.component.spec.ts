@@ -21,10 +21,11 @@ import { generateExampleTutorialGroupFreePeriod } from '../../../helpers/tutoria
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { Course } from 'app/entities/course.model';
 
 @Component({ selector: 'jhi-tutorial-group-free-period-row-buttons', template: '' })
 class TutorialGroupRowButtonsStubComponent {
-    @Input() courseId: number;
+    @Input() course: Course;
     @Input() tutorialGroupConfiguration: TutorialGroupsConfiguration;
     @Input() tutorialFreePeriod: TutorialGroupFreePeriod;
 }
@@ -34,6 +35,10 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     let component: TutorialGroupFreePeriodsManagementComponent;
     let configuration: TutorialGroupsConfiguration;
     const courseId = 1;
+    const course = {
+        id: courseId,
+        timeZone: 'Europe/Berlin',
+    } as Course;
     const tutorialGroupConfigurationId = 1;
     let configurationService: TutorialGroupsConfigurationService;
     let findConfigurationSpy: jest.SpyInstance;
@@ -59,7 +64,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
                 MockProvider(AlertService),
                 SortService,
                 { provide: Router, useValue: router },
-                mockedActivatedRoute({ tutorialGroupsConfigurationId: tutorialGroupConfigurationId }, {}, {}, { courseId }),
+                mockedActivatedRoute({ tutorialGroupsConfigurationId: tutorialGroupConfigurationId }, {}, { course }, {}),
             ],
         })
             .compileComponents()

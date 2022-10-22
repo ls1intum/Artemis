@@ -16,6 +16,7 @@ import { generateExampleTutorialGroupsConfiguration, tutorialsGroupsConfiguratio
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { Course } from 'app/entities/course.model';
 
 describe('CreateTutorialGroupsConfigurationComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupsConfigurationComponent>;
@@ -24,6 +25,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
     let courseManagementService: CourseManagementService;
     const course = { id: 1, title: 'Example' };
     const router = new MockRouter();
+    let getCourseSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -39,7 +41,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
-                mockedActivatedRoute({}, {}, { course }, {}),
+                mockedActivatedRoute({ courseId: course.id! }, {}, {}, {}),
             ],
         })
             .compileComponents()
@@ -48,6 +50,12 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
                 component = fixture.componentInstance;
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 courseManagementService = TestBed.inject(CourseManagementService);
+                const response: HttpResponse<Course> = new HttpResponse({
+                    body: course,
+                    status: 201,
+                });
+
+                getCourseSpy = jest.spyOn(courseManagementService, 'find').mockReturnValue(of(response));
             });
     });
 
@@ -58,6 +66,8 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
+        expect(getCourseSpy).toHaveBeenCalledWith(course.id!);
+        expect(getCourseSpy).toHaveBeenCalledOnce();
     });
 
     it('should send POST request upon form submission and navigate', () => {
@@ -87,7 +97,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
         expect(createStub).toHaveBeenCalledOnce();
         expect(createStub).toHaveBeenCalledWith(exampleConfiguration, course.id, formData.period);
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups-checklist']);
         expect(updateCourseSpy).toHaveBeenCalledOnce();
         expect(updateCourseSpy).toHaveBeenCalledWith(component.course);
     });

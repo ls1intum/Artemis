@@ -5,7 +5,7 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupsConfigurationFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
-import { finalize } from 'rxjs/operators';
+import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -28,17 +28,29 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.activatedRoute.data.subscribe(({ course }) => {
-            if (course) {
-                this.course = course;
-            }
-        });
-        this.newTutorialGroupsConfiguration = new TutorialGroupsConfiguration();
+        this.isLoading = true;
+        this.activatedRoute.paramMap
+            .pipe(
+                take(1),
+                switchMap((params) => {
+                    const courseId = Number(params.get('courseId'));
+                    return this.courseManagementService.find(courseId);
+                }),
+                finalize(() => (this.isLoading = false)),
+            )
+            .subscribe({
+                next: (courseResult) => {
+                    if (courseResult.body) {
+                        this.course = courseResult.body;
+                        this.newTutorialGroupsConfiguration = new TutorialGroupsConfiguration();
+                    }
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     createTutorialsGroupConfiguration(formData: TutorialGroupsConfigurationFormData) {
-        const { timeZone, period } = formData;
-        this.newTutorialGroupsConfiguration.timeZone = timeZone ? timeZone : 'Europe/Berlin';
+        const { period } = formData;
         this.isLoading = true;
         this.tutorialGroupsConfigurationService
             .create(this.newTutorialGroupsConfiguration, this.course.id!, period ?? [])
@@ -52,7 +64,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit {
                     const createdConfiguration = resp.body!;
                     this.course.tutorialGroupsConfiguration = createdConfiguration;
                     this.courseManagementService.courseWasUpdated(this.course);
-                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
+                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups-checklist']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

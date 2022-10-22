@@ -47,7 +47,6 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
                     if (tutorialGroupsConfigurationResult.body) {
                         this.tutorialGroupsConfiguration = tutorialGroupsConfigurationResult.body;
                         this.formData = {
-                            timeZone: this.tutorialGroupsConfiguration.timeZone,
                             period: [
                                 this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive!.toDate(),
                                 this.tutorialGroupsConfiguration.tutorialPeriodEndInclusive!.toDate(),
@@ -60,8 +59,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
     }
 
     updateTutorialGroupsConfiguration(formData: TutorialGroupsConfigurationFormData) {
-        const { timeZone, period } = formData;
-        this.tutorialGroupsConfiguration.timeZone = timeZone!;
+        const { period } = formData;
 
         this.isLoading = true;
         this.tutorialGroupsConfigurationService

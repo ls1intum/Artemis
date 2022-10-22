@@ -36,8 +36,8 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         id: courseId,
         tutorialGroupsConfiguration: {
             id: configurationId,
-            timeZone: 'Europe/Berlin',
         },
+        timeZone: 'Europe/Berlin',
     } as Course;
 
     const router = new MockRouter();

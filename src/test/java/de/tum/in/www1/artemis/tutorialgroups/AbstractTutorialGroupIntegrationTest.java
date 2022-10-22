@@ -60,6 +60,9 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     @Autowired
     TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
+    @Autowired
+    TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+
     Long exampleCourseId;
 
     Long exampleConfigurationId;
@@ -110,9 +113,12 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         userRepository.save(student9);
 
         var course = this.database.createCourse();
+        course.setTimeZone(exampleTimeZone);
+        courseRepository.save(course);
+
         exampleCourseId = course.getId();
 
-        exampleConfigurationId = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, exampleTimeZone, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
+        exampleConfigurationId = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
 
         exampleOneTutorialGroupId = databaseUtilService
                 .createTutorialGroup(exampleCourseId, "ExampleTitle1", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH, userRepository.findOneByLogin("tutor1").get(),
@@ -187,7 +193,6 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         tutorialGroupsConfiguration.setCourse(courseRepository.findById(exampleCourseId).get());
         tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(firstAugustMonday.toString());
         tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
-        tutorialGroupsConfiguration.setTimeZone(exampleTimeZone);
         return tutorialGroupsConfiguration;
     }
 
@@ -301,11 +306,10 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         assertThat(tutorialGroupSessionToCheck.getStatusExplanation()).isEqualTo(expectedStatusExplanation);
     }
 
-    void assertConfigurationStructure(TutorialGroupsConfiguration configuration, LocalDate expectedPeriodStart, LocalDate expectedPeriodEnd, String expectedTimeZone) {
+    void assertConfigurationStructure(TutorialGroupsConfiguration configuration, LocalDate expectedPeriodStart, LocalDate expectedPeriodEnd) {
         assertThat(configuration.getCourse().getId()).isEqualTo(exampleCourseId);
         assertThat(LocalDate.parse(configuration.getTutorialPeriodStartInclusive())).isEqualTo(expectedPeriodStart);
         assertThat(LocalDate.parse(configuration.getTutorialPeriodEndInclusive())).isEqualTo(expectedPeriodEnd);
-        assertThat(configuration.getTimeZone()).isEqualTo(expectedTimeZone);
     }
 
 }

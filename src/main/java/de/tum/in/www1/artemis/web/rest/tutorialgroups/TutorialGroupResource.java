@@ -172,6 +172,9 @@ public class TutorialGroupResource {
             throw new BadRequestException("The course has no tutorial groups configuration");
         }
         var configuration = configurationOptional.get();
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
 
         tutorialGroup.setCourse(course);
         trimStringFields(tutorialGroup);
@@ -244,6 +247,9 @@ public class TutorialGroupResource {
             throw new BadRequestException("The course has no tutorial groups configuration");
         }
         var configuration = configurationOptional.get();
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
 
         tutorialGroupScheduleService.updateSchedule(configuration, persistedTutorialGroup, Optional.ofNullable(persistedTutorialGroup.getTutorialGroupSchedule()),
                 Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()));

@@ -12,13 +12,11 @@ import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial
 import { TutorialGroupsConfigurationFormComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
-import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { TutorialGroupFormComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { CancellationModalComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
 import { TutorialGroupSessionRowButtonsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-session-row-buttons/tutorial-group-session-row-buttons.component';
 import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
 import { TutorialGroupFreePeriodFormComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { TutorialGroupsCourseInformationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-course-information/tutorial-groups-course-information.component';
 import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
 import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
@@ -39,6 +37,8 @@ import { TutorialGroupsCourseInformationComponent } from 'app/course/tutorial-gr
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { TutorialGroupsRegistrationImportDialog } from './tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { TutorialGroupsImportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
+import { TutorialGroupsChecklistComponent } from './tutorial-groups-checklist/tutorial-groups-checklist.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [
@@ -51,6 +51,7 @@ import { TutorialGroupsImportButtonComponent } from 'app/course/tutorial-groups/
         OwlDateTimeModule,
         ArtemisTutorialGroupsSharedModule,
         ArtemisSidePanelModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [
         TutorialGroupsManagementComponent,
@@ -79,6 +80,7 @@ import { TutorialGroupsImportButtonComponent } from 'app/course/tutorial-groups/
         TutorialGroupSessionRowComponent,
         TutorialGroupsImportButtonComponent,
         TutorialGroupsRegistrationImportDialog,
+        TutorialGroupsChecklistComponent,
     ],
 })
 export class ArtemisTutorialGroupsManagementModule {}

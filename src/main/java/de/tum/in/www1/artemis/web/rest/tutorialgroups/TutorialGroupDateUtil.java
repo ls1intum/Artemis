@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import java.time.*;
 
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
-
 public class TutorialGroupDateUtil {
 
     /*
@@ -49,26 +47,26 @@ public class TutorialGroupDateUtil {
     }
 
     /**
-     * Convert a LocalDate and LocalTime to a ZonedDateTime by interpreting them in the time zone of the TutorialGroupsConfiguration
+     * Convert a LocalDate and LocalTime to a ZonedDateTime by interpreting them in a specific time zone
      *
-     * @param localDate                   date to convert
-     * @param localTime                   time to convert
-     * @param tutorialGroupsConfiguration configuration to use for the time zone
-     * @return the ZonedDateTime object interpreted in the time zone of the TutorialGroupsConfiguration
+     * @param localDate date to convert
+     * @param localTime time to convert
+     * @param timeZone  time zone to interpret the date and time in
+     * @return the ZonedDateTime object interpreted in the given time zone
      */
-    public static ZonedDateTime interpretInTimeZoneOfConfiguration(LocalDate localDate, LocalTime localTime, TutorialGroupsConfiguration tutorialGroupsConfiguration) {
-        return ZonedDateTime.of(localDate, localTime, ZoneId.of(tutorialGroupsConfiguration.getTimeZone()));
+    public static ZonedDateTime interpretInTimeZone(LocalDate localDate, LocalTime localTime, String timeZone) {
+        return ZonedDateTime.of(localDate, localTime, ZoneId.of(timeZone));
     }
 
     /**
-     * Convert a LocalDateTime to a ZonedDateTime by interpreting them in the time zone of the TutorialGroupsConfiguration
+     * Convert a LocalDateTime to a ZonedDateTime by interpreting them in a specific time zone
      *
-     * @param localDateTime               date and time to convert
-     * @param tutorialGroupsConfiguration configuration to use for the time zone
-     * @return the ZonedDateTime object interpreted in the time zone of the TutorialGroupsConfiguration
+     * @param localDateTime date and time to convert
+     * @param timeZone      time zone to interpret the date and time in
+     * @return the ZonedDateTime object interpreted in the given time zone
      */
-    public static ZonedDateTime interpretInTimeZoneOfConfiguration(LocalDateTime localDateTime, TutorialGroupsConfiguration tutorialGroupsConfiguration) {
-        return interpretInTimeZoneOfConfiguration(localDateTime.toLocalDate(), localDateTime.toLocalTime(), tutorialGroupsConfiguration);
+    public static ZonedDateTime interpretInTimeZone(LocalDateTime localDateTime, String timeZone) {
+        return interpretInTimeZone(localDateTime.toLocalDate(), localDateTime.toLocalTime(), timeZone);
     }
 
     /**

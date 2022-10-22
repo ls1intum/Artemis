@@ -35,13 +35,9 @@ describe('EditTutorialGroupSessionComponent', () => {
     const tutorialGroupId = 2;
     const sessionId = 3;
     const courseId = 5;
-    const configurationId = 7;
     const course = {
         id: courseId,
-        tutorialGroupsConfiguration: {
-            id: configurationId,
-            timeZone,
-        },
+        timeZone,
     } as Course;
 
     beforeEach(() => {

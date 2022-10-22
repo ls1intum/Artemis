@@ -98,13 +98,16 @@ public class TutorialGroupFreePeriodResource {
             throw new BadRequestException("The course has no tutorial groups configuration");
         }
         var configuration = configurationOptional.get();
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
 
         TutorialGroupFreePeriod updatedFreePeriod = new TutorialGroupFreePeriod();
         updatedFreePeriod.setId(existingFreePeriod.getId());
         updatedFreePeriod.setTutorialGroupsConfiguration(configuration);
         updatedFreePeriod.setReason(tutorialGroupFreePeriod.reason);
-        updatedFreePeriod.setStart(interpretInTimeZoneOfConfiguration(tutorialGroupFreePeriod.date, START_OF_DAY, configuration));
-        updatedFreePeriod.setEnd(interpretInTimeZoneOfConfiguration(tutorialGroupFreePeriod.date, END_OF_DAY, configuration));
+        updatedFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.date, START_OF_DAY, configuration.getCourse().getTimeZone()));
+        updatedFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.date, END_OF_DAY, configuration.getCourse().getTimeZone()));
         isValidTutorialGroupPeriod(updatedFreePeriod);
 
         // activate previously cancelled sessions
@@ -134,14 +137,17 @@ public class TutorialGroupFreePeriodResource {
                 courseId);
         TutorialGroupsConfiguration tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository
                 .findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
+        if (tutorialGroupsConfiguration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupsConfiguration.getCourse(), null);
 
         TutorialGroupFreePeriod newTutorialGroupFreePeriod = new TutorialGroupFreePeriod();
         newTutorialGroupFreePeriod.setTutorialGroupsConfiguration(tutorialGroupsConfiguration);
         newTutorialGroupFreePeriod.setReason(tutorialGroupFreePeriod.reason);
 
-        newTutorialGroupFreePeriod.setStart(interpretInTimeZoneOfConfiguration(tutorialGroupFreePeriod.date, START_OF_DAY, tutorialGroupsConfiguration));
-        newTutorialGroupFreePeriod.setEnd(interpretInTimeZoneOfConfiguration(tutorialGroupFreePeriod.date, END_OF_DAY, tutorialGroupsConfiguration));
+        newTutorialGroupFreePeriod.setStart(interpretInTimeZone(tutorialGroupFreePeriod.date, START_OF_DAY, tutorialGroupsConfiguration.getCourse().getTimeZone()));
+        newTutorialGroupFreePeriod.setEnd(interpretInTimeZone(tutorialGroupFreePeriod.date, END_OF_DAY, tutorialGroupsConfiguration.getCourse().getTimeZone()));
 
         checkEntityIdMatchesPathIds(newTutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         isValidTutorialGroupPeriod(newTutorialGroupFreePeriod);

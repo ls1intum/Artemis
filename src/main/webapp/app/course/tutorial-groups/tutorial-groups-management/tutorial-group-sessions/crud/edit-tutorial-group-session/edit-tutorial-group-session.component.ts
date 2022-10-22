@@ -10,7 +10,7 @@ import { finalize, map, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
-import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-session',
@@ -20,10 +20,9 @@ export class EditTutorialGroupSessionComponent implements OnInit {
     isLoading = false;
     session: TutorialGroupSession;
     formData: TutorialGroupSessionFormData;
-    courseId: number;
+    course: Course;
     tutorialGroupId: number;
     sessionId: number;
-    tutorialGroupsConfiguration: TutorialGroupsConfiguration;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -39,12 +38,11 @@ export class EditTutorialGroupSessionComponent implements OnInit {
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
-                switchMap(([params, data]) => {
+                switchMap(([params, { course }]) => {
                     this.sessionId = Number(params.get('sessionId'));
                     this.tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.courseId = data['course'].id;
-                    this.tutorialGroupsConfiguration = data['course'].tutorialGroupsConfiguration;
-                    return this.tutorialGroupSessionService.getOneOfTutorialGroup(this.courseId, this.tutorialGroupId, this.sessionId);
+                    this.course = course;
+                    return this.tutorialGroupSessionService.getOneOfTutorialGroup(this.course.id!, this.tutorialGroupId, this.sessionId);
                 }),
                 map((res: HttpResponse<TutorialGroupSession>) => res.body),
                 finalize(() => (this.isLoading = false)),
@@ -54,9 +52,9 @@ export class EditTutorialGroupSessionComponent implements OnInit {
                     if (session) {
                         this.session = session;
                         this.formData = {
-                            date: session.start?.tz(this.tutorialGroupsConfiguration.timeZone).toDate(),
-                            startTime: session.start?.tz(this.tutorialGroupsConfiguration.timeZone).format('HH:mm:ss'),
-                            endTime: session.end?.tz(this.tutorialGroupsConfiguration.timeZone).format('HH:mm:ss'),
+                            date: session.start?.tz(this.course.timeZone).toDate(),
+                            startTime: session.start?.tz(this.course.timeZone).format('HH:mm:ss'),
+                            endTime: session.end?.tz(this.course.timeZone).format('HH:mm:ss'),
                             location: session.location,
                         };
                     }
@@ -78,7 +76,7 @@ export class EditTutorialGroupSessionComponent implements OnInit {
         this.isLoading = true;
 
         this.tutorialGroupSessionService
-            .update(this.courseId, this.tutorialGroupId, this.sessionId, tutorialGroupSessionDTO)
+            .update(this.course.id!, this.tutorialGroupId, this.sessionId, tutorialGroupSessionDTO)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -86,7 +84,7 @@ export class EditTutorialGroupSessionComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups', this.tutorialGroupId, 'sessions']);
+                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups', this.tutorialGroupId, 'sessions']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
