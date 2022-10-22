@@ -519,6 +519,19 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Checks if a user is allowed to modify the sessions of a tutorial group
+     *
+     * @param tutorialGroup the tutorial group for which to check permission
+     * @param user          the user for which to check permission
+     */
+    public void isAllowedToModifySessionsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
+        // ToDo: Clarify if this is the correct permission check
+        if (!isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+            throw new AccessForbiddenException("The user is not allowed to modify the sessions of tutorial group: " + tutorialGroup.getId());
+        }
+    }
+
+    /**
      * NOTE: this method should only be used in a REST Call context, when the SecurityContext is correctly setup.
      * Preferably use the method isAdmin(user) below
      * <p>

@@ -69,22 +69,17 @@ public class TutorialGroupSessionResource {
      * @return ResponseEntity with status 200 (OK) and with body the tutorial group session
      */
     @GetMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> getOneOfTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
         log.debug("REST request to get session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var session = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, session.getTutorialGroup().getCourse(), null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, session.getTutorialGroup().getCourse(), null);
         checkEntityIdMatchesPathIds(session, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
-        // prevent circular to json conversion
-        if (session.getTutorialGroupSchedule() != null) {
-            session.getTutorialGroupSchedule().setTutorialGroupSessions(null);
+        if (!authorizationCheckService.isAllowedToSeePrivateTutorialGroupInformation(session.getTutorialGroup(), null)) {
+            session.hidePrivacySensitiveInformation();
         }
-        if (session.getTutorialGroup() != null) {
-            session.getTutorialGroup().setTutorialGroupSessions(null);
-            session.getTutorialGroup().setTutorialGroupSchedule(null);
-        }
-        return ResponseEntity.ok().body(session);
+        return ResponseEntity.ok().body(session.preventCircularJsonConversion());
     }
 
     /**
@@ -97,7 +92,7 @@ public class TutorialGroupSessionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group session
      */
     @PutMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('TA')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestBody @Valid TutorialGroupSessionDTO tutorialGroupSessionDTO) {
@@ -106,7 +101,7 @@ public class TutorialGroupSessionResource {
 
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sessionToUpdate.getTutorialGroup().getCourse(), null);
+        authorizationCheckService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), null);
         var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourse_Id(courseId);
         if (configurationOptional.isEmpty()) {
             throw new BadRequestException("The course has no tutorial groups configuration");
@@ -144,7 +139,7 @@ public class TutorialGroupSessionResource {
 
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(result.preventCircularJsonConversion());
     }
 
     /**
@@ -156,13 +151,13 @@ public class TutorialGroupSessionResource {
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('TA')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> deleteSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
         log.debug("REST request to delete session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionFromDatabase = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sessionFromDatabase.getTutorialGroup().getCourse(), null);
+        authorizationCheckService.isAllowedToChangeRegistrationsOfTutorialGroup(sessionFromDatabase.getTutorialGroup(), null);
         tutorialGroupSessionRepository.deleteById(sessionId);
         return ResponseEntity.noContent().build();
     }
@@ -176,14 +171,14 @@ public class TutorialGroupSessionResource {
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group session
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('TA')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
             @RequestBody @Valid TutorialGroupSessionDTO tutorialGroupSessionDTO) throws URISyntaxException {
         log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
         tutorialGroupSessionDTO.validityCheck();
         var tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(tutorialGroupId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroup.getCourse(), null);
+        authorizationCheckService.isAllowedToModifySessionsOfTutorialGroup(tutorialGroup, null);
         var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourse_Id(courseId);
         if (configurationOptional.isEmpty()) {
             throw new BadRequestException("The course has no tutorial groups configuration");
@@ -207,9 +202,10 @@ public class TutorialGroupSessionResource {
             newSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
             newSession.setStatusExplanation(null);
         }
-        tutorialGroupSessionRepository.save(newSession);
+        newSession = tutorialGroupSessionRepository.save(newSession);
 
-        return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId())).body(newSession);
+        return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
+                .body(newSession.preventCircularJsonConversion());
     }
 
     /**
@@ -222,20 +218,20 @@ public class TutorialGroupSessionResource {
      * @return ResponseEntity with status 200 (OK) and in the body the cancelled tutorial group session
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('TA')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> cancel(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestBody TutorialGroupStatusDTO tutorialGroupStatusDTO) throws URISyntaxException {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToCancel = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sessionToCancel.getTutorialGroup().getCourse(), null);
+        authorizationCheckService.isAllowedToModifySessionsOfTutorialGroup(sessionToCancel.getTutorialGroup(), null);
         sessionToCancel.setStatus(TutorialGroupSessionStatus.CANCELLED);
         if (tutorialGroupStatusDTO != null && tutorialGroupStatusDTO.status_explanation() != null && tutorialGroupStatusDTO.status_explanation().trim().length() > 0) {
             sessionToCancel.setStatusExplanation(tutorialGroupStatusDTO.status_explanation().trim());
         }
         sessionToCancel = tutorialGroupSessionRepository.save(sessionToCancel);
-        return ResponseEntity.ok().body(sessionToCancel);
+        return ResponseEntity.ok().body(sessionToCancel.preventCircularJsonConversion());
     }
 
     /**
@@ -247,18 +243,17 @@ public class TutorialGroupSessionResource {
      * @return ResponseEntity with status 200 (OK) and in the body the activated tutorial group session
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('TA')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> activate(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) throws URISyntaxException {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToActivate, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.ofNullable(sessionId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sessionToActivate.getTutorialGroup().getCourse(), null);
+        authorizationCheckService.isAllowedToModifySessionsOfTutorialGroup(sessionToActivate.getTutorialGroup(), null);
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
         sessionToActivate.setStatusExplanation(null);
         sessionToActivate = tutorialGroupSessionRepository.save(sessionToActivate);
-        sessionToActivate = tutorialGroupSessionRepository.save(sessionToActivate);
-        return ResponseEntity.ok().body(sessionToActivate);
+        return ResponseEntity.ok().body(sessionToActivate.preventCircularJsonConversion());
     }
 
     private void checkEntityIdMatchesPathIds(TutorialGroupSession tutorialGroupSession, Optional<Long> courseId, Optional<Long> tutorialGroupId, Optional<Long> sessionId) {

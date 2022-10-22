@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -111,5 +112,30 @@ public class TutorialGroupSession extends DomainObject {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    /**
+     * Hides privacy sensitive information.
+     */
+    public void hidePrivacySensitiveInformation() {
+        if (this.tutorialGroup != null) {
+            this.tutorialGroup.hidePrivacySensitiveInformation();
+        }
+    }
+
+    /**
+     * Removes circular references for JSON serialization.
+     */
+    public TutorialGroupSession preventCircularJsonConversion() {
+        // prevent circular to json conversion
+        if (Hibernate.isInitialized(this.tutorialGroupSchedule) && this.tutorialGroupSchedule != null) {
+            this.getTutorialGroupSchedule().setTutorialGroupSessions(null);
+            this.getTutorialGroupSchedule().setTutorialGroup(null);
+        }
+        if (Hibernate.isInitialized(this.tutorialGroup) && this.tutorialGroup != null) {
+            this.getTutorialGroup().setTutorialGroupSessions(null);
+            this.getTutorialGroup().setTutorialGroupSchedule(null);
+        }
+        return this;
     }
 }

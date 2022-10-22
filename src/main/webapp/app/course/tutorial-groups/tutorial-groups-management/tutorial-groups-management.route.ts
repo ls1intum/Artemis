@@ -94,7 +94,7 @@ export const tutorialGroupManagementRoutes: Routes = [
         path: ':tutorialGroupId/sessions/create',
         component: CreateTutorialGroupSessionComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.pages.createTutorialSession.title',
         },
         canActivate: [UserRouteAccessService],
@@ -103,7 +103,7 @@ export const tutorialGroupManagementRoutes: Routes = [
         path: ':tutorialGroupId/sessions/:sessionId/edit',
         component: EditTutorialGroupSessionComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.pages.editTutorialSession.title',
         },
         canActivate: [UserRouteAccessService],
@@ -112,7 +112,7 @@ export const tutorialGroupManagementRoutes: Routes = [
         path: ':tutorialGroupId/sessions',
         component: TutorialGroupSessionsManagementComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.pages.tutorialGroupSessionManagement.title',
         },
         canActivate: [UserRouteAccessService],
