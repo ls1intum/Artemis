@@ -84,15 +84,40 @@ export class TutorialGroupsService {
         return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' });
     }
 
-    private convertTutorialGroupDatesFromServer(tutorialGroup: TutorialGroup): TutorialGroup {
+    convertTutorialGroupArrayDatesFromServer(tutorialGroups: TutorialGroup[]): TutorialGroup[] {
+        if (tutorialGroups) {
+            tutorialGroups.forEach((tutorialGroup: TutorialGroup) => {
+                this.convertTutorialGroupDatesFromServer(tutorialGroup);
+            });
+        }
+        return tutorialGroups;
+    }
+
+    convertTutorialGroupDatesFromServer(tutorialGroup: TutorialGroup): TutorialGroup {
         if (tutorialGroup.tutorialGroupSchedule) {
             tutorialGroup.tutorialGroupSchedule.validFromInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validFromInclusive);
             tutorialGroup.tutorialGroupSchedule.validToInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validToInclusive);
         }
+        if (tutorialGroup.tutorialGroupSessions) {
+            tutorialGroup.tutorialGroupSessions.map((tutorialGroupSession: TutorialGroupSession) =>
+                this.tutorialGroupSessionService.convertTutorialGroupSessionDatesFromServer(tutorialGroupSession),
+            );
+        }
+
+        if (tutorialGroup.nextSession) {
+            tutorialGroup.nextSession = this.tutorialGroupSessionService.convertTutorialGroupSessionDatesFromServer(tutorialGroup.nextSession);
+        }
+
+        if (tutorialGroup.course?.tutorialGroupsConfiguration) {
+            tutorialGroup.course.tutorialGroupsConfiguration = this.tutorialGroupsConfigurationService.convertTutorialGroupsConfigurationDatesFromServer(
+                tutorialGroup.course?.tutorialGroupsConfiguration,
+            );
+        }
+
         return tutorialGroup;
     }
 
-    private convertTutorialGroupResponseDatesFromServer(res: HttpResponse<TutorialGroup>): HttpResponse<TutorialGroup> {
+    convertTutorialGroupResponseDatesFromServer(res: HttpResponse<TutorialGroup>): HttpResponse<TutorialGroup> {
         if (res.body?.tutorialGroupSchedule) {
             res.body.tutorialGroupSchedule.validFromInclusive = convertDateFromServer(res.body.tutorialGroupSchedule.validFromInclusive);
             res.body.tutorialGroupSchedule.validToInclusive = convertDateFromServer(res.body.tutorialGroupSchedule.validToInclusive);
@@ -102,6 +127,9 @@ export class TutorialGroupsService {
                 this.tutorialGroupSessionService.convertTutorialGroupSessionDatesFromServer(tutorialGroupSession),
             );
         }
+        if (res.body?.nextSession) {
+            res.body.nextSession = this.tutorialGroupSessionService.convertTutorialGroupSessionDatesFromServer(res?.body.nextSession);
+        }
         if (res.body?.course?.tutorialGroupsConfiguration) {
             res.body.course.tutorialGroupsConfiguration = this.tutorialGroupsConfigurationService.convertTutorialGroupsConfigurationDatesFromServer(
                 res.body?.course?.tutorialGroupsConfiguration,
@@ -110,7 +138,7 @@ export class TutorialGroupsService {
         return res;
     }
 
-    private convertTutorialGroupResponseArrayDatesFromServer(res: HttpResponse<TutorialGroup[]>): HttpResponse<TutorialGroup[]> {
+    convertTutorialGroupResponseArrayDatesFromServer(res: HttpResponse<TutorialGroup[]>): HttpResponse<TutorialGroup[]> {
         if (res.body) {
             res.body.forEach((tutorialGroup: TutorialGroup) => {
                 this.convertTutorialGroupDatesFromServer(tutorialGroup);
@@ -119,7 +147,7 @@ export class TutorialGroupsService {
         return res;
     }
 
-    private convertTutorialGroupDatesFromClient(tutorialGroup: TutorialGroup): TutorialGroup {
+    convertTutorialGroupDatesFromClient(tutorialGroup: TutorialGroup): TutorialGroup {
         if (tutorialGroup.tutorialGroupSchedule) {
             return Object.assign({}, tutorialGroup, {
                 tutorialGroupSchedule: Object.assign({}, tutorialGroup.tutorialGroupSchedule, {

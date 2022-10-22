@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
@@ -20,6 +18,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 
 @Entity
 @Table(name = "tutorial_group")
@@ -99,6 +98,13 @@ public class TutorialGroup extends DomainObject {
     @Transient
     @JsonSerialize
     private String courseTitle;
+
+    /**
+     * This transient field is set to the next session of this tutorial group
+     */
+    @Transient
+    @JsonSerialize
+    private TutorialGroupSession nextSession;
 
     @OneToOne(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "tutorialGroup")
@@ -259,6 +265,14 @@ public class TutorialGroup extends DomainObject {
         this.courseTitle = courseTitle;
     }
 
+    public TutorialGroupSession getNextSession() {
+        return nextSession;
+    }
+
+    public void setNextSession(TutorialGroupSession nextSession) {
+        this.nextSession = nextSession;
+    }
+
     /**
      * Sets the transient fields for the given user.
      *
@@ -288,6 +302,16 @@ public class TutorialGroup extends DomainObject {
         else {
             this.setTeachingAssistantName(null);
         }
+
+        if (Hibernate.isInitialized(tutorialGroupSessions) && tutorialGroupSessions != null) {
+            // determine the next session
+            var nextSession = tutorialGroupSessions.stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
+                    .filter(session -> session.getStart().isAfter(ZonedDateTime.now())).min(Comparator.comparing(TutorialGroupSession::getStart)).orElse(null);
+            this.setNextSession(nextSession);
+        }
+        else {
+            this.setNextSession(null);
+        }
     }
 
     /**
@@ -297,6 +321,20 @@ public class TutorialGroup extends DomainObject {
         this.setRegistrations(null);
         this.setTeachingAssistant(null);
         this.setCourse(null);
+    }
+
+    /**
+     * Removes circular references for JSON serialization.
+     */
+    public TutorialGroup preventCircularJsonConversion() {
+        // prevent circular to json conversion
+        if (Hibernate.isInitialized(this.tutorialGroupSchedule) && this.tutorialGroupSchedule != null) {
+            this.getTutorialGroupSchedule().setTutorialGroup(null);
+        }
+        if (Hibernate.isInitialized(this.tutorialGroupSessions) && this.tutorialGroupSessions != null) {
+            this.getTutorialGroupSessions().forEach(tutorialGroupSession -> tutorialGroupSession.setTutorialGroup(null));
+        }
+        return this;
     }
 
 }

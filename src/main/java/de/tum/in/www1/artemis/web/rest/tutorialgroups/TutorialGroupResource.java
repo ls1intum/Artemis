@@ -10,7 +10,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.ws.rs.BadRequestException;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -150,11 +149,6 @@ public class TutorialGroupResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
         var tutorialGroups = tutorialGroupService.findAllForCourse(course, user);
-
-        for (var tutorialGroup : tutorialGroups) {
-            this.preventCircularJsonConversion(tutorialGroup);
-        }
-
         return ResponseEntity.ok(new ArrayList<>(tutorialGroups));
     }
 
@@ -174,7 +168,6 @@ public class TutorialGroupResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         var tutorialGroup = tutorialGroupService.getOneOfCourse(course, user, tutorialGroupId);
-        this.preventCircularJsonConversion(tutorialGroup);
         return ResponseEntity.ok().body(tutorialGroup);
     }
 
@@ -227,9 +220,8 @@ public class TutorialGroupResource {
             taFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(persistedTutorialGroup, user, responsibleUser));
         }
 
-        this.preventCircularJsonConversion(persistedTutorialGroup);
-
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId())).body(persistedTutorialGroup);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
+                .body(persistedTutorialGroup.preventCircularJsonConversion());
     }
 
     /**
@@ -325,9 +317,7 @@ public class TutorialGroupResource {
         tutorialGroupScheduleService.updateSchedule(configuration, persistedTutorialGroup, Optional.ofNullable(persistedTutorialGroup.getTutorialGroupSchedule()),
                 Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()));
 
-        this.preventCircularJsonConversion(persistedTutorialGroup);
-
-        return ResponseEntity.ok(persistedTutorialGroup);
+        return ResponseEntity.ok(persistedTutorialGroup.preventCircularJsonConversion());
     }
 
     /**
@@ -446,16 +436,6 @@ public class TutorialGroupResource {
         originalTutorialGroup.setIsOnline(sourceTutorialGroup.getIsOnline());
         originalTutorialGroup.setLanguage(sourceTutorialGroup.getLanguage());
         originalTutorialGroup.setCampus(sourceTutorialGroup.getCampus());
-    }
-
-    private void preventCircularJsonConversion(TutorialGroup tutorialGroup) {
-        // prevent circular to json conversion
-        if (Hibernate.isInitialized(tutorialGroup.getTutorialGroupSchedule()) && tutorialGroup.getTutorialGroupSchedule() != null) {
-            tutorialGroup.getTutorialGroupSchedule().setTutorialGroup(null);
-        }
-        if (Hibernate.isInitialized(tutorialGroup.getTutorialGroupSessions()) && tutorialGroup.getTutorialGroupSessions() != null) {
-            tutorialGroup.getTutorialGroupSessions().forEach(tutorialGroupSession -> tutorialGroupSession.setTutorialGroup(null));
-        }
     }
 
     private void checkEntityIdMatchesPathIds(TutorialGroup tutorialGroup, Optional<Long> courseId, Optional<Long> tutorialGroupId) {

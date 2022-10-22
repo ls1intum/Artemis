@@ -354,13 +354,14 @@ public class TutorialGroupService {
      * @return A list of tutorial groups for the given course with the transient properties set for the given user.
      */
     public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user) {
-        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(course.getId());
+        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrationsAndSessions(course.getId());
         tutorialGroups.forEach(tutorialGroup -> tutorialGroup.setTransientPropertiesForUser(user));
         tutorialGroups.forEach(tutorialGroup -> {
             if (!authorizationCheckService.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
                 tutorialGroup.hidePrivacySensitiveInformation();
             }
         });
+        tutorialGroups.forEach(TutorialGroup::preventCircularJsonConversion);
         return tutorialGroups;
     }
 
@@ -381,7 +382,7 @@ public class TutorialGroupService {
         if (!authorizationCheckService.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
             tutorialGroup.hidePrivacySensitiveInformation();
         }
-        return tutorialGroup;
+        return tutorialGroup.preventCircularJsonConversion();
     }
 
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {

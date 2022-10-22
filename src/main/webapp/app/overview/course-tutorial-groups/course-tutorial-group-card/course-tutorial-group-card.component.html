@@ -5,8 +5,11 @@
     <div class="card-body">
         <div class="d-flex justify-content-center align-items-center">
             <fa-icon [icon]="faPersonChalkboard" size="2x"></fa-icon>
-            <!-- ToDo: Show Date of next session in the card body when session managment is merged-->
-            <p *ngIf="upcomingSession" class="card-text"></p>
+            <span *ngIf="tutorialGroup.nextSession" class="ms-2 card-text">
+                {{ tutorialGroup.nextSession.start | artemisDate: 'long-date':false }}
+                {{ tutorialGroup.nextSession.start | artemisDate: 'time':false! }} -
+                {{ tutorialGroup.nextSession.end | artemisDate: 'time':false! }}
+            </span>
         </div>
     </div>
     <div class="card-footer">

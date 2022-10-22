@@ -20,6 +20,7 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { convertDateFromClient } from 'app/utils/date.utils';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -39,6 +40,7 @@ export class CourseManagementService {
         private accountService: AccountService,
         private entityTitleService: EntityTitleService,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
+        private tutorialGroupsService: TutorialGroupsService,
     ) {}
 
     /**
@@ -428,6 +430,7 @@ export class CourseManagementService {
      * @private
      */
     private processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
+        this.convertTutorialGroupDatesFromServer(courseRes);
         this.convertTutorialGroupConfigurationDateFromServer(courseRes);
         this.convertCourseResponseDateFromServer(courseRes);
         this.setLearningGoalsIfNone(courseRes);
@@ -464,6 +467,13 @@ export class CourseManagementService {
             startDate: convertDateFromClient(course.startDate),
             endDate: convertDateFromClient(course.endDate),
         });
+    }
+
+    private convertTutorialGroupDatesFromServer(courseRes: EntityResponseType): EntityResponseType {
+        if (courseRes.body?.tutorialGroups) {
+            courseRes.body.tutorialGroups = this.tutorialGroupsService.convertTutorialGroupArrayDatesFromServer(courseRes.body.tutorialGroups);
+        }
+        return courseRes;
     }
 
     private convertTutorialGroupConfigurationDateFromServer(courseRes: EntityResponseType): EntityResponseType {
