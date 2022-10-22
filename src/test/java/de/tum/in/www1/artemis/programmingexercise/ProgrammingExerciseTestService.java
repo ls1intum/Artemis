@@ -1848,8 +1848,10 @@ public class ProgrammingExerciseTestService {
         String zip = exportStudentRequestedRepository(exerciseRepo, HttpStatus.OK, false);
         assertThat(zip).isNotNull();
 
+        // Test include tests but not allowed
         exportStudentRequestedRepository(exerciseRepo, HttpStatus.FORBIDDEN, true);
 
+        // Test include tests
         exercise.setReleaseTestsAfterDueDate(true);
         programmingExerciseRepository.save(exercise);
 

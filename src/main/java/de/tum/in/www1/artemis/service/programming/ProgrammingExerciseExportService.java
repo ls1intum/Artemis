@@ -409,7 +409,7 @@ public class ProgrammingExerciseExportService {
         try {
             gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUrl(), clonePath, true);
             String assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(exercise.getProgrammingLanguage());
-            gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUrl(), clonePath.resolve(assignmentPath), true);
+            gitService.getOrCheckoutRepository(exercise.getVcsSolutionRepositoryUrl(), clonePath.resolve(assignmentPath), true);
             for (AuxiliaryRepository auxRepo : exercise.getAuxiliaryRepositoriesForBuildPlan()) {
                 gitService.getOrCheckoutRepository(auxRepo.getVcsRepositoryUrl(), clonePath.resolve(auxRepo.getCheckoutDirectory()), true);
             }

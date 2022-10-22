@@ -24,6 +24,9 @@ export class ProgrammingExerciseInstructorRepoDownloadComponent {
     @Input()
     auxiliaryRepositoryId: number;
 
+    @Input()
+    title = 'artemisApp.programmingExercise.export.downloadRepo';
+
     // Icons
     faDownload = faDownload;
 

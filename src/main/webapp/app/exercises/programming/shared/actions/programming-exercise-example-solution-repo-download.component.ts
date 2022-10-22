@@ -7,11 +7,11 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercise
     templateUrl: './programming-exercise-instructor-repo-download.component.html',
 })
 export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends ProgrammingExerciseInstructorRepoDownloadComponent {
-    @Input() includeTests: boolean;
+    @Input() includeTests?: boolean;
 
     exportRepository() {
         if (this.exerciseId) {
-            this.programmingExerciseService.exportStudentRequestedRepository(this.exerciseId, this.includeTests).subscribe((response) => {
+            this.programmingExerciseService.exportStudentRequestedRepository(this.exerciseId, this.includeTests ?? false).subscribe((response) => {
                 downloadZipFileFromResponse(response);
                 this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
             });

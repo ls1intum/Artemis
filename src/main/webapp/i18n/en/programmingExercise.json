@@ -232,6 +232,8 @@
             },
             "export": {
                 "downloadRepo": "Download Repo",
+                "downloadExampleSolution": "Download example solution",
+                "downloadTests": "Download tests",
                 "downloadExercise": "Download Exercise",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
