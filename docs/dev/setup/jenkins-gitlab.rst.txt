@@ -1,7 +1,7 @@
-Setup for Programming Exercises with Jenkins and GitLab
-=======================================================
+Jenkins and GitLab Setup
+------------------------
 
-This page describes how to set up a programming exercise environment
+This section describes how to set up a programming exercise environment
 based on Jenkins and GitLab. Optional commands are in curly brackets ``{}``.
 
 The following assumes that all instances run on separate servers. If you
@@ -20,12 +20,12 @@ GitLab,** ``8082`` **for Jenkins,** ``8080`` **for Artemis)**
 
  Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Preferences -> Resources`` and restart Docker.
 
-.. contents:: Content of this document
+.. contents:: Content of this section
     :local:
-    :depth: 2
+    :depth: 3
 
 Artemis
--------
+^^^^^^^
 
 In order to use Artemis with Jenkins as **Continuous Integration**
 Server and Gitlab as **Version Control** Server, you have to configure
@@ -33,7 +33,8 @@ the file ``application-prod.yml`` (Production Server) or
 ``application-artemis.yml`` (Local Development) accordingly. Please note
 that all values in ``<..>`` have to be configured properly. These values
 will be explained below in the corresponding sections. If you want to set up a local environment, copy the values
-below into your ``application-artemis.yml`` or ``application-local.yml`` file (the latter is recommended), and follow the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
+below into your ``application-artemis.yml`` or ``application-local.yml`` file (the latter is recommended), and follow
+the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
 
 .. code:: yaml
 
@@ -87,14 +88,14 @@ In addition, you have to start Artemis with the profiles ``gitlab`` and
 
    --spring.profiles.active=dev,jenkins,gitlab,artemis,scheduling
 
-Please read :doc:`../setup` for more details.
+Please read :ref:`Server Setup` for more details.
 
 For a local setup on Windows you can use `http://host.docker.internal` appended
 by the chosen ports as the version-control and continuous-integration url.
 
 Make sure to change the ``server.url`` value in ``application-dev.yml``
 or ``application-prod.yml`` accordingly. This value will be used for the
-communication hooks from Gitlab to Artemis and from Jenkins to Artemis.
+communication hooks from GitLab to Artemis and from Jenkins to Artemis.
 In case you use a different port than 80 (http) or 443 (https) for the
 communication, you have to append it to the ``server.url`` value,
 e.g. \ ``127.0.0.1:8080``.
@@ -103,7 +104,7 @@ When you start Artemis for the first time, it will automatically create
 an admin user.
 
 **Note:** Sometimes Artemis does not generate the admin user which may lead to a startup
-error. You will have to create the user manually in the MySQL database and in Gitlab. Make sure
+error. You will have to create the user manually in the MySQL database and in GitLab. Make sure
 both are set up correctly and follow these steps:
 
 1.  Use the tool mentioned above to generate a password hash.
@@ -128,42 +129,51 @@ both are set up correctly and follow these steps:
 4. Create a user in Gitlab (``http://your-gitlab-domain/admin/users/new``) and make sure that the username,
 email, and password are the same as the user from the database:
 
-.. figure:: jenkins-gitlab/gitlab_admin_user.png
+.. figure:: setup/jenkins-gitlab/gitlab_admin_user.png
 
 Starting the Artemis server should now succeed.
 
 GitLab
-------
+^^^^^^
 
-Gitlab Server Quickstart
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+GitLab Server Quickstart
+""""""""""""""""""""""""
 
-The following steps describes how to set up the Gitlab server in a semi-automated way.
-This is ideal as a quickstart for developers. For a more detailed setup, see `Manual Gitlab Server Setup <#gitlab-server-setup>`__.
-In a production setup, you have to at least change the root password (by either specifying it in step 1 or extracting the random password in step 2) and generate random access tokens (instead of the pre-defined values).
-Set the variable ``GENERATE_ACCESS_TOKENS`` to ``true`` in the ``gitlab-local-setup.sh`` script and use the generated tokens instead of the predefined ones.
+The following steps describes how to set up the GitLab server in a semi-automated way.
+This is ideal as a quickstart for developers. For a more detailed setup, see
+`Manual Gitlab Server Setup <#gitlab-server-setup>`__.
+In a production setup, you have to at least change the root password (by either specifying it in step 1 or extracting
+the random password in step 2) and generate random access tokens (instead of the pre-defined values).
+Set the variable ``GENERATE_ACCESS_TOKENS`` to ``true`` in the ``gitlab-local-setup.sh`` script and use the generated
+tokens instead of the predefined ones.
 
-1. Start the Gitlab container defined in `src/main/docker/gitlab-jenkins-mysql.yml` by running
+1. Start the GitLab container defined in `src/main/docker/gitlab-jenkins-mysql.yml` by running
 
    ::
 
         GITLAB_ROOT_PASSWORD=artemis_admin docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build -d gitlab
 
-   If you want to generate a random password for the ``root`` user, remove the part before ``docker-compose`` from the command.
+   If you want to generate a random password for the ``root`` user, remove the part before ``docker-compose`` from
+   the command.
 
-   The file uses the `GITLAB_OMNIBUS_CONFIG` environment variable to configure the Gitlab instance after the container is started.
-   It disables prometheus monitoring, sets the ssh port to ``2222``, and adjusts the monitoring endpoint whitelist by default.
+   The file uses the ``GITLAB_OMNIBUS_CONFIG`` environment variable to configure the Gitlab instance after the container
+   is started.
+   It disables prometheus monitoring, sets the ssh port to ``2222``, and adjusts the monitoring endpoint whitelist
+   by default.
 
-2. Wait a couple of minutes since Gitlab can take some time to set up. Open the instance in your browser (usually ``http://localhost:8081``).
+2. Wait a couple of minutes since GitLab can take some time to set up. Open the instance in your browser
+   (usually ``http://localhost:8081``).
 
-   You can then login using the username ``root`` and your password (which defaults to ``artemis_admin``, if you used the command from above).
+   You can then login using the username ``root`` and your password (which defaults to ``artemis_admin``,
+   if you used the command from above).
    If you did not specify the password, you can get the initial one using:
 
    .. code:: bash
 
         docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab cat /etc/gitlab/initial_root_password
 
-3. Insert the Gitlab root user password in the file ``application-local.yml`` (in src/main/resources) and insert the Gitlab admin account.
+3. Insert the GitLab root user password in the file ``application-local.yml`` (in src/main/resources) and insert
+   the GitLab admin account.
    If you copied the template from above and used the default password, this is already done for you.
 
    .. code:: yaml
@@ -174,14 +184,17 @@ Set the variable ``GENERATE_ACCESS_TOKENS`` to ``true`` in the ``gitlab-local-se
                user: root
                password: your.gitlab.admin.password # artemis_admin
 
-4. You now need to create an admin access token. You can do that using the following command (which takes a while to execute):
+4. You now need to create an admin access token. You can do that using the following command (which takes a while
+   to execute):
 
    ::
 
         docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: [:api, :read_user, :read_api, :read_repository, :write_repository, :sudo], name: 'Artemis Admin Token'); token.set_token('artemis-gitlab-token'); token.save!"
 
-   | You can also manually create in by navigating to ``http://localhost:8081/-/profile/personal_access_tokens`` and generate a token with all scopes.
-   | Copy this token into the ``ADMIN_PERSONAL_ACCESS_TOKEN`` field in the ``src/main/docker/gitlab/gitlab-local-setup.sh`` file.
+   | You can also manually create in by navigating to ``http://localhost:8081/-/profile/personal_access_tokens`` and
+     generate a token with all scopes.
+   | Copy this token into the ``ADMIN_PERSONAL_ACCESS_TOKEN`` field in the
+     ``src/main/docker/gitlab/gitlab-local-setup.sh`` file.
    | If you used the command to generate the token, you don't have to change the ``gitlab-local-setup.sh`` file.
 
 5. Adjust the GitLab setup by running, this will configure GitLab's network setting to allow local requests:
@@ -190,14 +203,18 @@ Set the variable ``GENERATE_ACCESS_TOKENS`` to ``true`` in the ``gitlab-local-se
 
         docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml exec gitlab /bin/sh -c "sh /gitlab-local-setup.sh"
 
-   This script can also generate random access tokens, which should be used in a production setup. Change the variabe ``$GENERATE_ACCESS_TOKENS`` to ``true`` to generate the random tokens and insert them into the Artemis configuration file.
+   This script can also generate random access tokens, which should be used in a production setup. Change the
+   variable ``$GENERATE_ACCESS_TOKENS`` to ``true`` to generate the random tokens and insert them into the Artemis
+   configuration file.
 
-6. You're done! Follow the `Automated Jenkins Server Setup <#automated-jenkins-server-setup>`__ section for configuring Jenkins.
+6. You're done! Follow the `Automated Jenkins Server Setup <#automated-jenkins-server-setup>`__ section for
+   configuring Jenkins.
 
-Manual Gitlab Server Setup
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Manual GitLab Server Setup
+""""""""""""""""""""""""""
 
-GitLab provides no possibility to set a users password via API without forcing the user to change it afterwards (see `Issue 19141 <https://gitlab.com/gitlab-org/gitlab/-/issues/19141>`__).
+GitLab provides no possibility to set a users password via API without forcing the user to change it afterwards
+(see `Issue 19141 <https://gitlab.com/gitlab-org/gitlab/-/issues/19141>`__).
 Therefore, you may want to patch the official gitlab docker image.
 Thus, you can use the following Dockerfile:
 
@@ -207,8 +224,9 @@ Thus, you can use the following Dockerfile:
     RUN sed -i '/^.*user_params\[:password_expires_at\] = Time.current if admin_making_changes_for_another_user.*$/s/^/#/' /opt/gitlab/embedded/service/gitlab-rails/lib/api/users.rb
 
 
-This dockerfile disables the mechanism that sets the password to expired state after changed via API.
-If you want to use this custom image, you have to build the image and replace all occurrences of ``gitlab/gitlab-ce:latest`` in the following instructions by your chosen image name.
+This Dockerfile disables the mechanism that sets the password to expired state after changed via API.
+If you want to use this custom image, you have to build the image and replace all occurrences of
+``gitlab/gitlab-ce:latest`` in the following instructions by your chosen image name.
 
 
 1. Pull the latest GitLab Docker image (only if you don't use your custom gitlab image)
@@ -217,14 +235,14 @@ If you want to use this custom image, you have to build the image and replace al
 
        docker pull gitlab/gitlab-ce:latest
 
-Start Gitlab
-^^^^^^^^^^^^
+Start GitLab
+############
 
 2. Run the image (and change the values for hostname and ports). Add
    ``-p 2222:22`` if cloning/pushing via ssh should be possible. As
-   Gitlab runs in a docker container and the default port for SSH (22)
+   GitLab runs in a docker container and the default port for SSH (22)
    is typically used by the host running Docker, we change the port
-   Gitlab uses for SSH to ``2222``. This can be adjusted if needed.
+   GitLab uses for SSH to ``2222``. This can be adjusted if needed.
 
    Make sure to remove the comments from the command before running it.
 
@@ -261,8 +279,8 @@ Start Gitlab
 
 5. **If you run your own NGINX or if you install Gitlab on a local development computer, then skip the next steps (6-7)**
 
-6. Configure Gitlab to automatically generate certificates using
-   LetsEncrypt. Edit the Gitlab configuration
+6. Configure GitLab to automatically generate certificates using
+   LetsEncrypt. Edit the GitLab configuration
 
    ::
 
@@ -280,7 +298,7 @@ Start Gitlab
        nginx['redirect_http_to_https'] = true
        nginx['redirect_http_to_https_port'] = 80
 
-7. Reconfigure gitlab to generate the certificate.
+7. Reconfigure GitLab to generate the certificate.
 
    ::
 
@@ -296,20 +314,20 @@ Start Gitlab
 8. Login to GitLab using the Artemis admin account and go to the profile
    settings (upper right corned → *Settings*)
 
-   .. figure:: jenkins-gitlab/gitlab_setting_button.png
+   .. figure:: setup/jenkins-gitlab/gitlab_setting_button.png
       :align: center
 
-Gitlab Access Token
-^^^^^^^^^^^^^^^^^^^
+GitLab Access Token
+###################
 
 9.  Go to *Access Tokens*
 
-   .. figure:: jenkins-gitlab/gitlab_access_tokens_button.png
+   .. figure:: setup/jenkins-gitlab/gitlab_access_tokens_button.png
       :align: center
 
 10. Create a new token named “Artemis” and give it **all** rights.
 
-   .. figure:: jenkins-gitlab/artemis_gitlab_access_token.png
+   .. figure:: setup/jenkins-gitlab/artemis_gitlab_access_token.png
       :align: center
 
 11. Copy the generated token and insert it into the Artemis
@@ -324,9 +342,9 @@ Gitlab Access Token
 12. (Optional, only necessary for local setup) Allow outbound requests to local network
 
     There is a known limitation for the local setup: webhook URLs for the
-    communication between Gitlab and Artemis and between Gitlab and Jenkins
+    communication between GitLab and Artemis and between GitLab and Jenkins
     cannot include local IP addresses. This option can be deactivated in
-    Gitlab on ``<https://gitlab-url>/admin/application_settings/network`` →
+    GitLab on ``<https://gitlab-url>/admin/application_settings/network`` →
     Outbound requests. Another possible solution is to register a local URL,
     e.g. using `ngrok <https://ngrok.com/>`__, to be available over a domain
     the Internet.
@@ -337,7 +355,7 @@ Gitlab Access Token
 
            docker exec -it gitlab /bin/bash
 
-    Then edit the Gitlab configuration
+    Then edit the GitLab configuration
 
     ::
 
@@ -358,7 +376,8 @@ Gitlab Access Token
     adjust the port above.
 
 14. Disable prometheus.
-    As we encountered issues with the prometheus log files not being deleted and therefore filling up the disk space, we decided to disable prometheus within Gitlab.
+    As we encountered issues with the Prometheus log files not being deleted and therefore filling up the disk space,
+    we decided to disable Prometheus within GitLab.
     If you also want to disable prometheus, edit the configuration again using
 
     ::
@@ -376,33 +395,40 @@ Gitlab Access Token
 15. Add a SSH key for the admin user.
 
     Artemis can clone/push the repositories during setup and for the online code editor using SSH.
-    If the SSH key is not present, the username + token will be used as fallback (and all git operations will use HTTP(S) instead of SSH).
+    If the SSH key is not present, the username + token will be used as fallback (and all git operations will use
+    HTTP(S) instead of SSH).
 
-    You first have to create a SSH key (locally), e.g. using ``ssh-keygen`` (more information on how to create a SSH key can be found e.g. at `ssh.com <https://www.ssh.com/ssh/keygen/>`__ or at `gitlab.com <https://docs.gitlab.com/ee/ssh/#rsa-ssh-keys>`__).
+    You first have to create a SSH key (locally), e.g. using ``ssh-keygen`` (more information on how to create a SSH
+    key can be found e.g. at `ssh.com <https://www.ssh.com/ssh/keygen/>`__ or
+    at `gitlab.com <https://docs.gitlab.com/ee/ssh/#rsa-ssh-keys>`__).
 
     The list of supported ciphers can be found at `Apache Mina <https://github.com/apache/mina-sshd>`__.
 
     It is recommended to use a password to secure the private key, but it is not mandatory.
 
-    Please note that the private key file **must** be named ``ìd_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``, depending on the ciphers used.
+    Please note that the private key file **must** be named ``ìd_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``,
+    depending on the ciphers used.
 
-    You now have to extract the public key and add it to Gitlab.
-    Open the public key file (usually called ``id_rsa.pub`` (when using RSA)) and copy it's content (you can also use ``cat id_rsa.pub`` to show the public key).
+    You now have to extract the public key and add it to GitLab.
+    Open the public key file (usually called ``id_rsa.pub`` (when using RSA)) and copy it's content (you can also
+    use ``cat id_rsa.pub`` to show the public key).
 
     Navigate to ``GITLAB-URL/-/profile/keys`` and add the SSH key by pasting the content of the public key.
 
-    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename). It will be used in the configuration of Artemis to specify where Artemis should look for the key and store the ``known_hosts`` file.
+    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename). It will
+    be used in the configuration of Artemis to specify where Artemis should look for the key and store the ``known_hosts`` file.
 
-    ``<ssh-private-key-password>`` is the password used to secure the private key. It is also needed for the configuration of Artemis, but can be omitted if no password was set (e.g. for development environments).
+    ``<ssh-private-key-password>`` is the password used to secure the private key. It is also needed for the
+    configuration of Artemis, but can be omitted if no password was set (e.g. for development environments).
 
-Reconfigure Gitlab
+Reconfigure GitLab
 
 ::
 
    gitlab-ctl reconfigure
 
 Upgrade GitLab
-~~~~~~~~~~~~~~
+""""""""""""""
 
 You can upgrade GitLab by downloading the latest Docker image and
 starting a new container with the old volumes:
@@ -425,16 +451,18 @@ image (see ``docker images``) using ``docker rmi <old-image-id>``.
 You can also remove all old images using ``docker image prune -a``
 
 Jenkins
--------
+^^^^^^^
 
 Automated Jenkins Server Setup
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""""""""""""
 
 The following steps describe how to deploy a pre-configured version of the Jenkins server.
 This is ideal as a quickstart for developers. For a more detailed setup, see `Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
-In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config.yml``) and generate random access tokens and push tokens.
+In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config.yml``) and
+generate random access tokens and push tokens.
 
-1. Create a new access token in Gitlab named ``Jenkins`` and give it **api** and **read_repository** rights. You can do either do it manually or using the following command:
+1. Create a new access token in GitLab named ``Jenkins`` and give it **api** and **read_repository** rights. You can
+do either do it manually or using the following command:
 
     ::
 
@@ -442,20 +470,24 @@ In a production setup, you have to at least change the user credentials (in the 
 
 
 
-2. You can now deploy Jenkins. A ``src/main/docker/gitlab-jenkins-mysql.yml`` file is provided which deploys the Jenkins, Gitlab, and Mysql containers bound to static ip addresses. You can deploy them by running:
+2. You can now deploy Jenkins. A ``src/main/docker/gitlab-jenkins-mysql.yml`` file is provided which deploys the
+   Jenkins, GitLab, and Mysql containers bound to static ip addresses. You can deploy them by running:
 
     ::
 
        JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker-compose -f src/main/docker/gitlab-jenkins-mysql.yml up --build -d
 
-   Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
+   Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified
+   in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
 
 3. You need to generate the `ci-token` and `secret-push-token`.
    If you used the preset ``master.key`` within the file ``gitlab-jenkins-mysql.yml``, you can skip this step.
-   In a production setup, you should use a random ``master.key``, then you have to follow the steps described in  `Gitlab to Jenkins push notification token <#gitlab-to-jenkins-push-notification-token>`__ to generate the token.
+   In a production setup, you should use a random ``master.key``, then you have to follow the steps described in
+   `Gitlab to Jenkins push notification token <#gitlab-to-jenkins-push-notification-token>`__ to generate the token.
 
 4. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
-   If you used the preset ``master.key`` and are running a development setup, the secrets can be found in the `artemis configuration template posted at the beginning of this page <#artemis>`__.
+   If you used the preset ``master.key`` and are running a development setup, the secrets can be found in the
+   `artemis configuration template posted at the beginning of this page <#artemis>`__.
 
 .. code:: yaml
 
@@ -480,7 +512,8 @@ In a production setup, you have to at least change the user credentials (in the 
             secret-push-token: # generated in step 3
 
 5. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
-    Again, if you are using a development setup, the template in the beginning of this page already contains the correct values.
+   Again, if you are using a development setup, the template in the beginning of this page already contains the
+   correct values.
 
 .. code:: yaml
 
@@ -489,10 +522,10 @@ In a production setup, you have to at least change the user credentials (in the 
             ci-url: http://jenkins:8080
             vcs-url: http://gitlab:80
 
-6. You're done. You can now run Artemis with the Gitlab/Jenkins environment.
+6. You're done. You can now run Artemis with the GitLab/Jenkins environment.
 
 Manual Jenkins Server Setup
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""""""""""""""""""""""""""
 
 1. Pull the latest Jenkins LTS Docker image
 
@@ -513,7 +546,7 @@ Manual Jenkins Server Setup
    To perform all these steps automatically, you can prepare a Docker
    image:
 
-   Create a dockerfile with the content found `here <src/main/docker/jenkins/Dockerfile>`
+   Create a Dockerfile with the content found `here <src/main/docker/jenkins/Dockerfile>`
    or `here <src/main/docker/jenkins/swift/Dockerfile>` in case you want to additionally
    install Swift/SwiftLint.
    Copy it in a file named ``Dockerfile``, e.g. in
@@ -535,7 +568,8 @@ Manual Jenkins Server Setup
 
        echo "client_max_body_size 16m;" > client_max_body_size.conf
 
-5. The NGINX default timeout is pretty low. For plagiarism check and unlocking student repos for the exam a higher timeout is advisable. Therefore we write our own nginx.conf and load it in the container.
+5. The NGINX default timeout is pretty low. For plagiarism check and unlocking student repos for the exam a higher
+   timeout is advisable. Therefore we write our own nginx.conf and load it in the container.
 
 
    .. code:: nginx
@@ -610,7 +644,7 @@ Manual Jenkins Server Setup
            jrcs/letsencrypt-nginx-proxy-companion
 
 Start Jenkins
-^^^^^^^^^^^^^
+#############
 
 8.  Run Jenkins by executing the following command (change the hostname
     and choose which port alternative you need)
@@ -628,8 +662,11 @@ Start Jenkins
             -u root \
             jenkins/jenkins:lts
 
-    If you still need the old setup with python & maven installed locally, use `jenkins-artemis` instead of `jenkins/jenkins:lts`.
-    Also note that you can omit the ``-u root``, ``-v /var/run/docker.sock:/var/run/docker.sock`` and ``-v /usr/bin/docker:/usr/bin/docker:ro`` parameters, if you do not want to run Docker builds on the Jenkins master (but e.g. use remote agents).
+    If you still need the old setup with Python & Maven installed locally, use ``jenkins-artemis`` instead of
+    ``jenkins/jenkins:lts``.
+    Also note that you can omit the ``-u root``, ``-v /var/run/docker.sock:/var/run/docker.sock`` and
+    ``-v /usr/bin/docker:/usr/bin/docker:ro`` parameters, if you do not want to run Docker builds on the Jenkins controller
+    (but e.g. use remote agents).
 
 9. Open Jenkins in your browser (e.g. ``localhost:8082``) and setup the
     admin user account (install all suggested plugins). You can get the
@@ -653,10 +690,13 @@ Start Jenkins
                password: your.chosen.password
 
 Required Jenkins Plugins
-~~~~~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""""""
 
-**Note:** The custom Jenkins dockerfile takes advantage of the `Plugin Installation Manager Tool for Jenkins <https://github.com/jenkinsci/plugin-installation-manager-tool>`__ to automatically
-install the plugins listed below. If you used the dockerfile, you can skip these steps and `Server Notification Plugin <#server-notification-plugin>`__. The list of plugins is maintained in ``src/main/docker/jenkins/plugins.yml``.
+**Note:** The custom Jenkins Dockerfile takes advantage of the
+`Plugin Installation Manager Tool for Jenkins <https://github.com/jenkinsci/plugin-installation-manager-tool>`__
+to automatically install the plugins listed below. If you used the Dockerfile, you can skip these steps and
+`Server Notification Plugin <#server-notification-plugin>`__.
+The list of plugins is maintained in ``src/main/docker/jenkins/plugins.yml``.
 
 
 You will need to install the following plugins (apart from the
@@ -673,9 +713,11 @@ recommended ones that got installed during the setup process):
 
     **Note:** This is a suite of plugins that will install multiple plugins
 
-4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines. If you want to use docker for your build agents you may also need to install `Docker Pipeline <https://plugins.jenkins.io/docker-workflow/>`__ .
+4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines. If you want to
+   use Docker for your build agents you may also need to install `Docker Pipeline <https://plugins.jenkins.io/docker-workflow/>`__ .
 
-5. `Matrix Authorization Strategy Plugin <https://plugins.jenkins.io/matrix-auth/>`__ for configuring permissions for users on a project and build plan level (Matrix Authorization Strategy might already be installed).
+5. `Matrix Authorization Strategy Plugin <https://plugins.jenkins.io/matrix-auth/>`__ for configuring permissions
+   for users on a project and build plan level (Matrix Authorization Strategy might already be installed).
 
 
 The plugins above (and the pipeline-setup associated with it) got introduced in Artemis 4.7.3.
@@ -697,7 +739,7 @@ Choose “Download now and install after restart” and checking the
 “Restart Jenkins when installation is complete and no jobs are running” box
 
 Timestamper Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~
+"""""""""""""""""""""""""
 
 Go to *Manage Jenkins → Configure System*. There you will find the
 Timestamper configuration, use the following value for both formats:
@@ -706,11 +748,11 @@ Timestamper configuration, use the following value for both formats:
 
        '<b>'yyyy-MM-dd'T'HH:mm:ssX'</b> '
 
-.. figure:: jenkins-gitlab/timestamper_config.png
+.. figure:: setup/jenkins-gitlab/timestamper_config.png
    :align: center
 
 Server Notification Plugin
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""""""""
 
 Artemis needs to receive a notification after every build, which
 contains the test results and additional commit information. For that
@@ -723,24 +765,24 @@ You can download the current release of the plugin
 Jenkins → Manage Plugins*) and install the downloaded file under the
 *Advanced* tab under *Upload Plugin*
 
-.. figure:: jenkins-gitlab/jenkins_custom_plugin.png
+.. figure:: setup/jenkins-gitlab/jenkins_custom_plugin.png
    :align: center
 
 Jenkins Credentials
-~~~~~~~~~~~~~~~~~~~
+"""""""""""""""""""
 
 Go to *Manage Jenkins -> Security -> Manage Credentials → Jenkins → Global credentials* and create the
 following credentials
 
 GitLab API Token
-^^^^^^^^^^^^^^^^
+################
 
 1. Create a new access token in GitLab named ``Jenkins`` and give it
    **api** rights and **read_repository** rights. For detailed
    instructions on how to create such a token follow `Gitlab Access
    Token <#gitlab-access-token>`__.
 
-   .. figure:: jenkins-gitlab/gitlab_jenkins_token_rights.png
+   .. figure:: setup/jenkins-gitlab/gitlab_jenkins_token_rights.png
       :align: center
 
 2. Copy the generated token and create new Jenkins credentials:
@@ -759,11 +801,11 @@ GitLab API Token
    you can try `http://host.docker.internal:8081` for Windows or `http://docker.for.mac.host.internal:8081` for Mac
    if GitLab is reachable over port 8081.
 
-   .. figure:: jenkins-gitlab/jenkins_gitlab_configuration.png
+   .. figure:: setup/jenkins-gitlab/jenkins_gitlab_configuration.png
       :align: center
 
 Server Notification Token
-^^^^^^^^^^^^^^^^^^^^^^^^^
+#########################
 
 1. Create a new Jenkins credential containing the token, which gets send
    by the server notification plugin to Artemis with every build result:
@@ -794,7 +836,7 @@ Server Notification Token
                artemis-authentication-token-value: the.actual.value.of.the.notification.token
 
 GitLab Repository Access
-^^^^^^^^^^^^^^^^^^^^^^^^
+########################
 
 1. Create a new Jenkins credentials containing the username and password
    of the GitLab administrator account:
@@ -817,7 +859,7 @@ GitLab Repository Access
                vcs-credentials: the.id.of.the.username.and.password.credentials.from.jenkins
 
 GitLab to Jenkins push notification token
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""""""""""""""""""""""""""""""""""""""""
 
 GitLab has to notify Jenkins build plans if there are any new commits to
 the repository. The push notification that gets sent here is secured by
@@ -842,7 +884,7 @@ the following steps:
 
 7.  Apply these change to the plan (i.e. click on *Apply*)
 
-   .. figure:: jenkins-gitlab/jenkins_test_project.png
+   .. figure:: setup/jenkins-gitlab/jenkins_test_project.png
       :align: center
 
 8.  Perform a *GET* request to the following URL (e.g. with Postman)
@@ -853,7 +895,8 @@ the following steps:
 
         GET https://your.jenkins.domain/job/TestProject/config.xml
 
-    If you have xmllint installed, you can use this command, which will output the ``secret-push-token`` from steps 9 and 10 (you may have to adjust the username and password):
+    If you have xmllint installed, you can use this command, which will output the ``secret-push-token`` from
+    steps 9 and 10 (you may have to adjust the username and password):
 
     ::
 
@@ -866,7 +909,7 @@ the following steps:
 
         <secretToken>{$some-long-encrypted-value}</secretToken>
 
-   .. figure:: jenkins-gitlab/jenkins_project_config_xml.png
+   .. figure:: setup/jenkins-gitlab/jenkins_project_config_xml.png
       :align: center
 
       Job configuration XML
@@ -899,14 +942,18 @@ the following steps:
            use-crumb: false
 
 Upgrading Jenkins
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In order to upgrade Jenkins to a newer version, you need to rebuild the Docker image targeting the new version.
-The stable LTS versions can be viewed through the `changelog <https://www.jenkins.io/changelog-stable/>`__. and the corresponding
-Docker image can be found on `dockerhub <https://hub.docker.com/r/jenkins/jenkins/tags?page=1&ordering=last_updated>`__.
+"""""""""""""""""
 
-1. Open the Jenkins Dockerfile and replace the value of ``FROM`` with ``jenkins/jenkins:lts``. After running the command ``docker pull jenkins/jenkins:lts``, this will use the latest LTS version in the following steps.
+In order to upgrade Jenkins to a newer version, you need to rebuild the Docker image targeting the new version.
+The stable LTS versions can be viewed through the `changelog <https://www.jenkins.io/changelog-stable/>`__
+and the corresponding Docker image can be found on
+`dockerhub <https://hub.docker.com/r/jenkins/jenkins/tags?page=1&ordering=last_updated>`__.
+
+1. Open the Jenkins Dockerfile and replace the value of ``FROM`` with ``jenkins/jenkins:lts``.
+   After running the command ``docker pull jenkins/jenkins:lts``, this will use the latest LTS version in the following steps.
    You can also use a specific LTS version.
-   For example, if you want to upgrade Jenkins to version ``2.289.2``, you will need to use the ``jenkins/jenkins:2.289.2-lts`` image.
+   For example, if you want to upgrade Jenkins to version ``2.289.2``, you will need to use the
+   ``jenkins/jenkins:2.289.2-lts`` image.
 
 2. If you're using docker-compose, you can simply use the following command and skip the next steps.
 
@@ -960,18 +1007,18 @@ Build agents
 You can either run the builds locally (that means on the machine that hosts Jenkins) or on remote build agents.
 
 Configuring local build agents
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""
 
 Go to `Manage Jenkins` > `Manage Nodes and Clouds` > `master`
 Configure your master node like this  (adjust the number of executors, if needed). Make sure to add the docker label.
 
-   .. figure:: jenkins-gitlab/jenkins_local_node.png
+   .. figure:: setup/jenkins-gitlab/jenkins_local_node.png
       :align: center
 
       Jenkins local node
 
 Alternative local build agents setup using docker
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""""""""""""""""""""""
 
 An alternative way of adding a build agent that will use docker (similar to the remote agents below) but running
 locally, can be done using the jenkins/ssh-agent docker image `docker image <https://hub.docker.com/r/jenkins/ssh-agent>`__.
@@ -1033,7 +1080,7 @@ Add agent in Jenkins:
 
     - Passphrase: <the previous entered passphrase> (you can leave it blank if none has been specified)
 
-   .. figure:: jenkins-gitlab/alternative_jenkins_node_credentials.png
+   .. figure:: setup/jenkins-gitlab/alternative_jenkins_node_credentials.png
       :align: center
 
 3. Go to Manage Jenkins -> Manage Nodes and Clouds -> New Node
@@ -1042,7 +1089,7 @@ Add agent in Jenkins:
 
     - Check 'Permanent Agent'
 
-   .. figure:: jenkins-gitlab/alternative_jenkins_node_setup.png
+   .. figure:: setup/jenkins-gitlab/alternative_jenkins_node_setup.png
       :align: center
 
 4. Node settings:
@@ -1065,7 +1112,7 @@ Add agent in Jenkins:
 
     - Availability: Keep this agent online as much as possible
 
-   .. figure:: jenkins-gitlab/alternative_jenkins_node.png
+   .. figure:: setup/jenkins-gitlab/alternative_jenkins_node.png
       :align: center
 
 5. Save the new node
@@ -1073,9 +1120,11 @@ Add agent in Jenkins:
 6. Node should now be up and running
 
 Installing remote build agents
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-You might want to run the builds on additional Jenkins agents, especially if a large amount of students should use the system at the same time.
-Jenkins supports remote build agents: The actual compilation of the students submissions happens on these other machines but the whole process is transparent to Artemis.
+""""""""""""""""""""""""""""""
+You might want to run the builds on additional Jenkins agents, especially if a large amount of students should use
+the system at the same time.
+Jenkins supports remote build agents: The actual compilation of the students submissions happens on these
+other machines but the whole process is transparent to Artemis.
 
 This guide explains setting up a remote agent on an Ubuntu virtual machine that supports docker builds.
 
@@ -1084,35 +1133,43 @@ Prerequisites:
 
 2. Add a new user to the remote machine that Jenkins will use: ``sudo adduser --disabled-password --gecos "" jenkins``
 
-3. Add the jenkins user to the docker group (This allows the jenkins user to interact with docker): ``sudo usermod -a -G docker jenkins``
+3. Add the jenkins user to the docker group (This allows the jenkins user to interact with docker):
+   ``sudo usermod -a -G docker jenkins``
 
-4. Generate a new SSH key locally (e.g. using ``ssh-keygen``) and add the public key to the ``.ssh/authorized_keys`` file of the jenkins user on the agent VM.
+4. Generate a new SSH key locally (e.g. using ``ssh-keygen``) and add the public key to the ``.ssh/authorized_keys``
+   file of the jenkins user on the agent VM.
 
-5. Validate that you can connect to the build agent machine using SSH and the generated private key and validate that you can use docker (`docker ps` should not show an error)
+5. Validate that you can connect to the build agent machine using SSH and the generated private key and validate that
+   you can use docker (`docker ps` should not show an error)
 
 6. Log in with your normal account on the build agent machine and install Java: ``sudo apt install default-jre``
 
 7. Add a new secret in Jenkins, enter private key you just generated and add the passphrase, if set:
 
-   .. figure:: jenkins-gitlab/jenkins_ssh_credentials.png
+   .. figure:: setup/jenkins-gitlab/jenkins_ssh_credentials.png
       :align: center
 
       Jenkins SSH Credentials
 
 8. Add a new node (select a name and select `Permanent Agent`):
-    Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds this agent can handle. It is recommended to match the number of cores of the machine, but you might want to adjust this later if needed.
+    Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds
+    this agent can handle. It is recommended to match the number of cores of the machine,
+    but you might want to adjust this later if needed.
 
     Set the remote root directory to ``/home/jenkins/remote_agent``.
 
-    Set the usage to `Only build jobs with label expressions matching this node`. This ensures that only docker-jobs will be built on this agent, and not other jobs.
+    Set the usage to `Only build jobs with label expressions matching this node`.
+    This ensures that only docker-jobs will be built on this agent, and not other jobs.
 
     Add a label ``docker`` to the agent.
 
-    Set the launch method to `Launch via SSH` and add the host of the machine. Select the credentials you just created and select `Manually trusted key Verification Strategy` as Host key verification Strategy.
+    Set the launch method to `Launch via SSH` and add the host of the machine.
+    Select the credentials you just created and select `Manually trusted key Verification Strategy`
+    as Host key verification Strategy.
     Save it.
 
 
-   .. figure:: jenkins-gitlab/jenkins_node.png
+   .. figure:: setup/jenkins-gitlab/jenkins_node.png
       :align: center
 
       Add a Jenkins node
@@ -1124,7 +1181,7 @@ Prerequisites:
     This ensures that the docker tasks are not executed on the master agent but on the remote agent.
 
 
-   .. figure:: jenkins-gitlab/jenkins_master_node.png
+   .. figure:: setup/jenkins-gitlab/jenkins_master_node.png
       :align: center
 
       Adjust Jenkins master node settings
@@ -1133,7 +1190,7 @@ Prerequisites:
 
 
 Jenkins User Management
-~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^
 
 Artemis supports user management in Jenkins as of version 4.11.0. Creating an account in Artemis will also create an
 account on Jenkins using the same password. This enables users to login and access Jenkins. Updating and/or deleting
@@ -1142,44 +1199,53 @@ users from Artemis will also lead to updating and/or deleting from Jenkins.
 Unfortunately, Jenkins does not provide a Rest API for user management which present the following **caveats**:
 
  - The username of a user is treated as a unique identifier in Jenkins.
- - It's not possible to update an existing user with a single request. We update by deleting the user from Jenkins and recreating it with the updated data.
- - In Jenkins, users are created in an on-demand basis. For example, when a build is performed, its change log is computed and as a result commits from users who Jenkins has never seen may be discovered and created.
- - Since Jenkins users may be re-created automatically, issues may occur such as 1) creating a user, deleting it, and  then re-creating it and 2) changing the username of the user and reverting back to the previous one.
- - Updating a user will re-create it in Jenkins and therefore remove any additionally saved Jenkins-specific user data such as API access tokens.
+ - It's not possible to update an existing user with a single request.
+   We update by deleting the user from Jenkins and recreating it with the updated data.
+ - In Jenkins, users are created in an on-demand basis.
+   For example, when a build is performed, its change log is computed and as a result commits from users
+   who Jenkins has never seen may be discovered and created.
+ - Since Jenkins users may be re-created automatically, issues may occur such as 1) creating a user, deleting it,
+   and then re-creating it and 2) changing the username of the user and reverting back to the previous one.
+ - Updating a user will re-create it in Jenkins and therefore remove any additionally saved Jenkins-specific
+   user data such as API access tokens.
 
 
 Jenkins Build Plan Access Control Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Artemis takes advantage of the Project-based Matrix Authorization Strategy plugin to support build plan access control in Jenkins.
+Artemis takes advantage of the Project-based Matrix Authorization Strategy plugin to support build plan
+access control in Jenkins.
 This enables specific Artemis users to access build plans and execute actions such as triggering a build.
 This section explains the changes required in Jenkins in order to set up build plan access control:
 
-1. Navigate to Manage Jenkins -> Manage Plugins -> Installed and make sure that you have the `Matrix Authorization Strategy <https://plugins.jenkins.io/matrix-auth/>`__ plugin installed
+1. Navigate to Manage Jenkins -> Manage Plugins -> Installed and make sure that you have the
+   `Matrix Authorization Strategy <https://plugins.jenkins.io/matrix-auth/>`__ plugin installed
 
 2. Navigate to Manage Jenkins -> Configure Global Security and navigate to the "Authorization" section
 
 3. Select the "Project-based Matrix Authorization Strategy" option
 
-4. In the table make sure that the "Read" permission under the "Overall" section is assigned to the "Authenticated Users" user group.
+4. In the table make sure that the "Read" permission under the "Overall" section is assigned to
+   the "Authenticated Users" user group.
 
 5. In the table make sure that all "Administer" permission is assigned to all administrators.
 
-6. You are finished. If you want to fine-tune permissions assigned to teaching assistants and/or instructors, you can change them within the ``JenkinsJobPermission.java`` file.
+6. You are finished. If you want to fine-tune permissions assigned to teaching assistants and/or instructors,
+   you can change them within the ``JenkinsJobPermission.java`` file.
 
-.. figure:: jenkins-gitlab/jenkins_authorization_permissions.png
+.. figure:: setup/jenkins-gitlab/jenkins_authorization_permissions.png
     :align: center
 
 
 Caching
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^
 
 You can configure caching for e.g. Maven repositories.
-See :doc:`programming-exercises` for more details.
+See :ref:`programming-exercises` for more details.
 
 
 Separate NGINX Configurations
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 There are some placeholders in the following configurations. Replace
 them with your setup specific values ### GitLab
@@ -1216,7 +1282,7 @@ them with your setup specific values ### GitLab
 .. _jenkins-1:
 
 Jenkins
-~~~~~~~
+"""""""
 
 ::
 
@@ -1256,7 +1322,7 @@ Jenkins
    }
 
 /etc/nginx/common/common_ssl.conf
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+"""""""""""""""""""""""""""""""""
 
 If you haven’t done so, generate the DH param file:
 ``sudo openssl dhparam -out /etc/nginx/dhparam.pem 4096``
@@ -1279,24 +1345,24 @@ If you haven’t done so, generate the DH param file:
    resolver_timeout 5s;
 
 Deployment Artemis / GitLab / Jenkins using Docker on Local machine
--------------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Execute the following steps in addition to the ones described above:
 
 Preparation
-~~~~~~~~~~~
+"""""""""""
 
 1. Create a Docker network named “artemis” with
    ``docker network create artemis``.
 
 .. _gitlab-1:
 
-Gitlab
-~~~~~~
+GitLab
+""""""
 
-1. Add the Gitlab container to the created network with
+1. Add the GitLab container to the created network with
    ``docker network connect artemis gitlab``.
-2. Get the URL of the Gitlab container with the first IP returned by
+2. Get the URL of the GitLab container with the first IP returned by
    ``docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' gitlab``.
 3. Use this IP in the ``application-artemis.yml`` file at
    ``artemis.version-control.url``.
@@ -1304,11 +1370,11 @@ Gitlab
 .. _jenkins-2:
 
 Jenkins
-~~~~~~~
+"""""""
 
 1. Add the Jenkins container to the created network with
    ``docker network connect artemis jenkins``.
-2. Get the URL of the Gitlab container with the first IP returned by
+2. Get the URL of the GitLab container with the first IP returned by
    ``docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' jenkins``.
 3. Use this IP in the ``application-artemis.yml`` file at
    ``artemis.continuous-integration.url``.
@@ -1316,11 +1382,11 @@ Jenkins
 .. _artemis-1:
 
 Artemis
-~~~~~~~
+"""""""
 
 1. In ``docker-compose.yml``:
 
-   1. Make sure to use unique ports, e.g. 8080 for Artemis, 8081 for Gitlab and 8082 for Jenkins.
+   1. Make sure to use unique ports, e.g. 8080 for Artemis, 8081 for GitLab and 8082 for Jenkins.
    2. Change the ``SPRING_PROFILES_ACTIVE`` environment variable to ``dev,jenkins,gitlab,artemis,scheduling``.
 
 2. In ``src/main/resources/config/application-dev.yml`` at ``server:`` use ``port: 8080`` for Artemis.

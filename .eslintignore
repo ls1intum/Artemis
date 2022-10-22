@@ -14,7 +14,6 @@ repos-download/
 src/main/docker/
 src/main/generated/
 src/main/java/
-src/main/jib/
 src/main/resources/
 uploads/
 webpack/
