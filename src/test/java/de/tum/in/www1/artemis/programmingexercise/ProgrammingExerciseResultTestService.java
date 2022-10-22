@@ -383,8 +383,8 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseStudentParticipation.setBranch("default");
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
 
-        assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("different branch");
+        assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("different branch");
     }
 
     // Test
