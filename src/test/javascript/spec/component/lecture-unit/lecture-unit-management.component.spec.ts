@@ -144,7 +144,7 @@ describe('LectureUnitManagementComponent', () => {
             button.nativeElement.click();
         }
         lectureUnitManagementComponentFixture.detectChanges();
-        expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length * 2); // 3 units with edit button, each method is invoked twice
+        expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length);
     });
 
     it('should give the correct delete question translation key', () => {

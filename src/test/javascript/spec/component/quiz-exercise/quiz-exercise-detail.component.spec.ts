@@ -81,7 +81,7 @@ describe('QuizExercise Management Detail Component', () => {
 
     resetQuizExercise();
 
-    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }) } } as any as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }) }, queryParams: of({}) } as any as ActivatedRoute;
 
     const createValidMCQuestion = () => {
         const question = new MultipleChoiceQuestion();
@@ -221,6 +221,7 @@ describe('QuizExercise Management Detail Component', () => {
         describe('with exam id', () => {
             const testRoute = {
                 snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                queryParams: of({}),
             } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
@@ -240,7 +241,7 @@ describe('QuizExercise Management Detail Component', () => {
         });
 
         describe('with exam id but without exercise id', () => {
-            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) } } as any as ActivatedRoute;
+            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) }, queryParams: of({}) } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -259,7 +260,7 @@ describe('QuizExercise Management Detail Component', () => {
         });
 
         describe('without exam id and exercise id', () => {
-            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
+            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, queryParams: of({}) } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -280,6 +281,7 @@ describe('QuizExercise Management Detail Component', () => {
         describe('with exercise id and exam with test runs', () => {
             const testRoute = {
                 snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                queryParams: of({}),
             } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);

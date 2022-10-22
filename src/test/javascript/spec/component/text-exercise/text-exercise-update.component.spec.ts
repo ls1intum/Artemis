@@ -28,7 +28,7 @@ describe('TextExercise Management Update Component', () => {
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 MockProvider(TranslateService),
             ],
             declarations: [TextExerciseUpdateComponent],
