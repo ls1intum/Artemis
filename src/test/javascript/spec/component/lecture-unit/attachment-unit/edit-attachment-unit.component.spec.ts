@@ -43,7 +43,7 @@ describe('EditAttachmentUnitComponent', () => {
     let attachment: Attachment;
     let attachmentUnit: AttachmentUnit;
     let baseFormData: FormData;
-    let fakeBlob: Blob;
+    let fakeFile: File;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -101,12 +101,10 @@ describe('EditAttachmentUnitComponent', () => {
                 attachmentUnit.description = 'lorem ipsum';
                 attachmentUnit.attachment = attachment;
 
-                fakeBlob = new Blob([''], { type: 'application/pdf' });
-                // @ts-ignore
-                fakeBlob['name'] = 'Test-File.pdf';
+                fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
                 baseFormData = new FormData();
-                baseFormData.append('file', fakeBlob, 'updated file');
+                baseFormData.append('file', fakeFile, 'updated file');
                 baseFormData.append('attachment', objectToJsonBlob(attachment));
                 baseFormData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
 
@@ -159,7 +157,7 @@ describe('EditAttachmentUnitComponent', () => {
                 updateNotificationText: undefined,
             },
             fileProperties: {
-                file: fakeBlob,
+                file: fakeFile,
                 fileName,
             },
         };
@@ -191,7 +189,7 @@ describe('EditAttachmentUnitComponent', () => {
                 updateNotificationText: notification,
             },
             fileProperties: {
-                file: fakeBlob,
+                file: fakeFile,
                 fileName,
             },
         };
