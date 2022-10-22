@@ -22,7 +22,8 @@ export class SubmissionResultStatusComponent {
     @Input() studentParticipation?: StudentParticipation;
     @Input() updatingResultClass: string;
     @Input() showBadge = false;
-    @Input() showUngradedResults: boolean;
+    @Input() showUngradedResults = false;
+    @Input() showIcon = true;
     @Input() short = false;
     @Input() triggerLastGraded = true;
 

@@ -20,7 +20,7 @@ export class FileUploadSubmissionService {
      * @param exerciseId id of the exercise
      * @param submissionFile the file submitted that will for the exercise
      */
-    update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: Blob | File): Observable<HttpResponse<FileUploadSubmission>> {
+    update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: File): Observable<HttpResponse<FileUploadSubmission>> {
         const copy = this.submissionService.convert(fileUploadSubmission);
         const formData = new FormData();
         const submissionBlob = new Blob([stringifyCircular(copy)], { type: 'application/json' });
