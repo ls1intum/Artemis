@@ -5,13 +5,13 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPublicKey;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.stereotype.Component;
 
 import com.nimbusds.jose.JOSEException;
@@ -21,6 +21,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 
+import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import uk.ac.ox.ctl.lti13.KeyPairService;
 
 /**
@@ -30,18 +31,18 @@ import uk.ac.ox.ctl.lti13.KeyPairService;
 @Component
 public class OAuth2JWKSService implements KeyPairService {
 
-    private final ClientRegistrationRepository clientRegistrationRepository;
+    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
     private final StringKeyGenerator kidGenerator = new Base64StringKeyGenerator(32);
 
     private final Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
 
-    private final JWKSet jwkSet;
-
     private final Map<String, String> clientRegistrationIdToKeyId = new HashMap<>();
 
-    public OAuth2JWKSService(ClientRegistrationRepository clientRegistrationRepository) throws NoSuchAlgorithmException {
-        this.clientRegistrationRepository = clientRegistrationRepository;
+    private JWKSet jwkSet;
+
+    public OAuth2JWKSService(OnlineCourseConfigurationService onlineCourseConfigurationService) throws NoSuchAlgorithmException {
+        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.jwkSet = new JWKSet(generateOAuth2ClientKeys());
     }
 
@@ -65,39 +66,62 @@ public class OAuth2JWKSService implements KeyPairService {
 
     public JWK getJWK(String clientRegistrationId) {
         return this.jwkSet.getKeyByKeyId(this.clientRegistrationIdToKeyId.get(clientRegistrationId));
+    }
 
+    public void updateKey(String clientRegistrationId) {
+        ClientRegistration clientRegistration = onlineCourseConfigurationService.findByRegistrationId(clientRegistrationId);
+        JWK jwkToRemove = getJWK(clientRegistrationId);
+
+        if (jwkToRemove == null && clientRegistration == null) {
+            return;
+        }
+
+        List<JWK> keys = new ArrayList<>(jwkSet.getKeys());
+
+        if (jwkToRemove != null) {
+            keys = keys.stream().filter(jwk -> jwk != jwkToRemove).collect(Collectors.toList());
+        }
+
+        if (clientRegistration != null) {
+            try {
+                keys.add(generateKey(clientRegistration));
+            }
+            catch (NoSuchAlgorithmException e) {
+                log.error("Could not generate key for clientRegistrationId {}", clientRegistration.getRegistrationId());
+            }
+        }
+        this.jwkSet = new JWKSet(keys);
     }
 
     public JWKSet getJwkSet() {
         return this.jwkSet;
     }
 
-    private List<JWK> generateOAuth2ClientKeys() throws NoSuchAlgorithmException {
-        if (!(this.clientRegistrationRepository instanceof Iterable)) {
-            String message = "ClientRegistrationRepository is expected to implement Iterable";
-            log.error(message);
-            throw new IllegalStateException(message);
-        }
+    private List<JWK> generateOAuth2ClientKeys() {
 
         List<JWK> keys = new LinkedList<>();
 
-        for (Object obj : (Iterable<?>) this.clientRegistrationRepository) {
-            if (!(obj instanceof ClientRegistration clientRegistration)) {
-                String message = "ClientRegistrationRepository must be an Iterable of ClientRegistration";
-                log.error(message);
-                throw new RuntimeException(message);
+        for (ClientRegistration clientRegistration : onlineCourseConfigurationService.getAllClientRegistrations()) {
+            try {
+                keys.add(generateKey(clientRegistration));
             }
-
-            KeyPair clientKeyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
-            String kid = kidGenerator.generateKey();
-
-            RSAKey.Builder builder = new RSAKey.Builder((RSAPublicKey) clientKeyPair.getPublic()).keyUse(KeyUse.SIGNATURE).algorithm(JWSAlgorithm.RS256)
-                    .privateKey(clientKeyPair.getPrivate()).keyID(kid);
-
-            keys.add(builder.build());
-            this.clientRegistrationIdToKeyId.put(clientRegistration.getRegistrationId(), kid);
+            catch (NoSuchAlgorithmException e) {
+                log.error("Could not generate key for clientRegistrationId {}", clientRegistration.getRegistrationId());
+            }
         }
 
         return keys;
+    }
+
+    private JWK generateKey(ClientRegistration clientRegistration) throws NoSuchAlgorithmException {
+        KeyPair clientKeyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+        String kid = kidGenerator.generateKey();
+
+        RSAKey.Builder builder = new RSAKey.Builder((RSAPublicKey) clientKeyPair.getPublic()).keyUse(KeyUse.SIGNATURE).algorithm(JWSAlgorithm.RS256)
+                .privateKey(clientKeyPair.getPrivate()).keyID(kid);
+
+        this.clientRegistrationIdToKeyId.put(clientRegistration.getRegistrationId(), kid);
+
+        return builder.build();
     }
 }

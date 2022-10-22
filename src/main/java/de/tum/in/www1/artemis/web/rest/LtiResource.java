@@ -175,6 +175,12 @@ public class LtiResource {
         response.sendRedirect(redirectUri);
     }
 
+    @PostMapping(value = "/lti13/dynamic-registration")
+    public void lti13DynamicRegistration(HttpServletRequest request, HttpServletResponse response) {
+        String openIdConfiguration = request.getParameter("openid_configuration");
+        String registrationToken = request.getParameter("registration_token ");
+    }
+
     private void errorOnMissingParameter(HttpServletResponse response, String missingParamName) throws IOException {
         String message = "Missing parameter on oauth2 authorization response: " + missingParamName;
         log.error(message);

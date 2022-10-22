@@ -1,0 +1,21 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="manuelmanso" id="20221022120000">
+        <addColumn tableName="online_course_configuration">
+            <column name="registration_id" type="varchar(255)">
+                <constraints nullable="false" unique="true" />
+            </column>
+            <column name="client_id" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="authorization_uri" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="jkw_set_uri" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="token_uri" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>        </addColumn>
+    </changeSet>
+</databaseChangeLog>
