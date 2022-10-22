@@ -6,6 +6,16 @@ import org.w3c.dom.*;
 
 public class JenkinsJobPermissionsUtils {
 
+    /**
+     * Modern versions (>= 3.0) of the Matrix Authorization Strategy Plugin in
+     * Jenkins use a prefix to discern between permissions affecting individual
+     * users or groups.
+     */
+    private static final String USER_PERMISSIONS_PREFIX = "USER:";
+
+    private JenkinsJobPermissionsUtils() {
+    }
+
     public static void removePermissionsFromFolder(Document jobConfig, Set<JenkinsJobPermission> permissionsToRemove, Set<String> userLogins) throws DOMException {
         var folderAuthorizationMatrix = "com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty";
         removePermissionsFromElement(folderAuthorizationMatrix, jobConfig, permissionsToRemove, userLogins);
@@ -35,7 +45,9 @@ public class JenkinsJobPermissionsUtils {
         permissionsToRemove.forEach(jenkinsJobPermission -> userLogins.forEach(userLogin -> {
             // The permission in the xml node has the format: com.jenkins.job.permission:user-login
             String permission = jenkinsJobPermission.getName() + ":" + userLogin;
+            // old jobs might still use the permission without the prefix
             removePermission(authorizationMatrixElement, permission);
+            removePermission(authorizationMatrixElement, USER_PERMISSIONS_PREFIX + permission);
         }));
     }
 
@@ -109,9 +121,9 @@ public class JenkinsJobPermissionsUtils {
      * {@code
      *      <com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
      *          ...existing permissions
-     *          <permission>hudson.model.the.jenkins.permission1:userLogin</permission>
+     *          <permission>USER:hudson.model.the.jenkins.permission1:userLogin</permission>
      *          ...
-     *          <permission>hudson.model.the.jenkins.permissionn:userLogin</permission>
+     *          <permission>USER:hudson.model.the.jenkins.permission:userLogin</permission>
      *      </com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
      * }
      * </pre>
@@ -124,12 +136,12 @@ public class JenkinsJobPermissionsUtils {
         NodeList existingPermissionElements = authorizationMatrixElement.getElementsByTagName("permission");
         jenkinsJobPermissions.forEach(jenkinsJobPermission -> {
             // The permission in the xml node has the format: com.jenkins.job.permission:user-login
-            String permission = jenkinsJobPermission.getName() + ":" + userLogin;
+            String permission = USER_PERMISSIONS_PREFIX + jenkinsJobPermission.getName() + ":" + userLogin;
 
             // Add the permission if it doesn't exist.
             boolean permissionExists = permissionExistInPermissionList(existingPermissionElements, permission);
             if (!permissionExists) {
-                // Permission element has format <permission>com.jenkins.job.permission:user-login</permission>
+                // Permission element has format <permission>USER:com.jenkins.job.permission:user-login</permission>
                 Element permissionElement = document.createElement("permission");
                 permissionElement.setTextContent(permission);
                 authorizationMatrixElement.appendChild(permissionElement);
