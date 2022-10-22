@@ -19,7 +19,6 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "3.3.0"
     id "com.github.node-gradle.node" version "3.4.0"
     id "com.diffplug.spotless" version "6.11.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
@@ -37,7 +36,6 @@ description = "Interactive Learning with Individual Feedback"
 sourceCompatibility=17
 targetCompatibility=17
 
-apply from: "gradle/docker.gradle"
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
 apply from: "gradle/liquibase.gradle"
 
@@ -64,7 +62,7 @@ spotless {
     java {
         target project.fileTree(project.rootDir) {
             include "**/*.java"
-            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
         }
         importOrderFile "artemis-spotless.importorder"
         eclipse("4.19.0").configFile "artemis-spotless-style.xml"

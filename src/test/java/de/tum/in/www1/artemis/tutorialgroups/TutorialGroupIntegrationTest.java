@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.tutorialgroups;
 
 import static de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.*;
 
@@ -172,7 +174,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         existingTutorialGroup.setTitle("Updated");
 
         // when
-        var updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath() + exampleOneTutorialGroupId, existingTutorialGroup, TutorialGroup.class, HttpStatus.OK);
+        var updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath() + exampleOneTutorialGroupId,
+                new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum"), TutorialGroup.class, HttpStatus.OK);
 
         // then
         assertThat(updatedTutorialGroup.getTitle()).isEqualTo("Updated");
@@ -185,7 +188,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
         existingTutorialGroup.setTitle("  ExampleTitle2  ");
         // when
-        request.putWithResponseBody(getTutorialGroupsPath() + exampleOneTutorialGroupId, existingTutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(getTutorialGroupsPath() + exampleOneTutorialGroupId, new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum"),
+                TutorialGroup.class, HttpStatus.BAD_REQUEST);
         // then
         assertThat(tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get().getTitle()).isEqualTo("ExampleTitle1");
     }
@@ -200,7 +204,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void registerStudent_asTutorOfGroup_shouldAllowRegistration() throws Exception {
-        this.registerStudentAllowedTest();
+        this.registerStudentAllowedTest("tutor1");
     }
 
     @Test
@@ -224,7 +228,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void registerStudent_asInstructor_shouldAllowRegistration() throws Exception {
-        this.registerStudentAllowedTest();
+        this.registerStudentAllowedTest("instructor1");
     }
 
     @Test
@@ -251,13 +255,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void deregisterStudent_asTutorOfGroup_shouldAllowDeregistration() throws Exception {
-        this.deregisterStudentAllowedTest();
+        this.deregisterStudentAllowedTest("tutor1");
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void deregisterStudent_asInstructor_shouldAllowDeregistration() throws Exception {
-        this.deregisterStudentAllowedTest();
+        this.deregisterStudentAllowedTest("instructor1");
     }
 
     @Test
@@ -301,6 +305,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void registerMultipleStudents_asInstructor_shouldRegisterStudents() throws Exception {
         // given
+        var instructor1 = userRepository.findOneByLogin("instructor1").get();
         var student6 = userRepository.findOneByLogin("student6").get();
         student6.setRegistrationNumber("number6");
         userRepository.saveAndFlush(student6);
@@ -324,6 +329,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student6);
         assertThat(notFoundStudents).containsExactly(studentNotInCourse);
+        verify(singleUserNotificationService, times(1)).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student6, instructor1);
+
     }
 
     @Test
@@ -565,12 +572,15 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         verifyPrivateInformationIsShown(tutorialGroup, 5);
     }
 
-    private void registerStudentAllowedTest() throws Exception {
+    private void registerStudentAllowedTest(String loginOfResponsibleUser) throws Exception {
+        var responsibleUser = database.getUserByLogin(loginOfResponsibleUser);
         var student6 = userRepository.findOneByLogin("student6").get();
         request.postWithoutResponseBody(getTutorialGroupsPath() + exampleOneTutorialGroupId + "/register/" + student6.getLogin(), HttpStatus.NO_CONTENT,
                 new LinkedMultiValueMap<>());
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student6);
+        verify(singleUserNotificationService, times(1)).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student6, responsibleUser);
+        verify(singleUserNotificationService, times(1)).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student6, responsibleUser);
     }
 
     private void registerStudentForbiddenTest() throws Exception {
@@ -579,11 +589,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                 new LinkedMultiValueMap<>());
     }
 
-    private void deregisterStudentAllowedTest() throws Exception {
+    private void deregisterStudentAllowedTest(String loginOfResponsibleUser) throws Exception {
+        var responsibleUser = database.getUserByLogin(loginOfResponsibleUser);
         var student1 = userRepository.findOneByLogin("student1").get();
         request.delete(getTutorialGroupsPath() + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT);
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(student1);
+        verify(singleUserNotificationService, times(1)).notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
+        verify(singleUserNotificationService, times(1)).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
     }
 
     private void deregisterStudentForbiddenTest() throws Exception {

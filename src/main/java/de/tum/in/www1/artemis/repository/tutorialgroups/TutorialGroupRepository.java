@@ -77,9 +77,8 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
 
     Set<TutorialGroup> findAllByTeachingAssistant(User teachingAssistant);
 
+    @Transactional // ok because of delete
     @Modifying
-    @Transactional
-    // ok because of delete
     void deleteAllByCourse(Course course);
 
     @Query("""

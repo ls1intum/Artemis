@@ -46,10 +46,17 @@ export class TutorialGroupsService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
     }
 
-    update(courseId: number, tutorialGroupId: number, tutorialGroup: TutorialGroup): Observable<EntityResponseType> {
+    update(courseId: number, tutorialGroupId: number, tutorialGroup: TutorialGroup, notificationText?: string): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupDatesFromClient(tutorialGroup);
         return this.httpClient
-            .put<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, copy, { observe: 'response' })
+            .put<TutorialGroup>(
+                `${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`,
+                {
+                    tutorialGroup: copy,
+                    notificationText,
+                },
+                { observe: 'response' },
+            )
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
     }
 

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, CourseGroup, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
@@ -25,6 +25,7 @@ export interface TutorialGroupFormData {
     isOnline?: boolean;
     language?: Language;
     campus?: string;
+    notificationText?: string; // Only in edit mode
     schedule?: ScheduleFormData;
 }
 
@@ -110,6 +111,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         return this.form.get('language');
     }
 
+    get notificationControl() {
+        return this.form.get('notificationText');
+    }
+
     get isSubmitPossible() {
         if (this.configureSchedule) {
             return !this.form.invalid;
@@ -189,6 +194,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
             language: [this.GERMAN, [Validators.required]],
             campus: [undefined, Validators.maxLength(255)],
         });
+
+        if (this.isEditMode) {
+            this.form.addControl('notificationText', new FormControl(undefined, [Validators.maxLength(1000)]));
+        }
     }
 
     private setFormValues(formData: TutorialGroupFormData) {

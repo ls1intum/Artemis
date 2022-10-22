@@ -5,6 +5,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 public class NotificationTargetFactory {
 
@@ -21,6 +22,10 @@ public class NotificationTargetFactory {
     public static final String EXAMS_TEXT = "exams";
 
     public static final String LECTURES_TEXT = "lectures";
+
+    public static final String TUTORIAL_GROUP_MANAGEMENT_TEXT = "tutorial-groups-management";
+
+    public static final String TUTORIAL_GROUPS_TEXT = "tutorial-groups";
 
     public static final String ATTACHMENT_UPDATED_TEXT = "attachmentUpdated";
 
@@ -189,11 +194,33 @@ public class NotificationTargetFactory {
      * Create a NotificationTarget for plagiarism case related notifications
      *
      * @param plagiarismCaseId is the id of the PlagiarismCase
-     * @param courseId of the Course
+     * @param courseId         of the Course
      * @return the final NotificationTarget
      */
     public static NotificationTarget createPlagiarismCaseTarget(Long plagiarismCaseId, Long courseId) {
         return new NotificationTarget(PLAGIARISM_DETECTED_TEXT, plagiarismCaseId, PLAGIARISM_TEXT, courseId, COURSES_TEXT);
+    }
+
+    // Tutorial Group related targets
+
+    /**
+     * Create a NotificationTarget for notifications related to a Tutorial Group.
+     *
+     * @param tutorialGroup that is related to the notification
+     * @param courseId      of the course to which the tutorial group belongs
+     * @param isManagement  true if the notification should link to the tutorial group management page
+     * @param isDetailPage  true if the notification should lik to the detail page of the tutorial group
+     * @return the created NotificationTarget
+     */
+    public static NotificationTarget createTutorialGroupTarget(TutorialGroup tutorialGroup, Long courseId, boolean isManagement, boolean isDetailPage) {
+        var notificationTarget = new NotificationTarget();
+        if (isDetailPage) {
+            notificationTarget.setIdentifier(tutorialGroup.getId());
+        }
+        notificationTarget.setEntity(isManagement ? TUTORIAL_GROUP_MANAGEMENT_TEXT : TUTORIAL_GROUPS_TEXT);
+        notificationTarget.setCourseId(courseId);
+        notificationTarget.setMainPage(isManagement ? COURSE_MANAGEMENT_TEXT : COURSES_TEXT);
+        return notificationTarget;
     }
 
     /// URL/Link related methods
@@ -202,12 +229,17 @@ public class NotificationTargetFactory {
      * Extracts a viable URL from the provided notification and baseUrl
      *
      * @param notification which transient target property will be used for creating the URL
-     * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
+     * @param baseUrl      the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
      * @return viable URL to the notification related page
      */
     public static String extractNotificationUrl(Notification notification, String baseUrl) {
         NotificationTarget target = notification.getTargetTransient();
-        return baseUrl + "/" + target.getMainPage() + "/" + target.getCourseId() + "/" + target.getEntity() + "/" + target.getIdentifier();
+        var mainPage = target.getMainPage() != null ? target.getMainPage() : "";
+        var entity = target.getEntity() != null ? target.getEntity() : "";
+        var identifier = (target.getIdentifier() != null) ? String.valueOf(target.getIdentifier()) : "";
+        var courseId = (target.getCourseId() != null) ? String.valueOf(target.getCourseId()) : "";
+
+        return baseUrl + "/" + mainPage + "/" + courseId + "/" + entity + "/" + identifier;
     }
 
     /**
