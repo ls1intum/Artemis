@@ -768,7 +768,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "tutor1", roles = "TA")
-    void getProgrammingSubmissionWithoutAssessmentNothingAvailable(boolean lock) throws Exception {
+    void test_getProgrammingSubmissionWithoutAssessmentNothingAvailable(boolean lock) throws Exception {
         exercise.setDueDate(ZonedDateTime.now().minusDays(2));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
