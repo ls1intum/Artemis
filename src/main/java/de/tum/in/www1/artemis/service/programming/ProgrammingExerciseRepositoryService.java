@@ -30,6 +30,14 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final Path ALL_FILES_GLOB = Path.of("**", "*.*");
 
+    private static final String TEST_FILES_PATH = "testFiles";
+
+    private static final String PACKAGE_NAME_FOLDER_PLACEHOLDER = "${packageNameFolder}";
+
+    private static final String PACKAGE_NAME_FILE_PLACEHOLDER = "${packageNameFile}";
+
+    private static final String PACKAGE_NAME_PLACEHOLDER = "${packageName}";
+
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseRepositoryService.class);
 
     private final FileService fileService;
@@ -150,7 +158,7 @@ public class ProgrammingExerciseRepositoryService {
             setupTemplateAndPush(exerciseResources, "Exercise", programmingExercise, exerciseCreator);
             // The template repo can be re-written, so we can unprotect the default branch.
             final var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-            final String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
+            final String templateBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(programmingExercise);
             versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateBranch);
 
             setupTemplateAndPush(solutionResources, "Solution", programmingExercise, exerciseCreator);
@@ -176,10 +184,10 @@ public class ProgrammingExerciseRepositoryService {
      */
     void createRepositoriesForNewExercise(final ProgrammingExercise programmingExercise) throws GitAPIException {
         final String projectKey = programmingExercise.getProjectKey();
-        versionControlService.get().createProjectForExercise(programmingExercise); // Create project
-        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
-        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests repository
-        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
+        versionControlService.orElseThrow().createProjectForExercise(programmingExercise); // Create project
+        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
+        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests repository
+        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
 
         // Create auxiliary repositories
         createAndInitializeAuxiliaryRepositories(projectKey, programmingExercise);
@@ -188,8 +196,8 @@ public class ProgrammingExerciseRepositoryService {
     private void createAndInitializeAuxiliaryRepositories(final String projectKey, final ProgrammingExercise programmingExercise) throws GitAPIException {
         for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             final String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
-            versionControlService.get().createRepository(projectKey, repositoryName, null);
-            repo.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), repositoryName).toString());
+            versionControlService.orElseThrow().createRepository(projectKey, repositoryName, null);
+            repo.setRepositoryUrl(versionControlService.orElseThrow().getCloneRepositoryUrl(programmingExercise.getProjectKey(), repositoryName).toString());
 
             final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUrl(), true);
             gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
@@ -202,10 +210,11 @@ public class ProgrammingExerciseRepositoryService {
      * @param templateName         The name of the template
      * @param programmingExercise  the programming exercise
      * @param user                 The user that triggered the action (used as Git commit author)
-     * @throws Exception An exception in case something went wrong
+     * @throws IOException     Thrown in case resources could be copied into the local repository.
+     * @throws GitAPIException Thrown in case pushing to the version control system failed.
      */
     private void setupTemplateAndPush(final RepositoryResources repositoryResources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
-            throws Exception {
+            throws IOException, GitAPIException {
         // Only copy template if repo is empty
         if (!gitService.listFiles(repositoryResources.repository).isEmpty()) {
             return;
@@ -233,9 +242,10 @@ public class ProgrammingExerciseRepositoryService {
      * @param resources           The resources which should get added to the template
      * @param programmingExercise The related programming exercise for which the template should get created
      * @param user                the user who has initiated the generation of the programming exercise
-     * @throws Exception If anything goes wrong
+     * @throws IOException     Thrown in case copying files fails.
+     * @throws GitAPIException Thrown in case pushing the updates to the version control system fails.
      */
-    private void setupTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final User user) throws Exception {
+    private void setupTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final User user) throws IOException, GitAPIException {
         // Only copy template if repo is empty
         if (gitService.listFiles(resources.repository).isEmpty()
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
@@ -336,9 +346,9 @@ public class ProgrammingExerciseRepositoryService {
             final Map<String, Boolean> sectionsMap) throws IOException {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
-        final Path testFilePath = templatePath.resolve("testFiles").resolve(ALL_FILES_GLOB);
+        final Path testFilePath = templatePath.resolve(TEST_FILES_PATH).resolve(ALL_FILES_GLOB);
         final Resource[] testFileResources = resourceLoaderService.getResources(testFilePath.toString());
-        final String packagePath = repoLocalPath.resolve("test").resolve("${packageNameFolder}").toAbsolutePath().toString();
+        final String packagePath = repoLocalPath.resolve("test").resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
 
         sectionsMap.put("non-sequential", true);
         sectionsMap.put("sequential", false);
@@ -440,13 +450,13 @@ public class ProgrammingExerciseRepositoryService {
             final Path buildStagePath = repoLocalPath.resolve(buildStage);
             Files.createDirectory(buildStagePath);
 
-            Path buildStageResourcesPath = templatePath.resolve("testFiles").resolve(buildStage).resolve(ALL_FILES_GLOB);
+            Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStage).resolve(ALL_FILES_GLOB);
             Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath.toString());
 
             Files.createDirectory(buildStagePath.toAbsolutePath().resolve("test"));
-            Files.createDirectory(buildStagePath.toAbsolutePath().resolve("test").resolve("${packageNameFolder}"));
+            Files.createDirectory(buildStagePath.toAbsolutePath().resolve("test").resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER));
 
-            String packagePath = buildStagePath.toAbsolutePath().resolve("test").resolve("${packageNameFolder}").toAbsolutePath().toString();
+            String packagePath = buildStagePath.toAbsolutePath().resolve("test").resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
 
             // staging project files are only required for maven
             if (isMaven && stagePomXml != null) {
@@ -457,7 +467,7 @@ public class ProgrammingExerciseRepositoryService {
 
             // Possibly overwrite files if the project type is defined
             if (projectType != null) {
-                buildStageResourcesPath = projectTemplatePath.resolve("testFiles").resolve(buildStage).resolve(ALL_FILES_GLOB);
+                buildStageResourcesPath = projectTemplatePath.resolve(TEST_FILES_PATH).resolve(buildStage).resolve(ALL_FILES_GLOB);
                 try {
                     buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath.toString());
                     fileService.copyResources(buildStageResources, resources.prefix.toString(), packagePath, false);
@@ -481,14 +491,15 @@ public class ProgrammingExerciseRepositoryService {
 
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
-                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
+                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), PACKAGE_NAME_FOLDER_PLACEHOLDER,
                         programmingExercise.getPackageFolderName());
-                replacements.put("${packageName}", programmingExercise.getPackageName());
+                replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             }
             case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository);
+            default -> {
+                // no special package name replacements needed for other programming languages
+            }
         }
-
-        // there is no need in python to replace package names
 
         replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replace(" ", "-")); // Used e.g. in artifactId
         replacements.put("${exerciseName}", programmingExercise.getTitle());
@@ -511,10 +522,10 @@ public class ProgrammingExerciseRepositoryService {
         final String packageName = programmingExercise.getPackageName();
 
         if (ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
-            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, "${packageNameFolder}", packageName);
-            fileService.replaceVariablesInFileName(repositoryLocalPath, "${packageNameFile}", packageName);
+            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, PACKAGE_NAME_FOLDER_PLACEHOLDER, packageName);
+            fileService.replaceVariablesInFileName(repositoryLocalPath, PACKAGE_NAME_FILE_PLACEHOLDER, packageName);
 
-            replacements.put("${packageName}", packageName);
+            replacements.put(PACKAGE_NAME_PLACEHOLDER, packageName);
         }
         else if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
             fileService.replaceVariablesInDirectoryName(repositoryLocalPath, appNamePlaceholder, packageName);
