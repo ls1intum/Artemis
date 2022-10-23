@@ -1076,7 +1076,7 @@ public class ProgrammingExerciseTestService {
 
         setupMockRepo(localRepository, repositoryType, "some-file.java");
 
-        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType;
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType.name();
         return request.get(url, expectedStatus, String.class);
     }
 
