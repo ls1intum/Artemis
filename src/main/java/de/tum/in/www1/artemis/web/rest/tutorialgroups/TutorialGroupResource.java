@@ -221,7 +221,7 @@ public class TutorialGroupResource {
         }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
-                .body(persistedTutorialGroup.preventCircularJsonConversion());
+                .body(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
     }
 
     /**
@@ -317,7 +317,7 @@ public class TutorialGroupResource {
         tutorialGroupScheduleService.updateSchedule(configuration, persistedTutorialGroup, Optional.ofNullable(persistedTutorialGroup.getTutorialGroupSchedule()),
                 Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()));
 
-        return ResponseEntity.ok(persistedTutorialGroup.preventCircularJsonConversion());
+        return ResponseEntity.ok(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
     }
 
     /**

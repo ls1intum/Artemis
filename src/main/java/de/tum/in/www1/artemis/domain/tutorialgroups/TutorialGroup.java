@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.persistence.*;
@@ -8,7 +7,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -18,7 +16,6 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 
 @Entity
 @Table(name = "tutorial_group")
@@ -274,47 +271,6 @@ public class TutorialGroup extends DomainObject {
     }
 
     /**
-     * Sets the transient fields for the given user.
-     *
-     * @param user the user for which the transient fields should be set
-     */
-    public void setTransientPropertiesForUser(User user) {
-        if (Hibernate.isInitialized(registrations) && registrations != null) {
-            this.setIsUserRegistered(registrations.stream().anyMatch(registration -> registration.getStudent().equals(user)));
-            this.setNumberOfRegisteredUsers(registrations.size());
-        }
-        else {
-            this.setIsUserRegistered(null);
-            this.setNumberOfRegisteredUsers(null);
-        }
-
-        if (Hibernate.isInitialized(course) && course != null) {
-            this.setCourseTitle(course.getTitle());
-        }
-        else {
-            this.setCourseTitle(null);
-        }
-
-        if (Hibernate.isInitialized(teachingAssistant) && teachingAssistant != null) {
-            this.setTeachingAssistantName(teachingAssistant.getName());
-            this.isUserTutor = teachingAssistant.equals(user);
-        }
-        else {
-            this.setTeachingAssistantName(null);
-        }
-
-        if (Hibernate.isInitialized(tutorialGroupSessions) && tutorialGroupSessions != null) {
-            // determine the next session
-            var nextSession = tutorialGroupSessions.stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
-                    .filter(session -> session.getStart().isAfter(ZonedDateTime.now())).min(Comparator.comparing(TutorialGroupSession::getStart)).orElse(null);
-            this.setNextSession(nextSession);
-        }
-        else {
-            this.setNextSession(null);
-        }
-    }
-
-    /**
      * Hides privacy sensitive information.
      */
     public void hidePrivacySensitiveInformation() {
@@ -326,15 +282,21 @@ public class TutorialGroup extends DomainObject {
     /**
      * Removes circular references for JSON serialization.
      */
-    public TutorialGroup preventCircularJsonConversion() {
+    public static TutorialGroup preventCircularJsonConversion(TutorialGroup tutorialGroup) {
+
         // prevent circular to json conversion
-        if (Hibernate.isInitialized(this.tutorialGroupSchedule) && this.tutorialGroupSchedule != null) {
-            this.getTutorialGroupSchedule().setTutorialGroup(null);
+        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSchedule") && tutorialGroup.getTutorialGroupSchedule() != null) {
+            tutorialGroup.getTutorialGroupSchedule().setTutorialGroup(null);
         }
-        if (Hibernate.isInitialized(this.tutorialGroupSessions) && this.tutorialGroupSessions != null) {
-            this.getTutorialGroupSessions().forEach(tutorialGroupSession -> tutorialGroupSession.setTutorialGroup(null));
+        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
+            tutorialGroup.getTutorialGroupSessions().forEach(tutorialGroupSession -> {
+                tutorialGroupSession.setTutorialGroup(null);
+                if (tutorialGroupSession.getTutorialGroupSchedule() != null) {
+                    tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroup(null);
+                }
+            });
         }
-        return this;
+        return tutorialGroup;
     }
 
 }

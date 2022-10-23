@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS;
+import static javax.persistence.Persistence.getPersistenceUtil;
 
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.persistence.Persistence;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
@@ -14,13 +16,16 @@ import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -43,15 +48,78 @@ public class TutorialGroupService {
 
     private final CourseRepository courseRepository;
 
+    private final TutorialGroupSessionRepository tutorialGroupSessionRepository;
+
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
-            CourseRepository courseRepository) {
+            TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
+            TutorialGroupSessionRepository tutorialGroupSessionRepository) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.courseRepository = courseRepository;
+        this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
+    }
+
+    /**
+     * Sets the transient fields for the given user.
+     *
+     * @param user          the user for which the transient fields should be set
+     * @param tutorialGroup the tutorial group for which the transient fields should be set
+     */
+    public void setTransientPropertiesForUser(User user, TutorialGroup tutorialGroup) {
+
+        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "registrations") && tutorialGroup.getRegistrations() != null) {
+            tutorialGroup.setIsUserRegistered(tutorialGroup.getRegistrations().stream().anyMatch(registration -> registration.getStudent().equals(user)));
+            tutorialGroup.setNumberOfRegisteredUsers(tutorialGroup.getRegistrations().size());
+        }
+        else {
+            tutorialGroup.setIsUserRegistered(null);
+            tutorialGroup.setNumberOfRegisteredUsers(null);
+        }
+
+        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "course") && tutorialGroup.getCourse() != null) {
+            tutorialGroup.setCourseTitle(tutorialGroup.getCourse().getTitle());
+        }
+        else {
+            tutorialGroup.setCourseTitle(null);
+        }
+
+        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "teachingAssistant") && tutorialGroup.getTeachingAssistant() != null) {
+            tutorialGroup.setTeachingAssistantName(tutorialGroup.getTeachingAssistant().getName());
+            tutorialGroup.setIsUserTutor(tutorialGroup.getTeachingAssistant().equals(user));
+        }
+        else {
+            tutorialGroup.setTeachingAssistantName(null);
+        }
+        this.setNextSession(tutorialGroup);
+    }
+
+    /**
+     * Sets the nextSession transient field of the given tutorial group
+     *
+     * @param tutorialGroup the tutorial group to set the next session for
+     */
+    private void setNextSession(TutorialGroup tutorialGroup) {
+        Optional<TutorialGroupSession> nextSessionOptional = Optional.empty();
+        if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
+            // determine the next session
+            nextSessionOptional = tutorialGroup.getTutorialGroupSessions().stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
+                    .filter(session -> session.getStart().isAfter(ZonedDateTime.now())).min(Comparator.comparing(TutorialGroupSession::getStart));
+        }
+        else {
+            var nextSessions = tutorialGroupSessionRepository.findNextSessionsOfStatus(tutorialGroup.getId(), ZonedDateTime.now(), TutorialGroupSessionStatus.ACTIVE);
+            if (nextSessions.size() > 0) {
+                nextSessionOptional = Optional.of(nextSessions.get(0));
+            }
+        }
+        nextSessionOptional.ifPresent(tutorialGroupSession -> {
+            tutorialGroupSession.setTutorialGroup(null);
+            tutorialGroupSession.setTutorialGroupSchedule(null);
+            tutorialGroup.setNextSession(tutorialGroupSession);
+        });
+
     }
 
     /**
@@ -354,8 +422,9 @@ public class TutorialGroupService {
      * @return A list of tutorial groups for the given course with the transient properties set for the given user.
      */
     public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user) {
-        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrationsAndSessions(course.getId());
-        tutorialGroups.forEach(tutorialGroup -> tutorialGroup.setTransientPropertiesForUser(user));
+        // do not load all sessions here as they are not needed for the overview page and would slow down the request
+        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(course.getId());
+        tutorialGroups.forEach(tutorialGroup -> this.setTransientPropertiesForUser(user, tutorialGroup));
         tutorialGroups.forEach(tutorialGroup -> {
             if (!authorizationCheckService.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
                 tutorialGroup.hidePrivacySensitiveInformation();
@@ -378,11 +447,11 @@ public class TutorialGroupService {
         if (!course.equals(tutorialGroup.getCourse())) {
             throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial group", "tutorialGroup", "courseIdMismatch");
         }
-        tutorialGroup.setTransientPropertiesForUser(user);
+        this.setTransientPropertiesForUser(user, tutorialGroup);
         if (!authorizationCheckService.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
             tutorialGroup.hidePrivacySensitiveInformation();
         }
-        return tutorialGroup.preventCircularJsonConversion();
+        return TutorialGroup.preventCircularJsonConversion(tutorialGroup);
     }
 
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {

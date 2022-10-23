@@ -58,6 +58,15 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             FROM TutorialGroup tutorialGroup
             LEFT JOIN FETCH tutorialGroup.teachingAssistant
             LEFT JOIN FETCH tutorialGroup.registrations
+            WHERE tutorialGroup.course.id = :#{#courseId}
+            ORDER BY tutorialGroup.title""")
+    Set<TutorialGroup> findAllByCourseIdWithTeachingAssistantAndRegistrations(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT tutorialGroup
+            FROM TutorialGroup tutorialGroup
+            LEFT JOIN FETCH tutorialGroup.teachingAssistant
+            LEFT JOIN FETCH tutorialGroup.registrations
             LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
             LEFT JOIN FETCH tutorialGroup.tutorialGroupSchedule
             WHERE tutorialGroup.id = :#{#tutorialGroupId}

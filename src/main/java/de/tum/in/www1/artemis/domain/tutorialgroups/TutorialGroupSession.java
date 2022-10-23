@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
+import static javax.persistence.Persistence.getPersistenceUtil;
+
 import java.time.ZonedDateTime;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -126,16 +127,16 @@ public class TutorialGroupSession extends DomainObject {
     /**
      * Removes circular references for JSON serialization.
      */
-    public TutorialGroupSession preventCircularJsonConversion() {
+    public static TutorialGroupSession preventCircularJsonConversion(TutorialGroupSession tutorialGroupSession) {
         // prevent circular to json conversion
-        if (Hibernate.isInitialized(this.tutorialGroupSchedule) && this.tutorialGroupSchedule != null) {
-            this.getTutorialGroupSchedule().setTutorialGroupSessions(null);
-            this.getTutorialGroupSchedule().setTutorialGroup(null);
+        if (getPersistenceUtil().isLoaded(tutorialGroupSession, "tutorialGroupSchedule") && tutorialGroupSession.getTutorialGroupSchedule() != null) {
+            tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroupSessions(null);
+            tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroup(null);
         }
-        if (Hibernate.isInitialized(this.tutorialGroup) && this.tutorialGroup != null) {
-            this.getTutorialGroup().setTutorialGroupSessions(null);
-            this.getTutorialGroup().setTutorialGroupSchedule(null);
+        if (getPersistenceUtil().isLoaded(tutorialGroupSession, "tutorialGroup") && tutorialGroupSession.getTutorialGroup() != null) {
+            tutorialGroupSession.getTutorialGroup().setTutorialGroupSessions(null);
+            tutorialGroupSession.getTutorialGroup().setTutorialGroupSchedule(null);
         }
-        return this;
+        return tutorialGroupSession;
     }
 }

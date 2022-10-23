@@ -79,7 +79,7 @@ public class TutorialGroupSessionResource {
         if (!authorizationCheckService.isAllowedToSeePrivateTutorialGroupInformation(session.getTutorialGroup(), null)) {
             session.hidePrivacySensitiveInformation();
         }
-        return ResponseEntity.ok().body(session.preventCircularJsonConversion());
+        return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(session));
     }
 
     /**
@@ -139,7 +139,7 @@ public class TutorialGroupSessionResource {
 
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
-        return ResponseEntity.ok(result.preventCircularJsonConversion());
+        return ResponseEntity.ok(TutorialGroupSession.preventCircularJsonConversion(result));
     }
 
     /**
@@ -205,7 +205,7 @@ public class TutorialGroupSessionResource {
         newSession = tutorialGroupSessionRepository.save(newSession);
 
         return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId()))
-                .body(newSession.preventCircularJsonConversion());
+                .body(TutorialGroupSession.preventCircularJsonConversion(newSession));
     }
 
     /**
@@ -231,7 +231,7 @@ public class TutorialGroupSessionResource {
             sessionToCancel.setStatusExplanation(tutorialGroupStatusDTO.status_explanation().trim());
         }
         sessionToCancel = tutorialGroupSessionRepository.save(sessionToCancel);
-        return ResponseEntity.ok().body(sessionToCancel.preventCircularJsonConversion());
+        return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(sessionToCancel));
     }
 
     /**
@@ -253,7 +253,7 @@ public class TutorialGroupSessionResource {
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
         sessionToActivate.setStatusExplanation(null);
         sessionToActivate = tutorialGroupSessionRepository.save(sessionToActivate);
-        return ResponseEntity.ok().body(sessionToActivate.preventCircularJsonConversion());
+        return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(sessionToActivate));
     }
 
     private void checkEntityIdMatchesPathIds(TutorialGroupSession tutorialGroupSession, Optional<Long> courseId, Optional<Long> tutorialGroupId, Optional<Long> sessionId) {
