@@ -1,13 +1,27 @@
 <ng-container>
-    <td *ngIf="showIdColumn">{{ session.id }}</td>
-    <td>
+    <td [class.table-danger]="isCancelled" *ngIf="showIdColumn">{{ session.id }}</td>
+    <td [class.table-danger]="isCancelled">
         {{ session.start | artemisDate: 'short-date':false:timeZone! }}
         {{ session.start | artemisDate: 'time':false:timeZone! }} -
         {{ session.end | artemisDate: 'time':false:timeZone! }}
     </td>
-    <td [class.table-warning]="!hasSchedule">{{ (hasSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
-    <td [class.table-danger]="isCancelled">{{ (isCancelled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
-    <td *ngIf="extraColumn">
+    <td [class.table-warning]="!hasSchedule && !isCancelled" [class.table-danger]="isCancelled">
+        {{ (hasSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
+    </td>
+    <td [class.table-danger]="isCancelled">
+        {{ (isCancelled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
+        <button
+            *ngIf="isCancelled && session.statusExplanation && session.statusExplanation.trim().length > 0"
+            type="button"
+            class="btn btn-outline-danger ms-2"
+            placement="top"
+            [ngbPopover]="session.statusExplanation.trim()"
+            [popoverTitle]="'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate"
+        >
+            {{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}
+        </button>
+    </td>
+    <td [class.table-danger]="isCancelled" *ngIf="extraColumn">
         <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }"></ng-template>
     </td>
 </ng-container>

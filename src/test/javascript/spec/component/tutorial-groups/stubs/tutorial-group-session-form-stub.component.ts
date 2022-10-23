@@ -4,6 +4,7 @@ import { Course } from 'app/entities/course.model';
 
 @Component({ selector: 'jhi-tutorial-group-session-form', template: '' })
 export class TutorialGroupSessionFormStubComponent {
+    @Input() timeZone: string;
     @Input() isEditMode = false;
     @Input() course?: Course;
     @Input() formData: TutorialGroupSessionFormData;

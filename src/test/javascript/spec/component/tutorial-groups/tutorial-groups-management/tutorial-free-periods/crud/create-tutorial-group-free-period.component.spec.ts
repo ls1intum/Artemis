@@ -19,12 +19,13 @@ import {
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
 } from '../../../helpers/tutorialGroupFreePeriodExampleModel';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { Course } from 'app/entities/course.model';
 
 describe('CreateTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupFreePeriodComponent>;
     let component: CreateTutorialGroupFreePeriodComponent;
     let tutorialGroupFreePeriodService: TutorialGroupFreePeriodService;
-    const courseId = 2;
+    const course = { id: 1, timeZone: 'Europe/Berlin' } as Course;
     const configurationId = 1;
     const router = new MockRouter();
 
@@ -41,7 +42,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
                 MockProvider(TutorialGroupFreePeriodService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
-                mockedActivatedRoute({ tutorialGroupsConfigurationId: configurationId }, {}, {}, { courseId }),
+                mockedActivatedRoute({ tutorialGroupsConfigurationId: configurationId }, {}, { course }, {}),
             ],
         })
             .compileComponents()
@@ -81,8 +82,8 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
         sessionForm.formSubmitted.emit(formData);
 
         expect(createStub).toHaveBeenCalledOnce();
-        expect(createStub).toHaveBeenCalledWith(courseId, configurationId, formDataToTutorialGroupFreePeriodDTO(formData));
+        expect(createStub).toHaveBeenCalledWith(course.id!, configurationId, formDataToTutorialGroupFreePeriodDTO(formData));
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups', 'configuration', configurationId, 'tutorial-free-days']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id!, 'tutorial-groups', 'configuration', configurationId, 'tutorial-free-days']);
     });
 });

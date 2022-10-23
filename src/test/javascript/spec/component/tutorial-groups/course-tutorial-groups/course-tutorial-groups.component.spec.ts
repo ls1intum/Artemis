@@ -109,8 +109,8 @@ describe('CourseTutorialGroupsComponent', () => {
         expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
         expect(component.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
-        // one to get the course, one to perform the update
-        expect(getCourseSpy).toHaveBeenCalledTimes(2);
+        // one to get the course, one to get the tutorial groups, one to perform the update
+        expect(getCourseSpy).toHaveBeenCalledTimes(3);
         expect(getCourseSpy).toHaveBeenCalledWith(1);
         // check that the cache was updated
         expect(mockCourse.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
@@ -127,7 +127,7 @@ describe('CourseTutorialGroupsComponent', () => {
         const updateCourseSpy = jest.spyOn(TestBed.inject(CourseScoreCalculationService), 'updateCourse');
 
         fixture.detectChanges();
-        expect(getCourseSpy).toHaveBeenCalledOnce();
+        expect(getCourseSpy).toHaveBeenCalledTimes(2);
         expect(getCourseSpy).toHaveBeenCalledWith(1);
         expect(component.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
         expect(getAllOfCourseSpy).toHaveBeenCalledTimes(0);

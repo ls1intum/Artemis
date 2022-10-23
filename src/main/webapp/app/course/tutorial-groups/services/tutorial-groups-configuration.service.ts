@@ -37,6 +37,12 @@ export class TutorialGroupsConfigurationService {
     convertTutorialGroupsConfigurationDatesFromServer(tutorialGroupsConfiguration: TutorialGroupsConfiguration): TutorialGroupsConfiguration {
         tutorialGroupsConfiguration.tutorialPeriodStartInclusive = convertDateFromServer(tutorialGroupsConfiguration.tutorialPeriodStartInclusive);
         tutorialGroupsConfiguration.tutorialPeriodEndInclusive = convertDateFromServer(tutorialGroupsConfiguration.tutorialPeriodEndInclusive);
+        if (tutorialGroupsConfiguration.tutorialGroupFreePeriods) {
+            tutorialGroupsConfiguration.tutorialGroupFreePeriods.forEach((tutorialGroupFreePeriod) => {
+                tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
+                tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end);
+            });
+        }
         return tutorialGroupsConfiguration;
     }
 

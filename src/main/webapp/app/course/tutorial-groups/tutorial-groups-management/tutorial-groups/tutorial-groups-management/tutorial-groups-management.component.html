@@ -43,6 +43,9 @@
         </div>
         <div class="col-12 col-xl-4">
             <jhi-tutorial-groups-course-information [tutorialGroups]="tutorialGroups"></jhi-tutorial-groups-course-information>
+            <div class="mt-1" *ngIf="tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0">
+                <jhi-tutorial-group-free-days-overview [timeZone]="course.timeZone" [tutorialGroupFreeDays]="tutorialGroupFreeDays"> </jhi-tutorial-group-free-days-overview>
+            </div>
         </div>
     </div>
 </jhi-loading-indicator-container>

@@ -119,7 +119,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
 
     it('should load all free periods and sort by start date ascending', () => {
         fixture.detectChanges();
-        expect(component.tutorialGroupFreePeriods).toEqual([firstOfJanuaryPeriod, secondOfJanuaryPeriod, thirdOfJanuaryPeriod]);
+        expect(component.tutorialGroupFreePeriods).toEqual([thirdOfJanuaryPeriod, secondOfJanuaryPeriod, firstOfJanuaryPeriod]);
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
         expect(findConfigurationSpy).toHaveBeenCalledWith(courseId, tutorialGroupConfigurationId);
     });
@@ -128,8 +128,8 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         fixture.detectChanges();
         const rowButtons = fixture.debugElement.queryAll(By.directive(TutorialGroupRowButtonsStubComponent));
         expect(rowButtons).toHaveLength(3);
-        expect(rowButtons[0].componentInstance.tutorialFreePeriod).toEqual(firstOfJanuaryPeriod);
+        expect(rowButtons[0].componentInstance.tutorialFreePeriod).toEqual(thirdOfJanuaryPeriod);
         expect(rowButtons[1].componentInstance.tutorialFreePeriod).toEqual(secondOfJanuaryPeriod);
-        expect(rowButtons[2].componentInstance.tutorialFreePeriod).toEqual(thirdOfJanuaryPeriod);
+        expect(rowButtons[2].componentInstance.tutorialFreePeriod).toEqual(firstOfJanuaryPeriod);
     });
 });

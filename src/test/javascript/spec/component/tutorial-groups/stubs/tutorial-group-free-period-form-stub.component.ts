@@ -3,6 +3,7 @@ import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tuto
 
 @Component({ selector: 'jhi-tutorial-free-period-form', template: '' })
 export class TutorialGroupFreePeriodFormStubComponent {
+    @Input() timeZone: string;
     @Input() isEditMode = false;
     @Input() formData: TutorialGroupFreePeriodFormData;
     @Output() formSubmitted: EventEmitter<TutorialGroupFreePeriodFormData> = new EventEmitter<TutorialGroupFreePeriodFormData>();

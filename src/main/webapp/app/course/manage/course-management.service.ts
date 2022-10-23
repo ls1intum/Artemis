@@ -446,6 +446,8 @@ export class CourseManagementService {
      * @private
      */
     private processCourseEntityArrayResponseType(courseRes: EntityArrayResponseType): EntityArrayResponseType {
+        this.convertTutorialGroupsDatesFromServer(courseRes);
+        this.convertTutorialGroupConfigurationsDateFromServer(courseRes);
         this.convertCourseArrayResponseDatesFromServer(courseRes);
         this.convertExerciseCategoryArrayFromServer(courseRes);
         this.setAccessRightsCourseEntityArrayResponseType(courseRes);
@@ -476,11 +478,37 @@ export class CourseManagementService {
         return courseRes;
     }
 
+    private convertTutorialGroupsDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((course: Course) => {
+                if (course.tutorialGroups) {
+                    course.tutorialGroups = this.tutorialGroupsService.convertTutorialGroupArrayDatesFromServer(course.tutorialGroups);
+                }
+            });
+        }
+        return res;
+    }
+
     private convertTutorialGroupConfigurationDateFromServer(courseRes: EntityResponseType): EntityResponseType {
         if (courseRes.body?.tutorialGroupsConfiguration) {
-            this.tutorialGroupsConfigurationService.convertTutorialGroupsConfigurationDatesFromServer(courseRes.body.tutorialGroupsConfiguration);
+            courseRes.body.tutorialGroupsConfiguration = this.tutorialGroupsConfigurationService.convertTutorialGroupsConfigurationDatesFromServer(
+                courseRes.body.tutorialGroupsConfiguration,
+            );
         }
         return courseRes;
+    }
+
+    private convertTutorialGroupConfigurationsDateFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((course: Course) => {
+                if (course.tutorialGroupsConfiguration) {
+                    course.tutorialGroupsConfiguration = this.tutorialGroupsConfigurationService.convertTutorialGroupsConfigurationDatesFromServer(
+                        course.tutorialGroupsConfiguration,
+                    );
+                }
+            });
+        }
+        return res;
     }
 
     private convertCourseResponseDateFromServer(res: EntityResponseType): EntityResponseType {

@@ -20,6 +20,8 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
 
     @Input() isEditMode = false;
 
+    @Input() timeZone: string;
+
     @Output() formSubmitted: EventEmitter<TutorialGroupSessionFormData> = new EventEmitter<TutorialGroupSessionFormData>();
 
     faCalendarAlt = faCalendarAlt;

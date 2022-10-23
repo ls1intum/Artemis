@@ -8,6 +8,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faPencil, faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
+import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
@@ -24,12 +25,17 @@ export class TutorialGroupsManagementComponent implements OnInit {
     faPencil = faPencil;
     faUmbrellaBeach = faUmbrellaBeach;
 
+    tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
+
     constructor(private tutorialGroupService: TutorialGroupsService, private router: Router, private activatedRoute: ActivatedRoute, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.activatedRoute.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
+                if (this.course?.tutorialGroupsConfiguration?.tutorialGroupFreePeriods) {
+                    this.tutorialGroupFreeDays = this.course.tutorialGroupsConfiguration.tutorialGroupFreePeriods;
+                }
                 this.courseId = course.id!;
                 this.isAtLeastInstructor = course.isAtLeastInstructor;
                 this.loadTutorialGroups();

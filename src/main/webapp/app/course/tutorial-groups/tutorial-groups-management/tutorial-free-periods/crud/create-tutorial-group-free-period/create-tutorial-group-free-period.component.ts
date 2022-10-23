@@ -8,6 +8,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-create-tutorial-group-free-day',
@@ -18,7 +19,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnInit {
     isLoading: boolean;
     tutorialGroup: TutorialGroup;
     tutorialGroupConfigurationId: number;
-    courseId: number;
+    course: Course;
 
     constructor(
         private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
@@ -28,12 +29,12 @@ export class CreateTutorialGroupFreePeriodComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.paramMap])
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(take(1))
             .subscribe({
-                next: ([params, parentParams]) => {
+                next: ([params, { course }]) => {
                     this.tutorialGroupConfigurationId = Number(params.get('tutorialGroupsConfigurationId'));
-                    this.courseId = Number(parentParams.get('courseId'));
+                    this.course = course;
                 },
             });
     }
@@ -45,7 +46,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnInit {
 
         this.isLoading = true;
         this.tutorialGroupFreePeriodService
-            .create(this.courseId, this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodToCreate)
+            .create(this.course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodToCreate)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -53,7 +54,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups', 'configuration', this.tutorialGroupConfigurationId, 'tutorial-free-days']);
+                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups', 'configuration', this.tutorialGroupConfigurationId, 'tutorial-free-days']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

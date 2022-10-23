@@ -31,7 +31,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let freePeriod of tutorialGroupFreePeriods">
+                    <tr *ngFor="let freePeriod of tutorialGroupFreePeriods" [ngClass]="{ 'opacity-50': isInThePast(freePeriod) }">
                         <td>
                             {{ freePeriod.id }}
                         </td>

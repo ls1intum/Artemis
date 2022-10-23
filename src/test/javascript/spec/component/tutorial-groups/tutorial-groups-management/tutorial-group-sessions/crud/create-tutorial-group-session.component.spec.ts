@@ -21,13 +21,14 @@ import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group
 import { TutorialGroupSessionFormStubComponent } from '../../../stubs/tutorial-group-session-form-stub.component';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { Course } from 'app/entities/course.model';
 
 describe('CreateTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupSessionComponent>;
     let component: CreateTutorialGroupSessionComponent;
     let tutorialGroupService: TutorialGroupsService;
     let tutorialGroupSessionService: TutorialGroupSessionService;
-    const courseId = 2;
+    const course = { id: 2, timeZone: 'Europe/Berlin' } as Course;
     const tutorialGroupId = 1;
 
     let findTutorialGroupSpy: jest.SpyInstance;
@@ -43,7 +44,7 @@ describe('CreateTutorialGroupSessionComponent', () => {
                 MockProvider(TutorialGroupSessionService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
-                mockedActivatedRoute({ tutorialGroupId }, {}, {}, { courseId }),
+                mockedActivatedRoute({ tutorialGroupId }, {}, { course }, {}),
             ],
         })
             .compileComponents()
@@ -65,7 +66,7 @@ describe('CreateTutorialGroupSessionComponent', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(findTutorialGroupSpy).toHaveBeenCalledOnce();
-        expect(findTutorialGroupSpy).toHaveBeenCalledWith(courseId, tutorialGroupId);
+        expect(findTutorialGroupSpy).toHaveBeenCalledWith(course.id!, tutorialGroupId);
     });
 
     it('should send POST request upon form submission and navigate', () => {
@@ -88,8 +89,8 @@ describe('CreateTutorialGroupSessionComponent', () => {
         sessionForm.formSubmitted.emit(formData);
 
         expect(createStub).toHaveBeenCalledOnce();
-        expect(createStub).toHaveBeenCalledWith(courseId, tutorialGroupId, formDataToTutorialGroupSessionDTO(formData));
+        expect(createStub).toHaveBeenCalledWith(course.id!, tutorialGroupId, formDataToTutorialGroupSessionDTO(formData));
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups', tutorialGroupId, 'sessions']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id!, 'tutorial-groups', tutorialGroupId, 'sessions']);
     });
 });

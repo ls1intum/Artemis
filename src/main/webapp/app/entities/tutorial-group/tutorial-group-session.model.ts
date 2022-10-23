@@ -15,5 +15,6 @@ export class TutorialGroupSession implements BaseEntity {
     public start?: dayjs.Dayjs;
     public end?: dayjs.Dayjs;
     public status?: TutorialGroupSessionStatus;
+    public statusExplanation?: string;
     public location?: string;
 }

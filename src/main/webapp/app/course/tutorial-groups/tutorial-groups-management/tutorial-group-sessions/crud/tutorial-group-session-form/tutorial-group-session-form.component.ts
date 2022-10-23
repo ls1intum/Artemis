@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NgbTimeAdapter } from '@ng-bootstrap/ng-bootstrap';
-import { Course } from 'app/entities/course.model';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { NgbTimeStringAdapter } from 'app/course/tutorial-groups/shared/ngbTimeStringAdapter';
 import { validTimeRange } from 'app/course/tutorial-groups/shared/timeRangeValidator';

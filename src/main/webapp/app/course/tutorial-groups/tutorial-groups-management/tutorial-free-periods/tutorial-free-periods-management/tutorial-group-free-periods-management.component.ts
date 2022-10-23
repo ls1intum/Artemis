@@ -10,6 +10,7 @@ import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-gr
 import { SortService } from 'app/shared/service/sort.service';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-tutorial-free-periods',
@@ -39,6 +40,14 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
         this.loadAll();
     }
 
+    public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {
+        return tutorialGroupFreeDay.start!.isBefore(this.getCurrentDate());
+    }
+
+    public getCurrentDate(): dayjs.Dayjs {
+        return dayjs();
+    }
+
     loadAll() {
         this.isLoading = true;
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
@@ -56,7 +65,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
                     if (tutorialGroupsConfigurationResult.body) {
                         this.tutorialGroupsConfiguration = tutorialGroupsConfigurationResult.body;
                         if (this.tutorialGroupsConfiguration.tutorialGroupFreePeriods) {
-                            this.tutorialGroupFreePeriods = this.sortService.sortByProperty(this.tutorialGroupsConfiguration.tutorialGroupFreePeriods, 'start', true);
+                            this.tutorialGroupFreePeriods = this.sortService.sortByProperty(this.tutorialGroupsConfiguration.tutorialGroupFreePeriods, 'start', false);
                         }
                     }
                 },
