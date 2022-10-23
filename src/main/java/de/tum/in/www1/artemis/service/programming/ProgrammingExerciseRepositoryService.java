@@ -85,6 +85,14 @@ public class ProgrammingExerciseRepositoryService {
     private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix) {
     }
 
+    /**
+     * Collects all the required resources to fill the initial repository for a new exercise.
+     *
+     * @param programmingExercise The exercise for which the repository is set up.
+     * @param repositoryType The type of the repository which is set up.
+     * @return All required information about the required resources to set up the repository.
+     * @throws GitAPIException Thrown in case cloning the initial empty repository fails.
+     */
     private RepositoryResources getRepositoryResources(final ProgrammingExercise programmingExercise, final RepositoryType repositoryType) throws GitAPIException {
         final String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase(Locale.ROOT);
         final ProjectType projectType = programmingExercise.getProjectType();
@@ -126,6 +134,16 @@ public class ProgrammingExerciseRepositoryService {
         return new RepositoryResources(repo, resources, prefix, projectTypeResources, projectTypePrefix);
     }
 
+    /**
+     * Sets up the three initial repositories for a new exercise.
+     *
+     * @param programmingExercise The exercise that should be set up.
+     * @param exerciseCreator The user that wants to create the exercise
+     * @param exerciseResources The resources for the template repository.
+     * @param solutionResources The resources for the solution repository.
+     * @param testResources The resources for the repository containing the tests.
+     * @throws GitAPIException Thrown in case pushing a repository fails.
+     */
     private void setupRepositories(final ProgrammingExercise programmingExercise, final User exerciseCreator, final RepositoryResources exerciseResources,
             final RepositoryResources solutionResources, final RepositoryResources testResources) throws GitAPIException {
         try {
@@ -136,7 +154,7 @@ public class ProgrammingExerciseRepositoryService {
             versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateBranch);
 
             setupTemplateAndPush(solutionResources, "Solution", programmingExercise, exerciseCreator);
-            setupTestTemplateAndPush(testResources, "Test", programmingExercise, exerciseCreator);
+            setupTestTemplateAndPush(testResources, programmingExercise, exerciseCreator);
         }
         catch (Exception ex) {
             // if any exception occurs, try to at least push an empty commit, so that the
@@ -150,6 +168,12 @@ public class ProgrammingExerciseRepositoryService {
         }
     }
 
+    /**
+     * Creates the three initial repositories, and any required auxiliary repositories in the version control system for a new exercise.
+     *
+     * @param programmingExercise A new programming exercise.
+     * @throws GitAPIException Thrown in case creating a repository fails.
+     */
     void createRepositoriesForNewExercise(final ProgrammingExercise programmingExercise) throws GitAPIException {
         final String projectKey = programmingExercise.getProjectKey();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
@@ -171,8 +195,6 @@ public class ProgrammingExerciseRepositoryService {
             gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
         }
     }
-
-    // Copy template and push, if no file is in the directory
 
     /**
      * Copy template and push, if no file is currently in the repository.
@@ -209,25 +231,32 @@ public class ProgrammingExerciseRepositoryService {
      * Set up the test repository. This method differentiates non-sequential and sequential test repositories (more than 1 test job).
      *
      * @param resources           The resources which should get added to the template
-     * @param templateName        The name of the template
      * @param programmingExercise The related programming exercise for which the template should get created
      * @param user                the user who has initiated the generation of the programming exercise
      * @throws Exception If anything goes wrong
      */
-    private void setupTestTemplateAndPush(final RepositoryResources resources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
-            throws Exception {
+    private void setupTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final User user) throws Exception {
         // Only copy template if repo is empty
         if (gitService.listFiles(resources.repository).isEmpty()
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
-            setupJVMTestTemplateAndPush(resources, templateName, programmingExercise, user);
+            setupJVMTestTemplateAndPush(resources, programmingExercise, user);
         }
         else {
             // If there is no special test structure for a programming language, just copy all the test files.
-            setupTemplateAndPush(resources, templateName, programmingExercise, user);
+            setupTemplateAndPush(resources, "Test", programmingExercise, user);
         }
     }
 
-    private void setupJVMTestTemplateAndPush(final RepositoryResources resources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
+    /**
+     * Sets up the test repository for a programming exercise using a JVM-based programming language.
+     *
+     * @param resources The resources the repository should be filled with.
+     * @param programmingExercise The programming exercise the new repository belongs to.
+     * @param user The user that is creating the exercise.
+     * @throws IOException Thrown in case copying files fails.
+     * @throws GitAPIException Thrown in case pushing the updates to the version control system fails.
+     */
+    private void setupJVMTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final User user)
             throws IOException, GitAPIException {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
@@ -268,9 +297,17 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         replacePlaceholders(programmingExercise, resources.repository);
-        commitAndPushRepository(resources.repository, templateName + "-Template pushed by Artemis", true, user);
+        commitAndPushRepository(resources.repository, "Test-Template pushed by Artemis", true, user);
     }
 
+    /**
+     * Copies project type specific resources into the test repository.
+     *
+     * @param resources The resources for the test repository.
+     * @param programmingExercise The programming exercise the repository belongs to.
+     * @param repoLocalPath The local path where the repository can be found.
+     * @throws IOException Thrown in case copying the resources to the repository fails.
+     */
     private void setupJVMTestTemplateProjectTypeResources(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final Path repoLocalPath)
             throws IOException {
         final ProjectType projectType = programmingExercise.getProjectType();
@@ -286,6 +323,15 @@ public class ProgrammingExerciseRepositoryService {
         }
     }
 
+    /**
+     * Sets up the test repository for an exercise using regular (= non-sequential) test runs.
+     *
+     * @param resources The resources for the test repository.
+     * @param programmingExercise The programming exercise the repository belongs to.
+     * @param templatePath The local path in which the templates files can be found.
+     * @param sectionsMap Defines which parts of the template files should be copied based on the chosen exercise features.
+     * @throws IOException Thrown in case copying some resource to the local repo fails.
+     */
     private void setupTestTemplateRegularTestRuns(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final Path templatePath,
             final Map<String, Boolean> sectionsMap) throws IOException {
         final ProjectType projectType = programmingExercise.getProjectType();
@@ -345,6 +391,16 @@ public class ProgrammingExerciseRepositoryService {
         }
     }
 
+    /**
+     * Sets up the test repository for an exercise using sequential test runs.
+     *
+     * @param resources The resources for the test repository.
+     * @param templatePath The local path in which the templates files can be found.
+     * @param projectTemplatePath The local path in which the project type specific templates files can be found.
+     * @param projectType The project type of the exercise.
+     * @param sectionsMap Defines which parts of the template files should be copied based on the chosen exercise features.
+     * @throws IOException Thrown in case copying some resource to the local repo fails.
+     */
     private void setupTestTemplateSequentialTestRuns(final RepositoryResources resources, final Path templatePath, final Path projectTemplatePath, final ProjectType projectType,
             final Map<String, Boolean> sectionsMap) throws IOException {
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
