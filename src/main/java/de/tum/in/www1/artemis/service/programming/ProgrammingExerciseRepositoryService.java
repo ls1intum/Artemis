@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,10 +16,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -30,6 +28,8 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
 @Service
 public class ProgrammingExerciseRepositoryService {
+
+    private static final String ALL_FILES_GLOB = "/**/*.*";
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseRepositoryService.class);
 
@@ -64,7 +64,9 @@ public class ProgrammingExerciseRepositoryService {
     void commitAndPushRepository(final Repository repository, final String message, boolean emptyCommit, final User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, message, emptyCommit, user);
-        repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
+
+        // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
+        repository.setFiles(null);
     }
 
     /**
@@ -74,85 +76,59 @@ public class ProgrammingExerciseRepositoryService {
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
      */
     void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator) throws GitAPIException {
-        // Get URLs for repos
-        var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-        var testsRepoUrl = programmingExercise.getVcsTestRepositoryUrl();
-        var solutionRepoUrl = programmingExercise.getVcsSolutionRepositoryUrl();
+        final RepositoryResources exerciseResources = getRepositoryResources(programmingExercise, RepositoryType.TEMPLATE);
+        final RepositoryResources solutionResources = getRepositoryResources(programmingExercise, RepositoryType.SOLUTION);
+        final RepositoryResources testResources = getRepositoryResources(programmingExercise, RepositoryType.TESTS);
 
-        // Checkout repositories
-        Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl, true);
-        Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl, true);
-        Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl, true);
+        setupRepositories(programmingExercise, exerciseCreator, exerciseResources, solutionResources, testResources);
+    }
 
+    private record RepositoryResources(Repository repository, Resource[] resources, String prefix, Resource[] projectTypeResources, String projectTypePrefix) {
+    }
+
+    private RepositoryResources getRepositoryResources(final ProgrammingExercise programmingExercise, final RepositoryType repositoryType) throws GitAPIException {
+        final String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase(Locale.ROOT);
+        final ProjectType projectType = programmingExercise.getProjectType();
+
+        final VcsRepositoryUrl repoUrl = programmingExercise.getRepositoryURL(repositoryType);
+        final Repository repo = gitService.getOrCheckoutRepository(repoUrl, true);
         // Get path, files and prefix for the programming-language dependent files. They are copied first.
-        String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
-        String programmingLanguageTemplate = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage());
-        String exercisePath = programmingLanguageTemplate + "/exercise/**/*.*";
-        String solutionPath = programmingLanguageTemplate + "/solution/**/*.*";
-        String testPath = programmingLanguageTemplate + "/test/**/*.*";
+        final String templatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + File.separator
+                + repositoryType.getName() + ALL_FILES_GLOB;
 
-        Resource[] exerciseResources = resourceLoaderService.getResources(exercisePath);
-        Resource[] testResources = resourceLoaderService.getResources(testPath);
-        Resource[] solutionResources = resourceLoaderService.getResources(solutionPath);
+        Resource[] resources = resourceLoaderService.getResources(templatePath);
+        String prefix = programmingLanguage + File.separator + repositoryType.getName();
 
-        String exercisePrefix = programmingLanguage + "/exercise";
-        String testPrefix = programmingLanguage + "/test";
-        String solutionPrefix = programmingLanguage + "/solution";
+        Resource[] projectTypeResources = null;
+        String projectTypePrefix = null;
 
-        // Initialize project type dependent resources with null as they might not be used
-        Resource[] projectTypeExerciseResources = null;
-        Resource[] projectTypeTestResources = null;
-        Resource[] projectTypeSolutionResources = null;
-
-        String projectTypeExercisePrefix = null;
-        String projectTypeTestPrefix = null;
-        String projectTypeSolutionPrefix = null;
-
-        // Find the project type specific files if present
-        if (programmingExercise.getProjectType() != null && !ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
+        if (projectType != null && !ProjectType.PLAIN.equals(projectType)) {
             // Get path, files and prefix for the project-type dependent files. They are copied last and can overwrite the resources from the programming language.
-            String programmingLanguageProjectTypePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(),
-                    programmingExercise.getProjectType());
-            String projectType = programmingExercise.getProjectType().name().toLowerCase();
-            String projectTypePrefix = programmingLanguage + "/" + projectType;
+            final String programmingLanguageProjectTypePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(),
+                    projectType);
+            final String projectTypePath = projectType.name().toLowerCase();
+            final String generalProjectTypePrefix = programmingLanguage + File.separator + projectTypePath;
+            final String projectTypeTemplatePath = programmingLanguageProjectTypePath + File.separator + repositoryType.getName() + ALL_FILES_GLOB;
 
-            exercisePath = programmingLanguageProjectTypePath + "/exercise/**/*.*";
-            solutionPath = programmingLanguageProjectTypePath + "/solution/**/*.*";
-            testPath = programmingLanguageProjectTypePath + "/test/**/*.*";
+            final String projectTypeSpecificPrefix = generalProjectTypePrefix + File.separator + repositoryType.getName();
+            final Resource[] projectTypeSpecificResources = resourceLoaderService.getResources(projectTypeTemplatePath);
 
-            if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
+            if (ProjectType.XCODE.equals(projectType)) {
                 // For Xcode, we don't share source code, so we only copy files once
-                exercisePrefix = projectTypePrefix + "/exercise";
-                testPrefix = projectTypePrefix + "/test";
-                solutionPrefix = projectTypePrefix + "/solution";
-
-                exerciseResources = resourceLoaderService.getResources(exercisePath);
-                testResources = resourceLoaderService.getResources(testPath);
-                solutionResources = resourceLoaderService.getResources(solutionPath);
+                prefix = projectTypeSpecificPrefix;
+                resources = projectTypeSpecificResources;
             }
             else {
-                projectTypeExercisePrefix = projectTypePrefix + "/exercise";
-                projectTypeTestPrefix = projectTypePrefix + "/test";
-                projectTypeSolutionPrefix = projectTypePrefix + "/solution";
-
-                projectTypeExerciseResources = resourceLoaderService.getResources(exercisePath);
-                projectTypeTestResources = resourceLoaderService.getResources(testPath);
-                projectTypeSolutionResources = resourceLoaderService.getResources(solutionPath);
+                projectTypePrefix = projectTypeSpecificPrefix;
+                projectTypeResources = projectTypeSpecificResources;
             }
         }
 
-        final RepoResources exerciseRes = new RepoResources(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix);
-        final RepoResources solutionRes = new RepoResources(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix);
-        final RepoResources testRes = new RepoResources(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix);
-
-        setupRepositories(programmingExercise, exerciseCreator, exerciseRes, solutionRes, testRes);
+        return new RepositoryResources(repo, resources, prefix, projectTypeResources, projectTypePrefix);
     }
 
-    private record RepoResources(Repository repository, Resource[] resources, String prefix, Resource[] projectTypeResources, String projectTypePrefix) {
-    }
-
-    private void setupRepositories(final ProgrammingExercise programmingExercise, final User exerciseCreator, final RepoResources exerciseResources,
-            final RepoResources solutionResources, final RepoResources testResources) throws GitAPIException {
+    private void setupRepositories(final ProgrammingExercise programmingExercise, final User exerciseCreator, final RepositoryResources exerciseResources,
+            final RepositoryResources solutionResources, final RepositoryResources testResources) throws GitAPIException {
         try {
             setupTemplateAndPush(exerciseResources, "Exercise", programmingExercise, exerciseCreator);
             // The template repo can be re-written, so we can unprotect the default branch.
@@ -206,23 +182,23 @@ public class ProgrammingExerciseRepositoryService {
      * @param user                 The user that triggered the action (used as Git commit author)
      * @throws Exception An exception in case something went wrong
      */
-    private void setupTemplateAndPush(final RepoResources repoResources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
+    private void setupTemplateAndPush(final RepositoryResources repositoryResources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
             throws Exception {
         // Only copy template if repo is empty
-        if (!gitService.listFiles(repoResources.repository).isEmpty()) {
+        if (!gitService.listFiles(repositoryResources.repository).isEmpty()) {
             return;
         }
 
-        final String repoLocalPath = getRepoLocalPath(repoResources.repository);
+        final String repoLocalPath = getRepoLocalPath(repositoryResources.repository);
 
-        fileService.copyResources(repoResources.resources, repoResources.prefix, repoLocalPath, true);
+        fileService.copyResources(repositoryResources.resources, repositoryResources.prefix, repoLocalPath, true);
         // Also copy project type specific files AFTERWARDS (so that they might overwrite the default files)
-        if (repoResources.projectTypeResources != null) {
-            fileService.copyResources(repoResources.projectTypeResources, repoResources.projectTypePrefix, repoLocalPath, true);
+        if (repositoryResources.projectTypeResources != null) {
+            fileService.copyResources(repositoryResources.projectTypeResources, repositoryResources.projectTypePrefix, repoLocalPath, true);
         }
 
-        replacePlaceholders(programmingExercise, repoResources.repository);
-        commitAndPushRepository(repoResources.repository, templateName + "-Template pushed by Artemis", true, user);
+        replacePlaceholders(programmingExercise, repositoryResources.repository);
+        commitAndPushRepository(repositoryResources.repository, templateName + "-Template pushed by Artemis", true, user);
     }
 
     private static String getRepoLocalPath(final Repository repository) {
@@ -238,7 +214,7 @@ public class ProgrammingExerciseRepositoryService {
      * @param user                the user who has initiated the generation of the programming exercise
      * @throws Exception If anything goes wrong
      */
-    private void setupTestTemplateAndPush(final RepoResources resources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
+    private void setupTestTemplateAndPush(final RepositoryResources resources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
             throws Exception {
         // Only copy template if repo is empty
         if (gitService.listFiles(resources.repository).isEmpty()
@@ -251,7 +227,7 @@ public class ProgrammingExerciseRepositoryService {
         }
     }
 
-    private void setupJVMTestTemplateAndPush(final RepoResources resources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
+    private void setupJVMTestTemplateAndPush(final RepositoryResources resources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
             throws IOException, GitAPIException {
         final String repoLocalPath = getRepoLocalPath(resources.repository);
 
@@ -294,7 +270,7 @@ public class ProgrammingExerciseRepositoryService {
         commitAndPushRepository(resources.repository, templateName + "-Template pushed by Artemis", true, user);
     }
 
-    private void setupJVMTestTemplateProjectTypeResources(final RepoResources resources, final ProgrammingExercise programmingExercise, final String repoLocalPath,
+    private void setupJVMTestTemplateProjectTypeResources(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final String repoLocalPath,
             final ProjectType projectType) throws IOException {
         String projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
         String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
@@ -307,7 +283,7 @@ public class ProgrammingExerciseRepositoryService {
         }
     }
 
-    private void setupTestTemplateRegularTestRuns(final RepoResources resources, final ProgrammingExercise programmingExercise, final String templatePath,
+    private void setupTestTemplateRegularTestRuns(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final String templatePath,
             final ProjectType projectType, final Map<String, Boolean> sectionsMap) throws IOException {
         final String repoLocalPath = getRepoLocalPath(resources.repository);
         String testFilePath = templatePath + "/testFiles/**/*.*";
@@ -358,7 +334,7 @@ public class ProgrammingExerciseRepositoryService {
         }
     }
 
-    private void setupTestTemplateSequentialTestRuns(RepoResources resources, String templatePath, String projectTemplatePath, ProjectType projectType,
+    private void setupTestTemplateSequentialTestRuns(RepositoryResources resources, String templatePath, String projectTemplatePath, ProjectType projectType,
             Map<String, Boolean> sectionsMap) throws IOException {
         final String repoLocalPath = getRepoLocalPath(resources.repository);
         final String stagePomXmlName = "/stagePom.xml";
@@ -397,7 +373,7 @@ public class ProgrammingExerciseRepositoryService {
             Path buildStagePath = Path.of(repoLocalPath, buildStage);
             Files.createDirectory(buildStagePath);
 
-            String buildStageResourcesPath = templatePath + "/testFiles/" + buildStage + "/**/*.*";
+            String buildStageResourcesPath = templatePath + "/testFiles/" + buildStage + ALL_FILES_GLOB;
             Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
 
             Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test"));
@@ -414,7 +390,7 @@ public class ProgrammingExerciseRepositoryService {
 
             // Possibly overwrite files if the project type is defined
             if (projectType != null) {
-                buildStageResourcesPath = projectTemplatePath + "/testFiles/" + buildStage + "/**/*.*";
+                buildStageResourcesPath = projectTemplatePath + "/testFiles/" + buildStage + ALL_FILES_GLOB;
                 try {
                     buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
                     fileService.copyResources(buildStageResources, resources.prefix, packagePath, false);
