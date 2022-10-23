@@ -404,9 +404,12 @@ public class ProgrammingExerciseExportService {
         }
 
         Path clonePath = uniquePath.resolve("clone");
-        String zipPath = fileService.getUniquePathString(uniquePath.resolve("zip").toString());
+        Path zipPath = uniquePath.resolve("zip");
 
         try {
+            Files.createDirectories(clonePath);
+            Files.createDirectories(zipPath);
+
             gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUrl(), clonePath, true);
             String assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(exercise.getProgrammingLanguage());
             gitService.getOrCheckoutRepository(exercise.getVcsSolutionRepositoryUrl(), clonePath.resolve(assignmentPath), true);
@@ -414,7 +417,7 @@ public class ProgrammingExerciseExportService {
                 gitService.getOrCheckoutRepository(auxRepo.getVcsRepositoryUrl(), clonePath.resolve(auxRepo.getCheckoutDirectory()), true);
             }
 
-            return Optional.of(gitService.zipFiles(clonePath, zippedRepoName, zipPath, contentFilter).toFile());
+            return Optional.of(gitService.zipFiles(clonePath, zippedRepoName, zipPath.toString(), contentFilter).toFile());
         }
         catch (GitAPIException | IOException e) {
             var error = "Failed to export solution and test repository for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";

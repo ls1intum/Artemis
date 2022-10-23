@@ -1051,13 +1051,13 @@ public class ProgrammingExerciseTestService {
 
     // Test
     void exportInstructorRepositories_shouldReturnFile() throws Exception {
-        String zip = exportInstructorRepository("TEMPLATE", exerciseRepo, HttpStatus.OK);
+        String zip = exportInstructorRepository(RepositoryType.TEMPLATE, exerciseRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
 
-        zip = exportInstructorRepository("SOLUTION", solutionRepo, HttpStatus.OK);
+        zip = exportInstructorRepository(RepositoryType.SOLUTION, solutionRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
 
-        zip = exportInstructorRepository("TESTS", testRepo, HttpStatus.OK);
+        zip = exportInstructorRepository(RepositoryType.TESTS, testRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
     }
 
@@ -1066,32 +1066,27 @@ public class ProgrammingExerciseTestService {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        exportInstructorRepository("TEMPLATE", exerciseRepo, HttpStatus.FORBIDDEN);
-        exportInstructorRepository("SOLUTION", solutionRepo, HttpStatus.FORBIDDEN);
-        exportInstructorRepository("TESTS", testRepo, HttpStatus.FORBIDDEN);
+        exportInstructorRepository(RepositoryType.TEMPLATE, exerciseRepo, HttpStatus.FORBIDDEN);
+        exportInstructorRepository(RepositoryType.SOLUTION, solutionRepo, HttpStatus.FORBIDDEN);
+        exportInstructorRepository(RepositoryType.TESTS, testRepo, HttpStatus.FORBIDDEN);
     }
 
-    private String exportInstructorRepository(String repositoryType, LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
+    private String exportInstructorRepository(RepositoryType repositoryType, LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
         generateProgrammingExerciseForExport();
 
-        var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf(repositoryType));
-        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepository.localRepoFile.toPath(), null);
-        disableAutoGC(repository);
-        createAndCommitDummyFileInLocalRepository(localRepository, "some-file.java");
-        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
+        setupMockRepo(localRepository, repositoryType, "some-file.java");
 
         var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType;
         return request.get(url, expectedStatus, String.class);
     }
 
-    private String exportStudentRequestedRepository(LocalRepository localRepository, HttpStatus expectedStatus, boolean includeTests) throws Exception {
+    private String exportStudentRequestedRepository(HttpStatus expectedStatus, boolean includeTests) throws Exception {
         generateProgrammingExerciseForExport();
 
-        var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf("SOLUTION"));
-        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepository.localRepoFile.toPath(), null);
-        disableAutoGC(repository);
-        createAndCommitDummyFileInLocalRepository(localRepository, "some-file.java");
-        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
+        setupMockRepo(exerciseRepo, RepositoryType.SOLUTION, "some-file.java");
+        if (includeTests) {
+            setupMockRepo(testRepo, RepositoryType.TESTS, "some-test-file.java");
+        }
 
         var url = "/api/programming-exercises/" + exercise.getId() + "/export-student-requested-repository?includeTests=" + includeTests;
         return request.get(url, expectedStatus, String.class);
@@ -1153,6 +1148,15 @@ public class ProgrammingExerciseTestService {
         exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+    }
+
+    private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
+        VcsRepositoryUrl vcsUrl = exercise.getRepositoryURL(repoType);
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null);
+        disableAutoGC(repository);
+        createAndCommitDummyFileInLocalRepository(localRepo, fileName);
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), (Path) any(), anyBoolean());
     }
 
     // Test
@@ -1839,30 +1843,30 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(null);
         programmingExerciseRepository.save(exercise);
 
-        exportStudentRequestedRepository(exerciseRepo, HttpStatus.FORBIDDEN, false);
+        exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
 
         // Test example solution publication date in the past.
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(exercise);
 
-        String zip = exportStudentRequestedRepository(exerciseRepo, HttpStatus.OK, false);
+        String zip = exportStudentRequestedRepository(HttpStatus.OK, false);
         assertThat(zip).isNotNull();
 
         // Test include tests but not allowed
-        exportStudentRequestedRepository(exerciseRepo, HttpStatus.FORBIDDEN, true);
+        exportStudentRequestedRepository(HttpStatus.FORBIDDEN, true);
 
         // Test include tests
         exercise.setReleaseTestsAfterDueDate(true);
         programmingExerciseRepository.save(exercise);
 
-        zip = exportStudentRequestedRepository(exerciseRepo, HttpStatus.OK, false);
+        zip = exportStudentRequestedRepository(HttpStatus.OK, true);
         assertThat(zip).isNotNull();
 
         // Test example solution publication date in the future.
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(exercise);
 
-        exportStudentRequestedRepository(exerciseRepo, HttpStatus.FORBIDDEN, false);
+        exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
     }
 
     // TEST
