@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.programming;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Predicate;
@@ -132,17 +133,17 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private Resource[] getTemplateResources(ProgrammingExercise exercise, String filePattern) {
         // Get general template resources
-        String programmingLanguageTemplate = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
-        String templatePomPath = programmingLanguageTemplate + File.pathSeparator + filePattern;
+        final Path programmingLanguageTemplate = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
+        final Path templatePomPath = programmingLanguageTemplate.resolve(filePattern);
 
-        Resource[] templatePoms = resourceLoaderService.getResources(templatePomPath);
+        Resource[] templatePoms = resourceLoaderService.getResources(templatePomPath.toString());
 
         // Get project type specific template resources
         if (exercise.getProjectType() != null) {
-            String projectTypeTemplate = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
-            String projectTypePomPath = projectTypeTemplate + File.pathSeparator + filePattern;
+            final Path projectTypeTemplate = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
+            final Path projectTypePomPath = projectTypeTemplate.resolve(filePattern);
 
-            Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypePomPath);
+            final Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypePomPath.toString());
 
             // Prefer project type specific resources
             templatePoms = projectTypePoms.length > 0 ? projectTypePoms : templatePoms;

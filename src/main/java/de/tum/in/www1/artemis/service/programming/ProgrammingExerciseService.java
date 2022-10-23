@@ -276,12 +276,12 @@ public class ProgrammingExerciseService {
                 versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
     }
 
-    public static String getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
-        return getProgrammingLanguageTemplatePath(programmingLanguage) + "/" + projectType.name().toLowerCase();
+    public static Path getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
+        return getProgrammingLanguageTemplatePath(programmingLanguage).resolve(projectType.name().toLowerCase());
     }
 
-    public static String getProgrammingLanguageTemplatePath(ProgrammingLanguage programmingLanguage) {
-        return "templates/" + programmingLanguage.name().toLowerCase();
+    public static Path getProgrammingLanguageTemplatePath(ProgrammingLanguage programmingLanguage) {
+        return Path.of("templates", programmingLanguage.name().toLowerCase());
     }
 
     /**
