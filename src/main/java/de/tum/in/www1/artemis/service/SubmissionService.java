@@ -146,7 +146,8 @@ public class SubmissionService {
      * @param <T> the submission type
      * @return list of submissions
      */
-    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(Long exerciseId, User tutor, boolean examMode, int correctionRound) {
+    public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(Long exerciseId, User tutor, boolean examMode,
+            int correctionRound) {
         List<T> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
@@ -156,7 +157,7 @@ public class SubmissionService {
                     .collect(Collectors.toCollection(ArrayList::new));
         }
         else {
-            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+            submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
         }
 
         submissions.forEach(submission -> submission.getLatestResult().setSubmission(null));
@@ -175,7 +176,7 @@ public class SubmissionService {
             // Get all participations of submissions that are submitted and do not already have a manual result.
             // No manual result means that no user has started an assessment for the corresponding submission yet.
             // Does not fetch participations for which the due date has not yet passed.
-            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDate(exercise.getId(),
+            participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(exercise.getId(),
                     ZonedDateTime.now());
         }
 
