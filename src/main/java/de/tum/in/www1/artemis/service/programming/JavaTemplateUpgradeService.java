@@ -44,7 +44,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private final Logger log = LoggerFactory.getLogger(JavaTemplateUpgradeService.class);
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
     private final GitService gitService;
 
@@ -56,9 +56,9 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private final FileService fileService;
 
-    public JavaTemplateUpgradeService(ProgrammingExerciseService programmingExerciseService, GitService gitService, ResourceLoaderService resourceLoaderService,
+    public JavaTemplateUpgradeService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, GitService gitService, ResourceLoaderService resourceLoaderService,
             UserRepository userRepository, RepositoryService repositoryService, FileService fileService) {
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.resourceLoaderService = resourceLoaderService;
@@ -109,7 +109,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
                 // Overwrite old test classes with new templates if they are present in the repository
                 Resource[] testFileTemplates = getTemplateResources(exercise, "test/testFiles/**/*");
                 overwriteFilesIfPresent(repository, testFileTemplates);
-                programmingExerciseService.replacePlaceholders(exercise, repository);
+                programmingExerciseRepositoryService.replacePlaceholders(exercise, repository);
 
                 // Add the latest static code analysis tool configurations or remove configurations
                 if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
@@ -121,7 +121,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
                 }
             }
             // TODO: double check that this still works correctly
-            programmingExerciseService.commitAndPushRepository(repository, "Template upgraded by Artemis", false, userRepository.getUser());
+            programmingExerciseRepositoryService.commitAndPushRepository(repository, "Template upgraded by Artemis", false, userRepository.getUser());
         }
         catch (IOException | GitAPIException | XmlPullParserException exception) {
             log.error("Updating of template files of repository {} for exercise {} failed with error: {}", repositoryType.name(), exercise.getId(), exception.getMessage());
@@ -132,15 +132,15 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private Resource[] getTemplateResources(ProgrammingExercise exercise, String filePattern) {
         // Get general template resources
-        String programmingLanguageTemplate = programmingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
-        String templatePomPath = programmingLanguageTemplate + "/" + filePattern;
+        String programmingLanguageTemplate = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
+        String templatePomPath = programmingLanguageTemplate + File.pathSeparator + filePattern;
 
         Resource[] templatePoms = resourceLoaderService.getResources(templatePomPath);
 
         // Get project type specific template resources
         if (exercise.getProjectType() != null) {
-            String projectTypeTemplate = programmingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
-            String projectTypePomPath = projectTypeTemplate + "/" + filePattern;
+            String projectTypeTemplate = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
+            String projectTypePomPath = projectTypeTemplate + File.pathSeparator + filePattern;
 
             Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypePomPath);
 
@@ -248,12 +248,12 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         oldPlugin.ifPresent(plugin -> targetModel.getBuild().removePlugin(plugin));
     }
 
-    private Optional<Dependency> findDependency(Model model, String artifactId, String groupId) {
-        return model.getDependencies().stream().filter(isDependency(artifactId, groupId)).findFirst();
+    private Optional<Dependency> findDependency(Model model, String groupId, String artifactId) {
+        return model.getDependencies().stream().filter(isDependency(groupId, artifactId)).findFirst();
     }
 
-    private Optional<Plugin> findPlugin(Model model, String artifactId, String groupId) {
-        return model.getBuild().getPlugins().stream().filter(isPlugin(artifactId, groupId)).findFirst();
+    private Optional<Plugin> findPlugin(Model model, String groupId, String artifactId) {
+        return model.getBuild().getPlugins().stream().filter(isPlugin(groupId, artifactId)).findFirst();
     }
 
     private Predicate<Dependency> isDependency(String groupId, String artifactId) {
