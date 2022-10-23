@@ -1,24 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { LoginService } from 'app/core/login/login.service';
-import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-lti-exercise-launch',
-    templateUrl: './lti-exercise-launch.component.html',
+    templateUrl: './lti13-exercise-launch.component.html',
 })
-export class ArtemisLtiExerciseLaunchComponent implements OnInit {
+export class Lti13ExerciseLaunchComponent implements OnInit {
     isLaunching: boolean;
 
-    constructor(
-        private route: ActivatedRoute,
-        private http: HttpClient,
-        private loginService: LoginService,
-        private stateStorageService: StateStorageService,
-        private router: Router,
-    ) {
+    constructor(private route: ActivatedRoute, private http: HttpClient) {
         this.isLaunching = true;
     }
 
@@ -64,14 +55,7 @@ export class ArtemisLtiExerciseLaunchComponent implements OnInit {
                     this.isLaunching = false;
                     console.error('No LTI targetLinkUri received for a successful launch');
                 },
-                error: (err) => {
-                    // anonymous LTI launches are not permitted
-                    if (err.status === 401) {
-                        this.stateStorageService.storeUrl(this.router.routerState.snapshot.url);
-                        this.loginService.logout(false);
-                        return;
-                    }
-
+                error: () => {
                     window.sessionStorage.removeItem('state');
                     this.isLaunching = false;
                 },

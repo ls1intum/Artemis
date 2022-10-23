@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.lti.Scopes;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -52,7 +53,13 @@ class Lti13ServiceTest {
     private Lti13ResourceLaunchRepository launchRepository;
 
     @Mock
+    private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
+    @Mock
     private LtiService ltiService;
+
+    @Mock
+    private OAuth2JWKSService oAuth2JWKSService;
 
     @Mock
     private ResultRepository resultRepository;
@@ -71,8 +78,8 @@ class Lti13ServiceTest {
     @BeforeEach
     void init() {
         MockitoAnnotations.openMocks(this);
-        lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
-                clientRegistrationRepository, restTemplate);
+        lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, onlineCourseConfigurationRepository, ltiService, oAuth2JWKSService,
+                resultRepository, tokenRetriever, clientRegistrationRepository, restTemplate);
         clientRegistrationId = "clientId";
     }
 

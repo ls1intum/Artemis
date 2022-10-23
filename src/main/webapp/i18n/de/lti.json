@@ -35,6 +35,9 @@
             "launch": {
                 "title": "Aufgabe starten"
             }
+        },
+        "dynamicRegistration": {
+            "title": "Dynamic Registration"
         }
     }
 }

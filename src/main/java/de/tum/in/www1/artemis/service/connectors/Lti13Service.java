@@ -14,11 +14,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.util.StringUtils;
@@ -27,6 +29,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lti.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import net.minidev.json.JSONObject;
@@ -46,7 +49,11 @@ public class Lti13Service {
 
     private final Lti13ResourceLaunchRepository launchRepository;
 
+    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
     private final LtiService ltiService;
+
+    private final OAuth2JWKSService oAuth2JWKSService;
 
     private final ResultRepository resultRepository;
 
@@ -57,13 +64,15 @@ public class Lti13Service {
     private final RestTemplate restTemplate;
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository,
-            LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever, ClientRegistrationRepository clientRegistrationRepository,
-            RestTemplate restTemplate) {
+            OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, LtiService ltiService, OAuth2JWKSService oAuth2JWKSService, ResultRepository resultRepository,
+            Lti13TokenRetriever tokenRetriever, ClientRegistrationRepository clientRegistrationRepository, RestTemplate restTemplate) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
         this.ltiService = ltiService;
+        this.oAuth2JWKSService = oAuth2JWKSService;
         this.launchRepository = launchRepository;
+        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
         this.resultRepository = resultRepository;
         this.tokenRetriever = tokenRetriever;
         this.clientRegistrationRepository = clientRegistrationRepository;
@@ -295,5 +304,86 @@ public class Lti13Service {
      */
     public void addLtiQueryParams(UriComponentsBuilder uriComponentsBuilder) {
         ltiService.addLtiQueryParams(uriComponentsBuilder);
+    }
+
+    /**
+     * Performs dynamic registration.
+     *
+     * @param course the online course to register as an LTI1.3 tool
+     * @param openIdConfigurationUrl the url to get the configuration from
+     * @param registrationToken the token to be used to authenticate the POST request
+     */
+    public void performDynamicRegistration(Course course, String openIdConfigurationUrl, String registrationToken) {
+        if (!course.isOnlineCourse()) {
+            throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
+        }
+
+        // Get platform's configuration
+        Lti13PlatformConfiguration platformConfiguration = getLti13PlatformConfiguration(openIdConfigurationUrl);
+
+        String clientRegistrationId = course.getShortName() + UUID.randomUUID();
+
+        if (platformConfiguration.getAuthorizationEndpoint() == null || platformConfiguration.getTokenEndpoint() == null || platformConfiguration.getJwksUri() == null
+                || platformConfiguration.getRegistrationEndpoint() == null) {
+            throw new BadRequestAlertException("Invalid platform configuration", "LTI", "invalidPlatformConfiguration");
+        }
+
+        Lti13ClientRegistration clientRegistrationResponse = postClientRegistrationToPlatform(platformConfiguration.getRegistrationEndpoint(), course, clientRegistrationId,
+                registrationToken);
+
+        OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
+
+        // Save client in tool
+        onlineCourseConfiguration.setRegistrationId(clientRegistrationId);
+        onlineCourseConfiguration.setClientId(clientRegistrationResponse.getClientId());
+        onlineCourseConfiguration.setAuthorizationUri(platformConfiguration.getAuthorizationEndpoint());
+        onlineCourseConfiguration.setJwkSetUri(platformConfiguration.getJwksUri());
+        onlineCourseConfiguration.setTokenUri(platformConfiguration.getTokenEndpoint());
+        onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
+
+        oAuth2JWKSService.updateKey(clientRegistrationId);
+    }
+
+    private Lti13PlatformConfiguration getLti13PlatformConfiguration(String openIdConfigurationUrl) {
+        Lti13PlatformConfiguration platformConfiguration = null;
+        try {
+            ResponseEntity<Lti13PlatformConfiguration> responseEntity = restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class);
+            log.info("Got LTI13 configuration from {}" + openIdConfigurationUrl);
+            platformConfiguration = responseEntity.getBody();
+        }
+        catch (HttpClientErrorException e) {
+            log.error("Could not get configuration from {}", openIdConfigurationUrl);
+        }
+
+        if (platformConfiguration == null) {
+            throw new BadRequestAlertException("Could not get configuration from external LMS", "LTI", "getConfigurationFailed");
+        }
+        return platformConfiguration;
+    }
+
+    private Lti13ClientRegistration postClientRegistrationToPlatform(String registrationEndpoint, Course course, String clientRegistrationId, String registrationToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        if (registrationToken != null) {
+            headers.setBearerAuth(registrationToken);
+        }
+
+        Lti13ClientRegistration lti13ClientRegistration = new Lti13ClientRegistration(course, clientRegistrationId);
+        Lti13ClientRegistration registrationResponse = null;
+        try {
+            ResponseEntity<Lti13ClientRegistration> response = restTemplate.postForEntity(registrationEndpoint, new HttpEntity<>(lti13ClientRegistration, headers),
+                    Lti13ClientRegistration.class);
+            log.info("Registered course {} as LTI1.3 tool at {}", course.getTitle(), registrationEndpoint);
+            registrationResponse = response.getBody();
+        }
+        catch (HttpClientErrorException e) {
+            String message = "Could not register new client in external LMS at " + registrationEndpoint;
+            log.error(message);
+        }
+
+        if (registrationResponse == null) {
+            throw new BadRequestAlertException("Could not register configuration in external LMS", "LTI", "postConfigurationFailed");
+        }
+        return registrationResponse;
     }
 }

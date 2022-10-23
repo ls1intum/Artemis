@@ -34,6 +34,9 @@
         "lti13": {
             "launch": {
                 "title": "Launch exercise"
+            },
+            "dynamicRegistration": {
+                "title": "Dynamic Registration"
             }
         }
     }
