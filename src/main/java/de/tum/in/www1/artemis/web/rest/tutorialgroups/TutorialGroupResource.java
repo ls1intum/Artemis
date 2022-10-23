@@ -273,7 +273,7 @@ public class TutorialGroupResource {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
         }
         var oldTutorialGroup = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
-        checkEntityIdMatchesPathIds(updatedTutorialGroup, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
+        checkEntityIdMatchesPathIds(oldTutorialGroup, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, oldTutorialGroup.getCourse(), responsibleUser);
 

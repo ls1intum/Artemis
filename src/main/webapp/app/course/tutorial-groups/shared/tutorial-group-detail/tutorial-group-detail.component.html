@@ -127,7 +127,8 @@
         </dt>
         <dd>
             <ng-container *ngIf="sessions && sessions.length > 0; else sessionsNotFound">
-                <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [showIdColumn]="false"> </jhi-tutorial-group-sessions-table>
+                <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false">
+                </jhi-tutorial-group-sessions-table>
             </ng-container>
             <ng-template #sessionsNotFound>
                 <span>{{ 'artemisApp.pages.tutorialGroupDetail.sessionsNotFound' | artemisTranslate }}</span></ng-template

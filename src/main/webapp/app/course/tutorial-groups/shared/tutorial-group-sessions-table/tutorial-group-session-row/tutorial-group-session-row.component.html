@@ -1,25 +1,32 @@
 <ng-container>
     <td [class.table-danger]="isCancelled" *ngIf="showIdColumn">{{ session.id }}</td>
     <td [class.table-danger]="isCancelled">
-        {{ session.start | artemisDate: 'short-date':false:timeZone! }}
-        {{ session.start | artemisDate: 'time':false:timeZone! }} -
-        {{ session.end | artemisDate: 'time':false:timeZone! }}
-    </td>
-    <td [class.table-warning]="!hasSchedule && !isCancelled" [class.table-danger]="isCancelled">
-        {{ (hasSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
-    </td>
-    <td [class.table-danger]="isCancelled">
-        {{ (isCancelled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
+        <span>
+            {{ session.start | artemisDate: 'short-date':false:timeZone! }}
+            {{ session.start | artemisDate: 'time':false:timeZone! }} -
+            {{ session.end | artemisDate: 'time':false:timeZone! }}
+        </span>
         <button
-            *ngIf="isCancelled && session.statusExplanation && session.statusExplanation.trim().length > 0"
+            *ngIf="isCancelled"
             type="button"
             class="btn btn-outline-danger ms-2"
             placement="top"
-            [ngbPopover]="session.statusExplanation.trim()"
+            [disabled]="!session.statusExplanation"
+            [ngbPopover]="session.statusExplanation ? session.statusExplanation : ''"
             [popoverTitle]="'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate"
         >
-            {{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}
+            {{ 'artemisApp.pages.tutorialGroupSessionManagement.cancelled' | artemisTranslate }}
         </button>
+    </td>
+    <td [class.table-danger]="isCancelled">
+        <button type="button" class="btn btn-outline-info" placement="top" [ngbPopover]="session.location" [autoClose]="'outside'">
+            <span class="d-inline-block text-truncate" style="max-width: 150px">
+                {{ session.location }}
+            </span>
+        </button>
+    </td>
+    <td *ngIf="tutorialGroup.tutorialGroupSchedule" [class.table-danger]="isCancelled">
+        {{ !hasSchedule ? ('artemisApp.pages.tutorialGroupSessionManagement.differsFromSchedule' | artemisTranslate) : '' }}
     </td>
     <td [class.table-danger]="isCancelled" *ngIf="extraColumn">
         <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }"></ng-template>

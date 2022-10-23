@@ -11,6 +11,7 @@ import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-grou
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
 
 @Component({
     selector: 'jhi-session-management',
@@ -27,6 +28,9 @@ export class TutorialGroupSessionsManagementComponent implements OnInit {
     tutorialGroup: TutorialGroup;
     sessions: TutorialGroupSession[] = [];
     tutorialGroupSchedule: TutorialGroupSchedule;
+
+    getDayTranslationKey = getDayTranslationKey;
+
     ngOnInit(): void {
         this.loadAll();
     }

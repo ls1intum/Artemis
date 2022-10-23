@@ -248,6 +248,9 @@
                 "createSessionButton": "Neue Sitzung hinzufügen",
                 "timeZoneExplanation": "Jede Sitzung wird in der Zeitzone {{ timeZone }} angezeigt",
                 "divider": " Bevorstehende ↑ Vergangene ↓",
+                "cancelled": "Sitzung abgesagt",
+                "noReason": "Kein Grund angegeben",
+                "differsFromSchedule": "Die Sitzung findet an einem anderen Ort oder Datum statt als im Sitzungsplan!",
                 "rowButtons": {
                     "sessions": "Sitzungen",
                     "registrations": "Registrierungen",
@@ -255,7 +258,7 @@
                     "activate": "Sitzung reaktivieren"
                 },
                 "columns": {
-                    "scheduled": "Folgt Zeitplan?",
+                    "notes": "Anmerkungen",
                     "isCancelled": "Ist abgesagt?"
                 },
                 "deleteDialog": {

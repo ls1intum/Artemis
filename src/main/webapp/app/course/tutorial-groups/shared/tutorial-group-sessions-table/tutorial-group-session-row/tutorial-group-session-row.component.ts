@@ -1,5 +1,6 @@
 import { Component, Input, TemplateRef } from '@angular/core';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 @Component({
     selector: '[jhi-session-row]',
@@ -12,6 +13,8 @@ export class TutorialGroupSessionRowComponent {
     @Input() extraColumn: TemplateRef<any>;
 
     @Input() session: TutorialGroupSession;
+    @Input() tutorialGroup: TutorialGroup;
+
     @Input() timeZone?: string = undefined;
 
     get isCancelled() {

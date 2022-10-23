@@ -9,17 +9,38 @@
             <tr>
                 <th *ngIf="showIdColumn">{{ 'global.field.id' | artemisTranslate }}</th>
                 <th>{{ 'artemisApp.entities.tutorialGroupSession.date' | artemisTranslate }}</th>
-                <th>{{ 'artemisApp.pages.tutorialGroupSessionManagement.columns.scheduled' | artemisTranslate }}</th>
-                <th>{{ 'artemisApp.pages.tutorialGroupSessionManagement.columns.isCancelled' | artemisTranslate }}</th>
+                <th>
+                    <span>{{
+                        (tutorialGroup.isOnline ? 'artemisApp.forms.scheduleForm.locationInput.labelOnline' : 'artemisApp.forms.scheduleForm.locationInput.labelOffline')
+                            | artemisTranslate
+                    }}</span>
+                </th>
+                <th *ngIf="tutorialGroup.tutorialGroupSchedule">{{ 'artemisApp.pages.tutorialGroupSessionManagement.columns.notes' | artemisTranslate }}</th>
                 <th *ngIf="extraColumn"></th>
             </tr>
         </thead>
         <tbody>
-            <tr jhi-session-row *ngFor="let session of upcomingSessions" [extraColumn]="extraColumn" [session]="session" [timeZone]="timeZone" [showIdColumn]="showIdColumn"></tr>
+            <tr
+                jhi-session-row
+                *ngFor="let session of upcomingSessions"
+                [extraColumn]="extraColumn"
+                [session]="session"
+                [timeZone]="timeZone"
+                [tutorialGroup]="tutorialGroup"
+                [showIdColumn]="showIdColumn"
+            ></tr>
             <tr class="table-dark text-center">
                 <td [colSpan]="numberOfColumns">{{ 'artemisApp.pages.tutorialGroupSessionManagement.divider' | artemisTranslate }}</td>
             </tr>
-            <tr jhi-session-row *ngFor="let session of pastSessions" [extraColumn]="extraColumn" [session]="session" [timeZone]="timeZone" [showIdColumn]="showIdColumn"></tr>
+            <tr
+                jhi-session-row
+                *ngFor="let session of pastSessions"
+                [extraColumn]="extraColumn"
+                [session]="session"
+                [tutorialGroup]="tutorialGroup"
+                [timeZone]="timeZone"
+                [showIdColumn]="showIdColumn"
+            ></tr>
         </tbody>
     </table>
 </div>

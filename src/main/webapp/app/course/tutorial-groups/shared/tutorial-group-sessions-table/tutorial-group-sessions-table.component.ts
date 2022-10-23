@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 
@@ -10,6 +11,9 @@ import dayjs from 'dayjs/esm';
 })
 export class TutorialGroupSessionsTableComponent implements OnChanges {
     @ContentChild(TemplateRef) extraColumn: TemplateRef<any>;
+
+    @Input()
+    tutorialGroup: TutorialGroup;
 
     @Input()
     sessions: TutorialGroupSession[] = [];
@@ -28,7 +32,7 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
     pastSessions: TutorialGroupSession[] = [];
 
     get numberOfColumns(): number {
-        let numberOfColumns = 3;
+        let numberOfColumns = this.tutorialGroup.tutorialGroupSchedule ? 3 : 2;
         if (this.extraColumn) {
             numberOfColumns++;
         }

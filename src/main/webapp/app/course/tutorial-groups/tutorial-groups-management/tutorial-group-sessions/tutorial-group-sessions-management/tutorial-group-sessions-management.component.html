@@ -15,7 +15,32 @@
                 </div>
             </div>
         </div>
-        <jhi-tutorial-group-sessions-table [sessions]="sessions" [timeZone]="course.timeZone" [showIdColumn]="true">
+        <div class="col-12" *ngIf="tutorialGroup.tutorialGroupSchedule">
+            <!-- Schedule -->
+            <dt>
+                <span>{{ 'artemisApp.entities.tutorialGroup.schedule' | artemisTranslate }}</span>
+            </dt>
+            <dd>
+                <ng-container *ngIf="tutorialGroup.tutorialGroupSchedule; else scheduleNotSet">
+                    <span>{{
+                        (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) +
+                            ' ' +
+                            tutorialGroup.tutorialGroupSchedule?.startTime +
+                            '-' +
+                            tutorialGroup.tutorialGroupSchedule?.endTime
+                    }}</span>
+                    <br />
+                    <span *ngIf="tutorialGroup.isOnline">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOnline' | artemisTranslate }}</span>
+                    <span *ngIf="!tutorialGroup.isOnline">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOffline' | artemisTranslate }}</span>
+                    : {{ tutorialGroup.tutorialGroupSchedule?.location }}
+                </ng-container>
+                <br />
+                <ng-template #scheduleNotSet>
+                    <span>{{ 'artemisApp.pages.tutorialGroupDetail.scheduleNotSet' | artemisTranslate }}</span></ng-template
+                >
+            </dd>
+        </div>
+        <jhi-tutorial-group-sessions-table [sessions]="sessions" [timeZone]="course.timeZone" [showIdColumn]="true" [tutorialGroup]="tutorialGroup">
             <ng-template let-session>
                 <jhi-tutorial-group-session-row-buttons
                     [tutorialGroupSession]="session"

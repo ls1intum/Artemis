@@ -248,6 +248,9 @@
                 "createSessionButton": "Create New Tutorial Group Session",
                 "timeZoneExplanation": "Every session displayed in the time zone {{ timeZone }}",
                 "divider": "UPCOMING ↑ PAST ↓",
+                "cancelled": "Session Cancelled",
+                "noReason": "No reason given",
+                "differsFromSchedule": "This session has a different date or location than the schedule!",
                 "rowButtons": {
                     "sessions": "Sessions",
                     "registrations": "Registrations",
@@ -255,7 +258,7 @@
                     "activate": "Activate Session"
                 },
                 "columns": {
-                    "scheduled": "Follows Schedule?",
+                    "notes": "Notes",
                     "isCancelled": "Is Cancelled?"
                 },
                 "deleteDialog": {
