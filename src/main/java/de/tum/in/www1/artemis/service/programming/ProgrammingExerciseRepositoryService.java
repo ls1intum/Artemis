@@ -12,7 +12,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -142,26 +141,37 @@ public class ProgrammingExerciseRepositoryService {
             }
         }
 
+        final RepoResources exerciseRes = new RepoResources(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix);
+        final RepoResources solutionRes = new RepoResources(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix);
+        final RepoResources testRes = new RepoResources(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix);
+
+        setupRepositories(programmingExercise, exerciseCreator, exerciseRes, solutionRes, testRes);
+    }
+
+    private record RepoResources(Repository repository, Resource[] resources, String prefix, Resource[] projectTypeResources, String projectTypePrefix) {
+    }
+
+    private void setupRepositories(final ProgrammingExercise programmingExercise, final User exerciseCreator, final RepoResources exerciseResources,
+            final RepoResources solutionResources, final RepoResources testResources) throws GitAPIException {
         try {
-            setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix, "Exercise", programmingExercise,
-                    exerciseCreator);
+            setupTemplateAndPush(exerciseResources, "Exercise", programmingExercise, exerciseCreator);
             // The template repo can be re-written, so we can unprotect the default branch.
             var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
             String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
             versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateBranch);
 
-            setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise,
-                    exerciseCreator);
-            setupTestTemplateAndPush(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix, "Test", programmingExercise, exerciseCreator);
-
+            setupTemplateAndPush(solutionResources, "Solution", programmingExercise, exerciseCreator);
+            setupTestTemplateAndPush(testResources, "Test", programmingExercise, exerciseCreator);
         }
         catch (Exception ex) {
             // if any exception occurs, try to at least push an empty commit, so that the
             // repositories can be used by the build plans
             log.warn("An exception occurred while setting up the repositories", ex);
-            gitService.commitAndPush(exerciseRepo, "Empty Setup by Artemis", true, exerciseCreator);
-            gitService.commitAndPush(testRepo, "Empty Setup by Artemis", true, exerciseCreator);
-            gitService.commitAndPush(solutionRepo, "Empty Setup by Artemis", true, exerciseCreator);
+
+            final String commitMessage = "Empty Setup by Artemis";
+            gitService.commitAndPush(exerciseResources.repository, commitMessage, true, exerciseCreator);
+            gitService.commitAndPush(testResources.repository, commitMessage, true, exerciseCreator);
+            gitService.commitAndPush(solutionResources.repository, commitMessage, true, exerciseCreator);
         }
     }
 
@@ -191,204 +201,227 @@ public class ProgrammingExerciseRepositoryService {
     /**
      * Copy template and push, if no file is currently in the repository.
      *
-     * @param repository           The repository to push to
-     * @param resources            An array of resources that should be copied. Might be overwritten by projectTypeResources.
-     * @param prefix               A prefix that should be replaced for all Resources inside the resources.
-     * @param projectTypeResources An array of resources that should be copied AFTER the resources array has been copied. Can be null.
-     * @param projectTypePrefix    A prefix that should be replaced for all Resources inside the projectTypeResources.
      * @param templateName         The name of the template
      * @param programmingExercise  the programming exercise
      * @param user                 The user that triggered the action (used as Git commit author)
      * @throws Exception An exception in case something went wrong
      */
-    private void setupTemplateAndPush(final Repository repository, final Resource[] resources, final String prefix, @Nullable final Resource[] projectTypeResources,
-            final String projectTypePrefix, final String templateName, final ProgrammingExercise programmingExercise, final User user) throws Exception {
-        if (gitService.listFiles(repository).isEmpty()) { // Only copy template if repo is empty
-            fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
-            // Also copy project type specific files AFTERWARDS (so that they might overwrite the default files)
-            if (projectTypeResources != null) {
-                fileService.copyResources(projectTypeResources, projectTypePrefix, repository.getLocalPath().toAbsolutePath().toString(), true);
-            }
-
-            replacePlaceholders(programmingExercise, repository);
-            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", true, user);
+    private void setupTemplateAndPush(final RepoResources repoResources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
+            throws Exception {
+        // Only copy template if repo is empty
+        if (!gitService.listFiles(repoResources.repository).isEmpty()) {
+            return;
         }
+
+        final String repoLocalPath = getRepoLocalPath(repoResources.repository);
+
+        fileService.copyResources(repoResources.resources, repoResources.prefix, repoLocalPath, true);
+        // Also copy project type specific files AFTERWARDS (so that they might overwrite the default files)
+        if (repoResources.projectTypeResources != null) {
+            fileService.copyResources(repoResources.projectTypeResources, repoResources.projectTypePrefix, repoLocalPath, true);
+        }
+
+        replacePlaceholders(programmingExercise, repoResources.repository);
+        commitAndPushRepository(repoResources.repository, templateName + "-Template pushed by Artemis", true, user);
+    }
+
+    private static String getRepoLocalPath(final Repository repository) {
+        return repository.getLocalPath().toAbsolutePath().toString();
     }
 
     /**
      * Set up the test repository. This method differentiates non-sequential and sequential test repositories (more than 1 test job).
      *
-     * @param repository          The repository to be set up
      * @param resources           The resources which should get added to the template
-     * @param prefix              The prefix for the path to which the resources should get copied to
      * @param templateName        The name of the template
      * @param programmingExercise The related programming exercise for which the template should get created
      * @param user                the user who has initiated the generation of the programming exercise
      * @throws Exception If anything goes wrong
      */
-    private void setupTestTemplateAndPush(final Repository repository, final Resource[] resources, final String prefix, final Resource[] projectTypeResources,
-            final String projectTypePrefix, final String templateName, final ProgrammingExercise programmingExercise, final User user) throws Exception {
+    private void setupTestTemplateAndPush(final RepoResources resources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
+            throws Exception {
         // Only copy template if repo is empty
-        if (gitService.listFiles(repository).isEmpty()
+        if (gitService.listFiles(resources.repository).isEmpty()
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
-            // First get files that are not dependent on the project type
-            String templatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + "/test";
+            setupJVMTestTemplateAndPush(resources, templateName, programmingExercise, user);
+        }
+        else {
+            // If there is no special test structure for a programming language, just copy all the test files.
+            setupTemplateAndPush(resources, templateName, programmingExercise, user);
+        }
+    }
 
-            // Java both supports Gradle and Maven as a test template
-            String projectTemplatePath = templatePath;
-            ProjectType projectType = programmingExercise.getProjectType();
-            if (projectType != null && projectType.isGradle()) {
-                projectTemplatePath += "/gradle";
-            }
-            else {
-                projectTemplatePath += "/maven";
-            }
-            projectTemplatePath += "/projectTemplate/**/*.*";
-            Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
-            // keep the folder structure
-            fileService.copyResources(projectTemplate, "projectTemplate", repository.getLocalPath().toAbsolutePath().toString(), true);
+    private void setupJVMTestTemplateAndPush(final RepoResources resources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
+            throws IOException, GitAPIException {
+        final String repoLocalPath = getRepoLocalPath(resources.repository);
 
-            // These resources might override the programming language dependent resources as they are project type dependent.
+        // First get files that are not dependent on the project type
+        String templatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + "/test";
+
+        // Java both supports Gradle and Maven as a test template
+        String projectTemplatePath = templatePath;
+        ProjectType projectType = programmingExercise.getProjectType();
+        if (projectType != null && projectType.isGradle()) {
+            projectTemplatePath += "/gradle";
+        }
+        else {
+            projectTemplatePath += "/maven";
+        }
+        projectTemplatePath += "/projectTemplate/**/*.*";
+        Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
+        // keep the folder structure
+        fileService.copyResources(projectTemplate, "projectTemplate", repoLocalPath, true);
+
+        // These resources might override the programming language dependent resources as they are project type dependent.
+        if (projectType != null) {
+            setupJVMTestTemplateProjectTypeResources(resources, programmingExercise, repoLocalPath, projectType);
+        }
+
+        final Map<String, Boolean> sectionsMap = new HashMap<>();
+        // Keep or delete static code analysis configuration in the build configuration file
+        sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
+        // Keep or delete testwise coverage configuration in the build file
+        sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()));
+
+        if (programmingExercise.hasSequentialTestRuns()) {
+            setupTestTemplateSequentialTestRuns(resources, templatePath, projectTemplatePath, projectType, sectionsMap);
+        }
+        else {
+            setupTestTemplateRegularTestRuns(resources, programmingExercise, templatePath, projectType, sectionsMap);
+        }
+
+        replacePlaceholders(programmingExercise, resources.repository);
+        commitAndPushRepository(resources.repository, templateName + "-Template pushed by Artemis", true, user);
+    }
+
+    private void setupJVMTestTemplateProjectTypeResources(final RepoResources resources, final ProgrammingExercise programmingExercise, final String repoLocalPath,
+            final ProjectType projectType) throws IOException {
+        String projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
+        String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
+
+        try {
+            Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
+            fileService.copyResources(projectTypeProjectTemplate, resources.projectTypePrefix, repoLocalPath, false);
+        }
+        catch (FileNotFoundException ignored) {
+        }
+    }
+
+    private void setupTestTemplateRegularTestRuns(final RepoResources resources, final ProgrammingExercise programmingExercise, final String templatePath,
+            final ProjectType projectType, final Map<String, Boolean> sectionsMap) throws IOException {
+        final String repoLocalPath = getRepoLocalPath(resources.repository);
+        String testFilePath = templatePath + "/testFiles/**/*.*";
+        Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
+        String packagePath = Path.of(repoLocalPath, "test", "${packageNameFolder}").toAbsolutePath().toString();
+
+        sectionsMap.put("non-sequential", true);
+        sectionsMap.put("sequential", false);
+
+        // replace placeholder settings in project file
+        String projectFileFileName;
+        if (projectType != null && projectType.isGradle()) {
+            projectFileFileName = "build.gradle";
+        }
+        else {
+            projectFileFileName = "pom.xml";
+        }
+        fileService.replacePlaceholderSections(Path.of(repoLocalPath, projectFileFileName).toAbsolutePath().toString(), sectionsMap);
+
+        fileService.copyResources(testFileResources, resources.prefix, packagePath, false);
+
+        // Possibly overwrite files if the project type is defined
+        if (projectType != null) {
+            String projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
+
+            try {
+                Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
+                // filter non-existing resources to avoid exceptions
+                List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
+                for (Resource resource : projectTypeTestFileResources) {
+                    if (resource.exists()) {
+                        existingProjectTypeTestFileResources.add(resource);
+                    }
+                }
+                if (!existingProjectTypeTestFileResources.isEmpty()) {
+                    fileService.copyResources(existingProjectTypeTestFileResources.toArray(new Resource[] {}), resources.projectTypePrefix, packagePath, false);
+                }
+            }
+            catch (FileNotFoundException ignored) {
+            }
+        }
+
+        // Copy static code analysis config files
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
+            String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
+            Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
+            fileService.copyResources(staticCodeAnalysisResources, resources.prefix, repoLocalPath, true);
+        }
+    }
+
+    private void setupTestTemplateSequentialTestRuns(RepoResources resources, String templatePath, String projectTemplatePath, ProjectType projectType,
+            Map<String, Boolean> sectionsMap) throws IOException {
+        final String repoLocalPath = getRepoLocalPath(resources.repository);
+        final String stagePomXmlName = "/stagePom.xml";
+
+        // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
+        final boolean isMaven = ProjectType.isMavenProject(projectType);
+
+        sectionsMap.put("non-sequential", false);
+        sectionsMap.put("sequential", true);
+
+        String projectFileName;
+        if (isMaven) {
+            projectFileName = "pom.xml";
+        }
+        else {
+            projectFileName = "build.gradle";
+        }
+        fileService.replacePlaceholderSections(Path.of(repoLocalPath, projectFileName).toAbsolutePath().toString(), sectionsMap);
+
+        // staging project files are only required for maven
+        Resource stagePomXml = null;
+        if (isMaven) {
+            String stagePomXmlPath = templatePath + stagePomXmlName;
+            if (new java.io.File(projectTemplatePath + stagePomXmlName).exists()) {
+                stagePomXmlPath = projectTemplatePath + stagePomXmlName;
+            }
+            stagePomXml = resourceLoaderService.getResource(stagePomXmlPath);
+        }
+
+        // This is done to prepare for a feature where instructors/tas can add multiple build stages.
+        final List<String> sequentialTestTasks = new ArrayList<>();
+        sequentialTestTasks.add("structural");
+        sequentialTestTasks.add("behavior");
+
+        for (String buildStage : sequentialTestTasks) {
+            Path buildStagePath = Path.of(repoLocalPath, buildStage);
+            Files.createDirectory(buildStagePath);
+
+            String buildStageResourcesPath = templatePath + "/testFiles/" + buildStage + "/**/*.*";
+            Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
+
+            Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test"));
+            Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
+
+            String packagePath = Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
+
+            // staging project files are only required for maven
+            if (isMaven && stagePomXml != null) {
+                Files.copy(stagePomXml.getInputStream(), buildStagePath.resolve("pom.xml"));
+            }
+
+            fileService.copyResources(buildStageResources, resources.prefix, packagePath, false);
+
+            // Possibly overwrite files if the project type is defined
             if (projectType != null) {
-                String projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType)
-                        + "/test";
-                String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
-
+                buildStageResourcesPath = projectTemplatePath + "/testFiles/" + buildStage + "/**/*.*";
                 try {
-                    Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
-                    fileService.copyResources(projectTypeProjectTemplate, projectTypePrefix, repository.getLocalPath().toAbsolutePath().toString(), false);
+                    buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
+                    fileService.copyResources(buildStageResources, resources.prefix, packagePath, false);
                 }
                 catch (FileNotFoundException ignored) {
                 }
             }
-
-            Map<String, Boolean> sectionsMap = new HashMap<>();
-
-            // Keep or delete static code analysis configuration in the build configuration file
-            sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
-
-            // Keep or delete testwise coverage configuration in the build file
-            sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()));
-
-            if (!programmingExercise.hasSequentialTestRuns()) {
-                String testFilePath = templatePath + "/testFiles/**/*.*";
-                Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
-                String packagePath = Path.of(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
-
-                sectionsMap.put("non-sequential", true);
-                sectionsMap.put("sequential", false);
-
-                // replace placeholder settings in project file
-                String projectFileFileName;
-                if (projectType != null && projectType.isGradle()) {
-                    projectFileFileName = "build.gradle";
-                }
-                else {
-                    projectFileFileName = "pom.xml";
-                }
-                fileService.replacePlaceholderSections(Path.of(repository.getLocalPath().toAbsolutePath().toString(), projectFileFileName).toAbsolutePath().toString(),
-                        sectionsMap);
-
-                fileService.copyResources(testFileResources, prefix, packagePath, false);
-
-                // Possibly overwrite files if the project type is defined
-                if (projectType != null) {
-                    String projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType)
-                            + "/test";
-
-                    try {
-                        Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
-                        // filter non-existing resources to avoid exceptions
-                        List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
-                        for (Resource resource : projectTypeTestFileResources) {
-                            if (resource.exists()) {
-                                existingProjectTypeTestFileResources.add(resource);
-                            }
-                        }
-                        if (!existingProjectTypeTestFileResources.isEmpty()) {
-                            fileService.copyResources(existingProjectTypeTestFileResources.toArray(new Resource[] {}), projectTypePrefix, packagePath, false);
-                        }
-                    }
-                    catch (FileNotFoundException ignored) {
-                    }
-                }
-
-                // Copy static code analysis config files
-                if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
-                    String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
-                    Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
-                    fileService.copyResources(staticCodeAnalysisResources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
-                }
-            }
-            else {
-                // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
-                boolean isMaven = ProjectType.isMavenProject(projectType);
-                sectionsMap.put("non-sequential", false);
-                sectionsMap.put("sequential", true);
-
-                String projectFileName;
-                if (isMaven) {
-                    projectFileName = "pom.xml";
-                }
-                else {
-                    projectFileName = "build.gradle";
-                }
-                fileService.replacePlaceholderSections(Path.of(repository.getLocalPath().toAbsolutePath().toString(), projectFileName).toAbsolutePath().toString(), sectionsMap);
-
-                // staging project files are only required for maven
-                Resource stagePomXml = null;
-                if (isMaven) {
-                    String stagePomXmlPath = templatePath + "/stagePom.xml";
-                    if (new java.io.File(projectTemplatePath + "/stagePom.xml").exists()) {
-                        stagePomXmlPath = projectTemplatePath + "/stagePom.xml";
-                    }
-                    stagePomXml = resourceLoaderService.getResource(stagePomXmlPath);
-                }
-
-                // This is done to prepare for a feature where instructors/tas can add multiple build stages.
-                List<String> sequentialTestTasks = new ArrayList<>();
-                sequentialTestTasks.add("structural");
-                sequentialTestTasks.add("behavior");
-
-                for (String buildStage : sequentialTestTasks) {
-
-                    Path buildStagePath = Path.of(repository.getLocalPath().toAbsolutePath().toString(), buildStage);
-                    Files.createDirectory(buildStagePath);
-
-                    String buildStageResourcesPath = templatePath + "/testFiles/" + buildStage + "/**/*.*";
-                    Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
-
-                    Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test"));
-                    Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
-
-                    String packagePath = Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
-
-                    // staging project files are only required for maven
-                    if (isMaven && stagePomXml != null) {
-                        Files.copy(stagePomXml.getInputStream(), buildStagePath.resolve("pom.xml"));
-                    }
-
-                    fileService.copyResources(buildStageResources, prefix, packagePath, false);
-
-                    // Possibly overwrite files if the project type is defined
-                    if (projectType != null) {
-                        buildStageResourcesPath = projectTemplatePath + "/testFiles/" + buildStage + "/**/*.*";
-                        try {
-                            buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
-                            fileService.copyResources(buildStageResources, prefix, packagePath, false);
-                        }
-                        catch (FileNotFoundException ignored) {
-                        }
-                    }
-                }
-            }
-
-            replacePlaceholders(programmingExercise, repository);
-            commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", true, user);
-        }
-        else {
-            // If there is no special test structure for a programming language, just copy all the test files.
-            setupTemplateAndPush(repository, resources, prefix, projectTypeResources, projectTypePrefix, templateName, programmingExercise, user);
         }
     }
 
@@ -400,9 +433,9 @@ public class ProgrammingExerciseRepositoryService {
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
     void replacePlaceholders(final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
-        Map<String, String> replacements = new HashMap<>();
-        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
-        ProjectType projectType = programmingExercise.getProjectType();
+        final Map<String, String> replacements = new HashMap<>();
+        final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+        final ProjectType projectType = programmingExercise.getProjectType();
 
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
@@ -410,21 +443,7 @@ public class ProgrammingExerciseRepositoryService {
                         programmingExercise.getPackageFolderName());
                 replacements.put("${packageName}", programmingExercise.getPackageName());
             }
-            case SWIFT -> {
-                switch (projectType) {
-                    case PLAIN -> {
-                        fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
-                                programmingExercise.getPackageName());
-                        fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
-                        replacements.put("${packageName}", programmingExercise.getPackageName());
-                    }
-                    case XCODE -> {
-                        fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
-                        fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
-                        replacements.put("${appName}", programmingExercise.getPackageName());
-                    }
-                }
-            }
+            case SWIFT -> replaceSwiftPlaceholders(replacements, programmingExercise, repository, projectType);
         }
 
         // there is no need in python to replace package names
@@ -434,6 +453,37 @@ public class ProgrammingExerciseRepositoryService {
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
         replacements.put("${packaging}", programmingExercise.hasSequentialTestRuns() ? "pom" : "jar");
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements, List.of("gradle-wrapper.jar"));
+    }
+
+    /**
+     * Replaces Swift specific placeholders in repository files.
+     *
+     * @param replacements A set of known replacements that can be reused in other files.
+     * @param programmingExercise The exercise for which the replacements are performed.
+     * @param repository The repository in which the replacements are performed.
+     * @param projectType The type of the Swift project.
+     * @throws IOException Thrown if accessing repository files fails.
+     */
+    private void replaceSwiftPlaceholders(final Map<String, String> replacements, final ProgrammingExercise programmingExercise, final Repository repository,
+            final ProjectType projectType) throws IOException {
+        final String appNamePlaceholder = "${appName}";
+        final String repositoryLocalPath = repository.getLocalPath().toAbsolutePath().toString();
+        final String packageName = programmingExercise.getPackageName();
+
+        switch (projectType) {
+            case PLAIN -> {
+                fileService.replaceVariablesInDirectoryName(repositoryLocalPath, "${packageNameFolder}", packageName);
+                fileService.replaceVariablesInFileName(repositoryLocalPath, "${packageNameFile}", packageName);
+
+                replacements.put("${packageName}", packageName);
+            }
+            case XCODE -> {
+                fileService.replaceVariablesInDirectoryName(repositoryLocalPath, appNamePlaceholder, packageName);
+                fileService.replaceVariablesInFileName(repositoryLocalPath, appNamePlaceholder, packageName);
+
+                replacements.put(appNamePlaceholder, packageName);
+            }
+        }
     }
 
     /**
