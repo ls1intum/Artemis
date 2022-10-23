@@ -10,6 +10,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { combineLatest } from 'rxjs';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-create-tutorial-group-session',
@@ -19,7 +20,7 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
     tutorialGroupSessionToCreate: TutorialGroupSessionDTO = new TutorialGroupSessionDTO();
     isLoading: boolean;
     tutorialGroup: TutorialGroup;
-    courseId: number;
+    course: Course;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -31,13 +32,13 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.paramMap])
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
-                switchMap(([params, parentParams]) => {
+                switchMap(([params, { course }]) => {
                     const tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupService.getOneOfCourse(this.courseId, tutorialGroupId);
+                    this.course = course;
+                    return this.tutorialGroupService.getOneOfCourse(course.id!, tutorialGroupId);
                 }),
                 map((res: HttpResponse<TutorialGroup>) => res.body),
                 finalize(() => (this.isLoading = false)),
@@ -63,7 +64,7 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
         this.isLoading = true;
 
         this.tutorialGroupSessionService
-            .create(this.courseId, this.tutorialGroup.id!, this.tutorialGroupSessionToCreate)
+            .create(this.course.id!, this.tutorialGroup.id!, this.tutorialGroupSessionToCreate)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -71,7 +72,7 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups', this.tutorialGroup.id, 'sessions']);
+                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups', this.tutorialGroup.id, 'sessions']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

@@ -16,7 +16,8 @@
                 "friday": "Freitag",
                 "saturday": "Samstag",
                 "sunday": "Sonntag"
-            }
+            },
+            "timeZone": "Zeitzone: {{ timeZone }}"
         },
         "entities": {
             "tutorialGroup": {

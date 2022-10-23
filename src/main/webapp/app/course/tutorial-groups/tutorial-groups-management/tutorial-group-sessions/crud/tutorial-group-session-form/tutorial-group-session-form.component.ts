@@ -27,7 +27,7 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
         location: undefined,
     };
 
-    @Input() course?: Course;
+    @Input() timeZone: string;
     @Input() isEditMode = false;
     @Output() formSubmitted: EventEmitter<TutorialGroupSessionFormData> = new EventEmitter<TutorialGroupSessionFormData>();
     faCalendarAlt = faCalendarAlt;

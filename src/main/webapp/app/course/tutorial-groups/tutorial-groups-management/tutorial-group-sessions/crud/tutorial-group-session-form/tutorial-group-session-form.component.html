@@ -1,4 +1,9 @@
 <div class="row">
+    <div class="col-12 mb-2">
+        <div class="alert alert-info">
+            {{ 'artemisApp.generic.timeZone' | artemisTranslate: { timeZone } }}
+        </div>
+    </div>
     <div class="col-12">
         <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
             <!-- Date -->
