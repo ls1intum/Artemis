@@ -4,9 +4,7 @@ import { Language } from 'app/entities/course.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { getDayTranslationKey } from '../weekdays';
-import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import dayjs from 'dayjs/esm';
-import { SortService } from 'app/shared/service/sort.service';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 
 @Component({
     selector: 'jhi-tutorial-group-detail',
@@ -14,6 +12,9 @@ import { SortService } from 'app/shared/service/sort.service';
 })
 export class TutorialGroupDetailComponent implements OnChanges {
     @ContentChild(TemplateRef) header: TemplateRef<any>;
+
+    @Input()
+    timeZone?: string = undefined;
 
     @Input()
     tutorialGroup: TutorialGroup;
@@ -29,10 +30,9 @@ export class TutorialGroupDetailComponent implements OnChanges {
     formattedAdditionalInformation?: SafeHtml;
     getDayTranslationKey = getDayTranslationKey;
 
-    pastSessions: TutorialGroupSession[] = [];
-    upcomingSessions: TutorialGroupSession[] = [];
+    sessions: TutorialGroupSession[] = [];
 
-    constructor(private artemisMarkdownService: ArtemisMarkdownService, private sortService: SortService) {}
+    constructor(private artemisMarkdownService: ArtemisMarkdownService) {}
 
     ngOnChanges(changes: SimpleChanges) {
         for (const propName in changes) {
@@ -44,35 +44,11 @@ export class TutorialGroupDetailComponent implements OnChanges {
                             this.formattedAdditionalInformation = this.artemisMarkdownService.safeHtmlForMarkdown(this.tutorialGroup.additionalInformation);
                         }
                         if (change.currentValue && change.currentValue.tutorialGroupSessions) {
-                            this.splitIntoUpcomingAndPastSessions(this.sortService.sortByProperty(change.currentValue.tutorialGroupSessions, 'start', false));
+                            this.sessions = change.currentValue.tutorialGroupSessions;
                         }
                     }
                 }
             }
         }
-    }
-
-    public getCurrentDate(): dayjs.Dayjs {
-        return dayjs();
-    }
-
-    private splitIntoUpcomingAndPastSessions(sessions: TutorialGroupSession[]) {
-        const upcoming: TutorialGroupSession[] = [];
-        const past: TutorialGroupSession[] = [];
-        const now = this.getCurrentDate();
-
-        for (const session of sessions) {
-            if (session.status !== TutorialGroupSessionStatus.ACTIVE) {
-                continue;
-            }
-
-            if (session.end!.isBefore(now)) {
-                past.push(session);
-            } else {
-                upcoming.push(session);
-            }
-        }
-        this.upcomingSessions = upcoming;
-        this.pastSessions = past;
     }
 }

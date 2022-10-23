@@ -6,6 +6,7 @@ import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-cancellation-modal',
@@ -16,7 +17,7 @@ export class CancellationModalComponent implements OnInit {
     form: FormGroup;
 
     @Input()
-    courseId: number;
+    course: Course;
 
     @Input()
     tutorialGroupId: number;
@@ -53,7 +54,7 @@ export class CancellationModalComponent implements OnInit {
         if (!tutorialGroupSession?.start || !tutorialGroupSession?.end) {
             return '';
         } else {
-            return tutorialGroupSession.start.format('LLLL') + ' - ' + tutorialGroupSession.end.format('LT');
+            return tutorialGroupSession.start.tz(this.course.timeZone).format('LLLL') + ' - ' + tutorialGroupSession.end.tz(this.course.timeZone).format('LT');
         }
     }
     cancelOrActivate(): void {
@@ -65,7 +66,7 @@ export class CancellationModalComponent implements OnInit {
     }
 
     cancelSession(): void {
-        this.tutorialGroupSessionService.cancel(this.courseId, this.tutorialGroupId, this.tutorialGroupSession.id!, this.reasonControl?.value).subscribe({
+        this.tutorialGroupSessionService.cancel(this.course.id!, this.tutorialGroupId, this.tutorialGroupSession.id!, this.reasonControl?.value).subscribe({
             next: () => {
                 this.activeModal.close('confirmed');
             },
@@ -77,7 +78,7 @@ export class CancellationModalComponent implements OnInit {
     }
 
     activateSession(): void {
-        this.tutorialGroupSessionService.activate(this.courseId, this.tutorialGroupId, this.tutorialGroupSession.id!).subscribe({
+        this.tutorialGroupSessionService.activate(this.course.id!, this.tutorialGroupId, this.tutorialGroupSession.id!).subscribe({
             next: () => {
                 this.activeModal.close('confirmed');
             },

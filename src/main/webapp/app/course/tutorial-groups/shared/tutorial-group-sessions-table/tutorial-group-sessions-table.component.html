@@ -1,0 +1,26 @@
+<div class="table-responsive">
+    <div class="col-12 mb-2">
+        <div class="alert alert-info">
+            {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate: { timeZoneUsedForDisplay } }}
+        </div>
+        <div></div>
+    </div>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th *ngIf="showIdColumn">{{ 'global.field.id' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.entities.tutorialGroupSession.date' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.pages.tutorialGroupSessionManagement.columns.scheduled' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.pages.tutorialGroupSessionManagement.columns.isCancelled' | artemisTranslate }}</th>
+                <th *ngIf="extraColumn"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr jhi-session-row *ngFor="let session of upcomingSessions" [extraColumn]="extraColumn" [session]="session" [timeZone]="timeZone" [showIdColumn]="showIdColumn"></tr>
+            <tr class="table-dark text-center">
+                <td [colSpan]="numberOfColumns">{{ 'artemisApp.pages.tutorialGroupSessionManagement.divider' | artemisTranslate }}</td>
+            </tr>
+            <tr jhi-session-row *ngFor="let session of pastSessions" [extraColumn]="extraColumn" [session]="session" [timeZone]="timeZone" [showIdColumn]="showIdColumn"></tr>
+        </tbody>
+    </table>
+</div>

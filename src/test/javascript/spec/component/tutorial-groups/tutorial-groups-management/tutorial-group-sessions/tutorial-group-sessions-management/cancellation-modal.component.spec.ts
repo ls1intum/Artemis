@@ -10,11 +10,12 @@ import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGr
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { Course } from 'app/entities/course.model';
 
 describe('CancellationModalComponent', () => {
     let fixture: ComponentFixture<CancellationModalComponent>;
     let component: CancellationModalComponent;
-    const courseId = 1;
+    const course = { id: 1, timeZone: 'Europe/Berlin' } as Course;
     const tutorialGroupId = 2;
     const tutorialGroupSessionId = 3;
     const tutorialGroupSession = generateExampleTutorialGroupSession({ id: tutorialGroupSessionId });
@@ -31,7 +32,7 @@ describe('CancellationModalComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CancellationModalComponent);
                 component = fixture.componentInstance;
-                component.courseId = courseId;
+                component.course = course;
                 component.tutorialGroupId = tutorialGroupId;
                 component.tutorialGroupSession = tutorialGroupSession;
 
@@ -56,13 +57,12 @@ describe('CancellationModalComponent', () => {
 
         component!.reasonControl!.setValue('National Holiday');
         fixture.detectChanges();
-        // click button with id cancel-activate-button
         const button = fixture.debugElement.nativeElement.querySelector('#cancel-activate-button');
         button.click();
 
         fixture.whenStable().then(() => {
             expect(cancelSessionSpy).toHaveBeenCalledOnce();
-            expect(cancelSessionSpy).toHaveBeenCalledWith(courseId, tutorialGroupId, tutorialGroupSessionId, 'National Holiday');
+            expect(cancelSessionSpy).toHaveBeenCalledWith(course.id, tutorialGroupId, tutorialGroupSessionId, 'National Holiday');
             expect(closeModalSpy).toHaveBeenCalledOnce();
             expect(closeModalSpy).toHaveBeenCalledWith('confirmed');
         });
@@ -81,7 +81,7 @@ describe('CancellationModalComponent', () => {
 
         fixture.whenStable().then(() => {
             expect(activateSesssionSpy).toHaveBeenCalledOnce();
-            expect(activateSesssionSpy).toHaveBeenCalledWith(courseId, tutorialGroupId, tutorialGroupSessionId);
+            expect(activateSesssionSpy).toHaveBeenCalledWith(course.id, tutorialGroupId, tutorialGroupSessionId);
             expect(closeModalSpy).toHaveBeenCalledOnce();
             expect(closeModalSpy).toHaveBeenCalledWith('confirmed');
         });

@@ -121,21 +121,8 @@
             <span>{{ 'artemisApp.entities.tutorialGroup.sessions' | artemisTranslate }}</span>
         </dt>
         <dd>
-            <ng-container *ngIf="pastSessions!.length > 0 || upcomingSessions!.length > 0; else sessionsNotFound">
-                <ul>
-                    <li *ngFor="let session of upcomingSessions">
-                        <span class="badge bg-primary">
-                            {{ session.start | artemisDate: 'short-date':false }}
-                            {{ session.start | artemisDate: 'time':false! }} -
-                            {{ session.end | artemisDate: 'time':false! }}
-                        </span>
-                    </li>
-                    <li class="badge bg-secondary" *ngFor="let session of pastSessions">
-                        {{ session.start | artemisDate: 'short-date':false }}
-                        {{ session.start | artemisDate: 'time':false! }} -
-                        {{ session.end | artemisDate: 'time':false! }}
-                    </li>
-                </ul>
+            <ng-container *ngIf="sessions && sessions.length > 0; else sessionsNotFound">
+                <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [showIdColumn]="false"> </jhi-tutorial-group-sessions-table>
             </ng-container>
             <ng-template #sessionsNotFound>
                 <span>{{ 'artemisApp.pages.tutorialGroupDetail.sessionsNotFound' | artemisTranslate }}</span></ng-template

@@ -1,5 +1,5 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="row" *ngIf="tutorialGroup && (upcomingSessions || pastSessions)">
+    <div class="row" *ngIf="tutorialGroup">
         <div class="col-12">
             <div class="d-flex justify-content-between">
                 <h4>{{ 'artemisApp.pages.tutorialGroupSessionManagement.title' | artemisTranslate }}</h4>
@@ -15,43 +15,16 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 mb-2">
-            <div class="alert alert-info">
-                {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate: { timeZone: course.timeZone } }}
-            </div>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>{{ 'artemisApp.entities.tutorialGroupSession.date' | artemisTranslate }}</th>
-                        <th>{{ 'artemisApp.pages.tutorialGroupSessionManagement.columns.scheduled' | artemisTranslate }}</th>
-                        <th>{{ 'artemisApp.pages.tutorialGroupSessionManagement.columns.isCancelled' | artemisTranslate }}</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr
-                        jhi-session-row
-                        *ngFor="let session of upcomingSessions"
-                        [session]="session"
-                        [courseId]="course.id!"
-                        [tutorialGroupId]="tutorialGroup!.id!"
-                        (actionPerformed)="loadAll()"
-                    ></tr>
-                    <tr class="table-dark text-center">
-                        <td colspan="4">{{ 'artemisApp.pages.tutorialGroupSessionManagement.divider' | artemisTranslate }}</td>
-                    </tr>
-                    <tr
-                        jhi-session-row
-                        *ngFor="let session of pastSessions"
-                        [session]="session"
-                        [courseId]="course.id!"
-                        [tutorialGroupId]="tutorialGroup!.id!"
-                        (actionPerformed)="loadAll()"
-                    ></tr>
-                </tbody>
-            </table>
-        </div>
+        <jhi-tutorial-group-sessions-table [sessions]="sessions" [timeZone]="course.timeZone" [showIdColumn]="true">
+            <ng-template let-session>
+                <jhi-tutorial-group-session-row-buttons
+                    [tutorialGroupSession]="session"
+                    [course]="course"
+                    [tutorialGroupId]="tutorialGroup.id!"
+                    (cancelOrActivatePressed)="loadAll()"
+                    (tutorialGroupSessionDeleted)="loadAll()"
+                ></jhi-tutorial-group-session-row-buttons>
+            </ng-template>
+        </jhi-tutorial-group-sessions-table>
     </div>
 </jhi-loading-indicator-container>

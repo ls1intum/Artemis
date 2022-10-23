@@ -15,12 +15,13 @@ import { Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Course } from 'app/entities/course.model';
 
 describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodRowButtonsComponent>;
     let component: TutorialGroupFreePeriodRowButtonsComponent;
     let periodService: TutorialGroupFreePeriodService;
-    const courseId = 1;
+    const course = { id: 1 } as Course;
     let configuration: TutorialGroupsConfiguration;
     let tutorialFreePeriod: TutorialGroupFreePeriod;
 
@@ -50,7 +51,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     });
 
     const setInputValues = () => {
-        component.courseId = courseId;
+        component.course = course;
         component.tutorialGroupConfiguration = configuration;
         component.tutorialFreePeriod = tutorialFreePeriod;
     };
@@ -75,7 +76,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledWith([
                 '/course-management',
-                courseId,
+                course.id,
                 'tutorial-groups',
                 'configuration',
                 configuration.id,
@@ -92,7 +93,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
 
         fixture.detectChanges();
         component.deleteTutorialFreePeriod();
-        expect(deleteSpy).toHaveBeenCalledWith(courseId, configuration.id, tutorialFreePeriod.id);
+        expect(deleteSpy).toHaveBeenCalledWith(course.id, configuration.id, tutorialFreePeriod.id);
         expect(deleteEventSpy).toHaveBeenCalledOnce();
     });
 });

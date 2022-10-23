@@ -30,7 +30,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { TutorialGroupSessionFormComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
 import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/detail/tutorial-group-management-detail.component';
-import { TutorialGroupSessionRowComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-session-row/tutorial-group-session-row.component';
 import { EditTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
 import { NgModule } from '@angular/core';
 import { TutorialGroupsCourseInformationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-course-information/tutorial-groups-course-information.component';
@@ -77,7 +76,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         TutorialGroupSessionRowButtonsComponent,
         TutorialGroupFreePeriodRowButtonsComponent,
         EditTutorialGroupFreePeriodComponent,
-        TutorialGroupSessionRowComponent,
         TutorialGroupsImportButtonComponent,
         TutorialGroupsRegistrationImportDialog,
         TutorialGroupsChecklistComponent,

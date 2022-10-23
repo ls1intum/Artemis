@@ -42,6 +42,7 @@ describe('TutorialGroupFormComponent', () => {
     const validIsOnline = true;
     const validLanguage = Language.GERMAN;
     const validAdditionalInformation = 'ExampleAdditionalInformation';
+    const validNotificationText = 'ExampleNotificationText';
     // schedule
     const validDayOfWeek = 1;
     const validStartTime = '10:00';
@@ -87,7 +88,6 @@ describe('TutorialGroupFormComponent', () => {
                 validTeachingAssistant.login = 'testLogin';
                 component = fixture.componentInstance;
                 component.course = course;
-                fixture.detectChanges();
                 testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
             });
     });
@@ -200,7 +200,6 @@ describe('TutorialGroupFormComponent', () => {
     describe('without schedule', function () {
         beforeEach(() => {
             component.configureSchedule = false;
-            fixture.detectChanges();
             clickSubmit = generateClickSubmitButton(component, fixture, {
                 title: validTitle,
                 teachingAssistant: validTeachingAssistant,
@@ -218,6 +217,7 @@ describe('TutorialGroupFormComponent', () => {
         });
 
         it('should block submit when required property is missing', fakeAsync(() => {
+            fixture.detectChanges();
             const requiredGroupControlNames = ['title', 'teachingAssistant', 'isOnline', 'language'];
             for (const controlName of requiredGroupControlNames) {
                 testFormIsInvalidOnMissingRequiredProperty(controlName);
@@ -249,6 +249,7 @@ describe('TutorialGroupFormComponent', () => {
         });
 
         it('should submit valid form', fakeAsync(() => {
+            fixture.detectChanges();
             setValidFormValues();
             fixture.detectChanges();
             expect(component.form.valid).toBeTrue();
@@ -268,6 +269,9 @@ describe('TutorialGroupFormComponent', () => {
         component.languageControl!.setValue(validLanguage);
         component.campusControl!.setValue(validCampus);
         component.additionalInformation = validAdditionalInformation;
+        if (component.notificationControl) {
+            component.notificationControl?.setValue(validNotificationText);
+        }
 
         if (component.form.get('schedule')) {
             component.form.get('schedule')!.get('dayOfWeek')!.setValue(validDayOfWeek);

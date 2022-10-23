@@ -42,7 +42,7 @@
         "compare-versions": "5.0.1",
         "core-js": "3.25.5",
         "crypto-js": "4.1.1",
-        "dayjs": "1.11.5",
+        "dayjs": "1.11.6",
         "diff-match-patch-typescript": "1.0.8",
         "dompurify": "2.4.0",
         "export-to-csv": "0.2.1",

@@ -1,0 +1,13 @@
+<ng-container>
+    <td *ngIf="showIdColumn">{{ session.id }}</td>
+    <td>
+        {{ session.start | artemisDate: 'short-date':false:timeZone! }}
+        {{ session.start | artemisDate: 'time':false:timeZone! }} -
+        {{ session.end | artemisDate: 'time':false:timeZone! }}
+    </td>
+    <td [class.table-warning]="!hasSchedule">{{ (hasSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+    <td [class.table-danger]="isCancelled">{{ (isCancelled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+    <td *ngIf="extraColumn">
+        <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }"></ng-template>
+    </td>
+</ng-container>

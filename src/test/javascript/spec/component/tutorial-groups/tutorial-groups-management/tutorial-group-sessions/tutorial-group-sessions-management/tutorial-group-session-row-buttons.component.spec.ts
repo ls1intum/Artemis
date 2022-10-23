@@ -16,12 +16,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { CancellationModalComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
+import { Course } from 'app/entities/course.model';
 
 describe('TutorialGroupSessionRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupSessionRowButtonsComponent>;
     let component: TutorialGroupSessionRowButtonsComponent;
     let sessionService: TutorialGroupSessionService;
-    const courseId = 1;
+    const course = { id: 1 } as Course;
     const tutorialGroupId = 1;
     let tutorialGroupSession: TutorialGroupSession;
 
@@ -50,7 +51,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
     });
 
     const setInputValues = () => {
-        component.courseId = courseId;
+        component.course = course;
         component.tutorialGroupId = tutorialGroupId;
         component.tutorialGroupSession = tutorialGroupSession;
     };
@@ -73,14 +74,14 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
 
         fixture.whenStable().then(() => {
             expect(navigateSpy).toHaveBeenCalledOnce();
-            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups', tutorialGroupId, 'sessions', tutorialGroupSession.id, 'edit']);
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups', tutorialGroupId, 'sessions', tutorialGroupSession.id, 'edit']);
         });
     }));
 
     it('should open the cancellation / activation dialog when the respective button is clicked', fakeAsync(() => {
         const modalService = TestBed.inject(NgbModal);
         const mockModalRef = {
-            componentInstance: { tutorialGroupSession: undefined, courseId: undefined, tutorialGroupId: undefined },
+            componentInstance: { tutorialGroupSession: undefined, course: undefined, tutorialGroupId: undefined },
             result: { then: () => undefined },
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
@@ -97,7 +98,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
             expect(modalOpenSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledWith(CancellationModalComponent);
             expect(mockModalRef.componentInstance.tutorialGroupSession).toEqual(tutorialGroupSession);
-            expect(mockModalRef.componentInstance.courseId).toEqual(courseId);
+            expect(mockModalRef.componentInstance.course).toEqual(course);
             expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroupId);
         });
     }));
@@ -108,7 +109,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
 
         fixture.detectChanges();
         component.deleteTutorialGroupSession();
-        expect(deleteSpy).toHaveBeenCalledWith(courseId, tutorialGroupId, tutorialGroupSession.id);
+        expect(deleteSpy).toHaveBeenCalledWith(course.id, tutorialGroupId, tutorialGroupSession.id);
         expect(deleteEventSpy).toHaveBeenCalledOnce();
     });
 });

@@ -9,7 +9,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
@@ -18,20 +17,20 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutor
 import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
-import { By } from '@angular/platform-browser';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { Course } from 'app/entities/course.model';
+import { TutorialGroupSessionRowStubComponent, TutorialGroupSessionsTableStubComponent } from '../../../stubs/tutorial-group-sessions-table-stub.component';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
-@Component({ selector: '[jhi-session-row]', template: '' })
-class TutorialGroupSessionRowStubComponent {
-    @Input() session: TutorialGroupSession;
-    @Input() courseId: number;
+@Component({ selector: 'jhi-tutorial-group-session-row-buttons', template: '' })
+class TutorialGroupSessionRowButtonsStubComponent {
+    @Input() course: Course;
     @Input() tutorialGroupId: number;
-    @Input() timeZone: string;
+    @Input() tutorialGroupSession: TutorialGroupSession;
 
-    @Output() actionPerformed = new EventEmitter<void>();
+    @Output() tutorialGroupSessionDeleted = new EventEmitter<void>();
+    @Output() cancelOrActivatePressed = new EventEmitter<void>();
 }
-
 describe('TutorialGroupSessionsManagement', () => {
     let fixture: ComponentFixture<TutorialGroupSessionsManagementComponent>;
     let component: TutorialGroupSessionsManagementComponent;
@@ -44,7 +43,6 @@ describe('TutorialGroupSessionsManagement', () => {
     let pastSession: TutorialGroupSession;
     let upcomingSession: TutorialGroupSession;
     let tutorialGroup: TutorialGroup;
-    const currentDate = dayjs(new Date(Date.UTC(2021, 0, 2, 12, 0, 0)));
     const course = {
         id: courseId,
         timeZone: 'Europe/Berlin',
@@ -56,6 +54,8 @@ describe('TutorialGroupSessionsManagement', () => {
             declarations: [
                 TutorialGroupSessionsManagementComponent,
                 TutorialGroupSessionRowStubComponent,
+                TutorialGroupSessionsTableStubComponent,
+                TutorialGroupSessionRowButtonsStubComponent,
                 LoadingIndicatorContainerStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
@@ -106,31 +106,6 @@ describe('TutorialGroupSessionsManagement', () => {
         expect(component.tutorialGroup).toEqual(tutorialGroup);
         expect(component.tutorialGroupSchedule).toEqual(tutorialGroup.tutorialGroupSchedule);
         expect(component.course.id).toEqual(courseId);
-    });
-
-    it('should spit sessions into upcoming and past', () => {
-        jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
-
-        fixture.detectChanges();
-        expect(component.upcomingSessions).toHaveLength(1);
-        expect(component.upcomingSessions).toEqual([upcomingSession]);
-        expect(component.pastSessions).toHaveLength(1);
-        expect(component.pastSessions).toEqual([pastSession]);
-    });
-
-    it('should load all when user action is performed on a row', () => {
-        jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
-        fixture.detectChanges();
-
-        const loadAllSpy = jest.spyOn(component, 'loadAll');
-
-        const sessionRows = fixture.debugElement
-            .queryAll(By.directive(TutorialGroupSessionRowStubComponent))
-            .map((row) => row.componentInstance) as TutorialGroupSessionRowStubComponent[];
-        expect(sessionRows).toHaveLength(2);
-        const firstRow = sessionRows[0];
-        firstRow.actionPerformed.emit();
-        expect(loadAllSpy).toHaveBeenCalledOnce();
     });
 
     it('should navigate to create session page', fakeAsync(() => {

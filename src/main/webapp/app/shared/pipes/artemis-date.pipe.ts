@@ -62,7 +62,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
 
         // Set locale to current language
         this.updateLocale(this.translateService.currentLang);
-        this.updateLocalizedDateTime();
+        this.updateLocalizedDateTime(timeZone);
 
         // Clean up a possibly existing subscription to onLangChange
         this.cleanUpSubscription();
@@ -105,8 +105,8 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         }
     }
 
-    private updateLocalizedDateTime(): void {
-        this.dateTime = this.dateTime.locale(this.locale);
+    private updateLocalizedDateTime(timeZone: string | undefined = undefined): void {
+        this.dateTime = timeZone ? this.dateTime.locale(this.locale).tz(timeZone) : this.dateTime.locale(this.locale);
         this.localizedDateTime = this.dateTime.format(this.format());
     }
 
