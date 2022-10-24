@@ -63,6 +63,8 @@ class Lti10ServiceTest {
         course.setOnlineCourse(true);
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setCourse(course);
+        onlineCourseConfiguration.setLtiKey("key");
+        onlineCourseConfiguration.setLtiSecret("secret");
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         exercise = new TextExercise();
         exercise.setCourse(course);
@@ -72,6 +74,7 @@ class Lti10ServiceTest {
         user.setPassword("password");
         user.setGroups(new HashSet<>(Collections.singleton(LtiService.LTI_GROUP_NAME)));
         ltiOutcomeUrl = new LtiOutcomeUrl();
+        ltiOutcomeUrl.setUrl("testUrl");
     }
 
     @Test

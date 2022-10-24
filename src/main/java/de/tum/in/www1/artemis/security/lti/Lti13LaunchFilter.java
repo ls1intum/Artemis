@@ -62,7 +62,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
             writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
         }
-        catch (HttpClientErrorException ex) {
+        catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
             log.error(ex.getMessage());
             response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());
         }
