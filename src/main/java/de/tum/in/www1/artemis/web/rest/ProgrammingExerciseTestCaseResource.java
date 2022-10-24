@@ -117,7 +117,7 @@ public class ProgrammingExerciseTestCaseResource {
 
     public static final class Endpoints {
 
-        private static final String PROGRAMMING_EXERCISE = "/programming-exercise/{exerciseId}";
+        private static final String PROGRAMMING_EXERCISE = "/programming-exercises/{exerciseId}";
 
         public static final String TEST_CASES = PROGRAMMING_EXERCISE + "/test-cases";
 

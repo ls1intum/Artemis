@@ -82,7 +82,7 @@ describe('Programming exercise assessment', () => {
         exerciseResult.clickOpenCodeEditor(exercise.id!);
         programmingFeedback.shouldShowRepositoryLockedWarning();
         programmingFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
-        programmingFeedback.shouldShowScore(totalPoints, exercise.maxPoints!, percentage);
+        programmingFeedback.shouldShowScore(percentage);
         programmingFeedback.shouldShowCodeFeedback('BubbleSort.java', tutorCodeFeedback, '-2', onlineEditor);
     }
 

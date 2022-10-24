@@ -75,7 +75,7 @@ describe('Text exercise assessment', () => {
             exerciseResult.clickViewSubmission();
             textFeedback.shouldShowTextFeedback(1, tutorTextFeedback);
             textFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
-            textFeedback.shouldShowScore(totalPoints, exercise.maxPoints!, percentage);
+            textFeedback.shouldShowScore(percentage);
             textFeedback.complain(complaint);
         });
 

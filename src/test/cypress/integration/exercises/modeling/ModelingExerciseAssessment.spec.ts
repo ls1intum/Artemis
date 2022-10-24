@@ -70,7 +70,7 @@ describe('Modeling Exercise Assessment Spec', () => {
             exerciseResult.shouldShowExerciseTitle(modelingExercise.title!);
             exerciseResult.shouldShowScore(20);
             exerciseResult.clickViewSubmission();
-            modelingFeedback.shouldShowScore(2, 10, 20);
+            modelingFeedback.shouldShowScore(20);
             modelingFeedback.shouldShowAdditionalFeedback(1, 'Thanks, good job.');
             modelingFeedback.shouldShowComponentFeedback(1, 2, 'Good');
             modelingFeedback.complain('I am not happy with your assessment.');

@@ -145,7 +145,7 @@ describe('Exam assessment', () => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                editorPage.getResultScore().should('contain.text', '40%, 4 points').should('be.visible');
+                editorPage.getResultScore().should('contain.text', '40%, 4 points').and('be.visible');
             });
         });
 
@@ -175,7 +175,7 @@ describe('Exam assessment', () => {
                     expect(assessmentResponse.response!.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                editorPage.getResultScore().should('contain.text', '70%, 7 points').should('be.visible');
+                editorPage.getResultScore().should('contain.text', '70%, 7 points').and('be.visible');
             });
         });
     });
