@@ -15,6 +15,7 @@
         </div>
         <div #containerRef class="plagiarism-run-details-info">
             <ngx-charts-bar-vertical
+                [roundEdges]="false"
                 [view]="[containerRef.offsetWidth, 400]"
                 [scheme]="ngxColor"
                 [results]="ngxData"

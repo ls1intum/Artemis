@@ -318,7 +318,7 @@ public class ParticipationResource {
         });
         resultRepository.saveAll(participationResults);
 
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewFeedbackRequest(programmingExercise);
+        groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
 
         return ResponseEntity.ok().body(participation);
     }
@@ -448,10 +448,9 @@ public class ParticipationResource {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        boolean examMode = exercise.isExamExercise();
         Set<StudentParticipation> participations;
         if (withLatestResult) {
-            participations = studentParticipationRepository.findByExerciseIdAndTestRunWithLatestResult(exerciseId, false);
+            participations = studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
         }
         else {
             participations = studentParticipationRepository.findByExerciseId(exerciseId);

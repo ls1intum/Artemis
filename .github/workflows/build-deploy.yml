@@ -84,10 +84,8 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: Artemis.war
-    - name: Copy Dockerfile to Build Directory
-      run: cp src/main/docker/Dockerfile .
     - name: Build Docker Image
-      run: docker build --build-arg WAR_PATH=. -t artemis .
+      run: docker build --build-arg WAR_PATH=. -t artemis -f src/main/docker/Dockerfile .
 
     - name: Compute Tag
       uses: actions/github-script@v6
@@ -129,7 +127,7 @@ jobs:
 
     # TODO: Push to Docker Hub (develop + tag)
 
-    # TODO: Push to Chair Habour (??)
+    # TODO: Push to Chair Harbour (??)
 
   deploy:
     if: ${{ github.event_name == 'pull_request' }}
@@ -220,7 +218,7 @@ jobs:
         done
 
     # Always disconnect from VPN
-    - name: Disconncet VPN
+    - name: Disconnect VPN
       run: |
         sudo killall openvpn
         rm lrz.ovpn
