@@ -145,7 +145,7 @@ public class Lti13Service {
             return new Lti13LaunchRequest(ltiIdToken, clientRegistrationId);
         }
         catch (IllegalArgumentException ex) {
-            throw new RuntimeException("Could not create LTI 1.3 launch request with provided idToken: " + ex.getMessage());
+            throw new IllegalArgumentException("Could not create LTI 1.3 launch request with provided idToken: " + ex.getMessage());
         }
     }
 
