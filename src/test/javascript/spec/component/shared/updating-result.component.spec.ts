@@ -10,11 +10,12 @@ import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { MissingResultInformation, ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { Result } from 'app/entities/result.model';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent } from 'ng-mocks';
 import { Submission } from 'app/entities/submission.model';
+import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
 
 describe('UpdatingResultComponent', () => {
     let comp: UpdatingResultComponent;
@@ -157,7 +158,7 @@ describe('UpdatingResultComponent', () => {
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).toBeTrue();
-        expect(comp.missingResultInfo).toBe(MissingResultInfo.NONE);
+        expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
     });
 
     it('should set the isBuilding attribute to false if exerciseType is PROGRAMMING and there is no pending submission anymore', () => {
@@ -168,7 +169,7 @@ describe('UpdatingResultComponent', () => {
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).toBeFalse();
-        expect(comp.missingResultInfo).toBe(MissingResultInfo.NONE);
+        expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
     });
 
     it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed (offline IDE)', () => {
@@ -179,7 +180,7 @@ describe('UpdatingResultComponent', () => {
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
         expect(comp.isBuilding).toBeFalse();
-        expect(comp.missingResultInfo).toBe(MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
+        expect(comp.missingResultInfo).toBe(MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE);
     });
 
     it('should set missingResultInfo attribute if the exerciseType is PROGRAMMING and the latest submission failed (online IDE)', () => {
@@ -188,7 +189,7 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledOnce();
         expect(getLatestPendingSubmissionStub).toHaveBeenCalledWith(comp.participation.id, comp.exercise.id, true);
-        expect(comp.missingResultInfo).toBe(MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
+        expect(comp.missingResultInfo).toBe(MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE);
     });
 
     it('should not set the isBuilding attribute to true if the exerciseType is not PROGRAMMING', () => {
@@ -196,7 +197,7 @@ describe('UpdatingResultComponent', () => {
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).not.toHaveBeenCalled();
         expect(comp.isBuilding).toBeUndefined();
-        expect(comp.missingResultInfo).toBe(MissingResultInfo.NONE);
+        expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
     });
 
     it('should update the building status if the submission was before the due date', () => {
@@ -205,7 +206,7 @@ describe('UpdatingResultComponent', () => {
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
         expect(comp.isBuilding).toBeTrue();
-        expect(comp.missingResultInfo).toBe(MissingResultInfo.NONE);
+        expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
     });
 
     it('should not update the building status if the submission was after the due date', () => {
@@ -214,6 +215,6 @@ describe('UpdatingResultComponent', () => {
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
         expect(comp.isBuilding).toBeUndefined();
-        expect(comp.missingResultInfo).toBe(MissingResultInfo.NONE);
+        expect(comp.missingResultInfo).toBe(MissingResultInformation.NONE);
     });
 });
