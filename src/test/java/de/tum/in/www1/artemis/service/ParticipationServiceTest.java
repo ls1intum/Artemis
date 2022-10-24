@@ -63,17 +63,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student1");
-        var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
-        // Copy Repository in ParticipationService#copyRepository(..)
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(String.class), any(String.class), any(String.class), any(String.class));
-        // Configure Repository in ParticipationService#configureRepository(..)
-        doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
-        // Configure WebHook in ParticipationService#configureRepositoryWebHook(..)
-        doNothing().when(versionControlService).addWebHookForParticipation(any());
-        // Do Nothing when setRepositoryPermissionsToReadOnly in ParticipationService#createParticipationWithEmptySubmissionIfNotExisting
-        doNothing().when(versionControlService).setRepositoryPermissionsToReadOnly(any(), any(String.class), any());
-        // Return the default branch for all repositories of the exercise
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
+        mockCreationOfExerciseParticipation();
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.get(), SubmissionType.EXTERNAL);
         assertThat(participation).isNotNull();
@@ -105,15 +95,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @WithMockUser(username = "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
         Participant participant = database.getUserByLogin("student1");
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(any());
-        var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(String.class), any(String.class), any(String.class), any(String.class));
-        doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
-        doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
-        doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
-        doNothing().when(versionControlService).addWebHookForParticipation(any());
+        mockCreationOfExerciseParticipation();
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -154,15 +136,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         Participant participant = database.getUserByLogin("student1");
 
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(any());
-        var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(String.class), any(String.class), any(String.class), any(String.class));
-        doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
-        doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
-        doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
-        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
-        doNothing().when(versionControlService).addWebHookForParticipation(any());
+        mockCreationOfExerciseParticipation();
 
         StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise, participant, Optional.empty());
 
@@ -174,5 +148,17 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         assertTrue(ZonedDateTime.now().minusSeconds(10).isBefore(studentParticipationReceived.getInitializationDate()));
         assertTrue(ZonedDateTime.now().plusSeconds(10).isAfter(studentParticipationReceived.getInitializationDate()));
         assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
+    }
+
+    private void mockCreationOfExerciseParticipation() throws URISyntaxException {
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(any());
+        var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
+        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(String.class), any(String.class), any(String.class), any(String.class));
+        doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
+        doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
+        doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
+        doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
+        doNothing().when(versionControlService).addWebHookForParticipation(any());
     }
 }
