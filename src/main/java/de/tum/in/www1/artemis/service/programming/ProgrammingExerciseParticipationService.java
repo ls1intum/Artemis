@@ -152,7 +152,9 @@ public class ProgrammingExerciseParticipationService {
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
             return true;
         }
-        final var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation);
+
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise() != null ? participation.getProgrammingExercise()
+                : programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation);
         if (programmingExercise == null) {
             log.error("canAccessParticipation: could not find programming exercise of participation id {}", participation.getId());
             // Cannot access a programming participation that has no programming exercise associated with it

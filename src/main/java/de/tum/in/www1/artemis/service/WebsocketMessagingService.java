@@ -30,10 +30,14 @@ public class WebsocketMessagingService {
 
     private final ExerciseDateService exerciseDateService;
 
-    public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate, ExamDateService examDateService, ExerciseDateService exerciseDateService) {
+    private final AuthorizationCheckService authCheckService;
+
+    public WebsocketMessagingService(SimpMessageSendingOperations messagingTemplate, ExamDateService examDateService, ExerciseDateService exerciseDateService,
+            AuthorizationCheckService authCheckService) {
         this.messagingTemplate = messagingTemplate;
         this.examDateService = examDateService;
         this.exerciseDateService = exerciseDateService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -72,8 +76,8 @@ public class WebsocketMessagingService {
         final var originalFeedback = new ArrayList<>(result.getFeedbacks());
 
         // TODO: Are there other cases that must be handled here?
-        if (participation instanceof StudentParticipation) {
-            final Exercise exercise = participation.getExercise();
+        if (participation instanceof StudentParticipation studentParticipation) {
+            final Exercise exercise = studentParticipation.getExercise();
             final boolean isWorkingPeriodOver;
             if (exercise.isExamExercise()) {
                 isWorkingPeriodOver = examDateService.isExerciseWorkingPeriodOver(exercise);
@@ -88,10 +92,10 @@ public class WebsocketMessagingService {
                     || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
 
             if (isReadyForRelease && !isAfterExamEnd) {
-                StudentParticipation studentParticipation = (StudentParticipation) participation;
-
                 result.filterSensitiveInformation();
-                result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
+                if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                    result.filterSensitiveFeedbacks(!isWorkingPeriodOver);
+                }
 
                 studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_RESULT_TOPIC, result));
             }
