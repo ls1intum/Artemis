@@ -15,7 +15,6 @@ import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredPr
 describe('TutorialGroupSessionForm', () => {
     let fixture: ComponentFixture<TutorialGroupSessionFormComponent>;
     let component: TutorialGroupSessionFormComponent;
-    const course = { id: 1, title: 'Example', isAtLeastInstructor: true };
     const validDate = new Date(Date.UTC(2021, 1, 1));
     const validStartTime = '12:00:00';
     const validEndTime = '13:00:00';
@@ -33,7 +32,7 @@ describe('TutorialGroupSessionForm', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupSessionFormComponent);
                 component = fixture.componentInstance;
-                component.course = course;
+                component.timeZone = 'Europe/Berlin';
                 fixture.detectChanges();
 
                 clickSubmit = generateClickSubmitButton(component, fixture, {
