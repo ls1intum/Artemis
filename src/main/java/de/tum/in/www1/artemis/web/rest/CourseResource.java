@@ -145,10 +145,7 @@ public class CourseResource {
         course.validateRegistrationConfirmationMessage();
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndRegistrationEnabled();
-        if (course.isOnlineCourse()) {
-            course.validateOnlineCourseConfiguration();
-            oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
-        }
+        course.validateOnlineCourseConfiguration();
         course.validateAccuracyOfScores();
         if (!course.isValidStartAndEndDate()) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
@@ -156,6 +153,9 @@ public class CourseResource {
 
         courseService.createOrValidateGroups(course);
         Course result = courseRepository.save(course);
+        if (course.isOnlineCourse()) {
+            oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
+        }
         return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
 

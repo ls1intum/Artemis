@@ -102,7 +102,7 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 {
                     path: 'lti',
-                    loadChildren: () => import('./lti/lti13.module').then((m) => m.ArtemisLti13Module),
+                    loadChildren: () => import('./lti/lti.module').then((m) => m.ArtemisLtiModule),
                 },
             ],
             { enableTracing: false, onSameUrlNavigation: 'reload' },

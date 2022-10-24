@@ -37,7 +37,10 @@
             }
         },
         "dynamicRegistration": {
-            "title": "Dynamic Registration"
+            "title": "Dynamische Registrierung",
+            "registering": "Am registrieren",
+            "registeredSuccessfully": "Kurs erfolgreich registriert",
+            "registerFailed": "Fehler bei der dynamischen Registrierung"
         }
     }
 }

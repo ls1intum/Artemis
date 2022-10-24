@@ -36,7 +36,10 @@
                 "title": "Launch exercise"
             },
             "dynamicRegistration": {
-                "title": "Dynamic Registration"
+                "title": "Dynamic Registration",
+                "registering": "Registering",
+                "registeredSuccessfully": "Registered course successfully",
+                "registerFailed": "Error during dynamic registration"
             }
         }
     }

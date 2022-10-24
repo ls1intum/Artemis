@@ -1,3 +1,3 @@
-<h1 [hidden]="!isRegistering">Registering...</h1>
-<h2 [hidden]="isRegistering || !registeredSuccessfully">Registered course successfully</h2>
-<h2 [hidden]="isRegistering || registeredSuccessfully">Error during dynamic registration</h2>
+<h1 [hidden]="!isRegistering" jhiTranslate="artemisApp.lti13.dynamicRegistration.registering">Registering...</h1>
+<h2 [hidden]="isRegistering || !registeredSuccessfully" jhiTranslate="artemisApp.lti13.dynamicRegistration.registeredSuccessfully">Registered course successfully</h2>
+<h2 [hidden]="isRegistering || registeredSuccessfully" jhiTranslate="artemisApp.lti13.dynamicRegistration.registerFailed">Error during dynamic registration</h2>
