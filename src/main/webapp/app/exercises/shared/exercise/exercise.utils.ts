@@ -197,7 +197,7 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
 };
 
 export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean => {
-    return exercise.dueDate === undefined || dayjs().isBefore(exercise.dueDate);
+    return !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
 };
 
 export const isResumeExerciseAvailable = (exercise: Exercise, studentParticipation?: StudentParticipation): boolean => {
