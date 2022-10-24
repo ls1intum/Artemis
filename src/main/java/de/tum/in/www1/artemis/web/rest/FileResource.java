@@ -217,7 +217,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         FileUploadSubmission submission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
@@ -247,7 +247,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
@@ -263,7 +263,7 @@ public class FileResource {
      *         access it, or 404 if the files to be merged do not exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/merge-pdf")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId) {
         log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
 
@@ -295,7 +295,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);

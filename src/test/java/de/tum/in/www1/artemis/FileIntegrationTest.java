@@ -178,17 +178,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         return fileUploadSubmission;
     }
 
-    private FileUploadSubmission createFileUploadSubmissionWithoutUploadPermissions() {
-        Course course = database.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
-        String path = "/api/files/file-upload-exercises/" + fileUploadExercise.getId() + "/submissions/" + fileUploadSubmission.getId() + "/test.png";
-        fileUploadSubmission.setFilePath(path);
-
-        return fileUploadSubmission;
-    }
-
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetLectureAttachment() throws Exception {

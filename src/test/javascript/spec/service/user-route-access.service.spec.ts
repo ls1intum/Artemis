@@ -76,7 +76,7 @@ describe('UserRouteAccessService', () => {
         const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
         const routeConfig = snapshot.routeConfig as Route;
         routeConfig.path = route;
-        snapshot.queryParams = { ['ltiSuccessLoginRequired']: '' };
+        snapshot.queryParams = { ['ltiSuccessLoginRequired']: 'username' };
         snapshot.data = { authorities: [Authority.USER] };
 
         service.canActivate(snapshot, routeStateMock);
