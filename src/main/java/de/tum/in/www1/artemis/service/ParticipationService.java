@@ -126,7 +126,7 @@ public class ParticipationService {
             // Do not load potential practice submissions in a course exercise
             optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
             findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, true).ifPresent(practiceParticipation -> {
-                practiceParticipation.setInitializationState(FINISHED);
+                practiceParticipation.setInitializationState(INACTIVE);
                 studentParticipationRepository.saveAndFlush(practiceParticipation);
             });
         }

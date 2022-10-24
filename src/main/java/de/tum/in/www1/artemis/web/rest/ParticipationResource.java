@@ -169,7 +169,7 @@ public class ParticipationResource {
         if (exercise instanceof ProgrammingExercise) {
             // fetch additional objects needed for the startExercise method below
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-            if (!featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises) || isNotAllowedToStartProgrammingExercise(programmingExercise, null)) {
+            if (!featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises) || !isAllowedToParticipateInProgrammingExercise(programmingExercise, null)) {
                 throw new AccessForbiddenException("Not allowed");
             }
             exercise = programmingExercise;
@@ -223,8 +223,8 @@ public class ParticipationResource {
         if (!(exercise instanceof ProgrammingExercise)) {
             throw new BadRequestAlertException("The practice can only be used for programming exercises", ENTITY_NAME, "practiceModeOnlyForProgramming");
         }
-        if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate()) || (optionalGradedStudentParticipation.isPresent()
-                && optionalGradedStudentParticipation.get().getIndividualDueDate() != null && now().isBefore(optionalGradedStudentParticipation.get().getIndividualDueDate()))) {
+        if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())
+                || (optionalGradedStudentParticipation.isPresent() && exerciseDateService.isBeforeDueDate(optionalGradedStudentParticipation.get()))) {
             throw new AccessForbiddenException("The practice mode can only be started after the due date");
         }
 
@@ -260,8 +260,8 @@ public class ParticipationResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
-        if (isNotAllowedToStartProgrammingExercise(programmingExercise, participation)) {
-            throw new AccessForbiddenException("You are not allowed to start the programming exercise after its due date.");
+        if (!isAllowedToParticipateInProgrammingExercise(programmingExercise, participation)) {
+            throw new AccessForbiddenException("You are not allowed to resume that participation.");
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
@@ -323,12 +323,22 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(participation);
     }
 
-    private boolean isNotAllowedToStartProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable StudentParticipation participation) {
+    /**
+     * Checks if the student is currently allowed to participate in the exercise using this Participation
+     * @param programmingExercise the exercise where the userr wants to participate
+     * @param participation       the participation, may be null in case there is none
+     * @return
+     */
+    private boolean isAllowedToParticipateInProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable StudentParticipation participation) {
         boolean isAfterDueDate = participation != null ? exerciseDateService.isAfterDueDate(participation)
                 : (programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate()));
-        // users cannot start/resume the programming exercises if test run after due date or semi-automatic grading is active and the due date has passed
-        return (isAfterDueDate && (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC || programmingExercise.getAllowComplaintsForAutomaticAssessments()));
+        if (participation != null) {
+            // Test runs may only be started after the due date
+            return participation.isTestRun() == isAfterDueDate;
+        }
+        else {
+            return !isAfterDueDate;
+        }
     }
 
     /**
