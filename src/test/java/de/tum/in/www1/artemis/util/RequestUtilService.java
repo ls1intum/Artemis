@@ -477,6 +477,11 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
+    public String getRedirectTarget(String path, HttpStatus expectedStatus) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andReturn();
+        return res.getResponse().getRedirectedUrl();
+    }
+
     public void delete(String path, HttpStatus expectedStatus) throws Exception {
         mvc.perform(MockMvcRequestBuilders.delete(new URI(path))).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
