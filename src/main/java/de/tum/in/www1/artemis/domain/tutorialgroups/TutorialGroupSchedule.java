@@ -43,6 +43,9 @@ public class TutorialGroupSchedule extends DomainObject {
     @Column(name = "end_time")
     private String endTime;
 
+    /**
+     * Currently represents weekly recurrence, so 1 means every week, 2 means every other week, etc.
+     */
     @Column(name = "repetition_frequency")
     private Integer repetitionFrequency;
 
