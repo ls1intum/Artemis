@@ -153,8 +153,7 @@ public class ProgrammingExerciseParticipationService {
             return true;
         }
 
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise() != null ? participation.getProgrammingExercise()
-                : programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation);
         if (programmingExercise == null) {
             log.error("canAccessParticipation: could not find programming exercise of participation id {}", participation.getId());
             // Cannot access a programming participation that has no programming exercise associated with it
