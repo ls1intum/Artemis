@@ -1,7 +1,13 @@
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { getExerciseDueDate, hasExerciseDueDatePassed, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
+import {
+    getExerciseDueDate,
+    hasExerciseDueDatePassed,
+    isResumeExerciseAvailable,
+    isStartExerciseAvailable,
+    isStartPracticeAvailable,
+} from 'app/exercises/shared/exercise/exercise.utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
@@ -108,5 +114,53 @@ describe('ExerciseUtils', () => {
         };
 
         expect(isStartPracticeAvailable(exercise)).toBeFalse();
+    });
+
+    it('should allow students to start the exercise if there is no due date', () => {
+        const exercise = exerciseWithDueDate(undefined);
+        expect(isStartExerciseAvailable(exercise)).toBeTrue();
+    });
+
+    it('should allow students to start the exercise if the due date is in the future', () => {
+        const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
+        expect(isStartExerciseAvailable(exercise)).toBeTrue();
+    });
+
+    it('should not allow students to start the exercise if the due date is in the past', () => {
+        const exercise = exerciseWithDueDate(dayjs().subtract(1, 'day'));
+        expect(isStartExerciseAvailable(exercise)).toBeFalse();
+    });
+
+    it('should allow students to resume the exercise if there is no due date', () => {
+        const exercise = exerciseWithDueDate(undefined);
+        expect(isResumeExerciseAvailable()).toBeTrue();
+    });
+
+    it('should allow students to resume the exercise if the exercise due date is in the future', () => {
+        const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
+        const participation = participationWithDueDate(undefined);
+
+        expect(isResumeExerciseAvailable(participation)).toBeTrue();
+    });
+
+    it('should not allow students to resume the exercise if the exercise due date is in the past', () => {
+        const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
+        const participation = participationWithDueDate(undefined);
+
+        expect(isResumeExerciseAvailable(participation)).toBeFalse();
+    });
+
+    it('should allow students to resume the exercise if the individual due date is in the future', () => {
+        const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
+        const participation = participationWithDueDate(dayjs().add(1, 'hour'));
+
+        expect(isResumeExerciseAvailable(participation)).toBeTrue();
+    });
+
+    it('should not allow students to resume the exercise if the individual due date is in the past', () => {
+        const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
+        const participation = participationWithDueDate(dayjs().subtract(1, 'hour'));
+
+        expect(isResumeExerciseAvailable(participation)).toBeFalse();
     });
 });
