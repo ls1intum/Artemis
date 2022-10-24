@@ -180,7 +180,11 @@ public class CourseResource {
 
         var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(updatedCourse.getId());
 
-        var timeZoneChanged = !existingCourse.getTimeZone().equals(updatedCourse.getTimeZone());
+        if (existingCourse.getTimeZone() != null && updatedCourse.getTimeZone() == null) {
+            throw new IllegalArgumentException("You can not remove the time zone of a course");
+        }
+
+        var timeZoneChanged = (existingCourse.getTimeZone() != null && updatedCourse.getTimeZone() != null && !existingCourse.getTimeZone().equals(updatedCourse.getTimeZone()));
 
         if (!Objects.equals(existingCourse.getShortName(), updatedCourse.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
