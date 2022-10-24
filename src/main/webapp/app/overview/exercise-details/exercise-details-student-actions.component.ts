@@ -70,7 +70,7 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     isResumeExerciseAvailable(): boolean {
-        return !this.examMode && isResumeExerciseAvailable(this.studentParticipation);
+        return !this.examMode && isResumeExerciseAvailable(this.exercise, this.studentParticipation);
     }
 
     /**

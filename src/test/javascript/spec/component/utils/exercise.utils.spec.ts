@@ -133,34 +133,34 @@ describe('ExerciseUtils', () => {
 
     it('should allow students to resume the exercise if there is no due date', () => {
         const exercise = exerciseWithDueDate(undefined);
-        expect(isResumeExerciseAvailable()).toBeTrue();
+        expect(isResumeExerciseAvailable(exercise, undefined)).toBeTrue();
     });
 
     it('should allow students to resume the exercise if the exercise due date is in the future', () => {
         const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
         const participation = participationWithDueDate(undefined);
 
-        expect(isResumeExerciseAvailable(participation)).toBeTrue();
+        expect(isResumeExerciseAvailable(exercise, participation)).toBeTrue();
     });
 
     it('should not allow students to resume the exercise if the exercise due date is in the past', () => {
         const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
         const participation = participationWithDueDate(undefined);
 
-        expect(isResumeExerciseAvailable(participation)).toBeFalse();
+        expect(isResumeExerciseAvailable(exercise, participation)).toBeFalse();
     });
 
     it('should allow students to resume the exercise if the individual due date is in the future', () => {
-        const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
+        const exercise = exerciseWithDueDate(undefined);
         const participation = participationWithDueDate(dayjs().add(1, 'hour'));
 
-        expect(isResumeExerciseAvailable(participation)).toBeTrue();
+        expect(isResumeExerciseAvailable(exercise, participation)).toBeTrue();
     });
 
     it('should not allow students to resume the exercise if the individual due date is in the past', () => {
         const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
         const participation = participationWithDueDate(dayjs().subtract(1, 'hour'));
 
-        expect(isResumeExerciseAvailable(participation)).toBeFalse();
+        expect(isResumeExerciseAvailable(exercise, participation)).toBeFalse();
     });
 });
