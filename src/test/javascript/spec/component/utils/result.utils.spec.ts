@@ -5,6 +5,8 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { Result } from 'app/entities/result.model';
 
 describe('ResultUtils', () => {
     it('should filter out all non unreferenced feedbacks', () => {
@@ -46,11 +48,15 @@ describe('ResultUtils', () => {
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-danger',
         },
-        { result: { participation: { type: ParticipationType.PROGRAMMING } }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-secondary' },
+        {
+            result: { participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } } as Result, assessmentType: AssessmentType.AUTOMATIC },
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: 'text-secondary',
+        },
         { result: { score: undefined, successful: true }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
         { result: { score: undefined, successful: false }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
         { result: { score: MIN_SCORE_GREEN }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
-        { result: { score: MIN_SCORE_ORANGE }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-orange' },
+        { result: { score: MIN_SCORE_ORANGE }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'result-orange' },
         { result: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
     ])('should correctly determine text color class', ({ result, templateStatus, expected }) => {
         expect(getTextColorClass(result, templateStatus!)).toBe(expected);
@@ -63,13 +69,33 @@ describe('ResultUtils', () => {
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faTimesCircle,
         },
-        { result: { participation: { type: ParticipationType.PROGRAMMING } }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faQuestionCircle },
+        {
+            result: { participation: { type: ParticipationType.PROGRAMMING, exercise: { type: ExerciseType.PROGRAMMING } } } as Result,
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faQuestionCircle,
+        },
         { result: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faCheckCircle },
-        { result: { score: undefined, successful: true }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faCheckCircle },
-        { result: { score: undefined, successful: false }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faTimesCircle },
-        { result: { score: MIN_SCORE_GREEN }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faCheckCircle },
-        { result: { score: MIN_SCORE_ORANGE }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faTimesCircle },
-        { result: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faTimesCircle },
+        {
+            result: { score: undefined, successful: true, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }] },
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faCheckCircle,
+        },
+        {
+            result: { score: undefined, successful: false, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }] },
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faTimesCircle,
+        },
+        {
+            result: { score: MIN_SCORE_GREEN, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }] },
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faCheckCircle,
+        },
+        {
+            result: { score: MIN_SCORE_ORANGE, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }] },
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faTimesCircle,
+        },
+        { result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }] }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faTimesCircle },
     ])('should correctly determine result icon', ({ result, templateStatus, expected }) => {
         expect(getResultIconClass(result, templateStatus!)).toBe(expected);
     });
