@@ -54,10 +54,20 @@ public class TutorialGroupsConfiguration extends DomainObject {
         this.course = course;
     }
 
+    /**
+     * Gets the start date time of the tutorial period of the course in ISO 8601 format
+     *
+     * @return the start date time of the tutorial period of the course
+     */
     public String getTutorialPeriodStartInclusive() {
         return tutorialPeriodStartInclusive;
     }
 
+    /**
+     * Set the start date time of the tutorial period. The parameter must be a valid ISO 8601 date string.
+     *
+     * @param tutorialPeriodStartInclusive the start date of the tutorial period of the course
+     */
     public void setTutorialPeriodStartInclusive(String tutorialPeriodStartInclusive) {
         if (isIso8601DateString(tutorialPeriodStartInclusive)) {
             this.tutorialPeriodStartInclusive = tutorialPeriodStartInclusive;
@@ -67,10 +77,20 @@ public class TutorialGroupsConfiguration extends DomainObject {
         }
     }
 
+    /**
+     * Gets the end date time of the tutorial period of the course in ISO 8601 format
+     *
+     * @return the end date time of the tutorial period of the course
+     */
     public String getTutorialPeriodEndInclusive() {
         return tutorialPeriodEndInclusive;
     }
 
+    /**
+     * Set the end date time of the tutorial period. The parameter must be a valid ISO 8601 date string.
+     *
+     * @param tutorialPeriodEndInclusive the end date of the tutorial period of the course
+     */
     public void setTutorialPeriodEndInclusive(String tutorialPeriodEndInclusive) {
         if (isIso8601DateString(tutorialPeriodEndInclusive)) {
             this.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;

@@ -27,6 +27,12 @@ public class TutorialGroupFreePeriodService {
         return tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(course, tutorialGroupSession.getStart(), tutorialGroupSession.getEnd());
     }
 
+    /**
+     * Cancel all active tutorial group sessions that overlap with the given free period
+     *
+     * @param course                  the course in which the free period is defined
+     * @param tutorialGroupFreePeriod the free period
+     */
     public void cancelActiveOverlappingSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod) {
         var overlappingSessions = tutorialGroupSessionRepository.findAllActiveBetween(course, tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());
         overlappingSessions.forEach(session -> {
@@ -38,6 +44,12 @@ public class TutorialGroupFreePeriodService {
         tutorialGroupSessionRepository.saveAll(overlappingSessions);
     }
 
+    /**
+     * Activate all cancelled tutorial group sessions that overlap with the given free period
+     *
+     * @param course                  the course in which the free period is defined
+     * @param tutorialGroupFreePeriod the free period
+     */
     public void activateCancelledOverlappingSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod) {
         var overlappingSessions = tutorialGroupSessionRepository.findAllCancelledBetween(course, tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());
         overlappingSessions.forEach(session -> {

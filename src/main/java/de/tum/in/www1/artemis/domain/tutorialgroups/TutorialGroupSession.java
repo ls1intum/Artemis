@@ -126,6 +126,9 @@ public class TutorialGroupSession extends DomainObject {
 
     /**
      * Removes circular references for JSON serialization.
+     *
+     * @param tutorialGroupSession the tutorial group session to remove circular references for
+     * @return the tutorial group session without circular references
      */
     public static TutorialGroupSession preventCircularJsonConversion(TutorialGroupSession tutorialGroupSession) {
         // prevent circular to json conversion

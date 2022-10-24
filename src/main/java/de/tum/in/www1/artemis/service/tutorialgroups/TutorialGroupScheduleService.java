@@ -38,6 +38,13 @@ public class TutorialGroupScheduleService {
         this.tutorialGroupFreePeriodService = tutorialGroupFreePeriodService;
     }
 
+    /**
+     * Create a new schedule for the given tutorial group and creates all corresponding sessions
+     *
+     * @param tutorialGroupsConfiguration the course wide tutorial groups configuration
+     * @param tutorialGroup               the tutorial group for which the schedule should be created
+     * @param tutorialGroupSchedule       the schedule to create
+     */
     public void saveScheduleAndGenerateScheduledSessions(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup,
             TutorialGroupSchedule tutorialGroupSchedule) {
         // Generate Sessions
@@ -67,10 +74,24 @@ public class TutorialGroupScheduleService {
         tutorialGroupSessionRepository.saveAll(individualSessions);
     }
 
+    /**
+     * Generates all individual sessions for the given schedule
+     *
+     * @param tutorialGroupsConfiguration the course wide tutorial groups configuration
+     * @param tutorialGroupSchedule       the schedule for which the sessions should be generated
+     * @return a list of all generated individual sessions
+     */
     public List<TutorialGroupSession> generateSessions(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroupSchedule tutorialGroupSchedule) {
         return this.generateSessions(tutorialGroupsConfiguration.getCourse(), tutorialGroupSchedule);
     }
 
+    /**
+     * Generates all individual sessions for the given schedule
+     *
+     * @param course                the course for which the sessions should be generated
+     * @param tutorialGroupSchedule the schedule for which the sessions should be generated
+     * @return a list of all generated individual sessions
+     */
     public List<TutorialGroupSession> generateSessions(Course course, TutorialGroupSchedule tutorialGroupSchedule) {
         ZoneId timeZone = ZoneId.of(course.getTimeZone());
         List<TutorialGroupSession> sessions = new ArrayList<>();
@@ -112,6 +133,14 @@ public class TutorialGroupScheduleService {
         return session;
     }
 
+    /**
+     * Update the schedule of the given tutorial group
+     *
+     * @param tutorialGroupsConfiguration the course wide tutorial groups configuration
+     * @param tutorialGroup               the tutorial group for which the schedule should be updated
+     * @param oldSchedule                 the old schedule of the tutorial group
+     * @param newSchedule                 the new schedule of the tutorial group
+     */
     public void updateSchedule(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup, Optional<TutorialGroupSchedule> oldSchedule,
             Optional<TutorialGroupSchedule> newSchedule) {
         if (oldSchedule.isPresent() && newSchedule.isPresent()) { // update existing schedule -> delete all scheduled sessions and recreate using the new schedule

@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @RestController
@@ -34,16 +33,13 @@ public class TutorialGroupsConfigurationResource {
 
     private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
-    private final TutorialGroupsConfigurationService tutorialGroupConfigurationService;
-
     private final CourseRepository courseRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public TutorialGroupsConfigurationResource(TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
-            TutorialGroupsConfigurationService tutorialGroupConfigurationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService) {
+    public TutorialGroupsConfigurationResource(TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository, CourseRepository courseRepository,
+            AuthorizationCheckService authorizationCheckService) {
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
-        this.tutorialGroupConfigurationService = tutorialGroupConfigurationService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
@@ -69,8 +65,8 @@ public class TutorialGroupsConfigurationResource {
     /**
      * POST /courses/:courseId/tutorial-groups-configuration : creates a new tutorial group configuration for the specified course and sets the timeZone on the course.
      *
-     * @param courseId                       the id of the course to which the tutorial group configuration should be added
-     * @param tutorialGroupsConfigurationDTO the tutorial group configuration that should be created and time zone that should be updated on the course
+     * @param courseId                    the id of the course to which the tutorial group configuration should be added
+     * @param tutorialGroupsConfiguration the tutorial group configuration to create
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group configuration
      */
     @PostMapping("/courses/{courseId}/tutorial-groups-configuration")
@@ -97,6 +93,7 @@ public class TutorialGroupsConfigurationResource {
      * PUT /courses/:courseId/tutorial-groups-configurations/:tutorialGroupsConfigurationId : Update tutorial groups configuration.
      *
      * @param courseId                          the id of the course to which the tutorial groups configuration belongs
+     * @param tutorialGroupsConfigurationId     the id of the tutorial groups configuration to update
      * @param updatedTutorialGroupConfiguration the configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group configuration
      */

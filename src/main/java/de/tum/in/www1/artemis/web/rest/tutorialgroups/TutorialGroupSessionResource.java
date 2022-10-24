@@ -304,6 +304,12 @@ public class TutorialGroupSessionResource {
             }
         }
 
+        /**
+         * Convert the DTO to a TutorialGroupSession object
+         *
+         * @param tutorialGroupsConfiguration the tutorial groups configuration to use for the conversion (needed for the time zone)
+         * @return the converted TutorialGroupSession object
+         */
         public TutorialGroupSession toEntity(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
             TutorialGroupSession tutorialGroupSession = new TutorialGroupSession();
             tutorialGroupSession.setStart(interpretInTimeZone(date, startTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));

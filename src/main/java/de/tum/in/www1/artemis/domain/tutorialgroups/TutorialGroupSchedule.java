@@ -104,10 +104,24 @@ public class TutorialGroupSchedule extends DomainObject {
         this.dayOfWeek = dayOfWeek;
     }
 
+    /**
+     * Get the start time of the schedule. The time is in ISO 8601 format.
+     * <p>
+     * Note: In the time zone of the course.
+     *
+     * @return the start time of a session created from this schedule
+     */
     public String getStartTime() {
         return startTime;
     }
 
+    /**
+     * Set the start time of the schedule. The time must be in ISO 8601 format.
+     * <p>
+     * Note: In the time zone of the course.
+     *
+     * @param startTime the start time of a session created from this schedule
+     */
     public void setStartTime(String startTime) {
         if (isIso8601TimeString(startTime)) {
             this.startTime = startTime;
@@ -117,10 +131,24 @@ public class TutorialGroupSchedule extends DomainObject {
         }
     }
 
+    /**
+     * Get the end time of the schedule. The time is in ISO 8601 format.
+     * <p>
+     * Note: In the time zone of the course.
+     *
+     * @return the end time of a session created from this schedule
+     */
     public String getEndTime() {
         return endTime;
     }
 
+    /**
+     * Set the end time of the schedule. The time must be in ISO 8601 format.
+     * <p>
+     * Note: In the time zone of the course.
+     *
+     * @param endTime the end time of a session created from this schedule
+     */
     public void setEndTime(String endTime) {
         if (isIso8601TimeString(endTime)) {
             this.endTime = endTime;
