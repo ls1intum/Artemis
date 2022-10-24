@@ -351,7 +351,7 @@ describe('ExamParticipationComponent', () => {
         expect(secondSubmission.isSynced).toBeTrue();
         expect(secondSubmission.submitted).toBeFalse();
 
-        if (!!comp.testRunId || comp.testExam) {
+        if (studentExam.testRun || studentExam.exam?.testExam) {
             expect(comp.individualStudentEndDate).toEqual(comp.testStartTime!.add(studentExam.workingTime!, 'seconds'));
         } else {
             expect(comp.individualStudentEndDate).toEqual(comp.exam.startDate!.add(studentExam.workingTime!, 'seconds'));
@@ -365,6 +365,7 @@ describe('ExamParticipationComponent', () => {
     it('should initialize exercises when exam starts', () => {
         const studentExam = new StudentExam();
         studentExam.workingTime = 100;
+        studentExam.testRun = true;
         comp.testStartTime = dayjs().subtract(1000, 'seconds');
         comp.exam = new Exam();
         testExamStarted(studentExam);
