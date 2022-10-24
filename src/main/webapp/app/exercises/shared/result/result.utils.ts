@@ -75,7 +75,7 @@ export enum MissingResultInformation {
  * @param result
  */
 export const initializedResultWithScore = (result?: Result) => {
-    return result != undefined && (result.score || result.score === 0);
+    return result?.score !== undefined;
 };
 
 /**
@@ -181,7 +181,8 @@ export const evaluateTemplateStatus = (
  *
  */
 export const onlyShowSuccessfulCompileStatus = (result: Result | undefined, templateStatus: ResultTemplateStatus): boolean => {
-    const zeroTestsPassed = (result?.feedbacks?.filter((feedback) => Feedback.isStaticCodeAnalysisFeedback(feedback)).length || 0) === 0;
+    const zeroTestsPassed =
+        (result?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)).length ?? 0) === 0;
     return templateStatus !== ResultTemplateStatus.NO_RESULT && templateStatus !== ResultTemplateStatus.IS_BUILDING && !isBuildFailed(result?.submission) && zeroTestsPassed;
 };
 
@@ -208,7 +209,7 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'text-secondary';
     }
 
-    if (result?.score == undefined) {
+    if (result?.score === undefined) {
         return result?.successful ? 'text-success' : 'text-danger';
     }
 
