@@ -4,24 +4,30 @@ import { TutorialGroupSessionRowComponent } from 'app/course/tutorial-groups/sha
 import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { By } from '@angular/platform-browser';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 
 describe('TutorialGroupSessionRowComponent', () => {
     let component: TutorialGroupSessionRowComponent;
     let fixture: ComponentFixture<TutorialGroupSessionRowComponent>;
     let session: TutorialGroupSession;
+    let tutorialGroup: TutorialGroup;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [TutorialGroupSessionRowComponent, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTranslatePipe)],
+            declarations: [TutorialGroupSessionRowComponent, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTranslatePipe), MockDirective(NgbPopover)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupSessionRowComponent);
         component = fixture.componentInstance;
         session = generateExampleTutorialGroupSession({});
+        tutorialGroup = generateExampleTutorialGroup({});
         component.session = session;
+        component.tutorialGroup = tutorialGroup;
         component.timeZone = 'Europe/Berlin';
         component.showIdColumn = true;
         fixture.detectChanges();
@@ -35,15 +41,10 @@ describe('TutorialGroupSessionRowComponent', () => {
         component.session = { ...session, status: TutorialGroupSessionStatus.CANCELLED };
         fixture.detectChanges();
 
-        const thirdColumn = fixture.debugElement.query(By.css('td:nth-child(4)'));
-        expect(thirdColumn.nativeElement.classList).toContain('table-danger');
-    });
-
-    it('should set class of sessions without schedule correctly', () => {
-        component.session = { ...session, tutorialGroupSchedule: undefined };
-        fixture.detectChanges();
-
-        const thirdColumn = fixture.debugElement.query(By.css('td:nth-child(3)'));
-        expect(thirdColumn.nativeElement.classList).toContain('table-warning');
+        // all columns should have the table danger class
+        const tableCells = fixture.debugElement.queryAll(By.css('td'));
+        tableCells.forEach((tableCell) => {
+            expect(tableCell.nativeElement.classList).toContain('table-danger');
+        });
     });
 });

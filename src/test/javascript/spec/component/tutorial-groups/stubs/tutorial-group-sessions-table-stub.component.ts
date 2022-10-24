@@ -1,5 +1,6 @@
 import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 @Component({
     selector: 'jhi-tutorial-group-sessions-table',
@@ -20,6 +21,9 @@ export class TutorialGroupSessionsTableStubComponent {
 
     @Input()
     showIdColumn = false;
+
+    @Input()
+    tutorialGroup: TutorialGroup;
 }
 @Component({
     selector: '[jhi-session-row]',
@@ -42,4 +46,5 @@ export class TutorialGroupSessionRowStubComponent {
 
     @Input() session: TutorialGroupSession;
     @Input() timeZone?: string = undefined;
+    @Input() tutorialGroup: TutorialGroup;
 }

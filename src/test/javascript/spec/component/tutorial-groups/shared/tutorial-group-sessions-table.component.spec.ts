@@ -1,4 +1,4 @@
-import { Component, Input, QueryList, SimpleChange, SimpleChanges, TemplateRef, ViewChild, ViewChildren } from '@angular/core';
+import { Component, Input, QueryList, SimpleChange, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
 import { TutorialGroupSessionsTableComponent } from 'app/course/tutorial-groups/shared/tutorial-group-sessions-table/tutorial-group-sessions-table.component';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -7,6 +7,8 @@ import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { generateExampleTutorialGroupSession } from '../helpers/tutorialGroupSessionExampleModels';
 import dayjs from 'dayjs/esm';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumn {
@@ -16,7 +18,7 @@ class MockExtraColumn {
 @Component({
     selector: 'jhi-mock-wrapper',
     template: `
-        <jhi-tutorial-group-sessions-table [sessions]="sessions" [timeZone]="timeZone" [showIdColumn]="true">
+        <jhi-tutorial-group-sessions-table [sessions]="sessions" [timeZone]="timeZone" [showIdColumn]="true" [tutorialGroup]="tutorialGroup">
             <ng-template let-session>
                 <jhi-mock-extra-column [tutorialGroupSession]="session"></jhi-mock-extra-column>
             </ng-template>
@@ -24,6 +26,9 @@ class MockExtraColumn {
     `,
 })
 class MockWrapper {
+    @Input()
+    tutorialGroup: TutorialGroup;
+
     @Input()
     sessions: TutorialGroupSession[];
 
@@ -44,6 +49,7 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
     let mockExtraColumns: MockExtraColumn[];
     let sessionOne: TutorialGroupSession;
     let sessionTwo: TutorialGroupSession;
+    let tutorialGroup: TutorialGroup;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -53,10 +59,12 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
             .then(() => {
                 fixture = TestBed.createComponent(MockWrapper);
                 component = fixture.componentInstance;
+                tutorialGroup = generateExampleTutorialGroup({});
                 sessionOne = generateExampleTutorialGroupSession({ id: 1 });
                 sessionTwo = generateExampleTutorialGroupSession({ id: 2 });
                 component.sessions = [sessionOne, sessionTwo];
                 component.timeZone = 'Europe/Berlin';
+                component.tutorialGroup = tutorialGroup;
                 fixture.detectChanges();
                 tableInstance = component.sessionTableInstance;
                 mockExtraColumns = component.mockExtraColumns.toArray();
@@ -86,9 +94,9 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
 describe('TutorialGroupSessionTableComponent', () => {
     let fixture: ComponentFixture<TutorialGroupSessionsTableComponent>;
     let component: TutorialGroupSessionsTableComponent;
-
     let pastSession: TutorialGroupSession;
     let upcomingSession: TutorialGroupSession;
+    let tutorialGroup: TutorialGroup;
     const timeZone = 'Europe/Berlin';
     const currentDate = dayjs(new Date(Date.UTC(2021, 0, 2, 12, 0, 0)));
 
@@ -113,8 +121,10 @@ describe('TutorialGroupSessionTableComponent', () => {
                     end: dayjs('2021-01-03T13:00:00.000Z').tz('Europe/Berlin'),
                     location: 'Room 1',
                 });
+                tutorialGroup = generateExampleTutorialGroup({});
 
                 component.sessions = [upcomingSession, pastSession];
+                component.tutorialGroup = tutorialGroup;
                 component.timeZone = timeZone;
                 jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
             });
