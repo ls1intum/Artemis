@@ -14,7 +14,7 @@
     </div>
     <!-- Feedbacks container -->
     <ng-template #feedbackContainer>
-        <div *ngIf="!loadingFailed && resultIsPreliminary()">
+        <div *ngIf="!loadingFailed && resultIsPreliminary(result)">
             <div class="d-flex justify-content-end m-1">
                 <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
             </div>

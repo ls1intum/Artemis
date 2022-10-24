@@ -96,20 +96,4 @@ describe('ResultHistoryComponent', () => {
         expect(component.showPreviousDivider).toBeTrue();
         expect(component.movedLastRatedResult).toBeTrue();
     });
-
-    it('should return the right values for result score', () => {
-        const result = new Result();
-
-        fixture.detectChanges();
-        result.score = 85;
-        expect(component.resultIcon(result)).toEqual(faCheck);
-        expect(component.resultClass(result)).toBe('success');
-
-        result.score = 50;
-        expect(component.resultIcon(result)).toEqual(faTimes);
-        expect(component.resultClass(result)).toBe('warning');
-
-        result.score = 30;
-        expect(component.resultClass(result)).toBe('danger');
-    });
 });

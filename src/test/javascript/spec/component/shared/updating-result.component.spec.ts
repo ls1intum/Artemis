@@ -10,7 +10,7 @@ import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { MissingResultInfo, ResultComponent } from 'app/exercises/shared/result/result.component';
+import { MissingResultInformation, ResultComponent } from 'app/exercises/shared/result/result.component';
 import { Result } from 'app/entities/result.model';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent } from 'ng-mocks';
