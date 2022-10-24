@@ -114,7 +114,7 @@ describe('EditTutorialGroupComponent', () => {
         tutorialGroupForm.formSubmitted.emit(formData);
 
         expect(updatedStub).toHaveBeenCalledOnce();
-        expect(updatedStub).toHaveBeenCalledWith(2, 1, changedTutorialGroup);
+        expect(updatedStub).toHaveBeenCalledWith(2, 1, changedTutorialGroup, undefined);
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 2, 'tutorial-groups']);
     });

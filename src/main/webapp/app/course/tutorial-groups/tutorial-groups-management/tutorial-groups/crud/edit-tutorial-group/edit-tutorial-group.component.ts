@@ -69,7 +69,7 @@ export class EditTutorialGroupComponent implements OnInit {
     }
 
     updateTutorialGroup(formData: TutorialGroupFormData) {
-        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, campus, schedule } = formData;
+        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, campus, schedule, notificationText } = formData;
         const updatedTutorialGroup = new TutorialGroup();
         updatedTutorialGroup.id = this.tutorialGroup.id;
         updatedTutorialGroup.title = title;
@@ -100,7 +100,7 @@ export class EditTutorialGroupComponent implements OnInit {
 
         this.isLoading = true;
         this.tutorialGroupService
-            .update(this.course.id!, this.tutorialGroupId, updatedTutorialGroup)
+            .update(this.course.id!, this.tutorialGroupId, updatedTutorialGroup, notificationText)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

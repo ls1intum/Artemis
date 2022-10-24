@@ -363,6 +363,7 @@ public class TutorialGroupResource {
         if (!userToRegister.getGroups().contains(tutorialGroupFromDatabase.getCourse().getStudentGroupName())) {
             throw new BadRequestAlertException("The user is not a student of the course", ENTITY_NAME, "userNotPartOfCourse");
         }
+        // ToDo: Discuss if we change the registration type if registration is done by the tutor itself
         tutorialGroupService.registerStudent(userToRegister, tutorialGroupFromDatabase, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
         return ResponseEntity.noContent().build();
     }
