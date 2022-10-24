@@ -33,7 +33,9 @@
         },
         "lti13": {
             "launch": {
-                "title": "Aufgabe starten"
+                "title": "Aufgabe starten",
+                "launching": "Am starten...",
+                "launchFailed": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es später noch einmal oder kontaktieren Sie den Administrator."
             }
         }
     }

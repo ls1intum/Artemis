@@ -12,6 +12,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.JsonParser;
@@ -63,6 +64,11 @@ public class Lti13TokenRetriever {
             Objects.requireNonNull(clientRegistration, "You must supply a clientRegistration.");
 
             SignedJWT signedJWT = createJWT(clientRegistration);
+
+            if (signedJWT == null) {
+                return null;
+            }
+
             MultiValueMap<String, String> formData = buildFormData(signedJWT, scopes);
             HttpHeaders headers = new HttpHeaders();
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -75,34 +81,39 @@ public class Lti13TokenRetriever {
             }
             return JsonParser.parseString(exchange.getBody()).getAsJsonObject().get("access_token").getAsString();
         }
-        catch (Exception e) {
+        catch (HttpClientErrorException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());
             return null;
         }
     }
 
-    private SignedJWT createJWT(ClientRegistration clientRegistration) throws JOSEException {
+    private SignedJWT createJWT(ClientRegistration clientRegistration) {
         JWK jwk = oAuth2JWKSService.getJWK(clientRegistration.getRegistrationId());
 
         if (jwk == null) {
-            throw new NullPointerException("Failed to get JWK for client registration: " + clientRegistration.getRegistrationId());
+            throw new IllegalArgumentException("Failed to get JWK for client registration: " + clientRegistration.getRegistrationId());
         }
 
-        KeyPair keyPair = jwk.toRSAKey().toKeyPair();
+        KeyPair keyPair;
+        try {
+            keyPair = jwk.toRSAKey().toKeyPair();
+            RSASSASigner signer = new RSASSASigner(keyPair.getPrivate());
 
-        RSASSASigner signer = new RSASSASigner(keyPair.getPrivate());
+            JWTClaimsSet claimsSet = new JWTClaimsSet.Builder().issuer(clientRegistration.getClientId()).subject(clientRegistration.getClientId())
+                    .audience(clientRegistration.getProviderDetails().getTokenUri()).issueTime(Date.from(Instant.now())).jwtID(UUID.randomUUID().toString())
+                    .expirationTime(Date.from(Instant.now().plusSeconds(JWT_LIFETIME))).build();
 
-        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder().issuer(clientRegistration.getClientId()).subject(clientRegistration.getClientId())
-                .audience(clientRegistration.getProviderDetails().getTokenUri()).issueTime(Date.from(Instant.now())).jwtID(UUID.randomUUID().toString())
-                .expirationTime(Date.from(Instant.now().plusSeconds(JWT_LIFETIME))).build();
+            JWSHeader jwt = new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).keyID(jwk.getKeyID()).build();
+            SignedJWT signedJWT = new SignedJWT(jwt, claimsSet);
+            signedJWT.sign(signer);
 
-        JWSHeader jwt = new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).keyID(jwk.getKeyID()).build();
-        SignedJWT signedJWT = new SignedJWT(jwt, claimsSet);
-        signedJWT.sign(signer);
-
-        log.debug("Created signed token: {}", signedJWT.serialize());
-
-        return signedJWT;
+            log.debug("Created signed token: {}", signedJWT.serialize());
+            return signedJWT;
+        }
+        catch (JOSEException e) {
+            log.error("Could not create keypair for clientRegistrationId {}", clientRegistration.getRegistrationId());
+            return null;
+        }
     }
 
     private MultiValueMap<String, String> buildFormData(SignedJWT signedJWT, String[] scopes) {

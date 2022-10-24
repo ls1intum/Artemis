@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -19,6 +20,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.util.StringUtils;
@@ -204,10 +206,10 @@ public class Lti13Service {
         String body = getScoreBody(launch.getSub(), comment, score);
         HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
         try {
-            restTemplate.postForEntity(new URI(getScoresUrl(launch.getScoreLineItemUrl())), httpRequest, Object.class);
+            restTemplate.postForEntity(getScoresUrl(launch.getScoreLineItemUrl()), httpRequest, Object.class);
             log.info("Submitted score for " + launch.getUser().getLogin() + " to client" + client.getClientId());
         }
-        catch (Exception e) {
+        catch (HttpClientErrorException e) {
             String message = "Could not submit score for " + launch.getUser().getLogin() + " to client " + client.getClientId() + ": " + e.getMessage();
             log.error(message);
         }

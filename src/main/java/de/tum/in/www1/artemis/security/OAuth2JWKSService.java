@@ -85,7 +85,7 @@ public class OAuth2JWKSService implements KeyPairService {
             if (!(obj instanceof ClientRegistration clientRegistration)) {
                 String message = "ClientRegistrationRepository must be an Iterable of ClientRegistration";
                 log.error(message);
-                throw new RuntimeException(message);
+                throw new IllegalStateException(message);
             }
 
             KeyPair clientKeyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
