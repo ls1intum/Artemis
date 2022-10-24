@@ -76,10 +76,10 @@ class Lti13LaunchFilterTest {
     @BeforeEach
     void init() {
         MockitoAnnotations.openMocks(this);
-        launchFilter = new Lti13LaunchFilter(defaultFilter, CustomLti13Configurer.LTI_BASE_PATH + CustomLti13Configurer.LOGIN_PATH, lti13Service);
+        launchFilter = new Lti13LaunchFilter(defaultFilter, CustomLti13Configurer.LTI13_LOGIN_PATH, lti13Service);
         SecurityContextHolder.setContext(securityContext);
         doReturn(authentication).when(securityContext).getAuthentication();
-        doReturn(CustomLti13Configurer.LTI_BASE_PATH + CustomLti13Configurer.LOGIN_PATH).when(httpRequest).getServletPath();
+        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
 
         doReturn(idTokenClaims).when(idToken).getClaims();
         OidcUser oidcUser = mock(OidcUser.class);
@@ -105,7 +105,7 @@ class Lti13LaunchFilterTest {
     @Test
     void authenticatedLogin() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
-        doReturn(CustomLti13Configurer.LTI_BASE_PATH + CustomLti13Configurer.LOGIN_PATH).when(httpRequest).getServletPath();
+        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
         doReturn(responseWriter).when(httpResponse).getWriter();
         initValidIdToken();
@@ -127,7 +127,7 @@ class Lti13LaunchFilterTest {
     @Test
     void authenticatedLogin_oauth2AuthenticationException() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
-        doReturn(CustomLti13Configurer.LTI_BASE_PATH + CustomLti13Configurer.LOGIN_PATH).when(httpRequest).getServletPath();
+        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doThrow(new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST))).when(defaultFilter).attemptAuthentication(any(), any());
 
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
@@ -139,7 +139,7 @@ class Lti13LaunchFilterTest {
     @Test
     void authenticatedLogin_noAuthenticationTokenReturned() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
-        doReturn(CustomLti13Configurer.LTI_BASE_PATH + CustomLti13Configurer.LOGIN_PATH).when(httpRequest).getServletPath();
+        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doReturn(null).when(defaultFilter).attemptAuthentication(any(), any());
 
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
@@ -151,7 +151,7 @@ class Lti13LaunchFilterTest {
     @Test
     void authenticatedLogin_serviceLaunchFailed() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
-        doReturn(CustomLti13Configurer.LTI_BASE_PATH + CustomLti13Configurer.LOGIN_PATH).when(httpRequest).getServletPath();
+        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doThrow(new RuntimeException("something")).when(lti13Service).performLaunch(any(), any());
 
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);

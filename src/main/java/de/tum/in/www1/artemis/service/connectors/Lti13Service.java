@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -38,6 +39,9 @@ import net.minidev.json.JSONObject;
 public class Lti13Service {
 
     private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
+
+    @Value("${server.url}")
+    private String artemisServerUrl;
 
     private final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
@@ -368,7 +372,7 @@ public class Lti13Service {
             headers.setBearerAuth(registrationToken);
         }
 
-        Lti13ClientRegistration lti13ClientRegistration = new Lti13ClientRegistration(course, clientRegistrationId);
+        Lti13ClientRegistration lti13ClientRegistration = new Lti13ClientRegistration(artemisServerUrl, course, clientRegistrationId);
         Lti13ClientRegistration registrationResponse = null;
         try {
             ResponseEntity<Lti13ClientRegistration> response = restTemplate.postForEntity(registrationEndpoint, new HttpEntity<>(lti13ClientRegistration, headers),

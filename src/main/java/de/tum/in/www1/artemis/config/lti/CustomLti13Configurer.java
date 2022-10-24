@@ -20,16 +20,22 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticati
  */
 public class CustomLti13Configurer extends Lti13Configurer {
 
-    public static final String LTI_BASE_PATH = "/api/lti13";
+    private static final String LOGIN_PATH = "/auth-login";
 
-    public static final String LOGIN_INITIATION_PATH = "/initiate-login";
+    private static final String LOGIN_INITIATION_PATH = "/initiate-login";
 
-    public static final String LOGIN_REDIRECT_PROXY_PATH = "/auth-callback";
+    public static final String LTI13_BASE_PATH = "/api/lti13";
 
-    public static final String LOGIN_PATH = "/auth-login";
+    public static final String LTI13_LOGIN_PATH = LTI13_BASE_PATH + LOGIN_PATH;
+
+    public static final String LTI13_LOGIN_INITIATION_PATH = LTI13_BASE_PATH + LOGIN_INITIATION_PATH;
+
+    public static final String LTI13_LOGIN_REDIRECT_PROXY_PATH = LTI13_BASE_PATH + "/auth-callback";
+
+    public static final String JWKS_PATH = "/.well-known/jwks.json";
 
     public CustomLti13Configurer() {
-        super.ltiPath(LTI_BASE_PATH);
+        super.ltiPath(LTI13_BASE_PATH);
         super.loginInitiationPath(LOGIN_INITIATION_PATH);
         super.loginPath(LOGIN_PATH);
         super.useState(true);
@@ -49,7 +55,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
         // https://www.imsglobal.org/spec/security/v1p0/#step-3-authentication-response
         OAuth2LoginAuthenticationFilter defaultLoginFilter = configureLoginFilter(clientRegistrationRepository(http), oidcLaunchFlowAuthenticationProvider,
                 authorizationRequestRepository);
-        http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, LTI_BASE_PATH + LOGIN_PATH, lti13Service(http)), AbstractPreAuthenticatedProcessingFilter.class);
+        http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, LTI13_BASE_PATH + LOGIN_PATH, lti13Service(http)), AbstractPreAuthenticatedProcessingFilter.class);
     }
 
     protected Lti13Service lti13Service(HttpSecurity http) {

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -19,6 +20,9 @@ import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 public class OnlineCourseConfigurationService implements ClientRegistrationRepository {
 
     private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
+    @Value("${server.url}")
+    private String artemisServerUrl;
 
     public OnlineCourseConfigurationService(OnlineCourseConfigurationRepository onlineCourseConfigurationRepository) {
         this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
@@ -40,7 +44,7 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
                 .authorizationUri(onlineCourseConfiguration.getAuthorizationUri()) //
                 .jwkSetUri(onlineCourseConfiguration.getJwkSetUri()) //
                 .tokenUri(onlineCourseConfiguration.getTokenUri()) //
-                .redirectUri("http://localhost:9000" + CustomLti13Configurer.LTI_BASE_PATH + CustomLti13Configurer.LOGIN_REDIRECT_PROXY_PATH) //
+                .redirectUri(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH) //
                 .scope("openid") //
                 .authorizationGrantType(AuthorizationGrantType.IMPLICIT) //
                 .build();

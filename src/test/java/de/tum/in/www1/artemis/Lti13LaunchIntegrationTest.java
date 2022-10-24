@@ -41,7 +41,7 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         body.put("id_token", idToken);
         body.put("state", state);
 
-        URI header = request.postForm(CustomLti13Configurer.LTI_BASE_PATH + CustomLti13Configurer.LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.FOUND);
+        URI header = request.postForm(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.FOUND);
 
         assertEquals(LtiResource.LOGIN_REDIRECT_CLIENT_PATH, header.getPath());
 
@@ -53,7 +53,7 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     void oidcFlowFails_noRequestCached() throws Exception {
-        String ltiLaunchUri = CustomLti13Configurer.LTI_BASE_PATH + CustomLti13Configurer.LOGIN_PATH + "?id_token=some-token&state=some-state";
+        String ltiLaunchUri = CustomLti13Configurer.LTI13_LOGIN_PATH + "?id_token=some-token&state=some-state";
         request.get(ltiLaunchUri, HttpStatus.INTERNAL_SERVER_ERROR, Object.class);
     }
 }

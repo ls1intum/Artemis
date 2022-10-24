@@ -7,6 +7,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.Course;
 
 public class Lti13ClientRegistration {
@@ -40,24 +41,26 @@ public class Lti13ClientRegistration {
     @JsonProperty("https://purl.imsglobal.org/spec/lti-tool-configuration")
     private Lti13ToolConfiguration lti13ToolConfiguration;
 
-    public Lti13ClientRegistration() {
+    public Lti13ClientRegistration() { // Necessary for conversion
     }
 
-    public Lti13ClientRegistration(Course course, String clientRegistrationId) {
+    public Lti13ClientRegistration(String serverUrl, Course course, String clientRegistrationId) {
         this.setGrantTypes(Arrays.asList(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(), AuthorizationGrantType.IMPLICIT.getValue()));
         this.setResponseTypes(List.of("id_token"));
-        this.setRedirectUris(List.of("http://localhost:9000/api/lti13/auth-callback"));
-        this.setInitiateLoginUri("http://localhost:9000/api/lti13/initiate-login/" + clientRegistrationId);
         this.setClientName("Artemis - " + course.getShortName());
-        this.setJwksUri("http://host.docker.internal:8080/.well-known/jwks.json");
         this.setTokenEndpointAuthMethod("private_key_jwt");
-        this.setScope(String.join(" ", List.of(Scopes.AGS_SCORE)));
+        this.setScope(String.join(" ", List.of(Scopes.AGS_SCORE, Scopes.AGS_RESULT)));
+        this.setRedirectUris(List.of(serverUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH));
+        this.setInitiateLoginUri(serverUrl + CustomLti13Configurer.LTI13_LOGIN_INITIATION_PATH + "/" + clientRegistrationId);
+        this.setJwksUri(serverUrl + CustomLti13Configurer.JWKS_PATH);
 
         Lti13ToolConfiguration toolConfiguration = new Lti13ToolConfiguration();
-        toolConfiguration.setDomain("localhost:9000");
-        toolConfiguration.setTargetLinkUri("http://localhost:9000/courses/" + course.getId());
+        String domain = serverUrl.split("://").length >= 1 ? serverUrl.split("://")[1] : ""; // Domain cannot include protocol
+        toolConfiguration.setDomain(domain);
+        toolConfiguration.setTargetLinkUri(serverUrl + "/courses/" + course.getId());
         toolConfiguration.setClaims(Arrays.asList("iss", "email", "sub", "name", "given_name", "family_name"));
-        toolConfiguration.setMessages(List.of(new Message("LtiDeepLinkingRequest", "test")));
+        Message deepLinkingMessage = new Message("LtiDeepLinkingRequest", serverUrl + CustomLti13Configurer.LTI13_BASE_PATH + "/deep-linking/" + course.getId());
+        toolConfiguration.setMessages(List.of(deepLinkingMessage));
         this.setLti13ToolConfiguration(toolConfiguration);
     }
 

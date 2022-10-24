@@ -119,7 +119,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api-docs/**")
             .antMatchers("/api.html")
             .antMatchers("/test/**")
-            .antMatchers("/.well-known/jwks.json");
+            .antMatchers(CustomLti13Configurer.JWKS_PATH);
         web.ignoring()
             .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
         web.ignoring()
