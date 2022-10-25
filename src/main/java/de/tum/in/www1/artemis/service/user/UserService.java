@@ -639,9 +639,19 @@ public class UserService {
      * */
     public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login, String email) {
         try {
-            var optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber).or(() -> this.createUserFromLdap(registrationNumber))
-                    .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(login)).or(() -> userRepository.findUserWithGroupsAndAuthoritiesByEmail(email));
+            var optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+            if (optionalStudent.isPresent()) {
+                var student = optionalStudent.get();
+                // we only need to add the student to the course group, if the student is not yet part of it, otherwise the student cannot access the
+                // course
+                if (!student.getGroups().contains(courseGroupName)) {
+                    this.addUserToGroup(student, courseGroupName, courseGroupRole);
+                }
+                return optionalStudent;
+            }
 
+            optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber).or(() -> (this.createUserFromLdap(registrationNumber)))
+                    .or(() -> (userRepository.findUserWithGroupsAndAuthoritiesByLogin(login))).or(() -> (userRepository.findUserWithGroupsAndAuthoritiesByEmail(email)));
             if (optionalStudent.isPresent()) {
                 var student = optionalStudent.get();
                 // the newly created user needs to get the rights to access the course
