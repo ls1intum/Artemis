@@ -19,11 +19,37 @@
             </button>
         </div>
         <div class="flex-grow-1 d-flex justify-content-center">
-            <div class="step" [class.completed]="isCompleted(1)" [class.current]="isCurrent(1)"></div>
-            <div class="step" [class.completed]="isCompleted(2)" [class.current]="isCurrent(2)"></div>
-            <div class="step" [class.completed]="isCompleted(3)" [class.current]="isCurrent(3)"></div>
-            <div class="step" [class.completed]="isCompleted(4)" [class.current]="isCurrent(4)"></div>
-            <div class="step" [class.completed]="isCompleted(5)" [class.current]="isCurrent(5)"></div>
+            <div class="flex-grow-1 d-flex justify-content-space-between ms-5 me-5 code-hint-generation-wrapper">
+                <jhi-code-hint-generation-status-step
+                    [currentlySelected]="isCurrent(1)"
+                    [isPerformed]="isCompleted(1)"
+                    [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.titleStepTitle'"
+                ></jhi-code-hint-generation-status-step>
+                <div class="connector" [ngClass]="isCompleted(1) ? 'check' : 'unset'"></div>
+                <jhi-code-hint-generation-status-step
+                    [currentlySelected]="isCurrent(2)"
+                    [isPerformed]="isCompleted(2)"
+                    [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.periodStepTitle'"
+                ></jhi-code-hint-generation-status-step>
+                <div class="connector" [ngClass]="isCompleted(2) ? 'check' : 'unset'"></div>
+                <jhi-code-hint-generation-status-step
+                    [currentlySelected]="isCurrent(3)"
+                    [isPerformed]="isCompleted(3)"
+                    [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle'"
+                ></jhi-code-hint-generation-status-step>
+                <div class="connector" [ngClass]="isCompleted(3) ? 'check' : 'unset'"></div>
+                <jhi-code-hint-generation-status-step
+                    [currentlySelected]="isCurrent(4)"
+                    [isPerformed]="isCompleted(4)"
+                    [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.unitsStepTitle'"
+                ></jhi-code-hint-generation-status-step>
+                <div class="connector" [ngClass]="isCompleted(4) ? 'check' : 'unset'"></div>
+                <jhi-code-hint-generation-status-step
+                    [currentlySelected]="isCurrent(5)"
+                    [isPerformed]="isCompleted(5)"
+                    [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.learningGoalsStepTitle'"
+                ></jhi-code-hint-generation-status-step>
+            </div>
         </div>
         <div class="ms-3">
             <button type="button" id="next" [disabled]="(currentStep === 2 && !lecture.title) || isSaving" class="btn btn-primary" (click)="next()">

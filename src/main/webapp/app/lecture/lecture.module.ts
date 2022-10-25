@@ -20,6 +20,7 @@ import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lect
 import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mode/lecture-wizard-learning-goals.component';
+import { ArtemisCodeHintGenerationOverviewModule } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.module';
 
 const ENTITY_STATES = [...lectureRoute];
 
@@ -33,6 +34,7 @@ const ENTITY_STATES = [...lectureRoute];
         ArtemisMarkdownModule,
         ArtemisMarkdownEditorModule,
         ArtemisLearningGoalsModule,
+        ArtemisCodeHintGenerationOverviewModule,
     ],
     declarations: [
         LectureComponent,
