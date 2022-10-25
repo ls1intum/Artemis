@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -26,11 +25,11 @@ public record TestSuiteDTO(String name, double time, int errors, int skipped, in
 
     @Override
     public List<TestCaseDTOInterface> getFailedTests() {
-        return testCases.stream().filter(testCase -> !testCase.isSuccessful()).map(testCase -> (TestCaseDTOInterface) testCase).collect(Collectors.toList());
+        return testCases.stream().filter(testCase -> !testCase.isSuccessful()).map(testCase -> (TestCaseDTOInterface) testCase).toList();
     }
 
     @Override
     public List<TestCaseDTOInterface> getSuccessfulTests() {
-        return testCases.stream().filter(TestCaseDTO::isSuccessful).collect(Collectors.toList());
+        return testCases.stream().filter(TestCaseDTO::isSuccessful).map(testCase -> (TestCaseDTOInterface) testCase).toList();
     }
 }

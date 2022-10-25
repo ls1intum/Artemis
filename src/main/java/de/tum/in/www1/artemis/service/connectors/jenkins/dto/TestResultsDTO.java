@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.*;
@@ -149,7 +148,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     }
 
     public List<BuildJobDTOInterface> getResults() {
-        return results.stream().map(testSuiteDTO -> (BuildJobDTOInterface) testSuiteDTO).collect(Collectors.toList());
+        return results.stream().map(testSuiteDTO -> (BuildJobDTOInterface) testSuiteDTO).toList();
     }
 
     @JsonInclude

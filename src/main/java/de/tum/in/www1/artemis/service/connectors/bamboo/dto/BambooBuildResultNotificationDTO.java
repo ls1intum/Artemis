@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -116,7 +115,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
     @Override
     public List<BuildJobDTOInterface> getBuildJobs() {
-        return getBuild().jobs().stream().map(job -> (BuildJobDTOInterface) job).collect(Collectors.toList());
+        return getBuild().jobs().stream().map(job -> (BuildJobDTOInterface) job).toList();
     }
 
     @JsonIgnore
@@ -206,12 +205,12 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         @Override
         public List<TestCaseDTOInterface> getFailedTests() {
-            return failedTests.stream().map(test -> (TestCaseDTOInterface) test).collect(Collectors.toList());
+            return failedTests.stream().map(test -> (TestCaseDTOInterface) test).toList();
         }
 
         @Override
         public List<TestCaseDTOInterface> getSuccessfulTests() {
-            return failedTests.stream().map(test -> (TestCaseDTOInterface) test).collect(Collectors.toList());
+            return failedTests.stream().map(test -> (TestCaseDTOInterface) test).toList();
         }
     }
 
