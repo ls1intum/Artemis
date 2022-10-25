@@ -201,8 +201,10 @@ export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean
 };
 
 export const isResumeExerciseAvailable = (exercise: Exercise, studentParticipation?: StudentParticipation): boolean => {
-    const isBeforeIndividualDueDate = (studentParticipation?.individualDueDate && dayjs().isBefore(studentParticipation.individualDueDate)) ?? true;
-    return isStartExerciseAvailable(exercise) && isBeforeIndividualDueDate;
+    if (!studentParticipation?.individualDueDate) {
+        return isStartExerciseAvailable(exercise);
+    }
+    return dayjs().isBefore(studentParticipation.individualDueDate);
 };
 
 /**
