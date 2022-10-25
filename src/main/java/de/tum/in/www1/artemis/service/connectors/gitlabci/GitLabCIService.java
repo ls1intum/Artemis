@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.gitlabci;
 
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
+import de.tum.in.www1.artemis.repository.*;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.ProjectApi;
@@ -22,16 +27,12 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
-import de.tum.in.www1.artemis.repository.BuildPlanRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 @Profile("gitlabci")
@@ -65,9 +66,10 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private URL artemisServerUrl;
 
     public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository,
-            BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
+                           RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository,
+                           BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
+                           BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate);
         this.gitlab = gitlab;
         this.urlService = urlService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -284,6 +286,46 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         log.error("Unsupported action: GitLabCIService.getWebHookUrl()");
         // TODO
         return Optional.empty();
+    }
+
+    @Override
+    public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+                                                    List<BuildLogEntry> buildLogEntries) {
+        // In GitLab CI we get the logs from the maven command. Therefore, we cannot extract any information about the setup of the runner.
+        // In addition, static code analysis is not yet available.
+
+        if (buildLogEntries.isEmpty() || programmingLanguage != ProgrammingLanguage.JAVA) {
+            log.debug("No build logs statistics extracted for submission {}", programmingSubmission.getId());
+            // No logs received -> Do nothing
+            return;
+        }
+
+        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
+        ZonedDateTime testsStarted;
+        ZonedDateTime testsFinished;
+        ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
+        Integer dependenciesDownloadedCount;
+
+        if (ProjectType.isMavenProject(projectType)) {
+            testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
+            testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
+            dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
+        } else {
+            // A new, unsupported project type was used -> Log it but don't store it since it would only contain null-values
+            log.warn("Received unsupported project type {} for GitLabCIService.extractAndPersistBuildLogStatistics, will not store any build log statistics.", projectType);
+            return;
+        }
+
+        var testDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(testsStarted, testsFinished);
+        var totalJobDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(jobStarted, jobFinished);
+
+        // Set the duration to -1 for the durations, we cannot extract.
+        var time = ZonedDateTime.now();
+        var agentSetupDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time.minusSeconds(1));
+        var scaDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time.minusSeconds(1));
+
+        buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
+            dependenciesDownloadedCount);
     }
 
     @Override
