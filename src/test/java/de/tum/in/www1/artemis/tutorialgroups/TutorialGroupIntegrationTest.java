@@ -29,7 +29,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     void testJustForInstructorEndpoints() throws Exception {
         request.postWithResponseBody(getTutorialGroupsPath(), buildTutorialGroupWithoutSchedule(), TutorialGroup.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody(getTutorialGroupsPath() + exampleOneTutorialGroupId,
-                tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get(), TutorialGroup.class, HttpStatus.FORBIDDEN);
+                new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get(),
+                        "Lorem Ipsum"),
+                TutorialGroup.class, HttpStatus.FORBIDDEN);
         request.delete(getTutorialGroupsPath() + exampleOneTutorialGroupId, HttpStatus.FORBIDDEN);
         request.postListWithResponseBody(getTutorialGroupsPath() + exampleOneTutorialGroupId + "/register-multiple", new HashSet<>(), StudentDTO.class, HttpStatus.FORBIDDEN);
         request.getList(getTutorialGroupsPath() + "campus-values", HttpStatus.FORBIDDEN, String.class);
@@ -204,7 +206,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void registerStudent_asTutorOfGroup_shouldAllowRegistration() throws Exception {
-        this.registerStudentAllowedTest("tutor1");
+        this.registerStudentAllowedTest("tutor1", false);
     }
 
     @Test
@@ -228,7 +230,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void registerStudent_asInstructor_shouldAllowRegistration() throws Exception {
-        this.registerStudentAllowedTest("instructor1");
+        this.registerStudentAllowedTest("instructor1", true);
     }
 
     @Test
@@ -255,13 +257,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void deregisterStudent_asTutorOfGroup_shouldAllowDeregistration() throws Exception {
-        this.deregisterStudentAllowedTest("tutor1");
+        this.deregisterStudentAllowedTest("tutor1", false);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void deregisterStudent_asInstructor_shouldAllowDeregistration() throws Exception {
-        this.deregisterStudentAllowedTest("instructor1");
+        this.deregisterStudentAllowedTest("instructor1", true);
     }
 
     @Test
@@ -572,7 +574,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         verifyPrivateInformationIsShown(tutorialGroup, 5);
     }
 
-    private void registerStudentAllowedTest(String loginOfResponsibleUser) throws Exception {
+    private void registerStudentAllowedTest(String loginOfResponsibleUser, boolean expectTutorNotification) throws Exception {
         var responsibleUser = database.getUserByLogin(loginOfResponsibleUser);
         var student6 = userRepository.findOneByLogin("student6").get();
         request.postWithoutResponseBody(getTutorialGroupsPath() + exampleOneTutorialGroupId + "/register/" + student6.getLogin(), HttpStatus.NO_CONTENT,
@@ -580,7 +582,12 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student6);
         verify(singleUserNotificationService, times(1)).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student6, responsibleUser);
-        verify(singleUserNotificationService, times(1)).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student6, responsibleUser);
+        if (expectTutorNotification) {
+            verify(singleUserNotificationService, times(1)).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student6, responsibleUser);
+        }
+        else {
+            verify(singleUserNotificationService, times(0)).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student6, responsibleUser);
+        }
     }
 
     private void registerStudentForbiddenTest() throws Exception {
@@ -589,14 +596,19 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                 new LinkedMultiValueMap<>());
     }
 
-    private void deregisterStudentAllowedTest(String loginOfResponsibleUser) throws Exception {
+    private void deregisterStudentAllowedTest(String loginOfResponsibleUser, boolean expectTutorNotification) throws Exception {
         var responsibleUser = database.getUserByLogin(loginOfResponsibleUser);
         var student1 = userRepository.findOneByLogin("student1").get();
         request.delete(getTutorialGroupsPath() + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT);
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(student1);
         verify(singleUserNotificationService, times(1)).notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
-        verify(singleUserNotificationService, times(1)).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
+        if (expectTutorNotification) {
+            verify(singleUserNotificationService, times(1)).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
+        }
+        else {
+            verify(singleUserNotificationService, times(0)).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
+        }
     }
 
     private void deregisterStudentForbiddenTest() throws Exception {

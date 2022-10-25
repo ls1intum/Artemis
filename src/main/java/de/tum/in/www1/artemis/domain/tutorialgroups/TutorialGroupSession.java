@@ -50,13 +50,13 @@ public class TutorialGroupSession extends DomainObject {
     @ManyToOne
     @JoinColumn(name = "tutorial_group_schedule_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("tutorialGroupSessions, tutorialGroup")
+    @JsonIgnoreProperties(value = "tutorialGroupSessions, tutorialGroup", allowSetters = true)
     private TutorialGroupSchedule tutorialGroupSchedule;
 
     @ManyToOne
     @JoinColumn(name = "tutorial_group_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("tutorialGroupSessions")
+    @JsonIgnoreProperties(value = "tutorialGroupSessions", allowSetters = true)
     private TutorialGroup tutorialGroup;
 
     public ZonedDateTime getStart() {

@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource;
 
 class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
@@ -102,8 +103,10 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var tutorialGroup = this.buildAndSaveTutorialGroupWithoutSchedule();
         var newSchedule = this.buildExampleSchedule(firstAugustMonday, secondAugustMonday);
         tutorialGroup.setTutorialGroupSchedule(newSchedule);
+
+        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum");
         // when
-        request.putWithResponseBody(getTutorialGroupsPath() + tutorialGroup.getId(), tutorialGroup, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath() + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.OK);
 
         // then
         var persistedTutorialGroup = tutorialGroupRepository.findByIdElseThrow(tutorialGroup.getId());
@@ -127,8 +130,9 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var newSchedule = this.buildExampleSchedule(firstAugustMonday, secondAugustMonday);
         tutorialGroup.setTutorialGroupSchedule(newSchedule);
 
+        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum");
         // when
-        request.putWithResponseBody(getTutorialGroupsPath() + tutorialGroup.getId(), tutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(getTutorialGroupsPath() + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.BAD_REQUEST);
 
         // then
         assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId())).hasSize(1);
@@ -146,10 +150,14 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, fourthAugustMonday);
 
         var newSchedule = this.buildExampleSchedule(firstAugustMonday, thirdAugustMonday);
+        newSchedule.setId(tutorialGroup.getTutorialGroupSchedule().getId());
         newSchedule.setRepetitionFrequency(2); // repeat every two weeks
         tutorialGroup.setTutorialGroupSchedule(newSchedule);
+        newSchedule.setTutorialGroup(tutorialGroup);
+
+        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum");
         // when
-        request.putWithResponseBody(getTutorialGroupsPath() + tutorialGroup.getId(), tutorialGroup, TutorialGroup.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsPath() + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.OK);
 
         // then
         tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
@@ -177,7 +185,9 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
         // when
         tutorialGroup.setTutorialGroupSchedule(null);
-        tutorialGroup = request.putWithResponseBody(getTutorialGroupsPath() + tutorialGroup.getId(), tutorialGroup, TutorialGroup.class, HttpStatus.OK);
+
+        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum");
+        tutorialGroup = request.putWithResponseBody(getTutorialGroupsPath() + tutorialGroup.getId(), dto, TutorialGroup.class, HttpStatus.OK);
         // then
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         assertThat(sessions).hasSize(1);

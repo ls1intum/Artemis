@@ -282,6 +282,15 @@ public class TutorialGroupResource {
             checkTitleIsUnique(updatedTutorialGroup);
         }
 
+        Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourse_Id(courseId);
+        if (configurationOptional.isEmpty()) {
+            throw new BadRequestException("The course has no tutorial groups configuration");
+        }
+        var configuration = configurationOptional.get();
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
+
         // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails
 
         var oldTA = oldTutorialGroup.getTeachingAssistant();
@@ -303,16 +312,9 @@ public class TutorialGroupResource {
         }
 
         overrideValues(updatedTutorialGroup, oldTutorialGroup);
+        // persist without schedule at first
+        oldTutorialGroup.setTutorialGroupSchedule(null);
         var persistedTutorialGroup = tutorialGroupRepository.save(oldTutorialGroup);
-
-        Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourse_Id(courseId);
-        if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
-        }
-        var configuration = configurationOptional.get();
-        if (configuration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
-        }
 
         tutorialGroupScheduleService.updateSchedule(configuration, persistedTutorialGroup, Optional.ofNullable(persistedTutorialGroup.getTutorialGroupSchedule()),
                 Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()));

@@ -104,11 +104,11 @@ public class TutorialGroup extends DomainObject {
     private TutorialGroupSession nextSession;
 
     @OneToOne(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnoreProperties(value = "tutorialGroup")
+    @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
     private TutorialGroupSchedule tutorialGroupSchedule;
 
     @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("tutorialGroup, tutorialGroupSchedule")
+    @JsonIgnoreProperties(value = "tutorialGroup, tutorialGroupSchedule", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<TutorialGroupSession> tutorialGroupSessions = new HashSet<>();
 
@@ -296,6 +296,7 @@ public class TutorialGroup extends DomainObject {
                 tutorialGroupSession.setTutorialGroup(null);
                 if (tutorialGroupSession.getTutorialGroupSchedule() != null) {
                     tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroup(null);
+                    tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroupSessions(null);
                 }
             });
         }

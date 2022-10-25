@@ -22,7 +22,7 @@ public class TutorialGroupFreePeriod extends DomainObject {
     @ManyToOne
     @JoinColumn(name = "tutorial_groups_configuration_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("tutorialFreePeriods")
+    @JsonIgnoreProperties(value = "tutorialFreePeriods", allowSetters = true)
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
 
     /**
