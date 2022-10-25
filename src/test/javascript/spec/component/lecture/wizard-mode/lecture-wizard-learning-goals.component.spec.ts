@@ -111,7 +111,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         wizardLearningGoalsComponent.showCreateLearningGoal();
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            expect(lectureStub).toHaveBeenCalledOnce();
+            expect(lectureStub).toHaveBeenCalledTimes(2);
 
             expect(wizardLearningGoalsComponent.lecture).toBe(lecture);
             expect(wizardLearningGoalsComponent.isAddingLearningGoal).toBeTrue();
@@ -255,7 +255,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<Object>({ status: 201 })));
+        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<Object>({ status: 201, body: new LearningGoal() })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         wizardLearningGoalsComponentFixture.detectChanges();
@@ -265,14 +265,15 @@ describe('LectureWizardLearningGoalsComponent', () => {
             title: 'Goal',
         };
 
-        wizardLearningGoalsComponent.isEditingLearningGoal = false;
-
-        wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
-
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            expect(wizardLearningGoalsComponent.isAddingLearningGoal).toBeFalse();
-            expect(createStub).toHaveBeenCalledOnce();
-            expect(alertStub).toHaveBeenCalledOnce();
+            wizardLearningGoalsComponent.isEditingLearningGoal = false;
+            wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
+
+            wizardLearningGoalsComponentFixture.whenStable().then(() => {
+                expect(wizardLearningGoalsComponent.isAddingLearningGoal).toBeFalse();
+                expect(createStub).toHaveBeenCalledOnce();
+                expect(alertStub).toHaveBeenCalledOnce();
+            });
         });
     }));
 
@@ -284,7 +285,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const editStub = jest.spyOn(learningGoalService, 'update').mockReturnValue(of(new HttpResponse<Object>({ status: 201 })));
+        const editStub = jest.spyOn(learningGoalService, 'update').mockReturnValue(of(new HttpResponse<Object>({ status: 201, body: new LearningGoal() })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         wizardLearningGoalsComponentFixture.detectChanges();
@@ -293,15 +294,17 @@ describe('LectureWizardLearningGoalsComponent', () => {
             id: 1,
             title: 'Goal',
         };
-        wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new LearningGoal();
-        wizardLearningGoalsComponent.isEditingLearningGoal = true;
-
-        wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
-            expect(wizardLearningGoalsComponent.isEditingLearningGoal).toBeFalse();
-            expect(editStub).toHaveBeenCalledOnce();
-            expect(alertStub).toHaveBeenCalledOnce();
+            wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new LearningGoal();
+            wizardLearningGoalsComponent.isEditingLearningGoal = true;
+            wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
+
+            wizardLearningGoalsComponentFixture.whenStable().then(() => {
+                expect(wizardLearningGoalsComponent.isEditingLearningGoal).toBeFalse();
+                expect(editStub).toHaveBeenCalledOnce();
+                expect(alertStub).toHaveBeenCalledOnce();
+            });
         });
     }));
 });
