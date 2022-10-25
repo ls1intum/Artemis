@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,6 +16,8 @@ import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
+import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 describe('LectureWizardLearningGoalsComponent', () => {
     let wizardLearningGoalsComponentFixture: ComponentFixture<LectureUpdateWizardLearningGoalsComponent>;
@@ -139,6 +141,68 @@ describe('LectureWizardLearningGoalsComponent', () => {
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
             expect(lectureStub).toHaveBeenCalledOnce();
             expect(alertStub).toHaveBeenCalledOnce();
+        });
+    }));
+
+    it('should show an alert when creating fails', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+        const learningGoalService = TestBed.inject(LearningGoalService);
+        const alertService = TestBed.inject(AlertService);
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
+        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+
+        const goals = [new LearningGoal()];
+        const goalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+            body: goals,
+            status: 201,
+        });
+        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(goalsResponse));
+
+        const alertStub = jest.spyOn(alertService, 'error');
+
+        wizardLearningGoalsComponentFixture.detectChanges();
+
+        wizardLearningGoalsComponent.createLearningGoal({
+            id: 1,
+            title: 'Goal',
+        });
+
+        wizardLearningGoalsComponentFixture.whenStable().then(() => {
+            expect(createStub).toHaveBeenCalledOnce();
+            expect(alertStub).toHaveBeenCalledTimes(2);
+        });
+    }));
+
+    it('should show an alert when editing fails', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+        const learningGoalService = TestBed.inject(LearningGoalService);
+        const alertService = TestBed.inject(AlertService);
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
+        const editStub = jest.spyOn(learningGoalService, 'update').mockReturnValue(throwError(() => ({ status: 404 })));
+
+        const goals = [new LearningGoal()];
+        const goalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+            body: goals,
+            status: 201,
+        });
+        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(goalsResponse));
+
+        const alertStub = jest.spyOn(alertService, 'error');
+
+        wizardLearningGoalsComponentFixture.detectChanges();
+
+        wizardLearningGoalsComponentFixture.whenStable().then(() => {
+            wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new LearningGoal();
+            wizardLearningGoalsComponent.editLearningGoal({
+                id: 1,
+                title: 'Goal',
+            });
+            wizardLearningGoalsComponentFixture.whenStable().then(() => {
+                expect(editStub).toHaveBeenCalledOnce();
+                expect(alertStub).toHaveBeenCalledTimes(2);
+            });
         });
     }));
 
@@ -277,6 +341,76 @@ describe('LectureWizardLearningGoalsComponent', () => {
         });
     }));
 
+    it('should append exercises as units when creating a goal', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+        const learningGoalService = TestBed.inject(LearningGoalService);
+        const alertService = TestBed.inject(AlertService);
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
+        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
+
+        const goal = new LearningGoal();
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.id = 2;
+        goal.exercises = [exercise];
+        goal.lectureUnits = [];
+        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<Object>({ status: 201, body: goal })));
+        const alertStub = jest.spyOn(alertService, 'success');
+
+        const unit = new ExerciseUnit();
+        unit.id = 2;
+        unit.exercise = exercise;
+
+        wizardLearningGoalsComponent.lecture.lectureUnits = [unit];
+
+        wizardLearningGoalsComponentFixture.detectChanges();
+
+        const formData: LearningGoalFormData = {
+            id: 1,
+            title: 'Goal',
+        };
+
+        wizardLearningGoalsComponentFixture.whenStable().then(() => {
+            wizardLearningGoalsComponent.lecture.lectureUnits = [unit];
+            wizardLearningGoalsComponent.isEditingLearningGoal = false;
+            wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
+
+            wizardLearningGoalsComponentFixture.whenStable().then(() => {
+                expect(wizardLearningGoalsComponent.isAddingLearningGoal).toBeFalse();
+                expect(createStub).toHaveBeenCalledOnce();
+                expect(alertStub).toHaveBeenCalledOnce();
+
+                expect(wizardLearningGoalsComponent.learningGoals.length).toBe(1);
+                expect(wizardLearningGoalsComponent.learningGoals[0]!.lectureUnits![0]!.id).toBe(2);
+            });
+        });
+    }));
+
+    it('should not call the service when creating a goal with an empty form', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+        const learningGoalService = TestBed.inject(LearningGoalService);
+        const alertService = TestBed.inject(AlertService);
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
+        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
+
+        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<Object>({ status: 201, body: new LearningGoal() })));
+        const alertStub = jest.spyOn(alertService, 'success');
+
+        wizardLearningGoalsComponentFixture.detectChanges();
+
+        const formData: LearningGoalFormData = {};
+
+        wizardLearningGoalsComponentFixture.whenStable().then(() => {
+            wizardLearningGoalsComponent.createLearningGoal(formData);
+
+            wizardLearningGoalsComponentFixture.whenStable().then(() => {
+                expect(createStub).toHaveBeenCalledTimes(0);
+                expect(alertStub).toHaveBeenCalledTimes(0);
+            });
+        });
+    }));
+
     it('should call the service and show an alert when editing a goal', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
         const learningGoalService = TestBed.inject(LearningGoalService);
@@ -304,6 +438,52 @@ describe('LectureWizardLearningGoalsComponent', () => {
                 expect(wizardLearningGoalsComponent.isEditingLearningGoal).toBeFalse();
                 expect(editStub).toHaveBeenCalledOnce();
                 expect(alertStub).toHaveBeenCalledOnce();
+            });
+        });
+    }));
+
+    it('should append exercises as units when editing a goal', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+        const learningGoalService = TestBed.inject(LearningGoalService);
+        const alertService = TestBed.inject(AlertService);
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
+        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
+
+        const goal = new LearningGoal();
+        const exercise = new TextExercise(undefined, undefined);
+        exercise.id = 2;
+        goal.exercises = [exercise];
+        goal.lectureUnits = [];
+        const editStub = jest.spyOn(learningGoalService, 'update').mockReturnValue(of(new HttpResponse<Object>({ status: 201, body: goal })));
+        const alertStub = jest.spyOn(alertService, 'success');
+
+        const unit = new ExerciseUnit();
+        unit.id = 2;
+        unit.exercise = exercise;
+
+        wizardLearningGoalsComponent.lecture.lectureUnits = [unit];
+
+        wizardLearningGoalsComponentFixture.detectChanges();
+
+        const formData: LearningGoalFormData = {
+            id: 1,
+            title: 'Goal',
+        };
+
+        wizardLearningGoalsComponentFixture.whenStable().then(() => {
+            wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new LearningGoal();
+            wizardLearningGoalsComponent.lecture.lectureUnits = [unit];
+            wizardLearningGoalsComponent.isEditingLearningGoal = true;
+            wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
+
+            wizardLearningGoalsComponentFixture.whenStable().then(() => {
+                expect(wizardLearningGoalsComponent.isEditingLearningGoal).toBeFalse();
+                expect(editStub).toHaveBeenCalledOnce();
+                expect(alertStub).toHaveBeenCalledOnce();
+
+                expect(wizardLearningGoalsComponent.learningGoals.length).toBe(1);
+                expect(wizardLearningGoalsComponent.learningGoals[0]!.lectureUnits![0]!.id).toBe(2);
             });
         });
     }));

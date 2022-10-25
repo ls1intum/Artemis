@@ -11,6 +11,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import dayjs from 'dayjs/esm';
 
 describe('LectureWizardComponent', () => {
     let wizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
@@ -67,6 +68,18 @@ describe('LectureWizardComponent', () => {
 
         wizardComponentFixture.whenStable().then(() => {
             expect(wizardComponent.currentStep).toBe(1);
+        });
+    }));
+
+    it('should initialize and set step without given lecture but preset date', fakeAsync(() => {
+        wizardComponent.lecture.id = undefined;
+        wizardComponent.lecture.startDate = dayjs().year(2010).month(3).date(5);
+
+        wizardComponentFixture.detectChanges();
+        expect(wizardComponent).not.toBeNull();
+
+        wizardComponentFixture.whenStable().then(() => {
+            expect(wizardComponent.currentStep).toBe(2);
         });
     }));
 
