@@ -22,7 +22,8 @@
             "editor": {
                 "addHint": "[-h] Hint",
                 "addExplanation": "[-e] Explanation",
-                "addSpot": "[-spot #] Add Spot",
+                "addTextSpot": "[-spot #] Add Text Spot",
+                "addNumberSpot": "[-spot #] Add Number Spot",
                 "addOption": "[-option #] Add Answer Option",
                 "text": "Text",
                 "visual": "Visual",

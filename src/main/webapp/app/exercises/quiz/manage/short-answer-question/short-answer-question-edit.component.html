@@ -144,7 +144,8 @@
         <div class="markupEditorArea" [hidden]="showVisualMode">
             <div class="toolbar" *ngIf="!reEvaluationInProgress">
                 <div class="btn-group">
-                    <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursor()"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addTextSpot" (click)="addSpotAtCursor(spotType.TEXT)"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addNumberSpot" (click)="addSpotAtCursor(spotType.NUMBER)"></div>
                     <div class="btn btn-outline-secondary" jhiTranslate="artemisApp.shortAnswerQuestion.editor.addOption" (click)="addOption()"></div>
                 </div>
             </div>
@@ -168,8 +169,14 @@
             <div
                 *ngIf="!reEvaluationInProgress"
                 class="btn btn-outline-secondary"
-                jhiTranslate="artemisApp.shortAnswerQuestion.editor.addSpot"
-                (click)="addSpotAtCursorVisualMode()"
+                jhiTranslate="artemisApp.shortAnswerQuestion.editor.addTextSpot"
+                (click)="addSpotAtCursorVisualMode(spotType.TEXT)"
+            ></div>
+            <div
+                *ngIf="!reEvaluationInProgress"
+                class="btn btn-outline-secondary"
+                jhiTranslate="artemisApp.shortAnswerQuestion.editor.addNumberSpot"
+                (click)="addSpotAtCursorVisualMode(spotType.NUMBER)"
             ></div>
             <hr *ngIf="!reEvaluationInProgress" />
             <div style="display: flex">

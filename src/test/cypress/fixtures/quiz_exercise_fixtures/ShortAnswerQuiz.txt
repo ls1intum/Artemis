@@ -4,6 +4,7 @@ Never gonna [-spot 3] around and [-spot 4] you
 Never gonna make you [-spot 5]
 Never gonna say [-spot 6]
 Never gonna tell a lie and hurt you
+[-spot-number 7], [-spot-number 8], [-spot-number 9], and [-spot-number 10]
 
 
 [-option 1] give
@@ -12,3 +13,7 @@ Never gonna tell a lie and hurt you
 [-option 4] desert
 [-option 5] cry
 [-option 6] goodbye
+[-option 7] 1.0
+[-option 8] 0.5 - 10
+[-option 9] 2.5
+[-option 10] 5 - 10.0

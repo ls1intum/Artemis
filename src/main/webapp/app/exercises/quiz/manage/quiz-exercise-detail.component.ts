@@ -442,10 +442,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             'Enter your long question if needed\n\n' +
             'Select a part of the text and click on Add Spot to automatically create an input field and the corresponding mapping\n\n' +
             'You can define a input field like this: This [-spot 1] an [-spot 2] field.\n\n' +
+            'You can also define a number input field like this: There are [-spot-number 3] input fields.\n\n' +
             'To define the solution for the input fields you need to create a mapping (multiple mapping also possible):\n\n' +
             '[-option 1] is\n' +
             '[-option 2] input\n' +
-            '[-option 1,2] correctInBothFields';
+            '[-option 1,2] correctInBothFields\n' +
+            '[-option 3] 1-3\n';
         shortAnswerQuestion.scoringType = ScoringType.PROPORTIONAL_WITHOUT_PENALTY; // explicit default value for short answer questions
         shortAnswerQuestion.randomizeOrder = true;
         shortAnswerQuestion.points = 1;

@@ -61,10 +61,10 @@ describe('Quiz Exercise Assessment', () => {
         it('Assesses a sa quiz submission automatically', () => {
             cy.login(student);
             courseManagementRequest.startExerciseParticipation(quizExercise.id!);
-            courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
+            courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert', 'cries', 'good', '1', '0.51', '2.51', '4.99']);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
             cy.reloadUntilFound(resultSelector);
-            cy.contains('66.7%').should('be.visible');
+            cy.contains('60%').should('be.visible');
         });
     });
 });

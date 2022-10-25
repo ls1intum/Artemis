@@ -240,4 +240,12 @@ export class ShortAnswerQuestionComponent {
         }
         return isTextCorrect;
     }
+
+    /**
+     * Returns the type of the input for the given spot tag
+     * @param spotTag Spot tag for which to get the type
+     */
+    getSpotInputType(spotTag: string): string {
+        return this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.shortAnswerQuestion).type.toLowerCase();
+    }
 }

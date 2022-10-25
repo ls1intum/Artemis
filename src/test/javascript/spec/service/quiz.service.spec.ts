@@ -4,6 +4,7 @@ import { QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.m
 import { ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { SpotType } from 'app/entities/quiz/short-answer-spot.model';
 
 describe('Quiz Service', () => {
     let service: ArtemisQuizService;
@@ -92,12 +93,14 @@ describe('Quiz Service', () => {
                 invalid: false,
                 width: 15,
                 spotNr: 1,
+                type: SpotType.TEXT,
             },
             {
                 tempID: 1693282244205775,
                 invalid: false,
                 width: 15,
                 spotNr: 2,
+                type: SpotType.TEXT,
             },
         ],
         solutions: [
@@ -119,6 +122,7 @@ describe('Quiz Service', () => {
                     invalid: false,
                     width: 15,
                     spotNr: 1,
+                    type: SpotType.TEXT,
                 },
                 solution: {
                     tempID: 7036040666954049,
@@ -133,6 +137,7 @@ describe('Quiz Service', () => {
                     invalid: false,
                     width: 15,
                     spotNr: 2,
+                    type: SpotType.TEXT,
                 },
                 solution: {
                     tempID: 94143448556475,

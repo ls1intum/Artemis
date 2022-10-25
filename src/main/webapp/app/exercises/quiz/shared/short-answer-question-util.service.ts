@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
+import { ShortAnswerSpot, SpotType } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { SHORT_ANSWER_NUMBER_SPOT_TYPE_OPTION_REGEX } from 'app/app.constants';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
@@ -291,7 +292,7 @@ export class ShortAnswerQuestionUtil {
      * @returns {string[][]}
      */
     divideQuestionTextIntoTextParts(questionText: string): string[][] {
-        const spotRegExpo = /\[-spot\s*[0-9]+\]/g;
+        const spotRegExpo = /\[-spot(?:-number)?\s*[0-9]+\]/g;
 
         /**
          * Interleaves elements of two lists xs and ys recursively
@@ -313,6 +314,51 @@ export class ShortAnswerQuestionUtil {
     }
 
     /**
+     * checks if every spot which type is number has valid solution
+     *
+     * @param mappings {ShortAnswerMapping[]} mappings of spot and solution(s)
+     * @param spots {ShortAnswerSpot[]}list of spots
+     * @return {boolean}
+     */
+    everyNumberSpotHasValidSolution(mappings: ShortAnswerMapping[], spots: ShortAnswerSpot[]): boolean {
+        const numberSpots = spots.filter((spot) => spot.type === SpotType.NUMBER);
+        for (const spot of numberSpots) {
+            const solutions = this.getAllSolutionsForSpot(mappings, spot);
+            for (const solution of solutions!) {
+                const solutionText = solution.text!;
+                if (!this.isValidNumberSpotSolution(solutionText)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * checks if text is a valid solution for spot which type is number.
+     * valid solution is either in range format (e.g. 0.5 - 10) or a single number (e.g 8.0)
+     *
+     * @param text {string} text to be checked
+     * @return {boolean}
+     */
+    isValidNumberSpotSolution(text: string): boolean {
+        const validSolutionRegex = new RegExp(SHORT_ANSWER_NUMBER_SPOT_TYPE_OPTION_REGEX);
+        const match = text.match(validSolutionRegex);
+        if (match) {
+            const lowerBound = +match[1];
+            const upperBound = +match[4];
+            if (isNaN(lowerBound) || isNaN(upperBound) || lowerBound > upperBound) {
+                return false;
+            }
+        } else {
+            if (text.length === 0 || isNaN(+text)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * checks if text is an input field (check for spot tag)
      * @param text
      */
@@ -327,7 +373,7 @@ export class ShortAnswerQuestionUtil {
     getSpotNr(text: string): number {
         // separate "[-spot 1]" into just "1"
         return +text
-            .split(/\[-spot/g)[1]
+            .split(/\[-spot(?:-number)?/g)[1]
             .split(']')[0]
             .trim();
     }

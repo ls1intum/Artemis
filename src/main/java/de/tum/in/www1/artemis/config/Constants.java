@@ -257,6 +257,18 @@ public final class Constants {
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
 
+    /**
+     * The regex matches range of decimal numbers
+     * For example: -10.05--1.5
+     * Group 1: -10.05 (Lower Bound)
+     * Group 2: 10.05
+     * Group 3: .05
+     * Group 4: -1.5 (Upper Bound)
+     * Group 5: 1.5
+     * Group 6: .5
+     */
+    public static final String SHORT_ANSWER_NUMBER_SPOT_TYPE_SOLUTION_REGEX = "^(-?(\\d+(\\.\\d+)?|\\.\\d+))\\s*-\\s*(-?(\\d+(\\.\\d+)?|\\.\\d+))$";
+
     private Constants() {
     }
 }

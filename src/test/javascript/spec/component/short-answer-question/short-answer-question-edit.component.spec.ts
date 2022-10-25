@@ -11,7 +11,7 @@ import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/mat
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SimpleChange } from '@angular/core';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
+import { ShortAnswerSpot, SpotType } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
@@ -41,6 +41,7 @@ const spot1 = new ShortAnswerSpot();
 spot1.spotNr = 0;
 
 const spot2 = new ShortAnswerSpot();
+spot2.type = SpotType.NUMBER;
 spot2.spotNr = 1;
 
 describe('ShortAnswerQuestionEditComponent', () => {
@@ -77,12 +78,12 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     it('should initialize with different question texts', () => {
         // test spots concatenated to other words
-        component.shortAnswerQuestion.text = 'This is a[-spot 12]regarding this question.\nAnother [-spot 8] is in the line above';
+        component.shortAnswerQuestion.text = 'This is a[-spot 12]regarding this question.\nAnother [-spot-number 8] is in the line above';
         component.ngOnInit();
 
         let expectedTextParts = [
             ['This', 'is', 'a', '[-spot 12]', 'regarding', 'this', 'question.'],
-            ['Another', '[-spot 8]', 'is', 'in', 'the', 'line', 'above'],
+            ['Another', '[-spot-number 8]', 'is', 'in', 'the', 'line', 'above'],
         ];
         expect(component.textParts).toEqual(expectedTextParts);
 
@@ -92,7 +93,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             'Select a part of the[-spot 6]and click on Add Spot to automatically [-spot 9]an input field and the corresponding[-spot 16]\n\n' +
             'You can define a input field like this: This [-spot 1] an [-spot 2] field.\n' +
             'Code snippets should be correctly indented:\n' +
-            '[-spot 5] method testIndentation() {\n' +
+            '[-spot-number 5] method testIndentation() {\n' +
             "    System.out.[-spot 3]('Print this');\n" +
             '    const [-spot 4] Array = [\n' +
             '    first element = ({\n' +
@@ -134,7 +135,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ],
             ['You', 'can', 'define', 'a', 'input', 'field', 'like', 'this:', 'This', '[-spot 1]', 'an', '[-spot 2]', 'field.'],
             ['Code', 'snippets', 'should', 'be', 'correctly', 'indented:'],
-            ['[-spot 5]', 'method', 'testIndentation()', '{'],
+            ['[-spot-number 5]', 'method', 'testIndentation()', '{'],
             ['    System.out.', '[-spot 3]', "('Print", "this');"],
             ['    const', '[-spot 4]', 'Array', '=', '['],
             ['    first', 'element', '=', '({'],
@@ -150,18 +151,25 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         // tests simple indentation
         component.shortAnswerQuestion.text =
-            '[-spot 5]\n' + '    [-spot 6]\n' + '        [-spot 7]\n' + '            [-spot 8]\n' + '                [-spot 9]\n' + '                    [-spot 10]';
+            '[-spot-number 5]\n' + '    [-spot-number 6]\n' + '        [-spot 7]\n' + '            [-spot 8]\n' + '                [-spot 9]\n' + '                    [-spot 10]';
 
         component.ngOnInit();
 
-        expectedTextParts = [['[-spot 5]'], ['    [-spot 6]'], ['        [-spot 7]'], ['            [-spot 8]'], ['                [-spot 9]'], ['                    [-spot 10]']];
+        expectedTextParts = [
+            ['[-spot-number 5]'],
+            ['    [-spot-number 6]'],
+            ['        [-spot 7]'],
+            ['            [-spot 8]'],
+            ['                [-spot 9]'],
+            ['                    [-spot 10]'],
+        ];
         expect(component.textParts).toEqual(expectedTextParts);
 
         // classic java main method test
         component.shortAnswerQuestion.text =
             '[-spot 1] class [-spot 2] {\n' +
             '    public static void main([-spot 3][] args){\n' +
-            '        System.out.println("This is the [-spot 4] method");\n' +
+            '        System.out.println("This is the [-spot-number 4] method");\n' +
             '    }\n' +
             '}';
 
@@ -170,7 +178,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expectedTextParts = [
             ['[-spot 1]', 'class', '[-spot 2]', '{'],
             ['    public', 'static', 'void', 'main(', '[-spot 3]', '[]', 'args){'],
-            ['        System.out.println("This', 'is', 'the', '[-spot 4]', 'method");'],
+            ['        System.out.println("This', 'is', 'the', '[-spot-number 4]', 'method");'],
             ['    }'],
             ['}'],
         ];
@@ -180,7 +188,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.shortAnswerQuestion.text =
             'private[-spot 1] methodCallWithMultipleLineParameter (\n' +
             '    int number,\n' +
-            '    [-spot 2] secondNumber,\n' +
+            '    [-spot-number 2] secondNumber,\n' +
             '    [-spot 3] thirdString,\n' +
             '    boolean doesWork) {\n' +
             '        System.out.[-spot 4]("[-spot 5]");\n' +
@@ -191,7 +199,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expectedTextParts = [
             ['private', '[-spot 1]', 'methodCallWithMultipleLineParameter', '('],
             ['    int', 'number,'],
-            ['    [-spot 2]', 'secondNumber,'],
+            ['    [-spot-number 2]', 'secondNumber,'],
             ['    [-spot 3]', 'thirdString,'],
             ['    boolean', 'doesWork)', '{'],
             ['        System.out.', '[-spot 4]', '("', '[-spot 5]', '");'],
@@ -201,7 +209,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         // test nested arrays
         component.shortAnswerQuestion.text =
-            'const manyArrayFields = [\n' + "    ['test1'],\n" + "    ['test2'],\n" + "    ['[-spot 1]'],\n" + "    ['middleField'],\n" + "    ['[-spot 2]'],\n" + '];';
+            'const manyArrayFields = [\n' + "    ['test1'],\n" + "    ['test2'],\n" + "    ['[-spot 1]'],\n" + "    ['middleField'],\n" + "    ['[-spot-number 2]'],\n" + '];';
 
         component.ngOnInit();
 
@@ -211,7 +219,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ["    ['test2'],"],
             ["    ['", '[-spot 1]', "'],"],
             ["    ['middleField'],"],
-            ["    ['", '[-spot 2]', "'],"],
+            ["    ['", '[-spot-number 2]', "'],"],
             ['];'],
         ];
         expect(component.textParts).toEqual(expectedTextParts);
@@ -297,9 +305,13 @@ describe('ShortAnswerQuestionEditComponent', () => {
     it('should add spot to cursor', () => {
         component.numberOfSpot = 2;
 
-        component.addSpotAtCursor();
+        component.addSpotAtCursor(SpotType.TEXT);
         expect(component.numberOfSpot).toBe(3);
         expect(component.firstPressed).toBe(2);
+
+        component.addSpotAtCursor(SpotType.NUMBER);
+        expect(component.numberOfSpot).toBe(4);
+        expect(component.firstPressed).toBe(3);
     });
 
     it('should add option', () => {
@@ -381,7 +393,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         } as unknown as HTMLDivElement;
         jest.spyOn(document, 'createElement').mockReturnValue(returnHTMLDivElement);
 
-        const markdownHelper = {
+        let markdownHelper = {
             length: 1,
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             substring(start: number, end?: number): string {
@@ -395,11 +407,23 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.shortAnswerQuestion.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
         fixture.detectChanges();
 
-        component.addSpotAtCursorVisualMode();
+        component.addSpotAtCursorVisualMode(SpotType.TEXT);
 
         expect(component.numberOfSpot).toBe(2);
         expect(component.firstPressed).toBe(2);
         expect(questionUpdated).toHaveBeenCalledTimes(3);
+
+        markdownHelper = {
+            length: 1,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            substring(start: number, end?: number): string {
+                return '10.5';
+            },
+        } as string;
+        jest.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue(markdownHelper);
+        component.addSpotAtCursorVisualMode(SpotType.NUMBER);
+        expect(component.numberOfSpot).toBe(3);
+        expect(component.firstPressed).toBe(3);
     });
 
     it('should delete question', () => {
@@ -474,6 +498,10 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         expect(component.shortAnswerQuestion.spots).toHaveLength(1);
         expect(component.shortAnswerQuestion.spots[0]).toEqual(spot2);
+
+        component.deleteSpot(spot2);
+
+        expect(component.shortAnswerQuestion.spots).toHaveLength(0);
     });
 
     it('should set question text', () => {

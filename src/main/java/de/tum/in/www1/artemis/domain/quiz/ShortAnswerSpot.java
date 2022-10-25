@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.TempIdObject;
+import de.tum.in.www1.artemis.domain.enumeration.SpotType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
@@ -36,6 +37,11 @@ public class ShortAnswerSpot extends TempIdObject {
     @JsonView(QuizView.Before.class)
     private Boolean invalid;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    @JsonView(QuizView.Before.class)
+    private SpotType type = SpotType.TEXT;
+
     @ManyToOne
     @JsonIgnore
     private ShortAnswerQuestion question;
@@ -51,6 +57,11 @@ public class ShortAnswerSpot extends TempIdObject {
 
     public ShortAnswerSpot spotNr(Integer spotNr) {
         this.spotNr = spotNr;
+        return this;
+    }
+
+    public ShortAnswerSpot spotType(SpotType type) {
+        this.type = type;
         return this;
     }
 
@@ -79,6 +90,14 @@ public class ShortAnswerSpot extends TempIdObject {
         this.invalid = invalid;
     }
 
+    public SpotType getType() {
+        return type;
+    }
+
+    public void setType(SpotType type) {
+        this.type = type;
+    }
+
     public ShortAnswerQuestion getQuestion() {
         return question;
     }
@@ -105,6 +124,6 @@ public class ShortAnswerSpot extends TempIdObject {
 
     @Override
     public String toString() {
-        return "ShortAnswerSpot{" + "id=" + getId() + ", width=" + getWidth() + ", spotNr=" + getSpotNr() + ", invalid='" + isInvalid() + "'" + "}";
+        return "ShortAnswerSpot{" + "id=" + getId() + ", width=" + getWidth() + ", spotNr=" + getSpotNr() + ", invalid='" + isInvalid() + "', type='" + getType() + "'" + "}";
     }
 }
