@@ -11,7 +11,6 @@ import { faPlus, faWrench } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-tutorial-groups-checklist',
     templateUrl: './tutorial-groups-checklist.component.html',
-    styleUrls: ['./tutorial-groups-checklist.component.scss'],
 })
 export class TutorialGroupsChecklistComponent implements OnInit {
     isLoading = false;

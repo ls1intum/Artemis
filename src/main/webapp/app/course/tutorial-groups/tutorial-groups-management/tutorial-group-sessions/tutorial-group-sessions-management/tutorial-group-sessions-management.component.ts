@@ -16,6 +16,7 @@ import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays
 @Component({
     selector: 'jhi-session-management',
     templateUrl: './tutorial-group-sessions-management.component.html',
+    styleUrls: ['./tutorial-group-sessions-management.component.scss'],
 })
 export class TutorialGroupSessionsManagementComponent implements OnInit {
     isLoading = false;

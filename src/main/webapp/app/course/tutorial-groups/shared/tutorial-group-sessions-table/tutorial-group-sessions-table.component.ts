@@ -21,9 +21,7 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
     @Input()
     timeZone?: string = undefined;
 
-    get timeZoneUsedForDisplay(): string {
-        return this.timeZone || dayjs.tz.guess();
-    }
+    timeZoneUsedForDisplay = dayjs.tz.guess();
 
     @Input()
     showIdColumn = false;
@@ -43,6 +41,7 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
     }
 
     constructor(private sortService: SortService, private changeDetectorRef: ChangeDetectorRef) {}
+
     ngOnChanges(changes: SimpleChanges) {
         for (const propName in changes) {
             if (changes.hasOwnProperty(propName)) {
@@ -52,6 +51,13 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
                         if (change.currentValue) {
                             this.splitIntoUpcomingAndPastSessions(this.sortService.sortByProperty(change.currentValue, 'start', false));
                         }
+                        break;
+                    }
+                    case 'timeZone': {
+                        if (change.currentValue) {
+                            this.timeZoneUsedForDisplay = change.currentValue;
+                        }
+                        break;
                     }
                 }
             }
@@ -60,6 +66,10 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
 
     public getCurrentDate(): dayjs.Dayjs {
         return dayjs();
+    }
+
+    public trackSession(index: number, item: TutorialGroupSession): string {
+        return `${item.id}`;
     }
 
     private splitIntoUpcomingAndPastSessions(sessions: TutorialGroupSession[]) {

@@ -234,12 +234,8 @@ export class CourseUpdateComponent implements OnInit {
         );
     };
 
-    get timeZoneControl() {
-        return this.courseForm.get('timeZone');
-    }
-
     get timeZoneChanged() {
-        return this.course?.id && this.originalTimeZone !== this.courseForm.value.timeZone;
+        return this.course?.id && this.originalTimeZone && this.originalTimeZone !== this.courseForm.value.timeZone;
     }
 
     /**

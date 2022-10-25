@@ -1,5 +1,5 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="row">
+    <div class="row" *ngIf="course">
         <div class="col-12">
             <h1>{{ 'artemisApp.pages.checklist.title' | artemisTranslate }}</h1>
             <p>

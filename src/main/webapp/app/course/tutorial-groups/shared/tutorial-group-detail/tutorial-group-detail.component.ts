@@ -9,6 +9,7 @@ import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group
 @Component({
     selector: 'jhi-tutorial-group-detail',
     templateUrl: './tutorial-group-detail.component.html',
+    styleUrls: ['./tutorial-group-detail.component.scss'],
 })
 export class TutorialGroupDetailComponent implements OnChanges {
     @ContentChild(TemplateRef) header: TemplateRef<any>;

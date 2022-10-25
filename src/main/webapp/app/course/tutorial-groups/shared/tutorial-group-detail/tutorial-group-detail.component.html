@@ -1,4 +1,4 @@
-<div>
+<div class="tutorial-group-detail">
     <h2>{{ tutorialGroup.title }}</h2>
     <hr />
     <ng-container *ngIf="header">
@@ -127,8 +127,10 @@
         </dt>
         <dd>
             <ng-container *ngIf="sessions && sessions.length > 0; else sessionsNotFound">
-                <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false">
-                </jhi-tutorial-group-sessions-table>
+                <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
+                    <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false">
+                    </jhi-tutorial-group-sessions-table>
+                </div>
             </ng-container>
             <ng-template #sessionsNotFound>
                 <span>{{ 'artemisApp.pages.tutorialGroupDetail.sessionsNotFound' | artemisTranslate }}</span></ng-template

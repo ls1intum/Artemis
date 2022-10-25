@@ -110,7 +110,7 @@ public class TutorialGroup extends DomainObject {
     @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("tutorialGroup, tutorialGroupSchedule")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List<TutorialGroupSession> tutorialGroupSessions = new ArrayList<>();
+    private Set<TutorialGroupSession> tutorialGroupSessions = new HashSet<>();
 
     public TutorialGroupSchedule getTutorialGroupSchedule() {
         return tutorialGroupSchedule;
@@ -120,11 +120,11 @@ public class TutorialGroup extends DomainObject {
         this.tutorialGroupSchedule = tutorialGroupSchedule;
     }
 
-    public List<TutorialGroupSession> getTutorialGroupSessions() {
+    public Set<TutorialGroupSession> getTutorialGroupSessions() {
         return tutorialGroupSessions;
     }
 
-    public void setTutorialGroupSessions(List<TutorialGroupSession> tutorialGroupSessions) {
+    public void setTutorialGroupSessions(Set<TutorialGroupSession> tutorialGroupSessions) {
         this.tutorialGroupSessions = tutorialGroupSessions;
     }
 

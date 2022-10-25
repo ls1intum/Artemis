@@ -1,4 +1,4 @@
-import { Component, Input, TemplateRef } from '@angular/core';
+import { Component, Input, OnChanges, TemplateRef } from '@angular/core';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
@@ -6,7 +6,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
     selector: '[jhi-session-row]',
     templateUrl: './tutorial-group-session-row.component.html',
 })
-export class TutorialGroupSessionRowComponent {
+export class TutorialGroupSessionRowComponent implements OnChanges {
     @Input()
     showIdColumn = false;
 
@@ -17,10 +17,13 @@ export class TutorialGroupSessionRowComponent {
 
     @Input() timeZone?: string = undefined;
 
-    get isCancelled() {
-        return this.session?.status === TutorialGroupSessionStatus.CANCELLED;
-    }
-    get hasSchedule() {
-        return !!this.session?.tutorialGroupSchedule;
+    isCancelled = false;
+    hasSchedule = false;
+
+    ngOnChanges() {
+        if (this.session) {
+            this.isCancelled = this.session.status === TutorialGroupSessionStatus.CANCELLED;
+            this.hasSchedule = !!this.session.tutorialGroupSchedule;
+        }
     }
 }

@@ -1,8 +1,8 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="row" *ngIf="tutorialGroup">
+    <div class="row tutorial-group-session-management" *ngIf="tutorialGroup">
         <div class="col-12">
             <div class="d-flex justify-content-between">
-                <h4>{{ 'artemisApp.pages.tutorialGroupSessionManagement.title' | artemisTranslate }}</h4>
+                <h4>{{ 'artemisApp.pages.tutorialGroupSessionManagement.title' | artemisTranslate }} - {{ tutorialGroup.title }}</h4>
                 <div>
                     <a
                         id="create-session-button"
@@ -40,16 +40,18 @@
                 >
             </dd>
         </div>
-        <jhi-tutorial-group-sessions-table [sessions]="sessions" [timeZone]="course.timeZone" [showIdColumn]="true" [tutorialGroup]="tutorialGroup">
-            <ng-template let-session>
-                <jhi-tutorial-group-session-row-buttons
-                    [tutorialGroupSession]="session"
-                    [course]="course"
-                    [tutorialGroupId]="tutorialGroup.id!"
-                    (cancelOrActivatePressed)="loadAll()"
-                    (tutorialGroupSessionDeleted)="loadAll()"
-                ></jhi-tutorial-group-session-row-buttons>
-            </ng-template>
-        </jhi-tutorial-group-sessions-table>
+        <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
+            <jhi-tutorial-group-sessions-table [sessions]="sessions" [timeZone]="course.timeZone" [showIdColumn]="true" [tutorialGroup]="tutorialGroup">
+                <ng-template let-session>
+                    <jhi-tutorial-group-session-row-buttons
+                        [tutorialGroupSession]="session"
+                        [course]="course"
+                        [tutorialGroupId]="tutorialGroup.id!"
+                        (cancelOrActivatePressed)="loadAll()"
+                        (tutorialGroupSessionDeleted)="loadAll()"
+                    ></jhi-tutorial-group-session-row-buttons>
+                </ng-template>
+            </jhi-tutorial-group-sessions-table>
+        </div>
     </div>
 </jhi-loading-indicator-container>

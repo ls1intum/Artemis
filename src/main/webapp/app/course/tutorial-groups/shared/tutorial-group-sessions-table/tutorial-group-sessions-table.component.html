@@ -22,7 +22,7 @@
         <tbody>
             <tr
                 jhi-session-row
-                *ngFor="let session of upcomingSessions"
+                *ngFor="let session of upcomingSessions; trackBy: trackSession"
                 [extraColumn]="extraColumn"
                 [session]="session"
                 [timeZone]="timeZone"
@@ -34,7 +34,7 @@
             </tr>
             <tr
                 jhi-session-row
-                *ngFor="let session of pastSessions"
+                *ngFor="let session of pastSessions; trackBy: trackSession"
                 [extraColumn]="extraColumn"
                 [session]="session"
                 [tutorialGroup]="tutorialGroup"
