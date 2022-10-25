@@ -174,6 +174,33 @@ describe('LectureWizardLearningGoalsComponent', () => {
         });
     }));
 
+    it('should show an alert when deleting fails', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+        const learningGoalService = TestBed.inject(LearningGoalService);
+        const alertService = TestBed.inject(AlertService);
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
+
+        const goals = [new LearningGoal()];
+        const goalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+            body: goals,
+            status: 201,
+        });
+        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(goalsResponse));
+
+        const alertStub = jest.spyOn(alertService, 'error');
+        const deleteStub = jest.spyOn(learningGoalService, 'delete').mockReturnValue(throwError(() => ({ status: 404 })));
+
+        wizardLearningGoalsComponentFixture.detectChanges();
+
+        wizardLearningGoalsComponent.deleteLearningGoal(goals[0]);
+
+        wizardLearningGoalsComponentFixture.whenStable().then(() => {
+            expect(deleteStub).toHaveBeenCalledOnce();
+            expect(alertStub).toHaveBeenCalledTimes(1);
+        });
+    }));
+
     it('should show an alert when editing fails', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
         const learningGoalService = TestBed.inject(LearningGoalService);
@@ -380,7 +407,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
                 expect(createStub).toHaveBeenCalledOnce();
                 expect(alertStub).toHaveBeenCalledOnce();
 
-                expect(wizardLearningGoalsComponent.learningGoals.length).toBe(1);
+                expect(wizardLearningGoalsComponent.learningGoals).toHaveLength(1);
                 expect(wizardLearningGoalsComponent.learningGoals[0]!.lectureUnits![0]!.id).toBe(2);
             });
         });
@@ -482,7 +509,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
                 expect(editStub).toHaveBeenCalledOnce();
                 expect(alertStub).toHaveBeenCalledOnce();
 
-                expect(wizardLearningGoalsComponent.learningGoals.length).toBe(1);
+                expect(wizardLearningGoalsComponent.learningGoals).toHaveLength(1);
                 expect(wizardLearningGoalsComponent.learningGoals[0]!.lectureUnits![0]!.id).toBe(2);
             });
         });

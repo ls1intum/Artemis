@@ -225,7 +225,7 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
                 this.unitManagementComponent.loadData();
             },
             error: (res: HttpErrorResponse) => {
-                if (res.error.params === 'file' && res?.error?.title) {
+                if (res.error?.params === 'file' && res?.error?.title) {
                     this.alertService.error(res.error.title);
                 } else {
                     onError(this.alertService, res);

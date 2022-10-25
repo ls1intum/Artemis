@@ -6,7 +6,7 @@ import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
@@ -273,6 +273,86 @@ describe('LectureWizardUnitComponent', () => {
         });
     }));
 
+    it('should show alert upon unsuccessful text form submission', fakeAsync(() => {
+        const textUnitService = TestBed.inject(TextUnitService);
+        const alertService = TestBed.inject(AlertService);
+
+        const formData: TextUnitFormData = {
+            name: 'Test',
+            releaseDate: dayjs().year(2010).month(3).date(5),
+            content: 'Lorem Ipsum',
+        };
+
+        const createStub = jest.spyOn(textUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const alertStub = jest.spyOn(alertService, 'error');
+
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        wizardUnitComponent.isTextUnitFormOpen = true;
+
+        wizardUnitComponent.createEditTextUnit(formData);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(createStub).toHaveBeenCalledOnce();
+            expect(alertStub).toHaveBeenCalledOnce();
+        });
+    }));
+
+    it('should show alert upon unsuccessful video form submission', fakeAsync(() => {
+        const videoUnitService = TestBed.inject(VideoUnitService);
+        const alertService = TestBed.inject(AlertService);
+
+        const formData: VideoUnitFormData = {
+            name: 'Test',
+            releaseDate: dayjs().year(2010).month(3).date(5),
+            description: 'Lorem Ipsum',
+            source: 'https://www.youtube.com/embed/8iU8LPEa4o0',
+        };
+
+        const createStub = jest.spyOn(videoUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const alertStub = jest.spyOn(alertService, 'error');
+
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        wizardUnitComponent.isVideoUnitFormOpen = true;
+
+        wizardUnitComponent.createEditVideoUnit(formData);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(createStub).toHaveBeenCalledOnce();
+            expect(alertStub).toHaveBeenCalledOnce();
+        });
+    }));
+
+    it('should show alert upon unsuccessful online form submission', fakeAsync(() => {
+        const onlineUnitService = TestBed.inject(OnlineUnitService);
+        const alertService = TestBed.inject(AlertService);
+
+        const formData: OnlineUnitFormData = {
+            name: 'Test',
+            releaseDate: dayjs().year(2010).month(3).date(5),
+            description: 'Lorem Ipsum',
+            source: 'https://www.example.com',
+        };
+
+        const createStub = jest.spyOn(onlineUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const alertStub = jest.spyOn(alertService, 'error');
+
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        wizardUnitComponent.isOnlineUnitFormOpen = true;
+
+        wizardUnitComponent.createEditOnlineUnit(formData);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(createStub).toHaveBeenCalledOnce();
+            expect(alertStub).toHaveBeenCalledOnce();
+        });
+    }));
+
     it('should send POST request upon online form submission and update units', fakeAsync(() => {
         const onlineUnitService = TestBed.inject(OnlineUnitService);
 
@@ -396,6 +476,125 @@ describe('LectureWizardUnitComponent', () => {
             expect(updateSpy).toHaveBeenCalledOnce();
 
             updateSpy.mockRestore();
+        });
+    }));
+
+    it('should send POST request upon attachment form submission and update units when editing lecture', fakeAsync(() => {
+        const attachmentUnitService = TestBed.inject(AttachmentUnitService);
+
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+
+        const attachmentUnitFormData: AttachmentUnitFormData = {
+            formProperties: {
+                name: 'test',
+                description: 'lorem ipsum',
+                releaseDate: dayjs().year(2010).month(3).date(5),
+                version: 2,
+                updateNotificationText: 'lorem ipsum',
+            },
+            fileProperties: {
+                file: fakeFile,
+                fileName: 'lorem ipsum',
+            },
+        };
+
+        const examplePath = '/path/to/file';
+
+        const attachment = new Attachment();
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.releaseDate = attachmentUnitFormData.formProperties.releaseDate;
+        attachment.name = attachmentUnitFormData.formProperties.name;
+        attachment.link = examplePath;
+
+        const attachmentUnit = new AttachmentUnit();
+        attachmentUnit.description = attachmentUnitFormData.formProperties.description;
+        attachmentUnit.attachment = attachment;
+
+        const formData = new FormData();
+        formData.append('file', fakeFile, attachmentUnitFormData.fileProperties.fileName);
+        formData.append('attachment', objectToJsonBlob(attachment));
+        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
+
+        const attachmentUnitResponse: HttpResponse<AttachmentUnit> = new HttpResponse({
+            body: attachmentUnit,
+            status: 201,
+        });
+        const createAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'update').mockReturnValue(of(attachmentUnitResponse));
+
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
+
+        const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
+
+        wizardUnitComponent.isEditingLectureUnit = true;
+        wizardUnitComponent.currentlyProcessedAttachmentUnit = new AttachmentUnit();
+        wizardUnitComponent.currentlyProcessedAttachmentUnit.attachment = new Attachment();
+        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+
+        wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(createAttachmentUnitStub).toHaveBeenCalledOnce();
+            expect(updateSpy).toHaveBeenCalledOnce();
+
+            updateSpy.mockRestore();
+        });
+    }));
+
+    it('should show alert upon unsuccessful attachment form submission', fakeAsync(() => {
+        const attachmentUnitService = TestBed.inject(AttachmentUnitService);
+        const alertService = TestBed.inject(AlertService);
+
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+
+        const attachmentUnitFormData: AttachmentUnitFormData = {
+            formProperties: {
+                name: 'test',
+                description: 'lorem ipsum',
+                releaseDate: dayjs().year(2010).month(3).date(5),
+                version: 2,
+                updateNotificationText: 'lorem ipsum',
+            },
+            fileProperties: {
+                file: fakeFile,
+                fileName: 'lorem ipsum',
+            },
+        };
+
+        const examplePath = '/path/to/file';
+
+        const attachment = new Attachment();
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.releaseDate = attachmentUnitFormData.formProperties.releaseDate;
+        attachment.name = attachmentUnitFormData.formProperties.name;
+        attachment.link = examplePath;
+
+        const attachmentUnit = new AttachmentUnit();
+        attachmentUnit.description = attachmentUnitFormData.formProperties.description;
+        attachmentUnit.attachment = attachment;
+
+        const formData = new FormData();
+        formData.append('file', fakeFile, attachmentUnitFormData.fileProperties.fileName);
+        formData.append('attachment', objectToJsonBlob(attachment));
+        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
+
+        const createAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const alertStub = jest.spyOn(alertService, 'error');
+
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+
+        wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(createAttachmentUnitStub).toHaveBeenCalledOnce();
+            expect(alertStub).toHaveBeenCalledOnce();
         });
     }));
 
