@@ -84,7 +84,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     quizExercises: QuizExercise[];
     allExistingQuestions: QuizQuestion[];
     existingQuestions: QuizQuestion[];
-    importFile?: Blob;
+    importFile?: File;
     importFileName: string;
     searchQueryText: string;
     dndFilterEnabled: boolean;
