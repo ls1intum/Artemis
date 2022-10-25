@@ -51,6 +51,26 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     }
 
     @Test
+    @WithAnonymousUser
+    void redirectProxyNoState() throws Exception {
+        String idToken = "some-token";
+        Map<String, Object> body = new HashMap<>();
+        body.put("id_token", idToken);
+
+        request.postFormWithoutLocation(CustomLti13Configurer.LTI13_BASE_PATH + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void redirectProxyNoToken() throws Exception {
+        String state = "some-state";
+        Map<String, Object> body = new HashMap<>();
+        body.put("state", state);
+
+        request.postFormWithoutLocation(CustomLti13Configurer.LTI13_BASE_PATH + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
     @WithMockUser(value = "student1", roles = "USER")
     void oidcFlowFails_noRequestCached() throws Exception {
         String ltiLaunchUri = CustomLti13Configurer.LTI13_LOGIN_PATH + "?id_token=some-token&state=some-state";

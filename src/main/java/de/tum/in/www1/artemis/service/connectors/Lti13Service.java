@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -156,7 +158,7 @@ public class Lti13Service {
             return new Lti13LaunchRequest(ltiIdToken, clientRegistrationId);
         }
         catch (IllegalArgumentException ex) {
-            throw new RuntimeException("Could not create LTI 1.3 launch request with provided idToken: " + ex.getMessage());
+            throw new IllegalArgumentException("Could not create LTI 1.3 launch request with provided idToken: " + ex.getMessage());
         }
     }
 
@@ -217,10 +219,10 @@ public class Lti13Service {
         String body = getScoreBody(launch.getSub(), comment, score);
         HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
         try {
-            restTemplate.postForEntity(new URI(getScoresUrl(launch.getScoreLineItemUrl())), httpRequest, Object.class);
+            restTemplate.postForEntity(getScoresUrl(launch.getScoreLineItemUrl()), httpRequest, Object.class);
             log.info("Submitted score for " + launch.getUser().getLogin() + " to client" + client.getClientId());
         }
-        catch (Exception e) {
+        catch (HttpClientErrorException e) {
             String message = "Could not submit score for " + launch.getUser().getLogin() + " to client " + client.getClientId() + ": " + e.getMessage();
             log.error(message);
         }

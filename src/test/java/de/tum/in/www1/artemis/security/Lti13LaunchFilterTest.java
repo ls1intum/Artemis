@@ -38,8 +38,6 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticati
 
 class Lti13LaunchFilterTest {
 
-    private final String targetLinkUri = "https://any-artemis-domain.org/course/123/exercise/1234";
-
     @Mock
     private OAuth2LoginAuthenticationFilter defaultFilter;
 
@@ -71,6 +69,8 @@ class Lti13LaunchFilterTest {
 
     private OidcAuthenticationToken oidcToken;
 
+    private String targetLinkUri;
+
     private final Map<String, Object> idTokenClaims = new HashMap<>();
 
     @BeforeEach
@@ -90,6 +90,8 @@ class Lti13LaunchFilterTest {
         doAnswer(getClaimAnswer).when(idToken).getClaim(any());
         doAnswer(getClaimAnswer).when(oidcUser).getClaim(any());
         oidcToken = new OidcAuthenticationToken(oidcUser, null, "some-registration", "some-state");
+
+        targetLinkUri = "https://any-artemis-domain.org/course/123/exercise/1234";
     }
 
     private void initValidIdToken() {

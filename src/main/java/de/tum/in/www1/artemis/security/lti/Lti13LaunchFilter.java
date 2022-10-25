@@ -15,6 +15,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -61,10 +62,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
             writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
         }
-        catch (IOException ex) {
-            throw ex;
-        }
-        catch (Exception ex) {
+        catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
             log.error(ex.getMessage());
             response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());
         }
@@ -80,7 +78,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             }
         }
         catch (OAuth2AuthenticationException | IllegalStateException ex) {
-            throw new RuntimeException("Failed to attempt LTI 1.3 login authentication: " + ex.getMessage());
+            throw new IllegalStateException("Failed to attempt LTI 1.3 login authentication: " + ex.getMessage());
         }
 
         return ltiAuthToken;

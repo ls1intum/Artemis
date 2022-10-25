@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.connectors;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -207,10 +206,10 @@ class Lti13ServiceTest {
 
         lti13Service.onNewResult(participation);
 
-        ArgumentCaptor<URI> uriCapture = ArgumentCaptor.forClass(URI.class);
+        ArgumentCaptor<String> urlCapture = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<HttpEntity<String>> httpEntityCapture = ArgumentCaptor.forClass(HttpEntity.class);
 
-        verify(restTemplate).postForEntity(uriCapture.capture(), httpEntityCapture.capture(), any());
+        verify(restTemplate).postForEntity(urlCapture.capture(), httpEntityCapture.capture(), any());
 
         HttpEntity<String> httpEntity = httpEntityCapture.getValue();
 
@@ -229,8 +228,7 @@ class Lti13ServiceTest {
         assertEquals(scoreGiven, body.get("scoreGiven"), "Invalid parameter in score publish request: scoreGiven");
         assertEquals(100d, body.get("scoreMaximum"), "Invalid parameter in score publish request: scoreMaximum");
 
-        URI scoreUri = uriCapture.getValue();
-        assertEquals(launch.getScoreLineItemUrl() + "/scores", scoreUri.toString(), "Score publish request was sent to a wrong URI");
+        assertEquals(urlCapture.getValue(), launch.getScoreLineItemUrl() + "/scores", "Score publish request was sent to a wrong URI");
     }
 
     private State getValidStateForNewResult(Result result) {

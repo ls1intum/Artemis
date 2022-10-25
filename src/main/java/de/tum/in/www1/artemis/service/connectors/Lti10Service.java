@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
@@ -22,6 +24,7 @@ import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.util.StringUtils;
 
@@ -32,6 +35,7 @@ import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
+import oauth.signpost.exception.OAuthException;
 
 @Service
 public class Lti10Service {
@@ -274,7 +278,7 @@ public class Lti10Service {
                     String responseString = new BasicResponseHandler().handleResponse(response);
                     log.info("Response from LTI consumer: {}", responseString);
                 }
-                catch (Exception ex) {
+                catch (HttpClientErrorException | IOException | OAuthException | GeneralSecurityException ex) {
                     log.error("Reporting to LTI consumer failed", ex);
                 }
             }));

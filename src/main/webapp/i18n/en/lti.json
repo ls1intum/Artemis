@@ -33,7 +33,9 @@
         },
         "lti13": {
             "launch": {
-                "title": "Launch exercise"
+                "title": "Launch exercise",
+                "launching": "Launching...",
+                "launchFailed": "Could not launch exercise. Please try again later or contact the administrator."
             },
             "dynamicRegistration": {
                 "title": "Dynamic Registration",
