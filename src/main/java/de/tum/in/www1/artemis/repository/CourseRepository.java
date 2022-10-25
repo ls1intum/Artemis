@@ -68,6 +68,20 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActiveWithLecturesAndExams(@Param("now") ZonedDateTime now);
 
+    @Query("""
+            SELECT DISTINCT c FROM Course c
+            LEFT JOIN FETCH c.tutorialGroups tutorialGroups
+            LEFT JOIN FETCH tutorialGroups.teachingAssistant tutor
+            LEFT JOIN FETCH tutorialGroups.registrations registrations
+            LEFT JOIN FETCH registrations.student student
+            WHERE (c.startDate <= :#{#now}
+            	OR c.startDate IS NULL)
+            AND (c.endDate >= :#{#now}
+            	OR c.endDate IS NULL)
+            AND (student.id = :#{#userId} OR tutor.id = :#{#userId})
+            """)
+    List<Course> findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
+
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
     Optional<Course> findWithEagerLecturesAndExamsById(long courseId);
 
@@ -77,12 +91,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             LEFT JOIN FETCH c.exercises exercises
             LEFT JOIN FETCH c.lectures lectures
             LEFT JOIN FETCH lectures.attachments
-            LEFT JOIN FETCH exercises.categories
-            WHERE (c.startDate <= :#{#now}
-            	OR c.startDate IS NULL)
-            AND (c.endDate >= :#{#now}
-            	OR c.endDate IS NULL)
-            """)
+                LEFT JOIN FETCH exercises.categories
+                WHERE (c.startDate <= :#{#now}
+                	OR c.startDate IS NULL)
+                AND (c.endDate >= :#{#now}
+                	OR c.endDate IS NULL)
+                """)
     List<Course> findAllActiveWithEagerExercisesAndLectures(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
