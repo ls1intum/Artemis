@@ -20,35 +20,35 @@
         </div>
         <div class="flex-grow-1 d-flex justify-content-center">
             <div class="flex-grow-1 d-flex justify-content-space-between ms-5 me-5 code-hint-generation-wrapper">
-                <jhi-code-hint-generation-status-step
+                <jhi-lecture-update-wizard-step
                     [currentlySelected]="isCurrent(1)"
                     [isPerformed]="isCompleted(1)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.titleStepTitle'"
-                ></jhi-code-hint-generation-status-step>
+                ></jhi-lecture-update-wizard-step>
                 <div class="connector" [ngClass]="isCompleted(1) ? 'check' : 'unset'"></div>
-                <jhi-code-hint-generation-status-step
+                <jhi-lecture-update-wizard-step
                     [currentlySelected]="isCurrent(2)"
                     [isPerformed]="isCompleted(2)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.periodStepTitle'"
-                ></jhi-code-hint-generation-status-step>
+                ></jhi-lecture-update-wizard-step>
                 <div class="connector" [ngClass]="isCompleted(2) ? 'check' : 'unset'"></div>
-                <jhi-code-hint-generation-status-step
+                <jhi-lecture-update-wizard-step
                     [currentlySelected]="isCurrent(3)"
                     [isPerformed]="isCompleted(3)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle'"
-                ></jhi-code-hint-generation-status-step>
+                ></jhi-lecture-update-wizard-step>
                 <div class="connector" [ngClass]="isCompleted(3) ? 'check' : 'unset'"></div>
-                <jhi-code-hint-generation-status-step
+                <jhi-lecture-update-wizard-step
                     [currentlySelected]="isCurrent(4)"
                     [isPerformed]="isCompleted(4)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.unitsStepTitle'"
-                ></jhi-code-hint-generation-status-step>
+                ></jhi-lecture-update-wizard-step>
                 <div class="connector" [ngClass]="isCompleted(4) ? 'check' : 'unset'"></div>
-                <jhi-code-hint-generation-status-step
+                <jhi-lecture-update-wizard-step
                     [currentlySelected]="isCurrent(5)"
                     [isPerformed]="isCompleted(5)"
                     [labelTranslationKey]="'artemisApp.lecture.wizardMode.steps.learningGoalsStepTitle'"
-                ></jhi-code-hint-generation-status-step>
+                ></jhi-lecture-update-wizard-step>
             </div>
         </div>
         <div class="ms-3">
