@@ -189,7 +189,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
                 List<ShortAnswerSolution> solutions = shortAnswerQuestion.getSolutions();
                 assertThat(solutions.get(0).getText()).as("Text for solution is correct").isEqualTo("is");
-                assertThat(solutions.get(1).getText()).as("Text for solution is correct").isEqualTo("long");
+                assertThat(solutions.get(1).getText()).as("Text for solution is correct").isEqualTo(".5-10.5");
             }
         }
     }
@@ -259,7 +259,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
                 List<ShortAnswerSolution> solutions = shortAnswerQuestion.getSolutions();
                 assertThat(solutions.get(0).getText()).as("Text for solution is correct").isEqualTo("is");
-                assertThat(solutions.get(1).getText()).as("Text for solution is correct").isEqualTo("long");
+                assertThat(solutions.get(1).getText()).as("Text for solution is correct").isEqualTo(".5-10.5");
             }
         }
     }
@@ -389,7 +389,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 assertThat(spots.get(0).getWidth()).as("Width for spot is correct").isEqualTo(2);
 
                 List<ShortAnswerSolution> solutions = shortAnswerQuestion.getSolutions();
-                assertThat(solutions.get(0).getText()).as("Text for solution is correct").isEqualTo("long");
+                assertThat(solutions.get(0).getText()).as("Text for solution is correct").isEqualTo(".5-10.5");
             }
         }
     }
@@ -505,7 +505,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 assertThat(spots.get(0).getWidth()).as("Width for spot is correct").isEqualTo(2);
 
                 List<ShortAnswerSolution> solutions = shortAnswerQuestion.getSolutions();
-                assertThat(solutions.get(0).getText()).as("Text for solution is correct").isEqualTo("long");
+                assertThat(solutions.get(0).getText()).as("Text for solution is correct").isEqualTo(".5-10.5");
             }
         }
     }

@@ -6,7 +6,7 @@
     "matchLetterCase": false,
     "similarityValue": 85,
     "title": "Cypress SA",
-    "text": "Never gonna [-spot 1] you up\nNever gonna [-spot 2] you down\nNever gonna [-spot 3] around and [-spot 4] you\nNever gonna make you [-spot 5]\nNever gonna say [-spot 6]\nNever gonna tell a lie and hurt you",
+    "text": "Never gonna [-spot 1] you up\nNever gonna [-spot 2] you down\nNever gonna [-spot 3] around and [-spot 4] you\nNever gonna make you [-spot 5]\nNever gonna say [-spot 6]\nNever gonna tell a lie and hurt you\n[-spot-number 7], [-spot-number 8], [-spot-number 9], and [-spot-number 10]",
     "scoringType": "PROPORTIONAL_WITHOUT_PENALTY",
     "points": 1,
     "spots": [
@@ -45,6 +45,34 @@
             "invalid": false,
             "width": 15,
             "spotNr": 6
+        },
+        {
+            "tempID": 1005759930642079,
+            "invalid": false,
+            "width": 15,
+            "spotNr": 7,
+            "type": "NUMBER"
+        },
+        {
+            "tempID": 3608490967605782,
+            "invalid": false,
+            "width": 15,
+            "spotNr": 8,
+            "type": "NUMBER"
+        },
+        {
+            "tempID": 2953708649537689,
+            "invalid": false,
+            "width": 15,
+            "spotNr": 9,
+            "type": "NUMBER"
+        },
+        {
+            "tempID": 2239053305650430,
+            "invalid": false,
+            "width": 15,
+            "spotNr": 10,
+            "type": "NUMBER"
         }
     ],
     "solutions": [
@@ -77,6 +105,26 @@
             "tempID": 1934608439373183,
             "invalid": false,
             "text": "goodbye"
+        },
+        {
+            "tempID": 6343183993645076,
+            "invalid": false,
+            "text": "1.0"
+        },
+        {
+            "tempID": 9688463778946560,
+            "invalid": false,
+            "text": "0.5 - 10"
+        },
+        {
+            "tempID": 7106393289200588,
+            "invalid": false,
+            "text": "2.5"
+        },
+        {
+            "tempID": 1301028410071601,
+            "invalid": false,
+            "text": "5 - 10.0"
         }
     ],
     "correctMappings": [
@@ -161,6 +209,66 @@
                 "tempID": 1934608439373183,
                 "invalid": false,
                 "text": "goodbye"
+            },
+            "invalid": false
+        },
+        {
+            "spot": {
+                "tempID": 1005759930642079,
+                "invalid": false,
+                "width": 15,
+                "spotNr": 7,
+                "type": "NUMBER"
+            },
+            "solution": {
+                "tempID": 6343183993645076,
+                "invalid": false,
+                "text": "1.0"
+            },
+            "invalid": false
+        },
+        {
+            "spot": {
+                "tempID": 3608490967605782,
+                "invalid": false,
+                "width": 15,
+                "spotNr": 8,
+                "type": "NUMBER"
+            },
+            "solution": {
+                "tempID": 9688463778946560,
+                "invalid": false,
+                "text": "0.5 - 10"
+            },
+            "invalid": false
+        },
+        {
+            "spot": {
+                "tempID": 2953708649537689,
+                "invalid": false,
+                "width": 15,
+                "spotNr": 9,
+                "type": "NUMBER"
+            },
+            "solution": {
+                "tempID": 7106393289200588,
+                "invalid": false,
+                "text": "2.5"
+            },
+            "invalid": false
+        },
+        {
+            "spot": {
+                "tempID": 2239053305650430,
+                "invalid": false,
+                "width": 15,
+                "spotNr": 10,
+                "type": "NUMBER"
+            },
+            "solution": {
+                "tempID": 1301028410071601,
+                "invalid": false,
+                "text": "5 - 10.0"
             },
             "invalid": false
         }

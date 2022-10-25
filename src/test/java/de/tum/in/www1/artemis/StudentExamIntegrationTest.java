@@ -1211,7 +1211,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // check that the submission was saved and that a submitted version was created
         int dndDragItemIndex = 1;
         int dndLocationIndex = 2;
-        String shortAnswerText = "New Short Answer Text";
+        String shortAnswerText = "11";
         int saSpotIndex = 1;
         int mcSelectedOptionIndex = 0;
         quizExercise.getQuizQuestions().forEach(quizQuestion -> {

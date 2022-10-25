@@ -184,6 +184,7 @@
                 "misleadingCorrectMapping": "Frage {{index}}: Es gibt mindestens eine korrekte Zuordnung (oder Kombination an korrekten Zuordnungen), die wenn sie verwendet wird, keine korrekte Gesamtlösung mehr zulässt.",
                 "shortAnswerQuestionEverySpotHasASolution": "Frage {{index}}: Es gibt mindestens ein Eingabefeld, dass keine Lösung besitzt.",
                 "shortAnswerQuestionEveryMappedSolutionHasASpot": "Frage {{index}}: Es fehlt mindestens ein Eingabefeld, um eine Kombination an korrekten Zuordnungen zu erhalten.",
+                "shortAnswerQuestionEverySpotNumberHasAValidSolution": "Frage {{index}}: Es gibt mindestens ein Eingabefeld, das hat ungültige Lösung.",
                 "shortAnswerQuestionUnsolvable": "Frage {{index}}: Diese Frage kann nicht richtig beantwortet werden. Bitte überprüfe die zugeordneten Lösungen",
                 "shortAnswerQuestionSolutionHasNoValue": "Frage {{index}}: Es gibt mindestens eine Lösung die keinen Wert besitzt.",
                 "shortAnswerQuestionDuplicateMapping": "Frage {{index}}: Es gibt mindestens ein Mapping das doppelt ist.",

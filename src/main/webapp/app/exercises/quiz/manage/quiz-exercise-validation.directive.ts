@@ -125,7 +125,8 @@ export abstract class QuizExerciseValidationDirective {
                         shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
                         shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= this.maxLengthThreshold).length === 0 &&
                         !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings) &&
-                        this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
+                        this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion) &&
+                        this.shortAnswerQuestionUtil.everyNumberSpotHasValidSolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots!)
                     );
                 }
                 default: {
@@ -359,6 +360,12 @@ export abstract class QuizExerciseValidationDirective {
                 if (!this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
+                        translateValues: { index: index + 1 },
+                    });
+                }
+                if (!this.shortAnswerQuestionUtil.everyNumberSpotHasValidSolution(shortAnswerQuestion.correctMappings!, shortAnswerQuestion.spots!)) {
+                    invalidReasons.push({
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotNumberHasAValidSolution',
                         translateValues: { index: index + 1 },
                     });
                 }

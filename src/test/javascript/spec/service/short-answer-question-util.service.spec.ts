@@ -3,7 +3,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ArtemisTestModule } from '../test.module';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
+import { ShortAnswerSpot, SpotType } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
@@ -56,14 +56,16 @@ describe('ShortAnswerQuestionUtil', () => {
         const sampleSolutions = service.getSampleSolutions(shortAnswerQuestion);
         const mappingFromGetter = service.getShortAnswerMapping(shortAnswerQuestion.correctMappings, solution, spot);
         const spotFromGetter = service.getSpot(spot.spotNr!, shortAnswerQuestion);
-        const spotNr = service.getSpotNr('[-spot 123]');
+        const spotNr1 = service.getSpotNr('[-spot 123]');
+        const spotNr2 = service.getSpotNr('[-spot-number 456]');
 
         expect(solutions).toContain(solution);
         expect(spots).toContain(spot);
         expect(sampleSolutions).toContain(solution);
         expect(mappingFromGetter).toEqual(mapping);
         expect(spotFromGetter).toEqual(spot);
-        expect(spotNr).toBe(123);
+        expect(spotNr1).toBe(123);
+        expect(spotNr2).toBe(456);
 
         let isMappedTogether = service.isMappedTogether(shortAnswerQuestion.correctMappings, solution, spot);
         expect(isMappedTogether).toBeTrue();
@@ -72,6 +74,9 @@ describe('ShortAnswerQuestionUtil', () => {
         expect(isMappedTogether).toBeFalse();
 
         let isInputField = service.isInputField('[-spot 123]');
+        expect(isInputField).toBeTrue();
+
+        isInputField = service.isInputField('[-spot-number 456]');
         expect(isInputField).toBeTrue();
 
         isInputField = service.isInputField('text with no input');
@@ -197,5 +202,53 @@ describe('ShortAnswerQuestionUtil', () => {
         const textPartsInHTML = service.transformTextPartsIntoHTML(textParts);
         expect(textPartsInHTML[0][0]).toContain(`<p>${textPart1}</p>`);
         expect(textPartsInHTML[1][0]).toContain(`<p><strong>${textPart2.split('**').join('')}</strong></p>`);
+    });
+
+    it('should check for invalid number spot solution', () => {
+        const spot1 = new ShortAnswerSpot();
+        spot1.type = SpotType.NUMBER;
+
+        const solution1 = new ShortAnswerSolution();
+        const solution2 = new ShortAnswerSolution();
+        const solution3 = new ShortAnswerSolution();
+        const solution4 = new ShortAnswerSolution();
+        solution1.text = '1.1-5.9';
+        solution2.text = '-10.1-12.1';
+        solution3.text = '-100--90.1';
+        solution4.text = '-8.2';
+
+        const mapping1 = new ShortAnswerMapping(spot1, solution1);
+        const mapping2 = new ShortAnswerMapping(spot1, solution2);
+        const mapping3 = new ShortAnswerMapping(spot1, solution3);
+        const mapping4 = new ShortAnswerMapping(spot1, solution4);
+
+        expect(service.everyNumberSpotHasValidSolution([mapping1, mapping2, mapping3, mapping4], [spot1])).toBeTrue();
+
+        const solution5 = new ShortAnswerSolution();
+        solution5.text = 'a';
+        const mapping5 = new ShortAnswerMapping(spot1, solution5);
+        expect(service.everyNumberSpotHasValidSolution([mapping5], [spot1])).toBeFalse();
+
+        const solution6 = new ShortAnswerSolution();
+        solution6.text = '';
+        const mapping6 = new ShortAnswerMapping(spot1, solution6);
+        expect(service.everyNumberSpotHasValidSolution([mapping6], [spot1])).toBeFalse();
+
+        const solution7 = new ShortAnswerSolution();
+        solution7.text = '-1.1--10.1';
+        const mapping7 = new ShortAnswerMapping(spot1, solution7);
+        expect(service.everyNumberSpotHasValidSolution([mapping7], [spot1])).toBeFalse();
+
+        const solution8 = new ShortAnswerSolution();
+        solution8.text = 'x--10.1';
+        const mapping8 = new ShortAnswerMapping(spot1, solution8);
+        expect(service.everyNumberSpotHasValidSolution([mapping8], [spot1])).toBeFalse();
+
+        const solution9 = new ShortAnswerSolution();
+        solution9.text = '-1.1-a';
+        const mapping9 = new ShortAnswerMapping(spot1, solution9);
+        expect(service.everyNumberSpotHasValidSolution([mapping9], [spot1])).toBeFalse();
+
+        expect(service.everyNumberSpotHasValidSolution([mapping1, mapping2, mapping3, mapping4, mapping5], [spot1])).toBeFalse();
     });
 });

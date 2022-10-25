@@ -443,6 +443,7 @@ export class CourseManagementRequests {
                     spotNr: quizExercise.quizQuestions[0].spots[index].spotNr,
                     width: quizExercise.quizQuestions[0].spots[index].width,
                     invalid: quizExercise.quizQuestions[0].spots[index].invalid,
+                    type: quizExercise.quizQuestions[0].spots[index].type,
                 },
             };
         });

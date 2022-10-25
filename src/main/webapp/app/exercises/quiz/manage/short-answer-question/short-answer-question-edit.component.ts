@@ -21,7 +21,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
+import { ShortAnswerSpot, SpotType } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
@@ -37,6 +37,8 @@ import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.co
     encapsulation: ViewEncapsulation.None,
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
+    spotType: typeof SpotType = SpotType;
+
     @ViewChild('questionEditor', { static: false })
     private questionEditor: AceEditorComponent;
     @ViewChild('clickLayer', { static: false })
@@ -154,7 +156,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(line)[0];
             let parsedLine: string[] = [];
             textParts.forEach((block) => {
-                if (block.includes('[-spot ', 0)) {
+                if (block.includes('[-spot ', 0) || block.includes('[-spot-number ', 0)) {
                     parsedLine.push(block);
                 } else {
                     let blockSplit = block.split(/\s+/g);
@@ -269,12 +271,16 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const questionParts = text.split(/\[-option /g);
         const questionText = questionParts[0];
 
-        // Split into spots to generate this structure: {"1","2","3"}
-        const spotParts = questionText
-            .split(/\[-spot/g)
-            .map((splitText) => splitText.split(/\]/g))
-            .slice(1)
-            .map((sliceText) => sliceText[0]);
+        // Split into spots to generate this structure: [{spotID: "1", spotType: "text"}, {spotID: "2", spotType: "text"}, {spotID: "3", spotType: "number"}]
+        const spotParts: { spotID: string; spotType: string }[] = [];
+        const regexp = new RegExp('\\[-spot-?(number)? (\\d+)\\]', 'g');
+        let match = regexp.exec(questionText);
+        while (match !== null) {
+            const spotType = match[1] ? match[1] : 'text';
+            const spotID = match[2];
+            spotParts.push({ spotID, spotType });
+            match = regexp.exec(questionText);
+        }
 
         // Split new created Array by "]" to generate this structure: {"1,2", " SolutionText"}
         const solutionParts = questionParts.map((questionPart) => questionPart.split(/\]/g)).slice(1);
@@ -292,7 +298,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.shortAnswerQuestion.spots = [];
 
         // setup spots
-        for (const spotID of spotParts) {
+        for (const { spotID, spotType } of spotParts) {
             const spot = new ShortAnswerSpot();
             spot.width = 15;
 
@@ -301,6 +307,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
                 spot.id = existingSpotIDs[this.shortAnswerQuestion.spots.length];
             }
             spot.spotNr = +spotID.trim();
+            spot.type = SpotType[spotType.toUpperCase()];
             this.shortAnswerQuestion.spots.push(spot);
         }
 
@@ -343,13 +350,14 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /**
      * @function addSpotAtCursor
+     * @param type Type of the spot that will be added
      * @desc Add the markdown for a spot at the current cursor location and
      * an option connected to the spot below the last visible row
      */
-    addSpotAtCursor(): void {
+    addSpotAtCursor(type: SpotType): void {
         const editor = this.questionEditor.getEditor();
         const optionText = editor.getCopyText();
-        const addedText = '[-spot ' + this.numberOfSpot + ']';
+        const addedText = `[-spot${type === SpotType.NUMBER ? '-number' : ''} ` + this.numberOfSpot + ']';
         editor.focus();
         editor.insert(addedText);
         editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
@@ -406,7 +414,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @function addSpotAtCursorVisualMode
      * @desc Add an input field on the current selected location and add the solution option accordingly
      */
-    addSpotAtCursorVisualMode(): void {
+    addSpotAtCursorVisualMode(type: SpotType): void {
         // check if selection is on the correct div
         const wrapperDiv = document.getElementById('test')!;
         const selection = window.getSelection()!;
@@ -442,6 +450,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const markedTextHTML = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
         const markedText = markdownForHtml(markedTextHTML).substring(startOfRange, endOfRange);
 
+        // If spot type is number, only create spot if marked text is a valid solution
+        if (type === SpotType.NUMBER && !this.shortAnswerQuestionUtil.isValidNumberSpotSolution(markedText)) {
+            return;
+        }
+
         // split text before first option tag
         const questionText = editor
             .getValue()
@@ -450,7 +463,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
         const textOfSelectedRow = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
         this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] =
-            textOfSelectedRow.substring(0, startOfRange) + '[-spot ' + this.numberOfSpot + ']' + textOfSelectedRow.substring(endOfRange);
+            textOfSelectedRow.substring(0, startOfRange) +
+            `[-spot${type === SpotType.NUMBER ? '-number' : ''} ` +
+            this.numberOfSpot +
+            ']' +
+            textOfSelectedRow.substring(endOfRange);
 
         // recreation of question text from array and update textParts and parse textParts to html
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
@@ -509,6 +526,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
         if (!dragItem) {
             // Drag item was not found in question => do nothing
+            return;
+        }
+
+        // If spot type is number, only create spot if marked text is a valid solution
+        if (spot.type === SpotType.NUMBER && !this.shortAnswerQuestionUtil.isValidNumberSpotSolution(dragItem.text)) {
             return;
         }
 
@@ -709,7 +731,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
         this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
 
-        this.textParts = this.textParts.map((part) => part.filter((text) => !text || !text.includes('[-spot ' + spotToDelete.spotNr + ']')));
+        this.textParts = this.textParts.map((part) =>
+            part.filter((text) => !text || !text.includes(`[-spot${spotToDelete.type === SpotType.NUMBER ? '-number' : ''} ` + spotToDelete.spotNr + ']')),
+        );
 
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
     }

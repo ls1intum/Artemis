@@ -184,6 +184,7 @@
                 "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly.",
                 "shortAnswerQuestionEverySpotHasASolution": "Question {{index}}: At least one spot is missing a solution.",
                 "shortAnswerQuestionEveryMappedSolutionHasASpot": "Question {{index}}: At least one spot is missing that is necessary for a correct mapping.",
+                "shortAnswerQuestionEverySpotNumberHasAValidSolution": "Question {{index}}: At least one number spot has an invalid solution.",
                 "shortAnswerQuestionUnsolvable": "Question {{index}}: The question cannot be answered correctly. Please check your mapped solutions",
                 "shortAnswerQuestionSolutionHasNoValue": "Question {{index}}: At least one solution has no value.",
                 "shortAnswerQuestionDuplicateMapping": "Question {{index}}: At least one mapping is duplicated.",

@@ -18,6 +18,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -41,6 +43,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.opencsv.CSVReader;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -3500,11 +3503,26 @@ public class DatabaseUtilService {
                 ShortAnswerSubmittedText submittedText = new ShortAnswerSubmittedText();
                 submittedText.setSpot(spot);
                 var correctText = ((ShortAnswerQuestion) question).getCorrectSolutionForSpot(spot).iterator().next().getText();
-                if (correct) {
-                    submittedText.setText(correctText);
+                if (spot.getType() == SpotType.NUMBER) {
+                    String patternStr = Constants.SHORT_ANSWER_NUMBER_SPOT_TYPE_SOLUTION_REGEX;
+                    Pattern pattern = Pattern.compile(patternStr);
+                    Matcher matcher = pattern.matcher(correctText);
+                    matcher.find();
+                    double upperBound = Double.parseDouble(matcher.group(4));
+                    if (correct) {
+                        submittedText.setText(String.valueOf(upperBound));
+                    }
+                    else {
+                        submittedText.setText(String.valueOf(upperBound + 0.5));
+                    }
                 }
                 else {
-                    submittedText.setText(correctText.toUpperCase());
+                    if (correct) {
+                        submittedText.setText(correctText);
+                    }
+                    else {
+                        submittedText.setText(correctText.toUpperCase());
+                    }
                 }
                 submittedAnswer.addSubmittedTexts(submittedText);
                 // also invoke remove once
@@ -3619,14 +3637,14 @@ public class DatabaseUtilService {
 
         var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
         shortAnswerSpot1.setTempID(generateTempId());
-        var shortAnswerSpot2 = new ShortAnswerSpot().spotNr(2).width(2);
+        var shortAnswerSpot2 = new ShortAnswerSpot().spotNr(2).width(2).spotType(SpotType.NUMBER);
         shortAnswerSpot2.setTempID(generateTempId());
         sa.getSpots().add(shortAnswerSpot1);
         sa.getSpots().add(shortAnswerSpot2);
 
         var shortAnswerSolution1 = new ShortAnswerSolution().text("is");
         shortAnswerSolution1.setTempID(generateTempId());
-        var shortAnswerSolution2 = new ShortAnswerSolution().text("long");
+        var shortAnswerSolution2 = new ShortAnswerSolution().text(".5-10.5");
         shortAnswerSolution2.setTempID(generateTempId());
         sa.addSolution(shortAnswerSolution1);
         // also invoke remove once
