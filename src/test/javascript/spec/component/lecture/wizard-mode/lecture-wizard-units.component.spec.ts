@@ -79,7 +79,7 @@ describe('LectureWizardUnitComponent', () => {
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.VIDEO);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isVideoUnitFormOpen).toBe(true);
+            expect(wizardUnitComponent.isVideoUnitFormOpen).toBeTrue();
         });
     }));
 
@@ -90,7 +90,7 @@ describe('LectureWizardUnitComponent', () => {
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ONLINE);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isOnlineUnitFormOpen).toBe(true);
+            expect(wizardUnitComponent.isOnlineUnitFormOpen).toBeTrue();
         });
     }));
 
@@ -101,7 +101,7 @@ describe('LectureWizardUnitComponent', () => {
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ATTACHMENT);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentUnitFormOpen).toBe(true);
+            expect(wizardUnitComponent.isAttachmentUnitFormOpen).toBeTrue();
         });
     }));
 
@@ -112,7 +112,7 @@ describe('LectureWizardUnitComponent', () => {
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.TEXT);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isTextUnitFormOpen).toBe(true);
+            expect(wizardUnitComponent.isTextUnitFormOpen).toBeTrue();
         });
     }));
 
@@ -123,7 +123,7 @@ describe('LectureWizardUnitComponent', () => {
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.EXERCISE);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isExerciseUnitFormOpen).toBe(true);
+            expect(wizardUnitComponent.isExerciseUnitFormOpen).toBeTrue();
         });
     }));
 
@@ -133,11 +133,11 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponent.onCloseLectureUnitForms();
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isOnlineUnitFormOpen).toBe(false);
-            expect(wizardUnitComponent.isTextUnitFormOpen).toBe(false);
-            expect(wizardUnitComponent.isExerciseUnitFormOpen).toBe(false);
-            expect(wizardUnitComponent.isAttachmentUnitFormOpen).toBe(false);
-            expect(wizardUnitComponent.isVideoUnitFormOpen).toBe(false);
+            expect(wizardUnitComponent.isOnlineUnitFormOpen).toBeFalse();
+            expect(wizardUnitComponent.isTextUnitFormOpen).toBeFalse();
+            expect(wizardUnitComponent.isExerciseUnitFormOpen).toBeFalse();
+            expect(wizardUnitComponent.isAttachmentUnitFormOpen).toBeFalse();
+            expect(wizardUnitComponent.isVideoUnitFormOpen).toBeFalse();
         });
     }));
 
