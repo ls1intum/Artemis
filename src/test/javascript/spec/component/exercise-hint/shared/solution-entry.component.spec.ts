@@ -29,7 +29,7 @@ describe('Solution Entry Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should setup editors', () => {
+    it('should setup editors', () => {
         jest.spyOn(comp.editor.getEditor(), 'setOptions');
         jest.spyOn(comp.editor.getEditor().getSession(), 'setValue');
 
@@ -46,7 +46,7 @@ describe('Solution Entry Component', () => {
         expect(comp.editor.getEditor().getSession().setValue).toHaveBeenCalledWith('ABC');
     });
 
-    it('Should give correct line for gutter', () => {
+    it('should give correct line for gutter', () => {
         comp.ngOnInit();
         const gutterRendererNow = comp.editor.getEditor().session.gutterRenderer;
         const config = { characterWidth: 1 };

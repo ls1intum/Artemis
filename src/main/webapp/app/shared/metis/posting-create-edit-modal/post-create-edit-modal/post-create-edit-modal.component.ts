@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
@@ -11,6 +11,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseWideContext, PageType, PostContentValidationPattern, PostingEditType, PostTitleValidationPattern } from 'app/shared/metis/metis.util';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 const TITLE_MAX_LENGTH = 200;
 const DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK = 800;
@@ -19,6 +20,7 @@ export interface ContextSelectorOption {
     lecture?: Lecture;
     exercise?: Exercise;
     courseWideContext?: CourseWideContext;
+    conversation?: Conversation;
 }
 
 @Component({
@@ -27,6 +29,8 @@ export interface ContextSelectorOption {
     styleUrls: ['../../metis.component.scss'],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
+    @Input() isCourseMessagesPage: boolean;
+
     modalRef?: NgbModalRef;
     exercises?: Exercise[];
     lectures?: Lecture[];
@@ -37,6 +41,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     isAtLeastInstructorInCourse: boolean;
     currentContextSelectorOption: ContextSelectorOption;
     similarPosts: Post[] = [];
+
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly EditType = PostingEditType;
@@ -96,12 +101,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         this.similarPosts = [];
         this.posting.title = this.posting.title ?? '';
         this.resetCurrentContextSelectorOption();
-        this.formGroup = this.formBuilder.group({
-            // the pattern ensures that the title and content must include at least one non-whitespace character
-            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), PostTitleValidationPattern]],
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
-            context: [this.currentContextSelectorOption, [Validators.required]],
-        });
+        this.formGroup = this.formBuilder.group(!this.isCourseMessagesPage ? this.postValidator() : this.messageValidator());
         this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
             this.currentContextSelectorOption = context;
             // announcements should not show similar posts
@@ -216,6 +216,9 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         if (currentContextSelectorOption.courseWideContext) {
             post.course = { id: this.course.id, title: this.course.title };
         }
+        if (currentContextSelectorOption.conversation) {
+            post.conversation = currentContextSelectorOption.conversation;
+        }
         return post;
     }
 
@@ -224,6 +227,23 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
             lecture: this.posting.lecture,
             exercise: this.posting.exercise,
             courseWideContext: this.posting.courseWideContext,
+        };
+    }
+
+    private postValidator() {
+        return {
+            // the pattern ensures that the title and content must include at least one non-whitespace character
+            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), PostTitleValidationPattern]],
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
+            context: [this.currentContextSelectorOption, [Validators.required]],
+        };
+    }
+
+    private messageValidator() {
+        return {
+            // the pattern ensures that content must include at least one non-whitespace character
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
+            context: [this.currentContextSelectorOption, [Validators.required]],
         };
     }
 }

@@ -57,9 +57,29 @@ public class NotificationTitleTypeConstants {
 
     public static final String PROGRAMMING_TEST_CASES_CHANGED_TITLE = "Test cases for programming exercise changed";
 
+    public static final String NEW_MANUAL_FEEDBACK_REQUEST_TITLE = "A new manual feedback request has been submitted";
+
     public static final String NEW_PLAGIARISM_CASE_STUDENT_TITLE = "New plagiarism case";
 
     public static final String PLAGIARISM_CASE_VERDICT_STUDENT_TITLE = "Verdict for your plagiarism case";
+
+    public static final String TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE = "You have been registered to a tutorial group";
+
+    public static final String TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE = "You have been deregistered from a tutorial group";
+
+    public static final String TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE = "A student has been registered to your tutorial group";
+
+    public static final String TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE = "A student has been deregistered from your tutorial group";
+
+    public static final String TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE = "Multiple students have been registered to your tutorial group";
+
+    public static final String TUTORIAL_GROUP_DELETED_TITLE = "Tutorial Group deleted";
+
+    public static final String TUTORIAL_GROUP_UPDATED_TITLE = "Tutorial Group updated";
+
+    public static final String TUTORIAL_GROUP_ASSIGNED_TITLE = "You have been assigned to lead a tutorial group";
+
+    public static final String TUTORIAL_GROUP_UNASSIGNED_TITLE = "You have been unassigned from leading a tutorial group";
 
     // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
@@ -72,11 +92,17 @@ public class NotificationTitleTypeConstants {
             .put(COURSE_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED_TITLE).put(NEW_ANNOUNCEMENT_POST, NEW_ANNOUNCEMENT_POST_TITLE)
             .put(COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FINISHED_TITLE).put(COURSE_ARCHIVE_FAILED, COURSE_ARCHIVE_FAILED_TITLE)
             .put(EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_STARTED_TITLE).put(EXAM_ARCHIVE_FAILED, EXAM_ARCHIVE_FAILED_TITLE).put(EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FINISHED_TITLE)
-            .put(PROGRAMMING_TEST_CASES_CHANGED, PROGRAMMING_TEST_CASES_CHANGED_TITLE).put(NEW_PLAGIARISM_CASE_STUDENT, NEW_PLAGIARISM_CASE_STUDENT_TITLE)
-            .put(PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT_TITLE).build();
+            .put(PROGRAMMING_TEST_CASES_CHANGED, PROGRAMMING_TEST_CASES_CHANGED_TITLE).put(NEW_MANUAL_FEEDBACK_REQUEST, NEW_MANUAL_FEEDBACK_REQUEST_TITLE)
+            .put(NEW_PLAGIARISM_CASE_STUDENT, NEW_PLAGIARISM_CASE_STUDENT_TITLE).put(PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT_TITLE)
+            .put(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE)
+            .put(TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE).put(TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE)
+            .put(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE).put(TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_DELETED_TITLE)
+            .put(TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_UPDATED_TITLE).put(TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE)
+            .put(TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_ASSIGNED_TITLE).put(TUTORIAL_GROUP_UNASSIGNED, TUTORIAL_GROUP_UNASSIGNED_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title
+     *
      * @param title based on NotificationTitleTypeConstants
      * @return corresponding NotificationType
      */
@@ -86,10 +112,26 @@ public class NotificationTitleTypeConstants {
 
     /**
      * Finds the corresponding notification title for the provided NotificationType
+     *
      * @param type from NotificationType
      * @return corresponding notification title
      */
     public static String findCorrespondingNotificationTitle(NotificationType type) {
         return NOTIFICATION_TYPE_AND_TITLE_MAP.get(type);
     }
+
+    /**
+     * Finds the corresponding notification title for the provided NotificationType or throws an exception if the type is not found
+     *
+     * @param type from NotificationType
+     * @return corresponding notification title
+     */
+    public static String findCorrespondingNotificationTitleOrThrow(NotificationType type) {
+        var result = findCorrespondingNotificationTitle(type);
+        if (result == null) {
+            throw new UnsupportedOperationException("No matching title found for: " + type);
+        }
+        return result;
+    }
+
 }

@@ -56,14 +56,23 @@
                     "bonus": "Bonuspunkte",
                     "youAchievedWithBonus": "Du hast {{achievedPoints}} Punkte von {{normalPoints}} möglichen Punkten, und {{bonusPoints}} Bonuspunkten erreicht.",
                     "youAchieved": "Du hast {{achievedPoints}} von möglichen {{normalPoints}} Punkten",
+                    "youAchievedFromBonus": {
+                        "GRADES_CONTINUOUS": "Du hast einen Notenbonus von {{achievedBonus}} aus {{bonusFromTitle}}",
+                        "GRADES_DISCRETE": "Du hast einen Notenbonus von {{achievedBonus}} Stufe(n) gemäß der Notenskala erhalten, was {{gradePointDifference}} von {{bonusFromTitle}} entspricht",
+                        "POINTS": "Du hast {{achievedBonus}} Bonuspunkte von {{bonusFromTitle}}"
+                    },
+                    "youAchievedPointsAfterBonus": "Deine endgültigen Punkte sind {{finalPoints}} nach dem Bonus",
                     "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
                 },
                 "grade": "Note",
+                "gradeBeforeBonus": "Note vor Bonus",
+                "gradeAfterBonus": "Note nach Bonus",
                 "bonus": "Bonuspunkte für die Klausur",
                 "interval": "Intervall (%)",
                 "intervalPoints": "Intervall (Punkte)",
                 "gradeKeyButton": "Notenschlüssel ansehen",
-                "gradeKeyButtonBonus": "Bonusregeln ansehen"
+                "gradeKeyButtonBonus": "Bonusregeln ansehen",
+                "bonusGradeKeyButton": "Bonusnotenschlüssel ansehen"
             },
             "title": "Klausur",
             "startExam": "Starten",
@@ -158,7 +167,12 @@
             "overallScoreColumn": "Erreichtes Ergebnis (%)",
             "overallGradeColumn": "Gesamtnote",
             "overallBonusColumn": "Gesamt-Bonuspunkte",
+            "bonusGradeColumn": "Bonusnote",
+            "finalGradeColumn": "Endnote",
             "passedColumn": "Bestanden",
+            "mostSeverePlagiarismVerdictColumn": "Urteil",
+            "mostSeverePlagiarismVerdictInBonusColumn": "Urteil in Bonus",
+            "presentationScoreThresholdColumn": "Präsentationsergebnis Schwelle: {{ threshold }}",
             "exportCSV": "Exportiere Ergebnisse als CSV",
             "filterForSubmittedExams": "Berücksichtige nur abgegebene Klausuren",
             "filterForNonEmptySubmissions": "Berücksichtige nur Aufgaben mit mindestens einer nicht leeren Abgabe",
@@ -170,7 +184,9 @@
             "noExerciseGroups": "Aufgabengruppen",
             "submittedColumn": "Abgegeben",
             "totalColumn": "Total",
-            "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe \"{{ groupTitle }}\" im Vergleich"
+            "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe \"{{ groupTitle }}\" im Vergleich",
+            "gradesBeforeBonus": "Noten vor Bonus",
+            "gradesAfterBonus": "Noten nach Bonus"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
@@ -244,6 +260,8 @@
             "submitted": "Abgegeben",
             "submissionDate": "Abgabedatum",
             "grade": "Note",
+            "gradeBeforeBonus": "Note vor Bonus",
+            "gradeAfterBonus": "Note nach Bonus",
             "bonus": "Bonuspunkte",
             "passed": "Bestanden",
             "participationStatus": "Teilnahmestatus",
@@ -353,6 +371,7 @@
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
             "gradingSystem": "Notenschlüssel",
+            "bonus": "Bonus",
             "testExam": {
                 "realExam": "Klausur",
                 "testExam": "Testklausur",

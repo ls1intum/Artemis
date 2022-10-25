@@ -219,7 +219,7 @@ export class ComplaintsForTutorComponent implements OnInit {
      * For exam test runs, the original assessor is allowed to respond to complaints.
      */
     get isAllowedToRespond(): boolean {
-        return isAllowedToRespondToComplaintAction(this.exercise?.isAtLeastInstructor ?? false, this.isTestRun, this.isAssessor, this.complaint, this.exercise);
+        return isAllowedToRespondToComplaintAction(this.isTestRun, this.isAssessor, this.complaint, this.exercise);
     }
 
     /**

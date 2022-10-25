@@ -172,7 +172,7 @@ describe('Plagiarism Inspector Component', () => {
 
         comp.checkPlagiarism();
 
-        expect(modelingExerciseService.checkPlagiarism).toHaveBeenCalled();
+        expect(modelingExerciseService.checkPlagiarism).toHaveBeenCalledOnce();
     });
 
     it('should fetch the plagiarism detection results for programming exercises', () => {
@@ -181,7 +181,7 @@ describe('Plagiarism Inspector Component', () => {
 
         comp.checkPlagiarism();
 
-        expect(programmingExerciseService.checkPlagiarism).toHaveBeenCalled();
+        expect(programmingExerciseService.checkPlagiarism).toHaveBeenCalledOnce();
     });
 
     it('should fetch the plagiarism detection results for text exercises', () => {
@@ -190,7 +190,7 @@ describe('Plagiarism Inspector Component', () => {
 
         comp.checkPlagiarism();
 
-        expect(textExerciseService.checkPlagiarism).toHaveBeenCalled();
+        expect(textExerciseService.checkPlagiarism).toHaveBeenCalledOnce();
     });
 
     it('should comparisons by similarity', () => {
@@ -211,7 +211,7 @@ describe('Plagiarism Inspector Component', () => {
         comp.plagiarismResult = modelingPlagiarismResult;
         comp.downloadPlagiarismResultsJson();
 
-        expect(downloadFile).toHaveBeenCalled();
+        expect(downloadFile).toHaveBeenCalledOnce();
     });
 
     it('should download the plagiarism detection results as CSV', () => {
@@ -219,8 +219,8 @@ describe('Plagiarism Inspector Component', () => {
         comp.plagiarismResult = modelingPlagiarismResult;
         comp.downloadPlagiarismResultsCsv();
 
-        expect(ExportToCsv).toHaveBeenCalled();
-        expect(generateCsv).toHaveBeenCalled();
+        expect(ExportToCsv).toHaveBeenCalledOnce();
+        expect(generateCsv).toHaveBeenCalledOnce();
     });
 
     it('should get the latest plagiarism result for modeling exercise', fakeAsync(() => {

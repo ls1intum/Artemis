@@ -21,7 +21,7 @@ export interface FormProperties {
 
 // file input is a special case and is not included in the reactive form structure
 export interface FileProperties {
-    file?: File | Blob;
+    file?: File;
     fileName?: string;
 }
 
@@ -40,7 +40,6 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     // The list of file extensions for the "accept" attribute of the file input field
     readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
-    fileUploadErrorMessage?: string;
     faQuestionCircle = faQuestionCircle;
 
     @Output()
@@ -50,7 +49,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     // have to handle the file input as a special case at is not part of the reactive form
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
-    file: File | Blob;
+    file: File;
     fileName?: string;
     fileInputTouched = false;
 
@@ -82,10 +81,9 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
 
     onFileChange(event: any): void {
         if (event.target.files.length) {
-            this.fileUploadErrorMessage = undefined; // removes the file size error message when the user selects a new file
             const fileList = event.target.files;
             this.file = fileList[0];
-            this.fileName = this.file['name'];
+            this.fileName = this.file.name;
         }
     }
 
@@ -110,14 +108,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !(this.form.invalid || this.fileUploadErrorMessage || !this.fileName);
-    }
-
-    // will be called from parent component to set the form error when the file upload failed
-    setFileUploadError(errorMessage: string) {
-        this.fileUploadErrorMessage = errorMessage;
-        this.fileInput.nativeElement.value = '';
-        this.fileName = undefined;
+        return !(this.form.invalid || !this.fileName);
     }
 
     submitForm() {

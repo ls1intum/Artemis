@@ -50,7 +50,7 @@ describe('Exercise detail common actions Component', () => {
         comp = fixture.componentInstance;
     });
 
-    it('Should be ok', () => {
+    it('should be ok', () => {
         comp.exercise = { type: ExerciseType.TEXT, id: 1 } as TextExercise;
         comp.course = course;
         fixture.detectChanges();
@@ -121,14 +121,14 @@ describe('Exercise detail common actions Component', () => {
 
         comp.exercise = new TextExercise({ id: 123 }, undefined);
         comp.deleteExercise();
-        expect(deleteTextExerciseService).toHaveBeenCalled();
+        expect(deleteTextExerciseService).toHaveBeenCalledOnce();
 
         comp.exercise = new FileUploadExercise({ id: 123 }, undefined);
         comp.deleteExercise();
-        expect(deleteFileUploadExerciseStub).toHaveBeenCalled();
+        expect(deleteFileUploadExerciseStub).toHaveBeenCalledOnce();
 
         comp.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, { id: 123 }, undefined);
         comp.deleteExercise();
-        expect(deleteModelingExerciseService).toHaveBeenCalled();
+        expect(deleteModelingExerciseService).toHaveBeenCalledOnce();
     });
 });

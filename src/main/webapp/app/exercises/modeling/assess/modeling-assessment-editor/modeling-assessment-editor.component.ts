@@ -140,7 +140,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private loadRandomSubmission(exerciseId: number): void {
-        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
+        this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
             next: (submission: ModelingSubmission) => {
                 this.handleReceivedSubmission(submission);
 
@@ -273,15 +273,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(
-            this.modelingExercise?.isAtLeastInstructor ?? false,
-            this.isTestRun,
-            this.isAssessor,
-            this.hasAssessmentDueDatePassed,
-            this.result,
-            this.complaint,
-            this.modelingExercise,
-        );
+        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.modelingExercise);
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {
@@ -434,7 +426,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     assessNext() {
         this.isLoading = true;
         this.nextSubmissionBusy = true;
-        this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe({
+        this.modelingSubmissionService.getSubmissionWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe({
             next: (unassessedSubmission: ModelingSubmission) => {
                 this.nextSubmissionBusy = false;
                 this.isLoading = false;

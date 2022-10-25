@@ -26,7 +26,7 @@ import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -862,8 +862,8 @@ public class GitService {
      * @param lastValidSubmission       The last valid submission from the database or empty, if not found
      * @param filterLateSubmissionsDate the date after which all submissions should be filtered out (may be null)
      */
-    // TODO: remove transactional
-    @Transactional(readOnly = true)
+
+    @Transactional(readOnly = true) // TODO: remove transactional
     public void filterLateSubmissions(Repository repository, Optional<Submission> lastValidSubmission, ZonedDateTime filterLateSubmissionsDate) {
         if (filterLateSubmissionsDate == null) {
             // No date set in client and exercise has no due date

@@ -17,6 +17,9 @@ import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { BonusService } from 'app/grading-system/bonus/bonus.service';
+import { Bonus } from 'app/entities/bonus.model';
+import { HttpResponse } from '@angular/common/http';
 
 describe('GradeKeyOverviewComponent', () => {
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
@@ -24,6 +27,7 @@ describe('GradeKeyOverviewComponent', () => {
     let route: ActivatedRoute;
 
     let gradingSystemService: GradingSystemService;
+    let bonusService: BonusService;
 
     const gradeStep1: GradeStep = {
         gradeName: 'Fail',
@@ -52,7 +56,7 @@ describe('GradeKeyOverviewComponent', () => {
 
     beforeEach(() => {
         route = {
-            snapshot: { params: {} as Params, queryParams: { grade: studentGrade } as Params },
+            snapshot: { params: {} as Params, queryParams: { grade: studentGrade } as Params, data: {} },
             parent: {
                 snapshot: { params: {} },
                 parent: {
@@ -77,6 +81,7 @@ describe('GradeKeyOverviewComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(GradingSystemService),
+                MockProvider(BonusService),
                 MockProvider(ArtemisNavigationUtilService),
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
@@ -86,6 +91,7 @@ describe('GradeKeyOverviewComponent', () => {
                 fixture = TestBed.createComponent(GradingKeyOverviewComponent);
                 comp = fixture.componentInstance;
                 gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
+                bonusService = fixture.debugElement.injector.get(BonusService);
             });
     });
 
@@ -136,32 +142,39 @@ describe('GradeKeyOverviewComponent', () => {
         expectInitialState(studentGrade);
     });
 
+    it('should initialize for bonus grading scale', () => {
+        jest.spyOn(gradingSystemService, 'getGradingScaleTitle').mockImplementation((gradingScale) => gradingScale?.course?.title);
+        jest.spyOn(gradingSystemService, 'getGradingScaleMaxPoints').mockImplementation((gradingScale) => gradingScale?.course?.maxPoints ?? 0);
+        const bonusServiceSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(
+            of({
+                body: {
+                    sourceGradingScale: {
+                        gradeSteps: gradeStepsDto.gradeSteps,
+                        gradeType: gradeStepsDto.gradeType,
+                        course: { title: gradeStepsDto.title, maxPoints: gradeStepsDto.maxPoints },
+                    },
+                } as Bonus,
+            } as HttpResponse<Bonus>),
+        );
+
+        route.snapshot.params = route.parent?.parent?.snapshot.params!;
+        route.parent!.parent!.snapshot = { params: {} } as ActivatedRouteSnapshot;
+        route.snapshot.data.forBonus = true;
+
+        expectInitialState(studentGrade);
+
+        expect(bonusServiceSpy).toHaveBeenCalledOnce();
+        expect(bonusServiceSpy).toHaveBeenCalledWith(345, 123, true);
+    });
+
     it('should print PDF', fakeAsync(() => {
         const printSpy = jest.spyOn(TestBed.inject(ThemeService), 'print').mockImplementation();
 
         comp.printPDF();
 
         tick();
-        expect(printSpy).toHaveBeenCalled();
+        expect(printSpy).toHaveBeenCalledOnce();
     }));
-
-    it('should properly determine that points are not set', () => {
-        comp.gradeSteps = gradeStepsDto.gradeSteps;
-
-        expect(comp.hasPointsSet()).toBeFalse();
-    });
-
-    it('should properly determine that points are set', () => {
-        const gradeStepWithPoints1 = Object.assign({}, gradeStep1);
-        gradeStepWithPoints1.lowerBoundPoints = 0;
-        gradeStepWithPoints1.upperBoundPoints = 50;
-        const gradeStepWithPoints2 = Object.assign({}, gradeStep2);
-        gradeStepWithPoints2.lowerBoundPoints = 50;
-        gradeStepWithPoints2.upperBoundPoints = 100;
-        comp.gradeSteps = [gradeStepWithPoints1, gradeStepWithPoints2];
-
-        expect(comp.hasPointsSet()).toBeTrue();
-    });
 
     it('should round correctly', () => {
         expect(comp.round(undefined)).toBeUndefined();

@@ -2,10 +2,10 @@ plugins {
     // %static-code-analysis-start%
     id 'checkstyle'
     id 'pmd'
-    id 'com.github.spotbugs' version '5.0.6'
+    id 'com.github.spotbugs' version '5.0.12'
     // %static-code-analysis-stop%
     // %record-testwise-coverage-start%
-    id "com.teamscale" version "23.0.0"
+    id "com.teamscale" version "26.0.1"
     // %record-testwise-coverage-stop%
 }
 

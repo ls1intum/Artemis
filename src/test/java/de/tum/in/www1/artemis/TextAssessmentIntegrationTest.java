@@ -462,8 +462,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         TextSubmission submissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, params);
+        var participation = textExercise.getStudentParticipations().stream().findFirst().get();
         Result result = new Result();
-
+        result.setParticipation(participation);
         result.setSubmission(submissionWithoutAssessment);
 
         textBlockService.setNumberOfAffectedSubmissionsPerBlock(result);

@@ -66,7 +66,7 @@ describe('Programming exercise participations', () => {
     function makeFailingSubmission() {
         const submission = { files: [{ name: 'BubbleSort.java', path: 'programming_exercise_submissions/build_error/BubbleSort.txt' }] };
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, submission, () => {
-            editorPage.getResultScore().contains('Build failed').should('be.visible');
+            editorPage.getResultScore().contains('Build failed').and('be.visible');
             editorPage.getResultScore().contains('0%').and('be.visible');
         });
     }
@@ -77,7 +77,6 @@ describe('Programming exercise participations', () => {
     function makePartiallySuccessfulSubmission() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, partiallySuccessful, () => {
             editorPage.getResultScore().contains('46.2%').and('be.visible');
-            editorPage.getResultScore().contains('6 of 13 passed').should('be.visible');
         });
     }
 
@@ -86,8 +85,7 @@ describe('Programming exercise participations', () => {
      */
     function makeSuccessfulSubmission() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, allSuccessful, () => {
-            editorPage.getResultScore().contains('100%').should('be.visible');
-            editorPage.getResultScore().contains('13 of 13 passed').should('be.visible');
+            editorPage.getResultScore().contains('100%').and('be.visible');
         });
     }
 });

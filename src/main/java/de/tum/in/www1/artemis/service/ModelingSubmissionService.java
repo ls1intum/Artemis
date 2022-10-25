@@ -127,6 +127,11 @@ public class ModelingSubmissionService extends SubmissionService {
         modelingSubmission.setType(SubmissionType.MANUAL);
         participation.addSubmission(modelingSubmission);
 
+        if (participation.getInitializationState() != InitializationState.FINISHED) {
+            participation.setInitializationState(InitializationState.FINISHED);
+            studentParticipationRepository.save(participation);
+        }
+
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         modelingSubmission.setResults(new ArrayList<>());
         modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
@@ -144,11 +149,6 @@ public class ModelingSubmissionService extends SubmissionService {
             log.error("Modeling submission version could not be saved", ex);
         }
 
-        if (participation.getInitializationState() != InitializationState.FINISHED) {
-            participation.setInitializationState(InitializationState.FINISHED);
-            studentParticipationRepository.save(participation);
-        }
-
         return modelingSubmission;
     }
 
@@ -164,7 +164,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return a random modeling submission (potentially based on compass)
      */
     public ModelingSubmission findRandomSubmissionWithoutExistingAssessment(boolean lockSubmission, int correctionRound, ModelingExercise modelingExercise, boolean isExamMode) {
-        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(modelingExercise, isExamMode, correctionRound)
+        var submissionWithoutResult = super.getRandomAssessableSubmission(modelingExercise, isExamMode, correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
         ModelingSubmission modelingSubmission = (ModelingSubmission) submissionWithoutResult;
         if (lockSubmission) {

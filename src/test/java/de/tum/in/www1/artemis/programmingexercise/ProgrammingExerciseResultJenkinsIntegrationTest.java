@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.util.ModelFactory.DEFAULT_BRANCH;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
 
@@ -49,16 +52,17 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         var loginName = "student1";
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
         var repoName = (exercise.getProjectKey() + "-" + loginName).toUpperCase();
-        var notification = ModelFactory.generateTestResultDTO(repoName, List.of("test1"), List.of(), exercise.getProgrammingLanguage(), false);
         // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
-        notification.setFullName(exercise.getProjectKey() + " » " + repoName + " #3");
+        var notification = ModelFactory.generateTestResultDTO(exercise.getProjectKey() + " » " + repoName + " #3", repoName, null, exercise.getProgrammingLanguage(), false,
+                List.of("test1"), List.of(), new ArrayList<>(), new ArrayList<>(), null);
         programmingExerciseResultTestService.shouldUpdateFeedbackInSemiAutomaticResult(notification, loginName);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws GitLabApiException {
-        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA, true);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, null, ProgrammingLanguage.JAVA, true, List.of("test1", "test2", "test4"),
+                List.of(), new ArrayList<>(), new ArrayList<>(), null);
         gitlabRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getSolutionParticipation(), Map.of(TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now()));
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, false);
     }
@@ -66,7 +70,8 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResultWithFailedTests() throws GitLabApiException {
-        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of("test3"), ProgrammingLanguage.JAVA, true);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, null, ProgrammingLanguage.JAVA, true, List.of("test1", "test2", "test4"),
+                List.of("test3"), new ArrayList<>(), new ArrayList<>(), null);
         gitlabRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getSolutionParticipation(), Map.of(TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now()));
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, true);
     }
@@ -76,7 +81,8 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "student1", roles = "USER")
     void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(ProgrammingLanguage programmingLanguage) {
         programmingExerciseResultTestService.setupForProgrammingLanguage(programmingLanguage);
-        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), programmingLanguage, true);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, null, programmingLanguage, true, List.of("test1"), List.of(), new ArrayList<>(),
+                new ArrayList<>(), null);
         programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification, programmingLanguage);
     }
 
@@ -92,7 +98,52 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldGenerateNewManualResultIfManualAssessmentExists() {
-        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA, true);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, null, ProgrammingLanguage.JAVA, true, List.of("test1", "test2", "test4"),
+                List.of(), new ArrayList<>(), new ArrayList<>(), null);
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldIgnoreResultOnOtherBranches() {
+        var commit = new CommitDTO("abc123", "slug", "other");
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
+                List.of(commit), null);
+        programmingExerciseResultTestService.shouldIgnoreResultIfNotOnDefaultBranch(notification);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldCreateResultOnParticipationDefaultBranch() {
+        var commit = new CommitDTO("abc123", "slug", "branch");
+        var notification = ModelFactory.generateTestResultDTO(null, "student1", null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(), List.of(commit), null);
+        programmingExerciseResultTestService.shouldCreateResultOnParticipationDefaultBranch(notification);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldIgnoreResultNotOnParticipationDefaultBranch() {
+        var commit = new CommitDTO("abc123", "slug", "other");
+        var notification = ModelFactory.generateTestResultDTO(null, "student1", null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(), List.of(commit), null);
+        programmingExerciseResultTestService.shouldIgnoreResultIfNotOnParticipationBranch(notification);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldCreateResultOnDefaultBranch() {
+        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
+                List.of(commit), null);
+        programmingExerciseResultTestService.shouldCreateResultOnCustomDefaultBranch(defaultBranch, notification);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldCreateResultOnCustomDefaultBranch() {
+        final var customDefaultBranch = "dummy";
+        var commit = new CommitDTO("abc123", "slug", customDefaultBranch);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
+                List.of(commit), null);
+        programmingExerciseResultTestService.shouldCreateResultOnCustomDefaultBranch(customDefaultBranch, notification);
     }
 }

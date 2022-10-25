@@ -17,6 +17,95 @@
             </div>
         </div>
     </div>
+    <div *ngIf="showRelations" class="container mt-3 mb-3">
+        <ngb-accordion [closeOthers]="true">
+            <ngb-panel id="panel-1">
+                <ng-template ngbPanelTitle> Learning Goal Relations <span class="badge rounded-pill text-bg-warning ms-1">BETA</span> </ng-template>
+                <ng-template ngbPanelContent>
+                    <form class="row p-3 g-3 align-items-center">
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="tail">Tail Learning Goal</label>
+                                <select class="form-select" id="tail" name="tail" [(ngModel)]="tailLearningGoal">
+                                    <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="type">Relation Type</label>
+                                <select class="form-select" id="type" name="type" [(ngModel)]="relationType">
+                                    <option value="RELATES" selected>Relates</option>
+                                    <option value="ASSUMES">Assumes</option>
+                                    <option value="EXTENDS">Extends</option>
+                                    <option value="MATCHES">Matches</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label for="head">Head Learning Goal</label>
+                                <select class="form-select" id="head" name="head" [(ngModel)]="headLearningGoal">
+                                    <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <input
+                                type="button"
+                                class="btn btn-primary"
+                                value="Create Relation"
+                                (click)="createRelation()"
+                                [disabled]="!headLearningGoal || !tailLearningGoal || !relationType || headLearningGoal == tailLearningGoal"
+                            />
+                        </div>
+                    </form>
+                    <ngx-graph
+                        class="m-1 chart-container"
+                        layout="dagreCluster"
+                        [view]="[800, 400]"
+                        [enableZoom]="false"
+                        [draggingEnabled]="false"
+                        [nodes]="nodes"
+                        [links]="edges"
+                        [clusters]="clusters"
+                    >
+                        <ng-template #defsTemplate>
+                            <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                                <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
+                            </svg:marker>
+                        </ng-template>
+
+                        <ng-template #clusterTemplate let-cluster>
+                            <svg:g class="node cluster">
+                                <svg:rect rx="5" ry="5" [attr.width]="cluster.dimension.width" [attr.height]="cluster.dimension.height" [attr.fill]="cluster.data.color" />
+                            </svg:g>
+                        </ng-template>
+
+                        <ng-template #nodeTemplate let-node>
+                            <svg:g class="node">
+                                <svg:rect [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" [attr.fill]="node.data.color" />
+                                <svg:text alignment-baseline="central" [attr.x]="10" [attr.y]="node.dimension.height / 2">
+                                    {{ node.label }}
+                                </svg:text>
+                            </svg:g>
+                        </ng-template>
+
+                        <ng-template #linkTemplate let-link>
+                            <svg:g class="edge" (click)="removeRelation(link)">
+                                <svg:path class="line" stroke-width="2" marker-end="url(#arrow)"></svg:path>
+                                <svg:text class="edge-label" text-anchor="middle">
+                                    <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
+                                        {{ link.label }}
+                                    </textPath>
+                                </svg:text>
+                            </svg:g>
+                        </ng-template>
+                    </ngx-graph>
+                </ng-template>
+            </ngb-panel>
+        </ngb-accordion>
+    </div>
     <div class="d-flex my-3 flex-wrap gap-3 justify-content-evenly" style="min-height: 100px">
         <jhi-learning-goal-card
             *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"

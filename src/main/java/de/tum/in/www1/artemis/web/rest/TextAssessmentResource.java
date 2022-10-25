@@ -70,13 +70,15 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final FeedbackConflictRepository feedbackConflictRepository;
 
+    private final ResultService resultService;
+
     public TextAssessmentResource(AuthorizationCheckService authCheckService, TextAssessmentService textAssessmentService, TextBlockService textBlockService,
             TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository, UserRepository userRepository,
             TextSubmissionService textSubmissionService, WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
             Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository,
-            SingleUserNotificationService singleUserNotificationService) {
+            SingleUserNotificationService singleUserNotificationService, ResultService resultService) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
                 submissionRepository, singleUserNotificationService);
 
@@ -91,6 +93,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.feedbackConflictRepository = feedbackConflictRepository;
         this.feedbackRepository = feedbackRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.resultService = resultService;
     }
 
     /**
@@ -195,7 +198,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final var latestResult = submission.getLatestResult();
         if (latestResult != null) {
             latestResult.getFeedbacks().clear();
-            resultRepository.delete(latestResult);
+            resultService.deleteResult(latestResult, true);
             submission.setResults(List.of());
             submissionRepository.save(submission);
         }

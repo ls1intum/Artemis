@@ -16,9 +16,8 @@ export abstract class AbstractExerciseFeedback {
         }
     }
 
-    shouldShowScore(achievedPoints: number, maxPoints: number, percentage: number) {
+    shouldShowScore(percentage: number) {
         cy.get(this.resultSelector).contains(`${percentage}%`);
-        cy.get(this.resultSelector).contains(`${achievedPoints} of ${maxPoints} points`);
     }
 
     complain(complaint: string) {

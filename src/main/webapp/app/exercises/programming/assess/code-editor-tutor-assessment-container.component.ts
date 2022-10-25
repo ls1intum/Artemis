@@ -154,6 +154,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 .pipe(
                     tap({
                         next: (submission: ProgrammingSubmission) => {
+                            if (!submission) {
+                                // there are no unassessed submission, nothing we have to worry about
+                                return;
+                            }
+
                             this.handleReceivedSubmission(submission);
                             if (submissionId === 'new') {
                                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -197,7 +202,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private loadRandomSubmission(exerciseId: number): Observable<ProgrammingSubmission> {
-        return this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound);
+        return this.programmingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound);
     }
 
     private loadSubmission(submissionId: number): Observable<ProgrammingSubmission> {
@@ -238,8 +243,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.participationCouldNotBeFetched = true;
         if (error?.error?.errorKey === 'lockedSubmissionsLimitReached') {
             this.lockLimitReached = true;
-        } else if (error?.error?.status === 404) {
-            // there are no unassessed submission, nothing we have to worry about
         } else if (error?.error) {
             this.onError(error?.error?.detail || 'Not Found');
         }
@@ -340,8 +343,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     nextSubmission() {
         this.loadingParticipation = true;
         this.submission = undefined;
-        this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe({
+        this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe({
             next: (response: ProgrammingSubmission) => {
+                // there are no unassessed submission, nothing we have to worry about
+                if (!response) {
+                    return;
+                }
+
                 this.loadingParticipation = false;
 
                 // if override set, skip navigation
@@ -365,11 +373,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
             },
             error: (error: HttpErrorResponse) => {
-                // there are no unassessed submission, nothing we have to worry about
-                if (error.status === 404) {
-                    return;
-                }
-
                 this.loadingParticipation = false;
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     // the lock limit is reached
@@ -477,15 +480,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Defines whether the inline feedback should be read only or not
      */
     readOnly() {
-        return !isAllowedToModifyFeedback(
-            this.exercise.isAtLeastInstructor ?? false,
-            this.isTestRun,
-            this.isAssessor,
-            this.hasAssessmentDueDatePassed,
-            this.manualResult,
-            this.complaint,
-            this.exercise,
-        );
+        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.manualResult, this.complaint, this.exercise);
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {

@@ -142,7 +142,7 @@
             {{ totalItems === 0 ? ('artemisApp.metis.noPosts' | artemisTranslate) : ('artemisApp.metis.postNumberInformation' | artemisTranslate: { number: totalItems }) }}
         </div>
         <!-- list of posts -->
-        <div class="col-12" infinite-scroll (scrolled)="fetchNextPage()">
+        <div id="scrollableDiv" class="col-12" infinite-scroll (scrolled)="fetchNextPage()">
             <jhi-posting-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"></jhi-posting-thread>
         </div>
         <!-- spinner while loading posts -->

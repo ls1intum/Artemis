@@ -5,72 +5,28 @@ import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class TestCaseDTO {
+public record TestCaseDTO(String name, String classname, double time, List<TestCaseDetailMessageDTO> failures, List<TestCaseDetailMessageDTO> errors,
+        List<TestCaseDetailMessageDTO> successInfos) {
 
-    private String name;
-
-    private String classname;
-
-    private double time;
-
-    private List<TestCaseDetailMessageDTO> failures = new ArrayList<>();
-
-    private List<TestCaseDetailMessageDTO> errors = new ArrayList<>();
-
-    private List<TestCaseDetailMessageDTO> successInfos = new ArrayList<>();
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
+    // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
+    @JsonCreator
+    public TestCaseDTO(String name, String classname, double time, @JsonProperty("failures") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> failures,
+            @JsonProperty("errors") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> errors,
+            @JsonProperty("successInfos") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDetailMessageDTO> successInfos) {
         this.name = name;
-    }
-
-    public String getClassname() {
-        return classname;
-    }
-
-    public void setClassname(String classname) {
         this.classname = classname;
-    }
-
-    public double getTime() {
-        return time;
-    }
-
-    public void setTime(double time) {
         this.time = time;
-    }
-
-    public List<TestCaseDetailMessageDTO> getFailures() {
-        return failures;
-    }
-
-    public void setFailures(List<TestCaseDetailMessageDTO> failures) {
         this.failures = failures;
-    }
-
-    public List<TestCaseDetailMessageDTO> getErrors() {
-        return errors;
-    }
-
-    public void setErrors(List<TestCaseDetailMessageDTO> errors) {
         this.errors = errors;
-    }
-
-    public List<TestCaseDetailMessageDTO> getSuccessInfos() {
-        return successInfos;
-    }
-
-    public void setSuccessInfos(List<TestCaseDetailMessageDTO> successInfos) {
         this.successInfos = successInfos;
+    }
+
+    public TestCaseDTO(String name, String classname, double time) {
+        this(name, classname, time, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
     @JsonIgnore

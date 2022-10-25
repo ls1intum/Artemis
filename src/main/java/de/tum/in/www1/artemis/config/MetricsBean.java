@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.config;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.WebSocketMessageBrokerStats;
 import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -47,15 +50,18 @@ public class MetricsBean {
     private final WebSocketHandler webSocketHandler;
 
     public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
-            WebSocketHandler websocketHandler, List<HealthContributor> healthContributors) {
+            WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource) {
         this.meterRegistry = meterRegistry;
         this.env = env;
         this.taskScheduler = taskScheduler;
         this.webSocketStats = webSocketStats;
         this.userRegistry = userRegistry;
         this.webSocketHandler = websocketHandler;
+
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
+        // the data source is optional as it is not used during testing
+        hikariDataSource.ifPresent(this::registerDatasourceMetrics);
     }
 
     /**
@@ -64,17 +70,17 @@ public class MetricsBean {
     @PostConstruct
     public void init() {
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
-        // later one, e.g. in the code editor. Therefore we call this method here directly to get a reference and adapt the logging period!
+        // later one, e.g. in the code editor. Therefore, we call this method here directly to get a reference and adapt the logging period!
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         // Note: this mechanism prevents that this is logged during testing
         if (activeProfiles.contains("websocketLog")) {
-            webSocketStats.setLoggingPeriod(LOGGING_DELAY_SECONDS * 1000);
+            webSocketStats.setLoggingPeriod(LOGGING_DELAY_SECONDS * 1000L);
             taskScheduler.scheduleAtFixedRate(() -> {
                 final var connectedUsers = userRegistry.getUsers();
                 final var subscriptionCount = connectedUsers.stream().flatMap(simpUser -> simpUser.getSessions().stream()).map(simpSession -> simpSession.getSubscriptions().size())
                         .reduce(0, Integer::sum);
                 log.info("Currently connect users {} with active websocket subscriptions: {}", connectedUsers.size(), subscriptionCount);
-            }, LOGGING_DELAY_SECONDS * 1000);
+            }, LOGGING_DELAY_SECONDS * 1000L);
         }
     }
 
@@ -112,6 +118,10 @@ public class MetricsBean {
             return subProtocolWebSocketHandler.getStats().getWebSocketSessions();
         }
         return -1;
+    }
+
+    private void registerDatasourceMetrics(HikariDataSource dataSource) {
+        dataSource.setMetricRegistry(meterRegistry);
     }
 
     /**

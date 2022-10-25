@@ -1,4 +1,4 @@
-<jhi-post-header [previewMode]="previewMode" [posting]="posting"></jhi-post-header>
+<jhi-post-header [previewMode]="previewMode" [posting]="posting" [isCourseMessagesPage]="isCourseMessagesPage" (isModalOpen)="displayInlineInput = true"></jhi-post-header>
 <div class="row align-items-center">
     <div class="col">
         <div class="mb-1">
@@ -18,7 +18,8 @@
                 [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
             ></fa-icon>
             <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
-            <span *ngIf="pageType === PageType.OVERVIEW || previewMode" class="col-auto">
+            <!-- not shown in course messages page -->
+            <span *ngIf="!isCourseMessagesPage && (pageType === PageType.OVERVIEW || previewMode)" class="col-auto">
                 <a
                     class="linked-context-information"
                     *ngIf="contextInformation.routerLinkComponents"
@@ -29,7 +30,8 @@
                 >
                 <span class="context-information" *ngIf="!contextInformation.routerLinkComponents">{{ contextInformation.displayName }}:</span>
             </span>
-            <span *ngIf="pageType !== PageType.PLAGIARISM_CASE" class="col-auto">
+            <!-- post title not shown in course messages page -->
+            <span *ngIf="pageType !== PageType.PLAGIARISM_CASE && !isCourseMessagesPage" class="col-auto">
                 <a
                     class="post-title"
                     [routerLink]="metisService.getLinkForPost(posting)"
@@ -42,10 +44,20 @@
             </span>
         </div>
         <jhi-posting-content
+            *ngIf="!displayInlineInput"
             [previewMode]="previewMode"
             [content]="posting.content"
             [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
         ></jhi-posting-content>
     </div>
 </div>
-<jhi-post-footer [modalRef]="modalRef" [previewMode]="previewMode" [posting]="posting" [showAnswers]="showAnswers"></jhi-post-footer>
+<jhi-message-inline-input *ngIf="displayInlineInput" [posting]="posting" (isModalOpen)="displayInlineInput = false"> </jhi-message-inline-input>
+<jhi-post-footer
+    [modalRef]="modalRef"
+    [previewMode]="previewMode"
+    [posting]="posting"
+    [showAnswers]="showAnswers"
+    [isCourseMessagesPage]="isCourseMessagesPage"
+    [isThreadSidebar]="isThreadSidebar"
+    (openThread)="openThread.emit()"
+></jhi-post-footer>

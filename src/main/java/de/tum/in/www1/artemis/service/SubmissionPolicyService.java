@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;

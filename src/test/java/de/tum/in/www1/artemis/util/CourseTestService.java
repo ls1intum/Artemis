@@ -23,6 +23,7 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -42,6 +43,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
@@ -120,6 +122,12 @@ public class CourseTestService {
 
     @Autowired
     private ParticipationService participationService;
+
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
+    @Autowired
+    private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
 
     private final static int numberOfStudents = 8;
 
@@ -1073,6 +1081,52 @@ public class CourseTestService {
         assertThat(instructors).as("All instructors in course found").hasSize(numberOfInstructors);
     }
 
+    /** Searches for others users of a course in multiple roles
+     *
+     * @throws Exception
+     */
+    public void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("nameOfUser", "student1");
+
+        // users must not be able to find themselves
+        List<User> student1 = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        assertThat(student1).as("User could not find themself").hasSize(0);
+
+        // find another student for course
+        parameters.set("nameOfUser", "student2");
+        List<User> student2 = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        assertThat(student2).as("Another student in course found").hasSize(1);
+
+        // find a tutor for course
+        parameters.set("nameOfUser", "tutor1");
+        List<User> tutor = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        assertThat(tutor).as("A tutors in course found").hasSize(1);
+
+        // find an instructors for course
+        parameters.set("nameOfUser", "instructor");
+        List<User> instructor = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        assertThat(instructor).as("An instructors in course found").hasSize(1);
+    }
+
+    /** Tries to search for users of another course and expects to be forbidden
+     *
+     * @throws Exception
+     */
+    public void testSearchStudentsAndTutorsAndInstructorsInOtherCourseForbidden() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
+        course = courseRepo.save(course);
+
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("nameOfUser", "student2");
+
+        // find a user in another course
+        request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.FORBIDDEN, User.class, parameters);
+    }
+
     // Test
     public void testGetAllEditorsInCourse() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -1286,6 +1340,26 @@ public class CourseTestService {
         await().until(() -> courseRepo.findById(course.getId()).get().getCourseArchivePath() != null);
         var updatedCourse = courseRepo.findById(course.getId()).get();
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
+    }
+
+    /**
+     * Test
+     *
+     * @throws Exception
+     */
+    public void searchStudentsInCourse() throws Exception {
+        var course = database.createCourse();
+
+        MultiValueMap<String, String> params1 = new LinkedMultiValueMap<>();
+        params1.add("loginOrName", "student");
+        List<UserDTO> students = request.getList("/api/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params1);
+        assertThat(students).size().isEqualTo(8);
+
+        MultiValueMap<String, String> params2 = new LinkedMultiValueMap<>();
+        params2.add("loginOrName", "tutor");
+        // should be empty as we only search for students
+        List<UserDTO> tutors = request.getList("/api/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params2);
+        assertThat(tutors).isEmpty();
     }
 
     // Test
@@ -1659,6 +1733,8 @@ public class CourseTestService {
 
         courseRepo.save(instructorsCourse);
 
+        await().until(() -> participantScoreRepository.findAll().size() == 2);
+
         // We only added one course, so expect one dto
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
         assertThat(courseDtos).hasSize(1);
@@ -1927,6 +2003,8 @@ public class CourseTestService {
         request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
                 + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
 
+        await().until(() -> participantScoreRepository.findAll().size() == 4);
+
         // API call
         var courseDTO = request.get("/api/courses/" + course1.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
 
@@ -2025,5 +2103,101 @@ public class CourseTestService {
     public void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+    }
+
+    // Test
+    public void testCreateInvalidOnlineCourse() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+
+        // with RegistrationEnabled
+        course.setOnlineCourse(true);
+        course.setRegistrationEnabled(true);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+
+        // without onlinecourseconfiguration
+        course.setRegistrationEnabled(false);
+        course.setOnlineCourseConfiguration(null);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+
+        // with invalid online course configuration - no key and secret
+        ModelFactory.generateOnlineCourseConfiguration(course, null, null, null, null);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+
+        // with invalid user prefix - not matching regex
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "with space", null);
+        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+    }
+
+    // Test
+    public void testCreateValidOnlineCourse() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+        Course courseWithOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
+    }
+
+    public void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+        course = courseRepo.save(course);
+        var courseId = course.getId();
+
+        List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
+
+        Course receivedCourse = courses.stream().filter(c -> courseId.equals(c.getId())).findFirst().get();
+        assertThat(receivedCourse.getOnlineCourseConfiguration()).as("Online course configuration is lazily loaded").isNull();
+    }
+
+    // Test
+    public void testUpdateOnlineCourseConfiguration() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+
+        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+
+        OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
+        onlineCourseConfiguration.setLtiKey("changedKey");
+        onlineCourseConfiguration.setLtiSecret("changedSecret");
+        onlineCourseConfiguration.setUserPrefix("changedUserPrefix");
+
+        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        course = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+
+        assertThat(course.getOnlineCourseConfiguration().getLtiKey()).isEqualTo("changedKey");
+        assertThat(course.getOnlineCourseConfiguration().getLtiSecret()).isEqualTo("changedSecret");
+        assertThat(course.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo("changedUserPrefix");
+    }
+
+    // Test
+    public void testUpdateCourseRemoveOnlineCourseConfiguration() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+
+        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+
+        course.setOnlineCourse(false);
+        course.setOnlineCourseConfiguration(null);
+        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        assertThat(courseWithoutOnlineConfiguration.getOnlineCourseConfiguration()).isNull();
+    }
+
+    // Test
+    public void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+        course = courseRepo.save(course);
+
+        request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
+
+        assertThat(onlineCourseConfigurationRepository.findById(course.getOnlineCourseConfiguration().getId())).isNotPresent();
     }
 }
