@@ -823,6 +823,7 @@ public class ProgrammingExerciseResource {
             throw new AccessForbiddenException();
         }
         return ResponseEntity.ok().body(programmingExercise.getBuildPlan().getBuildPlan());
+    }
 
     /**
      * GET programming-exercises/:exerciseId/build-log-statistics
