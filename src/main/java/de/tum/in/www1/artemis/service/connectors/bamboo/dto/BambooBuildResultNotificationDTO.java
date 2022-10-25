@@ -119,11 +119,13 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         return getBuild().jobs().stream().map(job -> (BuildJobDTOInterface) job).collect(Collectors.toList());
     }
 
+    @JsonIgnore
     @Override
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports(BuildJobDTOInterface job) {
         return ((BambooJobDTO) job).staticCodeAnalysisReports();
     }
 
+    @JsonIgnore
     @Override
     public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports(BuildJobDTOInterface job) {
         return ((BambooJobDTO) job).testwiseCoverageReport();

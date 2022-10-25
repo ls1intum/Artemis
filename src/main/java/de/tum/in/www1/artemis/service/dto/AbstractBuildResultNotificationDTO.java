@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -53,9 +54,12 @@ public abstract class AbstractBuildResultNotificationDTO {
 
     public abstract List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage);
 
+    @JsonIgnore
     public abstract List<BuildJobDTOInterface> getBuildJobs();
 
+    @JsonIgnore
     public abstract List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports(BuildJobDTOInterface job);
 
+    @JsonIgnore
     public abstract List<TestwiseCoverageReportDTO> getTestwiseCoverageReports(BuildJobDTOInterface job);
 }

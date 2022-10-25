@@ -152,10 +152,13 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return results.stream().map(testSuiteDTO -> (BuildJobDTOInterface) testSuiteDTO).collect(Collectors.toList());
     }
 
+    @JsonInclude
+    @Override
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports(BuildJobDTOInterface job) {
         return staticCodeAnalysisReports;
     }
 
+    @JsonInclude
     @Override
     public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports(BuildJobDTOInterface job) {
         return testwiseCoverageReport;
