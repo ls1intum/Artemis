@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -37,6 +38,8 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     private final List<TestSuiteDTO> results;
 
+    // For an unknown reason, the deserialization only works with this annotation
+    @JsonProperty("staticCodeAnalysisReports")
     private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
 
     // For an unknown reason, the deserialization only works with this annotation
@@ -151,13 +154,11 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return results.stream().map(testSuiteDTO -> (BuildJobDTOInterface) testSuiteDTO).toList();
     }
 
-    @JsonInclude
     @Override
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports(BuildJobDTOInterface job) {
         return staticCodeAnalysisReports;
     }
 
-    @JsonInclude
     @Override
     public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports(BuildJobDTOInterface job) {
         return testwiseCoverageReport;
