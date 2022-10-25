@@ -210,7 +210,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         @Override
         public List<TestCaseDTOInterface> getSuccessfulTests() {
-            return failedTests.stream().map(test -> (TestCaseDTOInterface) test).toList();
+            return successfulTests.stream().map(test -> (TestCaseDTOInterface) test).toList();
         }
     }
 
