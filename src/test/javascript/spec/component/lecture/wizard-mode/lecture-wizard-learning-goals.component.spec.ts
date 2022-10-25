@@ -197,7 +197,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
             expect(deleteStub).toHaveBeenCalledOnce();
-            expect(alertStub).toHaveBeenCalledTimes(1);
+            expect(alertStub).toHaveBeenCalledOnce();
         });
     }));
 
