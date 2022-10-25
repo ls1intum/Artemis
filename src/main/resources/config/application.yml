@@ -45,6 +45,7 @@ artemis:
                 ASSEMBLER: "tizianleonhardt/era-artemis-assembler:latest"
                 SWIFT: "norionomura/swiftlint:latest"
                 OCAML: "ls1tum/artemis-ocaml-docker:v1"
+        notification-plugin: "ls1tum/artemis-notification-plugin:pr-1"
 
 management:
     endpoints:

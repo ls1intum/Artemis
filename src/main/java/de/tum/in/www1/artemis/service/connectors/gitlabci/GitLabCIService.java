@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.service.connectors.gitlabci;
 import java.net.URL;
 import java.util.*;
 
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
+import org.apache.commons.collections.CollectionUtils;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.ProjectApi;
@@ -32,7 +35,9 @@ import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationSe
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Profile("gitlabci")
 @Service
@@ -40,11 +45,27 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(GitLabCIService.class);
 
-    private static final String VARIABLE_DOCKER_IMAGE_NAME = "ARTEMIS_DOCKER_IMAGE";
+    private static final String VARIABLE_BUILD_DOCKER_IMAGE_NAME = "ARTEMIS_BUILD_DOCKER_IMAGE";
 
-    private static final String VARIABLE_BRANCH_NAME = "ARTEMIS_BRANCH";
+    private static final String VARIABLE_BUILD_LOGS_FILE_NAME = "ARTEMIS_BUILD_LOGS_FILE";
 
-    private static final String VARIABLE_ARTEMIS_SERVER_URL_NAME = "ARTEMIS_SERVER_URL";
+    private static final String VARIABLE_BUILD_PLAN_ID_NAME = "ARTEMIS_BUILD_PLAN_ID";
+
+    private static final String VARIABLE_CUSTOM_FEEDBACK_DIR_NAME = "ARTEMIS_CUSTOM_FEEDBACK_DIR";
+
+    private static final String VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME = "ARTEMIS_NOTIFICATION_PLUGIN_DOCKER_IMAGE";
+
+    private static final String VARIABLE_NOTIFICATION_SECRET_NAME = "ARTEMIS_NOTIFICATION_SECRET";
+
+    private static final String VARIABLE_NOTIFICATION_URL_NAME = "ARTEMIS_NOTIFICATION_URL";
+
+    private static final String VARIABLE_SUBMISSION_GIT_BRANCH_NAME = "ARTEMIS_SUBMISSION_GIT_BRANCH";
+
+    private static final String VARIABLE_TEST_GIT_BRANCH_NAME = "ARTEMIS_TEST_GIT_BRANCH";
+
+    private static final String VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME = "ARTEMIS_TEST_GIT_REPOSITORY_SLUG";
+
+    private static final String VARIABLE_TEST_RESULTS_DIR_NAME = "ARTEMIS_TEST_RESULTS_DIR";
 
     private final GitLabApi gitlab;
 
@@ -58,15 +79,24 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
+    private final TestwiseCoverageService testwiseCoverageService;
+
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
     @Value("${server.url}")
     private URL artemisServerUrl;
 
+    @Value("${artemis.continuous-integration.notification-plugin}")
+    private String notificationPluginDockerImage;
+
+    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
+    private String artemisAuthenticationTokenValue;
+
     public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository,
-            BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+            BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
+            TestwiseCoverageService testwiseCoverageService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
         this.gitlab = gitlab;
         this.urlService = urlService;
@@ -74,17 +104,18 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         this.buildPlanRepository = buildPlanRepository;
         this.buildPlanService = buildPlanService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+        this.testwiseCoverageService = testwiseCoverageService;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
         addBuildPlanToProgrammingExerciseIfUnset(exercise);
-        setupGitLabCIConfiguration(repositoryURL, exercise);
+        setupGitLabCIConfiguration(repositoryURL, exercise, planKey);
         // TODO: triggerBuild(repositoryURL, exercise.getBranch());
     }
 
-    private void setupGitLabCIConfiguration(VcsRepositoryUrl repositoryURL, ProgrammingExercise exercise) {
+    private void setupGitLabCIConfiguration(VcsRepositoryUrl repositoryURL, ProgrammingExercise exercise, String buildPlanId) {
         final String repositoryPath = getRepositoryPath(repositoryURL);
         ProjectApi projectApi = gitlab.getProjectApi();
         try {
@@ -103,16 +134,27 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         }
 
         try {
-            // TODO: Update variables
-            projectApi.createVariable(repositoryPath, VARIABLE_DOCKER_IMAGE_NAME,
-                    programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())), Variable.Type.ENV_VAR, false,
-                    true);
-            projectApi.createVariable(repositoryPath, VARIABLE_BRANCH_NAME, exercise.getBranch(), Variable.Type.ENV_VAR, false, true);
-            projectApi.createVariable(repositoryPath, VARIABLE_ARTEMIS_SERVER_URL_NAME, artemisServerUrl.toExternalForm(), Variable.Type.ENV_VAR, false, true);
+            // TODO: Reduce the number of API calls
+
+            updateVariable(repositoryPath, VARIABLE_BUILD_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())), true);
+            updateVariable(repositoryPath, VARIABLE_BUILD_LOGS_FILE_NAME, "build.log", true);
+            updateVariable(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId, true);
+            updateVariable(repositoryPath, VARIABLE_CUSTOM_FEEDBACK_DIR_NAME, "TODO", false); // TODO
+            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage, true);
+            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue, true);
+            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + Constants.NEW_RESULT_RESOURCE_API_PATH, false);
+            updateVariable(repositoryPath, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch(), false);
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch(), false);
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, urlService.getRepositorySlugFromRepositoryUrlString(exercise.getTestRepositoryUrl()), true);
+            updateVariable(repositoryPath, VARIABLE_TEST_RESULTS_DIR_NAME, "target/surefire-reports", true);
         }
         catch (GitLabApiException e) {
             log.error("Error creating variable for " + repositoryURL.toString() + " The variables may already have been created.", e);
         }
+    }
+
+    private void updateVariable(String repositoryPath, String key, String value, boolean masked) throws GitLabApiException {
+        gitlab.getProjectApi().createVariable(repositoryPath, key, value, Variable.Type.ENV_VAR, false, masked);
     }
 
     private void addBuildPlanToProgrammingExerciseIfUnset(ProgrammingExercise programmingExercise) {
@@ -130,24 +172,29 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         addBuildPlanToProgrammingExerciseIfUnset(exercise);
 
         VcsRepositoryUrl templateUrl = exercise.getVcsTemplateRepositoryUrl();
-        setupGitLabCIConfiguration(templateUrl, exercise);
+        setupGitLabCIConfiguration(templateUrl, exercise, exercise.getTemplateBuildPlanId());
         // TODO: triggerBuild(templateUrl, exercise.getBranch());
 
         VcsRepositoryUrl solutionUrl = exercise.getVcsSolutionRepositoryUrl();
-        setupGitLabCIConfiguration(solutionUrl, exercise);
+        setupGitLabCIConfiguration(solutionUrl, exercise, exercise.getSolutionBuildPlanId());
         // TODO: triggerBuild(solutionUrl, exercise.getBranch());
     }
 
     @Override
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
+        // In GitLab CI we don't have to copy the build plan.
+        // Instead, we configure a CI config path leading to the API when enabling the CI.
         log.error("Unsupported action: GitLabCIService.copyBuildPlan()");
-        return null;
+
+        // When sending the build results back, the build plan key is used to identify the participation.
+        // Therefore, we return the key here even though GitLab CI does not need it.
+        return targetProjectKey + "-" + targetPlanName.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        setupGitLabCIConfiguration(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise());
+        setupGitLabCIConfiguration(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise(), participation.getBuildPlanId());
     }
 
     @Override
@@ -186,14 +233,13 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
-        log.error("Unsupported action: GitLabCIService.getPlanKey()");
-        return null;
+        TestResultsDTO dto = TestResultsDTO.convert(requestBody);
+        return dto.getFullName();
     }
 
     @Override
     public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
-        log.error("Unsupported action: GitLabCIService.convertBuildResult()");
-        return null;
+        return TestResultsDTO.convert(requestBody);
     }
 
     @Override
@@ -286,15 +332,86 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         return Optional.empty();
     }
 
-    @Override
-    protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
-        // TODO
-    }
-
     private String generateBuildPlanURL(ProgrammingExercise exercise) {
         programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
         // We need this workaround (&file-extension=.yml) since GitLab only accepts URLs ending with .yml.
         // See https://gitlab.com/gitlab-org/gitlab/-/issues/27526
         return String.format("%s/api/programming-exercises/%s/build-plan?secret=%s&file-extension=.yml", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
+    }
+
+    @Override
+    protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
+        final var testResults = ((TestResultsDTO) buildResult);
+        final var jobs = testResults.getResults();
+        final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
+        final var programmingLanguage = programmingExercise.getProgrammingLanguage();
+        final var projectType = programmingExercise.getProjectType();
+
+        // Extract test case feedback
+        for (final var job : jobs) {
+            for (final var testCase : job.getTestCases()) {
+                var feedbackMessages = extractMessageFromTestCase(testCase).map(List::of).orElse(List.of());
+                var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.getName(), feedbackMessages, testCase.isSuccessful(), programmingLanguage, projectType);
+                result.addFeedback(feedback);
+            }
+
+            int passedTestCasesAmount = (int) job.getTestCases().stream().filter(TestCaseDTO::isSuccessful).count();
+            result.setTestCaseCount(result.getTestCaseCount() + job.getTests());
+            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + passedTestCasesAmount);
+        }
+
+        // Extract static code analysis feedback if option was enabled
+        final var staticCodeAnalysisReports = testResults.getStaticCodeAnalysisReports();
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
+            var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
+            result.addFeedbacks(scaFeedbackList);
+            result.setCodeIssueCount(scaFeedbackList.size());
+        }
+
+        final var testwiseCoverageReport = testResults.getTestwiseCoverageReport();
+        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && testwiseCoverageReport != null && !testwiseCoverageReport.isEmpty()) {
+            // since the test cases are not saved to the database yet, the test case is null for the entries
+            var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(testwiseCoverageReport);
+            result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
+        }
+
+        // Relevant feedback is negative, or positive with a message
+        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive() || feedback.getDetailText() != null));
+    }
+
+    /**
+     * Extracts the most helpful message from the given test case.
+     * @param testCase the test case information as received from Jenkins.
+     * @return the most helpful message that can be added to an automatic {@link Feedback}.
+     */
+    private Optional<String> extractMessageFromTestCase(final TestCaseDTO testCase) {
+        var hasErrors = !CollectionUtils.isEmpty(testCase.getErrors());
+        var hasFailures = !CollectionUtils.isEmpty(testCase.getFailures());
+        var hasSuccessInfos = !CollectionUtils.isEmpty(testCase.getSuccessInfos());
+        boolean successful = testCase.isSuccessful();
+
+        if (successful && hasSuccessInfos && testCase.getSuccessInfos().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.getSuccessInfos().get(0).getMostInformativeMessage());
+        }
+        else if (hasErrors && testCase.getErrors().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.getErrors().get(0).getMostInformativeMessage());
+        }
+        else if (hasFailures && testCase.getFailures().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.getFailures().get(0).getMostInformativeMessage());
+        }
+        else if (hasErrors && testCase.getErrors().get(0).getType() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType()));
+        }
+        else if (hasFailures && testCase.getFailures().get(0).getType() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType()));
+        }
+        else if (!successful) {
+            // this is an edge case which typically does not happen
+            return Optional.of("Unsuccessful due to an unknown error. Please contact your instructor!");
+        }
+        else {
+            // successful and no message available => do not generate one
+            return Optional.empty();
+        }
     }
 }

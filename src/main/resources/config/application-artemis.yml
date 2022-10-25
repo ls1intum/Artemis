@@ -70,7 +70,7 @@ artemis:
         # You can get this by GETting any job.xml for a job with an activated GitLab step and your token value of choice.
         secret-push-token: <token hash>
         # Key of the saved credentials for the VCS service
-        # Bamboo: not needed
+        # Bamboo, GitLab CI: not needed
         # Jenkins: You have to specify the key from the credentials page in Jenkins under which the user and
         #          password for the VCS are stored
         vcs-credentials: <credentials key>
@@ -80,7 +80,7 @@ artemis:
         artemis-authentication-token-key: <credentials key>
         # The actual value of the notification token to check against in Artemis. This is the token that gets send with
         # every request the CI system makes to Artemis containing a new result after a build.
-        # Bamboo: The token value you use for the Server Notification Plugin
+        # Bamboo, GitLab CI: The token value you use for the Server Notification Plugin
         # Jenkins: The token value you use for the Server Notification Plugin and is stored under the notification-token credential above
         artemis-authentication-token-value: <token>
         build-timeout: 30 # Does cancel jenkins builds after 30 minutes to remove build that get stuck

@@ -1,19 +1,44 @@
-image: ${ARTEMIS_DOCKER_IMAGE}
-
 stages:
     - test
+    - upload
 
 test-job:
+    image: ${ARTEMIS_BUILD_DOCKER_IMAGE}
     stage: test
     only:
-        - ${ARTEMIS_BRANCH}
+        variables:
+            - $CI_COMMIT_BRANCH == $ARTEMIS_SUBMISSION_GIT_BRANCH
     allow_failure: true
     variables:
         GIT_STRATEGY: none
-        ARTEMIS_SERVER_URL: $ARTEMIS_SERVER_URL
-        studentid: $studentid
-        uploadsecret: $uploadsecret
+        MAVEN_OPTS: -Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=[yyyy-MM-dd'T'HH:mm:ssX] -Dorg.slf4j.simpleLogger.logFile=${ARTEMIS_BUILD_LOGS_FILE}
     script:
-        - git clone ${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_NAMESPACE}/$(echo ${CI_PROJECT_NAME} | sed "s/\-[^\-]*$/-tests/gm") .
-        - git clone ${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME} assignment
-        - mvn --version
+        - export ARTEMIS_NOTIFICATION_SECRET=[hidden] # Workaround for overwriting the secret
+        - git clone --branch ${ARTEMIS_TEST_GIT_BRANCH} ${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_NAMESPACE}/${ARTEMIS_TEST_GIT_REPOSITORY_SLUG} .
+        - git clone --branch ${ARTEMIS_SUBMISSION_GIT_BRANCH} ${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME} assignment
+        - mvn --version && echo "ARTEMIS_BUILD_STATUS=success" > .env || echo "ARTEMIS_BUILD_STATUS=failed" > .env
+    after_script:
+        - echo "ARTEMIS_TEST_GIT_HASH=$(git rev-parse HEAD)" >> .env
+        - echo "ARTEMIS_SUBMISSION_GIT_HASH=${CI_COMMIT_SHA}" >> .env
+        - echo "ARTEMIS_SUBMISSION_GIT_REPOSITORY_SLUG=${CI_PROJECT_NAME}" >> .env
+    artifacts:
+        paths:
+            - ${ARTEMIS_BUILD_LOGS_FILE}
+            - ${ARTEMIS_TEST_RESULTS_DIR}/*.xml
+        reports:
+            dotenv: .env
+
+
+upload-job:
+    image: ${ARTEMIS_NOTIFICATION_PLUGIN_DOCKER_IMAGE}
+    stage: upload
+    dependencies:
+        - test-job
+    only:
+        variables:
+            - $CI_COMMIT_BRANCH == $ARTEMIS_SUBMISSION_GIT_BRANCH
+    variables:
+        GIT_STRATEGY: none
+    script:
+        - cp -r /notification-plugin/* .
+        - gradle run
