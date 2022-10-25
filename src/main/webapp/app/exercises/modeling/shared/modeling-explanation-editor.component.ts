@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-modeling-explanation-editor',
@@ -14,6 +15,8 @@ export class ModelingExplanationEditorComponent {
 
     @Output()
     explanationChange = new EventEmitter();
+
+    readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
 
     // Add tab to the value of textarea instead of moving to the next element in DOM
     onTextEditorTab(editor: HTMLTextAreaElement, event: Event) {

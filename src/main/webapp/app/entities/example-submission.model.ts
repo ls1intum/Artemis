@@ -14,3 +14,8 @@ export class ExampleSubmission implements BaseEntity {
 
     constructor() {}
 }
+
+export enum ExampleSubmissionMode {
+    READ_AND_CONFIRM = 'readConfirm',
+    ASSESS_CORRECTLY = 'assessCorrectly',
+}

@@ -8,7 +8,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LtiLaunchRequestDTO {
 
+    // Method and variable names need to match the LTI standard
+
     private String lis_person_sourcedid;
+
+    private String lis_person_name_given;
+
+    private String lis_person_name_family;
+
+    private String lis_person_name_full;
 
     private String lis_person_contact_email_primary;
 
@@ -17,6 +25,8 @@ public class LtiLaunchRequestDTO {
     private String lti_message_type;
 
     private String lti_version;
+
+    private String ext_user_username;
 
     private String context_id;
 
@@ -79,6 +89,30 @@ public class LtiLaunchRequestDTO {
         this.lis_person_sourcedid = lis_person_sourcedid;
     }
 
+    public String getLis_person_name_given() {
+        return lis_person_name_given;
+    }
+
+    public void setLis_person_name_given(String lis_person_name_given) {
+        this.lis_person_name_given = lis_person_name_given;
+    }
+
+    public String getLis_person_name_family() {
+        return lis_person_name_family;
+    }
+
+    public void setLis_person_name_family(String lis_person_name_family) {
+        this.lis_person_name_family = lis_person_name_family;
+    }
+
+    public String getLis_person_name_full() {
+        return lis_person_name_full;
+    }
+
+    public void setLis_person_name_full(String lis_person_name_full) {
+        this.lis_person_name_full = lis_person_name_full;
+    }
+
     public String getLis_person_contact_email_primary() {
         return lis_person_contact_email_primary;
     }
@@ -101,6 +135,14 @@ public class LtiLaunchRequestDTO {
 
     public void setLti_message_type(String lti_message_type) {
         this.lti_message_type = lti_message_type;
+    }
+
+    public String getExt_user_username() {
+        return ext_user_username;
+    }
+
+    public void setExt_user_username(String ext_user_username) {
+        this.ext_user_username = ext_user_username;
     }
 
     public String getLti_version() {
@@ -233,14 +275,14 @@ public class LtiLaunchRequestDTO {
 
     @Override
     public String toString() {
-        return "LtiLaunchRequest{" + "lis_person_sourcedid='" + lis_person_sourcedid + '\'' + ", lis_person_contact_email_primary='" + lis_person_contact_email_primary + '\''
-                + ", lis_outcome_service_url='" + lis_outcome_service_url + '\'' + ", lti_message_type='" + lti_message_type + '\'' + ", lti_version='" + lti_version + '\''
+        return "LtiLaunchRequest{" + "lis_person_sourcedid='" + lis_person_sourcedid + '\'' + "lis_person_name_given='" + lis_person_name_given + '\'' + "lis_person_name_family='"
+                + lis_person_name_family + '\'' + "lis_person_name_full='" + lis_person_name_full + '\'' + ", lis_person_contact_email_primary='" + lis_person_contact_email_primary
+                + '\'' + ", lis_outcome_service_url='" + lis_outcome_service_url + '\'' + ", lti_message_type='" + lti_message_type + '\'' + ", lti_version='" + lti_version + '\''
                 + ", context_id='" + context_id + '\'' + ", context_label='" + context_label + '\'' + ", oauth_version='" + oauth_version + '\'' + ", oauth_signature_method='"
                 + oauth_signature_method + '\'' + ", oauth_timestamp=" + oauth_timestamp + ", roles='" + roles + '\'' + ", launch_presentation_locale='"
                 + launch_presentation_locale + '\'' + ", custom_component_display_name='" + custom_component_display_name + '\'' + ", launch_presentation_return_url='"
                 + launch_presentation_return_url + '\'' + ", lis_result_sourcedid='" + lis_result_sourcedid + '\'' + ", resource_link_id='" + resource_link_id + '\''
                 + ", user_id='" + user_id + '\'' + ", oauth_nonce=" + oauth_nonce + ", oauth_consumer_key='" + oauth_consumer_key + '\'' + ", oauth_signature='" + oauth_signature
-                + '\'' + '}';
+                + ", custom_require_existing_user=" + custom_require_existing_user + ", custom_lookup_user_by_email='" + custom_lookup_user_by_email + '\'' + '}';
     }
-
 }

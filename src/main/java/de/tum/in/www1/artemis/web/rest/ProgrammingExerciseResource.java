@@ -214,6 +214,7 @@ public class ProgrammingExerciseResource {
 
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
+        programmingExercise.validateManualFeedbackSettings();
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -588,7 +589,7 @@ public class ProgrammingExerciseResource {
         catch (Exception e) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName,
-                            "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": \n" + e.getMessage(),
+                            "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": " + e,
                             "errorStructureOracleGeneration"))
                     .body(null);
         }
@@ -743,7 +744,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET programming-exercise/:exerciseId/solution-files-content
+     * GET programming-exercises/:exerciseId/solution-files-content
      *
      * Returns the solution repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
@@ -765,7 +766,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET programming-exercise/:exerciseId/template-files-content
+     * GET programming-exercises/:exerciseId/template-files-content
      *
      * Returns the template repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
@@ -787,7 +788,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET programming-exercise/:exerciseId/solution-file-names
+     * GET programming-exercises/:exerciseId/solution-file-names
      *
      * Returns the solution repository file names for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
@@ -809,7 +810,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET programming-exercise/:exerciseId/build-log-statistics
+     * GET programming-exercises/:exerciseId/build-log-statistics
      *
      * Returns the averaged build log statistics for a given programming exercise.
      * @param exerciseId the exercise for which the build log statistics should be retrieved

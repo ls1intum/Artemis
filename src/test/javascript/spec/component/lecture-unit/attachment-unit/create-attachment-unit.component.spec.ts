@@ -82,8 +82,7 @@ describe('CreateAttachmentUnitComponent', () => {
         const router: Router = TestBed.inject(Router);
         const attachmentUnitService = TestBed.inject(AttachmentUnitService);
 
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
         const attachmentUnitFormData: AttachmentUnitFormData = {
             formProperties: {
@@ -94,7 +93,7 @@ describe('CreateAttachmentUnitComponent', () => {
                 updateNotificationText: 'lorem ipsum',
             },
             fileProperties: {
-                file: fakeBlob,
+                file: fakeFile,
                 fileName: 'lorem ipsum',
             },
         };
@@ -113,7 +112,7 @@ describe('CreateAttachmentUnitComponent', () => {
         attachmentUnit.attachment = attachment;
 
         const formData = new FormData();
-        formData.append('file', fakeBlob, attachmentUnitFormData.fileProperties.fileName);
+        formData.append('file', fakeFile, attachmentUnitFormData.fileProperties.fileName);
         formData.append('attachment', objectToJsonBlob(attachment));
         formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
 

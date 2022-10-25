@@ -93,7 +93,7 @@ export class FileUploadAssessmentDashboardComponent extends AbstractAssessmentDa
      */
     private getSubmissions() {
         this.fileUploadSubmissionService
-            .getFileUploadSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
+            .getSubmissions(this.exercise.id!, { submittedOnly: true })
             .pipe(
                 map((response: HttpResponse<FileUploadSubmission[]>) =>
                     response.body!.map((submission: FileUploadSubmission) => {
