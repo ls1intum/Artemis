@@ -25,9 +25,9 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
 @RequestMapping("/api")
 public class ProgrammingExerciseGradingResource {
 
-    public static final String RE_EVALUATE = "/programming-exercise/{exerciseId}/grading/re-evaluate";
+    public static final String RE_EVALUATE = "/programming-exercises/{exerciseId}/grading/re-evaluate";
 
-    public static final String STATISTICS = "/programming-exercise/{exerciseId}/grading/statistics";
+    public static final String STATISTICS = "/programming-exercises/{exerciseId}/grading/statistics";
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
 

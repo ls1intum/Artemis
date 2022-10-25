@@ -54,13 +54,12 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
     constructor(private complaintService: ComplaintService) {}
 
-    ngOnInit(): void {
+    ngOnInit() {
         this.exerciseCategories = this.exercise.categories || [];
 
         this.setIcon(this.exercise.type);
 
         this.programmingExercise = this.exercise.type === ExerciseType.PROGRAMMING ? (this.exercise as ProgrammingExercise) : undefined;
-        this.course = this.course ?? getCourseFromExercise(this.exercise);
 
         if (this.exam) {
             this.setIsNextDueDateExamMode();
@@ -80,7 +79,9 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         }
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
+        this.course = this.course ?? getCourseFromExercise(this.exercise);
+
         if (this.submissionPolicy) {
             this.countSubmissions();
         }

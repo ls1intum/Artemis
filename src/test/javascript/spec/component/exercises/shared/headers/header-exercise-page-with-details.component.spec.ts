@@ -104,7 +104,7 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-success', 'bg-success']);
 
         exercise.assessmentDueDate = dayjs().subtract(1, 'days');
-        exercise.course = { maxComplaintTimeDays: 7 } as Course;
+        component.course = { maxComplaintTimeDays: 7 } as Course;
         participation.results = [{ rated: true, completionDate: dayjs() } as Result];
         component.ngOnInit();
         expect(component.isNextDueDate).toStrictEqual([false, false, true, false]);
