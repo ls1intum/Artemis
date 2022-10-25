@@ -86,10 +86,15 @@
     }
 
     .dismiss-all {
-        pointer-events: all;
-        border-radius: 0.3rem;
-        box-shadow: var(--artemis-alerts-shadow) 0 5px 15px;
         width: 100%;
+        margin-bottom: 15px;
+
+        .btn {
+            pointer-events: all;
+            border-radius: 0.3rem;
+            box-shadow: var(--artemis-alerts-shadow) 0 5px 15px;
+            width: 100%;
+        }
     }
 
     @media screen and (min-width: 800px) {

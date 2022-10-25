@@ -43,27 +43,6 @@ import { animate, group, style, transition, trigger } from '@angular/animations'
                 ),
             ]),
         ]),
-        trigger('dismissAllAnimation', [
-            transition(':enter', [
-                style({
-                    opacity: '0',
-                }),
-                animate(
-                    '0.2s ease-in-out',
-                    style({
-                        opacity: '1',
-                    }),
-                ),
-            ]),
-            transition(':leave', [
-                animate(
-                    '0.2s ease-out',
-                    style({
-                        opacity: '0',
-                    }),
-                ),
-            ]),
-        ]),
     ],
 })
 export class AlertOverlayComponent implements OnInit, OnDestroy {
