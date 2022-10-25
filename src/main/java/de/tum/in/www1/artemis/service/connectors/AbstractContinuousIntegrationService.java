@@ -97,11 +97,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
             // 3) process static code analysis feedback
             final var staticCodeAnalysisReports = buildResult.getStaticCodeAnalysisReports(job);
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
-                // TODO
-                System.out.println("Static code analysis reports: " + staticCodeAnalysisReports);
                 var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
-                // TODO
-                System.out.println("scaFeedbackList: " + scaFeedbackList);
                 result.addFeedbacks(scaFeedbackList);
                 result.setCodeIssueCount(scaFeedbackList.size());
             }
