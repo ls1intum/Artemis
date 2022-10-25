@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,29 +6,16 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mode/lecture-wizard-learning-goals.component';
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { LearningGoal, LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
-
-// @Component({ selector: 'jhi-video-unit-form', template: '' })
-// class VideoUnitFormStubComponent {
-//     @Input() isEditMode = false;
-//     @Output() formSubmitted: EventEmitter<VideoUnitFormData> = new EventEmitter<VideoUnitFormData>();
-// }
-//
-// @Component({ selector: 'jhi-unit-creation-card', template: '' })
-// class UnitCreationCardStubComponent {
-//     @Input() emitEvents = true;
-//     @Output() onUnitCreationCardClicked: EventEmitter<LectureUnitType> = new EventEmitter<LectureUnitType>();
-// }
 
 describe('LectureWizardLearningGoalsComponent', () => {
     let wizardLearningGoalsComponentFixture: ComponentFixture<LectureUpdateWizardLearningGoalsComponent>;
@@ -69,7 +56,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize and load data', () => {
+    it('should initialize and load data', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
         const learningGoalService = TestBed.inject(LearningGoalService);
 
@@ -98,9 +85,9 @@ describe('LectureWizardLearningGoalsComponent', () => {
             expect(wizardLearningGoalsComponent.lecture).toBe(lecture);
             expect(wizardLearningGoalsComponent.learningGoals).toBe(goals);
         });
-    });
+    }));
 
-    it('should show create form and load lecture when clicked', () => {
+    it('should show create form and load lecture when clicked', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
         const learningGoalService = TestBed.inject(LearningGoalService);
 
@@ -129,9 +116,9 @@ describe('LectureWizardLearningGoalsComponent', () => {
             expect(wizardLearningGoalsComponent.lecture).toBe(lecture);
             expect(wizardLearningGoalsComponent.isAddingLearningGoal).toBeTrue();
         });
-    });
+    }));
 
-    it('should show an alert when loading fails', () => {
+    it('should show an alert when loading fails', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
         const learningGoalService = TestBed.inject(LearningGoalService);
         const alertService = TestBed.inject(AlertService);
@@ -153,9 +140,9 @@ describe('LectureWizardLearningGoalsComponent', () => {
             expect(lectureStub).toHaveBeenCalledOnce();
             expect(alertStub).toHaveBeenCalledOnce();
         });
-    });
+    }));
 
-    it('should close all forms when canceling', () => {
+    it('should close all forms when canceling', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
         const learningGoalService = TestBed.inject(LearningGoalService);
 
@@ -177,9 +164,9 @@ describe('LectureWizardLearningGoalsComponent', () => {
             expect(wizardLearningGoalsComponent.isEditingLearningGoal).toBeFalse();
             expect(wizardLearningGoalsComponent.isLoadingLearningGoalForm).toBeFalse();
         });
-    });
+    }));
 
-    it('should delete the learning goal when clicked', () => {
+    it('should delete the learning goal when clicked', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
         const learningGoalService = TestBed.inject(LearningGoalService);
 
@@ -200,9 +187,9 @@ describe('LectureWizardLearningGoalsComponent', () => {
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
             expect(deleteStub).toHaveBeenCalledOnce();
         });
-    });
+    }));
 
-    it('should open the form when editing', () => {
+    it('should open the form when editing', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
         const learningGoalService = TestBed.inject(LearningGoalService);
 
@@ -219,9 +206,9 @@ describe('LectureWizardLearningGoalsComponent', () => {
             expect(wizardLearningGoalsComponent.isEditingLearningGoal).toBeTrue();
             expect(wizardLearningGoalsComponent.currentlyProcessedLearningGoal.id).toBe(12);
         });
-    });
+    }));
 
-    it('should return the connected units for a goal and lecture', () => {
+    it('should return the connected units for a goal and lecture', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
         const learningGoalService = TestBed.inject(LearningGoalService);
 
@@ -242,9 +229,9 @@ describe('LectureWizardLearningGoalsComponent', () => {
         const result = wizardLearningGoalsComponent.getConnectedUnitsForLearningGoal(learningGoal);
 
         expect(result).toBe('Test');
-    });
+    }));
 
-    it('should return no connected units for empty goal', () => {
+    it('should return no connected units for empty goal', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
         const learningGoalService = TestBed.inject(LearningGoalService);
 
@@ -258,9 +245,9 @@ describe('LectureWizardLearningGoalsComponent', () => {
         const result = wizardLearningGoalsComponent.getConnectedUnitsForLearningGoal(learningGoal);
 
         expect(result).toBe('artemisApp.lecture.wizardMode.learningGoalNoConnectedUnits');
-    });
+    }));
 
-    it('should call the service and show an alert when creating a goal', () => {
+    it('should call the service and show an alert when creating a goal', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
         const learningGoalService = TestBed.inject(LearningGoalService);
         const alertService = TestBed.inject(AlertService);
@@ -278,16 +265,18 @@ describe('LectureWizardLearningGoalsComponent', () => {
             title: 'Goal',
         };
 
-        wizardLearningGoalsComponent.createLearningGoal(formData);
+        wizardLearningGoalsComponent.isEditingLearningGoal = false;
+
+        wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
             expect(wizardLearningGoalsComponent.isAddingLearningGoal).toBeFalse();
             expect(createStub).toHaveBeenCalledOnce();
             expect(alertStub).toHaveBeenCalledOnce();
         });
-    });
+    }));
 
-    it('should call the service and show an alert when editing a goal', () => {
+    it('should call the service and show an alert when editing a goal', fakeAsync(() => {
         const lectureService = TestBed.inject(LectureService);
         const learningGoalService = TestBed.inject(LearningGoalService);
         const alertService = TestBed.inject(AlertService);
@@ -305,13 +294,14 @@ describe('LectureWizardLearningGoalsComponent', () => {
             title: 'Goal',
         };
         wizardLearningGoalsComponent.currentlyProcessedLearningGoal = new LearningGoal();
+        wizardLearningGoalsComponent.isEditingLearningGoal = true;
 
-        wizardLearningGoalsComponent.editLearningGoal(formData);
+        wizardLearningGoalsComponent.onLearningGoalFormSubmitted(formData);
 
         wizardLearningGoalsComponentFixture.whenStable().then(() => {
             expect(wizardLearningGoalsComponent.isEditingLearningGoal).toBeFalse();
             expect(editStub).toHaveBeenCalledOnce();
             expect(alertStub).toHaveBeenCalledOnce();
         });
-    });
+    }));
 });
