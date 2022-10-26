@@ -214,7 +214,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                     this.course.learningGoals = learningGoals.body!;
                     this.course.prerequisites = prerequisites.body!;
                     this.course.tutorialGroups = tutorialGroups.body!;
-                    this.course.tutorialGroupsConfiguration = configuration.body!;
+                    if (configuration.body) {
+                        this.course.tutorialGroupsConfiguration = configuration.body!;
+                    }
                     this.courseCalculationService.updateCourse(this.course);
                 }
             },
