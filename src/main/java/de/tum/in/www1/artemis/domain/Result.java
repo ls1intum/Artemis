@@ -520,6 +520,8 @@ public class Result extends DomainObject {
         if (isBeforeDueDate) {
             feedbacks.removeIf(Feedback::isAfterDueDate);
         }
+        setTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).count());
+        setPassedTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).filter(Feedback::isPositive).count());
     }
 
     /**
