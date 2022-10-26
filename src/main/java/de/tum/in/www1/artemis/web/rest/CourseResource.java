@@ -235,6 +235,7 @@ public class CourseResource {
 
         // Make sure to preserve associations in updated entity
         updatedCourse.setPrerequisites(existingCourse.getPrerequisites());
+        updatedCourse.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
 
         updatedCourse.validateRegistrationConfirmationMessage();
         updatedCourse.validateComplaintsAndRequestMoreFeedbackConfig();
