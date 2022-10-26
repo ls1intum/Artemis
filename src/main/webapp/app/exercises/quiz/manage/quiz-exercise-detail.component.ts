@@ -275,7 +275,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? null : this.quizExercise.dueDate;
         this.quizExercise?.quizBatches?.forEach((batch) => {
             const startTime = dayjs(batch.startTime);
-            batch.startTimeError = startTime.isBefore(this.quizExercise.releaseDate) || startTime.add(dayjs.duration(this.duration)).isAfter(dueDate ?? '');
+            batch.startTimeError = startTime.isBefore(this.quizExercise.releaseDate) || startTime.add(dayjs.duration(this.duration)).isAfter(dueDate ?? null);
         });
     }
 
