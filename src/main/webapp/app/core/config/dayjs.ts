@@ -11,7 +11,6 @@ import minMax from 'dayjs/esm/plugin/minMax';
 import localizedFormat from 'dayjs/esm/plugin/localizedFormat';
 import isoWeeksInYear from 'dayjs/esm/plugin/isoWeeksInYear';
 import isLeapYear from 'dayjs/esm/plugin/isLeapYear';
-import objectSupport from 'dayjs/esm/plugin/objectSupport';
 import timezone from 'dayjs/esm/plugin/timezone';
 
 import 'dayjs/esm/locale/en';
@@ -29,5 +28,4 @@ dayjs.extend(minMax);
 dayjs.extend(localizedFormat);
 dayjs.extend(isoWeeksInYear);
 dayjs.extend(isLeapYear);
-dayjs.extend(objectSupport);
 dayjs.extend(timezone);
