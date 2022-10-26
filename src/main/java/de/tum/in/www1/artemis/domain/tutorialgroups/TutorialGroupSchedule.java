@@ -170,6 +170,11 @@ public class TutorialGroupSchedule extends DomainObject {
         return validFromInclusive;
     }
 
+    /**
+     * Sets the start date of the schedule validity. The date must be in ISO 8601 format.
+     *
+     * @param validFromInclusive start date of the schedule validity
+     */
     public void setValidFromInclusive(String validFromInclusive) {
         if (isIso8601DateString(validFromInclusive)) {
             this.validFromInclusive = validFromInclusive;
@@ -183,6 +188,11 @@ public class TutorialGroupSchedule extends DomainObject {
         return validToInclusive;
     }
 
+    /**
+     * Sets the start end of the schedule validity. The date must be in ISO 8601 format.
+     *
+     * @param validToInclusive end date of the schedule validity
+     */
     public void setValidToInclusive(String validToInclusive) {
         if (isIso8601DateString(validToInclusive)) {
             this.validToInclusive = validToInclusive;
