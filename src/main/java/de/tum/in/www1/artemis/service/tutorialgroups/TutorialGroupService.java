@@ -116,7 +116,10 @@ public class TutorialGroupService {
         }
         nextSessionOptional.ifPresent(tutorialGroupSession -> {
             tutorialGroupSession.setTutorialGroup(null);
-            tutorialGroupSession.setTutorialGroupSchedule(null);
+            if (tutorialGroupSession.getTutorialGroupSchedule() != null) {
+                tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroup(null);
+                tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroupSessions(null);
+            }
             tutorialGroup.setNextSession(tutorialGroupSession);
         });
 

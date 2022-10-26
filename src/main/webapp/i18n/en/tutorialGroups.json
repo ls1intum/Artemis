@@ -41,6 +41,8 @@
                 "endTime": "End Time",
                 "location": "Meeting Place",
                 "repetitionFrequency": "Repetition Frequency",
+                "repetitionOneWeek": "Repeats every week",
+                "repetitionNWeeks": "Repeats every {{ n }} weeks",
                 "validFromInclusive": "Valid From",
                 "validToInclusive": "Valid Until"
             },

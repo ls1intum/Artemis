@@ -41,6 +41,8 @@
                 "endTime": "Endzeit",
                 "location": "Treffpunkt",
                 "repetitionFrequency": "Wiederholungsfrequenz",
+                "repetitionOneWeek": "Wöchentlich",
+                "repetitionNWeeks": "Wiederholt sich alle {{ n }} Wochen",
                 "validFromInclusive": "Gültig ab",
                 "validToInclusive": "Gültig bis"
             },

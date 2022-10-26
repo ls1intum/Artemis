@@ -22,6 +22,14 @@
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.dayOfWeek' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
+                <th jhiSortBy="tutorialGroupSchedule.repetitionFrequency">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.repetitionFrequency' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="tutorialGroupSchedule.location">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSession.location' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
                 <th jhiSortBy="tutorialGroupSchedule.startTime">
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.time' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
@@ -72,6 +80,20 @@
                 <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
                 <td>{{ tutorialGroup.capacity }}</td>
                 <td>{{ tutorialGroup.tutorialGroupSchedule ? (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) : '' }}</td>
+                <td>
+                    <span *ngIf="tutorialGroup.tutorialGroupSchedule; else no_schedule">
+                        {{
+                            (tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! === 1
+                                ? 'artemisApp.entities.tutorialGroupSchedule.repetitionOneWeek'
+                                : 'artemisApp.entities.tutorialGroupSchedule.repetitionNWeeks'
+                            ) | artemisTranslate: { n: tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! }
+                        }}
+                    </span>
+                    <ng-template #no_schedule></ng-template>
+                </td>
+                <td>
+                    <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.tutorialGroupSchedule ? tutorialGroup.tutorialGroupSchedule?.location : '' }} </span>
+                </td>
                 <td>
                     {{ tutorialGroup.tutorialGroupSchedule ? tutorialGroup.tutorialGroupSchedule?.startTime + '-' + tutorialGroup.tutorialGroupSchedule?.endTime : '' }}
                 </td>

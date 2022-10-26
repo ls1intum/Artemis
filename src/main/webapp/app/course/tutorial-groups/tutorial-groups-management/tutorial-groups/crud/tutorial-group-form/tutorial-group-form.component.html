@@ -135,7 +135,7 @@
             </div>
             <hr />
             <jhi-schedule-form *ngIf="configureSchedule" #scheduleForm [parentFormGroup]="form" [course]="course"></jhi-schedule-form>
-            <hr />
+            <hr *ngIf="configureSchedule" />
             <!-- Optional Notification Message -->
             <div class="form-group border border-info rounded p-3" *ngIf="notificationControl">
                 <label for="notificationText">{{ 'artemisApp.forms.tutorialGroupForm.notificationInput.label' | artemisTranslate }}</label>

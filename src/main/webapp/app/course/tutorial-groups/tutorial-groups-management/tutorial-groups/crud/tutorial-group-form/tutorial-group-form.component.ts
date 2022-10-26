@@ -131,7 +131,21 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     }
 
     get scheduleChanged() {
-        return this.isEditMode && (!isEqual({ ...this.form.value.schedule }, this.existingScheduleFormDate) || this.configureSchedule !== !!this.existingScheduleFormDate);
+        if (!this.isEditMode) {
+            return false;
+        }
+        const originalHasSchedule = !!this.existingScheduleFormDate;
+        const updateHasSchedule = this.configureSchedule && this.form.value.schedule;
+
+        if (originalHasSchedule && !updateHasSchedule) {
+            return true;
+        } else if (!originalHasSchedule && updateHasSchedule) {
+            return true;
+        } else if (!originalHasSchedule && !updateHasSchedule) {
+            return false;
+        } else {
+            return !isEqual({ ...this.form.value.schedule }, this.existingScheduleFormDate);
+        }
     }
 
     ngOnInit(): void {

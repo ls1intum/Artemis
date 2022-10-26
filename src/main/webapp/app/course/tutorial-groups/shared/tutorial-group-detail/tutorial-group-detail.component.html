@@ -115,6 +115,15 @@
                 <span *ngIf="tutorialGroup.isOnline">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOnline' | artemisTranslate }}</span>
                 <span *ngIf="!tutorialGroup.isOnline">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOffline' | artemisTranslate }}</span>
                 : {{ tutorialGroup.tutorialGroupSchedule?.location }}
+                <br />
+                <span>
+                    {{
+                        (tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! === 1
+                            ? 'artemisApp.entities.tutorialGroupSchedule.repetitionOneWeek'
+                            : 'artemisApp.entities.tutorialGroupSchedule.repetitionNWeeks'
+                        ) | artemisTranslate: { n: tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! }
+                    }}
+                </span>
             </ng-container>
             <br />
             <ng-template #scheduleNotSet>
@@ -133,8 +142,8 @@
                 </div>
             </ng-container>
             <ng-template #sessionsNotFound>
-                <span>{{ 'artemisApp.pages.tutorialGroupDetail.sessionsNotFound' | artemisTranslate }}</span></ng-template
-            >
+                <span>{{ 'artemisApp.pages.tutorialGroupDetail.sessionsNotFound' | artemisTranslate }}</span>
+            </ng-template>
         </dd>
     </dl>
 </div>

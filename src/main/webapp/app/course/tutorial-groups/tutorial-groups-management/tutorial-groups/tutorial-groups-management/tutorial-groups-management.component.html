@@ -1,6 +1,6 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
     <div class="row">
-        <div class="col-12 col-xl-8">
+        <div class="col-12 col-xl-10">
             <div class="d-flex justify-content-between">
                 <h4>{{ 'artemisApp.pages.tutorialGroupsManagement.title' | artemisTranslate }}</h4>
                 <div *ngIf="isAtLeastInstructor">
@@ -41,7 +41,7 @@
                 </jhi-tutorial-groups-table>
             </ng-container>
         </div>
-        <div class="col-12 col-xl-4">
+        <div class="col-12 col-xl-2">
             <jhi-tutorial-groups-course-information [tutorialGroups]="tutorialGroups"></jhi-tutorial-groups-course-information>
             <div class="mt-1" *ngIf="tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0">
                 <jhi-tutorial-group-free-days-overview [timeZone]="course.timeZone" [tutorialGroupFreeDays]="tutorialGroupFreeDays"> </jhi-tutorial-group-free-days-overview>
