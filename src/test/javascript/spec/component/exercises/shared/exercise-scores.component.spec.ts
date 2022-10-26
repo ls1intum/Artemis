@@ -328,14 +328,6 @@ describe('Exercise Scores Component', () => {
         expect(component.isLoading).toBeFalse();
     });
 
-    it('should format date correctly', () => {
-        const date = new Date(2021, 4, 8, 21, 47, 17);
-
-        expect(component.formatDate(date)).toBe('2021-05-08 21:47:17');
-
-        expect(component.formatDate(undefined)).toBe('');
-    });
-
     it.each(filterRanges)('should filter results correctly and reset the filter', (rangeFilter: Range) => {
         component.rangeFilter = rangeFilter;
         component.results = [result];

@@ -22,11 +22,11 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     attachments: Attachment[] = [];
     attachmentToBeCreated?: Attachment;
     attachmentBackup?: Attachment;
-    attachmentFile?: Blob;
+    attachmentFile?: File;
     isUploadingAttachment: boolean;
     isDownloadingAttachmentLink?: string;
     notificationText?: string;
-    erroredFile?: Blob;
+    erroredFile?: File;
     errorMessage?: string;
 
     // A human-readable list of allowed file extensions
