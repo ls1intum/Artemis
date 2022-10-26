@@ -17,22 +17,22 @@ describe('ResultUtils', () => {
 
     it.each([
         {
-            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }] },
+            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }], testCaseCount: 0 },
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: true,
         },
         {
-            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }, { type: FeedbackType.MANUAL }] },
+            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }, { type: FeedbackType.MANUAL }], testCaseCount: 1 },
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: false,
         },
         {
-            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }] },
+            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }], testCaseCount: 0 },
             templateStatus: ResultTemplateStatus.NO_RESULT,
             expected: false,
         },
         {
-            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }] },
+            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER }, { type: FeedbackType.MANUAL }], testCaseCount: 0 },
             templateStatus: ResultTemplateStatus.IS_BUILDING,
             expected: false,
         },
@@ -42,7 +42,7 @@ describe('ResultUtils', () => {
 
     it.each([
         { result: undefined, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-secondary' },
-        { result: {}, templateStatus: ResultTemplateStatus.LATE, expected: 'result--late' },
+        { result: {}, templateStatus: ResultTemplateStatus.LATE, expected: 'result-late' },
         {
             result: { submission: { submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true }, assessmentType: AssessmentType.AUTOMATIC },
             templateStatus: ResultTemplateStatus.HAS_RESULT,
@@ -76,26 +76,30 @@ describe('ResultUtils', () => {
         },
         { result: {}, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faCheckCircle },
         {
-            result: { score: undefined, successful: true, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }] },
+            result: { score: undefined, successful: true, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faCheckCircle,
         },
         {
-            result: { score: undefined, successful: false, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }] },
+            result: { score: undefined, successful: false, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faTimesCircle,
         },
         {
-            result: { score: MIN_SCORE_GREEN, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }] },
+            result: { score: MIN_SCORE_GREEN, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faCheckCircle,
         },
         {
-            result: { score: MIN_SCORE_ORANGE, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }] },
+            result: { score: MIN_SCORE_ORANGE, feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faTimesCircle,
         },
-        { result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }] }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: faTimesCircle },
+        {
+            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faTimesCircle,
+        },
     ])('should correctly determine result icon', ({ result, templateStatus, expected }) => {
         expect(getResultIconClass(result, templateStatus!)).toBe(expected);
     });

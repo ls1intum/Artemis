@@ -181,9 +181,8 @@ export const evaluateTemplateStatus = (
  *
  */
 export const onlyShowSuccessfulCompileStatus = (result: Result | undefined, templateStatus: ResultTemplateStatus): boolean => {
-    const zeroTestsPassed =
-        (result?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC && !Feedback.isStaticCodeAnalysisFeedback(feedback)).length ?? 0) === 0;
-    return templateStatus !== ResultTemplateStatus.NO_RESULT && templateStatus !== ResultTemplateStatus.IS_BUILDING && !isBuildFailed(result?.submission) && zeroTestsPassed;
+    const zeroTests = !result?.testCaseCount;
+    return templateStatus !== ResultTemplateStatus.NO_RESULT && templateStatus !== ResultTemplateStatus.IS_BUILDING && !isBuildFailed(result?.submission) && zeroTests;
 };
 
 /**
@@ -197,10 +196,9 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
     }
 
     if (templateStatus === ResultTemplateStatus.LATE) {
-        return 'result--late';
+        return 'result-late';
     }
 
-    // Build failure so return red text.
     if (isBuildFailedAndResultIsAutomatic(result)) {
         return 'text-danger';
     }
@@ -233,7 +231,6 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faQuestionCircle;
     }
 
-    // Build failure so return times icon.
     if (isBuildFailedAndResultIsAutomatic(result)) {
         return faTimesCircle;
     }
