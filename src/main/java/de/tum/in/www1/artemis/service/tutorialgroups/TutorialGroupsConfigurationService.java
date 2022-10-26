@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import javax.transaction.Transactional;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
@@ -41,9 +43,12 @@ public class TutorialGroupsConfigurationService {
     @Transactional // ok because of delete
     public void onTimeZoneUpdate(Course course) {
         // ToDo: Think about smarter way to handle time zone change then just deleting the entities
+
+        Set<TutorialGroupFreePeriod> tutorialGroupFreePeriods = this.tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(course.getId());
+
         // delete all sessions and tutorial free periods of course
-        tutorialGroupSessionRepository.deleteByTutorialGroup_Course(course);
-        tutorialGroupFreePeriodRepository.deleteByTutorialGroupsConfiguration_Course(course);
+        tutorialGroupSessionRepository.deleteByTutorialGroupCourse(course);
+        tutorialGroupFreePeriodRepository.deleteAll(tutorialGroupFreePeriods);
 
         // recreate schedules sessions with new time zone
         var schedules = tutorialGroupScheduleRepository.getAllByTutorialGroup_Course(course);

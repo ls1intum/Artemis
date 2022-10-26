@@ -88,7 +88,7 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
 
     @Modifying
     @Transactional
-    void deleteByTutorialGroup_Course(Course course);
+    void deleteByTutorialGroupCourse(Course course);
 
     @Modifying
     @Transactional

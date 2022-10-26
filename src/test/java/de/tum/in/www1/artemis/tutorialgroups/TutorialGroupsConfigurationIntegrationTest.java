@@ -108,10 +108,13 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
 
         // when
         // change time zone to berlin and change end period
-        var course = courseRepository.findByIdElseThrow(exampleCourseId);
+        var course = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(exampleCourseId);
         course.setTimeZone("Europe/Berlin");
         course.setTutorialGroupsConfiguration(null);
         request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(exampleCourseId);
+        assertThat(course.getTutorialGroupsConfiguration()).isNotNull();
 
         sessions = this.getTutorialGroupSessionsAscending(tutorialGroupWithSchedule.getId());
         assertThat(sessions).hasSize(2);

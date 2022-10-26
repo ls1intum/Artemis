@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.repository.tutorialgroups;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -30,10 +30,10 @@ public interface TutorialGroupFreePeriodRepository extends JpaRepository<Tutoria
         return findById(tutorialGroupFreePeriodId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupFreePeriod", tutorialGroupFreePeriodId));
     }
 
-    List<TutorialGroupFreePeriod> findAllByTutorialGroupsConfigurationCourseId(Long courseId);
+    Set<TutorialGroupFreePeriod> findAllByTutorialGroupsConfigurationCourseId(Long courseId);
 
     @Modifying
     @Transactional
-    void deleteByTutorialGroupsConfiguration_Course(Course course);
+    void deleteByTutorialGroupsConfigurationCourse(Course course);
 
 }
