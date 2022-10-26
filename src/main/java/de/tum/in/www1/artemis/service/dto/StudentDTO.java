@@ -13,21 +13,6 @@ import de.tum.in.www1.artemis.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StudentDTO {
 
-    public StudentDTO(String login, String firstName, String lastName, String registrationNumber) {
-        this.login = login;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.registrationNumber = registrationNumber;
-    }
-
-    public StudentDTO(User user) {
-        this(user.getLogin(), user.getFirstName(), user.getLastName(), user.getRegistrationNumber());
-    }
-
-    public StudentDTO() {
-        // for jackson
-    }
-
     @Size(max = 50)
     private String login;
 
@@ -43,6 +28,21 @@ public class StudentDTO {
     @Email
     @Size(max = 100)
     private String email;
+
+    public StudentDTO(String login, String firstName, String lastName, String registrationNumber) {
+        this.login = login;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.registrationNumber = registrationNumber;
+    }
+
+    public StudentDTO(User user) {
+        this(user.getLogin(), user.getFirstName(), user.getLastName(), user.getRegistrationNumber());
+    }
+
+    public StudentDTO() {
+        // for jackson
+    }
 
     public String getLogin() {
         return login;
