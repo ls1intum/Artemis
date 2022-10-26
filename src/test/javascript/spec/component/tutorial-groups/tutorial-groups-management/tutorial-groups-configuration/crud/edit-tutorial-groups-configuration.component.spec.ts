@@ -72,7 +72,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
-        expect(findConfigurationSpy).toHaveBeenCalledWith(course.id, exampleConfiguration.id);
+        expect(findConfigurationSpy).toHaveBeenCalledWith(course.id);
     });
 
     it('should set form data correctly', () => {
@@ -82,7 +82,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
 
         expect(component.tutorialGroupsConfiguration).toEqual(exampleConfiguration);
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
-        expect(findConfigurationSpy).toHaveBeenCalledWith(course.id, exampleConfiguration.id);
+        expect(findConfigurationSpy).toHaveBeenCalledWith(course.id);
 
         expect(component.formData.period).toEqual([exampleConfiguration.tutorialPeriodStartInclusive?.toDate(), exampleConfiguration.tutorialPeriodEndInclusive?.toDate()]);
         expect(formStub.formData).toEqual(component.formData);

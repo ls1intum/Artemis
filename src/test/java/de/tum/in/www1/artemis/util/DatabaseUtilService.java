@@ -4323,6 +4323,10 @@ public class DatabaseUtilService {
         var course = courseRepo.findByIdElseThrow(courseId);
         var tutorialGroupConfiguration = ModelFactory.generateTutorialGroupsConfiguration(start, end);
         tutorialGroupConfiguration.setCourse(course);
-        return tutorialGroupsConfigurationRepository.saveAndFlush(tutorialGroupConfiguration);
+        var persistedConfiguration = tutorialGroupsConfigurationRepository.save(tutorialGroupConfiguration);
+        course.setTutorialGroupsConfiguration(persistedConfiguration);
+        course = courseRepo.save(course);
+        persistedConfiguration.setCourse(course);
+        return persistedConfiguration;
     }
 }

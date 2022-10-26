@@ -45,21 +45,19 @@ public class TutorialGroupsConfigurationResource {
     }
 
     /**
-     * GET /courses/:courseId/tutorial-groups-configuration/:tutorialGroupsConfigurationId : gets the tutorial groups configuration with the specified id.
+     * GET /courses/:courseId/tutorial-groups-configuration/: gets the tutorial groups configuration of the course with the specified id
      *
-     * @param courseId                      the id of the course to which the tutorial groups configuration belongs
-     * @param tutorialGroupsConfigurationId the id of the tutorial groups configuration to retrieve
+     * @param courseId the id of the course to which the tutorial groups configuration belongs
      * @return ResponseEntity with status 200 (OK) and with body the tutorial groups configuration
      */
-    @GetMapping("/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @GetMapping("/courses/{courseId}/tutorial-groups-configuration")
+    @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId) {
-        log.debug("REST request to get tutorial groups configuration: {} of course: {}", tutorialGroupsConfigurationId, courseId);
-        var configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
-        checkEntityIdMatchesPathIds(configuration, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
-        return ResponseEntity.ok().body(configuration);
+    public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get tutorial groups configuration of course: {}", courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        return ResponseEntity.ok().body(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
     }
 
     /**
@@ -80,12 +78,14 @@ public class TutorialGroupsConfigurationResource {
         }
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        if (tutorialGroupsConfigurationRepository.findByCourse(course).isPresent()) {
+        if (tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(course.getId()).isPresent()) {
             throw new BadRequestException("A tutorial group configuration already exists for this course");
         }
         isValidTutorialGroupConfiguration(tutorialGroupsConfiguration);
         tutorialGroupsConfiguration.setCourse(course);
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(tutorialGroupsConfiguration);
+        course.setTutorialGroupsConfiguration(persistedConfiguration);
+        courseRepository.save(course);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "tutorial-groups-configuration/" + tutorialGroupsConfiguration.getId())).body(persistedConfiguration);
     }
 

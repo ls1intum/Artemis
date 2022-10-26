@@ -39,7 +39,6 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         id: courseId,
         timeZone: 'Europe/Berlin',
     } as Course;
-    const tutorialGroupConfigurationId = 1;
     let configurationService: TutorialGroupsConfigurationService;
     let findConfigurationSpy: jest.SpyInstance;
 
@@ -64,7 +63,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
                 MockProvider(AlertService),
                 SortService,
                 { provide: Router, useValue: router },
-                mockedActivatedRoute({ tutorialGroupsConfigurationId: tutorialGroupConfigurationId }, {}, { course }, {}),
+                mockedActivatedRoute({}, {}, { course }, {}),
             ],
         })
             .compileComponents()
@@ -121,7 +120,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         fixture.detectChanges();
         expect(component.tutorialGroupFreePeriods).toEqual([thirdOfJanuaryPeriod, secondOfJanuaryPeriod, firstOfJanuaryPeriod]);
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
-        expect(findConfigurationSpy).toHaveBeenCalledWith(courseId, tutorialGroupConfigurationId);
+        expect(findConfigurationSpy).toHaveBeenCalledWith(courseId);
     });
 
     it('should display three rows for three free periods', () => {

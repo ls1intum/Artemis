@@ -2134,7 +2134,7 @@ public class CourseTestService {
         course.setOnlineCourse(true);
         ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
         course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
-        Course courseWithOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        Course courseWithOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(course.getId());
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
     }
 
@@ -2166,7 +2166,7 @@ public class CourseTestService {
 
         course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
 
-        course = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        course = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(course.getId());
 
         assertThat(course.getOnlineCourseConfiguration().getLtiKey()).isEqualTo("changedKey");
         assertThat(course.getOnlineCourseConfiguration().getLtiSecret()).isEqualTo("changedSecret");
@@ -2185,7 +2185,7 @@ public class CourseTestService {
         course.setOnlineCourseConfiguration(null);
         course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
 
-        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(course.getId());
         assertThat(courseWithoutOnlineConfiguration.getOnlineCourseConfiguration()).isNull();
     }
 

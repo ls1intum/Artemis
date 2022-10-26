@@ -13,9 +13,9 @@ export class TutorialGroupsConfigurationService {
 
     constructor(private httpClient: HttpClient) {}
 
-    getOneOfCourse(courseId: number, tutorialGroupsConfigurationId: number) {
+    getOneOfCourse(courseId: number) {
         return this.httpClient
-            .get<TutorialGroupsConfiguration>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}`, { observe: 'response' })
+            .get<TutorialGroupsConfiguration>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupsConfigurationResponseDatesFromServer(res)));
     }
     create(tutorialGroupsConfiguration: TutorialGroupsConfiguration, courseId: number, period: Date[]): Observable<EntityResponseType> {
@@ -47,13 +47,15 @@ export class TutorialGroupsConfigurationService {
     }
 
     private convertTutorialGroupsConfigurationResponseDatesFromServer(res: HttpResponse<TutorialGroupsConfiguration>): HttpResponse<TutorialGroupsConfiguration> {
-        res.body!.tutorialPeriodStartInclusive = convertDateFromServer(res.body!.tutorialPeriodStartInclusive);
-        res.body!.tutorialPeriodEndInclusive = convertDateFromServer(res.body!.tutorialPeriodEndInclusive);
-        if (res.body!.tutorialGroupFreePeriods) {
-            res.body!.tutorialGroupFreePeriods.forEach((tutorialGroupFreePeriod) => {
-                tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
-                tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end);
-            });
+        if (res.body) {
+            res.body.tutorialPeriodStartInclusive = convertDateFromServer(res.body!.tutorialPeriodStartInclusive);
+            res.body!.tutorialPeriodEndInclusive = convertDateFromServer(res.body!.tutorialPeriodEndInclusive);
+            if (res.body!.tutorialGroupFreePeriods) {
+                res.body!.tutorialGroupFreePeriods.forEach((tutorialGroupFreePeriod) => {
+                    tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
+                    tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end);
+                });
+            }
         }
 
         return res;

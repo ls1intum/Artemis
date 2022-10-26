@@ -28,7 +28,7 @@ describe('TutorialGroupsConfigurationService', () => {
     it('getOneOfCourse', fakeAsync(() => {
         const returnedFromService = { ...elemDefault };
         service
-            .getOneOfCourse(1, 1)
+            .getOneOfCourse(1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
 

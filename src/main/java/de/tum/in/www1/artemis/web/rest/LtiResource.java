@@ -100,7 +100,8 @@ public class LtiResource {
         Exercise exercise = optionalExercise.get();
         log.debug("found exercise {}", exercise.getTitle());
 
-        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        Course course = courseRepository
+                .findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
         if (onlineCourseConfiguration == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Exercise is not part of course configured for LTI");
@@ -188,7 +189,8 @@ public class LtiResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
-        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        Course course = courseRepository
+                .findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
         OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
         if (ocConfiguration == null) {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");

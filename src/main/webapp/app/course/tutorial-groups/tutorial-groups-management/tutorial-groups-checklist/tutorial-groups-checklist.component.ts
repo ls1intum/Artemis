@@ -4,9 +4,10 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { finalize, switchMap, take } from 'rxjs';
+import { combineLatest, finalize, switchMap, take } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { faPlus, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 
 @Component({
     selector: 'jhi-tutorial-groups-checklist',
@@ -21,7 +22,12 @@ export class TutorialGroupsChecklistComponent implements OnInit {
     faWrench = faWrench;
     faPlus = faPlus;
 
-    constructor(private activatedRoute: ActivatedRoute, private courseManagementService: CourseManagementService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private courseManagementService: CourseManagementService,
+        private alertService: AlertService,
+        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
+    ) {}
 
     get isFullyConfigured(): boolean {
         return this.isTimeZoneConfigured && this.isTutorialGroupConfigurationCreated;
@@ -38,16 +44,19 @@ export class TutorialGroupsChecklistComponent implements OnInit {
                 take(1),
                 switchMap((params) => {
                     const courseId = Number(params.get('courseId'));
-                    return this.courseManagementService.find(courseId);
+                    return combineLatest([this.courseManagementService.find(courseId), this.tutorialGroupsConfigurationService.getOneOfCourse(courseId)]);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
             .subscribe({
-                next: (courseResult) => {
+                next: ([courseResult, configurationResult]) => {
                     if (courseResult.body) {
                         this.course = courseResult.body;
-                        this.isTimeZoneConfigured = this.course.timeZone !== undefined;
-                        this.isTutorialGroupConfigurationCreated = this.course.tutorialGroupsConfiguration !== undefined;
+                        this.isTimeZoneConfigured = !!this.course.timeZone;
+                    }
+                    if (configurationResult.body) {
+                        this.course.tutorialGroupsConfiguration = configurationResult.body;
+                        this.isTutorialGroupConfigurationCreated = !!this.course.tutorialGroupsConfiguration;
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

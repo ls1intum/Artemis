@@ -17,25 +17,35 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
 
     @BeforeEach
     void deleteExistingConfiguration() {
-        tutorialGroupsConfigurationRepository.deleteAll();
+        deleteExampleConfiguration();
+    }
+
+    private void deleteExampleConfiguration() {
+        Course course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(exampleCourseId);
+        TutorialGroupsConfiguration configuration = course.getTutorialGroupsConfiguration();
+        if (configuration != null) {
+            course.setTutorialGroupsConfiguration(null);
+            configuration.setCourse(null);
+            courseRepository.save(course);
+            tutorialGroupsConfigurationRepository.delete(configuration);
+        }
     }
 
     @Override
     void testJustForInstructorEndpoints() throws Exception {
         var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, firstAugustMonday, firstSeptemberMonday);
-        request.get(this.getTutorialGroupsConfigurationPath() + configuration.getId(), HttpStatus.FORBIDDEN, TutorialGroupsConfiguration.class);
         request.putWithResponseBody(getTutorialGroupsConfigurationPath() + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
-        tutorialGroupsConfigurationRepository.deleteAll();
+        this.deleteExampleConfiguration();
         request.postWithResponseBody(getTutorialGroupsConfigurationPath(), buildExampleConfiguration(), TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
-    void getOneOfCourse_asInstructor_shouldReturnTutorialGroupsConfiguration() throws Exception {
+    @WithMockUser(value = "student1", roles = "USER")
+    void getOneOfCourse_asStudent_shouldReturnTutorialGroupsConfiguration() throws Exception {
         // given
         var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, firstAugustMonday, firstSeptemberMonday);
         // when
-        var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath() + configuration.getId(), HttpStatus.OK, TutorialGroupsConfiguration.class);
+        var configurationFromRequest = request.get(this.getTutorialGroupsConfigurationPath(), HttpStatus.OK, TutorialGroupsConfiguration.class);
         // then
         assertThat(configurationFromRequest).isEqualTo(configuration);
     }
@@ -59,7 +69,7 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
         // when
         request.postWithResponseBody(getTutorialGroupsConfigurationPath(), buildExampleConfiguration(), TutorialGroupsConfiguration.class, HttpStatus.BAD_REQUEST);
         // then
-        assertThat(tutorialGroupsConfigurationRepository.findByCourse_Id(exampleCourseId)).isNotEmpty();
+        assertThat(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(exampleCourseId)).isNotEmpty();
     }
 
     @Test

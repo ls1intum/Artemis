@@ -211,7 +211,8 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("consecutiveCourses")
     private Set<LearningGoal> prerequisites = new HashSet<>();
 
-    @OneToOne(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "tutorial_groups_configuration_id")
     @JsonIgnoreProperties(value = "course")
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
 

@@ -396,7 +396,8 @@ public class LtiService {
             return;
         }
 
-        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
+        Course course = courseRepository
+                .findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
         OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
 
         if (onlineCourseConfiguration == null) {

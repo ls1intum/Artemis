@@ -3,6 +3,8 @@
     <changeSet author="stefanwaldhauser" id="20220826000000-1">
         <addColumn tableName="course">
             <column name="time_zone" type="VARCHAR(255)"/>
+            <!-- Add the foreign key on the course to support lazy loading of configuration with @OneToOne -->
+            <column name="tutorial_groups_configuration_id" type="BIGINT"/>
         </addColumn>
         <createTable tableName="tutorial_group_schedule">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -61,9 +63,6 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_schedule_PK"/>
             </column>
-            <column name="course_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
             <column name="tutorial_period_start_inclusive" type="DATE">
             </column>
             <column name="tutorial_period_end_inclusive" type="DATE">
@@ -100,13 +99,13 @@
                                  initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group_schedule"
                                  validate="true"/>
         <!-- fks for tutorial_groups_configuration table -->
-        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="tutorial_groups_configuration"
-                                 constraintName="fk_tutorial_groups_configuration_course_id" deferrable="false"
-                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"
+        <addForeignKeyConstraint baseColumnNames="tutorial_groups_configuration_id" baseTableName="course"
+                                 constraintName="fk_course_tutorial_groups_configuration_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_groups_configuration"
                                  validate="true"/>
         <!-- fks for tutorial_group_free_period table -->
         <addForeignKeyConstraint baseColumnNames="tutorial_groups_configuration_id" baseTableName="tutorial_group_free_period"
-                                 constraintName="fk_tutorial_group_free_period_tutorial_group_configuration_id" deferrable="false"
+                                 constraintName="fk_tutorial_group_free_period_tutorial_groups_configuration_id" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_groups_configuration"
                                  validate="true"/>
     </changeSet>

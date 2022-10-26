@@ -102,7 +102,7 @@ public class TutorialGroupSessionResource {
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
         authorizationCheckService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), null);
-        var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourse_Id(courseId);
+        var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         if (configurationOptional.isEmpty()) {
             throw new BadRequestException("The course has no tutorial groups configuration");
         }
@@ -179,7 +179,7 @@ public class TutorialGroupSessionResource {
         tutorialGroupSessionDTO.validityCheck();
         var tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(tutorialGroupId);
         authorizationCheckService.isAllowedToModifySessionsOfTutorialGroup(tutorialGroup, null);
-        var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourse_Id(courseId);
+        var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         if (configurationOptional.isEmpty()) {
             throw new BadRequestException("The course has no tutorial groups configuration");
         }

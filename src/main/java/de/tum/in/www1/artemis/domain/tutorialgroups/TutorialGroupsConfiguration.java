@@ -23,8 +23,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorialGroupsConfiguration extends DomainObject {
 
-    @OneToOne
-    @JoinColumn(name = "course_id")
+    @OneToOne(mappedBy = "tutorialGroupsConfiguration")
     @JsonIgnoreProperties(value = "tutorialGroupsConfiguration", allowSetters = true)
     private Course course;
 
@@ -42,7 +41,7 @@ public class TutorialGroupsConfiguration extends DomainObject {
     @NotNull
     private String tutorialPeriodEndInclusive;
 
-    @OneToMany(mappedBy = "tutorialGroupsConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "tutorialGroupsConfiguration", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "tutorialGroupsConfiguration", allowSetters = true)
     private Set<TutorialGroupFreePeriod> tutorialGroupFreePeriods = new HashSet<>();
 

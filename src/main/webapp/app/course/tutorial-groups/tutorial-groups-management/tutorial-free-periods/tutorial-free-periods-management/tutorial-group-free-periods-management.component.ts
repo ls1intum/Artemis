@@ -50,13 +50,12 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
 
     loadAll() {
         this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
+        combineLatest([this.activatedRoute.data])
             .pipe(
                 take(1),
-                switchMap(([params, { course }]) => {
-                    const tutorialGroupConfigurationId = Number(params.get('tutorialGroupsConfigurationId'));
+                switchMap(([{ course }]) => {
                     this.course = course;
-                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!, tutorialGroupConfigurationId);
+                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
