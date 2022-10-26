@@ -196,10 +196,6 @@ export class ResultComponent implements OnInit, OnChanges {
             this.result = undefined;
             this.resultString = '';
         }
-
-        if (this.showIcon) {
-            console.log(this.result);
-        }
     }
 
     /**

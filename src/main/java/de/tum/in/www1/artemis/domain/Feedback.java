@@ -348,7 +348,7 @@ public class Feedback extends DomainObject {
 
     /**
      * Checks whether the feedback was created by a submission policy
-     * @return true if it is static code analysis feedback else false
+     * @return true if it is submission policy feedback else false
      */
     @JsonIgnore
     public boolean isSubmissionPolicyFeedback() {
@@ -357,7 +357,7 @@ public class Feedback extends DomainObject {
 
     /**
      * Checks whether the feedback was created by an automatic test
-     * @return true if it is static code analysis feedback else false
+     * @return true if it is a test feedback else false
      */
     @JsonIgnore
     public boolean isTestFeedback() {
