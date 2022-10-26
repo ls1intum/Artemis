@@ -230,7 +230,7 @@ public class CourseService {
         course.setLearningGoals(learningGoalService.findAllForCourse(course, user));
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
         course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
-        course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
+        course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
