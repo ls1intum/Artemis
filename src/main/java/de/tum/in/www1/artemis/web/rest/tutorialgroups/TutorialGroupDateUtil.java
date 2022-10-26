@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import java.time.*;
+import java.time.format.DateTimeParseException;
 
 public class TutorialGroupDateUtil {
 
@@ -25,7 +26,7 @@ public class TutorialGroupDateUtil {
             LocalDate.parse(dateString);
             return true;
         }
-        catch (Exception e) {
+        catch (DateTimeParseException e) {
             return false;
         }
     }
@@ -41,7 +42,7 @@ public class TutorialGroupDateUtil {
             LocalTime.parse(timeString);
             return true;
         }
-        catch (Exception e) {
+        catch (DateTimeParseException e) {
             return false;
         }
     }
