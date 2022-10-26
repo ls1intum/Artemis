@@ -1032,8 +1032,8 @@ public class ModelFactory {
 
         final var testSuite = new TestSuiteDTO("TestSuiteName1", now().toEpochSecond(), 0, 0, failedTestNames.size(), successfulTestNames.size() + failedTestNames.size(),
                 new ArrayList<>());
-        testSuite.testCases().addAll(successfulTestNames.stream().map(name -> new de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO(name, "Class", 0d)).toList());
-        testSuite.testCases().addAll(failedTestNames.stream().map(name -> new de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO(name, "Class", 0d,
+        testSuite.testCases().addAll(successfulTestNames.stream().map(name -> new TestCaseDTO(name, "Class", 0d)).toList());
+        testSuite.testCases().addAll(failedTestNames.stream().map(name -> new TestCaseDTO(name, "Class", 0d,
                 new ArrayList<>(), List.of(new TestCaseDetailMessageDTO(name + " error message")), new ArrayList<>())).toList());
 
         final var commitDTO = new CommitDTO(TestConstants.COMMIT_HASH_STRING, repoName, DEFAULT_BRANCH);
@@ -1064,32 +1064,32 @@ public class ModelFactory {
     public static TestResultsDTO generateTestResultsDTOWithCustomFeedback(String repoName, List<String> successfulTestNames, List<String> failedTestNames,
             ProgrammingLanguage programmingLanguage, boolean enableStaticAnalysisReports) {
 
-        final List<de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO> testCases = new ArrayList<>();
+        final List<TestCaseDTO> testCases = new ArrayList<>();
 
         // successful with message
         {
-            var testCase = new de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO("CustomSuccessMessage", null, 0d);
+            var testCase = new TestCaseDTO("CustomSuccessMessage", null, 0d);
             testCase.successInfos().add(new TestCaseDetailMessageDTO("Successful test with message"));
             testCases.add(testCase);
         }
 
         // successful without message
         {
-            var testCase = new de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO("CustomSuccessNoMessage", null, 0d);
+            var testCase = new TestCaseDTO("CustomSuccessNoMessage", null, 0d);
             testCase.successInfos().add(new TestCaseDetailMessageDTO(null));
             testCases.add(testCase);
         }
 
         // failed with message
         {
-            var testCase = new de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO("CustomFailedMessage", null, 0d);
+            var testCase = new TestCaseDTO("CustomFailedMessage", null, 0d);
             testCase.failures().add(new TestCaseDetailMessageDTO("Failed test with message"));
             testCases.add(testCase);
         }
 
         // failed without message
         {
-            var testCase = new de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO("CustomFailedNoMessage", null, 0d);
+            var testCase = new TestCaseDTO("CustomFailedNoMessage", null, 0d);
             testCase.failures().add(new TestCaseDetailMessageDTO(null));
             testCases.add(testCase);
         }
