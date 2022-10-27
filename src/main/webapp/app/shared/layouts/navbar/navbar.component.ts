@@ -219,6 +219,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     breadcrumbTranslation = {
         new: 'global.generic.create',
         create: 'global.generic.create',
+        start: 'global.generic.start',
         edit: 'global.generic.edit',
         audits: 'audits.title',
         configuration: 'configuration.title',
@@ -312,6 +313,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     studentPathBreadcrumbTranslations = {
         exams: 'artemisApp.courseOverview.menu.exams',
+        test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
         learning_goals: 'artemisApp.courseOverview.menu.learningGoals',
@@ -380,6 +382,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (isStudentPath) {
             switch (this.lastRouteUrlSegment) {
                 case 'code-editor':
+                case 'test-exam':
                 case 'participate':
                     this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
                     return;
@@ -504,6 +507,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'mc-question-statistic':
             case 'dnd-question-statistic':
             case 'sa-question-statistic':
+            case 'test-exam':
             case 'participate':
                 break;
             case 'example-submissions':
