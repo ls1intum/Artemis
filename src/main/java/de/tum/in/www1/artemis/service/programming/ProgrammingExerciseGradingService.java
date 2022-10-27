@@ -19,6 +19,8 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import com.google.common.base.Strings;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
@@ -127,7 +129,7 @@ public class ProgrammingExerciseGradingService {
         Result newResult = null;
         try {
             var buildResult = continuousIntegrationService.get().convertBuildResult(requestBody);
-            checkCorrectBranchElseThrow(participation.getProgrammingExercise(), buildResult);
+            checkCorrectBranchElseThrow(participation, buildResult);
 
             newResult = continuousIntegrationService.get().createResultFromBuildResult(buildResult, participation);
 
@@ -166,18 +168,26 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Checks that the build result belongs to the default branch of the exercise.
+     * Checks that the build result belongs to the default branch of the student participation (in case it has a branch).
+     * For all other cases (template/solution or student participation without a branch) it falls back to check the default branch of the programming exercise.
      *
-     * @param exercise The exercise in which the submission was made.
-     * @param buildResult The build result received from the CI system.
+     * @param participation The programming exercise participation in which the submission was made (including a reference to the programming exercise)
+     * @param buildResult   The build result received from the CI system.
      * @throws IllegalArgumentException Thrown if the result does not belong to the default branch of the exercise.
      */
-    private void checkCorrectBranchElseThrow(final ProgrammingExercise exercise, final AbstractBuildResultNotificationDTO buildResult) throws IllegalArgumentException {
+    private void checkCorrectBranchElseThrow(final ProgrammingExerciseParticipation participation, final AbstractBuildResultNotificationDTO buildResult)
+            throws IllegalArgumentException {
         // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
         buildResult.getBranchNameFromAssignmentRepo().ifPresent(branchName -> {
-            final String exerciseDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(exercise);
+            String participationDefaultBranch = null;
+            if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+                participationDefaultBranch = studentParticipation.getBranch();
+            }
+            if (Strings.isNullOrEmpty(participationDefaultBranch)) {
+                participationDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+            }
 
-            if (!branchName.equals(exerciseDefaultBranch)) {
+            if (!Objects.equals(branchName, participationDefaultBranch)) {
                 throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
             }
         });
@@ -361,7 +371,7 @@ public class ProgrammingExerciseGradingService {
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
             Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(exercise.getId());
-            messagingTemplate.convertAndSend("/topic/programming-exercise/" + exercise.getId() + "/test-cases", testCases);
+            messagingTemplate.convertAndSend("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCases);
         }
     }
 

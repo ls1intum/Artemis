@@ -43,7 +43,7 @@ describe('FileUploadSubmission Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         service
-            .update(new FileUploadSubmission(), 1, new Blob())
+            .update(new FileUploadSubmission(), 1, new File([''], ''))
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'POST' });
