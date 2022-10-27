@@ -32,8 +32,8 @@
                     [studentParticipation]="gradedStudentParticipation"
                     updatingResultClass="me-2"
                     [showBadge]="true"
-                    [showUngradedResults]="false"
                     [triggerLastGraded]="false"
+                    [short]="true"
                 >
                 </jhi-submission-result-status>
             </div>
@@ -136,33 +136,21 @@
                 </div>
                 <div class="row" *ngIf="showMoreResults">
                     <div class="col-12 col-md-12">
-                        <div *ngFor="let result of sortedHistoryResults">
-                            <div *ngIf="result.participation" class="row justify-content-between">
-                                <div class="col">
-                                    <h4>
-                                        <span
-                                            class="badge w-100"
-                                            [ngClass]="evaluateBadge(result.participation, result).badgeClass"
-                                            ngbTooltip="{{ evaluateBadge(result.participation, result).tooltip | artemisTranslate }}"
-                                            placement="right"
-                                        >
-                                            {{ evaluateBadge(result.participation, result).text | artemisTranslate | uppercase }}
-                                        </span>
-                                    </h4>
-                                </div>
-                                <div class="col text-start">
-                                    <jhi-result
-                                        [exercise]="exercise"
-                                        [result]="result"
-                                        [participation]="result.participation"
-                                        [showUngradedResults]="true"
-                                        [short]="true"
-                                    ></jhi-result>
-                                </div>
-                                <div class="col text-start d-none d-md-flex">
-                                    <h6 [ngbTooltip]="result.completionDate | artemisDate">({{ result.completionDate! | artemisTimeAgo }})</h6>
-                                </div>
-                            </div>
+                        <div *ngFor="let result of sortedHistoryResults; let i = index">
+                            <h4
+                                *ngIf="
+                                    result.submission &&
+                                    result.submission.submissionDate &&
+                                    (i === 0 ||
+                                        !sortedHistoryResults[i - 1].submission ||
+                                        !sortedHistoryResults[i - 1].submission?.submissionDate ||
+                                        !dayjs(result.submission.submissionDate).isSame(sortedHistoryResults[i - 1].submission?.submissionDate, 'day'))
+                                "
+                                class="mt-2"
+                            >
+                                {{ result.submission.submissionDate | artemisDate: 'long-date' }}
+                            </h4>
+                            <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [showTestDetails]="true" [exercise]="exercise"> </jhi-result>
                         </div>
                         <div class="no-results" *ngIf="!sortedHistoryResults">
                             {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}
