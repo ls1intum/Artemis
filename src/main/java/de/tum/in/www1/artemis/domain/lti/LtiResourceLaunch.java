@@ -41,9 +41,6 @@ public class LtiResourceLaunch extends DomainObject {
     @ManyToOne
     private Exercise exercise;
 
-    @NotNull
-    private String clientRegistrationId;
-
     /**
      * Creates an LtiResourceLaunch entity from an LTI1.3 launch request to be saved in the database
      *
@@ -56,7 +53,6 @@ public class LtiResourceLaunch extends DomainObject {
         launch.sub = launchRequest.getSub();
         launch.deploymentId = launchRequest.getDeploymentId();
         launch.resourceLinkId = launchRequest.getResourceLinkId();
-        launch.clientRegistrationId = launchRequest.getClientRegistrationId();
 
         return launch;
     }
@@ -111,13 +107,5 @@ public class LtiResourceLaunch extends DomainObject {
 
     public void setTargetLinkUri(String targetLinkUri) {
         this.targetLinkUri = targetLinkUri;
-    }
-
-    public String getClientRegistrationId() {
-        return clientRegistrationId;
-    }
-
-    public void setClientRegistrationId(String clientRegistrationId) {
-        this.clientRegistrationId = clientRegistrationId;
     }
 }

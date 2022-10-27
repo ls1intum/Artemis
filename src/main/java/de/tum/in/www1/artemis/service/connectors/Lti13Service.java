@@ -19,7 +19,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
@@ -34,6 +33,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
+import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import net.minidev.json.JSONObject;
 
@@ -65,13 +65,13 @@ public class Lti13Service {
 
     private final Lti13TokenRetriever tokenRetriever;
 
-    private final ClientRegistrationRepository clientRegistrationRepository;
+    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
     private final RestTemplate restTemplate;
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository,
             OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, LtiService ltiService, OAuth2JWKSService oAuth2JWKSService, ResultRepository resultRepository,
-            Lti13TokenRetriever tokenRetriever, ClientRegistrationRepository clientRegistrationRepository, RestTemplate restTemplate) {
+            Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService, RestTemplate restTemplate) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
@@ -81,7 +81,7 @@ public class Lti13Service {
         this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
         this.resultRepository = resultRepository;
         this.tokenRetriever = tokenRetriever;
-        this.clientRegistrationRepository = clientRegistrationRepository;
+        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.restTemplate = restTemplate;
     }
 
@@ -170,6 +170,13 @@ public class Lti13Service {
     public void onNewResult(StudentParticipation participation) {
         var students = participation.getStudents();
 
+        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
+        ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(course.getOnlineCourseConfiguration());
+        if (clientRegistration == null) {
+            log.error("Could not transmit score to external LMS for course {}: client registration not found", course.getTitle());
+            return;
+        }
+
         if (students != null) {
             students.forEach(student -> {
                 // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
@@ -189,27 +196,21 @@ public class Lti13Service {
 
                 String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
 
-                launches.forEach(launch -> submitScore(launch, concatenatedFeedbacks, result.get().getScore()));
+                launches.forEach(launch -> submitScore(launch, clientRegistration, concatenatedFeedbacks, result.get().getScore()));
             });
         }
     }
 
-    protected void submitScore(LtiResourceLaunch launch, String comment, Double score) {
+    protected void submitScore(LtiResourceLaunch launch, ClientRegistration clientRegistration, String comment, Double score) {
         String scoreLineItemUrl = launch.getScoreLineItemUrl();
         if (scoreLineItemUrl == null) {
             return;
         }
 
-        ClientRegistration client = clientRegistrationRepository.findByRegistrationId(launch.getClientRegistrationId());
-        if (client == null) {
-            log.error("Could not transmit score to " + launch.getClientRegistrationId() + ": client registration not found");
-            return;
-        }
-
-        String token = tokenRetriever.getToken(client, Scopes.AGS_SCORE);
+        String token = tokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);
 
         if (token == null) {
-            log.error("Could not transmit score to " + client.getClientId() + ": missing token");
+            log.error("Could not transmit score to " + clientRegistration.getClientId() + ": missing token");
             return;
         }
 
@@ -220,10 +221,10 @@ public class Lti13Service {
         HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
         try {
             restTemplate.postForEntity(getScoresUrl(launch.getScoreLineItemUrl()), httpRequest, Object.class);
-            log.info("Submitted score for " + launch.getUser().getLogin() + " to client" + client.getClientId());
+            log.info("Submitted score for " + launch.getUser().getLogin() + " to client" + clientRegistration.getClientId());
         }
         catch (HttpClientErrorException e) {
-            String message = "Could not submit score for " + launch.getUser().getLogin() + " to client " + client.getClientId() + ": " + e.getMessage();
+            String message = "Could not submit score for " + launch.getUser().getLogin() + " to client " + clientRegistration.getClientId() + ": " + e.getMessage();
             log.error(message);
         }
     }

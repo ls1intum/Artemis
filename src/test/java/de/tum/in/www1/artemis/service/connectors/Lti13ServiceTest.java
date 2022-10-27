@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpEntity;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.client.RestTemplate;
 
@@ -31,6 +30,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
+import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import uk.ac.ox.ctl.lti13.lti.Claims;
@@ -64,7 +64,7 @@ class Lti13ServiceTest {
     private ResultRepository resultRepository;
 
     @Mock
-    private ClientRegistrationRepository clientRegistrationRepository;
+    private OnlineCourseConfigurationService onlineCourseConfigurationService;
 
     @Mock
     private Lti13TokenRetriever tokenRetriever;
@@ -78,7 +78,7 @@ class Lti13ServiceTest {
     void init() {
         MockitoAnnotations.openMocks(this);
         lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, onlineCourseConfigurationRepository, ltiService, oAuth2JWKSService,
-                resultRepository, tokenRetriever, clientRegistrationRepository, restTemplate);
+                resultRepository, tokenRetriever, onlineCourseConfigurationService, restTemplate);
         clientRegistrationId = "clientId";
     }
 
@@ -195,11 +195,10 @@ class Lti13ServiceTest {
         Exercise exercise = state.getExercise();
         StudentParticipation participation = state.getParticipation();
         ClientRegistration clientRegistration = state.getClientRegistration();
-        String clientRegistrationId = clientRegistration.getRegistrationId();
 
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
-        doReturn(clientRegistration).when(clientRegistrationRepository).findByRegistrationId(clientRegistrationId);
+        doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
 
         String accessToken = "accessToken";
         doReturn(accessToken).when(tokenRetriever).getToken(eq(clientRegistration), eq(Scopes.AGS_SCORE));
@@ -254,7 +253,6 @@ class Lti13ServiceTest {
         launch.setTargetLinkUri(targetLinkUri);
         launch.setUser(user);
         launch.setSub("some-sub");
-        launch.setClientRegistrationId(clientRegistration.getRegistrationId());
         launch.setExercise(exercise);
         launch.setScoreLineItemUrl("https://some-lti-platform/some/lineitem");
 

@@ -103,7 +103,9 @@ public class OAuth2JWKSService implements KeyPairService {
 
         for (ClientRegistration clientRegistration : onlineCourseConfigurationService.getAllClientRegistrations()) {
             try {
-                keys.add(generateKey(clientRegistration));
+                if (clientRegistration != null) {
+                    keys.add(generateKey(clientRegistration));
+                }
             }
             catch (NoSuchAlgorithmException e) {
                 log.error("Could not generate key for clientRegistrationId {}", clientRegistration.getRegistrationId());

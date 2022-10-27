@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -29,7 +30,7 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
     }
 
     public List<ClientRegistration> getAllClientRegistrations() {
-        return onlineCourseConfigurationRepository.findAll().stream().map(this::getClientRegistration).toList();
+        return onlineCourseConfigurationRepository.findAll().stream().map(this::getClientRegistration).filter(Objects::nonNull).toList();
     }
 
     @Override
@@ -39,6 +40,10 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
     }
 
     public ClientRegistration getClientRegistration(OnlineCourseConfiguration onlineCourseConfiguration) {
+        if (onlineCourseConfiguration == null || onlineCourseConfiguration.getRegistrationId() == null || onlineCourseConfiguration.getClientId() == null
+                || onlineCourseConfiguration.getAuthorizationUri() == null || onlineCourseConfiguration.getTokenUri() == null) {
+            return null;
+        }
         return ClientRegistration.withRegistrationId(onlineCourseConfiguration.getRegistrationId()) // formatting
                 .clientId(onlineCourseConfiguration.getClientId()) //
                 .authorizationUri(onlineCourseConfiguration.getAuthorizationUri()) //

@@ -1,6 +1,22 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
-    <changeSet author="daniels98it" id="20221018220000">
+    <changeSet author="manuelmanso" id="20221026200000">
+        <addColumn tableName="online_course_configuration">
+            <column name="registration_id" type="VARCHAR(255)"/>
+            <column name="client_id" type="VARCHAR(255)"/>
+            <column name="authorization_uri" type="VARCHAR(255)"/>
+            <column name="jkw_set_uri" type="VARCHAR(255)"/>
+            <column name="token_uri" type="VARCHAR(255)"/>
+        </addColumn>
+
+        <comment>Add a unique value to the registrationId for all existing onlineCourseConfigurations</comment>
+        <sql>
+            UPDATE online_course_configuration
+            SET registration_id = id
+        </sql>
+
+        <addUniqueConstraint columnNames="registration_id" constraintName="unique_registration_id" tableName="online_course_configuration"/>
+
         <createTable tableName="lti_resource_launch">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="lti_resource_launchPK"/>
@@ -25,9 +41,6 @@
                 <constraints nullable="false"/>
             </column>
             <column name="exercise_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="client_registration_id" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
         </createTable>
