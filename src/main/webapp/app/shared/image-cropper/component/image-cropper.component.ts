@@ -38,10 +38,10 @@ import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cro
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImageCropperComponent implements OnChanges, OnInit {
-    private settings = new CropperSettings();
-    private setImageMaxSizeRetries = 0;
-    private moveStart: MoveStart;
-    private loadedImage?: LoadedImage;
+    settings = new CropperSettings();
+    setImageMaxSizeRetries = 0;
+    moveStart: MoveStart;
+    loadedImage?: LoadedImage;
 
     safeImgDataUrl: SafeUrl | string;
     safeTransformStyle: SafeStyle | string;
@@ -106,6 +106,10 @@ export class ImageCropperComponent implements OnChanges, OnInit {
         private changeDetector: ChangeDetectorRef,
     ) {
         this.reset();
+    }
+
+    ngOnInit(): void {
+        this.settings.stepSize = this.initialStepSize;
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -194,10 +198,6 @@ export class ImageCropperComponent implements OnChanges, OnInit {
                 (this.transform.rotate || 0) +
                 'deg)',
         );
-    }
-
-    ngOnInit(): void {
-        this.settings.stepSize = this.initialStepSize;
     }
 
     private reset(): void {
