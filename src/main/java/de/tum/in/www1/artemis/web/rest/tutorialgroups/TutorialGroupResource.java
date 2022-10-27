@@ -129,18 +129,15 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing the tutorial groups of the course
      */
     @GetMapping("/courses/{courseId}/tutorial-groups")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<List<TutorialGroup>> getAllOfCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<TutorialGroup>> getAllForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutorial groups of course with id: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
-        var tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(courseId);
-
+        var tutorialGroups = tutorialGroupService.findAllForCourse(course, user);
         return ResponseEntity.ok(new ArrayList<>(tutorialGroups));
     }
 
@@ -152,13 +149,14 @@ public class TutorialGroupResource {
      * @return ResponseEntity with status 200 (OK) and with body the tutorial group
      */
     @GetMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
-        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
-        checkEntityIdMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroup.getCourse(), null);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        var tutorialGroup = tutorialGroupService.getOneOfCourse(course, user, tutorialGroupId);
         return ResponseEntity.ok().body(tutorialGroup);
     }
 
@@ -287,15 +285,14 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin:" + Constants.LOGIN_REGEX + "}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('TA')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> deregisterStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to deregister {} student from tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
+        authorizationCheckService.isAllowedToChangeRegistrationsOfTutorialGroup(tutorialGroupFromDatabase, responsibleUser);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
-
         User studentToDeregister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         tutorialGroupService.deregisterStudent(studentToDeregister, tutorialGroupFromDatabase, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
         return ResponseEntity.noContent().build();
@@ -310,19 +307,19 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin:" + Constants.LOGIN_REGEX + "}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('TA')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> registerStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to register {} student to tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
+        authorizationCheckService.isAllowedToChangeRegistrationsOfTutorialGroup(tutorialGroupFromDatabase, responsibleUser);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
         User userToRegister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         if (!userToRegister.getGroups().contains(tutorialGroupFromDatabase.getCourse().getStudentGroupName())) {
             throw new BadRequestAlertException("The user is not a student of the course", ENTITY_NAME, "userNotPartOfCourse");
         }
-
+        // ToDo: Discuss if we change the registration type if registration is done by the tutor itself
         tutorialGroupService.registerStudent(userToRegister, tutorialGroupFromDatabase, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
         return ResponseEntity.noContent().build();
     }

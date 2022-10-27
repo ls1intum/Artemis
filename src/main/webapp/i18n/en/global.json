@@ -5,6 +5,7 @@
         "generic": {
             "yes": "Yes",
             "no": "No",
+            "you": "You",
             "emptyList": "No items available",
             "unset": "Unset",
             "create": "Create",
@@ -313,6 +314,7 @@
         "course": "Course details",
         "lectures": "Lectures",
         "learningGoals": "Learning Goals",
+        "tutorialGroups": "Tutorial Groups",
         "exercise": "Exercise details",
         "statistics": "Course statistics",
         "exams": "Exams",

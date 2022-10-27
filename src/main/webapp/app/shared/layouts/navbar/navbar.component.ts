@@ -308,6 +308,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
         code_hint_management: 'artemisApp.codeHint.management.title',
         tutorial_groups_management: 'artemisApp.pages.tutorialGroupsManagement.title',
+        tutorial_groups: 'artemisApp.breadcrumb.title',
         registered_students: 'artemisApp.pages.registeredStudents.title',
     };
 
@@ -442,7 +443,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'organization-management':
                 this.addResolvedTitleAsCrumb(EntityType.ORGANIZATION, [Number(segment)], currentPath, segment);
                 break;
-            case 'tutorial-groups-management':
+            case 'tutorial-groups':
                 this.addResolvedTitleAsCrumb(EntityType.TUTORIAL_GROUP, [Number(segment)], currentPath, segment);
                 break;
             case 'import':

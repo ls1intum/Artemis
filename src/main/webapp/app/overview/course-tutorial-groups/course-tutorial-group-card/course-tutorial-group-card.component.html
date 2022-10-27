@@ -1,0 +1,17 @@
+<ng-container *ngIf="tutorialGroup">
+    <div class="card-header bg-success">
+        <h5 class="text-center text-white">{{ tutorialGroup?.title ?? '' }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-center align-items-center">
+            <fa-icon [icon]="faPersonChalkboard" size="2x"></fa-icon>
+            <!-- ToDo: Show Date of next session in the card body when session managment is merged-->
+            <p *ngIf="upcomingSession" class="card-text"></p>
+        </div>
+    </div>
+    <div class="card-footer">
+        <div *ngIf="tutorialGroup.teachingAssistantName">
+            {{ 'artemisApp.tutorialGroupCard.teachingAssistant' | artemisTranslate: { name: tutorialGroup.teachingAssistantName } }}
+        </div>
+    </div>
+</ng-container>

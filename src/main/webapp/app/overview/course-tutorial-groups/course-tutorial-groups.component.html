@@ -1,0 +1,42 @@
+<ng-template #controls>
+    <div class="btn-group" role="group">
+        <input
+            type="radio"
+            class="btn-check"
+            name="filter"
+            id="registered-filter"
+            autocomplete="off"
+            [value]="'registered'"
+            [ngModel]="selectedFilter"
+            (ngModelChange)="onFilterChange($event)"
+        />
+        <label class="btn btn-outline-secondary" for="registered-filter">{{ 'artemisApp.pages.courseTutorialGroups.registeredFilter' | artemisTranslate }}</label>
+
+        <input
+            type="radio"
+            class="btn-check"
+            name="filter"
+            id="all-filter"
+            autocomplete="off"
+            [value]="'all'"
+            [ngModel]="selectedFilter"
+            (ngModelChange)="onFilterChange($event)"
+        />
+        <label class="btn btn-outline-secondary" for="all-filter">{{ 'artemisApp.pages.courseTutorialGroups.allFilter' | artemisTranslate }}</label>
+    </div>
+</ng-template>
+
+<div class="my-2">
+    <div class="row">
+        <div class="col-12 col-xl-8">
+            <ng-container [ngSwitch]="selectedFilter">
+                <jhi-course-tutorial-groups-overview *ngSwitchCase="'all'" [tutorialGroups]="tutorialGroups" [courseId]="courseId"></jhi-course-tutorial-groups-overview>
+                <jhi-course-tutorial-groups-registered
+                    *ngSwitchCase="'registered'"
+                    [registeredTutorialGroups]="registeredTutorialGroups"
+                    [courseId]="courseId"
+                ></jhi-course-tutorial-groups-registered>
+            </ng-container>
+        </div>
+    </div>
+</div>
