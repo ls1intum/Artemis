@@ -1,6 +1,8 @@
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { of, Subject } from 'rxjs';
 import { FormBuilder, NgForm, NgModel } from '@angular/forms';
 
@@ -87,6 +89,9 @@ describe('User Management Update Component', () => {
                 jest.spyOn(service, 'authorities').mockReturnValue(of(['USER']));
                 const getAllSpy = jest.spyOn(languageHelper, 'getAll').mockReturnValue([]);
 
+                const profileInfoStub = jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo');
+                profileInfoStub.mockReturnValue(of({ activeProfiles: ['bamboo'] } as ProfileInfo));
+
                 // WHEN
                 comp.ngOnInit();
 
@@ -94,6 +99,7 @@ describe('User Management Update Component', () => {
                 expect(service.authorities).toHaveBeenCalledOnce();
                 expect(comp.authorities).toEqual(['USER']);
                 expect(getAllSpy).toHaveBeenCalledOnce();
+                expect(profileInfoStub).toHaveBeenCalledOnce();
             }),
         ));
 
@@ -102,6 +108,8 @@ describe('User Management Update Component', () => {
             fakeAsync((languageHelper: JhiLanguageHelper) => {
                 // GIVEN
                 const getAllSpy = jest.spyOn(languageHelper, 'getAll');
+                const profileInfoStub = jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo');
+                profileInfoStub.mockReturnValue(of({ activeProfiles: ['bamboo'] } as ProfileInfo));
 
                 // WHEN
                 comp.ngOnInit();
@@ -109,6 +117,7 @@ describe('User Management Update Component', () => {
                 // THEN
                 expect(getAllSpy).toHaveBeenCalledOnce();
                 expect(comp.languages).toEqual(LANGUAGES);
+                expect(profileInfoStub).toHaveBeenCalledOnce();
             }),
         ));
 
