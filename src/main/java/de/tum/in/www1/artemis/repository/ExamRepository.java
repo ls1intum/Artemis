@@ -92,7 +92,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT DISTINCT e FROM Exam e
+            SELECT e FROM Exam e
             WHERE e.course.instructorGroupName IN :groups
                 AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
             """)
@@ -107,7 +107,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT DISTINCT e FROM Exam e
+            SELECT e FROM Exam e
             WHERE e.course.instructorGroupName IN :groups
                 AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
                 AND e.exerciseGroups IS NOT EMPTY
@@ -122,7 +122,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT DISTINCT e
+            SELECT e
             FROM Exam e
                 WHERE (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
             """)
@@ -136,7 +136,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT DISTINCT e
+            SELECT e
             FROM Exam e
             WHERE (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
                 AND e.exerciseGroups IS NOT EMPTY
