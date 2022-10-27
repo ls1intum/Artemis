@@ -93,28 +93,28 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
             }
             result.setTestCaseCount(result.getTestCaseCount() + job.getSuccessfulTests().size());
             result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.getSuccessfulTests().size());
-
-            // 3) process static code analysis feedback
-            final var staticCodeAnalysisReports = buildResult.getStaticCodeAnalysisReports(job);
-            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
-                var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
-                result.addFeedbacks(scaFeedbackList);
-                result.setCodeIssueCount(scaFeedbackList.size());
-            }
-
-            // 4) process testwise coverage analysis report
-            if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled())) {
-                var report = buildResult.getTestwiseCoverageReports(job);
-                if (report != null) {
-                    // since the test cases are not saved to the database yet, the test case is null for the entries
-                    var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(report);
-                    result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
-                }
-            }
-
-            // Relevant feedback is negative
-            result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive()));
         }
+
+        // 3) process static code analysis feedback
+        final var staticCodeAnalysisReports = buildResult.getStaticCodeAnalysisReports();
+        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
+            var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
+            result.addFeedbacks(scaFeedbackList);
+            result.setCodeIssueCount(scaFeedbackList.size());
+        }
+
+        // 4) process testwise coverage analysis report
+        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled())) {
+            var report = buildResult.getTestwiseCoverageReports();
+            if (report != null) {
+                // since the test cases are not saved to the database yet, the test case is null for the entries
+                var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(report);
+                result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
+            }
+        }
+
+        // Relevant feedback is negative
+        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive()));
     }
 
     /**

@@ -120,14 +120,18 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
     @JsonIgnore
     @Override
-    public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports(BuildJobDTOInterface job) {
-        return ((BambooJobDTO) job).staticCodeAnalysisReports();
+    public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
+        List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
+        getBuild().jobs().forEach(job -> staticCodeAnalysisReports.addAll(job.staticCodeAnalysisReports()));
+        return staticCodeAnalysisReports;
     }
 
     @JsonIgnore
     @Override
-    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports(BuildJobDTOInterface job) {
-        return ((BambooJobDTO) job).testwiseCoverageReport();
+    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
+        List<TestwiseCoverageReportDTO> testwiseCoverageReports = new ArrayList<>();
+        getBuild().jobs().forEach(job -> testwiseCoverageReports.addAll(job.testwiseCoverageReport()));
+        return testwiseCoverageReports;
     }
 
     private Optional<String> getCommitHashFromRepo(String repoName) {

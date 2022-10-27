@@ -154,12 +154,12 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     }
 
     @Override
-    public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports(BuildJobDTOInterface job) {
+    public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
         return staticCodeAnalysisReports;
     }
 
     @Override
-    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports(BuildJobDTOInterface job) {
+    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
         return testwiseCoverageReport;
     }
 

@@ -58,8 +58,8 @@ public abstract class AbstractBuildResultNotificationDTO {
     public abstract List<BuildJobDTOInterface> getBuildJobs();
 
     @JsonIgnore
-    public abstract List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports(BuildJobDTOInterface job);
+    public abstract List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports();
 
     @JsonIgnore
-    public abstract List<TestwiseCoverageReportDTO> getTestwiseCoverageReports(BuildJobDTOInterface job);
+    public abstract List<TestwiseCoverageReportDTO> getTestwiseCoverageReports();
 }
