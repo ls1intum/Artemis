@@ -70,7 +70,7 @@ describe('TutorialGroupService', () => {
         const expected = { ...returnedFromService };
 
         service
-            .getAllOfCourse(1)
+            .getAllForCourse(1)
             .pipe(
                 take(1),
                 map((resp) => resp.body),

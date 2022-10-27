@@ -34,7 +34,7 @@ public class StatisticsResource {
 
     private final Logger log = LoggerFactory.getLogger(StatisticsResource.class);
 
-    private final StatisticsService service;
+    private final StatisticsService statisticsService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -42,9 +42,9 @@ public class StatisticsResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    public StatisticsResource(StatisticsService service, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
+    public StatisticsResource(StatisticsService statisticsService, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository,
             ExerciseRepository exerciseRepository) {
-        this.service = service;
+        this.statisticsService = statisticsService;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
@@ -62,7 +62,7 @@ public class StatisticsResource {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Integer>> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType) {
         log.debug("REST request to get graph data");
-        return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, StatisticsView.ARTEMIS, null));
+        return ResponseEntity.ok(this.statisticsService.getChartData(span, periodIndex, graphType, StatisticsView.ARTEMIS, null));
     }
 
     /**
@@ -88,7 +88,7 @@ public class StatisticsResource {
         }
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, view, entityId));
+        return ResponseEntity.ok(this.statisticsService.getChartData(span, periodIndex, graphType, view, entityId));
     }
 
     /**
@@ -102,7 +102,7 @@ public class StatisticsResource {
     public ResponseEntity<CourseManagementStatisticsDTO> getCourseStatistics(@RequestParam Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        return ResponseEntity.ok(this.service.getCourseStatistics(courseId));
+        return ResponseEntity.ok(this.statisticsService.getCourseStatistics(courseId));
     }
 
     /**
@@ -116,7 +116,7 @@ public class StatisticsResource {
     public ResponseEntity<ExerciseManagementStatisticsDTO> getExerciseStatistics(@RequestParam Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        var exerciseManagementStatisticsDTO = service.getExerciseStatistics(exercise);
+        var exerciseManagementStatisticsDTO = statisticsService.getExerciseStatistics(exercise);
         return ResponseEntity.ok(exerciseManagementStatisticsDTO);
     }
 }

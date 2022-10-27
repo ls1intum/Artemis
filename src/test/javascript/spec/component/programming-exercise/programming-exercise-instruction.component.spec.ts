@@ -304,7 +304,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(comp.markdownExtensions).toHaveLength(2);
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledOnce();
-        expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id);
+        // result should have been fetched with the submission as this is required to show details for it
+        expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id, true);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(comp.isInitial).toBeFalse();
         expect(comp.isLoading).toBeFalse();

@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Observable, Subject, of } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -72,8 +71,6 @@ export class CourseGroupComponent implements OnDestroy {
     // Icons
     faDownload = faDownload;
     faUserSlash = faUserSlash;
-
-    constructor(private alertService: AlertService) {}
 
     /**
      * Unsubscribe dialog error source on component destruction.

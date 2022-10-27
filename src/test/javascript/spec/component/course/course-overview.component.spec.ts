@@ -40,6 +40,8 @@ import { LearningGoalService } from 'app/course/learning-goals/learningGoal.serv
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -104,6 +106,7 @@ describe('CourseOverviewComponent', () => {
     let courseScoreCalculationService: CourseScoreCalculationService;
     let teamService: TeamService;
     let learningGoalService: LearningGoalService;
+    let tutorialGroupsService: TutorialGroupsService;
     let jhiWebsocketService: JhiWebsocketService;
 
     const route: MockActivatedRouteWithSubjects = new MockActivatedRouteWithSubjects();
@@ -146,6 +149,7 @@ describe('CourseOverviewComponent', () => {
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
                 teamService = TestBed.inject(TeamService);
                 learningGoalService = TestBed.inject(LearningGoalService);
+                tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
             });
     }));
@@ -214,7 +218,7 @@ describe('CourseOverviewComponent', () => {
         expect(bool).toBeFalse();
     });
 
-    it('should have learning goals', () => {
+    it('should have learning goals and tutorial groups', () => {
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
 
@@ -222,16 +226,23 @@ describe('CourseOverviewComponent', () => {
             body: [new LearningGoal()],
             status: 200,
         });
+        const tutorialGroupsResponse: HttpResponse<TutorialGroup[]> = new HttpResponse({
+            body: [new TutorialGroup()],
+            status: 200,
+        });
         jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(learningGoalsResponse));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsResponse));
+        jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(of(tutorialGroupsResponse));
         getCourseStub.mockReturnValue(course2);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 
         component.ngOnInit();
 
         expect(component.hasLearningGoals()).toBeTrue();
+        expect(component.hasTutorialGroups()).toBeTrue();
         expect(component.course?.learningGoals).not.toBeEmpty();
         expect(component.course?.prerequisites).not.toBeEmpty();
+        expect(component.course?.tutorialGroups).not.toBeEmpty();
     });
 
     it('should subscribeToTeamAssignmentUpdates', () => {

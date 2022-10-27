@@ -15,5 +15,10 @@ export class TutorialGroup implements BaseEntity {
     public teachingAssistant?: User;
     public registrations?: TutorialGroupRegistration[];
 
-    constructor() {}
+    // transientFields
+    public isUserRegistered?: boolean;
+    public isUserTutor?: boolean;
+    public numberOfRegisteredUsers?: number;
+    public teachingAssistantName?: string;
+    public courseTitle?: string;
 }
