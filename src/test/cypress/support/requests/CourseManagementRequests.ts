@@ -75,7 +75,6 @@ export class CourseManagementRequests {
             course.instructorGroupName = Cypress.env('instructorGroupName');
         }
         const formData = new FormData();
-        Cypress.Blob;
         formData.append('course', new File([JSON.stringify(course)], 'course', { type: 'application/json' }));
         return cy.request({
             url: BASE_API + 'courses',
