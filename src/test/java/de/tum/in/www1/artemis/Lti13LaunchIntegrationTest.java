@@ -57,7 +57,7 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         Map<String, Object> body = new HashMap<>();
         body.put("id_token", idToken);
 
-        request.postFormWithoutLocation(CustomLti13Configurer.LTI13_BASE_PATH + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.postFormWithoutLocation(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -67,7 +67,7 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         Map<String, Object> body = new HashMap<>();
         body.put("state", state);
 
-        request.postFormWithoutLocation(CustomLti13Configurer.LTI13_BASE_PATH + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.postFormWithoutLocation(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test

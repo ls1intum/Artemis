@@ -39,6 +39,12 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         return onlineCourseConfiguration.map(this::getClientRegistration).orElse(null);
     }
 
+    /**
+     * Converts the onlineCourseConfiguration to a ClientRegistration if the necessary fields are filled
+     *
+     * @param onlineCourseConfiguration the online course configuration
+     * @return the clientRegistration from the converted online course configuration
+     */
     public ClientRegistration getClientRegistration(OnlineCourseConfiguration onlineCourseConfiguration) {
         if (onlineCourseConfiguration == null || onlineCourseConfiguration.getRegistrationId() == null || onlineCourseConfiguration.getClientId() == null
                 || onlineCourseConfiguration.getAuthorizationUri() == null || onlineCourseConfiguration.getTokenUri() == null) {

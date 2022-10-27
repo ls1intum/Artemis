@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.Lti10Service;
 import de.tum.in.www1.artemis.service.connectors.Lti13Service;
+import de.tum.in.www1.artemis.service.connectors.LtiDynamicRegistrationService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -42,6 +43,8 @@ public class LtiResource {
 
     private final Lti13Service lti13Service;
 
+    private final LtiDynamicRegistrationService ltiDynamicRegistrationService;
+
     private final ExerciseRepository exerciseRepository;
 
     private final CourseRepository courseRepository;
@@ -50,10 +53,11 @@ public class LtiResource {
 
     public static final String LOGIN_REDIRECT_CLIENT_PATH = "/lti/launch";
 
-    public LtiResource(Lti10Service lti10Service, Lti13Service lti13Service, ExerciseRepository exerciseRepository, CourseRepository courseRepository,
-            AuthorizationCheckService authCheckService) {
+    public LtiResource(Lti10Service lti10Service, Lti13Service lti13Service, LtiDynamicRegistrationService ltiDynamicRegistrationService, ExerciseRepository exerciseRepository,
+            CourseRepository courseRepository, AuthorizationCheckService authCheckService) {
         this.lti10Service = lti10Service;
         this.lti13Service = lti13Service;
+        this.ltiDynamicRegistrationService = ltiDynamicRegistrationService;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -186,13 +190,14 @@ public class LtiResource {
         response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
     }
 
-    @GetMapping(value = "/lti13/dynamic-registration/{courseId}")
+    @GetMapping("/lti13/dynamic-registration/{courseId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public void lti13DynamicRegistration(@PathVariable Long courseId, @RequestParam(name = "openid_configuration") String openIdConfiguration,
             @RequestParam(name = "registration_token", required = false) String registrationToken) {
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        lti13Service.performDynamicRegistration(course, openIdConfiguration, registrationToken);
+        ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfiguration, registrationToken);
     }
 
     /**

@@ -33,9 +33,6 @@
             <column name="resource_link_id" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="target_link_uri" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
             <column name="score_line_item_url" type="VARCHAR(255)"/>
             <column name="user_id" type="BIGINT">
                 <constraints nullable="false"/>

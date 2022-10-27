@@ -195,7 +195,7 @@ public class Lti13ClientRegistration {
         @JsonProperty("target_link_uri")
         private String targetLinkUri;
 
-        public Message() {
+        public Message() {// Necessary for conversion
         }
 
         public Message(String type, String targetLinkUri) {

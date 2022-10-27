@@ -28,9 +28,6 @@ public class LtiResourceLaunch extends DomainObject {
     @NotNull
     private String resourceLinkId;
 
-    @NotNull
-    private String targetLinkUri;
-
     private String scoreLineItemUrl;
 
     @NotNull
@@ -99,13 +96,5 @@ public class LtiResourceLaunch extends DomainObject {
 
     public void setScoreLineItemUrl(String lineItemUrl) {
         this.scoreLineItemUrl = lineItemUrl;
-    }
-
-    public String getTargetLinkUri() {
-        return targetLinkUri;
-    }
-
-    public void setTargetLinkUri(String targetLinkUri) {
-        this.targetLinkUri = targetLinkUri;
     }
 }

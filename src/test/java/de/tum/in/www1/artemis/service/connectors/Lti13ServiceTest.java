@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.lti.Scopes;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -52,13 +51,7 @@ class Lti13ServiceTest {
     private Lti13ResourceLaunchRepository launchRepository;
 
     @Mock
-    private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
-
-    @Mock
     private LtiService ltiService;
-
-    @Mock
-    private OAuth2JWKSService oAuth2JWKSService;
 
     @Mock
     private ResultRepository resultRepository;
@@ -77,8 +70,8 @@ class Lti13ServiceTest {
     @BeforeEach
     void init() {
         MockitoAnnotations.openMocks(this);
-        lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, onlineCourseConfigurationRepository, ltiService, oAuth2JWKSService,
-                resultRepository, tokenRetriever, onlineCourseConfigurationService, restTemplate);
+        lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
+                onlineCourseConfigurationService, restTemplate);
         clientRegistrationId = "clientId";
     }
 
@@ -194,10 +187,13 @@ class Lti13ServiceTest {
         User user = state.getUser();
         Exercise exercise = state.getExercise();
         StudentParticipation participation = state.getParticipation();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         ClientRegistration clientRegistration = state.getClientRegistration();
 
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
 
         String accessToken = "accessToken";
@@ -234,23 +230,24 @@ class Lti13ServiceTest {
         User user = new User();
         user.setLogin("someone");
 
+        Course course = new Course();
+        course.setId(1L);
+
         Exercise exercise = new ProgrammingExercise() {
         };
         exercise.setMaxPoints(80d);
+        exercise.setCourse(course);
 
         StudentParticipation participation = new StudentParticipation();
         participation.setExercise(exercise);
         participation.setParticipant(user);
         participation.setId(123L);
 
-        String targetLinkUri = "https://some-artemis-domain.org/courses/12/exercises/123";
-
         String clientRegistrationId = "some-client-registration";
         ClientRegistration clientRegistration = mock(ClientRegistration.class);
         doReturn(clientRegistrationId).when(clientRegistration).getRegistrationId();
 
         LtiResourceLaunch launch = new LtiResourceLaunch();
-        launch.setTargetLinkUri(targetLinkUri);
         launch.setUser(user);
         launch.setSub("some-sub");
         launch.setExercise(exercise);

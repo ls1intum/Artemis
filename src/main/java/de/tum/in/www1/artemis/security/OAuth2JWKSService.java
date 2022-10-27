@@ -64,10 +64,21 @@ public class OAuth2JWKSService implements KeyPairService {
         return jwk != null ? jwk.getKeyID() : null;
     }
 
+    /**
+     * Returns the JWK created for a clientRegistrationId
+     *
+     * @param clientRegistrationId the client registrationId
+     * @return the JWK found for the client registrationId
+     */
     public JWK getJWK(String clientRegistrationId) {
         return this.jwkSet.getKeyByKeyId(this.clientRegistrationIdToKeyId.get(clientRegistrationId));
     }
 
+    /**
+     * Updates the JWK associated with the clientRegistrationId receives. Can either remove, replace, or add a new one.
+     *
+     * @param clientRegistrationId the client registrationId
+     */
     public void updateKey(String clientRegistrationId) {
         ClientRegistration clientRegistration = onlineCourseConfigurationService.findByRegistrationId(clientRegistrationId);
         JWK jwkToRemove = getJWK(clientRegistrationId);
