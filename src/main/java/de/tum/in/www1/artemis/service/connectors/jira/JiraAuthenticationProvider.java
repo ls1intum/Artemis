@@ -8,7 +8,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -347,7 +346,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             }
 
             for (JiraUserDTO jiraUserDTO : results) {
-                if (Objects.equals(jiraUserDTO.getEmailAddress(), email)) {
+                if (email.equalsIgnoreCase(jiraUserDTO.getEmailAddress())) {
                     return Optional.of(jiraUserDTO.getName());
                 }
             }
