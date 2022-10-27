@@ -81,10 +81,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     backupQuestion: DragAndDropQuestion;
 
     dragItemPicture?: string;
-    backgroundFile?: Blob | File;
+    backgroundFile?: File;
     backgroundFileName: string;
     backgroundFilePath: string;
-    dragItemFile?: Blob | File;
+    dragItemFile?: File;
     dragItemFileName: string;
 
     dropAllowed = false;
