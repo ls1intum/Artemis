@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.Lti10Service;
-import de.tum.in.www1.artemis.service.connectors.Lti13Service;
 import de.tum.in.www1.artemis.service.connectors.LtiDynamicRegistrationService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
@@ -41,8 +40,6 @@ public class LtiResource {
 
     private final Lti10Service lti10Service;
 
-    private final Lti13Service lti13Service;
-
     private final LtiDynamicRegistrationService ltiDynamicRegistrationService;
 
     private final ExerciseRepository exerciseRepository;
@@ -53,10 +50,9 @@ public class LtiResource {
 
     public static final String LOGIN_REDIRECT_CLIENT_PATH = "/lti/launch";
 
-    public LtiResource(Lti10Service lti10Service, Lti13Service lti13Service, LtiDynamicRegistrationService ltiDynamicRegistrationService, ExerciseRepository exerciseRepository,
+    public LtiResource(Lti10Service lti10Service, LtiDynamicRegistrationService ltiDynamicRegistrationService, ExerciseRepository exerciseRepository,
             CourseRepository courseRepository, AuthorizationCheckService authCheckService) {
         this.lti10Service = lti10Service;
-        this.lti13Service = lti13Service;
         this.ltiDynamicRegistrationService = ltiDynamicRegistrationService;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
@@ -190,7 +186,7 @@ public class LtiResource {
         response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
     }
 
-    @GetMapping("/lti13/dynamic-registration/{courseId}")
+    @PostMapping("/lti13/dynamic-registration/{courseId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public void lti13DynamicRegistration(@PathVariable Long courseId, @RequestParam(name = "openid_configuration") String openIdConfiguration,
             @RequestParam(name = "registration_token", required = false) String registrationToken) {

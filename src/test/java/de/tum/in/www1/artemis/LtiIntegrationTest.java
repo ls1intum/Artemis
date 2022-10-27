@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -236,6 +237,34 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
 
         Mockito.reset(timeService);
+    }
+
+    @Test
+    @WithMockUser(username = "student", roles = "USER")
+    void dynamicRegistrationFailsAsStudent() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("openid_configuration", "configurationUrl");
+
+        request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.FORBIDDEN, params);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void dynamicRegistrationFailsWithoutOpenIdConfiguration() throws Exception {
+        request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void dynamicRegistrationFailsForNonOnlineCourse() throws Exception {
+        course.setOnlineCourse(false);
+        courseRepository.save(course);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("openid_configuration", "configurationUrl");
+
+        request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+
     }
 
     @Test
