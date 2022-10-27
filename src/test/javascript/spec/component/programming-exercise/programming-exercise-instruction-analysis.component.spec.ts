@@ -1,4 +1,4 @@
-import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
@@ -99,7 +99,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             // Test cases are not ok according to the analysis.
             expect(testCaseOk).toBeNull();
             expect(testCaseIssues).not.toBeNull();
-            discardPeriodicTasks();
+            tick(500);
         }));
 
         describe('Analysis service integration test', () => {
