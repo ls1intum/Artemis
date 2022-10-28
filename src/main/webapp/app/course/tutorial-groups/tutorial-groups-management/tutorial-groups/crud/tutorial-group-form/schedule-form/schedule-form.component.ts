@@ -4,7 +4,7 @@ import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { NgbDateParserFormatter, NgbTimeAdapter } from '@ng-bootstrap/ng-bootstrap';
 import { weekDays } from 'app/course/tutorial-groups/shared/weekdays';
 import { Course } from 'app/entities/course.model';
-import _ from 'lodash';
+import * as _ from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { dayOfWeekZeroSundayToZeroMonday } from 'app/utils/date.utils';
 import { NgbTimeStringAdapter } from 'app/course/tutorial-groups/shared/ngbTimeStringAdapter';

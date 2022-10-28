@@ -85,7 +85,6 @@ describe('TutorialGroupsManagementComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupsManagementComponent);
                 component = fixture.componentInstance;
-
                 tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
                 tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
 

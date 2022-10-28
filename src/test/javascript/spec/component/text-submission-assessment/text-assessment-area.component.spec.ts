@@ -61,6 +61,15 @@ describe('TextAssessmentAreaComponent', () => {
         expect(component.autoTextBlockAssessment).toBeFalse();
     });
 
+    it('should not toggle on alt when manual selection forbidden', () => {
+        const spyOnAlt = jest.spyOn(component, 'onAltToggle');
+        const eventMock = new KeyboardEvent('keydown', { key: 'Alt' });
+        component.allowManualBlockSelection = false;
+        component.onAltToggle(eventMock, false);
+        expect(spyOnAlt).toHaveBeenCalledOnce();
+        expect(component.autoTextBlockAssessment).toBeTrue();
+    });
+
     it('should add TextBlockRef if text block is added manually', () => {
         component.textBlockRefs = [TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new(), TextBlockRef.new()];
         jest.spyOn(component.textBlockRefsAddedRemoved, 'emit');
