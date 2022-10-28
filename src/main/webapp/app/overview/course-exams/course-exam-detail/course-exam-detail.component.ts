@@ -69,14 +69,14 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
 
     /**
      * navigate to /courses/:courseId/exams/:examId for real exams or
-     * /courses/:courseId/exams/:examId/test-exam/new for test exams
+     * /courses/:courseId/exams/:examId/test-exam/start for test exams
      */
     openExam() {
         if (this.exam.testExam) {
             if (this.examState === ExamState.NO_MORE_ATTEMPTS || this.examState === ExamState.CLOSED) {
                 return;
             }
-            this.router.navigate(['courses', this.course.id, 'exams', this.exam.id, 'test-exam', 'new']);
+            this.router.navigate(['courses', this.course.id, 'exams', this.exam.id, 'test-exam', 'start']);
         } else {
             this.router.navigate(['courses', this.course.id, 'exams', this.exam.id]);
         }
