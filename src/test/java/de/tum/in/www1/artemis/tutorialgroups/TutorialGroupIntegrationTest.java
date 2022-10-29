@@ -682,16 +682,14 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private List<TutorialGroup> getTutorialGroupsOfExampleCourse(boolean loadFromService, String userLogin) throws Exception {
-        List<TutorialGroup> tutorialGroupsOfCourse;
         if (loadFromService) {
             var user = userRepository.findOneByLogin(userLogin).get();
             var course = courseRepository.findById(exampleCourseId).get();
-            tutorialGroupsOfCourse = tutorialGroupService.findAllForCourse(course, user).stream().toList();
+            return tutorialGroupService.findAllForCourse(course, user).stream().toList();
         }
         else {
-            tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+            return request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
         }
-        return tutorialGroupsOfCourse;
     }
 
     private void registerStudentAllowedTest() throws Exception {
