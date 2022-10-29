@@ -6,7 +6,7 @@ import { SourceTreeService } from 'app/exercises/programming/shared/service/sour
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
-import { isStartExerciseAvailable, isStartPracticeAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -67,6 +67,10 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     isStartExerciseAvailable(): boolean {
         return !this.examMode && isStartExerciseAvailable(this.exercise as ProgrammingExercise);
+    }
+
+    isResumeExerciseAvailable(): boolean {
+        return !this.examMode && isResumeExerciseAvailable(this.exercise, this.studentParticipation);
     }
 
     /**
@@ -231,11 +235,9 @@ export class ExerciseDetailsStudentActionsComponent {
     public shouldDisplayIDEButtons(): boolean {
         return !!this.exercise.studentParticipations?.some((participation) => {
             const status = participationStatus(this.exercise, participation.testRun);
-            return (
-                status === ParticipationStatus.INITIALIZED ||
-                (status === ParticipationStatus.INACTIVE &&
-                    ((!isStartExerciseAvailable(this.exercise) && !participation.testRun) || (!isStartPracticeAvailable(this.exercise) && participation.testRun)))
-            );
+            const startExerciseNotAvailable = !isStartExerciseAvailable(this.exercise) && !participation.testRun;
+            const startPracticeNotAvailable = !isStartPracticeAvailable(this.exercise) && participation.testRun;
+            return status === ParticipationStatus.INITIALIZED || (status === ParticipationStatus.INACTIVE && (startExerciseNotAvailable || startPracticeNotAvailable));
         });
     }
 
