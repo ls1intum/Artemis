@@ -48,7 +48,7 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
             })
             .add(() => {
                 this.isRegistering = false;
-                (window.opener || window.parent).postMessage('org.imsglobal.lti.close', '*');
+                (window.opener || window.parent).postMessage({ subject: 'org.imsglobal.lti.close' }, '*');
             });
     }
 }
