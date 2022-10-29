@@ -641,7 +641,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @Test
     void testCopyFeedbackSetValues() {
-        List<Feedback> oldFeedbacks = List.of(new Feedback().text("Feedback 1").credits(1.), // should get positive while copy
+        List<Feedback> oldFeedbacks = List.of(new Feedback().text("Feedback 1").credits(1.), // should get positive = true
                 new Feedback().type(FeedbackType.AUTOMATIC).credits(0.).positive(true), // should stay positive
                 new Feedback().detailText("test"), // no credits, should get credits = 0 and positive = true
                 new Feedback().credits(-2.5) // should get positive = false
