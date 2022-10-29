@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -107,8 +108,6 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @AfterEach
     void tearDown() {
-        // database.resetDatabase();
-
         if (submissionListTutor1CorrectionRound0 != null) {
             submissionListTutor1CorrectionRound0.clear();
         }
@@ -638,5 +637,27 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
                 fail("Unreachable statement");
             }
         });
+    }
+
+    @Test
+    void testCopyFeedbackSetValues() {
+        List<Feedback> oldFeedbacks = List.of(new Feedback().text("Feedback 1").credits(1.), // should get positive while copy
+                new Feedback().type(FeedbackType.AUTOMATIC).credits(0.).positive(true), // should stay positive
+                new Feedback().detailText("test"), // no credits, should get credits = 0 and positive = true
+                new Feedback().credits(-2.5) // should get positive = false
+        );
+        Result oldResult = new Result();
+        oldResult.setFeedbacks(oldFeedbacks);
+
+        Result newResult = new Result();
+
+        List<Feedback> newFeedbacks = submissionService.copyFeedbackToNewResult(newResult, oldResult);
+
+        assertThat(newFeedbacks).isEqualTo(newResult.getFeedbacks()).hasSameSizeAs(oldFeedbacks);
+        assertThat(newFeedbacks.get(0).isPositive()).isTrue();
+        assertThat(newFeedbacks.get(1).isPositive()).isTrue();
+        assertThat(newFeedbacks.get(2).isPositive()).isTrue();
+        assertThat(newFeedbacks.get(2).getCredits()).isEqualTo(0.);
+        assertThat(newFeedbacks.get(3).isPositive()).isFalse();
     }
 }
