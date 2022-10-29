@@ -388,14 +388,15 @@ public class TutorialGroupService {
      * @return true if the user is allowed, false otherwise
      */
     public boolean isAllowedToSeePrivateTutorialGroupInformation(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
+        var persistenceUtil = Persistence.getPersistenceUtil();
+        if (user == null || !persistenceUtil.isLoaded(user, "authorities") || !persistenceUtil.isLoaded(user, "groups") || user.getGroups() == null
+                || user.getAuthorities() == null) {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
         if (authorizationCheckService.isAdmin(user)) {
             return true;
         }
 
-        var persistenceUtil = Persistence.getPersistenceUtil();
         var courseInitialized = persistenceUtil.isLoaded(tutorialGroup, "course");
         var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroup, "teachingAssistant");
 
