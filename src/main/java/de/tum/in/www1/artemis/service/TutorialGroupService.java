@@ -400,7 +400,6 @@ public class TutorialGroupService {
         var courseInitialized = persistenceUtil.isLoaded(tutorialGroup, "course");
         var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroup, "teachingAssistant");
 
-        // load fresh from db to prevent NPEs nad lazy loading issues
         if (!courseInitialized || !teachingAssistantInitialized || tutorialGroup.getCourse() == null || tutorialGroup.getTeachingAssistant() == null) {
             tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndCourseElseThrow(tutorialGroup.getId());
         }
