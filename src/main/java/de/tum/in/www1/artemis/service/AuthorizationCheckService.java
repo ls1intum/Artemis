@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -29,8 +30,11 @@ public class AuthorizationCheckService {
 
     private final UserRepository userRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository) {
+    private final TutorialGroupRepository tutorialGroupRepository;
+
+    public AuthorizationCheckService(UserRepository userRepository, TutorialGroupRepository tutorialGroupRepository) {
         this.userRepository = userRepository;
+        this.tutorialGroupRepository = tutorialGroupRepository;
     }
 
     /**
@@ -498,11 +502,14 @@ public class AuthorizationCheckService {
         if (isAdmin(user)) {
             return true;
         }
-        Course course = tutorialGroup.getCourse();
+        // load from db to make sure that course and teachingAssistant is loaded
+        var tutorialGroupFromDatabase = tutorialGroupRepository.findByIdWithTeachingAssistantAndCourseElseThrow(tutorialGroup.getId());
+
+        Course course = tutorialGroupFromDatabase.getCourse();
         if (isAtLeastInstructorInCourse(course, user)) {
             return true;
         }
-        return (tutorialGroup.getTeachingAssistant() != null && tutorialGroup.getTeachingAssistant().equals(user));
+        return (tutorialGroupFromDatabase.getTeachingAssistant() != null && tutorialGroupFromDatabase.getTeachingAssistant().equals(user));
     }
 
     /**
