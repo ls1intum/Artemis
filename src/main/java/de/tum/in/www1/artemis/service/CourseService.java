@@ -229,7 +229,7 @@ public class CourseService {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
         course.getTutorialGroups().forEach(tutorialGroup -> {
-            if (!authCheckService.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+            if (!tutorialGroupService.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
                 tutorialGroup.hidePrivacySensitiveInformation();
             }
         });

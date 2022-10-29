@@ -15,9 +15,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -30,11 +28,8 @@ public class AuthorizationCheckService {
 
     private final UserRepository userRepository;
 
-    private final TutorialGroupRepository tutorialGroupRepository;
-
-    public AuthorizationCheckService(UserRepository userRepository, TutorialGroupRepository tutorialGroupRepository) {
+    public AuthorizationCheckService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.tutorialGroupRepository = tutorialGroupRepository;
     }
 
     /**
@@ -486,43 +481,6 @@ public class AuthorizationCheckService {
         }
         Course course = lectureUnit.getLecture().getCourse();
         return isAtLeastTeachingAssistantInCourse(course, user) || (isStudentInCourse(course, user) && lectureUnit.isVisibleToStudents());
-    }
-
-    /**
-     * Determines if a user is allowed to see private information about a tutorial group such as the list of registered students
-     *
-     * @param tutorialGroup the tutorial group for which to check permission
-     * @param user          the user for which to check permission
-     * @return true if the user is allowed, false otherwise
-     */
-    public boolean isAllowedToSeePrivateTutorialGroupInformation(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
-        if (isAdmin(user)) {
-            return true;
-        }
-        // load from db to make sure that course and teachingAssistant is loaded
-        var tutorialGroupFromDatabase = tutorialGroupRepository.findByIdWithTeachingAssistantAndCourseElseThrow(tutorialGroup.getId());
-
-        Course course = tutorialGroupFromDatabase.getCourse();
-        if (isAtLeastInstructorInCourse(course, user)) {
-            return true;
-        }
-        return (tutorialGroupFromDatabase.getTeachingAssistant() != null && tutorialGroupFromDatabase.getTeachingAssistant().equals(user));
-    }
-
-    /**
-     * Checks if a user is allowed to change the registrations of a tutorial group
-     *
-     * @param tutorialGroup the tutorial group for which to check permission
-     * @param user          the user for which to check permission
-     */
-    public void isAllowedToChangeRegistrationsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
-        // ToDo: Clarify if this is the correct permission check
-        if (!isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
-            throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
-        }
     }
 
     /**
