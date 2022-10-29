@@ -162,7 +162,7 @@ public class LtiResource {
      * @param response      HTTP response
      * @throws IOException If an input or output exception occurs
      */
-    @PostMapping(value = "/lti13/auth-callback")
+    @PostMapping("/lti13/auth-callback")
     public void lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String state = request.getParameter("state");
         if (state == null) {
@@ -177,7 +177,10 @@ public class LtiResource {
         }
 
         UriComponentsBuilder redirectUrlComponentsBuilder = UriComponentsBuilder.newInstance().scheme(request.getScheme()).host(request.getServerName());
-        redirectUrlComponentsBuilder.port(request.getServerPort()).path(LOGIN_REDIRECT_CLIENT_PATH);
+        if (request.getServerPort() != 80 && request.getServerPort() != 443) {
+            redirectUrlComponentsBuilder.port(request.getServerPort());
+        }
+        redirectUrlComponentsBuilder.path(LOGIN_REDIRECT_CLIENT_PATH);
         redirectUrlComponentsBuilder.queryParam("state", state);
         redirectUrlComponentsBuilder.queryParam("id_token", idToken);
         String redirectUrl = redirectUrlComponentsBuilder.build().toString();
