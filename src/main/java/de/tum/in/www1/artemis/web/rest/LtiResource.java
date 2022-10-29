@@ -162,7 +162,7 @@ public class LtiResource {
      * @param response      HTTP response
      * @throws IOException If an input or output exception occurs
      */
-    @PostMapping(value = "/lti13/auth-callback", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/lti13/auth-callback")
     public void lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String state = request.getParameter("state");
         if (state == null) {
@@ -176,8 +176,13 @@ public class LtiResource {
             return;
         }
 
-        String redirectUri = LOGIN_REDIRECT_CLIENT_PATH + "?state=" + state + "&id_token=" + idToken;
-        response.sendRedirect(redirectUri);
+        UriComponentsBuilder redirectUrlComponentsBuilder = UriComponentsBuilder.newInstance().scheme(request.getScheme()).host(request.getServerName());
+        redirectUrlComponentsBuilder.port(request.getServerPort()).path(LOGIN_REDIRECT_CLIENT_PATH);
+        redirectUrlComponentsBuilder.queryParam("state", state);
+        redirectUrlComponentsBuilder.queryParam("id_token", idToken);
+        String redirectUrl = redirectUrlComponentsBuilder.build().toString();
+        log.info("redirect to url: {}", redirectUrl);
+        response.sendRedirect(redirectUrl);
     }
 
     private void errorOnMissingParameter(HttpServletResponse response, String missingParamName) throws IOException {
