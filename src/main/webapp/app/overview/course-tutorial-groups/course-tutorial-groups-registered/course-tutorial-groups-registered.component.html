@@ -1,0 +1,19 @@
+<div class="row">
+    <div class="col-12">
+        <h2>{{ 'artemisApp.pages.courseTutorialGroups.title' | artemisTranslate }}</h2>
+        <div>
+            <ng-container *ngIf="registeredTutorialGroups && registeredTutorialGroups.length > 0; else noRegistrations">
+                <div class="d-flex flex-wrap">
+                    <jhi-course-tutorial-group-card
+                        *ngFor="let registeredTutorialGroup of registeredTutorialGroups"
+                        [tutorialGroup]="registeredTutorialGroup"
+                        [courseId]="courseId"
+                    ></jhi-course-tutorial-group-card>
+                </div>
+            </ng-container>
+            <ng-template #noRegistrations>
+                <span>{{ 'artemisApp.pages.courseTutorialGroups.noRegistrations' | artemisTranslate }}</span>
+            </ng-template>
+        </div>
+    </div>
+</div>

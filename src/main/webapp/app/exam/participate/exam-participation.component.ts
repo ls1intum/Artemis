@@ -159,9 +159,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.testRunId = parseInt(params['testRunId'], 10);
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
             if (params['studentExamId']) {
-                // If a new StudentExam should be created, the keyword new is used (and no StudentExam exists)
+                // If a new StudentExam should be created, the keyword start is used (and no StudentExam exists)
                 this.testExam = true;
-                if (params['studentExamId'] !== 'new') {
+                if (params['studentExamId'] !== 'start') {
                     this.studentExamId = parseInt(params['studentExamId'], 10);
                 }
             }
@@ -173,6 +173,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam.exam!.course = new Course();
                         this.studentExam.exam!.course.id = this.courseId;
                         this.exam = studentExam.exam!;
+                        this.testExam = this.exam.testExam!;
                         this.testStartTime = dayjs();
                         this.initIndividualEndDates(this.testStartTime);
                         this.loadingExam = false;
@@ -184,6 +185,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     next: (studentExam) => {
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
+                        this.testExam = this.exam.testExam!;
                         if (this.exam.testExam) {
                             // For TestExams, we either set the StartTime to the current time or the startedDate of the studentExam, if existent
                             this.testStartTime = this.studentExam.startedDate ? this.studentExam.startedDate! : dayjs();

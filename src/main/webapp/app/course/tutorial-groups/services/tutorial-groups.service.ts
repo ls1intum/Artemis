@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Observable } from 'rxjs';
@@ -18,7 +18,7 @@ export class TutorialGroupsService {
         return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/campus-values`, { observe: 'response' });
     }
 
-    getAllOfCourse(courseId: number): Observable<EntityArrayResponseType> {
+    getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<TutorialGroup[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, { observe: 'response' });
     }
 

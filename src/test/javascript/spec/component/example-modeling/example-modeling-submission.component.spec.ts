@@ -67,11 +67,15 @@ describe('Example Modeling Submission Component', () => {
     const mockFeedbackInvalid = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
     const mockFeedbackCorrectionError = { reference: 'reference', type: FeedbackCorrectionErrorType.INCORRECT_SCORE } as FeedbackCorrectionError;
 
+    const routeQueryParam = { readOnly: 0, toComplete: 0 };
+
     beforeEach(() => {
+        routeQueryParam.readOnly = 0;
+        routeQueryParam.toComplete = 0;
         route = {
             snapshot: {
                 paramMap: convertToParamMap({ exerciseId: '22', exampleSubmissionId: '35' }),
-                queryParamMap: convertToParamMap({ readOnly: 0, toComplete: 0 }),
+                queryParamMap: convertToParamMap(routeQueryParam),
             },
         } as ActivatedRoute;
 
@@ -453,5 +457,24 @@ describe('Example Modeling Submission Component', () => {
         expect(assessmentSpy).toHaveBeenCalledOnce();
         expect(comp.assessmentMode).toBeTrue();
         expect(result.feedbacks).toEqual(comp.assessments);
+    });
+
+    it('should call get exampleAssessment in toComplete mode', () => {
+        routeQueryParam.toComplete = 1;
+
+        const result = { id: 1 } as Result;
+        const feedbackOne = { id: 1, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
+        const feedbackTwo = { id: 2, type: FeedbackType.MANUAL } as Feedback;
+        result.feedbacks = [feedbackOne, feedbackTwo];
+
+        jest.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
+        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        const assessmentSpy = jest.spyOn(modelingAssessmentService, 'getExampleAssessment').mockReturnValue(of(result));
+
+        // WHEN
+        fixture.detectChanges();
+
+        expect(assessmentSpy).toHaveBeenCalledOnce();
+        expect(comp.referencedExampleFeedback).toEqual([feedbackTwo]);
     });
 });

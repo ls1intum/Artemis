@@ -39,7 +39,7 @@ export class CourseUpdateComponent implements OnInit {
     onlineCourseConfigurationForm: FormGroup;
     course: Course;
     isSaving: boolean;
-    courseImageFile?: Blob | File;
+    courseImageFile?: File;
     courseImageFileName: string;
     isUploadingCourseImage: boolean;
     imageChangedEvent: any = '';
