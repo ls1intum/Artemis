@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @RestController
@@ -47,16 +48,20 @@ public class TutorialGroupSessionResource {
 
     private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
+    private final TutorialGroupService tutorialGroupService;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     public TutorialGroupSessionResource(TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupScheduleRepository tutorialGroupScheduleRepository,
             TutorialGroupRepository tutorialGroupRepository, TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository,
-            TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository, AuthorizationCheckService authorizationCheckService) {
+            TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository, TutorialGroupService tutorialGroupService,
+            AuthorizationCheckService authorizationCheckService) {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupScheduleRepository = tutorialGroupScheduleRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupFreePeriodRepository = tutorialGroupFreePeriodRepository;
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
+        this.tutorialGroupService = tutorialGroupService;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -76,7 +81,7 @@ public class TutorialGroupSessionResource {
         var session = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, session.getTutorialGroup().getCourse(), null);
         checkEntityIdMatchesPathIds(session, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
-        if (!authorizationCheckService.isAllowedToSeePrivateTutorialGroupInformation(session.getTutorialGroup(), null)) {
+        if (!tutorialGroupService.isAllowedToSeePrivateTutorialGroupInformation(session.getTutorialGroup(), null)) {
             session.hidePrivacySensitiveInformation();
         }
         return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(session));
@@ -101,7 +106,7 @@ public class TutorialGroupSessionResource {
 
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
-        authorizationCheckService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), null);
+        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), null);
         var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         if (configurationOptional.isEmpty()) {
             throw new BadRequestException("The course has no tutorial groups configuration");
@@ -157,7 +162,7 @@ public class TutorialGroupSessionResource {
         log.debug("REST request to delete session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionFromDatabase = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
-        authorizationCheckService.isAllowedToChangeRegistrationsOfTutorialGroup(sessionFromDatabase.getTutorialGroup(), null);
+        tutorialGroupService.isAllowedToChangeRegistrationsOfTutorialGroup(sessionFromDatabase.getTutorialGroup(), null);
         tutorialGroupSessionRepository.deleteById(sessionId);
         return ResponseEntity.noContent().build();
     }
@@ -178,7 +183,7 @@ public class TutorialGroupSessionResource {
         log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
         tutorialGroupSessionDTO.validityCheck();
         var tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(tutorialGroupId);
-        authorizationCheckService.isAllowedToModifySessionsOfTutorialGroup(tutorialGroup, null);
+        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(tutorialGroup, null);
         var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         if (configurationOptional.isEmpty()) {
             throw new BadRequestException("The course has no tutorial groups configuration");
@@ -225,7 +230,7 @@ public class TutorialGroupSessionResource {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToCancel = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
-        authorizationCheckService.isAllowedToModifySessionsOfTutorialGroup(sessionToCancel.getTutorialGroup(), null);
+        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToCancel.getTutorialGroup(), null);
         sessionToCancel.setStatus(TutorialGroupSessionStatus.CANCELLED);
         if (tutorialGroupStatusDTO != null && tutorialGroupStatusDTO.status_explanation() != null && tutorialGroupStatusDTO.status_explanation().trim().length() > 0) {
             sessionToCancel.setStatusExplanation(tutorialGroupStatusDTO.status_explanation().trim());
@@ -249,7 +254,7 @@ public class TutorialGroupSessionResource {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToActivate, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.ofNullable(sessionId));
-        authorizationCheckService.isAllowedToModifySessionsOfTutorialGroup(sessionToActivate.getTutorialGroup(), null);
+        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToActivate.getTutorialGroup(), null);
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
         sessionToActivate.setStatusExplanation(null);
         sessionToActivate = tutorialGroupSessionRepository.save(sessionToActivate);

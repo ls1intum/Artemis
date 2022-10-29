@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -62,6 +63,9 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     @Autowired
     TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+
+    @Autowired
+    TutorialGroupService tutorialGroupService;
 
     Long exampleCourseId;
 

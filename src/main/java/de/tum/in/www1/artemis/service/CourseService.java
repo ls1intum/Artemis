@@ -234,11 +234,6 @@ public class CourseService {
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
-        course.getTutorialGroups().forEach(tutorialGroup -> {
-            if (!authCheckService.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
-                tutorialGroup.hidePrivacySensitiveInformation();
-            }
-        });
         return course;
     }
 
