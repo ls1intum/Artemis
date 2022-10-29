@@ -125,36 +125,6 @@ export class ExerciseDetailsStudentActionsComponent {
             });
     }
 
-    startPractice(): void {
-        this.startingPracticeMode = true;
-        this.courseExerciseService
-            .startPractice(this.exercise.id!)
-            .pipe(finalize(() => (this.startingPracticeMode = false)))
-            .subscribe({
-                next: (participation) => {
-                    if (participation) {
-                        if (this.exercise.studentParticipations?.some((studentParticipation) => studentParticipation.id === participation.id)) {
-                            this.exercise.studentParticipations = this.exercise.studentParticipations?.map((studentParticipation) =>
-                                studentParticipation.id === participation.id ? participation : studentParticipation,
-                            );
-                        } else {
-                            this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
-                        }
-                    }
-                    if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
-                            this.alertService.success('artemisApp.exercise.personalRepositoryClone');
-                        } else {
-                            this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
-                        }
-                    }
-                },
-                error: () => {
-                    this.alertService.warning('artemisApp.exercise.startError');
-                },
-            });
-    }
-
     /**
      * resume the programming exercise
      */
