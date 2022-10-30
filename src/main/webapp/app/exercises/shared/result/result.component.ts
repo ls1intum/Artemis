@@ -1,11 +1,11 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import {
-    ResultTemplateStatus,
     MissingResultInformation,
+    ResultTemplateStatus,
     evaluateTemplateStatus,
-    getTextColorClass,
     getResultIconClass,
+    getTextColorClass,
     resultIsPreliminary,
 } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
