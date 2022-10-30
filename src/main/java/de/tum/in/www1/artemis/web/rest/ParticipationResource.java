@@ -325,7 +325,7 @@ public class ParticipationResource {
 
     /**
      * Checks if the student is currently allowed to participate in the exercise using this Participation
-     * @param programmingExercise the exercise where the userr wants to participate
+     * @param programmingExercise the exercise where the user wants to participate
      * @param participation       the participation, may be null in case there is none
      * @return
      */
