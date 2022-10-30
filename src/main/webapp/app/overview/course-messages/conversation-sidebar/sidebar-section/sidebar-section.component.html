@@ -1,0 +1,23 @@
+<div class="sidebar-section">
+    <div class="section-header" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed">
+        <fa-icon [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
+        <span>Direct Messages</span>
+    </div>
+    <div #collapse="ngbCollapse" [(ngbCollapse)]="isCollapsed">
+        <ul class="conversation-list" *ngIf="conversations && conversations.length">
+            <li
+                *ngFor="let conversation of conversations; trackBy: conversationsTrackByFn"
+                class="conversation-list-item"
+                [class.selected]="activeConversation.id === conversation.id"
+                (click)="conversationSelected.emit(conversation)"
+            >
+                <span class="conversation-list-item-user">
+                    {{ getNameOfConversation(conversation) }}
+                </span>
+                <span *ngIf="isConversationUnread(conversation)">
+                    <fa-icon [icon]="faMessage"></fa-icon>
+                </span>
+            </li>
+        </ul>
+    </div>
+</div>

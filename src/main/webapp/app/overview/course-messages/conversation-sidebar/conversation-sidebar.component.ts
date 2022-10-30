@@ -2,7 +2,7 @@ import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, Output } fro
 import interact from 'interactjs';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical, faMessage } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faChevronUp, faComments, faGripLinesVertical, faMessage } from '@fortawesome/free-solid-svg-icons';
 
 import { MessagingService } from 'app/shared/metis/messaging.service';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
@@ -11,7 +11,8 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
-import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-details.model';
+import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
+import { ConversationType } from 'app/shared/metis/metis.util';
 
 @Component({
     selector: 'jhi-conversation-sidebar',
@@ -23,6 +24,11 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     @Output() selectConversation = new EventEmitter<Conversation>();
 
     conversations: Conversation[];
+
+    starredConversations: Conversation[] = [];
+    channelConversations: Conversation[] = [];
+    directConversations: Conversation[] = [];
+
     activeConversation: Conversation;
 
     course?: Course;
@@ -61,9 +67,14 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
             });
             this.courseMessagesService.getConversationsOfUser(this.courseId);
             this.conversationSubscription = this.courseMessagesService.conversations.subscribe((conversations: Conversation[]) => {
-                this.conversations = conversations;
+                this.conversations = conversations ?? [];
+                this.channelConversations = this.conversations.filter((conversation) => conversation.type === ConversationType.CHANNEL);
+                this.directConversations = this.conversations.filter((conversation) => conversation.type === ConversationType.DIRECT);
+                // ToDo: Select starred conversations here
+
                 if (this.conversations.length > 0 && !this.activeConversation) {
                     // emit the value to fetch conversation posts on post overview tab
+                    // ToDo: Überlegen welche conversation hier ausgewählt werden soll
                     this.activeConversation = this.conversations.first()!;
                     this.selectConversation.emit(this.activeConversation);
                 }
@@ -171,30 +182,6 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     }
 
     /**
-     * defines a function that returns the conversation id as unique identifier,
-     * by this means, Angular determines which conversation in the collection of conversation has to be reloaded/destroyed on changes
-     */
-    conversationsTrackByFn = (index: number, conversation: Conversation): number => conversation.id!;
-
-    getNameOfConversationParticipant(conversation: Conversation): string {
-        const participant = conversation.conversationParticipants!.find((conversationParticipants) => conversationParticipants.user.id !== this.courseMessagesService.userId)!.user;
-        return participant.lastName ? `${participant.firstName} ${participant.lastName}` : participant.firstName!;
-    }
-
-    isConversationUnread(conversation: Conversation): boolean {
-        const conversationParticipant = conversation.conversationParticipants!.find(
-            (conversationParticipants) => conversationParticipants.user.id === this.courseMessagesService.userId,
-        )!;
-
-        if (conversation.id !== this.activeConversation.id && !!conversation.lastMessageDate && !!conversationParticipant.lastRead) {
-            if (conversationParticipant.lastRead.isBefore(conversation.lastMessageDate.subtract(1, 'second'), 'second')) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * Formats the results in the autocomplete overlay.
      *
      * @param user
@@ -213,6 +200,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
 
     createNewConversationWithUser(user: User) {
         const conversation = new Conversation();
+        conversation.type = ConversationType.DIRECT;
         conversation.course = this.course!;
         conversation.conversationParticipants = [this.createNewConversationParticipant(user)];
 
@@ -223,5 +211,10 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
         const conversationParticipant = new ConversationParticipant();
         conversationParticipant.user = user;
         return conversationParticipant;
+    }
+
+    onConversationSelected($event: Conversation) {
+        this.activeConversation = $event;
+        this.selectConversation.emit($event);
     }
 }

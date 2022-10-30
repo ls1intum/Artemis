@@ -32,21 +32,30 @@
                     ></jhi-data-table>
                 </div>
                 <div>
-                    <ul class="conversation-list" *ngIf="conversations && conversations.length">
-                        <li
-                            *ngFor="let conversation of conversations; trackBy: conversationsTrackByFn"
-                            class="conversation-list-item"
-                            [class.selected]="activeConversation.id === conversation.id"
-                            (click)="activeConversation = conversation; selectConversation.emit(conversation)"
-                        >
-                            <span class="conversation-list-item-user">
-                                {{ getNameOfConversationParticipant(conversation) }}
-                            </span>
-                            <span *ngIf="isConversationUnread(conversation)">
-                                <fa-icon [icon]="faMessage"></fa-icon>
-                            </span>
-                        </li>
-                    </ul>
+                    <!-- Starred -->
+                    <jhi-sidebar-section
+                        [isCollapsed]="false"
+                        [conversations]="starredConversations"
+                        [activeConversation]="activeConversation"
+                        (conversationSelected)="onConversationSelected($event)"
+                    >
+                    </jhi-sidebar-section>
+                    <!-- Channels -->
+                    <jhi-sidebar-section
+                        [isCollapsed]="true"
+                        [conversations]="channelConversations"
+                        [activeConversation]="activeConversation"
+                        (conversationSelected)="onConversationSelected($event)"
+                    >
+                    </jhi-sidebar-section>
+                    <!-- Direct Messages -->
+                    <jhi-sidebar-section
+                        [isCollapsed]="true"
+                        [conversations]="directConversations"
+                        [activeConversation]="activeConversation"
+                        (conversationSelected)="onConversationSelected($event)"
+                    >
+                    </jhi-sidebar-section>
                 </div>
                 <!-- no conversations -->
                 <div class="conversation-empty" *ngIf="!isLoading && (conversations === undefined || conversations.length === 0)">

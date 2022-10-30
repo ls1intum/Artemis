@@ -45,35 +45,6 @@ $conversation-section-card-min-width: 215px;
                 padding: 5px 5px 0 5px;
             }
 
-            .conversation-list {
-                margin: 0;
-                padding: 0;
-
-                &-item {
-                    cursor: pointer;
-                    display: flex;
-                    padding: 0.2rem;
-                    color: var(--metis-light-gray);
-                    justify-content: space-between;
-
-                    &-user {
-                        font-size: 14px;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                    }
-
-                    &.selected {
-                        background-color: var(--metis-light-blue);
-                    }
-
-                    &:hover {
-                        color: var(--metis-course-discussion-select-bg);
-                        background-color: var(--metis-blue);
-                    }
-                }
-            }
-
             .conversation-empty {
                 display: flex;
                 flex-direction: column;
