@@ -187,7 +187,7 @@ export abstract class PostOverviewDirective implements OnInit, OnDestroy {
             exerciseId: undefined,
             lectureId: undefined,
             ...this.formGroup?.get('context')?.value,
-            searchText: this.searchText ? this.searchText : undefined,
+            searchText: this.searchText ? this.searchText.trim() : undefined,
             conversationId: this.conversation?.id,
             pagingEnabled: this.pagingEnabled,
             page: this.page - 1,
