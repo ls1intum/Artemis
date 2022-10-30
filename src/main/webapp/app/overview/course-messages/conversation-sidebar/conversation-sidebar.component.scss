@@ -3,6 +3,10 @@
 $draggable-width: 15px;
 $conversation-section-card-min-width: 215px;
 
+.dropdown-toggle::after {
+    content: none;
+}
+
 .expanded-conversations {
     display: flex;
     height: 100%;

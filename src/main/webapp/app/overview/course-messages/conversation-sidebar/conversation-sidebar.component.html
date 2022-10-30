@@ -34,6 +34,7 @@
                 <div>
                     <!-- Starred -->
                     <jhi-sidebar-section
+                        [label]="'Starred'"
                         [isCollapsed]="false"
                         [conversations]="starredConversations"
                         [activeConversation]="activeConversation"
@@ -42,14 +43,28 @@
                     </jhi-sidebar-section>
                     <!-- Channels -->
                     <jhi-sidebar-section
+                        [label]="'Channels'"
                         [isCollapsed]="true"
                         [conversations]="channelConversations"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
                     >
+                        <ng-template>
+                            <div ngbDropdown class="d-inline-block">
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
+                                    <fa-icon [icon]="faPlus" size="xs"></fa-icon>
+                                </button>
+                                <div ngbDropdownMenu>
+                                    <button ngbDropdownItem>Action - 1</button>
+                                    <button ngbDropdownItem>Another Action</button>
+                                    <button ngbDropdownItem>Something else is here</button>
+                                </div>
+                            </div>
+                        </ng-template>
                     </jhi-sidebar-section>
                     <!-- Direct Messages -->
                     <jhi-sidebar-section
+                        [label]="'Direct Messages'"
                         [isCollapsed]="true"
                         [conversations]="directConversations"
                         [activeConversation]="activeConversation"

@@ -1,5 +1,7 @@
 .sidebar-section {
     .section-header {
+        display: flex;
+        justify-content: space-between;
         cursor: pointer;
         padding: 0.2rem;
         &:hover {

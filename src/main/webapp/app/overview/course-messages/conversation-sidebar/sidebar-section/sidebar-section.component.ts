@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationType } from 'app/shared/metis/metis.util';
@@ -13,6 +13,9 @@ export class SidebarSectionComponent {
     @Output() conversationSelected = new EventEmitter<Conversation>();
 
     @Input()
+    label: string;
+
+    @Input()
     activeConversation: Conversation;
 
     @Input()
@@ -20,6 +23,10 @@ export class SidebarSectionComponent {
 
     @Input()
     isCollapsed = false;
+
+    isHover = false;
+
+    @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
 
     // icon imports
     faChevronRight = faChevronRight;

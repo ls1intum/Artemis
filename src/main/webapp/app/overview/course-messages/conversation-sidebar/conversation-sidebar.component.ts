@@ -2,7 +2,7 @@ import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, Output } fro
 import interact from 'interactjs';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { faChevronLeft, faChevronRight, faChevronUp, faComments, faGripLinesVertical, faMessage } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faChevronUp, faComments, faGripLinesVertical, faMessage, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 import { MessagingService } from 'app/shared/metis/messaging.service';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
@@ -49,7 +49,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     faChevronRight = faChevronRight;
     faGripLinesVertical = faGripLinesVertical;
     faConversation = faComments;
-    faMessage = faMessage;
+    faPlus = faPlus;
 
     constructor(protected courseMessagesService: MessagingService, private courseManagementService: CourseManagementService, private activatedRoute: ActivatedRoute) {}
 
