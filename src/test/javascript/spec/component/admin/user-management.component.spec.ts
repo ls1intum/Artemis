@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import {
     AuthorityFilter,
     OriginFilter,
@@ -14,7 +14,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
-import { of, Subscription } from 'rxjs';
+import { Subscription, of } from 'rxjs';
 import { AbstractControl, ReactiveFormsModule } from '@angular/forms';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';

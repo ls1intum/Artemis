@@ -281,7 +281,7 @@ If you want to run with local user management and no programming exercises setup
 
 1. Go to the ``src/main/resources/config/application-artemis.yml`` file, and set use-external in the user-management section to false.
 If you have created an additional ``application-local.yml`` file as it is described in the
-`Setup documentation <https://artemis-platform.readthedocs.io/en/latest/dev/setup/#server-setup>`__, make sure to edit this one.
+`Setup documentation <https://docs.artemis.ase.in.tum.de/dev/setup/#server-setup>`__, make sure to edit this one.
 
    Another possibility is to add the variable directly in ``src/main/kubernetes/artemis/configmap/artemis-configmap.yml``.
 

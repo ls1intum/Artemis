@@ -14,7 +14,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { notUndefined } from 'app/shared/util/global.utils';
+import { notUndefined, onError } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/exercises/text/assess/text-submission-assessment.route';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
@@ -31,7 +31,6 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/uti
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
-import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';

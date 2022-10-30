@@ -7,7 +7,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { createActions } from './exam-monitoring-helper';
 import { BehaviorSubject, of } from 'rxjs';
-import { EXAM_MONITORING_ACTION_TOPIC, EXAM_MONITORING_ACTIONS_TOPIC, EXAM_MONITORING_STATUS_TOPIC, ExamActionService } from 'app/exam/monitoring/exam-action.service';
+import { EXAM_MONITORING_ACTIONS_TOPIC, EXAM_MONITORING_ACTION_TOPIC, EXAM_MONITORING_STATUS_TOPIC, ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import dayjs from 'dayjs/esm';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
