@@ -92,13 +92,24 @@ public class RequestUtilService {
         return new URI(res.getResponse().getHeader("location"));
     }
 
-    public void postForm(String path, Object body, HttpStatus expectedStatus) throws Exception {
+    public URI postForm(String path, Object body, HttpStatus expectedStatus) throws Exception {
         final var mapper = new ObjectMapper();
         final var jsonMap = mapper.convertValue(body, new TypeReference<Map<String, String>>() {
         });
         final var content = new LinkedMultiValueMap<String, String>();
         content.setAll(jsonMap);
-        final var res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        return new URI(result.getResponse().getHeader("location"));
+    }
+
+    public void postFormWithoutLocation(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        final var mapper = new ObjectMapper();
+        final var jsonMap = mapper.convertValue(body, new TypeReference<Map<String, String>>() {
+        });
+        final var content = new LinkedMultiValueMap<String, String>();
+        content.setAll(jsonMap);
+        mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
     }
 

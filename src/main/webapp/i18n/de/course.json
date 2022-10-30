@@ -91,6 +91,11 @@
                 "ltiKey": "LTI-Key",
                 "ltiSecret": "LTI-Geheimnis",
                 "userPrefix": "Nutzer-Präfix",
+                "registrationId": "Registrierung ID",
+                "clientId": "Client ID",
+                "authorizationUri": "Authorization URI",
+                "tokenUri": "Token URI",
+                "jwkSetUri": "JWKSet URI",
                 "form": {
                     "userPrefix": {
                         "forbidden": "Nutzer Präfix darf keine Sonderzeichen beinhalten."

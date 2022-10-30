@@ -101,7 +101,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
-        doReturn(null).when(ltiService).verifyRequest(any(), any());
+        doReturn(null).when(lti10Service).verifyRequest(any(), any());
 
         final var userAuthority = new Authority(Role.STUDENT.getAuthority());
         final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());

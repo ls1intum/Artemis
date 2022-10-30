@@ -91,6 +91,11 @@
                 "ltiKey": "LTI Key",
                 "ltiSecret": "LTI Secret",
                 "userPrefix": "User Prefix",
+                "registrationId": "Registration ID",
+                "clientId": "Client ID",
+                "authorizationUri": "Authorization URI",
+                "tokenUri": "Token URI",
+                "jwkSetUri": "JWKSet URI",
                 "form": {
                     "userPrefix": {
                         "forbidden": "User prefix cannot contain special characters."
