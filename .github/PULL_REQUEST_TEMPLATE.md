@@ -48,6 +48,7 @@ Prerequisites:
 #### Exam Mode Testing
 <!-- If this PR changes some components that are also used in the exam mode, the PR needs additional testing that the exam mode is still working as expected. -->
 <!-- If the testing steps above already describe the exam mode or the exam mode cannot be affected by this PR in any way, you can leave this out. -->
+
 Prerequisites:
 - 1 Instructor
 - 2 Students
@@ -55,7 +56,7 @@ Prerequisites:
 
 1. Log in to Artemis
 2. Participate in the exam as a student
-3. Make sure that the UI of the programming exercise in the exam mode stays unchanged
+3. Make sure that the UI of the programming exercise in the exam mode stays unchanged. You can use the [exam mode documentation](https://docs.artemis.ase.in.tum.de/user/exam_mode/) as reference.
 4. ...
 
 ### Review Progress
