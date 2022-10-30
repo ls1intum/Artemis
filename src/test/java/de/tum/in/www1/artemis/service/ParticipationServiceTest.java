@@ -13,6 +13,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -22,6 +24,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -129,16 +132,21 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
-    void testStartPracticeMode() throws URISyntaxException {
+    @ValueSource(booleans = { true, false })
+    void testStartPracticeMode(boolean useGradedParticipation) throws URISyntaxException {
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(2));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        database.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusMinutes(2));
         Participant participant = database.getUserByLogin("student1");
+        Result gradedResult = database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
 
-        mockCreationOfExerciseParticipation();
+        mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult);
 
-        StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise, participant, Optional.empty());
+        StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise, participant,
+                Optional.of((StudentParticipation) gradedResult.getParticipation()), useGradedParticipation);
 
         assertTrue(studentParticipationReceived.isTestRun());
         assertEquals(programmingExercise, studentParticipationReceived.getExercise());
@@ -150,11 +158,18 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
     }
 
-    private void mockCreationOfExerciseParticipation() throws URISyntaxException {
+    private void mockCreationOfExerciseParticipation(boolean useGradedParticipation, Result gradedResult) throws URISyntaxException {
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(any());
+        String templateRepoName;
+        if (useGradedParticipation) {
+            templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(((ProgrammingExerciseStudentParticipation) gradedResult.getParticipation()).getVcsRepositoryUrl());
+        }
+        else {
+            templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getVcsTemplateRepositoryUrl());
+        }
         var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
-        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(String.class), any(String.class), any(String.class), any(String.class));
+        doReturn(someURL).when(versionControlService).copyRepository(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class));
         doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
         doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());

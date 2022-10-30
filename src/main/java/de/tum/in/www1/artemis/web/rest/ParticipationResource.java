@@ -201,14 +201,16 @@ public class ParticipationResource {
      * POST /exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
      *
      * @param exerciseId the participationId of the exercise for which to init a participation
+     * @param useGradedParticipation a flag that indicates that the student wants to use their graded participation as baseline for the new repo
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
      */
     @PostMapping("/exercises/{exerciseId}/participations/practice")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
-        log.debug("REST request to start Exercise : {}", exerciseId);
+    public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId,
+            @RequestParam(value = "useGradedParticipation", defaultValue = "false") boolean useGradedParticipation) throws URISyntaxException {
+        log.debug("REST request to practice Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, user, false);
@@ -227,8 +229,12 @@ public class ParticipationResource {
                 || (optionalGradedStudentParticipation.isPresent() && exerciseDateService.isBeforeDueDate(optionalGradedStudentParticipation.get()))) {
             throw new AccessForbiddenException("The practice mode can only be started after the due date");
         }
+        if (useGradedParticipation && optionalGradedStudentParticipation.isEmpty()) {
+            throw new BadRequestAlertException("Tried to start the practice mode based on the graded participation, but there is no graded participation", ENTITY_NAME,
+                    "practiceModeNoGradedParticipation");
+        }
 
-        StudentParticipation participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation);
+        StudentParticipation participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation, useGradedParticipation);
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();

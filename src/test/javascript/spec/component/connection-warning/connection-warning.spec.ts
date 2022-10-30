@@ -1,5 +1,5 @@
 import { ArtemisTestModule } from '../../test.module';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { CloseCircleComponent } from 'app/shared/close-circle/close-circle.component';

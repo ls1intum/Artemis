@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
+import { ActivatedRoute, Params, convertToParamMap } from '@angular/router';
 import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exams.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
