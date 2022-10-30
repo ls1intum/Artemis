@@ -1,0 +1,15 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="stefanwaldhauser" id="20221030000000">
+        <addColumn tableName="conversation">
+            <!-- Name is only relevant for type Channel -->
+            <column name="name" type="VARCHAR(20)">
+                <constraints nullable="true" />
+            </column>
+            <!-- Set default value to DIRECT_CONVERSATION as this is the only type existing in the db when this migration is executed -->
+            <column name="type" type="VARCHAR(255)" defaultValue="DIRECT">
+                <constraints nullable="false"  />
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

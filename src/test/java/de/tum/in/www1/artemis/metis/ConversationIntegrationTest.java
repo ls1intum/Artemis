@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Conversation;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.ConversationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
@@ -42,7 +43,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     public void initTestCase() {
         database.addUsers(5, 5, 0, 1);
         course = database.createCourse(1L);
-        existingConversation = database.createConversation(course);
+        existingConversation = database.createDirectConversation(course);
         doNothing().when(messagingTemplate).convertAndSendToUser(any(), any(), any());
     }
 
@@ -56,13 +57,13 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateConversation() throws Exception {
-        Conversation conversationToSave = conversationToCreate(course, database.getUserByLogin("student2"));
+        Conversation conversationToSave = directConversationToCreate(course, database.getUserByLogin("student2"));
 
         Conversation createdConversation = request.postWithResponseBody("/api/courses/" + course.getId() + "/conversations/", conversationToSave, Conversation.class,
                 HttpStatus.CREATED);
 
         checkCreatedConversationParticipants(createdConversation.getConversationParticipants());
-        checkCreatedConversation(createdConversation);
+        checkCreatedDirerctConversation(createdConversation);
 
         assertThat(conversationRepository.findById(createdConversation.getId())).isNotEmpty();
 
@@ -74,18 +75,19 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateConversation_badRequest() throws Exception {
         Conversation conversationToSave = new Conversation();
+        conversationToSave.setType(ConversationType.DIRECT);
 
         // conversation without required conversationParticipant
         createConversationBadRequest(conversationToSave);
 
-        conversationToSave = conversationToCreate(course, database.getUserByLogin("student2"));
+        conversationToSave = directConversationToCreate(course, database.getUserByLogin("student2"));
         conversationToSave.setId(1L);
 
         // conversation with existing ID
         createConversationBadRequest(conversationToSave);
 
         // conversation with user's own conversationParticipant object
-        conversationToSave = conversationToCreate(course, database.getUserByLogin("student2"));
+        conversationToSave = directConversationToCreate(course, database.getUserByLogin("student2"));
         ConversationParticipant conversationParticipant = new ConversationParticipant();
         conversationParticipant.setUser(database.getUserByLogin("student1"));
         conversationToSave.getConversationParticipants().add(conversationParticipant);
@@ -127,8 +129,9 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationDTO.class));
     }
 
-    static Conversation conversationToCreate(Course course, User conversatingUser) {
+    static Conversation directConversationToCreate(Course course, User conversatingUser) {
         Conversation conversation = new Conversation();
+        conversation.setType(ConversationType.DIRECT);
 
         ConversationParticipant conversationParticipant2 = new ConversationParticipant();
         conversationParticipant2.setUser(conversatingUser);
@@ -140,11 +143,13 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         return conversation;
     }
 
-    private void checkCreatedConversation(Conversation createdConversation) {
+    private void checkCreatedDirerctConversation(Conversation createdConversation) {
         assertThat(createdConversation).isNotNull();
         assertThat(createdConversation.getId()).isNotNull();
         assertThat(createdConversation.getCreationDate()).isNotNull();
         assertThat(createdConversation.getLastMessageDate()).isNull();
+        assertThat(createdConversation.getType()).isEqualTo(ConversationType.DIRECT);
+        assertThat(createdConversation.getName()).isNull(); // Null for direct conversations
     }
 
     private void checkCreatedConversationParticipants(Set<ConversationParticipant> conversationParticipants) {

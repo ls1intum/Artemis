@@ -823,7 +823,7 @@ public class DatabaseUtilService {
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
                 CourseWideContext.ANNOUNCEMENT };
         posts.addAll(createBasicPosts(course1, courseWideContexts));
-        posts.addAll(createBasicPosts(createConversation(course1)));
+        posts.addAll(createBasicPosts(createDirectConversation(course1)));
 
         return posts;
     }
@@ -953,8 +953,9 @@ public class DatabaseUtilService {
         }
     }
 
-    public Conversation createConversation(Course course) {
+    public Conversation createDirectConversation(Course course) {
         Conversation conversation = new Conversation();
+        conversation.setType(ConversationType.DIRECT);
         conversation.setCourse(course);
         conversation = conversationRepository.save(conversation);
 

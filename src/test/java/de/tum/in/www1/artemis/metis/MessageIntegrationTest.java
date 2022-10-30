@@ -224,7 +224,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Post post = new Post();
         post.setAuthor(database.getUserByLogin("student1"));
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.setConversation(ConversationIntegrationTest.conversationToCreate(course, database.getUserByLogin("student2")));
+        post.setConversation(ConversationIntegrationTest.directConversationToCreate(course, database.getUserByLogin("student2")));
         return post;
     }
 
