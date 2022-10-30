@@ -1,0 +1,23 @@
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <div class="channels-overview">
+        <div class="modal-header">
+            <h4 class="modal-title">
+                <span>All Channels</span>
+            </h4>
+            <button type="button" class="btn-close" (click)="clear()"></button>
+        </div>
+        <div class="modal-body">
+            <!-- Overview Table -->
+            <div *ngIf="channels && channels.length > 0" class="form-group mt-4">
+                <div class="table-wrapper-scroll-y scrollbar">
+                    <ul class="list-group">
+                        <li *ngFor="let channel of channels; trackBy: trackIdentity" class="list-group-item">
+                            <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)"></jhi-channel-item>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer justify-content-between"><-- Place Create Channel Button here --></div>
+    </div>
+</jhi-loading-indicator-container>

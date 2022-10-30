@@ -55,9 +55,8 @@
                                     <fa-icon [icon]="faPlus" size="xs"></fa-icon>
                                 </button>
                                 <div ngbDropdownMenu>
-                                    <button ngbDropdownItem>Action - 1</button>
-                                    <button ngbDropdownItem>Another Action</button>
-                                    <button ngbDropdownItem>Something else is here</button>
+                                    <button ngbDropdownItem (click)="openChannelOverviewDialog($event)">Browse Channels</button>
+                                    <button ngbDropdownItem>Create Channel</button>
                                 </div>
                             </div>
                         </ng-template>

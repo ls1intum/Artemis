@@ -10,6 +10,8 @@ import { MessagesComponent } from 'app/overview/course-messages/messages/message
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { ThreadSidebarComponent } from 'app/overview/course-messages/thread-sidebar/thread-sidebar.component';
 import { SidebarSectionComponent } from './conversation-sidebar/sidebar-section/sidebar-section.component';
+import { ChannelsOverviewDialogComponent } from './channels/channels-overview-dialog/channels-overview-dialog.component';
+import { ChannelItemComponent } from './channels/channels-overview-dialog/channel-item/channel-item.component';
 
 const routes: Routes = [
     {
@@ -24,6 +26,14 @@ const routes: Routes = [
 
 @NgModule({
     imports: [RouterModule.forChild(routes), MetisModule, ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisDataTableModule, InfiniteScrollModule],
-    declarations: [CourseMessagesComponent, ConversationSidebarComponent, ThreadSidebarComponent, MessagesComponent, SidebarSectionComponent],
+    declarations: [
+        CourseMessagesComponent,
+        ConversationSidebarComponent,
+        ThreadSidebarComponent,
+        MessagesComponent,
+        SidebarSectionComponent,
+        ChannelsOverviewDialogComponent,
+        ChannelItemComponent,
+    ],
 })
 export class CourseMessagesModule {}

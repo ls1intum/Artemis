@@ -1,0 +1,16 @@
+<div class="d-flex justify-content-between align-items-start" *ngIf="channel" (mouseover)="isHover = true" (mouseout)="isHover = false">
+    <div class="ms-2 me-auto">
+        <div class="fw-bold"># {{ channel.channelName }}</div>
+        <span>{{ channel.noOfMembers }} Members</span> <span *ngIf="channel.isMember" class="badge bg-success rounded-pill">Joined</span>
+    </div>
+    <div [hidden]="!isHover">
+        <ng-container *ngIf="!channel.isMember">
+            <button type="button" class="btn btn-primary" (click)="emitChannelAction($event, 'register')">Join</button>
+            <!--ToDo:  Introduce method to view channel even if no participant maybe hacky around with visitor status or something? -->
+        </ng-container>
+        <ng-container *ngIf="channel.isMember">
+            <button type="button" class="btn btn-secondary" (click)="emitChannelAction($event, 'view')">View</button>
+            <button type="button" class="btn btn-danger" (click)="emitChannelAction($event, 'deregister')">Leave</button>
+        </ng-container>
+    </div>
+</div>

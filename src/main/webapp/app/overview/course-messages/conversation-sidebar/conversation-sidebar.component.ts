@@ -5,7 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import { faChevronLeft, faChevronRight, faChevronUp, faComments, faGripLinesVertical, faMessage, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 import { MessagingService } from 'app/shared/metis/messaging.service';
-import { combineLatest, Observable, of, Subscription } from 'rxjs';
+import { combineLatest, from, Observable, of, Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -13,6 +13,9 @@ import { Course } from 'app/entities/course.model';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { ConversationType } from 'app/shared/metis/metis.util';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { TutorialGroupsRegistrationImportDialog } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
+import { ChannelsOverviewDialogComponent } from 'app/overview/course-messages/channels/channels-overview-dialog/channels-overview-dialog.component';
 
 @Component({
     selector: 'jhi-conversation-sidebar',
@@ -51,7 +54,12 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     faConversation = faComments;
     faPlus = faPlus;
 
-    constructor(protected courseMessagesService: MessagingService, private courseManagementService: CourseManagementService, private activatedRoute: ActivatedRoute) {}
+    constructor(
+        protected courseMessagesService: MessagingService,
+        private courseManagementService: CourseManagementService,
+        private activatedRoute: ActivatedRoute,
+        private modalService: NgbModal,
+    ) {}
 
     ngOnInit(): void {
         this.paramSubscription = combineLatest({
@@ -147,12 +155,23 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
         );
     };
 
+    openChannelOverviewDialog(event: MouseEvent) {
+        event.stopPropagation();
+        const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, { size: 'xl', scrollable: false, backdrop: 'static' });
+        modalRef.componentInstance.courseId = this.courseId;
+
+        from(modalRef.result).subscribe(() => {
+            this.courseMessagesService.getConversationsOfUser(this.courseId);
+        });
+    }
+
     /**
      * Receives the user that was selected in the autocomplete and the callback from DataTableComponent.
      *
      * @param user The selected user from the autocomplete suggestions
      */
     onAutocompleteSelect = (user: User): void => {
+        // ToDo: here müssen wir die find logik ändern wenn es gruppengespräche mit mehr nutzern gibt. Vielleiht id aus allen mitgliedern oder so?
         const foundConversation = this.findConversationWithUser(user);
         // if a conversation does not already exist with selected user
         if (foundConversation === undefined) {
