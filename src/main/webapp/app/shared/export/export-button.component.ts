@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { ExportModalComponent, CsvExportOptions } from 'app/shared/export/export-modal.component';
+import { CsvExportOptions, ExportModalComponent } from 'app/shared/export/export-modal.component';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
