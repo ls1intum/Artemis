@@ -521,7 +521,7 @@ public class Result extends DomainObject {
             feedbacks.removeIf(Feedback::isAfterDueDate);
         }
         setTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).count());
-        setPassedTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).filter(Feedback::isPositive).count());
+        setPassedTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
     }
 
     /**
