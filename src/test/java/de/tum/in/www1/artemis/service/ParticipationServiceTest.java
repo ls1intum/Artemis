@@ -47,6 +47,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         database.addUsers(3, 0, 0, 1);
         Course course = database.addCourseWithOneProgrammingExercise();
         this.programmingExercise = database.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         MockitoAnnotations.openMocks(this);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
@@ -66,7 +67,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student1");
-        mockCreationOfExerciseParticipation();
+        mockCreationOfExerciseParticipation(false, null);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.get(), SubmissionType.EXTERNAL);
         assertThat(participation).isNotNull();
@@ -98,11 +99,11 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @WithMockUser(username = "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
         Participant participant = database.getUserByLogin("student1");
-        mockCreationOfExerciseParticipation();
+        mockCreationOfExerciseParticipation(false, null);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        StudentParticipation practiceParticipation = participationService.startPracticeMode(programmingExercise, participant, Optional.empty());
+        StudentParticipation practiceParticipation = participationService.startPracticeMode(programmingExercise, participant, Optional.empty(), false);
 
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -136,9 +137,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @WithMockUser(username = "student1", roles = "USER")
     @ValueSource(booleans = { true, false })
     void testStartPracticeMode(boolean useGradedParticipation) throws URISyntaxException {
-        programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(2));
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusMinutes(2));
         Participant participant = database.getUserByLogin("student1");
         Result gradedResult = database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
@@ -158,11 +156,11 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
     }
 
-    private void mockCreationOfExerciseParticipation(boolean useGradedParticipation, Result gradedResult) throws URISyntaxException {
+    private void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult) throws URISyntaxException {
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(any());
         String templateRepoName;
-        if (useGradedParticipation) {
+        if (useGradedParticipationOfResult) {
             templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(((ProgrammingExerciseStudentParticipation) gradedResult.getParticipation()).getVcsRepositoryUrl());
         }
         else {

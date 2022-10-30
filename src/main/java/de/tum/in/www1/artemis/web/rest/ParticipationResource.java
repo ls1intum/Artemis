@@ -330,10 +330,10 @@ public class ParticipationResource {
     }
 
     /**
-     * Checks if the student is currently allowed to participate in the exercise using this Participation
+     * Checks if the student is currently allowed to participate in the course exercise using this participation
      * @param programmingExercise the exercise where the user wants to participate
      * @param participation       the participation, may be null in case there is none
-     * @return
+     * @return a boolean indicating if the user may participate
      */
     private boolean isAllowedToParticipateInProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable StudentParticipation participation) {
         boolean isAfterDueDate = participation != null ? exerciseDateService.isAfterDueDate(participation)
