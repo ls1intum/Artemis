@@ -5,9 +5,11 @@
         "generic": {
             "yes": "Ja",
             "no": "Nein",
+            "you": "Du",
             "emptyList": "Keine Elemente verfügbar",
             "unset": "Nicht gesetzt",
             "create": "Erstellen",
+            "start": "Start",
             "edit": "Editieren",
             "copy": "Kopieren",
             "copied": "Kopiert"
@@ -314,6 +316,7 @@
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
         "learningGoals": "Lernziele",
+        "tutorialGroups": "Übungsgruppen",
         "statistics": "Kursstatistiken",
         "exams": "Klausuren",
         "communication": "Kommunikation"

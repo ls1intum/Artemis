@@ -171,12 +171,12 @@ public class ExerciseService {
         DueDateStat totalNumberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countLegalSubmissionsByExerciseIdSubmitted(exerciseId, examMode), 0L);
-            totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId, examMode), 0L);
+            numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countLegalSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
+            totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId), 0L);
         }
         else {
-            numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exerciseId, examMode);
-            totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId, examMode);
+            numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exerciseId);
+            totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         }
 
         stats.setNumberOfSubmissions(numberOfSubmissions);

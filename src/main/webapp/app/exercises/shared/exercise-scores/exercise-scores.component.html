@@ -189,7 +189,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ formatDate(value) }}
+                        {{ value | artemisDate }}
                     </ng-template>
                 </ngx-datatable-column>
 
