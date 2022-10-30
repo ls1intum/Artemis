@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.web.bind.annotation.*;
@@ -25,9 +24,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.Lti10Service;
 import de.tum.in.www1.artemis.service.connectors.LtiDynamicRegistrationService;
-import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * REST controller to handle LTI10 launches.
@@ -202,31 +199,5 @@ public class LtiResource {
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfiguration, registrationToken);
-    }
-
-    /**
-     * GET lti/configuration/:exerciseId : Generates LTI configuration parameters for an exercise.
-     *
-     * @param exerciseId the id of the exercise for the wanted LTI configuration
-     * @param request    HTTP request
-     * @return the ResponseEntity with status 200 (OK) and with body the LTI configuration, or with status 404 (Not Found)
-     */
-    @GetMapping(value = "lti/configuration/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<ExerciseLtiConfigurationDTO> exerciseLtiConfiguration(@PathVariable("exerciseId") Long exerciseId, HttpServletRequest request) {
-        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-
-        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
-        if (ocConfiguration == null) {
-            throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
-        }
-
-        String launchUrl = request.getScheme() + "://" + // "https://"
-                request.getServerName() +              // "localhost" // ":"
-                (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/api/lti/launch/" + exercise.getId();
-
-        return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ocConfiguration.getLtiKey(), ocConfiguration.getLtiSecret()), HttpStatus.OK);
     }
 }

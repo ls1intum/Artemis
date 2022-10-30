@@ -8,7 +8,6 @@ import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
-import { LtiConfiguration } from 'app/entities/lti-configuration.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { User } from 'app/core/user/user.model';
@@ -468,20 +467,5 @@ export class ExerciseService {
         return this.http
             .get<dayjs.Dayjs>(`${this.resourceUrl}/${exerciseId}/latest-due-date`, { observe: 'response' })
             .pipe(map((res: HttpResponse<dayjs.Dayjs>) => (res.body ? dayjs(res.body) : undefined)));
-    }
-}
-
-@Injectable({ providedIn: 'root' })
-export class ExerciseLtiConfigurationService {
-    private resourceUrl = SERVER_API_URL + 'api/lti/configuration';
-
-    constructor(private http: HttpClient) {}
-
-    /**
-     * Load exercise with exerciseId from server
-     * @param { number } exerciseId - Id of exercise that is loaded
-     */
-    find(exerciseId: number): Observable<HttpResponse<LtiConfiguration>> {
-        return this.http.get<LtiConfiguration>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 }
