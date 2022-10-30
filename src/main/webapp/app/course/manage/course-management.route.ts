@@ -17,6 +17,7 @@ import { isOrion } from 'app/shared/orion/orion';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
+import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration.component';
 
 export const courseManagementState: Routes = [
     {
@@ -82,6 +83,17 @@ export const courseManagementState: Routes = [
             course: CourseManagementResolve,
         },
         loadChildren: () => import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
+    },
+    {
+        path: ':courseId/lti-configuration',
+        component: CourseLtiConfigurationComponent,
+        resolve: {
+            course: CourseManagementResolve,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.lti.home.title',
+        },
     },
     {
         // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered

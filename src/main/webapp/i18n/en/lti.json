@@ -2,7 +2,7 @@
     "artemisApp": {
         "lti": {
             "home": {
-                "title": "LTI configuration"
+                "title": "LTI Configuration"
             },
             "initializationError": "Your user initialization process was started but your LTI account was possible created with issues. Please ask your instructor for help if you didn't receive your Artemis password yet.",
             "initialization": {
@@ -16,10 +16,20 @@
                     "confirm": "Confirm"
                 }
             },
+            "version10": "LTI 1.0",
+            "version13": "LTI 1.3",
+            "dynamicRegistrationUrl": "Dynamic Registration URL",
+            "generalConfiguration": "General Configuration",
+            "registrationId": "Registration ID",
+            "clientId": "Client ID",
+            "authorizationUri": "Authorization URI",
+            "tokenUri": "Token URI",
+            "jwkSetUri": "JWKSet URI",
             "startExercise": "<strong>Welcome to Artemis!</strong> Click the button <i>Start Exercise</i>!",
             "ltiSuccessLoginRequired": "Successfully launched LTI exercise. Please login as user {{user}}.",
+            "exercises": "Exercises",
             "lti": "LTI",
-            "configurationForExercise": "LTI configuration for exercise {{ title }}",
+            "configurationForCourse": "LTI Configuration for course {{ title }}",
             "ltiKey": "LTI Key",
             "ltiSecret": "LTI Secret",
             "ltiLaunchUrl": "LTI Launch URL",
