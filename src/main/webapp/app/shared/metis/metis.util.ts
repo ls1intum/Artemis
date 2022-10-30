@@ -13,6 +13,11 @@ export enum CourseWideContext {
     ANNOUNCEMENT = 'ANNOUNCEMENT',
 }
 
+export enum ConversationType {
+    CHANNEL = 'CHANNEL',
+    DIRECT = 'DIRECT',
+}
+
 export enum DisplayPriority {
     PINNED = 'PINNED',
     ARCHIVED = 'ARCHIVED',
