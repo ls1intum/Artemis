@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -257,4 +257,3 @@ describe('Profile Service', () => {
         }));
     });
 });
-

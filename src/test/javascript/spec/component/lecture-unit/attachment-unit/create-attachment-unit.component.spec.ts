@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -82,9 +82,7 @@ describe('CreateAttachmentUnitComponent', () => {
         const router: Router = TestBed.inject(Router);
         const attachmentUnitService = TestBed.inject(AttachmentUnitService);
 
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        // @ts-ignore
-        fakeBlob['name'] = 'Test-File.pdf';
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
         const attachmentUnitFormData: AttachmentUnitFormData = {
             formProperties: {
@@ -95,7 +93,7 @@ describe('CreateAttachmentUnitComponent', () => {
                 updateNotificationText: 'lorem ipsum',
             },
             fileProperties: {
-                file: fakeBlob,
+                file: fakeFile,
                 fileName: 'lorem ipsum',
             },
         };
@@ -114,7 +112,7 @@ describe('CreateAttachmentUnitComponent', () => {
         attachmentUnit.attachment = attachment;
 
         const formData = new FormData();
-        formData.append('file', fakeBlob, attachmentUnitFormData.fileProperties.fileName);
+        formData.append('file', fakeFile, attachmentUnitFormData.fileProperties.fileName);
         formData.append('attachment', objectToJsonBlob(attachment));
         formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
 
