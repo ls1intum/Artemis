@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.jobs;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.w3c.dom.*;
@@ -45,9 +47,7 @@ public class JenkinsJobPermissionsUtils {
         permissionsToRemove.forEach(jenkinsJobPermission -> userLogins.forEach(userLogin -> {
             // The permission in the xml node has the format: com.jenkins.job.permission:user-login
             String permission = jenkinsJobPermission.getName() + ":" + userLogin;
-            // old jobs might still use the permission without the prefix
             removePermission(authorizationMatrixElement, permission);
-            removePermission(authorizationMatrixElement, USER_PERMISSIONS_PREFIX + permission);
         }));
     }
 
@@ -58,15 +58,20 @@ public class JenkinsJobPermissionsUtils {
      * @param permission the permission to remove
      */
     private static void removePermission(Node authorizationMatrix, String permission) throws DOMException {
-        NodeList permissionNodes = authorizationMatrix.getChildNodes();
-        int nodeCount = permissionNodes.getLength();
+        final NodeList permissionNodes = authorizationMatrix.getChildNodes();
+        final int nodeCount = permissionNodes.getLength();
+
+        final List<Node> toRemove = new ArrayList<>();
+
         for (int i = 0; i < nodeCount; i++) {
-            Node permissionNode = permissionNodes.item(i);
-            if (permissionNode.getTextContent().equals(permission)) {
-                authorizationMatrix.removeChild(permissionNode);
-                return;
+            final Node permissionNode = permissionNodes.item(i);
+            final String existingPermission = permissionNode.getTextContent();
+            if (existingPermission.equals(permission) || existingPermission.equals(USER_PERMISSIONS_PREFIX + permission)) {
+                toRemove.add(permissionNode);
             }
         }
+
+        toRemove.forEach(authorizationMatrix::removeChild);
     }
 
     public static void addPermissionsToFolder(Document folderConfig, Set<JenkinsJobPermission> jenkinsJobPermissions, Set<String> userLogins) throws DOMException {
