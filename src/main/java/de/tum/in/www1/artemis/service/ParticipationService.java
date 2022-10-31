@@ -120,20 +120,16 @@ public class ParticipationService {
     // test exam per exam/student
     public StudentParticipation startExerciseWithInitializationDate(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime initializationDate) {
         // common for all exercises
-        // Check if participation already exists
-        Optional<StudentParticipation> optionalStudentParticipation;
-        if (exercise.isCourseExercise()) {
-            // Do not load potential practice submissions in a course exercise
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
+        if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isTestRun() && exercise.isCourseExercise()) {
+            // In case there is already a practice participation, set it to inactive
+            optionalStudentParticipation.get().setInitializationState(INACTIVE);
+            studentParticipationRepository.saveAndFlush(optionalStudentParticipation.get());
+
             optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
-            findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, true).ifPresent(practiceParticipation -> {
-                practiceParticipation.setInitializationState(INACTIVE);
-                studentParticipationRepository.saveAndFlush(practiceParticipation);
-            });
-        }
-        else {
-            optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
         }
 
+        // Check if participation already exists
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             participation = createNewParticipationWithInitializationDate(exercise, participant, initializationDate);

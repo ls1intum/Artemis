@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { TranslateService } from '@ngx-translate/core';
