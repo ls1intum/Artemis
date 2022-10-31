@@ -31,7 +31,7 @@
             border: 1px solid;
             padding: 15px 20px;
             border-radius: 0.3rem;
-            box-shadow: rgba(0, 0, 0, 0.55) 0 5px 15px;
+            box-shadow: var(--artemis-alerts-shadow) 0 5px 15px;
 
             flex: 0 auto;
             display: flex;
@@ -85,8 +85,21 @@
         }
     }
 
+    .dismiss-all {
+        width: 100%;
+        margin-bottom: 15px;
+
+        .btn {
+            pointer-events: all;
+            border-radius: 0.3rem;
+            box-shadow: var(--artemis-alerts-shadow) 0 5px 15px;
+            width: 100%;
+        }
+    }
+
     @media screen and (min-width: 800px) {
-        .alert-wrap {
+        .alert-wrap,
+        .dismiss-all {
             width: 75%;
             max-width: 800px;
         }

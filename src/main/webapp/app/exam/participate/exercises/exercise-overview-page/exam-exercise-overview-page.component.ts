@@ -1,11 +1,11 @@
-import { Component, EventEmitter, Input, OnChanges, Output, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
-import { ChangeDetectorRef } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-item.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
     templateUrl: './exam-exercise-overview-page.component.html',

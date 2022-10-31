@@ -17,8 +17,8 @@ import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { BehaviorSubject, Observable, of, Subject, Subscription, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, throttleTime, timeout } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -46,7 +46,6 @@ import {
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { tap } from 'rxjs/operators';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { faWrench, faUsers, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
