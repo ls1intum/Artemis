@@ -21,6 +21,7 @@ export class ChannelsOverviewDialogComponent implements OnInit {
     channelActionPerformed = false;
     isLoading = false;
     channels: ChannelOverviewDTO[] = [];
+    idsOfUnsubscribedChannels: number[] = [];
 
     constructor(private channelService: ChannelService, private alertService: AlertService, private activeModal: NgbActiveModal) {}
 
@@ -36,7 +37,7 @@ export class ChannelsOverviewDialogComponent implements OnInit {
 
     clear() {
         if (this.channelActionPerformed) {
-            this.activeModal.close();
+            this.activeModal.close(this.idsOfUnsubscribedChannels);
         } else {
             this.activeModal.dismiss();
         }
@@ -54,12 +55,16 @@ export class ChannelsOverviewDialogComponent implements OnInit {
         switch (channelAction.action) {
             case 'register':
                 this.channelService.registerStudent(this.courseId, channelAction.channel.channelId).subscribe(() => {
+                    if (this.idsOfUnsubscribedChannels.includes(channelAction.channel.channelId)) {
+                        this.idsOfUnsubscribedChannels = this.idsOfUnsubscribedChannels.filter((id) => id !== channelAction.channel.channelId);
+                    }
                     this.loadChannels();
                     this.channelActionPerformed = true;
                 });
                 break;
             case 'deregister':
                 this.channelService.deregisterStudent(this.courseId, channelAction.channel.channelId).subscribe(() => {
+                    this.idsOfUnsubscribedChannels.push(channelAction.channel.channelId);
                     this.loadChannels();
                     this.channelActionPerformed = true;
                 });

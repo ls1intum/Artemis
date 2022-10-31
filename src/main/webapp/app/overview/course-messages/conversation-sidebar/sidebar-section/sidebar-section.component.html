@@ -14,7 +14,7 @@
             <li
                 *ngFor="let conversation of conversations; trackBy: conversationsTrackByFn"
                 class="conversation-list-item"
-                [class.selected]="activeConversation.id === conversation.id"
+                [class.selected]="activeConversation && activeConversation.id === conversation.id"
                 (click)="conversationSelected.emit(conversation)"
             >
                 <span class="conversation-list-item-user">

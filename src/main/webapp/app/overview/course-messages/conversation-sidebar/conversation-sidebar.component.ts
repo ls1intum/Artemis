@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import interact from 'interactjs';
 import { ActivatedRoute, Params } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 import { MessagingService } from 'app/shared/metis/messaging.service';
@@ -16,7 +16,6 @@ import { ConversationType } from 'app/shared/metis/metis.util';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-messages/channels/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-messages/channels/channels-create-dialog/channels-create-dialog.component';
-import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-conversation-sidebar',
@@ -33,7 +32,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     channelConversations: Conversation[] = [];
     directConversations: Conversation[] = [];
 
-    activeConversation: Conversation;
+    activeConversation?: Conversation;
 
     course?: Course;
     collapsed: boolean;
@@ -172,7 +171,10 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.courseId = this.courseId;
 
-        from(modalRef.result).subscribe(() => {
+        from(modalRef.result).subscribe((idsOfUnsubscribedChannels: number[]) => {
+            if (this.activeConversation && idsOfUnsubscribedChannels.includes(this.activeConversation.id!)) {
+                this.activeConversation = undefined;
+            }
             this.courseMessagesService.getConversationsOfUser(this.courseId);
         });
     }

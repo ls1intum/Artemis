@@ -16,7 +16,7 @@ export class SidebarSectionComponent {
     label: string;
 
     @Input()
-    activeConversation: Conversation;
+    activeConversation?: Conversation;
 
     @Input()
     conversations: Conversation[] = [];
@@ -54,7 +54,7 @@ export class SidebarSectionComponent {
             (conversationParticipants) => conversationParticipants.user.id === this.courseMessagesService.userId,
         )!;
 
-        if (conversation.id !== this.activeConversation.id && !!conversation.lastMessageDate && !!conversationParticipant.lastRead) {
+        if (this.activeConversation && conversation.id !== this.activeConversation.id && !!conversation.lastMessageDate && !!conversationParticipant.lastRead) {
             if (conversationParticipant.lastRead.isBefore(conversation.lastMessageDate.subtract(1, 'second'), 'second')) {
                 return true;
             }
