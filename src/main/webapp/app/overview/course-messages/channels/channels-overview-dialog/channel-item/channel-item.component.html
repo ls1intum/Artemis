@@ -1,7 +1,17 @@
-<div class="d-flex justify-content-between align-items-start" *ngIf="channel" (mouseover)="isHover = true" (mouseout)="isHover = false">
+<div class="d-flex justify-content-between align-items-start channel-item" *ngIf="channel" (mouseover)="isHover = true" (mouseout)="isHover = false">
     <div class="ms-2 me-auto">
-        <div class="fw-bold"># {{ channel.channelName }}</div>
-        <span>{{ channel.noOfMembers }} Members</span> <span *ngIf="channel.isMember" class="badge bg-success rounded-pill">Joined</span>
+        <div class="fw-bold">
+            <span>
+                <fa-icon *ngIf="channel.isPublic === true" [icon]="faHashtag" size="xs"></fa-icon>
+                <fa-icon *ngIf="channel.isPublic === false" [icon]="faLock" size="xs"></fa-icon>
+            </span>
+            <span>{{ channel.channelName }}</span>
+        </div>
+        <span *ngIf="channel.isMember" class="badge bg-success rounded-pill">Joined</span>
+        <span> {{ channel.noOfMembers }} Members</span>
+        <div *ngIf="channel.channelDescription && channel.channelDescription.length > 0">
+            <span class="d-inline-block text-truncate long-text fst-italic"> {{ channel.channelDescription }}</span>
+        </div>
     </div>
     <div [hidden]="!isHover">
         <ng-container *ngIf="!channel.isMember">

@@ -1,5 +1,5 @@
 import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
-import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faHashtag, faLock, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationType } from 'app/shared/metis/metis.util';
 import { MessagingService } from 'app/shared/metis/messaging.service';
@@ -31,6 +31,8 @@ export class SidebarSectionComponent {
     // icon imports
     faChevronRight = faChevronRight;
     faMessage = faMessage;
+    faHashtag = faHashtag;
+    faLock = faLock;
 
     constructor(protected courseMessagesService: MessagingService) {}
 
@@ -38,7 +40,7 @@ export class SidebarSectionComponent {
 
     getNameOfConversation(conversation: Conversation): string {
         if (conversation.type === ConversationType.CHANNEL) {
-            return '#' + (conversation.name ?? '');
+            return conversation.name ?? '';
         } else if (conversation.type === ConversationType.DIRECT) {
             const participant = conversation.conversationParticipants!.find(
                 (conversationParticipants) => conversationParticipants.user.id !== this.courseMessagesService.userId,

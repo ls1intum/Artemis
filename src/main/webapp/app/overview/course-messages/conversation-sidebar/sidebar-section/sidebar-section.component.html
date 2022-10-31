@@ -18,6 +18,10 @@
                 (click)="conversationSelected.emit(conversation)"
             >
                 <span class="conversation-list-item-user">
+                    <ng-container *ngIf="conversation.type === 'CHANNEL'">
+                        <fa-icon *ngIf="conversation.isPublic === true" [icon]="faHashtag" size="xs"></fa-icon>
+                        <fa-icon *ngIf="conversation.isPublic === false" [icon]="faLock" size="xs"></fa-icon>
+                    </ng-container>
                     {{ getNameOfConversation(conversation) }}
                 </span>
                 <span *ngIf="isConversationUnread(conversation)">
