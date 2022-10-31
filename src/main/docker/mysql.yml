@@ -1,7 +1,7 @@
 version: '2.4'
 services:
     artemis-mysql:
-        image: mysql:8.0.30
+        image: mysql:8.0.31
         # volumes:
         #     - ~/volumes/jhipster/Artemis/mysql/:/var/lib/mysql/
         environment:

@@ -40,7 +40,7 @@ services:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_ROOT_PASSWORD=
       - MYSQL_DATABASE=Artemis
-    image: mysql:8.0.30
+    image: mysql:8.0.31
     networks:
       - artemis
     ports:
