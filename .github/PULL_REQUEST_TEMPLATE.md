@@ -45,11 +45,26 @@ Prerequisites:
 2. Navigate to Course Administration
 3. ...
 
+#### Exam Mode Testing
+<!-- If this PR changes some components that are also used in the exam mode, the PR needs additional testing that the exam mode is still working as expected. -->
+<!-- If the testing steps above already describe the exam mode or the exam mode cannot be affected by this PR in any way, you can leave this out. -->
+
+Prerequisites:
+- 1 Instructor
+- 2 Students
+- 1 Exam with a Programming Exercise
+
+1. Log in to Artemis
+2. Participate in the exam as a student
+3. Make sure that the UI of the programming exercise in the exam mode stays unchanged. You can use the [exam mode documentation](https://docs.artemis.ase.in.tum.de/user/exam_mode/) as reference.
+4. ...
+
 ### Review Progress
-<!-- Each Pull Request should be reviewed by at least two other developers. The code as well as the functionality (= manual test) needs to be reviewed. -->
+<!-- Each Pull Request should be reviewed by at least two other developers. The code, the functionality (= manual test) and the exam mode need to be reviewed. -->
 <!-- The reviewer or author check the following boxes depending on what was reviewed or tested. All boxes should be checked before merge. -->
 <!-- You can add additional checkboxes if it makes sense to only review parts of the code or functionality. -->
 <!-- When changes are pushed, uncheck the affected boxes. (Not all changes require full re-reviews.) -->
+<!-- All PRs that might affect the exam mode (e.g. change a client component that is also used in the exam mode) need an additional verification that the exam mode still works. -->
 
 #### Code Review
 - [ ] Review 1
@@ -57,6 +72,8 @@ Prerequisites:
 #### Manual Tests
 - [ ] Test 1
 - [ ] Test 2
+#### Exam Mode Test
+- [ ] Test
 
 ### Test Coverage
 <!-- Please add the test coverages for all changed files here. You can see this when executing the tests locally (see build.gradle and package.json) or when looking into the corresponding Bamboo build plan. -->
