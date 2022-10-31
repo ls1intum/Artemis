@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FitTextDirective } from 'app/exercises/quiz/shared/fit-text/fit-text.directive';
 
 @Component({

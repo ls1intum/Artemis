@@ -26,6 +26,7 @@ public interface TutorialGroupRegistrationRepository extends JpaRepository<Tutor
 
     @Modifying
     @Transactional
+    // ok because of delete
     void deleteAllByStudent(User student);
 
     @Transactional

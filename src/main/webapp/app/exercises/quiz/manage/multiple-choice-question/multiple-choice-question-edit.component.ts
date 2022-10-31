@@ -11,7 +11,7 @@ import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
-import { faAngleDown, faAngleRight, faTrash, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 
 @Component({
