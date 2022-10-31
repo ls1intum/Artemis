@@ -144,7 +144,7 @@ export class CourseExerciseService {
                 exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
                 exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
                 exercise.studentParticipations = [participation];
-                if (participation.exercise.type === ExerciseType.PROGRAMMING) {
+                if (participation.exercise.type === ExerciseType.PROGRAMMING && (participation.exercise as ProgrammingExercise).publishBuildPlanUrl) {
                     this.profileService.getProfileInfo().subscribe((profileInfo) => {
                         const programmingParticipations = participation.exercise!.studentParticipations as ProgrammingExerciseStudentParticipation[];
                         setBuildPlanUrlForProgrammingParticipations(profileInfo, programmingParticipations, (participation.exercise as ProgrammingExercise).projectKey);
