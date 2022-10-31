@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { map, Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';

@@ -6,7 +6,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { CourseTutorialGroupsComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';

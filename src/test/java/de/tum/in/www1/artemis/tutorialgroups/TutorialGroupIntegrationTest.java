@@ -9,6 +9,8 @@ import java.util.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -26,6 +28,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.service.TutorialGroupService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource;
@@ -41,6 +44,9 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     TutorialGroupRepository tutorialGroupRepository;
+
+    @Autowired
+    TutorialGroupService tutorialGroupService;
 
     @Autowired
     TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
@@ -154,10 +160,11 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(tutorialGroupTitle).isEqualTo("ExampleTitle1");
     }
 
-    @Test
+    @ParameterizedTest
     @WithMockUser(username = "student1", roles = "USER")
-    void getAllForCourse_asStudent_shouldHidePrivateInformation() throws Exception {
-        var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+    @ValueSource(booleans = { true, false })
+    void getAllForCourse_asStudent_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
+        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(loadFromService, "student1");
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
@@ -166,10 +173,11 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         }
     }
 
-    @Test
+    @ParameterizedTest
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    void getAllForCourse_asEditor_shouldHidePrivateInformation() throws Exception {
-        var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+    @ValueSource(booleans = { true, false })
+    void getAllForCourse_asEditor_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
+        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(loadFromService, "editor1");
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
@@ -178,10 +186,11 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "tutor1", roles = "TA")
-    void getAllForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup() throws Exception {
-        var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+    void getAllForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup(boolean loadFromService) throws Exception {
+        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(loadFromService, "tutor1");
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
@@ -191,10 +200,11 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         verifyPrivateInformationIsHidden(groupWhereNotTutor);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void getAllForCourse_asInstructorOfCourse_shouldShowPrivateInformation() throws Exception {
-        var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+    void getAllForCourse_asInstructorOfCourse_shouldShowPrivateInformation(boolean loadFromService) throws Exception {
+        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(loadFromService, "instructor1");
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
@@ -204,34 +214,39 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         verifyPrivateInformationIsShown(group2, 2);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "student1", roles = "USER")
-    void getOneOfCourse_asStudent_shouldHidePrivateInformation() throws Exception {
-        oneOfCoursePrivateInfoHiddenTest();
+    void getOneOfCourse_asStudent_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
+        oneOfCoursePrivateInfoHiddenTest(loadFromService, "student1");
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    void getOneOfCourse_asEditor_shouldHidePrivateInformation() throws Exception {
-        oneOfCoursePrivateInfoHiddenTest();
+    void getOneOfCourse_asEditor_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
+        oneOfCoursePrivateInfoHiddenTest(loadFromService, "editor1");
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "tutor1", roles = "TA")
-    void getOneOfCourse_asTutorOfGroup_shouldShowPrivateInformation() throws Exception {
-        oneOfCoursePrivateInfoShownTest();
+    void getOneOfCourse_asTutorOfGroup_shouldShowPrivateInformation(boolean loadFromService) throws Exception {
+        oneOfCoursePrivateInfoShownTest(loadFromService, "tutor1");
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void getOneOfCourse_asInstructor_shouldShowPrivateInformation() throws Exception {
-        oneOfCoursePrivateInfoShownTest();
+    void getOneOfCourse_asInstructor_shouldShowPrivateInformation(boolean loadFromService) throws Exception {
+        oneOfCoursePrivateInfoShownTest(loadFromService, "instructor1");
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "tutor2", roles = "TA")
-    void getOneOfCourse_asNotTutorOfGroup_shouldHidePrivateInformation() throws Exception {
-        oneOfCoursePrivateInfoHiddenTest();
+    void getOneOfCourse_asNotTutorOfGroup_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
+        oneOfCoursePrivateInfoHiddenTest(loadFromService, "tutor2");
     }
 
     @Test
@@ -632,7 +647,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private void verifyPrivateInformationIsHidden(TutorialGroup tutorialGroup) {
-        assertThat(tutorialGroup.getRegistrations()).isEqualTo(Set.of());
+        assertThat(tutorialGroup.getRegistrations()).isNullOrEmpty();
         assertThat(tutorialGroup.getTeachingAssistant()).isEqualTo(null);
         assertThat(tutorialGroup.getCourse()).isEqualTo(null);
     }
@@ -643,16 +658,38 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(tutorialGroup.getCourse()).isNotNull();
     }
 
-    private void oneOfCoursePrivateInfoHiddenTest() throws Exception {
-        var tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+    private void oneOfCoursePrivateInfoHiddenTest(boolean loadFromService, String userLogin) throws Exception {
+        var tutorialGroup = getTutorialGroupOfExampleCourse(loadFromService, userLogin);
         assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
         verifyPrivateInformationIsHidden(tutorialGroup);
     }
 
-    private void oneOfCoursePrivateInfoShownTest() throws Exception {
-        var tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+    private void oneOfCoursePrivateInfoShownTest(boolean loadFromService, String userLogin) throws Exception {
+        var tutorialGroup = getTutorialGroupOfExampleCourse(loadFromService, userLogin);
         assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
         verifyPrivateInformationIsShown(tutorialGroup, 5);
+    }
+
+    private TutorialGroup getTutorialGroupOfExampleCourse(boolean loadFromService, String userLogin) throws Exception {
+        if (loadFromService) {
+            var user = userRepository.findOneByLogin(userLogin).get();
+            var course = courseRepository.findById(exampleCourseId).get();
+            return tutorialGroupService.getOneOfCourse(course, user, exampleOneTutorialGroupId);
+        }
+        else {
+            return request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+        }
+    }
+
+    private List<TutorialGroup> getTutorialGroupsOfExampleCourse(boolean loadFromService, String userLogin) throws Exception {
+        if (loadFromService) {
+            var user = userRepository.findOneByLogin(userLogin).get();
+            var course = courseRepository.findById(exampleCourseId).get();
+            return tutorialGroupService.findAllForCourse(course, user).stream().toList();
+        }
+        else {
+            return request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
+        }
     }
 
     private void registerStudentAllowedTest() throws Exception {
