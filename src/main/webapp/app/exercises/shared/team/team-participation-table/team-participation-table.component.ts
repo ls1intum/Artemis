@@ -9,7 +9,7 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { get } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
-import { getLatestSubmissionResult, setLatestSubmissionResult, Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';

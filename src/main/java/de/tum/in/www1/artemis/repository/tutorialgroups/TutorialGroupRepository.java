@@ -65,6 +65,15 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
             LEFT JOIN FETCH tutorialGroup.teachingAssistant
+            LEFT JOIN FETCH tutorialGroup.course
+            WHERE tutorialGroup.id = :#{#tutorialGroupId}
+            """)
+    Optional<TutorialGroup> findByIdWithTeachingAssistantAndCourse(@Param("tutorialGroupId") long tutorialGroupId);
+
+    @Query("""
+            SELECT tutorialGroup
+            FROM TutorialGroup tutorialGroup
+            LEFT JOIN FETCH tutorialGroup.teachingAssistant
             LEFT JOIN FETCH tutorialGroup.registrations
             WHERE tutorialGroup.title = :#{#title}
             AND tutorialGroup.course.id = :#{#courseId}
@@ -79,6 +88,10 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     @Modifying
     // ok because of delete
     void deleteAllByCourse(Course course);
+
+    default TutorialGroup findByIdWithTeachingAssistantAndCourseElseThrow(long tutorialGroupId) {
+        return this.findByIdWithTeachingAssistantAndCourse(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+    }
 
     default TutorialGroup findByIdElseThrow(long tutorialGroupId) {
         return this.findById(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));

@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
@@ -187,27 +187,36 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should start practice', fakeAsync(() => {
-        const participationId = 12345;
-        const participation = new StudentParticipation();
-        participation.id = participationId;
-        participation.exercise = programmingExercise;
-        returnedFromService = { ...participation };
-        const expected = Object.assign(
-            {
-                initializationDate: undefined,
-            },
-            participation,
-        );
-        service
-            .startPractice(exerciseId)
-            .pipe(take(1))
-            .subscribe((res) => expect(res).toEqual(expected));
+    it.each([true, false])(
+        'should start practice',
+        fakeAsync((useGradedParticipation: boolean) => {
+            const participationId = 12345;
+            const participation = new StudentParticipation();
+            participation.id = participationId;
+            participation.exercise = programmingExercise;
+            returnedFromService = { ...participation };
+            const expected = Object.assign(
+                {
+                    initializationDate: undefined,
+                },
+                participation,
+            );
+            service
+                .startPractice(exerciseId, useGradedParticipation)
+                .pipe(take(1))
+                .subscribe((res) => expect(res).toEqual(expected));
 
-        requestAndExpectDateConversion('POST', SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice`, returnedFromService, participation.exercise, true);
-        expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
-        tick();
-    }));
+            requestAndExpectDateConversion(
+                'POST',
+                SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
+                returnedFromService,
+                participation.exercise,
+                true,
+            );
+            expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
+            tick();
+        }),
+    );
 
     it('should resume programming exercise', fakeAsync(() => {
         const participationId = 12345;

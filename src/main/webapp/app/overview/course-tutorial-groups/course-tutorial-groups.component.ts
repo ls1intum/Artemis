@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { finalize, Subject } from 'rxjs';
+import { Subject, finalize } from 'rxjs';
 import { BarControlConfiguration } from 'app/overview/tab-bar/tab-bar';
 import { Course } from 'app/entities/course.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';

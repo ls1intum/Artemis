@@ -17,9 +17,9 @@ import {
     faFlag,
     faGraduationCap,
     faListAlt,
+    faPersonChalkboard,
     faTable,
     faUserCheck,
-    faPersonChalkboard,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
