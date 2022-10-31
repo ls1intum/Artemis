@@ -70,7 +70,7 @@ export class ChannelsOverviewDialogComponent implements OnInit {
                 });
                 break;
             case 'view':
-                // ToDo:
+                this.activeModal.close(channelAction.channel.channelId);
                 break;
         }
     }

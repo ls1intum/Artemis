@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { map, Observable, ReplaySubject } from 'rxjs';
+import { map, Observable, ReplaySubject, Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -11,6 +11,7 @@ import { Conversation } from 'app/entities/metis/conversation/conversation.model
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
+import { tap } from 'rxjs/operators';
 
 @Injectable()
 export class MessagingService implements OnDestroy {
@@ -70,12 +71,15 @@ export class MessagingService implements OnDestroy {
         return this.conversations$.asObservable();
     }
 
-    getConversationsOfUser(courseId: number): void {
-        this.conversationService.getConversationsOfUser(courseId).subscribe((res) => {
-            this.conversationsOfUser = res.body!;
-            this.conversations$.next(this.conversationsOfUser);
-            this.createWebSocketSubscription(courseId, this.userId);
-        });
+    getConversationsOfUser(courseId: number): Observable<Conversation[]> {
+        return this.conversationService.getConversationsOfUser(courseId).pipe(
+            map((res: HttpResponse<Conversation[]>) => res.body ?? []),
+            tap((conversation) => {
+                this.conversationsOfUser = conversation;
+                this.conversations$.next(this.conversationsOfUser);
+                this.createWebSocketSubscription(courseId, this.userId);
+            }),
+        );
     }
 
     createWebSocketSubscription(courseId: number, userId: number) {

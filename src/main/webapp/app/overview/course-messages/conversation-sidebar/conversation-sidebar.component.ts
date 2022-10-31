@@ -73,7 +73,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
                     this.course = res.body!;
                 }
             });
-            this.courseMessagesService.getConversationsOfUser(this.courseId);
+            this.courseMessagesService.getConversationsOfUser(this.courseId).subscribe();
             this.conversationSubscription = this.courseMessagesService.conversations.subscribe((conversations: Conversation[]) => {
                 this.conversations = conversations ?? [];
                 this.channelConversations = this.conversations.filter((conversation) => conversation.type === ConversationType.CHANNEL);
@@ -171,11 +171,21 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.courseId = this.courseId;
 
-        from(modalRef.result).subscribe((idsOfUnsubscribedChannels: number[]) => {
-            if (this.activeConversation && idsOfUnsubscribedChannels.includes(this.activeConversation.id!)) {
-                this.activeConversation = undefined;
-            }
-            this.courseMessagesService.getConversationsOfUser(this.courseId);
+        from(modalRef.result).subscribe((result: number[] | number) => {
+            this.courseMessagesService.getConversationsOfUser(this.courseId).subscribe(() => {
+                if (Array.isArray(result)) {
+                    // result represents array of ids of conversations that were unsubscribed
+                    if (this.activeConversation && result.includes(this.activeConversation.id!)) {
+                        this.activeConversation = undefined;
+                    }
+                } else {
+                    // result represent id of conversation that should be viewed
+                    if (this.activeConversation && result !== this.activeConversation.id) {
+                        this.activeConversation = this.conversations.find((conversation) => conversation.id === result);
+                        this.selectConversation.emit(this.activeConversation);
+                    }
+                }
+            });
         });
     }
 
