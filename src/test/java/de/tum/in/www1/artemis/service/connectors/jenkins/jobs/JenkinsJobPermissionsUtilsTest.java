@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 class JenkinsJobPermissionsUtilsTest {
 
     @Test
-    void testRemovePermissionsFromFolder() {
+    void testRemovePermissionsFromFolder() throws TransformerException {
         final Document folderConfig = XmlFileUtils.readFromString("""
                 <?xml version='1.1' encoding='UTF-8'?>
                 <com.cloudbees.hudson.plugins.folder.Folder plugin="cloudbees-folder@6.729.v2b_9d1a_74d673">
@@ -58,14 +58,7 @@ class JenkinsJobPermissionsUtilsTest {
         JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, allPermissions, Set.of("instructor1"));
 
         final var updatedPermissions = folderConfig.getElementsByTagName("permission");
-        assertThat(updatedPermissions.getLength()).withFailMessage(() -> {
-            try {
-                return "Expected document to contain no permissions:\n" + XmlFileUtils.writeToString(folderConfig);
-            }
-            catch (TransformerException e) {
-                throw new RuntimeException(e);
-            }
-        }).isEqualTo(0);
+        assertThat(updatedPermissions.getLength()).as("Document should contain no permissions:\n" + XmlFileUtils.writeToString(folderConfig)).isEqualTo(0);
     }
 
     @Test
