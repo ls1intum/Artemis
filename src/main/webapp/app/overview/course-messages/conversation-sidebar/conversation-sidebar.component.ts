@@ -76,8 +76,11 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
             this.courseMessagesService.getConversationsOfUser(this.courseId).subscribe();
             this.conversationSubscription = this.courseMessagesService.conversations.subscribe((conversations: Conversation[]) => {
                 this.conversations = conversations ?? [];
-                this.channelConversations = this.conversations.filter((conversation) => conversation.type === ConversationType.CHANNEL);
+                this.channelConversations = this.conversations
+                    .filter((conversation) => conversation.type === ConversationType.CHANNEL)
+                    .sort((a, b) => a.name!.localeCompare(b.name!));
                 this.directConversations = this.conversations.filter((conversation) => conversation.type === ConversationType.DIRECT);
+
                 // ToDo: Select starred conversations here
 
                 if (this.conversations.length > 0 && !this.activeConversation) {

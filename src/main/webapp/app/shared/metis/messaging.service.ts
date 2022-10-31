@@ -98,12 +98,13 @@ export class MessagingService implements OnDestroy {
 
             const conversationIndexInCache = this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationDTO.conversation.id);
             if (conversationDTO.crudAction === MetisPostAction.CREATE || conversationDTO.crudAction === MetisPostAction.UPDATE) {
-                if (conversationIndexInCache !== -1) {
-                    this.conversationsOfUser.splice(conversationIndexInCache, 1);
+                // add created/updated direct conversation to the beginning of the conversation list
+                if (conversationDTO.conversation.type === 'DIRECT') {
+                    if (conversationIndexInCache !== -1) {
+                        this.conversationsOfUser.splice(conversationIndexInCache, 1);
+                    }
+                    this.conversationsOfUser.unshift(conversationDTO.conversation);
                 }
-
-                // add created/updated conversation to the beginning of the conversation list
-                this.conversationsOfUser.unshift(conversationDTO.conversation);
             } else if (conversationDTO.crudAction === MetisPostAction.READ_CONVERSATION) {
                 // conversation is updated without being moved to the beginning of the list
                 this.conversationsOfUser[conversationIndexInCache] = conversationDTO.conversation;
