@@ -33,6 +33,21 @@ public class Conversation extends DomainObject {
     private String name;
 
     /**
+     * Note: Only for type channel {@link ConversationType#CHANNEL}
+     */
+    @Column(name = "description")
+    @Size(min = 1, max = 250)
+    @Nullable
+    private String description;
+
+    /**
+     * Note: Only for type channel {@link ConversationType#CHANNEL}
+     */
+    @Column(name = "is_public")
+    @Nullable
+    private Boolean isPublic;
+
+    /**
      * Note: Default value is {@link ConversationType#DIRECT}
      */
     @Enumerated(EnumType.STRING)
@@ -40,9 +55,7 @@ public class Conversation extends DomainObject {
     @NotNull
     private ConversationType type;
 
-    // ToDo: Add properties concerning authorization like owner and how to make channels private / public
-    // ToDo: Something like "invite_only"
-    // ToDo: Add Description
+    // ToDo: Add properties concerning authorization like owner (access rights maybe similiar to instructor tutor usw)
 
     // === END ADDED BY STEFAN ===
 
@@ -111,4 +124,33 @@ public class Conversation extends DomainObject {
     public void setType(ConversationType type) {
         this.type = type;
     }
+
+    @Nullable
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(@Nullable String description) {
+        this.description = description;
+    }
+
+    @Nullable
+    public Boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(@Nullable Boolean aPublic) {
+        isPublic = aPublic;
+    }
+
+    @JsonIgnore
+    public boolean isChannel() {
+        return type == ConversationType.CHANNEL;
+    }
+
+    @JsonIgnore
+    public boolean isDirectConversation() {
+        return type == ConversationType.DIRECT;
+    }
+
 }

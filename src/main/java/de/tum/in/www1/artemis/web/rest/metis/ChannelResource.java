@@ -68,7 +68,11 @@ public class ChannelResource {
             if (channel.getName() != null) {
                 channelName = channel.getName();
             }
-            return new ChannelOverviewDTO(channel.getId(), channelName, isMember, noOfMembers);
+            var channelDescription = "";
+            if (channel.getDescription() != null) {
+                channelDescription = channel.getDescription();
+            }
+            return new ChannelOverviewDTO(channel.getId(), channelName, channelDescription, channel.getIsPublic(), isMember, noOfMembers);
         }).toList();
         return new ResponseEntity<>(result, null, HttpStatus.OK);
     }

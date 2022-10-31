@@ -6,6 +6,8 @@ import { AccountService } from 'app/core/auth/account.service';
 export class ChannelOverviewDTO {
     public channelId: number;
     public channelName: string;
+    public channelDescription: string;
+    public isPublic: boolean;
     public isMember: boolean;
     public noOfMembers: number;
 }

@@ -33,6 +33,27 @@ public interface ChannelRepository extends JpaRepository<Conversation, Long> {
             """)
     Optional<Conversation> findChannelWithConversationParticipantsById(Long channelId);
 
+    @Query("""
+             SELECT DISTINCT conversation FROM Conversation conversation
+             LEFT JOIN conversation.conversationParticipants conversationParticipant
+             LEFT JOIN FETCH conversation.conversationParticipants
+             WHERE conversation.course.id = :#{#courseId}
+             AND conversation.type = 'CHANNEL'
+             AND conversationParticipant.user.id = :#{#userId}
+             ORDER BY conversation.name
+            """)
+    List<Conversation> findChannelsOfUserWithConversationParticipants(@Param("courseId") Long courseId, @Param("userId") Long userId);
+
+    @Query("""
+             SELECT DISTINCT conversation
+             FROM Conversation conversation
+             WHERE conversation.course.id = :#{#courseId}
+             AND conversation.name = :#{#name}
+             AND conversation.type = 'CHANNEL'
+             ORDER BY conversation.name
+            """)
+    Optional<Conversation> findChannelByCourseIdAndName(@Param("courseId") Long courseId, @Param("name") String name);
+
     default Conversation findChannelWithConversationParticipantsByIdElseThrow(long channelId) {
         return this.findChannelWithConversationParticipantsById(channelId).orElseThrow(() -> new EntityNotFoundException("Channel", channelId));
     }

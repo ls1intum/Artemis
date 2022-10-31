@@ -267,7 +267,7 @@ export class AlertService {
         });
     }
 
-    private addErrorAlert(message?: any, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
+    addErrorAlert(message?: any, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
         if (message && typeof message !== 'string') {
             message = '' + message;
         }

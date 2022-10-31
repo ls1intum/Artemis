@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { map, Observable, ReplaySubject } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -9,6 +9,8 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation-dt
 import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import dayjs from 'dayjs/esm';
+import { AlertService } from 'app/core/util/alert.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Injectable()
 export class MessagingService implements OnDestroy {
@@ -19,7 +21,12 @@ export class MessagingService implements OnDestroy {
     private subscribedChannel?: string;
     userId: number;
 
-    constructor(protected conversationService: ConversationService, private jhiWebsocketService: JhiWebsocketService, protected accountService: AccountService) {
+    constructor(
+        protected conversationService: ConversationService,
+        private jhiWebsocketService: JhiWebsocketService,
+        protected accountService: AccountService,
+        protected alertService: AlertService,
+    ) {
         this.accountService.identity().then((user: User) => {
             this.userId = user.id!;
         });
@@ -46,6 +53,13 @@ export class MessagingService implements OnDestroy {
                     this.conversationsOfUser.unshift(receivedConversation);
                     this.conversations$.next(this.conversationsOfUser);
                     this.conversation$.next(receivedConversation);
+                },
+                error: (res: HttpErrorResponse) => {
+                    if (res.error && res.error.title) {
+                        this.alertService.addErrorAlert(res.error.title, res.error.message, res.error.params);
+                    } else {
+                        onError(this.alertService, res);
+                    }
                 },
             });
 

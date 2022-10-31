@@ -40,6 +40,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
              LEFT JOIN conversation.conversationParticipants conversationParticipant
              LEFT JOIN FETCH conversation.conversationParticipants
              WHERE conversation.course.id = :#{#courseId}
+             AND conversation.type = 'DIRECT'
              AND conversation.lastMessageDate IS NOT NULL
              AND conversationParticipant.user.id = :#{#userId}
              ORDER BY conversation.lastMessageDate DESC

@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import interact from 'interactjs';
 import { ActivatedRoute, Params } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
-import { faChevronLeft, faChevronRight, faChevronUp, faComments, faGripLinesVertical, faMessage, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 import { MessagingService } from 'app/shared/metis/messaging.service';
 import { combineLatest, from, Observable, of, Subscription } from 'rxjs';
@@ -14,8 +14,9 @@ import { Conversation } from 'app/entities/metis/conversation/conversation.model
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { ConversationType } from 'app/shared/metis/metis.util';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { TutorialGroupsRegistrationImportDialog } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-messages/channels/channels-overview-dialog/channels-overview-dialog.component';
+import { ChannelsCreateDialogComponent } from 'app/overview/course-messages/channels/channels-create-dialog/channels-create-dialog.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-conversation-sidebar',
@@ -155,9 +156,20 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
         );
     };
 
+    openCreateChannelDialog(event: MouseEvent) {
+        event.stopPropagation();
+        const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+
+        from(modalRef.result).subscribe((channel: Conversation) => {
+            if (channel) {
+                this.createConversation(channel);
+            }
+        });
+    }
+
     openChannelOverviewDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, { size: 'xl', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.courseId = this.courseId;
 
         from(modalRef.result).subscribe(() => {
@@ -165,7 +177,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
         });
     }
 
-    /**
+    /**t
      * Receives the user that was selected in the autocomplete and the callback from DataTableComponent.
      *
      * @param user The selected user from the autocomplete suggestions
@@ -176,25 +188,29 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
         // if a conversation does not already exist with selected user
         if (foundConversation === undefined) {
             const newConversation = this.createNewConversationWithUser(user);
-            this.isTransitioning = true;
-            this.courseMessagesService.createConversation(this.courseId, newConversation).subscribe({
-                next: (conversation: Conversation) => {
-                    this.isTransitioning = false;
-
-                    // select the new conversation
-                    this.activeConversation = conversation;
-                    this.selectConversation.emit(conversation);
-                },
-                error: () => {
-                    this.isTransitioning = false;
-                },
-            });
+            this.createConversation(newConversation);
         } else {
             // conversation with the found user already exists, so we select it
             this.activeConversation = foundConversation;
             this.selectConversation.emit(foundConversation);
         }
     };
+
+    private createConversation(newConversation: Conversation) {
+        this.isTransitioning = true;
+        this.courseMessagesService.createConversation(this.courseId, newConversation).subscribe({
+            next: (conversation: Conversation) => {
+                this.isTransitioning = false;
+
+                // select the new conversation
+                this.activeConversation = conversation;
+                this.selectConversation.emit(conversation);
+            },
+            error: () => {
+                this.isTransitioning = false;
+            },
+        });
+    }
 
     ngOnDestroy(): void {
         this.conversationSubscription?.unsubscribe();

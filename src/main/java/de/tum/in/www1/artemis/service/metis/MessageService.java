@@ -71,7 +71,7 @@ public class MessageService extends PostingService {
 
             if (messagePost.getConversation().getId() == null) {
                 // persist conversation for post if it is new
-                messagePost.setConversation(conversationService.createConversation(courseId, messagePost.getConversation()));
+                messagePost.setConversation(conversationService.createDirectConversation(courseId, messagePost.getConversation()));
             }
             conversation = conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), user);
             conversation.setLastMessageDate(conversationService.auditConversationReadTimeOfUser(conversation, user));

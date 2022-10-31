@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.metis.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.metis.ChannelService;
 import de.tum.in.www1.artemis.service.metis.ConversationService;
 
 /**
@@ -26,12 +27,16 @@ public class ConversationResource {
 
     private final ConversationService conversationService;
 
+    private final ChannelService channelService;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final CourseRepository courseRepository;
 
-    public ConversationResource(ConversationService conversationService, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
+    public ConversationResource(ConversationService conversationService, ChannelService channelService, AuthorizationCheckService authorizationCheckService,
+            CourseRepository courseRepository) {
         this.conversationService = conversationService;
+        this.channelService = channelService;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
     }
@@ -62,9 +67,16 @@ public class ConversationResource {
     @PostMapping("/{courseId}/conversations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Conversation> createConversation(@PathVariable Long courseId, @Valid @RequestBody Conversation conversation) throws URISyntaxException {
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), null);
-
-        Conversation createdConversation = conversationService.createConversation(courseId, conversation);
-        return ResponseEntity.created(new URI("/api/conversations/" + createdConversation.getId())).body(createdConversation);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        if (conversation.isChannel()) { // Only instructors can create channels
+            channelService.isAllowedToCreateChannelElseThrow(course, null);
+            var createdChannel = channelService.createChannel(courseId, conversation);
+            return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(createdChannel);
+        }
+        else { // Everybody can create a direct conversation
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+            var createdConversation = conversationService.createDirectConversation(courseId, conversation);
+            return ResponseEntity.created(new URI("/api/conversations/" + createdConversation.getId())).body(createdConversation);
+        }
     }
 }

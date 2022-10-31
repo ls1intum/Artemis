@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +14,7 @@ import de.tum.in.www1.artemis.domain.metis.Conversation;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -38,15 +40,19 @@ public class ConversationService {
 
     private final ConversationRepository conversationRepository;
 
+    private final ChannelRepository channelRepository;
+
     private final ConversationParticipantRepository conversationParticipantRepository;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
     public ConversationService(UserRepository userRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
-            ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate) {
+            ChannelRepository channelRepository, ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository,
+            SimpMessageSendingOperations messagingTemplate) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.channelRepository = channelRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.conversationRepository = conversationRepository;
         this.messagingTemplate = messagingTemplate;
@@ -59,7 +65,11 @@ public class ConversationService {
      * @param conversation conversation to be persisted
      * @return persisted conversation
      */
-    public Conversation createConversation(Long courseId, Conversation conversation) {
+    public Conversation createDirectConversation(Long courseId, Conversation conversation) {
+        if (!conversation.isDirectConversation()) {
+            throw new IllegalArgumentException("Only direct conversations can be created with this method");
+        }
+
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
         if (conversation.getId() != null) {
@@ -119,9 +129,13 @@ public class ConversationService {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
         List<Conversation> conversations = conversationRepository.findActiveConversationsOfUserWithConversationParticipants(courseId, user.getId());
-        conversations.stream().forEach(conversation -> filterSensitiveInformation(conversation, user));
+        List<Conversation> channels = channelRepository.findChannelsOfUserWithConversationParticipants(courseId, user.getId());
+        var allConversations = new ArrayList<Conversation>();
+        allConversations.addAll(conversations);
+        allConversations.addAll(channels);
+        allConversations.forEach(conversation -> filterSensitiveInformation(conversation, user));
 
-        return conversations;
+        return allConversations;
     }
 
     /**

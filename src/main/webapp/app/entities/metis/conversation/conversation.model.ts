@@ -17,6 +17,14 @@ export class Conversation implements BaseEntity {
      * Note: Only for type channel
      */
     public name?: string | undefined; // max 20 characters
+    /**
+     * Note: Only for type channel
+     */
+    public description?: string | undefined; // max 200 characters
+    /**
+     * Note: Only for type channel
+     */
+    public isPublic?: boolean;
 
     public type?: ConversationType;
 

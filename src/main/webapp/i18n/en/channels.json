@@ -1,0 +1,44 @@
+{
+    "artemisApp": {
+        "errors": {
+            "channelNameDuplicate": "Channel with name {{ channelName }} already exists"
+        },
+        "entities": {
+            "channel": {
+                "name": "Name",
+                "description": "Description",
+                "isPublic": "Is Public"
+            }
+        },
+        "pages": {
+            "createChannel": {
+                "titlePublicChannel": "Create a public channel",
+                "titlePrivateChannel": "Create a private channel",
+                "description": "A channel is a way to group people together around a project, a topic, or just for fun. You can create as many channels as you want."
+            }
+        },
+        "forms": {
+            "channelForm": {
+                "nameInput": {
+                    "label": "Name",
+                    "placeholder": "e.g. tech-support",
+                    "requiredValidationError": "Name is required!",
+                    "maxLengthValidationError": "Name can be max {{ max }} characters long!",
+                    "regexValidationError": "Channel names can only contain lowercase letters, numbers, and dashes."
+                },
+                "descriptionInput": {
+                    "label": "Description (optional)",
+                    "descriptionHelp": "What's this channel about?",
+                    "maxLengthValidationError": "Description can be max {{ max }} characters long!"
+                },
+                "isPublicInput": {
+                    "label": "Private Channel / Public Channel",
+                    "explanation": "People will need an invitation to join a private channel. Everybody can join a public channel.",
+                    "public": "Public",
+                    "private": "Private"
+                },
+                "createButton": "Create Channel"
+            }
+        }
+    }
+}

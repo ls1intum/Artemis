@@ -12,6 +12,8 @@ import { ThreadSidebarComponent } from 'app/overview/course-messages/thread-side
 import { SidebarSectionComponent } from './conversation-sidebar/sidebar-section/sidebar-section.component';
 import { ChannelsOverviewDialogComponent } from './channels/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelItemComponent } from './channels/channels-overview-dialog/channel-item/channel-item.component';
+import { ChannelFormComponent } from './channels/channel-form/channel-form.component';
+import { ChannelsCreateDialogComponent } from './channels/channels-create-dialog/channels-create-dialog.component';
 
 const routes: Routes = [
     {
@@ -34,6 +36,8 @@ const routes: Routes = [
         SidebarSectionComponent,
         ChannelsOverviewDialogComponent,
         ChannelItemComponent,
+        ChannelFormComponent,
+        ChannelsCreateDialogComponent,
     ],
 })
 export class CourseMessagesModule {}

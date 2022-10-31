@@ -1,0 +1,65 @@
+<form class="row">
+    <div class="col-12">
+        <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+            <!-- CHANNEL NAME -->
+            <div class="form-group">
+                <label class="required" for="name">{{ 'artemisApp.forms.channelForm.nameInput.label' | artemisTranslate }}</label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <fa-icon *ngIf="isPublicControl?.value === true" [icon]="faHashtag" size="xs"></fa-icon>
+                        <fa-icon *ngIf="isPublicControl?.value === false" [icon]="faLock" size="xs"></fa-icon>
+                    </span>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="name"
+                        formControlName="name"
+                        [placeholder]="'artemisApp.forms.channelForm.nameInput.placeholder' | artemisTranslate"
+                    />
+                </div>
+                <div *ngIf="nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="nameControl?.errors?.required">
+                        {{ 'artemisApp.forms.channelForm.nameInput.requiredValidationError' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="nameControl?.errors?.maxlength">
+                        {{ 'artemisApp.forms.channelForm.nameInput.maxLengthValidationError' | artemisTranslate: { max: '20' } }}
+                    </div>
+                    <div *ngIf="!nameControl?.errors?.required && !nameControl?.errors?.maxlength && nameControl?.errors?.pattern">
+                        {{ 'artemisApp.forms.channelForm.nameInput.regexValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <!-- DESCRIPTION -->
+            <div class="form-group">
+                <label for="description">{{ 'artemisApp.forms.channelForm.descriptionInput.label' | artemisTranslate }}</label>
+                <input type="text" class="form-control" id="description" formControlName="description" />
+                <small id="descriptionHelp" class="form-text text-muted">{{ 'artemisApp.forms.channelForm.descriptionInput.descriptionHelp' | artemisTranslate }}</small>
+                <div *ngIf="descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="descriptionControl?.errors?.maxlength">
+                        {{ 'artemisApp.forms.channelForm.descriptionInput.maxLengthValidationError' | artemisTranslate: { max: '250' } }}
+                    </div>
+                </div>
+            </div>
+            <!--Public Channel / Private Channel -->
+            <div>
+                <div class="form-group">
+                    <label class="d-block">{{ 'artemisApp.forms.channelForm.isPublicInput.label' | artemisTranslate }}</label>
+                    <div class="btn-group" role="group">
+                        <input formControlName="isPublic" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
+                        <label class="btn btn-secondary" for="public">{{ 'artemisApp.forms.channelForm.isPublicInput.public' | artemisTranslate }}</label>
+                        <input formControlName="isPublic" type="radio" class="btn-check" id="private" autocomplete="off" [value]="false" />
+                        <label class="btn btn-secondary" for="private">{{ 'artemisApp.forms.channelForm.isPublicInput.private' | artemisTranslate }}</label>
+                    </div>
+                    <small id="isPublicHelp" class="form-text text-muted d-block">{{ 'artemisApp.forms.channelForm.isPublicInput.explanation' | artemisTranslate }}</small>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 text-end">
+                    <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
+                        <span>{{ 'artemisApp.forms.channelForm.createButton' | artemisTranslate }}</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</form>

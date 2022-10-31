@@ -1,0 +1,14 @@
+<div class="channels-overview">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span>{{ (isPublicChannel ? 'artemisApp.pages.createChannel.titlePublicChannel' : 'artemisApp.pages.createChannel.titlePrivateChannel') | artemisTranslate }}</span>
+        </h4>
+        <button type="button" class="btn-close" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <p>
+            {{ 'artemisApp.pages.createChannel.description' | artemisTranslate }}
+        </p>
+        <jhi-channel-form (channelTypeChanged)="onChannelTypeChanged($event)" (formSubmitted)="onFormSubmitted($event)"></jhi-channel-form>
+    </div>
+</div>
