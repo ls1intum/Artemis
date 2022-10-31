@@ -25,7 +25,7 @@ import { CypressCredentials } from './users';
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
-import { authTokenKey, BASE_API, POST } from './constants';
+import { BASE_API, POST, authTokenKey } from './constants';
 
 export {};
 

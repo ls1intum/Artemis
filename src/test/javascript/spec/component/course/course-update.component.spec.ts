@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -25,7 +25,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import dayjs from 'dayjs/esm';
-import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
+import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';

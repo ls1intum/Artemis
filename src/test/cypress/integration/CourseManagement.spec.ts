@@ -1,6 +1,6 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { COURSE_BASE } from '../support/requests/CourseManagementRequests';
-import { GET, BASE_API, POST, PUT } from '../support/constants';
+import { BASE_API, GET, POST, PUT } from '../support/constants';
 import { artemis } from '../support/ArtemisTesting';
 import { CourseManagementPage } from '../support/pageobjects/course/CourseManagementPage';
 import { NavigationBar } from '../support/pageobjects/NavigationBar';

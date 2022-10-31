@@ -9,7 +9,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { getLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';

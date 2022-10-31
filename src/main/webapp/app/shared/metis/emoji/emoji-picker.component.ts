@@ -1,4 +1,4 @@
-import { Component, Input, Output, OnDestroy, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Subscription } from 'rxjs';
 import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
