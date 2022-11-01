@@ -138,33 +138,33 @@ describe('Course management', () => {
                             .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), courseIcon)
                             .then((createCourseResponse) => {
                                 courseId = createCourseResponse.body!.id!;
+                                navigationBar.openCourseManagement();
+                                courseManagementPage.openCourse(courseShortName);
+                                cy.get('#edit-course').click();
+                                cy.get('#delete-course-icon').click();
+                                cy.get('#delete-course-icon').should('not.exist');
+                                cy.get('.no-image').should('exist');
+                                cy.intercept(PUT, BASE_API + 'courses').as('updateCourseQuery');
+                                cy.get('#save-entity').click();
+                                cy.wait('@updateCourseQuery').then(() => {
+                                    cy.get('#edit-course').click();
+                                    cy.get('#delete-course-icon').should('not.exist');
+                                    cy.get('.no-image').should('exist');
+                                });
                             });
                     });
                 });
-            navigationBar.openCourseManagement();
-            courseManagementPage.openCourse(courseShortName);
-            cy.get('#edit-course').click();
-            cy.get('#delete-course-icon').click();
-            cy.get('#delete-course-icon').should('not.exist');
-            cy.get('.no-image').should('exist');
-            cy.intercept(PUT, BASE_API + 'courses').as('updateCourseQuery');
-            cy.get('#save-entity').click();
-            cy.wait('@updateCourseQuery').then(() => {
-                cy.get('#edit-course').click();
-                cy.get('#delete-course-icon').should('not.exist');
-                cy.get('.no-image').should('exist');
-            });
         });
 
         it('Deletes not existing course icon', () => {
             artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).then((response) => {
                 courseId = response.body!.id!;
+                navigationBar.openCourseManagement();
+                courseManagementPage.openCourse(courseShortName);
+                cy.get('#edit-course').click();
+                cy.get('#delete-course-icon').should('not.exist');
+                cy.get('.no-image').should('exist');
             });
-            navigationBar.openCourseManagement();
-            courseManagementPage.openCourse(courseShortName);
-            cy.get('#edit-course').click();
-            cy.get('#delete-course-icon').should('not.exist');
-            cy.get('.no-image').should('exist');
         });
 
         after(() => {
