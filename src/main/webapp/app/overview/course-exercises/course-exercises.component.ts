@@ -79,7 +79,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     exerciseForGuidedTour?: Exercise;
     nextRelevantExercise?: ExerciseWithDueDate;
     sortingAttribute: SortingAttribute;
-    searchExercisesInput: string;
+    searchExercisesInput?: string;
     exerciseFilter: ExerciseFilterModel;
 
     // Icons
