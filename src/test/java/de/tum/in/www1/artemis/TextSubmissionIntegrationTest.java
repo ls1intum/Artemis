@@ -263,7 +263,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         TextSubmission submission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, false);
         database.saveTextSubmission(finishedTextExercise, submission, "student1");
 
-        request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.NOT_FOUND, TextSubmission.class);
+        var response = request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class);
+        assertThat(response).isNull();
     }
 
     @Test

@@ -589,7 +589,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addModelingSubmission(classExercise, submission, "student1");
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.NOT_FOUND, ModelingSubmission.class);
+        var response = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK, ModelingSubmission.class);
+        assertThat(response).isNull();
     }
 
     @Test
@@ -599,7 +600,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student1", "tutor1");
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.NOT_FOUND, ModelingSubmission.class);
+        var response = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK, ModelingSubmission.class);
+        assertThat(response).isNull();
     }
 
     @Test
