@@ -336,14 +336,12 @@ public class ParticipationResource {
      * @return a boolean indicating if the user may participate
      */
     private boolean isAllowedToParticipateInProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable StudentParticipation participation) {
-        boolean isAfterDueDate = participation != null ? exerciseDateService.isAfterDueDate(participation)
-                : (programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate()));
         if (participation != null) {
-            // Test runs may only be started after the due date
-            return participation.isTestRun() == isAfterDueDate;
+            // only regular participation before the due date; only practice run afterwards
+            return participation.isTestRun() == exerciseDateService.isAfterDueDate(participation);
         }
         else {
-            return !isAfterDueDate;
+            return programmingExercise.getDueDate() == null && now().isBefore(programmingExercise.getDueDate());
         }
     }
 
