@@ -55,7 +55,7 @@
                     "yourPoints": "Deine Punkte",
                     "maxPoints": "Erreichbare Punkte",
                     "maxBonus": "Erreichbare Bonuspunkte",
-                    "youAchievedWithBonus": "Du hast {{achievedPoints}} Punkte von möglichen {{maxPoints}} Punkten (einschließlich Bonus)",
+                    "youAchievedWithBonus": "Du hast {{achievedPoints}} Punkte von {{maxPoints}} möglichen Punkten (einschließlich Bonuspunkten) erreicht.",
                     "youAchieved": "Du hast {{achievedPoints}} von möglichen {{normalPoints}} Punkten",
                     "youAchievedFromBonus": {
                         "GRADES_CONTINUOUS": "Du hast einen Notenbonus von {{achievedBonus}} aus {{bonusFromTitle}}",

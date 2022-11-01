@@ -53,14 +53,14 @@
                     "overview": "Overview",
                     "total": "Total",
                     "yourPoints": "Your Points",
-                    "maxPoints": "Achievable normal points",
-                    "maxBonus": "Achievable bonus points",
-                    "youAchievedWithBonus": "You achieved {{achievedPoints}} out of {{maxPoints}} possible points (including bonus)",
+                    "maxPoints": "Achievable Points",
+                    "maxBonus": "Achievable Bonus Points",
+                    "youAchievedWithBonus": "You achieved {{achievedPoints}} out of a maximum {{maxPoints}} possible points (including bonus points).",
                     "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points",
                     "youAchievedFromBonus": {
                         "GRADES_CONTINUOUS": "You got a grade bonus of {{achievedBonus}} from {{bonusFromTitle}}",
                         "GRADES_DISCRETE": "You got a grade bonus of {{achievedBonus}} step(s) according to the grading scale which equals {{gradePointDiff}} from {{bonusFromTitle}}",
-                        "POINTS": "You got additional {{achievedBonus}} bonus points from {{bonusFromTitle}}"
+                        "POINTS": "You got {{achievedBonus}} additional bonus points from {{bonusFromTitle}}"
                     },
                     "youAchievedPointsAfterBonus": "Your final points are {{finalPoints}} after the bonus",
                     "maxPointsNotSet": "The maximum number of points in the exam is not set."
