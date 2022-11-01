@@ -29,11 +29,15 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.lecture.AttachmentUnitResource;
 
 /**
@@ -57,18 +61,21 @@ public class FileResource {
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
+    private final AttachmentRepository attachmentRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final UserRepository userRepository;
 
     public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository,
-            FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
+            FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
+        this.attachmentRepository = attachmentRepository;
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
@@ -139,7 +146,7 @@ public class FileResource {
      * @return The requested file, or 404 if the file doesn't exist
      */
     @GetMapping("files/markdown/{filename:.+}")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         return buildFileResponse(FilePathService.getMarkdownFilePath(), filename);
@@ -220,8 +227,26 @@ public class FileResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
+
         FileUploadSubmission submission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
         FileUploadExercise exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
+
+        // check if the participation is a StudentParticipation before the following cast
+        if (!(submission.getParticipation() instanceof StudentParticipation)) {
+            return ResponseEntity.badRequest().build();
+        }
+        // user or team members that submitted the exercise
+        Set<User> usersOfTheSubmission = ((StudentParticipation) submission.getParticipation()).getStudents();
+        if (usersOfTheSubmission.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        User requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        // auth check - either the user that submitted the exercise or the requesting user is at least a tutor for the exercise
+        if (!usersOfTheSubmission.contains(requestingUser) && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            throw new AccessForbiddenException();
+        }
+
         return buildFileResponse(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), filename);
     }
 
@@ -250,7 +275,20 @@ public class FileResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+
+        List<Attachment> lectureAttachments = attachmentRepository.findAllByLectureId(lectureId);
+        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> filename.equals(Path.of(lectureAttachment.getLink()).getFileName().toString())).findAny()
+                .orElseThrow(() -> new EntityNotFoundException("Attachment", filename));
+
+        // get the course for a lecture attachment
+        Lecture lecture = attachment.getLecture();
+        Course course = lecture.getCourse();
+
+        // check if the user is authorized to access the requested attachment unit
+        if (!checkAttachmentAuthorization(course, attachment)) {
+            throw new AccessForbiddenException();
+        }
+
         return buildFileResponse(Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString(), filename);
     }
 
@@ -268,6 +306,9 @@ public class FileResource {
         log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+
+        authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
         Set<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE);
 
@@ -299,6 +340,16 @@ public class FileResource {
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+
+        // get the course for a lecture's attachment unit
+        Attachment attachment = attachmentUnit.getAttachment();
+        Course course = attachmentUnit.getLecture().getCourse();
+
+        // check if the user is authorized to access the requested attachment unit
+        if (!checkAttachmentAuthorization(course, attachment)) {
+            throw new AccessForbiddenException();
+        }
+
         return buildFileResponse(Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString(), filename);
     }
 
@@ -341,6 +392,22 @@ public class FileResource {
             log.error("Failed to download file: {} on path: {}", filename, path, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    /**
+     * Checks if the user is authorized to access an attachment
+     *
+     * @param course     the course to check if the user is part of it
+     * @param attachment the attachment for which the authentication should be checked
+     * @return true if the user is authorized to access the attachment, otherwise false is returned
+     */
+    private boolean checkAttachmentAuthorization(Course course, Attachment attachment) {
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        if (!attachment.isVisibleToStudents() && !authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+            log.info("User not authorized to access attachment");
+            return false;
+        }
+        return true;
     }
 
     /**
