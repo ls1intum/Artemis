@@ -1,0 +1,35 @@
+<div (focusout)="onTouched()">
+    <div class="form-group">
+        <label [for]="id + '-user-input'">{{ label }}</label>
+        <input
+            #searchInput
+            [disabled]="disabled"
+            (selectItem)="onSelectItem($event)"
+            [id]="id + '-user-input'"
+            type="text"
+            class="form-control"
+            [placeholder]="'artemisApp.userSelector.placeholderText' | artemisTranslate"
+            [ngbTypeahead]="search"
+            [inputFormatter]="usersFormatter"
+            [resultFormatter]="usersFormatter"
+            [editable]="false"
+        />
+        <ng-container *ngIf="isSearching">
+            <small class="form-text text-muted">{{ 'artemisApp.userSelector.searchingText' | artemisTranslate }}</small>
+            <br />
+        </ng-container>
+        <ng-container *ngIf="searchFailed">
+            <small>{{ 'artemisApp.userSelector.searchFailedText' | artemisTranslate }}</small>
+            <br />
+        </ng-container>
+        <small class="form-text text-muted">{{ 'artemisApp.userSelector.helpText' | artemisTranslate }}</small>
+    </div>
+    <ul class="list-group">
+        <li *ngFor="let user of selectedUsers; let i = index; trackBy: trackIdentity" class="list-group-item d-flex justify-content-between align-items-center">
+            <span class="d-inline-block">{{ getUserLabel(user) }}</span>
+            <button *ngIf="!disabled" class="btn btn-outline-secondary d-inline-block" (click)="onDelete(i)">
+                <fa-icon [icon]="faX"></fa-icon>
+            </button>
+        </li>
+    </ul>
+</div>

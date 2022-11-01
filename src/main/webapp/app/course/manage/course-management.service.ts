@@ -23,6 +23,8 @@ import { convertDateFromClient } from 'app/utils/date.utils';
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
 
+export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
+
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
@@ -314,6 +316,13 @@ export class CourseManagementService {
         let httpParams = new HttpParams();
         httpParams = httpParams.append('nameOfUser', name);
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/search-other-users`, { params: httpParams, observe: 'response' });
+    }
+
+    searchUsers(courseId: number, loginOrName: string, roles: RoleGroup[]): Observable<HttpResponse<User[]>> {
+        let httpParams = new HttpParams();
+        httpParams = httpParams.append('loginOrName', loginOrName);
+        httpParams = httpParams.append('roles', roles.join(','));
+        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/users/search`, { observe: 'response', params: httpParams });
     }
 
     /**

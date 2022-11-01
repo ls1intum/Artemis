@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
@@ -754,6 +755,46 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/:courseId/users/search : Search all users by login or name that belong to the specified groups of the course
+     *
+     * @param courseId    the id of the course
+     * @param loginOrName the login or name by which to search users
+     * @param roles       the roles which should be searched in
+     * @return the ResponseEntity with status 200 (OK) and with body all users
+     */
+    @GetMapping("/courses/{courseId}/users/search")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<User>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName, @RequestParam("roles") List<String> roles) {
+        // ToDo: Discuss what information should be hidden as this is a public endpoint
+        log.debug("REST request to search users in course : {} with login or name : {}", courseId, loginOrName);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        // restrict result size by only allowing reasonable searches
+        if (loginOrName.length() < 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
+        }
+        var requestedRoles = roles.stream().map(Role::fromString).collect(Collectors.toSet());
+        var groups = new HashSet<String>();
+        if (requestedRoles.contains(Role.STUDENT)) {
+            groups.add(course.getStudentGroupName());
+        }
+        if (requestedRoles.contains(Role.TEACHING_ASSISTANT)) {
+            groups.add(course.getTeachingAssistantGroupName());
+        }
+        if (requestedRoles.contains(Role.INSTRUCTOR)) {
+            groups.add(course.getInstructorGroupName());
+        }
+        if (requestedRoles.contains(Role.EDITOR)) {
+            groups.add(course.getEditorGroupName());
+        }
+        User searchingUser = userRepository.getUser();
+        var result = userRepository.searchAllByLoginOrNameInGroups(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
+
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), result);
+        return new ResponseEntity<>(result.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
      * GET /courses/:courseId/tutors : Returns all users that belong to the tutor group of the course
      *
      * @param courseId the id of the course
@@ -833,7 +874,7 @@ public class CourseResource {
     /**
      * Post /courses/:courseId/students/:studentLogin : Add the given user to the students of the course so that the student can access the course
      *
-     * @param courseId     the id of the course
+     * @param courseId     the id of the course f
      * @param studentLogin the login of the user who should get student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */

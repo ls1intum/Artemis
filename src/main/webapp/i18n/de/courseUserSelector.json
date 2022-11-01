@@ -1,0 +1,10 @@
+{
+    "artemisApp": {
+        "userSelector": {
+            "searchingText": "Suche nach Nutzern...",
+            "searchFailedText": "Suche fehlgeschlagen",
+            "helpText": "Gib mindestens 3 Zeichen ein, um nach Benutzern anhand Namen oder Login zu suchen",
+            "placeholderText": "z.B. Stefan"
+        }
+    }
+}
