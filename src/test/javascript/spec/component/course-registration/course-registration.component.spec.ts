@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTestModule } from '../../test.module';

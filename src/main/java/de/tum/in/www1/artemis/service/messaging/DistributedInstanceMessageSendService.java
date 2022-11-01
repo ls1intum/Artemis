@@ -135,6 +135,10 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
         sendMessageDelayed("participant-score-schedule", exerciseId, participantId, resultId);
     }
 
+    private void sendMessageDelayed(String destination, Long payload) {
+        exec.schedule(() -> hazelcastInstance.getTopic(destination).publish(payload), 1, TimeUnit.SECONDS);
+    }
+
     private void sendMessageDelayed(String destination, Long... payload) {
         exec.schedule(() -> hazelcastInstance.getTopic(destination).publish(payload), 1, TimeUnit.SECONDS);
     }

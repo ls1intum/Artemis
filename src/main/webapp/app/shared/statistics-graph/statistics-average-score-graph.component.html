@@ -14,6 +14,7 @@
         ></fa-icon>
         <div #containerRef class="col-lg-8 ps-0 chart-container">
             <ngx-charts-bar-vertical
+                [roundEdges]="false"
                 [view]="[containerRef.offsetWidth, 300]"
                 [results]="ngxData"
                 [scheme]="ngxColor"
