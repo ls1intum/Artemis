@@ -1,7 +1,6 @@
 import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
-import { faChevronRight, faHashtag, faLock, faMessage } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
-import { ConversationType } from 'app/shared/metis/metis.util';
 import { MessagingService } from 'app/shared/metis/messaging.service';
 import { ConversationService } from 'app/shared/metis/conversation.service';
 

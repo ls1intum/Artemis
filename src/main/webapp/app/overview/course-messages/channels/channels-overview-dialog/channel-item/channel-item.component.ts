@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 import { ChannelOverviewDTO } from 'app/shared/metis/channel.service';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view';
@@ -20,10 +19,6 @@ export class ChannelItemComponent {
     channel: ChannelOverviewDTO;
 
     isHover = false;
-
-    // icons
-    faHashtag = faHashtag;
-    faLock = faLock;
 
     constructor() {}
 

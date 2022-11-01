@@ -1,0 +1,29 @@
+<form class="row">
+    <div class="col-12">
+        <div *ngIf="maxSelectable" class="alert alert-info">
+            {{ 'artemisApp.messages.addUserForm.maxUsersNote' | artemisTranslate: { max: maxSelectable } }}
+        </div>
+        <form (ngSubmit)="submitForm()" [formGroup]="form">
+            <jhi-course-users-selector
+                formControlName="selectedUsers"
+                [courseId]="courseId"
+                [label]="'artemisApp.messages.addUserForm.addUserLabel' | artemisTranslate"
+            ></jhi-course-users-selector>
+            <div *ngIf="selectedUsersControl?.invalid && (selectedUsersControl?.dirty || selectedUsersControl?.touched)" class="alert alert-danger">
+                <div *ngIf="selectedUsersControl?.errors?.required">
+                    {{ 'artemisApp.messages.addUserForm.requiredError' | artemisTranslate }}
+                </div>
+                <div *ngIf="selectedUsersControl?.errors?.maxlength">
+                    {{ 'artemisApp.messages.addUserForm.maxError' | artemisTranslate: { max: maxSelectable } }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 text-end">
+                    <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
+                        <span>{{ 'artemisApp.messages.addUserForm.addUsersButton' | artemisTranslate }}</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</form>

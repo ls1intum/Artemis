@@ -16,6 +16,9 @@ import { ChannelFormComponent } from './channels/channel-form/channel-form.compo
 import { ChannelsCreateDialogComponent } from './channels/channels-create-dialog/channels-create-dialog.component';
 import { ConversationHeaderComponent } from './conversation-header/conversation-header.component';
 import { ChannelIconComponent } from './channels/channel-icon/channel-icon.component';
+import { ConversationAddUsersDialogComponent } from './conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { AddUsersFormComponent } from './conversation-add-users-dialog/add-users-form/add-users-form.component';
+import { CourseUsersSelectorModule } from 'app/shared/course-users-selector/course-users-selector.module';
 
 const routes: Routes = [
     {
@@ -29,7 +32,15 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forChild(routes), MetisModule, ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisDataTableModule, InfiniteScrollModule],
+    imports: [
+        RouterModule.forChild(routes),
+        MetisModule,
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        ArtemisDataTableModule,
+        InfiniteScrollModule,
+        CourseUsersSelectorModule,
+    ],
     declarations: [
         CourseMessagesComponent,
         ConversationSidebarComponent,
@@ -42,6 +53,8 @@ const routes: Routes = [
         ChannelsCreateDialogComponent,
         ConversationHeaderComponent,
         ChannelIconComponent,
+        ConversationAddUsersDialogComponent,
+        AddUsersFormComponent,
     ],
 })
 export class CourseMessagesModule {}

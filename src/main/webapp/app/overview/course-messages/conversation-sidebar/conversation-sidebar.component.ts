@@ -1,11 +1,11 @@
-import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import interact from 'interactjs';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 import { MessagingService } from 'app/shared/metis/messaging.service';
-import { combineLatest, from, Observable, of, Subscription } from 'rxjs';
+import { from, Observable, of, Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -24,6 +24,9 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-messages/chan
     providers: [MessagingService],
 })
 export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDestroy {
+    @Input()
+    course?: Course;
+
     @Output() selectConversation = new EventEmitter<Conversation>();
 
     conversations: Conversation[];
@@ -34,12 +37,9 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
 
     activeConversation?: Conversation;
 
-    course?: Course;
     collapsed: boolean;
-    courseId: number;
 
     private conversationSubscription: Subscription;
-    private paramSubscription: Subscription;
 
     isLoading = false;
     isSearching = false;
@@ -62,18 +62,13 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     ) {}
 
     ngOnInit(): void {
-        this.paramSubscription = combineLatest({
-            params: this.activatedRoute.parent!.parent!.params,
-            queryParams: this.activatedRoute.parent!.parent!.queryParams,
-        }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
-            const { params } = routeParams;
-            this.courseId = params.courseId;
-            this.courseManagementService.findOneForDashboard(this.courseId).subscribe((res: HttpResponse<Course>) => {
+        if (this.course) {
+            this.courseManagementService.findOneForDashboard(this.course.id!).subscribe((res: HttpResponse<Course>) => {
                 if (res.body !== undefined) {
                     this.course = res.body!;
                 }
             });
-            this.courseMessagesService.getConversationsOfUser(this.courseId).subscribe();
+            this.courseMessagesService.getConversationsOfUser(this.course.id!).subscribe();
             this.conversationSubscription = this.courseMessagesService.conversations.subscribe((conversations: Conversation[]) => {
                 this.conversations = conversations ?? [];
                 this.channelConversations = this.conversations
@@ -90,7 +85,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
                     this.selectConversation.emit(this.activeConversation);
                 }
             });
-        });
+        }
     }
 
     ngAfterViewInit(): void {
@@ -138,7 +133,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
                 }
                 this.isSearching = true;
                 return this.courseManagementService
-                    .searchOtherUsersInCourse(this.courseId, loginOrName)
+                    .searchOtherUsersInCourse(this.course?.id!, loginOrName)
                     .pipe(map((usersResponse) => usersResponse.body!))
                     .pipe(
                         tap((users) => {
@@ -172,10 +167,10 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     openChannelOverviewDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
-        modalRef.componentInstance.courseId = this.courseId;
+        modalRef.componentInstance.courseId = this.course?.id!;
 
         from(modalRef.result).subscribe((result: number[] | number) => {
-            this.courseMessagesService.getConversationsOfUser(this.courseId).subscribe(() => {
+            this.courseMessagesService.getConversationsOfUser(this.course?.id!).subscribe(() => {
                 if (Array.isArray(result)) {
                     // result represents array of ids of conversations that were unsubscribed
                     if (this.activeConversation && result.includes(this.activeConversation.id!)) {
@@ -213,7 +208,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
 
     private createConversation(newConversation: Conversation) {
         this.isTransitioning = true;
-        this.courseMessagesService.createConversation(this.courseId, newConversation).subscribe({
+        this.courseMessagesService.createConversation(this.course?.id!, newConversation).subscribe({
             next: (conversation: Conversation) => {
                 this.isTransitioning = false;
 

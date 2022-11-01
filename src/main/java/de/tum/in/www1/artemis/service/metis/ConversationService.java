@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -56,6 +54,43 @@ public class ConversationService {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.conversationRepository = conversationRepository;
         this.messagingTemplate = messagingTemplate;
+    }
+
+    public void registerUsers(Set<User> usersToRegister, Conversation conversation) {
+        var userThatNeedToBeRegistered = new HashSet<User>();
+
+        for (User user : usersToRegister) {
+            var isRegistered = conversation.getConversationParticipants().stream()
+                    .anyMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()));
+            if (!isRegistered) {
+                userThatNeedToBeRegistered.add(user);
+            }
+        }
+
+        List<ConversationParticipant> newConversationParticipants = new ArrayList<>();
+        for (User user : userThatNeedToBeRegistered) {
+            ConversationParticipant conversationParticipant = new ConversationParticipant();
+            conversationParticipant.setUser(user);
+            conversationParticipant.setConversation(conversation);
+            newConversationParticipants.add(conversationParticipant);
+        }
+        newConversationParticipants = conversationParticipantRepository.saveAll(newConversationParticipants);
+        conversation.getConversationParticipants().addAll(newConversationParticipants);
+        conversationRepository.save(conversation);
+    }
+
+    public void deregisterUsers(Set<User> usersToDeregister, Conversation conversation) {
+        var participantsToRemove = new HashSet<ConversationParticipant>();
+
+        for (User user : usersToDeregister) {
+            var participant = conversation.getConversationParticipants().stream().filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()))
+                    .findFirst();
+            participant.ifPresent(participantsToRemove::add);
+        }
+
+        conversation.getConversationParticipants().removeAll(participantsToRemove);
+        conversationRepository.save(conversation);
+        conversationParticipantRepository.deleteAll(participantsToRemove);
     }
 
     /**

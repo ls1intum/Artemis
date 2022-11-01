@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.metis;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -19,7 +17,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.ChannelService;
 import de.tum.in.www1.artemis.service.metis.ChannelService.ChannelOverviewDTO;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -75,61 +72,6 @@ public class ChannelResource {
             return new ChannelOverviewDTO(channel.getId(), channelName, channelDescription, channel.getIsPublic(), isMember, noOfMembers);
         }).toList();
         return new ResponseEntity<>(result, null, HttpStatus.OK);
-    }
-
-    @PostMapping("/{courseId}/channels/{channelId}/register/{studentLogin:" + Constants.LOGIN_REGEX + "}")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> registerStudent(@PathVariable Long courseId, @PathVariable Long channelId, @PathVariable String studentLogin) {
-        log.debug("REST request to register {} student to channel : {}", studentLogin, channelId);
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var channelFromDatabase = this.channelService.getChannelElseThrow(channelId);
-        var userToRegister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
-
-        // ToDo: Allow users others user to register someone to a channel
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, userToRegister);
-        if (!userToRegister.equals(requestingUser)) {
-            throw new BadRequestAlertException("Only self registration is possible to a channel", "channel", "onlySelfRegistration");
-        }
-
-        channelService.registerStudent(userToRegister, channelFromDatabase);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping("/{courseId}/channels/{channelId}/deregister/{studentLogin:" + Constants.LOGIN_REGEX + "}")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> deregisterStudent(@PathVariable Long courseId, @PathVariable Long channelId, @PathVariable String studentLogin) {
-        log.debug("REST request to deregister {} student from channel : {}", studentLogin, channelId);
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var channelFromDatabase = this.channelService.getChannelElseThrow(channelId);
-        var userToRegister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
-
-        // ToDo: Allow users others user to register someone to a channel
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, userToRegister);
-        if (!userToRegister.equals(requestingUser)) {
-            throw new BadRequestAlertException("Only self deregistrations is possible from a channel", "channel", "onlySelfDeregistration");
-        }
-
-        channelService.deregisterStudent(userToRegister, channelFromDatabase);
-        return ResponseEntity.noContent().build();
-    }
-
-    private void checkEntityIdMatchesPathIds(Conversation channel, Optional<Long> courseId, Optional<Long> channelId) {
-        courseId.ifPresent(courseIdValue -> {
-            if (!channel.getCourse().getId().equals(courseIdValue)) {
-                throw new BadRequestAlertException("The courseId in the path does not match the courseId in the channel", "channel", "courseIdMismatch");
-            }
-        });
-        channelId.ifPresent(channelIdValue -> {
-            if (!channel.getId().equals(channelIdValue)) {
-                throw new BadRequestAlertException("The channelId in the path does not match the channelId in the channel", "channel", "channelIdMismatch");
-            }
-        });
     }
 
 }

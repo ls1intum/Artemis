@@ -6,6 +6,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelOverviewDTO, ChannelService } from 'app/shared/metis/channel.service';
 import { ChannelAction } from 'app/overview/course-messages/channels/channels-overview-dialog/channel-item/channel-item.component';
+import { ConversationService } from 'app/shared/metis/conversation.service';
 
 @Component({
     selector: 'jhi-channels-overview-dialog',
@@ -23,7 +24,12 @@ export class ChannelsOverviewDialogComponent implements OnInit {
     channels: ChannelOverviewDTO[] = [];
     idsOfUnsubscribedChannels: number[] = [];
 
-    constructor(private channelService: ChannelService, private alertService: AlertService, private activeModal: NgbActiveModal) {}
+    constructor(
+        private channelService: ChannelService,
+        private conversationService: ConversationService,
+        private alertService: AlertService,
+        private activeModal: NgbActiveModal,
+    ) {}
 
     ngOnInit(): void {
         if (this.courseId) {
@@ -54,7 +60,7 @@ export class ChannelsOverviewDialogComponent implements OnInit {
     performChannelAction(channelAction: ChannelAction) {
         switch (channelAction.action) {
             case 'register':
-                this.channelService.registerStudent(this.courseId, channelAction.channel.channelId).subscribe(() => {
+                this.conversationService.registerUsers(this.courseId, channelAction.channel.channelId).subscribe(() => {
                     if (this.idsOfUnsubscribedChannels.includes(channelAction.channel.channelId)) {
                         this.idsOfUnsubscribedChannels = this.idsOfUnsubscribedChannels.filter((id) => id !== channelAction.channel.channelId);
                     }
@@ -63,7 +69,7 @@ export class ChannelsOverviewDialogComponent implements OnInit {
                 });
                 break;
             case 'deregister':
-                this.channelService.deregisterStudent(this.courseId, channelAction.channel.channelId).subscribe(() => {
+                this.conversationService.deregisterUsers(this.courseId, channelAction.channel.channelId).subscribe(() => {
                     this.idsOfUnsubscribedChannels.push(channelAction.channel.channelId);
                     this.loadChannels();
                     this.channelActionPerformed = true;

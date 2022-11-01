@@ -20,6 +20,17 @@
                 "show": "Show thread",
                 "close": "Close thread",
                 "reply": "Reply in thread"
+            },
+            "addUsers": {
+                "addUsersToConversation": "Add users to conversation",
+                "addUsersToChannel": "Add users to: "
+            },
+            "addUserForm": {
+                "addUsersButton": "Add",
+                "requiredError": "You must select at least one user",
+                "maxError": "You can only add {{ max }} users",
+                "addUserLabel": "Search for users in the course",
+                "maxUsersNote": "Note: You can only add {{ max }} users to this conversation"
             }
         }
     }

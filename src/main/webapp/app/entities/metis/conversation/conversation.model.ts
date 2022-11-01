@@ -4,6 +4,8 @@ import { Course } from 'app/entities/course.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { ConversationType } from 'app/shared/metis/metis.util';
 
+export const MAX_MEMBERS_IN_DIRECT_CONVERSATION = 6;
+
 export class Conversation implements BaseEntity {
     public id?: number;
     public conversationParticipants?: ConversationParticipant[];

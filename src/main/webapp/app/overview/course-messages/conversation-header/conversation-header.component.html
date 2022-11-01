@@ -1,4 +1,4 @@
-<div *ngIf="activeConversation" class="conversation-header d-flex justify-content-between">
+<div *ngIf="activeConversation && course" class="conversation-header d-flex justify-content-between">
     <div>
         <h3 class="conversation-name d-inline-block rounded p-2">
             <jhi-channel-icon *ngIf="activeConversation.type === CHANNEL" [isPublic]="activeConversation.isPublic!"></jhi-channel-icon>
@@ -12,7 +12,7 @@
                 <button type="button" class="btn btn-outline-secondary">
                     <fa-icon [icon]="faUserGroup"></fa-icon> {{ activeConversation.conversationParticipants?.length || 0 }}
                 </button>
-                <button type="button" class="btn btn-outline-secondary">
+                <button type="button" class="btn btn-outline-secondary" (click)="openAddUsersDialog($event)">
                     <fa-icon [icon]="faUserPlus"></fa-icon>
                 </button>
             </div>

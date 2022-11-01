@@ -72,6 +72,19 @@ export class ConversationService {
             .pipe(map(this.convertDateArrayFromServer));
     }
 
+    deregisterUsers(courseId: number, conversationId: number, logins?: string[]): Observable<HttpResponse<void>> {
+        // if no explicit login is give we assume self deregistration
+        const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
+
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/deregister`, userLogins, { observe: 'response' });
+    }
+
+    registerUsers(courseId: number, conversationId: number, logins?: string[]): Observable<HttpResponse<void>> {
+        // if no explicit login is give we assume self registration
+        const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/register`, userLogins, { observe: 'response' });
+    }
+
     /**
      * takes a conversation and converts the date from the client
      * @param   {Conversation} conversation

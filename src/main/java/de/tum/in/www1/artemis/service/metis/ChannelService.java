@@ -46,40 +46,6 @@ public class ChannelService {
         this.courseRepository = courseRepository;
     }
 
-    public void registerStudent(User userToRegister, Conversation channel) {
-
-        var channelFromDatabase = channelRepository.findChannelWithConversationParticipantsByIdElseThrow(channel.getId());
-        var userFromDatabase = userRepository.getUserWithGroupsAndAuthorities(userToRegister.getLogin());
-
-        var isRegistered = channelFromDatabase.getConversationParticipants().stream()
-                .anyMatch(conversationParticipant -> conversationParticipant.getUser().getLogin().equals(userFromDatabase.getLogin()));
-        if (isRegistered) {
-            return;
-        }
-
-        var newConversationParticipant = new ConversationParticipant();
-        newConversationParticipant.setUser(userToRegister);
-        newConversationParticipant.setConversation(channelFromDatabase);
-        newConversationParticipant = conversationParticipantRepository.save(newConversationParticipant);
-        channelFromDatabase.getConversationParticipants().add(newConversationParticipant);
-        channelRepository.save(channelFromDatabase);
-    }
-
-    public void deregisterStudent(User userToDeregister, Conversation channel) {
-        var channelFromDatabase = channelRepository.findChannelWithConversationParticipantsByIdElseThrow(channel.getId());
-        var userFromDatabase = userRepository.getUserWithGroupsAndAuthorities(userToDeregister.getLogin());
-
-        var matchingParticipant = channelFromDatabase.getConversationParticipants().stream()
-                .filter(conversationParticipant -> conversationParticipant.getUser().getLogin().equals(userFromDatabase.getLogin())).findFirst();
-
-        // Todo: Think if we really want to delete this or just use a boolean property so channel specific config is not lost if user re-joins
-        matchingParticipant.ifPresent(conversationParticipant -> {
-            channelFromDatabase.getConversationParticipants().remove(conversationParticipant);
-            channelRepository.save(channelFromDatabase);
-            conversationParticipantRepository.delete(conversationParticipant);
-        });
-    }
-
     public record ChannelOverviewDTO(Long channelId, String channelName, String channelDescription, Boolean isPublic, boolean isMember, int noOfMembers) {
     }
 
