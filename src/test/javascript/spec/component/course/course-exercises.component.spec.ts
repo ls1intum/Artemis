@@ -355,11 +355,11 @@ describe('CourseExercisesComponent', () => {
     });
 
     it('should filter exercises based on search query', () => {
-        const searchInput = fixture.debugElement.query(By.css('#search-exercises-input')).nativeElement;
+        const searchInput = fixture.debugElement.query(By.css('#exercise-search-input')).nativeElement;
         searchInput.value = 'pat';
         searchInput.dispatchEvent(new Event('input'));
         fixture.detectChanges();
-        const searchButton = fixture.debugElement.query(By.css('#search-exercises-button')).nativeElement;
+        const searchButton = fixture.debugElement.query(By.css('#exercise-search-button')).nativeElement;
         const event = new Event('click');
         const exercise1 = new ModelingExercise(UMLDiagramType.ActivityDiagram, undefined, undefined);
         exercise1.title = 'Patten in Software Engineering';

@@ -79,7 +79,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     exerciseForGuidedTour?: Exercise;
     nextRelevantExercise?: ExerciseWithDueDate;
     sortingAttribute: SortingAttribute;
-    searchExercisesInput?: string;
+    searchExercisesInput: string;
     exerciseFilter: ExerciseFilterModel;
 
     // Icons
@@ -115,6 +115,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
         this.exerciseCountMap = new Map<string, number>();
         this.exerciseFilter = new ExerciseFilterModel();
         this.numberOfExercises = 0;
+        this.searchExercisesInput = '';
         const filters = this.localStorage.retrieve(SortFilterStorageKey.FILTER);
         const filtersInStorage = filters
             ? filters
@@ -223,7 +224,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     }
 
     /**
-     * Method is called when enter key is pressed on search input
+     * Method is called when enter key is pressed on search input or search button is clicked
      */
     onSearch() {
         this.searchExercisesInput = this.searchExercisesInput.trim();
