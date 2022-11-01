@@ -2,7 +2,11 @@
     <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
         <jhi-conversation-sidebar (selectConversation)="selectConversation($event)"> </jhi-conversation-sidebar>
     </div>
+
     <div class="col pe-0 flex-grow-1">
+        <div *ngIf="selectedConversation">
+            <jhi-conversation-header [activeConversation]="selectedConversation"></jhi-conversation-header>
+        </div>
         <jhi-messages [activeConversation]="selectedConversation" (openThread)="setPostInThread($event)"> </jhi-messages>
     </div>
     <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">

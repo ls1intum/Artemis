@@ -10,7 +10,8 @@
                 "notFound": "Keine Konversation gefunden",
                 "instructionForNewConversation": "Sie können über die Suchleiste oben nach anderen Benutzern suchen und eine neue Konversation beginnen",
                 "searchForUsers": "Benutzer des Kurses suchen",
-                "minQueryLengthHint": "Mind. {{ length }} Buchstaben"
+                "minQueryLengthHint": "Mind. {{ length }} Buchstaben",
+                "others": "{{ count }} andere"
             },
             "searchBarPlaceholder": "Suchen Sie in der aktuellen Konversation nach einer Nachricht",
             "submit": "Senden",

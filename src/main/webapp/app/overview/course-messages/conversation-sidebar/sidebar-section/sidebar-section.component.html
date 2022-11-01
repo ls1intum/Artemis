@@ -19,10 +19,9 @@
             >
                 <span class="conversation-list-item-user">
                     <ng-container *ngIf="conversation.type === 'CHANNEL'">
-                        <fa-icon *ngIf="conversation.isPublic === true" [icon]="faHashtag" size="xs"></fa-icon>
-                        <fa-icon *ngIf="conversation.isPublic === false" [icon]="faLock" size="xs"></fa-icon>
+                        <jhi-channel-icon [isPublic]="conversation.isPublic!"></jhi-channel-icon>
                     </ng-container>
-                    {{ getNameOfConversation(conversation) }}
+                    {{ conversationService.getNameOfConversation(conversation) }}
                 </span>
                 <span *ngIf="isConversationUnread(conversation)">
                     <fa-icon [icon]="faMessage"></fa-icon>

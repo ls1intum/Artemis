@@ -1,0 +1,14 @@
+@import 'node_modules/bootstrap/scss/functions';
+@import 'node_modules/bootstrap/scss/variables';
+@import 'node_modules/bootstrap/scss/mixins';
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+.conversation-header {
+    .conversation-name {
+        border-radius: 0.5rem;
+        &:hover {
+            background-color: var(--slightly-darker-body-bg);
+            cursor: pointer;
+        }
+    }
+}

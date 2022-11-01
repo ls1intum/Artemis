@@ -1,0 +1,21 @@
+<div *ngIf="activeConversation" class="conversation-header d-flex justify-content-between">
+    <div>
+        <h3 class="conversation-name d-inline-block rounded p-2">
+            <jhi-channel-icon *ngIf="activeConversation.type === CHANNEL" [isPublic]="activeConversation.isPublic!"></jhi-channel-icon>
+            {{ conversationService.getNameOfConversation(activeConversation) }}
+            <fa-icon [icon]="faChevronDown" size="xs"></fa-icon>
+        </h3>
+    </div>
+    <div>
+        <div class="btn-toolbar p-2" role="toolbar" aria-label="Toolbar with button groups">
+            <div class="btn-group me-2" role="group" aria-label="First group">
+                <button type="button" class="btn btn-outline-secondary">
+                    <fa-icon [icon]="faUserGroup"></fa-icon> {{ activeConversation.conversationParticipants?.length || 0 }}
+                </button>
+                <button type="button" class="btn btn-outline-secondary">
+                    <fa-icon [icon]="faUserPlus"></fa-icon>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

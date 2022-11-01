@@ -1,6 +1,5 @@
 import { Component, EventEmitter, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 
 export interface ChannelFormData {
     name?: string;
@@ -28,10 +27,6 @@ export class ChannelFormComponent implements OnInit, OnChanges {
     @Output() channelTypeChanged: EventEmitter<ChannelType> = new EventEmitter<ChannelType>();
 
     form: FormGroup;
-
-    // icons
-    faHashtag = faHashtag;
-    faLock = faLock;
 
     constructor(private fb: FormBuilder) {}
 

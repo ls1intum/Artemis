@@ -3,6 +3,7 @@ import { faChevronRight, faHashtag, faLock, faMessage } from '@fortawesome/free-
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationType } from 'app/shared/metis/metis.util';
 import { MessagingService } from 'app/shared/metis/messaging.service';
+import { ConversationService } from 'app/shared/metis/conversation.service';
 
 @Component({
     selector: 'jhi-sidebar-section',
@@ -31,25 +32,10 @@ export class SidebarSectionComponent {
     // icon imports
     faChevronRight = faChevronRight;
     faMessage = faMessage;
-    faHashtag = faHashtag;
-    faLock = faLock;
 
-    constructor(protected courseMessagesService: MessagingService) {}
+    constructor(protected courseMessagesService: MessagingService, public conversationService: ConversationService) {}
 
     conversationsTrackByFn = (index: number, conversation: Conversation): number => conversation.id!;
-
-    getNameOfConversation(conversation: Conversation): string {
-        if (conversation.type === ConversationType.CHANNEL) {
-            return conversation.name ?? '';
-        } else if (conversation.type === ConversationType.DIRECT) {
-            const participant = conversation.conversationParticipants!.find(
-                (conversationParticipants) => conversationParticipants.user.id !== this.courseMessagesService.userId,
-            )!.user;
-            return participant.lastName ? `${participant.firstName} ${participant.lastName}` : participant.firstName!;
-        } else {
-            return '';
-        }
-    }
 
     isConversationUnread(conversation: Conversation): boolean {
         const conversationParticipant = conversation.conversationParticipants!.find(

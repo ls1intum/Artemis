@@ -4,6 +4,10 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
+import { ConversationType } from 'app/shared/metis/metis.util';
 
 type EntityResponseType = HttpResponse<Conversation>;
 type EntityArrayResponseType = HttpResponse<Conversation[]>;
@@ -12,7 +16,37 @@ type EntityArrayResponseType = HttpResponse<Conversation[]>;
 export class ConversationService {
     public resourceUrl = SERVER_API_URL + '/api/courses/';
 
-    constructor(protected http: HttpClient) {}
+    constructor(protected http: HttpClient, protected translationService: TranslateService, protected accountService: AccountService) {}
+
+    getNameOfConversation(conversation: Conversation): string {
+        if (!conversation) {
+            return '';
+        }
+        const getParticipantName = (participant: ConversationParticipant) => {
+            return participant.user.lastName ? `${participant.user.firstName} ${participant.user.lastName}` : participant.user.firstName!;
+        };
+
+        if (conversation.type === ConversationType.CHANNEL) {
+            return conversation.name ?? '';
+        } else if (conversation.type === ConversationType.DIRECT) {
+            const userId = this.accountService.userIdentity?.id || 0;
+            const participants = conversation.conversationParticipants?.filter((participant) => participant.user?.id !== userId);
+            if (!participants || participants.length === 0) {
+                return '';
+            } else if (participants?.length === 1) {
+                return getParticipantName(participants[0]);
+            } else if (participants?.length === 2) {
+                return `${getParticipantName(participants[0])}, ${getParticipantName(participants[1])}`;
+            } else {
+                return (
+                    `${getParticipantName(participants[0])}, ${getParticipantName(participants[1])}, ` +
+                    this.translationService.instant('artemisApp.messages.conversation.others', { count: participants.length - 2 })
+                );
+            }
+        } else {
+            return '';
+        }
+    }
 
     /**
      * creates a conversation

@@ -14,6 +14,8 @@ import { ChannelsOverviewDialogComponent } from './channels/channels-overview-di
 import { ChannelItemComponent } from './channels/channels-overview-dialog/channel-item/channel-item.component';
 import { ChannelFormComponent } from './channels/channel-form/channel-form.component';
 import { ChannelsCreateDialogComponent } from './channels/channels-create-dialog/channels-create-dialog.component';
+import { ConversationHeaderComponent } from './conversation-header/conversation-header.component';
+import { ChannelIconComponent } from './channels/channel-icon/channel-icon.component';
 
 const routes: Routes = [
     {
@@ -38,6 +40,8 @@ const routes: Routes = [
         ChannelItemComponent,
         ChannelFormComponent,
         ChannelsCreateDialogComponent,
+        ConversationHeaderComponent,
+        ChannelIconComponent,
     ],
 })
 export class CourseMessagesModule {}

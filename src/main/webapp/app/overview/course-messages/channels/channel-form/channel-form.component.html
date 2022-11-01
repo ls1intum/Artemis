@@ -6,8 +6,7 @@
                 <label class="required" for="name">{{ 'artemisApp.forms.channelForm.nameInput.label' | artemisTranslate }}</label>
                 <div class="input-group">
                     <span class="input-group-text">
-                        <fa-icon *ngIf="isPublicControl?.value === true" [icon]="faHashtag" size="xs"></fa-icon>
-                        <fa-icon *ngIf="isPublicControl?.value === false" [icon]="faLock" size="xs"></fa-icon>
+                        <jhi-channel-icon [isPublic]="isPublicControl?.value"></jhi-channel-icon>
                     </span>
                     <input
                         type="text"
