@@ -111,7 +111,7 @@ public class ProgrammingExerciseRepositoryService {
         final Path templatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()).resolve(repositoryType.getName())
                 .resolve(ALL_FILES_GLOB);
 
-        Resource[] resources = resourceLoaderService.getResources(templatePath.toString());
+        Resource[] resources = resourceLoaderService.getResources(templatePath);
         Path prefix = Path.of(programmingLanguage, repositoryType.getName());
 
         Resource[] projectTypeResources = null;
@@ -126,7 +126,7 @@ public class ProgrammingExerciseRepositoryService {
             final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(repositoryType.getName()).resolve(ALL_FILES_GLOB);
 
             final Path projectTypeSpecificPrefix = generalProjectTypePrefix.resolve(repositoryType.getName());
-            final Resource[] projectTypeSpecificResources = resourceLoaderService.getResources(projectTypeTemplatePath.toString());
+            final Resource[] projectTypeSpecificResources = resourceLoaderService.getResources(projectTypeTemplatePath);
 
             if (ProjectType.XCODE.equals(projectType)) {
                 // For Xcode, we don't share source code, so we only copy files once
@@ -284,7 +284,7 @@ public class ProgrammingExerciseRepositoryService {
         }
         projectTemplatePath = projectTemplatePath.resolve("projectTemplate").resolve(ALL_FILES_GLOB);
 
-        final Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath.toString());
+        final Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
         // keep the folder structure
         fileService.copyResources(projectTemplate, "projectTemplate", repoLocalPath.toString(), true);
 
@@ -326,10 +326,11 @@ public class ProgrammingExerciseRepositoryService {
         final Path projectTypeProjectTemplatePath = projectTypeTemplatePath.resolve("projectTemplate").resolve(ALL_FILES_GLOB);
 
         try {
-            final Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath.toString());
+            final Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
             fileService.copyResources(projectTypeProjectTemplate, resources.projectTypePrefix.toString(), repoLocalPath.toString(), false);
         }
-        catch (FileNotFoundException ignored) {
+        catch (FileNotFoundException fileNotFoundException) {
+            log.debug("Could not copy resource to template", fileNotFoundException);
         }
     }
 
@@ -347,7 +348,7 @@ public class ProgrammingExerciseRepositoryService {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
         final Path testFilePath = templatePath.resolve(TEST_FILES_PATH).resolve(ALL_FILES_GLOB);
-        final Resource[] testFileResources = resourceLoaderService.getResources(testFilePath.toString());
+        final Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
         final String packagePath = repoLocalPath.resolve("test").resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
 
         sectionsMap.put("non-sequential", true);
@@ -372,7 +373,7 @@ public class ProgrammingExerciseRepositoryService {
         // Copy static code analysis config files
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
             final Path staticCodeAnalysisConfigPath = templatePath.resolve("staticCodeAnalysisConfig").resolve(ALL_FILES_GLOB);
-            final Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath.toString());
+            final Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
             fileService.copyResources(staticCodeAnalysisResources, resources.prefix.toString(), repoLocalPath.toString(), true);
         }
     }
@@ -384,7 +385,7 @@ public class ProgrammingExerciseRepositoryService {
                 .resolve("test");
 
         try {
-            final Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath.toString());
+            final Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
             // filter non-existing resources to avoid exceptions
             final List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
             for (Resource resource : projectTypeTestFileResources) {
@@ -397,7 +398,8 @@ public class ProgrammingExerciseRepositoryService {
                 fileService.copyResources(existingProjectTypeTestFileResources.toArray(new Resource[] {}), resources.projectTypePrefix.toString(), packagePath, false);
             }
         }
-        catch (FileNotFoundException ignored) {
+        catch (FileNotFoundException fileNotFoundException) {
+            log.debug("Could not copy resource to template", fileNotFoundException);
         }
     }
 
@@ -438,7 +440,7 @@ public class ProgrammingExerciseRepositoryService {
             if (projectTemplatePath.resolve(stagePomXmlName).toFile().exists()) {
                 stagePomXmlPath = projectTemplatePath.resolve(stagePomXmlName);
             }
-            stagePomXml = resourceLoaderService.getResource(stagePomXmlPath.toString());
+            stagePomXml = resourceLoaderService.getResource(stagePomXmlPath);
         }
 
         // This is done to prepare for a feature where instructors/tas can add multiple build stages.
@@ -451,7 +453,7 @@ public class ProgrammingExerciseRepositoryService {
             Files.createDirectory(buildStagePath);
 
             Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStage).resolve(ALL_FILES_GLOB);
-            Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath.toString());
+            Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
 
             Files.createDirectory(buildStagePath.toAbsolutePath().resolve("test"));
             Files.createDirectory(buildStagePath.toAbsolutePath().resolve("test").resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER));
@@ -469,10 +471,11 @@ public class ProgrammingExerciseRepositoryService {
             if (projectType != null) {
                 buildStageResourcesPath = projectTemplatePath.resolve(TEST_FILES_PATH).resolve(buildStage).resolve(ALL_FILES_GLOB);
                 try {
-                    buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath.toString());
+                    buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
                     fileService.copyResources(buildStageResources, resources.prefix.toString(), packagePath, false);
                 }
-                catch (FileNotFoundException ignored) {
+                catch (FileNotFoundException fileNotFoundException) {
+                    log.debug("Could not copy resource to template", fileNotFoundException);
                 }
             }
         }

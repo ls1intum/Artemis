@@ -35,6 +35,23 @@ public class ResourceLoaderService {
     }
 
     /**
+     * Loads the resource from the specified path.
+     * <p>
+     * Only relative paths are allowed.
+     *
+     * @param path A relative path to a resource.
+     * @return The resource located by the specified path.
+     * @throws IllegalArgumentException Thrown in case an absolute path was given.
+     */
+    public Resource getResource(final Path path) throws IllegalArgumentException {
+        if (path.isAbsolute()) {
+            throw new IllegalArgumentException("Cannot load resources from absolute paths!");
+        }
+
+        return getResource(path.toString());
+    }
+
+    /**
      * Load the resource from the specified path. The path MUST NOT start with a '/', it is appended automatically if needed.
      * File will be loaded from the relative path, if it exists, from the classpath otherwise.
      * @param path the path to load the file from. Must not start with a '/'.
@@ -62,6 +79,23 @@ public class ResourceLoaderService {
      */
     public Resource getResource(String... pathSegments) {
         return getResource(StringUtils.join(pathSegments, File.separator));
+    }
+
+    /**
+     * Loads the resources from the specified path.
+     * <p>
+     * Only relative paths are allowed.
+     *
+     * @param path A relative path to a resource.
+     * @return The resources located by the specified path.
+     * @throws IllegalArgumentException Thrown in case an absolute path was given.
+     */
+    public Resource[] getResources(final Path path) throws IllegalArgumentException {
+        if (path.isAbsolute()) {
+            throw new IllegalArgumentException("Cannot load resources from absolute paths!");
+        }
+
+        return getResources(path.toString());
     }
 
     /**

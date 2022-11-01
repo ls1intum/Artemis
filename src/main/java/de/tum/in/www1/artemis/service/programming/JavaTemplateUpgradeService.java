@@ -136,14 +136,14 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         final Path programmingLanguageTemplate = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(exercise.getProgrammingLanguage());
         final Path templatePomPath = programmingLanguageTemplate.resolve(filePattern);
 
-        Resource[] templatePoms = resourceLoaderService.getResources(templatePomPath.toString());
+        Resource[] templatePoms = resourceLoaderService.getResources(templatePomPath);
 
         // Get project type specific template resources
         if (exercise.getProjectType() != null) {
             final Path projectTypeTemplate = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(exercise.getProgrammingLanguage(), exercise.getProjectType());
             final Path projectTypePomPath = projectTypeTemplate.resolve(filePattern);
 
-            final Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypePomPath.toString());
+            final Resource[] projectTypePoms = resourceLoaderService.getResources(projectTypePomPath);
 
             // Prefer project type specific resources
             templatePoms = projectTypePoms.length > 0 ? projectTypePoms : templatePoms;
