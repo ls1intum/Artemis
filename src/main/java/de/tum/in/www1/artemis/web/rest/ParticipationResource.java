@@ -341,7 +341,7 @@ public class ParticipationResource {
             return participation.isTestRun() == exerciseDateService.isAfterDueDate(participation);
         }
         else {
-            return programmingExercise.getDueDate() == null && now().isBefore(programmingExercise.getDueDate());
+            return programmingExercise.getDueDate() == null || now().isBefore(programmingExercise.getDueDate());
         }
     }
 
