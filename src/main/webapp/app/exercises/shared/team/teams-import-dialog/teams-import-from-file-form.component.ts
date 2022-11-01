@@ -2,8 +2,7 @@ import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/cor
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
-import { StudentWithTeam } from 'app/entities/team.model';
-import { Team } from 'app/entities/team.model';
+import { StudentWithTeam, Team } from 'app/entities/team.model';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { parse } from 'papaparse';
 

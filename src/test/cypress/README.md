@@ -38,7 +38,7 @@ For `cypress.json`:
 * `baseUrl`: The url pointing to the test environment here (make sure that there is no trailing slash)
 
 For `cypress.env.json`:
-* `username`: The username template (as described in the [pre-created users section](#pre-created-users))
+* `username`: The username template (as described in the [prepared users section](#prepared-users))
 * `password`: The password template
 * `adminUsername`: The admin username (no template)
 * `adminPassword`: The admin password (no template)
