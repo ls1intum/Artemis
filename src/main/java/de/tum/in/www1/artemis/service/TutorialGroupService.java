@@ -7,6 +7,10 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+import javax.persistence.Persistence;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -21,6 +25,8 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistratio
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupImportErrors;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
 
@@ -37,13 +43,17 @@ public class TutorialGroupService {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            CourseRepository courseRepository, UserRepository userRepository, TutorialGroupRepository tutorialGroupRepository) {
+            CourseRepository courseRepository, UserRepository userRepository, TutorialGroupRepository tutorialGroupRepository,
+            AuthorizationCheckService authorizationCheckService) {
         this.singleUserNotificationService = singleUserNotificationService;
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -329,6 +339,89 @@ public class TutorialGroupService {
 
     private Set<User> findUsersByLogins(Set<String> logins, String groupName) {
         return new HashSet<>(userRepository.findAllByLoginsInGroup(groupName, logins));
+
+    }
+
+    /**
+     * Get all tutorial groups for a course, including setting the transient properties for the given user
+     *
+     * @param course The course for which the tutorial groups should be retrieved.
+     * @param user   The user for whom to set the transient properties of the tutorial groups.
+     * @return A list of tutorial groups for the given course with the transient properties set for the given user.
+     */
+    public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user) {
+        Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(course.getId());
+        tutorialGroups.forEach(tutorialGroup -> tutorialGroup.setTransientPropertiesForUser(user));
+        tutorialGroups.forEach(tutorialGroup -> {
+            if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+                tutorialGroup.hidePrivacySensitiveInformation();
+            }
+        });
+        return tutorialGroups;
+    }
+
+    /**
+     * Get one tutorial group of a course, including setting the transient properties for the given user
+     *
+     * @param tutorialGroupId The id of the tutorial group to retrieve.
+     * @param user            The user for whom to set the transient properties of the tutorial group.
+     * @param course          The course for which the tutorial group should be retrieved.
+     * @return The tutorial group of the course with the the transient properties set for the given user.
+     */
+    public TutorialGroup getOneOfCourse(@NotNull Course course, @NotNull User user, @NotNull Long tutorialGroupId) {
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
+        if (!course.equals(tutorialGroup.getCourse())) {
+            throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial group", "tutorialGroup", "courseIdMismatch");
+        }
+        tutorialGroup.setTransientPropertiesForUser(user);
+        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+            tutorialGroup.hidePrivacySensitiveInformation();
+        }
+        return tutorialGroup;
+    }
+
+    /**
+     * Determines if a user is allowed to see private information about a tutorial group such as the list of registered students
+     *
+     * @param tutorialGroup the tutorial group for which to check permission
+     * @param user          the user for which to check permission
+     * @return true if the user is allowed, false otherwise
+     */
+    public boolean isAllowedToSeePrivateTutorialGroupInformation(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
+        var persistenceUtil = Persistence.getPersistenceUtil();
+        if (user == null || !persistenceUtil.isLoaded(user, "authorities") || !persistenceUtil.isLoaded(user, "groups") || user.getGroups() == null
+                || user.getAuthorities() == null) {
+            user = userRepository.getUserWithGroupsAndAuthorities();
+        }
+        if (authorizationCheckService.isAdmin(user)) {
+            return true;
+        }
+
+        var courseInitialized = persistenceUtil.isLoaded(tutorialGroup, "course");
+        var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroup, "teachingAssistant");
+
+        if (!courseInitialized || !teachingAssistantInitialized || tutorialGroup.getCourse() == null || tutorialGroup.getTeachingAssistant() == null) {
+            tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndCourseElseThrow(tutorialGroup.getId());
+        }
+
+        Course course = tutorialGroup.getCourse();
+        if (authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
+            return true;
+        }
+        return (tutorialGroup.getTeachingAssistant() != null && tutorialGroup.getTeachingAssistant().equals(user));
+    }
+
+    /**
+     * Checks if a user is allowed to change the registrations of a tutorial group
+     *
+     * @param tutorialGroup the tutorial group for which to check permission
+     * @param user          the user for which to check permission
+     */
+    public void isAllowedToChangeRegistrationsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
+        // ToDo: Clarify if this is the correct permission check
+        if (!isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+            throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
+        }
     }
 
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {
@@ -336,4 +429,5 @@ public class TutorialGroupService {
                 .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDto.getLogin()));
         return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
     }
+
 }

@@ -8,7 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { faFile, faPencilAlt, faPlus, faPuzzlePiece, faTimes, faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { Subject } from 'rxjs';
 
