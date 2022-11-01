@@ -219,6 +219,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     breadcrumbTranslation = {
         new: 'global.generic.create',
         create: 'global.generic.create',
+        start: 'global.generic.start',
         edit: 'global.generic.edit',
         audits: 'audits.title',
         configuration: 'configuration.title',
@@ -307,11 +308,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
         plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
         code_hint_management: 'artemisApp.codeHint.management.title',
         tutorial_groups_management: 'artemisApp.pages.tutorialGroupsManagement.title',
+        tutorial_groups: 'artemisApp.breadcrumb.title',
         registered_students: 'artemisApp.pages.registeredStudents.title',
     };
 
     studentPathBreadcrumbTranslations = {
         exams: 'artemisApp.courseOverview.menu.exams',
+        test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
         learning_goals: 'artemisApp.courseOverview.menu.learningGoals',
@@ -380,6 +383,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (isStudentPath) {
             switch (this.lastRouteUrlSegment) {
                 case 'code-editor':
+                case 'test-exam':
                 case 'participate':
                     this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
                     return;
@@ -439,7 +443,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'organization-management':
                 this.addResolvedTitleAsCrumb(EntityType.ORGANIZATION, [Number(segment)], currentPath, segment);
                 break;
-            case 'tutorial-groups-management':
+            case 'tutorial-groups':
                 this.addResolvedTitleAsCrumb(EntityType.TUTORIAL_GROUP, [Number(segment)], currentPath, segment);
                 break;
             case 'import':
@@ -504,6 +508,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'mc-question-statistic':
             case 'dnd-question-statistic':
             case 'sa-question-statistic':
+            case 'test-exam':
             case 'participate':
                 break;
             case 'example-submissions':

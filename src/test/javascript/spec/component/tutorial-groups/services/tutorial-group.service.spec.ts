@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -70,7 +70,7 @@ describe('TutorialGroupService', () => {
         const expected = { ...returnedFromService };
 
         service
-            .getAllOfCourse(1)
+            .getAllForCourse(1)
             .pipe(
                 take(1),
                 map((resp) => resp.body),

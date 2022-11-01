@@ -2,7 +2,7 @@ import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/m
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { EntityResponseType, FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
-import { fileUploadExercise, MockFileUploadExerciseService } from '../helpers/mocks/service/mock-file-upload-exercise.service';
+import { MockFileUploadExerciseService, fileUploadExercise } from '../helpers/mocks/service/mock-file-upload-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../helpers/mocks/service/mock-course-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';

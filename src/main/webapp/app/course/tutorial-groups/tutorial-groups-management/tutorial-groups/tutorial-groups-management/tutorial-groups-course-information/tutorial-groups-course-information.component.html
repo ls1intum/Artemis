@@ -1,0 +1,10 @@
+<jhi-side-panel [panelHeader]="'artemisApp.pages.courseTutorialGroupOverview.sidePanel.header' | artemisTranslate">
+    <div class="row mb-1">
+        <div class="col-8">{{ 'artemisApp.pages.courseTutorialGroupOverview.sidePanel.numberOfGroups' | artemisTranslate }}</div>
+        <div class="col-4">{{ tutorialGroups ? tutorialGroups.length : 0 }}</div>
+    </div>
+    <div class="row mb-1">
+        <div class="col-8">{{ 'artemisApp.pages.courseTutorialGroupOverview.sidePanel.numberOfRegistrations' | artemisTranslate }}</div>
+        <div class="col-4">{{ totalNumberOfRegistrations }}</div>
+    </div>
+</jhi-side-panel>
