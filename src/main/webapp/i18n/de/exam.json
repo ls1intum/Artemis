@@ -55,14 +55,14 @@
                     "yourPoints": "Deine Punkte",
                     "maxPoints": "Erreichbare Punkte",
                     "maxBonus": "Erreichbare Bonuspunkte",
-                    "youAchievedWithBonus": "Du hast {{achievedPoints}} Punkte von {{maxPoints}} möglichen Punkten (einschließlich Bonuspunkten) erreicht.",
-                    "youAchieved": "Du hast {{achievedPoints}} von möglichen {{normalPoints}} Punkten",
+                    "youAchievedWithBonus": "Du hast {{achievedPoints}} Punkte von {{normalPoints}} möglichen Punkten (einschließlich Bonuspunkten) erreicht.",
+                    "youAchieved": "Du hast {{achievedPoints}} von möglichen {{normalPoints}} Punkten.",
                     "youAchievedFromBonus": {
-                        "GRADES_CONTINUOUS": "Du hast einen Notenbonus von {{achievedBonus}} aus {{bonusFromTitle}}",
-                        "GRADES_DISCRETE": "Du hast einen Notenbonus von {{achievedBonus}} Stufe(n) gemäß der Notenskala erhalten, was {{gradePointDifference}} von {{bonusFromTitle}} entspricht",
-                        "POINTS": "Du hast {{achievedBonus}} Bonuspunkte von {{bonusFromTitle}}"
+                        "GRADES_CONTINUOUS": "Du hast einen Notenbonus von {{achievedBonus}} aus {{bonusFromTitle}}.",
+                        "GRADES_DISCRETE": "Du hast einen Notenbonus von {{achievedBonus}} Stufe(n) gemäß der Notenskala erhalten, was {{gradePointDifference}} von {{bonusFromTitle}} entspricht.",
+                        "POINTS": "Du hast {{achievedBonus}} Bonuspunkte von {{bonusFromTitle}}."
                     },
-                    "youAchievedPointsAfterBonus": "Deine endgültigen Punkte sind {{finalPoints}} nach dem Bonus",
+                    "youAchievedPointsAfterBonus": "Deine endgültigen Punkte sind {{finalPoints}} nach dem Bonus.",
                     "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."
                 },
                 "grade": "Note",
