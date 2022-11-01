@@ -1,4 +1,4 @@
-import { ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, Component } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 

@@ -1,5 +1,5 @@
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
-import { TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
@@ -11,7 +11,7 @@ import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
-import { getLatestSubmissionResult, Submission, SubmissionType } from 'app/entities/submission.model';
+import { Submission, SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import dayjs from 'dayjs/esm';
 import { Complaint } from 'app/entities/complaint.model';
 

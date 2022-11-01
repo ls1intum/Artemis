@@ -439,9 +439,7 @@ public class ProgrammingSubmissionResource {
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
-            throw new AccessForbiddenException();
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
 
         // Check if the limit of simultaneously locked submissions has been reached
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -460,12 +458,11 @@ public class ProgrammingSubmissionResource {
             programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
         }
 
-        if (lockSubmission) {
-            Result lockedResult = programmingSubmissionService.lockSubmission(submission, correctionRound);
-            submission = (ProgrammingSubmission) lockedResult.getSubmission();
-        }
-
         if (Objects.nonNull(submission)) {
+            if (lockSubmission) {
+                Result lockedResult = programmingSubmissionService.lockSubmission(submission, correctionRound);
+                submission = (ProgrammingSubmission) lockedResult.getSubmission();
+            }
             submission.getParticipation().setExercise(programmingExercise);
             programmingSubmissionService.hideDetails(submission, user);
             // remove automatic results before sending to client
