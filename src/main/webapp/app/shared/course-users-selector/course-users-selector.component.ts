@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostBinding, Input, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostBinding, Input, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { catchError, map, Observable, of, OperatorFunction } from 'rxjs';
 import { CourseManagementService, RoleGroup } from 'app/course/manage/course-management.service';
@@ -21,6 +21,7 @@ let selectorId = 0;
 @Component({
     selector: 'jhi-course-users-selector',
     templateUrl: './course-users-selector.component.html',
+    styleUrls: ['./course-users-selector.component.scss'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -28,6 +29,8 @@ let selectorId = 0;
             multi: true,
         },
     ],
+    host: { class: 'course-users-selector' },
+    encapsulation: ViewEncapsulation.None,
 })
 export class CourseUsersSelectorComponent implements ControlValueAccessor {
     @Input() disabled = false;
@@ -38,7 +41,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor {
     @HostBinding('attr.id')
     id = 'users-selector' + selectorId++;
     @Input()
-    label = '';
+    label?: string;
     @Input()
     rolesToSearch: RoleGroup[] = ['tutors', 'students', 'instructors', 'editors'];
     @Input()
