@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/complaints/complaint.service';

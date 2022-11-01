@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of, Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';

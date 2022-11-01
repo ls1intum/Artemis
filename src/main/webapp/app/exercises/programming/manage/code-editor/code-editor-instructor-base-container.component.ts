@@ -1,5 +1,5 @@
-import { OnDestroy, OnInit, Component, ViewChild } from '@angular/core';
-import { Observable, Subscription, throwError, of } from 'rxjs';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';

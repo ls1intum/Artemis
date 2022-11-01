@@ -2,7 +2,7 @@ import * as ace from 'brace';
 import { DebugElement } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
