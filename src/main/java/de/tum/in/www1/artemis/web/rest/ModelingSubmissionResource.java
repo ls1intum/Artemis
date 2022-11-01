@@ -95,7 +95,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     /**
      * PUT /exercises/{exerciseId}/modeling-submissions : Updates an existing modeling submission or creates a new one.
      * This function is called by the modeling editor for saving and submitting modeling submissions.
-     * The submit specific handling occurs in the ModelingSubmissionService.handleModelingSubmission() and save() methods.
+     * Submit specific handling occurs in the ModelingSubmissionService.handleModelingSubmission() and save() methods.
      *
      * @param exerciseId         the id of the exercise for which to init a participation
      * @param modelingSubmission the modelingSubmission to update

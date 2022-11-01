@@ -59,7 +59,7 @@ public class ModelingSubmissionService extends SubmissionService {
     /**
      * Get the modeling submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it.
      * Additionally, check if the submission lock limit has been reached.
-     *
+     * <p>
      * In case Compass is supported (and activated), this method also assigns a result with feedback suggestions to the submission
      *
      * @param submissionId     the id of the modeling submission
@@ -154,7 +154,7 @@ public class ModelingSubmissionService extends SubmissionService {
 
     /**
      * retrieves a modeling submission without assessment for the specified correction round and potentially locks the submission
-     *
+     * <p>
      * In case Compass is supported (and activated), this method also assigns a result with feedback suggestions to the submission
      *
      * @param lockSubmission whether the submission should be locked
