@@ -1,6 +1,6 @@
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exam } from 'app/entities/exam.model';
-import { GET, BASE_API } from '../../support/constants';
+import { BASE_API, GET } from '../../support/constants';
 import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
 import dayjs from 'dayjs/esm';

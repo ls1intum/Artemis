@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';

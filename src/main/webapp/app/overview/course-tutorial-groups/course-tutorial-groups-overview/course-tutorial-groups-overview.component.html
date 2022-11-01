@@ -1,0 +1,8 @@
+<div class="row">
+    <div class="col-12">
+        <h2>{{ 'artemisApp.pages.courseTutorialGroupOverview.title' | artemisTranslate }}</h2>
+        <ng-container *ngIf="tutorialGroups && tutorialGroups.length > 0">
+            <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [courseId]="courseId" [tutorialGroupClickHandler]="onTutorialGroupSelected"> </jhi-tutorial-groups-table>
+        </ng-container>
+    </div>
+</div>

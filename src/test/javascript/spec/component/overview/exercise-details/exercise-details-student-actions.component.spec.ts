@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { Subject, of } from 'rxjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -37,7 +37,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let courseExerciseService: CourseExerciseService;
     let profileService: ProfileService;
     let startExerciseStub: jest.SpyInstance;
-    let startPracticeStub: jest.SpyInstance;
     let resumeStub: jest.SpyInstance;
     let getProfileInfoSub: jest.SpyInstance;
 
@@ -90,7 +89,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
 
                 startExerciseStub = jest.spyOn(courseExerciseService, 'startExercise');
-                startPracticeStub = jest.spyOn(courseExerciseService, 'startPractice');
                 resumeStub = jest.spyOn(courseExerciseService, 'resumeProgrammingExercise');
             });
     });
@@ -190,28 +188,23 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         } as ProgrammingExercise;
         const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED, testRun: true } as StudentParticipation;
         const initPart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
-        const participationSubject = new Subject<StudentParticipation>();
 
         comp.exercise = exercise;
 
         fixture.detectChanges();
         tick();
 
-        let startExerciseButton = fixture.debugElement.query(By.css('.start-practice'));
-        expect(startExerciseButton).not.toBeNull();
+        let startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
+        expect(startPracticeButton).not.toBeNull();
 
-        startPracticeStub.mockReturnValue(participationSubject);
-        comp.startPractice();
-        participationSubject.next(inactivePart);
+        comp.exercise.studentParticipations = [inactivePart];
 
         fixture.detectChanges();
         tick();
 
         expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.UNINITIALIZED);
-        expect(startPracticeStub).toHaveBeenCalledOnce();
 
-        comp.exercise.studentParticipations = [];
-        participationSubject.next(initPart);
+        comp.exercise.studentParticipations = [initPart];
 
         fixture.detectChanges();
         tick();
@@ -219,8 +212,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.INITIALIZED);
 
         // Check that button "Start practice" is no longer shown
-        startExerciseButton = fixture.debugElement.query(By.css('.start-practice'));
-        expect(startExerciseButton).toBeNull();
+        startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
+        expect(startPracticeButton).toBeNull();
 
         // Check that button "Clone repository" is shown
         const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));

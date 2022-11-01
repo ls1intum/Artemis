@@ -40,6 +40,17 @@
                     <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="messages" routerLinkActive="active">
                         <b jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</b>
                     </div>
+                    <div
+                        *ngIf="hasTutorialGroups()"
+                        [jhiFeatureToggleHide]="FeatureToggle.TutorialGroups"
+                        jhiOrionFilter
+                        [showInOrionWindow]="false"
+                        class="tab-item tutorial-groups"
+                        routerLink="tutorial-groups"
+                        routerLinkActive="active"
+                    >
+                        <b jhiTranslate="artemisApp.courseOverview.menu.tutorialGroups">Tutorial Groups</b>
+                    </div>
                 </div>
                 <div class="controls">
                     <button class="btn btn-primary btn-md ms-1" (click)="loadCourse(true)" [disabled]="refreshingCourse">

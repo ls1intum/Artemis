@@ -1,4 +1,4 @@
-import { inject, TestBed } from '@angular/core/testing';
+import { TestBed, inject } from '@angular/core/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';

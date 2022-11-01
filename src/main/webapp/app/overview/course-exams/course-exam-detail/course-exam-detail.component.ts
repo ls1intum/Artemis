@@ -1,9 +1,9 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { faPenAlt, faCirclePlay, faMagnifyingGlass, faCalendarDay, faPlay, faUserClock, faBook, faCircleStop } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faCalendarDay, faCirclePlay, faCircleStop, faMagnifyingGlass, faPenAlt, faPlay, faUserClock } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, interval } from 'rxjs';
 
 // Enum to dynamically change the template-content
@@ -69,14 +69,14 @@ export class CourseExamDetailComponent implements OnInit, OnDestroy {
 
     /**
      * navigate to /courses/:courseId/exams/:examId for real exams or
-     * /courses/:courseId/exams/:examId/test-exam/new for test exams
+     * /courses/:courseId/exams/:examId/test-exam/start for test exams
      */
     openExam() {
         if (this.exam.testExam) {
             if (this.examState === ExamState.NO_MORE_ATTEMPTS || this.examState === ExamState.CLOSED) {
                 return;
             }
-            this.router.navigate(['courses', this.course.id, 'exams', this.exam.id, 'test-exam', 'new']);
+            this.router.navigate(['courses', this.course.id, 'exams', this.exam.id, 'test-exam', 'start']);
         } else {
             this.router.navigate(['courses', this.course.id, 'exams', this.exam.id]);
         }

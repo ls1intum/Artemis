@@ -1,0 +1,24 @@
+<div class="alert alert-warning" role="alert" *ngIf="capacityReached">
+    {{ 'artemisApp.pages.registeredStudents.capacityWarning' | artemisTranslate: { capacity: tutorialGroup.capacity } }}
+</div>
+<jhi-course-group
+    [tutorialGroup]="tutorialGroup"
+    [allGroupUsers]="registeredStudents"
+    [courseGroup]="courseGroup"
+    [isLoadingAllGroupUsers]="isLoading"
+    [isAdmin]="isAdmin"
+    [course]="course"
+    [userSearch]="userSearch"
+    [addUserToGroup]="addToGroup"
+    [removeUserFromGroup]="removeFromGroup"
+    [exportFileName]="exportFilename"
+    [handleUsersSizeChange]="handleUsersSizeChange"
+    (importFinish)="loadAll()"
+>
+    <span *ngIf="tutorialGroup">
+        <span>{{ tutorialGroup.title }} - </span>
+        <span *ngIf="filteredUsersSize < registeredStudents.length">{{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"> out of </span> </span
+        >{{ registeredStudents.length }}
+        <span [jhiTranslate]="'artemisApp.course.students'"></span>
+    </span>
+</jhi-course-group>
