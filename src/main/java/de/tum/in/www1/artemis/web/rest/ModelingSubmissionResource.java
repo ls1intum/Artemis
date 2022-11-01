@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.validation.Valid;
@@ -254,15 +255,19 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        var modelingSubmission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode);
+        var submission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode)
+            .orElse(null);
 
-        // needed to show the grading criteria in the assessment view
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        modelingExercise.setGradingCriteria(gradingCriteria);
-        // Make sure the exercise is connected to the participation in the json response
-        modelingSubmission.getParticipation().setExercise(modelingExercise);
-        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
-        return ResponseEntity.ok(modelingSubmission);
+        if (Objects.nonNull(submission)) {
+            // needed to show the grading criteria in the assessment view
+            List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+            modelingExercise.setGradingCriteria(gradingCriteria);
+            // Make sure the exercise is connected to the participation in the json response
+            submission.getParticipation().setExercise(modelingExercise);
+            this.modelingSubmissionService.hideDetails(submission, user);
+        }
+
+        return ResponseEntity.ok(submission);
     }
 
     /**
