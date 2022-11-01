@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { DELETE } from '../../../support/constants';
 import { artemis } from '../../../support/ArtemisTesting';
 import { generateUUID } from '../../../support/utils';
-import { convertCourseAfterMultiPart, PROGRAMMING_EXERCISE_BASE } from '../../../support/requests/CourseManagementRequests';
+import { PROGRAMMING_EXERCISE_BASE, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
 //  Admin account
 const admin = artemis.users.getAdmin();
