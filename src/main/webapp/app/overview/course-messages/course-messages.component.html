@@ -1,14 +1,23 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
     <div class="row mt-2" *ngIf="course">
         <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
-            <jhi-conversation-sidebar [course]="course" (selectConversation)="selectConversation($event)"> </jhi-conversation-sidebar>
+            <jhi-conversation-sidebar
+                [course]="course"
+                [activeConversation]="activeConversation"
+                [conversations]="conversations"
+                [refreshConversations$]="refreshConversations$"
+                (conversationSelected)="onConversationSelected($event)"
+                (channelOverViewModalResult)="onChannelOverViewModalResult($event)"
+                (newConversationCreated)="onNewConversationCreated($event)"
+            >
+            </jhi-conversation-sidebar>
         </div>
 
         <div class="col pe-0 flex-grow-1">
-            <div *ngIf="selectedConversation">
-                <jhi-conversation-header [activeConversation]="selectedConversation" [course]="course"></jhi-conversation-header>
-            </div>
-            <jhi-messages [activeConversation]="selectedConversation" (openThread)="setPostInThread($event)"> </jhi-messages>
+            <ng-container *ngIf="activeConversation">
+                <jhi-conversation-header [activeConversation]="activeConversation!" [course]="course" [refreshConversations$]="refreshConversations$"></jhi-conversation-header>
+                <jhi-messages [activeConversation]="activeConversation!" (openThread)="setPostInThread($event)"> </jhi-messages>
+            </ng-container>
         </div>
         <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
             <jhi-thread-sidebar *ngIf="showPostThread" [activePost]="postInThread" (closePostThread)="showPostThread = false"> </jhi-thread-sidebar>

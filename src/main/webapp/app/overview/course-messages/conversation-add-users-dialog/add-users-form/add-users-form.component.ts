@@ -14,7 +14,7 @@ export interface AddUsersFormData {
 export class AddUsersFormComponent implements OnInit, OnChanges {
     @Output() formSubmitted: EventEmitter<AddUsersFormData> = new EventEmitter<AddUsersFormData>();
     @Input() courseId: number;
-    @Input() maxSelectable = undefined;
+    @Input() maxSelectable?: number = undefined;
 
     formData: AddUsersFormData = {
         selectedUsers: [],

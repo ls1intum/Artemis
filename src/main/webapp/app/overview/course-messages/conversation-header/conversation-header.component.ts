@@ -6,6 +6,7 @@ import { ConversationType } from 'app/shared/metis/metis.util';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-messages/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { from, Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -15,8 +16,9 @@ import { ConversationAddUsersDialogComponent } from 'app/overview/course-message
 export class ConversationHeaderComponent implements OnInit {
     readonly CHANNEL = ConversationType.CHANNEL;
     @Input()
+    refreshConversations$ = new Subject<void>();
+    @Input()
     course: Course;
-
     @Input()
     activeConversation: Conversation;
 
@@ -33,5 +35,8 @@ export class ConversationHeaderComponent implements OnInit {
         const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.conversation = this.activeConversation;
+        from(modalRef.result).subscribe(() => {
+            this.refreshConversations$.next();
+        });
     }
 }

@@ -3,28 +3,41 @@ import { Conversation } from 'app/entities/metis/conversation/conversation.model
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ActivatedRoute, Params } from '@angular/router';
-import { combineLatest } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
+import { Subject, switchMap, take } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { finalize } from 'rxjs/operators';
+import { MessagingService } from 'app/shared/metis/messaging.service';
+import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-course-messages',
     templateUrl: './course-messages.component.html',
-    providers: [MetisService],
+    providers: [MetisService, MessagingService],
 })
 export class CourseMessagesComponent implements OnInit {
+    // ToDo: vielleicht so einen Conversation Action listener machen, der dann die entsprechenden Methoden aufruft
+    refreshConversations$ = new Subject<void>();
+
+    conversations: Conversation[];
+    activeConversation?: Conversation;
+
     isLoading = false;
     course: Course;
-    selectedConversation: Conversation;
+
     postInThread: Post;
     showPostThread = false;
+    constructor(
+        private courseManagementService: CourseManagementService,
+        private activatedRoute: ActivatedRoute,
+        public messagingService: MessagingService,
+        private alertService: AlertService,
+    ) {}
 
-    constructor(protected courseManagementService: CourseManagementService, private activatedRoute: ActivatedRoute) {}
-
-    selectConversation(conversation: Conversation) {
-        this.selectedConversation = conversation;
+    onConversationSelected(conversation: Conversation | undefined) {
+        this.activeConversation = conversation;
     }
 
     setPostInThread(post?: Post) {
@@ -36,26 +49,65 @@ export class CourseMessagesComponent implements OnInit {
         }
     }
 
+    refreshConversations() {
+        this.isLoading = true;
+        return this.messagingService.getConversationsOfUser(this.course?.id!).pipe(finalize(() => (this.isLoading = false)));
+    }
+
     ngOnInit(): void {
         this.isLoading = true;
-        combineLatest({
-            params: this.activatedRoute.parent!.parent!.params,
-            queryParams: this.activatedRoute.parent!.parent!.queryParams,
-        }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
-            const { params } = routeParams;
-            const courseId = params.courseId;
-            this.courseManagementService
-                .findOneForDashboard(courseId)
-                .pipe(
-                    finalize(() => {
-                        this.isLoading = false;
-                    }),
-                )
-                .subscribe((res: HttpResponse<Course>) => {
-                    if (res.body !== undefined) {
-                        this.course = res.body!;
+        this.activatedRoute
+            .parent!.parent!.paramMap.pipe(
+                take(1),
+                switchMap((params) => {
+                    const courseId = Number(params.get('courseId'));
+                    return this.courseManagementService.findOneForDashboard(courseId);
+                }),
+                finalize(() => (this.isLoading = false)),
+            )
+            .subscribe({
+                next: (courseResult) => {
+                    this.course = courseResult.body!;
+                    this.messagingService.getConversationsOfUser(this.course.id!).subscribe(() => {
+                        this.messagingService.conversations.subscribe((conversations: Conversation[]) => {
+                            this.conversations = conversations ?? [];
+                            if (this.conversations.length > 0 && !this.activeConversation) {
+                                // emit the value to fetch conversation posts on post overview tab
+                                // ToDo: Überlegen welche conversation hier ausgewählt werden soll
+                                this.activeConversation = this.conversations.first()!;
+                            }
+                        });
+                    });
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+        this.refreshConversations$.subscribe(() => this.refreshConversations().subscribe());
+    }
+
+    onChannelOverViewModalResult(result: number | number[]) {
+        this.refreshConversations().subscribe({
+            next: () => {
+                if (Array.isArray(result)) {
+                    // result represents array of ids of conversations that were unsubscribed
+                    if (this.activeConversation && result.includes(this.activeConversation.id!)) {
+                        this.activeConversation = undefined;
                     }
-                });
+                } else {
+                    // result represent id of conversation that should be viewed
+                    if (this.activeConversation && result !== this.activeConversation.id) {
+                        this.activeConversation = this.conversations.find((conversation) => conversation.id === result);
+                    }
+                }
+            },
+        });
+    }
+
+    onNewConversationCreated(newConversation: Conversation) {
+        this.messagingService.createConversation(this.course?.id!, newConversation).subscribe({
+            next: (conversation: Conversation) => {
+                this.activeConversation = conversation;
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
     }
 }

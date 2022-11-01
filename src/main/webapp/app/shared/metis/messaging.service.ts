@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { map, Observable, ReplaySubject, Subscription } from 'rxjs';
+import { map, Observable, ReplaySubject } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';

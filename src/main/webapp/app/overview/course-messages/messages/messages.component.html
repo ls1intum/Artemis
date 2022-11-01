@@ -24,7 +24,7 @@
                 <fa-icon size="3x" [icon]="faCircleNotch" [spin]="true"></fa-icon>
             </div>
             <!-- no message exist -->
-            <div *ngIf="!isLoading && totalItems === 0" class="envelope">
+            <div *ngIf="!isLoading && (totalItems === 0 || !conversation)" class="envelope">
                 <fa-icon size="5x" [icon]="faEnvelope"></fa-icon>
             </div>
             <!-- list of messages -->

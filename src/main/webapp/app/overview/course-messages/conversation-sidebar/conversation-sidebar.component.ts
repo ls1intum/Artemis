@@ -1,11 +1,9 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
 import interact from 'interactjs';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
 import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
-import { MessagingService } from 'app/shared/metis/messaging.service';
-import { from, Observable, of, Subscription } from 'rxjs';
+import { from, Observable, of, Subject } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -21,26 +19,36 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-messages/chan
     selector: 'jhi-conversation-sidebar',
     styleUrls: ['./conversation-sidebar.component.scss'],
     templateUrl: './conversation-sidebar.component.html',
-    providers: [MessagingService],
 })
-export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ConversationSidebarComponent implements AfterViewInit {
+    @Input()
+    refreshConversations$ = new Subject<void>();
+
     @Input()
     course?: Course;
 
-    @Output() selectConversation = new EventEmitter<Conversation>();
+    @Output() conversationSelected = new EventEmitter<Conversation | undefined>();
 
-    conversations: Conversation[];
+    @Output() channelOverViewModalResult = new EventEmitter<number | number[]>();
 
+    @Output() newConversationCreated = new EventEmitter<Conversation>();
+
+    @Input()
+    set conversations(conversations: Conversation[]) {
+        this.allConversations = conversations ?? [];
+        this.channelConversations = this.allConversations.filter((conversation) => conversation.type === ConversationType.CHANNEL).sort((a, b) => a.name!.localeCompare(b.name!));
+        this.directConversations = this.allConversations.filter((conversation) => conversation.type === ConversationType.DIRECT);
+    }
+
+    @Input()
+    activeConversation?: Conversation;
+
+    allConversations: Conversation[] = [];
     starredConversations: Conversation[] = [];
     channelConversations: Conversation[] = [];
     directConversations: Conversation[] = [];
 
-    activeConversation?: Conversation;
-
     collapsed: boolean;
-
-    private conversationSubscription: Subscription;
-
     isLoading = false;
     isSearching = false;
     searchFailed = false;
@@ -54,39 +62,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     faConversation = faComments;
     faPlus = faPlus;
 
-    constructor(
-        protected courseMessagesService: MessagingService,
-        private courseManagementService: CourseManagementService,
-        private activatedRoute: ActivatedRoute,
-        private modalService: NgbModal,
-    ) {}
-
-    ngOnInit(): void {
-        if (this.course) {
-            this.courseManagementService.findOneForDashboard(this.course.id!).subscribe((res: HttpResponse<Course>) => {
-                if (res.body !== undefined) {
-                    this.course = res.body!;
-                }
-            });
-            this.courseMessagesService.getConversationsOfUser(this.course.id!).subscribe();
-            this.conversationSubscription = this.courseMessagesService.conversations.subscribe((conversations: Conversation[]) => {
-                this.conversations = conversations ?? [];
-                this.channelConversations = this.conversations
-                    .filter((conversation) => conversation.type === ConversationType.CHANNEL)
-                    .sort((a, b) => a.name!.localeCompare(b.name!));
-                this.directConversations = this.conversations.filter((conversation) => conversation.type === ConversationType.DIRECT);
-
-                // ToDo: Select starred conversations here
-
-                if (this.conversations.length > 0 && !this.activeConversation) {
-                    // emit the value to fetch conversation posts on post overview tab
-                    // ToDo: Überlegen welche conversation hier ausgewählt werden soll
-                    this.activeConversation = this.conversations.first()!;
-                    this.selectConversation.emit(this.activeConversation);
-                }
-            });
-        }
-    }
+    constructor(private courseManagementService: CourseManagementService, private activatedRoute: ActivatedRoute, private modalService: NgbModal) {}
 
     ngAfterViewInit(): void {
         // allows the conversation sidebar to be resized towards the right-hand side
@@ -170,20 +146,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
         modalRef.componentInstance.courseId = this.course?.id!;
 
         from(modalRef.result).subscribe((result: number[] | number) => {
-            this.courseMessagesService.getConversationsOfUser(this.course?.id!).subscribe(() => {
-                if (Array.isArray(result)) {
-                    // result represents array of ids of conversations that were unsubscribed
-                    if (this.activeConversation && result.includes(this.activeConversation.id!)) {
-                        this.activeConversation = undefined;
-                    }
-                } else {
-                    // result represent id of conversation that should be viewed
-                    if (this.activeConversation && result !== this.activeConversation.id) {
-                        this.activeConversation = this.conversations.find((conversation) => conversation.id === result);
-                        this.selectConversation.emit(this.activeConversation);
-                    }
-                }
-            });
+            this.channelOverViewModalResult.emit(result);
         });
     }
 
@@ -201,31 +164,13 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
             this.createConversation(newConversation);
         } else {
             // conversation with the found user already exists, so we select it
-            this.activeConversation = foundConversation;
-            this.selectConversation.emit(foundConversation);
+            this.conversationSelected.emit(foundConversation);
         }
     };
 
     private createConversation(newConversation: Conversation) {
-        this.isTransitioning = true;
-        this.courseMessagesService.createConversation(this.course?.id!, newConversation).subscribe({
-            next: (conversation: Conversation) => {
-                this.isTransitioning = false;
-
-                // select the new conversation
-                this.activeConversation = conversation;
-                this.selectConversation.emit(conversation);
-            },
-            error: () => {
-                this.isTransitioning = false;
-            },
-        });
+        this.newConversationCreated.emit(newConversation);
     }
-
-    ngOnDestroy(): void {
-        this.conversationSubscription?.unsubscribe();
-    }
-
     /**
      * Formats the results in the autocomplete overlay.
      *
@@ -259,7 +204,6 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     }
 
     onConversationSelected($event: Conversation) {
-        this.activeConversation = $event;
-        this.selectConversation.emit($event);
+        this.conversationSelected.emit($event);
     }
 }

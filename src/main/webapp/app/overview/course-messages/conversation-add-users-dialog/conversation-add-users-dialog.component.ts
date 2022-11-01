@@ -7,6 +7,9 @@ import { Course } from 'app/entities/course.model';
 import { Conversation, MAX_MEMBERS_IN_DIRECT_CONVERSATION } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationType } from 'app/shared/metis/metis.util';
 import { ConversationService } from 'app/shared/metis/conversation.service';
+import { finalize } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-conversation-add-users-dialog',
@@ -38,6 +41,16 @@ export class ConversationAddUsersDialogComponent implements OnInit {
 
     private addUsers(usersToAdd: User[]) {
         const userLogins = usersToAdd.map((user) => user.login!);
-        this.conversationService.registerUsers(this.course.id!, this.conversation.id!, userLogins).subscribe();
+        this.conversationService
+            .registerUsers(this.course.id!, this.conversation.id!, userLogins)
+            .pipe(
+                finalize(() => {
+                    this.activeModal.close();
+                }),
+            )
+            .subscribe({
+                next: () => {},
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
     }
 }

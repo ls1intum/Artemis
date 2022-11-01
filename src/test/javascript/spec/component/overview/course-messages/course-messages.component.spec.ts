@@ -30,7 +30,7 @@ describe('CourseMessagesComponent', () => {
     });
 
     it('should trigger selectConversation function on selectConversation event', () => {
-        const selectConversationSpy = jest.spyOn(component, 'selectConversation');
+        const selectConversationSpy = jest.spyOn(component, 'onConversationSelected');
 
         const scrollableDiv = getElement(fixture.debugElement, 'jhi-conversation-sidebar');
         scrollableDiv.dispatchEvent(new Event('selectConversation'));
@@ -39,7 +39,7 @@ describe('CourseMessagesComponent', () => {
     });
 
     it('should update selected conversation correctly', () => {
-        component.selectConversation(conversationBetweenUser1User2);
+        component.onConversationSelected(conversationBetweenUser1User2);
         expect(component.selectedConversation).toEqual(conversationBetweenUser1User2);
     });
 
@@ -51,7 +51,7 @@ describe('CourseMessagesComponent', () => {
     });
 
     it('should display threadSidebarComponent', () => {
-        component.selectConversation(conversationBetweenUser1User2);
+        component.onConversationSelected(conversationBetweenUser1User2);
         component.setPostInThread(directMessageUser1);
 
         fixture.detectChanges();
@@ -65,7 +65,7 @@ describe('CourseMessagesComponent', () => {
     });
 
     it('should close threadSidebarComponent', () => {
-        component.selectConversation(conversationBetweenUser1User2);
+        component.onConversationSelected(conversationBetweenUser1User2);
         component.setPostInThread(directMessageUser1);
 
         fixture.detectChanges();

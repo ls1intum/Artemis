@@ -14,6 +14,7 @@
             <!-- body -->
             <div class="card-body">
                 <div class="user-searchbar">
+                    <!-- ToDo: Refactor using user selector component-->
                     <jhi-data-table
                         [showPageSizeDropdown]="false"
                         entityType="user"
@@ -72,7 +73,7 @@
                     </jhi-sidebar-section>
                 </div>
                 <!-- no conversations -->
-                <div class="conversation-empty" *ngIf="!isLoading && (conversations === undefined || conversations.length === 0)">
+                <div class="conversation-empty" *ngIf="!isLoading && (allConversations === undefined || allConversations.length === 0)">
                     <fa-icon size="3x" [icon]="faConversation"></fa-icon>
                     <h5 class="mb-3 font-weight-bold">{{ 'artemisApp.messages.conversation.notFound' | artemisTranslate }}</h5>
                     <span jhiTranslate="artemisApp.messages.conversation.instructionForNewConversation"></span>
