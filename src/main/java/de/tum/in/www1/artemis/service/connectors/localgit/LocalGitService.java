@@ -20,7 +20,10 @@ import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.RefUpdate;
+import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -493,11 +496,6 @@ public class LocalGitService extends AbstractVersionControlService {
             if (remoteRepositoryRefs.containsKey("HEAD")) {
                 return remoteRepositoryRefs.get("HEAD").getTarget().getName();
             }
-            if (remoteRepositoryRefs.size() == 1) {
-                Map.Entry<String, Ref> firstValue = remoteRepositoryRefs.entrySet().iterator().next();
-                String reference = firstValue.getValue().getTarget().getName();
-                return reference.substring(reference.lastIndexOf("/") + 1);
-            }
 
             throw new LocalGitException("Cannot get default branch of repository " + repositoryUrl.folderNameForRepositoryUrl() + ". ls-remote does not return a HEAD reference.");
         } catch (Exception e) {
@@ -641,6 +639,10 @@ public class LocalGitService extends AbstractVersionControlService {
 
             // Create a bare local repository with JGit
             Git git = Git.init().setDirectory(remoteDir).setBare(true).call();
+            Repository repository = git.getRepository();
+            RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
+            refUpdate.setForceUpdate(true);
+            refUpdate.link("refs/heads/" + defaultBranch);
             git.close();
         }
         catch (GitAPIException | IOException e) {
