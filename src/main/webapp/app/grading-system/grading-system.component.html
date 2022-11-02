@@ -1,7 +1,10 @@
-<h2 style="margin-bottom: 0">
-    {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
-    {{ isExam ? examId : courseId }}
-</h2>
+<div class="d-flex align-items-center">
+    <h2 style="margin-bottom: 0">
+        {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
+        {{ isExam ? examId : courseId }}
+    </h2>
+    <jhi-documentation-button></jhi-documentation-button>
+</div>
 <div class="tab-bar" id="tab-bar">
     <div class="col-12 no-indent">
         <div>

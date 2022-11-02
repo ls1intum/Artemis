@@ -1,15 +1,20 @@
 <div class="row" *ngIf="quizExercise">
     <div class="col-lg-12">
-        <h4 class="title">
-            <h4 *ngIf="!quizExercise.id" id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.quizExercise.home.createLabel">Create a new Quiz Exercise</h4>
-            <h4 *ngIf="!isImport && quizExercise.id" id="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.quizExercise.home.editLabel">Edit Quiz Exercise</h4>
-            <h4 *ngIf="isImport" id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.quizExercise.home.importLabel">Import Quiz Exercise</h4>
-            <span class="badge bg-info align-text-top float-end">
-                <span jhiTranslate="artemisApp.quizExercise.maxScore"></span>&nbsp;
-                <span class="badge max-score">{{ calculateMaxExerciseScore() }}</span>
-                <span class="sr-only" jhiTranslate="artemisApp.quizExercise.maxScore"></span>
-            </span>
-        </h4>
+        <div class="title">
+            <div class="col-sm d-flex align-items-center">
+                <h4 *ngIf="!quizExercise.id" id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.quizExercise.home.createLabel">Create a new Quiz Exercise</h4>
+                <h4 *ngIf="!isImport && quizExercise.id" id="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.quizExercise.home.editLabel">Edit Quiz Exercise</h4>
+                <h4 *ngIf="isImport" id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.quizExercise.home.importLabel">Import Quiz Exercise</h4>
+                <jhi-documentation-button></jhi-documentation-button>
+            </div>
+            <h4>
+                <span class="badge bg-info align-text-top float-end">
+                    <span jhiTranslate="artemisApp.quizExercise.maxScore"></span>&nbsp;
+                    <span class="badge max-score">{{ calculateMaxExerciseScore() }}</span>
+                    <span class="sr-only" jhiTranslate="artemisApp.quizExercise.maxScore"></span>
+                </span>
+            </h4>
+        </div>
         <div *ngIf="hasSavedQuizStarted">
             <div class="quiz-is-active-background"></div>
             <div class="quiz-is-active-overlay alert alert-warning">

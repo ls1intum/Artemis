@@ -1,4 +1,7 @@
-<h3 jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</h3>
+<div class="d-flex align-items-center">
+    <h3 jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</h3>
+    <jhi-documentation-button></jhi-documentation-button>
+</div>
 <h4 jhiTranslate="artemisApp.plagiarism.cases.pageSubtitle"></h4>
 
 <div *ngIf="plagiarismCases && plagiarismCases.length > 0; else noPlagiarismCases">

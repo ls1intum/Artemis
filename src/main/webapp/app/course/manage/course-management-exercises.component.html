@@ -1,6 +1,6 @@
 <ng-container *ngIf="course">
     <div class="row">
-        <div class="col">
+        <div class="col d-flex align-items-center">
             <h3>
                 <span>
                     {{ course.title }}
@@ -8,6 +8,7 @@
                     {{ 'artemisApp.course.exercises' | artemisTranslate }}
                 </span>
             </h3>
+            <jhi-documentation-button></jhi-documentation-button>
         </div>
         <div class="col text-end align-self-center">
             <button id="toggleSearchButton" class="btn btn-primary" type="button" (click)="toggleSearch()">
