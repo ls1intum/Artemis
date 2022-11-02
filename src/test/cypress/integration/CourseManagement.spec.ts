@@ -139,6 +139,8 @@ describe('Course management', () => {
                             .then((createCourseResponse) => {
                                 courseId = createCourseResponse.body!.id!;
                                 cy.visit(`/course-management/${courseId}/edit`).then(() => {
+                                    cy.get(`#courseImageInput${courseId}`).should('exist');
+                                    cy.get('#delete-course-icon').should('exist');
                                     cy.get('#delete-course-icon').click();
                                     cy.get('#delete-course-icon').should('not.exist');
                                     cy.get('.no-image').should('exist');
