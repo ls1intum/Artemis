@@ -45,6 +45,7 @@ import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,8 +64,13 @@ public class GitService {
 
     private final Logger log = LoggerFactory.getLogger(GitService.class);
 
+    private final Environment environment;
+
     @Value("${artemis.version-control.url}")
     private URL gitUrl;
+
+    @Value("${artemis.local-git-server-path}")
+    private String localGitPath;
 
     @Value("${artemis.version-control.user}")
     private String gitUser;
@@ -114,11 +120,12 @@ public class GitService {
 
     private static final String REMOTE_NAME = "origin";
 
-    public GitService(FileService fileService, ZipFileService zipFileService) {
+    public GitService(Environment environment, FileService fileService, ZipFileService zipFileService) {
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
         log.info("Default Charset in Use={}", new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
+        this.environment = environment;
         this.fileService = fileService;
         this.zipFileService = zipFileService;
     }
@@ -256,6 +263,11 @@ public class GitService {
     }
 
     private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
+        // If the "localgit" profile is active the repository is cloned from the folder defined in artemis.local-git-server-path.
+        if (Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+            String vcsRepositoryFolderPath = vcsRepositoryUrl.folderNameForRepositoryUrl();
+            return new URI(localGitPath + vcsRepositoryFolderPath);
+        }
         return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURI();
     }
 
@@ -412,6 +424,7 @@ public class GitService {
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl sourceRepoUrl, VcsRepositoryUrl targetRepoUrl, Path localPath, boolean pullOnGet, String defaultBranch)
             throws GitAPIException, GitException, InvalidPathException {
+
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUrl differs from the targetRepoUrl, we attempt to clone the source repo into the target directory
         Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl, defaultBranch);
@@ -435,6 +448,7 @@ public class GitService {
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
+
                 Git git = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
                 git.close();
             }
@@ -734,10 +748,14 @@ public class GitService {
             log.warn("Cannot set remoteUrl because it is null!");
             return;
         }
-        // Note: we reset the remote url, because it might have changed from https to ssh or ssh to https
+        // Note: we reset the remote url, because it might have changed from https to ssh or ssh to https.
+        // When using the "localgit" profile it might have also changed because the folder the repository is saved at locally is set as the remote url during cloning.
         try {
             var existingRemoteUrl = repo.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url");
             var newRemoteUrl = getGitUriAsString(repo.getRemoteRepositoryUrl());
+//            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+//                newRemoteUrl = repo.getRemoteRepositoryUrl().toString();
+//            }
             if (!Objects.equals(newRemoteUrl, existingRemoteUrl)) {
                 log.info("Replace existing remote url {} with new remote url {}", existingRemoteUrl, newRemoteUrl);
                 repo.getConfig().setString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url", newRemoteUrl);

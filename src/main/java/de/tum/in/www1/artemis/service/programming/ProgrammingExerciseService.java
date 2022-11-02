@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -62,6 +63,8 @@ public class ProgrammingExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
+    private final Environment environment;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final FileService fileService;
@@ -104,15 +107,16 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
 
-    public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
-            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
-            InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository) {
+    public ProgrammingExerciseService(Environment environment, ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
+                                      Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+                                      TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+                                      SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
+                                      ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+                                      ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
+                                      InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+                                      ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
+                                      ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository) {
+        this.environment = environment;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -167,6 +171,7 @@ public class ProgrammingExerciseService {
         final User exerciseCreator = userRepository.getUser();
 
         programmingExercise.setBranch(versionControlService.get().getDefaultBranchOfArtemis());
+
         createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
         setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
@@ -181,16 +186,24 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        setupBuildPlansForNewExercise(programmingExercise);
+        // The local git repository (profile "localgit") cannot be integrated with Bamboo and Jenkins (e.g. to automatically trigger build plans on push).
+        // We will only allow "localgit" together with some "localci" profile that is to be implemented. In the meantime build plans are not set up at all when "localgit" is used.
+        // TODO: Remove check once "localci" is implemented.
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+            setupBuildPlansForNewExercise(programmingExercise);
+        }
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
-        // The creation of the webhooks must occur after the initial push, because the participation is
-        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
-        versionControlService.get().addWebHooksForExercise(programmingExercise);
+        // Webhooks must not be created for the local git server. Notifying Artemis on push is handled in the JGitPushFilter.
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+            // The creation of the webhooks must occur after the initial push, because the participation is
+            // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
+            versionControlService.get().addWebHooksForExercise(programmingExercise);
+        }
         scheduleOperations(programmingExercise.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(programmingExercise);
         return programmingExercise;
@@ -1031,9 +1044,12 @@ public class ProgrammingExerciseService {
             var errorMessageVcs = "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!";
             throw new BadRequestAlertException(errorMessageVcs, "ProgrammingExercise", "vcsProjectExists");
         }
-        String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
-        if (errorMessageCis != null) {
-            throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
+        // TODO: Remove check when local CI is implemented.
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+            String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
+            if (errorMessageCis != null) {
+                throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
+            }
         }
         // means the project does not exist in version control server and does not exist in continuous integration server
     }

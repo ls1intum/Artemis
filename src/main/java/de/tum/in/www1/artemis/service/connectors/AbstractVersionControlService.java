@@ -42,7 +42,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     private final ApplicationContext applicationContext;
 
-    private final GitService gitService;
+    protected final GitService gitService;
 
     protected final UrlService urlService;
 

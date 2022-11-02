@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -21,19 +20,15 @@ import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.lib.Ref;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
@@ -70,12 +65,10 @@ public class LocalGitService extends AbstractVersionControlService {
     private String adminGroupName;
 
     @Value("${artemis.version-control.url}")
-    private URL bitbucketServerUrl;
+    private URL localGitServerUrl;
 
     @Value("${artemis.local-git-server-path}")
     private String localGitPath;
-
-    private String serverBaseRoute = "http://localhost:8080/git";
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
@@ -111,9 +104,6 @@ public class LocalGitService extends AbstractVersionControlService {
                 addMemberToRepository(participation.getVcsRepositoryUrl(), user);
             }
         }
-
-        protectBranches(urlService.getProjectKeyFromRepositoryUrl(participation.getVcsRepositoryUrl()),
-            urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()));
     }
 
     @Override
@@ -132,45 +122,44 @@ public class LocalGitService extends AbstractVersionControlService {
      * The branch protection is applied to all branches and prevents rewriting the
      * history (force-pushes) and deletion of branches.
      *
-     * @param projectKey     The project key of the repository that should be
+     * projectKey     The project key of the repository that should be
      *                       protected
-     * @param repositorySlug The slug of the repository that should be protected
+     * repositorySlug The slug of the repository that should be protected
      */
-    private void protectBranches(String projectKey, String repositorySlug) {
-        String baseUrl = bitbucketServerUrl + "/rest/branch-permissions/2.0/projects/" + projectKey + "/repos/" + repositorySlug + "/restrictions";
-        log.debug("Setting up branch protection for repository {}", repositorySlug);
-
-        // Payload according to
-        // https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
-        final var type = new BitbucketBranchProtectionDTO.TypeDTO("PATTERN", "Pattern");
-        // A wildcard (*) ist used to protect all branches
-        final var matcher = new BitbucketBranchProtectionDTO.MatcherDTO("*", "*", type, true);
-        // Prevent force-pushes
-        final var fastForwardOnlyProtection = new BitbucketBranchProtectionDTO("fast-forward-only", matcher);
-        // Prevent deletion of branches
-        final var noDeletesProtection = new BitbucketBranchProtectionDTO("no-deletes", matcher);
-        final var body = List.of(fastForwardOnlyProtection, noDeletesProtection);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(new MediaType("application", "vnd.atl.bitbucket.bulk+json")); // Set content-type
-        // manually as required by
-        // Bitbucket
-        HttpEntity<?> entity = new HttpEntity<>(body, headers);
-        try {
-            restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Object.class);
-        }
-        catch (Exception emAll) {
-            log.error("Exception occurred while protecting repository {}", repositorySlug, emAll);
-        }
-
-        log.debug("Branch protection for repository {} set up", repositorySlug);
-    }
+//    private void protectBranches(String projectKey, String repositorySlug) {
+//        String baseUrl = bitbucketServerUrl + "/rest/branch-permissions/2.0/projects/" + projectKey + "/repos/" + repositorySlug + "/restrictions";
+//        log.debug("Setting up branch protection for repository {}", repositorySlug);
+//
+//        // Payload according to
+//        // https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
+//        final var type = new BitbucketBranchProtectionDTO.TypeDTO("PATTERN", "Pattern");
+//        // A wildcard (*) ist used to protect all branches
+//        final var matcher = new BitbucketBranchProtectionDTO.MatcherDTO("*", "*", type, true);
+//        // Prevent force-pushes
+//        final var fastForwardOnlyProtection = new BitbucketBranchProtectionDTO("fast-forward-only", matcher);
+//        // Prevent deletion of branches
+//        final var noDeletesProtection = new BitbucketBranchProtectionDTO("no-deletes", matcher);
+//        final var body = List.of(fastForwardOnlyProtection, noDeletesProtection);
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(new MediaType("application", "vnd.atl.bitbucket.bulk+json")); // Set content-type
+//        // manually as required by
+//        // Bitbucket
+//        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+//        try {
+//            restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Object.class);
+//        }
+//        catch (Exception emAll) {
+//            log.error("Exception occurred while protecting repository {}", repositorySlug, emAll);
+//        }
+//
+//        log.debug("Branch protection for repository {} set up", repositorySlug);
+//    }
 
     @Override
     protected void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName) {
-        if (!webHookExists(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl))) {
-            createWebHook(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl), notificationUrl, webHookName);
-        }
+        // Webhooks must not be added for the local git server. The JGitPushFilter notifies Artemis on every push.
+        // Falls notwendig, kann ich hier einen Boolean für das Repository setzen "hasWebHook".
     }
 
     @Override
@@ -181,29 +170,29 @@ public class LocalGitService extends AbstractVersionControlService {
 
     @Override
     public void deleteProject(String projectKey) {
-        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey;
-        log.info("Try to delete bitbucket project {}", projectKey);
-        try {
-            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
-            log.info("Delete bitbucket project {} was successful", projectKey);
-        }
-        catch (Exception e) {
-            log.error("Could not delete project", e);
-        }
+//        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey;
+//        log.info("Try to delete bitbucket project {}", projectKey);
+//        try {
+//            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
+//            log.info("Delete bitbucket project {} was successful", projectKey);
+//        }
+//        catch (Exception e) {
+//            log.error("Could not delete project", e);
+//        }
     }
 
     @Override
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
-        final String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        final String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
-        final String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase();
-        log.info("Delete repository {}", baseUrl);
-        try {
-            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
-        }
-        catch (Exception e) {
-            log.error("Could not delete repository", e);
-        }
+//        final String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
+//        final String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+//        final String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase();
+//        log.info("Delete repository {}", baseUrl);
+//        try {
+//            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
+//        }
+//        catch (Exception e) {
+//            log.error("Could not delete repository", e);
+//        }
     }
 
     @Override
@@ -230,16 +219,16 @@ public class LocalGitService extends AbstractVersionControlService {
      * @throws BitbucketException any exception occurred on the Bitbucket server
      */
     public Boolean userExists(String username) throws BitbucketException {
-        try {
-            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/users/" + username, HttpMethod.GET, null, Void.class);
-        }
-        catch (HttpClientErrorException e) {
-            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-                return false;
-            }
-            log.error("Could not check if user {} exists.", username, e);
-            throw new BitbucketException("Could not check if user exists");
-        }
+//        try {
+//            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/users/" + username, HttpMethod.GET, null, Void.class);
+//        }
+//        catch (HttpClientErrorException e) {
+//            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+//                return false;
+//            }
+//            log.error("Could not check if user {} exists.", username, e);
+//            throw new BitbucketException("Could not check if user exists");
+//        }
         return true;
     }
 
@@ -254,19 +243,19 @@ public class LocalGitService extends AbstractVersionControlService {
      *                            user failed.
      */
     public void createUser(String username, String password, String emailAddress, String displayName) throws BitbucketException {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", username)
-            .queryParam("email", emailAddress).queryParam("emailAddress", emailAddress).queryParam("password", password).queryParam("displayName", displayName)
-            .queryParam("addToDefaultGroup", "true").queryParam("notify", "false");
-
-        log.debug("Creating Bitbucket user {} ({})", username, emailAddress);
-
-        try {
-            restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, null, Void.class);
-        }
-        catch (HttpClientErrorException e) {
-            log.error("Could not create Bitbucket user {}", username, e);
-            throw new BitbucketException("Error while creating user", e);
-        }
+//        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", username)
+//            .queryParam("email", emailAddress).queryParam("emailAddress", emailAddress).queryParam("password", password).queryParam("displayName", displayName)
+//            .queryParam("addToDefaultGroup", "true").queryParam("notify", "false");
+//
+//        log.debug("Creating Bitbucket user {} ({})", username, emailAddress);
+//
+//        try {
+//            restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, null, Void.class);
+//        }
+//        catch (HttpClientErrorException e) {
+//            log.error("Could not create Bitbucket user {}", username, e);
+//            throw new BitbucketException("Error while creating user", e);
+//        }
     }
 
     /**
@@ -278,26 +267,26 @@ public class LocalGitService extends AbstractVersionControlService {
      * @throws BitbucketException the exception of the bitbucket system when updating the user does not work
      */
     public void updateUserDetails(String username, String emailAddress, String displayName) throws BitbucketException {
-        UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users");
-        Map<String, Object> userDetailsBody = new HashMap<>();
-        userDetailsBody.put("name", username);
-        userDetailsBody.put("email", emailAddress);
-        userDetailsBody.put("displayName", displayName);
-        HttpEntity<Map<String, Object>> userDetailsEntity = new HttpEntity<>(userDetailsBody, null);
-
-        log.debug("Updating Bitbucket user {} ({})", username, emailAddress);
-
-        try {
-            restTemplate.exchange(userDetailsBuilder.build().encode().toUri(), HttpMethod.PUT, userDetailsEntity, Void.class);
-        }
-        catch (HttpClientErrorException e) {
-            if (isUserNotFoundException(e)) {
-                log.warn("Bitbucket user {} does not exist.", username);
-                return;
-            }
-            log.error("Could not update Bitbucket user {}", username, e);
-            throw new BitbucketException("Error while updating user", e);
-        }
+//        UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users");
+//        Map<String, Object> userDetailsBody = new HashMap<>();
+//        userDetailsBody.put("name", username);
+//        userDetailsBody.put("email", emailAddress);
+//        userDetailsBody.put("displayName", displayName);
+//        HttpEntity<Map<String, Object>> userDetailsEntity = new HttpEntity<>(userDetailsBody, null);
+//
+//        log.debug("Updating Bitbucket user {} ({})", username, emailAddress);
+//
+//        try {
+//            restTemplate.exchange(userDetailsBuilder.build().encode().toUri(), HttpMethod.PUT, userDetailsEntity, Void.class);
+//        }
+//        catch (HttpClientErrorException e) {
+//            if (isUserNotFoundException(e)) {
+//                log.warn("Bitbucket user {} does not exist.", username);
+//                return;
+//            }
+//            log.error("Could not update Bitbucket user {}", username, e);
+//            throw new BitbucketException("Error while updating user", e);
+//        }
     }
 
     /**
@@ -308,26 +297,26 @@ public class LocalGitService extends AbstractVersionControlService {
      * @throws BitbucketException the exception of the bitbucket system when updating the password does not work
      */
     public void updateUserPassword(String username, String password) throws BitbucketException {
-        UriComponentsBuilder passwordBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/credentials");
-        Map<String, Object> passwordBody = new HashMap<>();
-        passwordBody.put("name", username);
-        passwordBody.put("password", password);
-        passwordBody.put("passwordConfirm", password);
-        HttpEntity<Map<String, Object>> passwordEntity = new HttpEntity<>(passwordBody, null);
-
-        log.debug("Updating Bitbucket user password for user {}", username);
-
-        try {
-            restTemplate.exchange(passwordBuilder.build().encode().toUri(), HttpMethod.PUT, passwordEntity, Void.class);
-        }
-        catch (HttpClientErrorException e) {
-            if (isUserNotFoundException(e)) {
-                log.warn("Bitbucket user {} does not exist.", username);
-                return;
-            }
-            log.error("Could not update Bitbucket user password for user {}", username, e);
-            throw new BitbucketException("Error while updating user", e);
-        }
+//        UriComponentsBuilder passwordBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/credentials");
+//        Map<String, Object> passwordBody = new HashMap<>();
+//        passwordBody.put("name", username);
+//        passwordBody.put("password", password);
+//        passwordBody.put("passwordConfirm", password);
+//        HttpEntity<Map<String, Object>> passwordEntity = new HttpEntity<>(passwordBody, null);
+//
+//        log.debug("Updating Bitbucket user password for user {}", username);
+//
+//        try {
+//            restTemplate.exchange(passwordBuilder.build().encode().toUri(), HttpMethod.PUT, passwordEntity, Void.class);
+//        }
+//        catch (HttpClientErrorException e) {
+//            if (isUserNotFoundException(e)) {
+//                log.warn("Bitbucket user {} does not exist.", username);
+//                return;
+//            }
+//            log.error("Could not update Bitbucket user password for user {}", username, e);
+//            throw new BitbucketException("Error while updating user", e);
+//        }
     }
 
     /**
@@ -337,22 +326,22 @@ public class LocalGitService extends AbstractVersionControlService {
      * @param username The user to delete
      */
     public void deleteAndEraseUser(String username) {
-        UriComponentsBuilder deleteBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", username);
-        UriComponentsBuilder eraseBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/erasure").queryParam("name", username);
-
-        log.debug("Deleting Bitbucket user {}", username);
-        try {
-            restTemplate.exchange(deleteBuilder.build().encode().toUri(), HttpMethod.DELETE, null, Void.class);
-            restTemplate.exchange(eraseBuilder.build().encode().toUri(), HttpMethod.POST, null, Void.class);
-        }
-        catch (HttpClientErrorException e) {
-            if (isUserNotFoundException(e)) {
-                log.warn("Bitbucket user {} has already been deleted.", username);
-                return;
-            }
-            log.error("Could not delete Bitbucket user {}", username, e);
-            throw new BitbucketException("Error while updating user", e);
-        }
+//        UriComponentsBuilder deleteBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users").queryParam("name", username);
+//        UriComponentsBuilder eraseBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/erasure").queryParam("name", username);
+//
+//        log.debug("Deleting Bitbucket user {}", username);
+//        try {
+//            restTemplate.exchange(deleteBuilder.build().encode().toUri(), HttpMethod.DELETE, null, Void.class);
+//            restTemplate.exchange(eraseBuilder.build().encode().toUri(), HttpMethod.POST, null, Void.class);
+//        }
+//        catch (HttpClientErrorException e) {
+//            if (isUserNotFoundException(e)) {
+//                log.warn("Bitbucket user {} has already been deleted.", username);
+//                return;
+//            }
+//            log.error("Could not delete Bitbucket user {}", username, e);
+//            throw new BitbucketException("Error while updating user", e);
+//        }
     }
 
     /**
@@ -364,18 +353,18 @@ public class LocalGitService extends AbstractVersionControlService {
      *                            user to the specified groups failed.
      */
     public void addUserToGroups(String username, Set<String> groups) throws BitbucketException {
-        final var body = new BitbucketUserDTO(username, groups);
-        HttpEntity<?> entity = new HttpEntity<>(body, null);
-
-        log.debug("Adding Bitbucket user {} to groups {}", username, groups);
-
-        try {
-            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/admin/users/add-groups", HttpMethod.POST, entity, Void.class);
-        }
-        catch (HttpClientErrorException e) {
-            log.error("Could not add Bitbucket user {} to groups {}", username, groups, e);
-            throw new BitbucketException("Error while adding Bitbucket user to groups");
-        }
+//        final var body = new BitbucketUserDTO(username, groups);
+//        HttpEntity<?> entity = new HttpEntity<>(body, null);
+//
+//        log.debug("Adding Bitbucket user {} to groups {}", username, groups);
+//
+//        try {
+//            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/admin/users/add-groups", HttpMethod.POST, entity, Void.class);
+//        }
+//        catch (HttpClientErrorException e) {
+//            log.error("Could not add Bitbucket user {} to groups {}", username, groups, e);
+//            throw new BitbucketException("Error while adding Bitbucket user to groups");
+//        }
     }
 
     /**
@@ -386,29 +375,29 @@ public class LocalGitService extends AbstractVersionControlService {
      * @throws BitbucketException if the request to Bitbucket fails
      */
     public void removeUserFromGroups(String username, Set<String> groups) throws BitbucketException {
-        log.debug("Removing Bitbucket user {} from groups {}", username, groups);
-
-        try {
-            for (String group : groups) {
-                Map<String, Object> jsonObject = new HashMap<>();
-                jsonObject.put("context", username);
-                jsonObject.put("itemName", group);
-
-                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, null);
-                UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/remove-group")
-                    .queryParam("context", username).queryParam("itemName", group);
-                restTemplate.exchange(userDetailsBuilder.build().toUri(), HttpMethod.POST, entity, Void.class);
-            }
-        }
-        catch (HttpClientErrorException e) {
-            if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
-                log.warn("Could not remove Bitbucket user {} from groups {}. Either the user or the groups were not found or the user is not assigned to a group.", username,
-                    groups);
-                return;
-            }
-            log.error("Could not remove Bitbucket user {} from groups {}", username, groups, e);
-            throw new BitbucketException("Error while removing Bitbucket user from groups");
-        }
+//        log.debug("Removing Bitbucket user {} from groups {}", username, groups);
+//
+//        try {
+//            for (String group : groups) {
+//                Map<String, Object> jsonObject = new HashMap<>();
+//                jsonObject.put("context", username);
+//                jsonObject.put("itemName", group);
+//
+//                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, null);
+//                UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/remove-group")
+//                    .queryParam("context", username).queryParam("itemName", group);
+//                restTemplate.exchange(userDetailsBuilder.build().toUri(), HttpMethod.POST, entity, Void.class);
+//            }
+//        }
+//        catch (HttpClientErrorException e) {
+//            if (HttpStatus.NOT_FOUND.equals(e.getStatusCode())) {
+//                log.warn("Could not remove Bitbucket user {} from groups {}. Either the user or the groups were not found or the user is not assigned to a group.", username,
+//                    groups);
+//                return;
+//            }
+//            log.error("Could not remove Bitbucket user {} from groups {}", username, groups, e);
+//            throw new BitbucketException("Error while removing Bitbucket user from groups");
+//        }
     }
 
     /**
@@ -432,57 +421,57 @@ public class LocalGitService extends AbstractVersionControlService {
      */
     // TODO: Refactor to also use setStudentRepositoryPermission.
     private void giveWritePermission(String projectKey, String repositorySlug, String username) throws BitbucketException {
-        String url = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=" + username + "&permission=REPO_WRITE";
-
-        try {
-            /*
-             * This is an edge case. If a new users logs in and clicks on Start Exercise within 1 minute, the user does not yet exist in Bitbucket.
-             */
-            User user = null;
-            for (int i = 0; i < MAX_GIVE_PERMISSIONS_RETRIES; i++) {
-                try {
-                    restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
-                }
-                catch (HttpClientErrorException e) {
-
-                    if (e.getResponseBodyAsString().contains("No such user")) {
-                        if (user == null) {
-                            user = userRepository.getUser();
-                        }
-                        if (user.getCreatedDate().plusSeconds(90).isAfter(Instant.now())) {
-                            log.warn("Could not give write permissions to user {} because the user does not yet exist in Bitbucket. Trying again in 5s", username);
-                            Thread.sleep(5000);
-                            // if the last attempt fails, we throw an exception to make sure to exit this
-                            // method with an exception
-                            if (i == MAX_GIVE_PERMISSIONS_RETRIES - 1) {
-                                throw e;
-                            }
-                        }
-                        else {
-                            throw e;
-                        }
-                    }
-                    else {
-                        throw e;
-                    }
-
-                    // Try again if there was an exception
-                    continue;
-                }
-                // Don't try again if everything went fine
-                break;
-            }
-        }
-        catch (HttpClientErrorException e) {
-            log.error("Server Error on Bitbucket with message: '{}', body: '{}', headers: '{}', status text: '{}'.", e.getMessage(), e.getResponseBodyAsString(),
-                e.getResponseHeaders(), e.getStatusText());
-            log.error("Could not give write permission using {}", url, e);
-            throw new BitbucketException("Error while giving repository permissions", e);
-        }
-        catch (Exception emAll) {
-            log.error("Could not give write permission using {}", url, emAll);
-            throw new BitbucketException("Error while giving repository permissions", emAll);
-        }
+//        String url = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=" + username + "&permission=REPO_WRITE";
+//
+//        try {
+//            /*
+//             * This is an edge case. If a new users logs in and clicks on Start Exercise within 1 minute, the user does not yet exist in Bitbucket.
+//             */
+//            User user = null;
+//            for (int i = 0; i < MAX_GIVE_PERMISSIONS_RETRIES; i++) {
+//                try {
+//                    restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
+//                }
+//                catch (HttpClientErrorException e) {
+//
+//                    if (e.getResponseBodyAsString().contains("No such user")) {
+//                        if (user == null) {
+//                            user = userRepository.getUser();
+//                        }
+//                        if (user.getCreatedDate().plusSeconds(90).isAfter(Instant.now())) {
+//                            log.warn("Could not give write permissions to user {} because the user does not yet exist in Bitbucket. Trying again in 5s", username);
+//                            Thread.sleep(5000);
+//                            // if the last attempt fails, we throw an exception to make sure to exit this
+//                            // method with an exception
+//                            if (i == MAX_GIVE_PERMISSIONS_RETRIES - 1) {
+//                                throw e;
+//                            }
+//                        }
+//                        else {
+//                            throw e;
+//                        }
+//                    }
+//                    else {
+//                        throw e;
+//                    }
+//
+//                    // Try again if there was an exception
+//                    continue;
+//                }
+//                // Don't try again if everything went fine
+//                break;
+//            }
+//        }
+//        catch (HttpClientErrorException e) {
+//            log.error("Server Error on Bitbucket with message: '{}', body: '{}', headers: '{}', status text: '{}'.", e.getMessage(), e.getResponseBodyAsString(),
+//                e.getResponseHeaders(), e.getStatusText());
+//            log.error("Could not give write permission using {}", url, e);
+//            throw new BitbucketException("Error while giving repository permissions", e);
+//        }
+//        catch (Exception emAll) {
+//            log.error("Could not give write permission using {}", url, emAll);
+//            throw new BitbucketException("Error while giving repository permissions", emAll);
+//        }
 
     }
 
@@ -499,29 +488,27 @@ public class LocalGitService extends AbstractVersionControlService {
      */
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws LocalGitException {
-        String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
-        var getDefaultBranchUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase() + "/default-branch";
-
         try {
-            var response = restTemplate.exchange(getDefaultBranchUrl, HttpMethod.GET, null, BitbucketDefaultBranchDTO.class);
-            var defaultBranchDTO = response.getBody();
-
-            if (defaultBranchDTO == null) {
-                log.error("Unable to get default branch for repository {}", repositorySlug);
-                throw new BitbucketException("Unable to get default branch for repository " + repositorySlug);
+            Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localGitPath + repositoryUrl.folderNameForRepositoryUrl()).callAsMap();
+            if (remoteRepositoryRefs.containsKey("HEAD")) {
+                return remoteRepositoryRefs.get("HEAD").getTarget().getName();
+            }
+            if (remoteRepositoryRefs.size() == 1) {
+                Map.Entry<String, Ref> firstValue = remoteRepositoryRefs.entrySet().iterator().next();
+                String reference = firstValue.getValue().getTarget().getName();
+                return reference.substring(reference.lastIndexOf("/") + 1);
             }
 
-            return defaultBranchDTO.displayId();
-        } catch (HttpClientErrorException e) {
-            log.error("Unable to get default branch for repository {}", repositorySlug, e);
-            throw new LocalGitException("Unable to get default branch for repository " + repositorySlug, e);
+            throw new LocalGitException("Cannot get default branch of repository " + repositoryUrl.folderNameForRepositoryUrl() + ". ls-remote does not return a HEAD reference.");
+        } catch (Exception e) {
+            log.error("Unable to get default branch for repository {}", repositoryUrl.folderNameForRepositoryUrl(), e);
+            throw new LocalGitException("Unable to get default branch for repository " + repositoryUrl.folderNameForRepositoryUrl(), e);
         }
     }
 
     @Override
     public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException {
-        // Not implemented because it's not needed in Bitbucket for the current use
+        // Not implemented because it's not needed for local git for the current use
         // case, because the main branch is not protected by default
     }
 
@@ -538,16 +525,16 @@ public class LocalGitService extends AbstractVersionControlService {
      */
     private void setStudentRepositoryPermission(VcsRepositoryUrl repositoryUrl, String projectKey, String username, VersionControlRepositoryPermission repositoryPermission)
         throws BitbucketException {
-        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
-        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME&PERMISSION
-        String url = baseUrl + username + "&permission=" + repositoryPermission;
-        try {
-            restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
-        }
-        catch (Exception e) {
-            log.error("Could not give {} permissions using {}", repositoryPermission, url, e);
-            throw new BitbucketException("Error while giving repository permissions", e);
-        }
+//        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+//        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME&PERMISSION
+//        String url = baseUrl + username + "&permission=" + repositoryPermission;
+//        try {
+//            restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
+//        }
+//        catch (Exception e) {
+//            log.error("Could not give {} permissions using {}", repositoryPermission, url, e);
+//            throw new BitbucketException("Error while giving repository permissions", e);
+//        }
     }
 
     /**
@@ -559,16 +546,16 @@ public class LocalGitService extends AbstractVersionControlService {
      * @param username      The username of the user whom to remove access
      */
     private void removeStudentRepositoryAccess(VcsRepositoryUrl repositoryUrl, String projectKey, String username) throws BitbucketException {
-        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
-        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME
-        String url = baseUrl + username;
-        try {
-            restTemplate.exchange(url, HttpMethod.DELETE, null, Void.class);
-        }
-        catch (Exception e) {
-            log.error("Could not remove repository access using {}", url, e);
-            throw new BitbucketException("Error while removing repository access", e);
-        }
+//        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
+//        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME
+//        String url = baseUrl + username;
+//        try {
+//            restTemplate.exchange(url, HttpMethod.DELETE, null, Void.class);
+//        }
+//        catch (Exception e) {
+//            log.error("Could not remove repository access using {}", url, e);
+//            throw new BitbucketException("Error while removing repository access", e);
+//        }
     }
 
     @Override
@@ -622,16 +609,16 @@ public class LocalGitService extends AbstractVersionControlService {
 
     @Override
     public ConnectorHealth health() {
-        ConnectorHealth health;
-        try {
-            final var status = shortTimeoutRestTemplate.getForObject(bitbucketServerUrl + "/status", JsonNode.class);
-            health = status.get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
-        }
-        catch (Exception emAll) {
-            health = new ConnectorHealth(emAll);
-        }
-
-        health.setAdditionalInfo(Map.of("url", bitbucketServerUrl));
+        ConnectorHealth health = null;
+//        try {
+//            final var status = shortTimeoutRestTemplate.getForObject(bitbucketServerUrl + "/status", JsonNode.class);
+//            health = status.get("state").asText().equals("RUNNING") ? new ConnectorHealth(true) : new ConnectorHealth(false);
+//        }
+//        catch (Exception emAll) {
+//            health = new ConnectorHealth(emAll);
+//        }
+//
+//        health.setAdditionalInfo(Map.of("url", bitbucketServerUrl));
         return health;
     }
 
@@ -646,7 +633,6 @@ public class LocalGitService extends AbstractVersionControlService {
         log.debug("Creating local git repo {} with parent key {}", repoName, projectKey);
 
         try {
-
             File remoteDir = new File(localGitPath + "/" + projectKey + "/" + repoName + ".git");
 
             if(!remoteDir.mkdirs()) {
@@ -654,48 +640,13 @@ public class LocalGitService extends AbstractVersionControlService {
             }
 
             // Create a bare local repository with JGit
-            new FileRepositoryBuilder()
-                .setGitDir(remoteDir)
-                .setBare()
-                .setInitialBranch(defaultBranch)
-                .readEnvironment() // scan environment GIT_* variables
-                .findGitDir()
-                .build();
-
-
-//            Git gitRemote = Git.init().setInitialBranch(defaultBranch).setDirectory(directory).setBare(true).call();
-//
-//            // Clone the repository and commit a file to it
-//            File cloneDir = File.createTempFile(projectKey + "-" + repoName, "");
-//            // File cloneDir = new File(localGitPath + "/local/" + projectKey + "/" +
-//            // repoName);
-//            cloneDir.delete();
-//            cloneDir.mkdirs();
-//            Git gitClone = Git.cloneRepository().setURI(gitRemote.getRepository().getDirectory().getAbsolutePath()).setDirectory(cloneDir).call();
-//            // gitClone.checkout().setName(defaultBranch).setCreateBranch(true).call();
-//
-//            File initFile = new File(cloneDir, "testfile");
-//            initFile.createNewFile();
-//            Files.write(initFile.toPath(), "Test content".getBytes());
-//
-//            gitClone.add().addFilepattern(initFile.getName()).call();
-//            gitClone.commit().setMessage("Initial commit").call();
-//            gitClone.branchRename().setOldName("master").setNewName(defaultBranch).call();
-//            gitClone.push().setRemote("origin").setRefSpecs(new RefSpec(defaultBranch)).call();
-//            log.debug("Commited file {} to repository at ", initFile, gitRemote.getRepository().getDirectory().getAbsolutePath());
-
+            Git git = Git.init().setDirectory(remoteDir).setBare(true).call();
+            git.close();
         }
         catch (GitAPIException | IOException e) {
             log.error("Could not create local git repo {} with project key {}", repoName, projectKey, e);
             throw new LocalGitException("Error while creating local git project.");
         }
-
-        /*
-         * try { restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos", HttpMethod.POST, entity, Void.class); } catch
-         * (HttpClientErrorException e) { if (e.getStatusCode() == HttpStatus.CONFLICT) { log.info("Repository {} (parent {}) already exists, reusing it...", repoName, projectKey);
-         * return; } log.error("Could not create Bitbucket repo {} with projectKey key {}", repoName, projectKey, e); throw new
-         * BitbucketException("Error while creating Bitbucket repo"); }
-         */
     }
 
     /**
@@ -707,71 +658,19 @@ public class LocalGitService extends AbstractVersionControlService {
      */
 
     public void grantGroupPermissionToProject(String projectKey, String groupName, BitbucketPermission permission) {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/permissions/groups").queryParam("name",
-            groupName);
-
-        if (permission != null) {
-            builder.queryParam("permission", permission);
-        }
-        try {
-            restTemplate.exchange(builder.build().toUri(), permission != null ? HttpMethod.PUT : HttpMethod.DELETE, null, Void.class);
-        }
-        catch (Exception e) {
-            log.error("Could not give project permission", e);
-            throw new BitbucketException("Error while giving project permissions", e);
-        }
-    }
-
-    /**
-     * Get all existing WebHooks for a specific repository.
-     *
-     * @param projectKey     The project key of the repository's project.
-     * @param repositorySlug The repository's slug.
-     * @return A map of all ids of the WebHooks to the URL they notify.
-     * @throws BitbucketException if the request to get the WebHooks failed
-     */
-    @Nullable
-    private List<BitbucketWebHookDTO> getExistingWebHooks(String projectKey, String repositorySlug) throws BitbucketException {
-        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
-        ResponseEntity<BitbucketSearchDTO<BitbucketWebHookDTO>> response;
-        try {
-            response = restTemplate.exchange(baseUrl, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
-            });
-        }
-        catch (Exception e) {
-            log.error("Error while getting existing WebHooks", e);
-            throw new BitbucketException("Error while getting existing WebHooks", e);
-        }
-
-        if (response.getStatusCode().equals(HttpStatus.OK) && response.getBody() != null) {
-            // TODO: BitBucket uses a pagination API to split up the responses, so we might
-            // have to check all pages
-            return response.getBody().searchResults();
-        }
-        log.error("Error while getting existing WebHooks for {}-{}: Invalid response", projectKey, repositorySlug);
-        throw new BitbucketException("Error while getting existing WebHooks: Invalid response");
-    }
-
-    private boolean webHookExists(String projectKey, String repositorySlug) {
-        List<BitbucketWebHookDTO> webHooks = getExistingWebHooks(projectKey, repositorySlug);
-        return webHooks != null && !webHooks.isEmpty();
-    }
-
-    private void createWebHook(String projectKey, String repositorySlug, String notificationUrl, String webHookName) {
-        log.debug("Creating WebHook for Repository {}-{} ({})", projectKey, repositorySlug, notificationUrl);
-        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
-        final var body = new BitbucketWebHookDTO(null, webHookName, notificationUrl, List.of("repo:refs_changed"));
-        // TODO: We might want to add a token to ensure the notification is valid
-
-        HttpEntity<?> entity = new HttpEntity<>(body, null);
-
-        try {
-            restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Void.class);
-        }
-        catch (HttpClientErrorException e) {
-            log.error("Could not add create WebHook for {}-{} ({})", projectKey, repositorySlug, notificationUrl, e);
-            throw new BitbucketException("Error while creating WebHook");
-        }
+//        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/permissions/groups").queryParam("name",
+//            groupName);
+//
+//        if (permission != null) {
+//            builder.queryParam("permission", permission);
+//        }
+//        try {
+//            restTemplate.exchange(builder.build().toUri(), permission != null ? HttpMethod.PUT : HttpMethod.DELETE, null, Void.class);
+//        }
+//        catch (Exception e) {
+//            log.error("Could not give project permission", e);
+//            throw new BitbucketException("Error while giving project permissions", e);
+//        }
     }
 
     @Override
@@ -785,14 +684,14 @@ public class LocalGitService extends AbstractVersionControlService {
             projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
             repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         }
-        catch (BitbucketException e) {
+        catch (LocalGitException e) {
             // Either the project Key or the repository slug could not be extracted,
             // therefore this can't be a valid URL
             return false;
         }
 
         try {
-            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug, HttpMethod.GET, null, Void.class);
+            //restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug, HttpMethod.GET, null, Void.class);
         }
         catch (Exception e) {
             return false;
@@ -841,50 +740,49 @@ public class LocalGitService extends AbstractVersionControlService {
     }
 
     @Override
-    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) {
+    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) throws LocalGitException {
         // If the event object is supplied we try to retrieve the push date from there
         // to save one call
-        if (eventObject != null) {
+        // if (eventObject != null) {
             JsonNode node = new ObjectMapper().convertValue(eventObject, JsonNode.class);
             String dateString = node.get("date").asText(null);
-            if (dateString != null) {
+           //  if (dateString != null) {
                 try {
                     return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
                 }
                 catch (DateTimeParseException e) {
-                    // If parsing fails for some reason we ignore the exception and try to get it
-                    // via the direct request.
+                    throw new LocalGitException("Unable to get the push date from participation.");
                 }
-            }
-        }
+            // }
+        // }
 
-        boolean isLastPage = false;
-        final int perPage = 40;
-        int start = 0;
-        while (!isLastPage) {
-            try {
-                UriComponents builder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
-                    .pathSegment("rest", "api", "latest", "projects", participation.getProgrammingExercise().getProjectKey(), "repos",
-                        urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()), "ref-change-activities")
-                    .queryParam("start", start).queryParam("limit", perPage).queryParam("ref", "refs/heads/" + defaultBranch).build();
-                final var response = restTemplate.exchange(builder.toUri(), HttpMethod.GET, null, BitbucketChangeActivitiesDTO.class);
-                if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
-                    throw new BitbucketException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
-                }
-                final var changeActivities = response.getBody().values();
-
-                final var activityOfPush = changeActivities.stream().filter(activity -> commitHash.equals(activity.refChange().toHash())).findFirst();
-                if (activityOfPush.isPresent()) {
-                    return Instant.ofEpochMilli(activityOfPush.get().createdDate()).atZone(ZoneOffset.UTC);
-                }
-                isLastPage = response.getBody().isLastPage();
-                start += perPage;
-            }
-            catch (URISyntaxException e) {
-                throw new BitbucketException("Unable to get push date for participation " + participation.getId(), e);
-            }
-        }
-        throw new BitbucketException("Unable to find push date result for participation " + participation.getId() + " and hash " + commitHash);
+//        boolean isLastPage = false;
+//        final int perPage = 40;
+//        int start = 0;
+//        while (!isLastPage) {
+//            try {
+//                UriComponents builder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
+//                    .pathSegment("rest", "api", "latest", "projects", participation.getProgrammingExercise().getProjectKey(), "repos",
+//                        urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()), "ref-change-activities")
+//                    .queryParam("start", start).queryParam("limit", perPage).queryParam("ref", "refs/heads/" + defaultBranch).build();
+//                final var response = restTemplate.exchange(builder.toUri(), HttpMethod.GET, null, BitbucketChangeActivitiesDTO.class);
+//                if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+//                    throw new BitbucketException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
+//                }
+//                final var changeActivities = response.getBody().values();
+//
+//                final var activityOfPush = changeActivities.stream().filter(activity -> commitHash.equals(activity.refChange().toHash())).findFirst();
+//                if (activityOfPush.isPresent()) {
+//                    return Instant.ofEpochMilli(activityOfPush.get().createdDate()).atZone(ZoneOffset.UTC);
+//                }
+//                isLastPage = response.getBody().isLastPage();
+//                start += perPage;
+//            }
+//            catch (URISyntaxException e) {
+//                throw new BitbucketException("Unable to get push date for participation " + participation.getId(), e);
+//            }
+//        }
+//        throw new BitbucketException("Unable to find push date result for participation " + participation.getId() + " and hash " + commitHash);
     }
 
     @Nullable
@@ -905,11 +803,11 @@ public class LocalGitService extends AbstractVersionControlService {
             }
             final var projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryURL);
             final var slug = urlService.getRepositorySlugFromRepositoryUrl(repositoryURL);
-            final var uriBuilder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
-                .pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash).build();
-            final var commitInfo = restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, null, JsonNode.class).getBody();
+            //final var uriBuilder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
+             //   .pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash).build();
+            final JsonNode commitInfo = null; //restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, null, JsonNode.class).getBody();
             if (commitInfo == null) {
-                throw new BitbucketException("Unable to fetch commit info from Bitbucket for hash " + hash);
+                throw new LocalGitException("Unable to fetch commit info from local git for hash " + hash);
             }
 
             return commitInfo;
@@ -928,7 +826,7 @@ public class LocalGitService extends AbstractVersionControlService {
     public final class LocalGitRepositoryUrl extends VcsRepositoryUrl {
 
         public LocalGitRepositoryUrl(String projectKey, String repositorySlug) {
-            final var urlString = serverBaseRoute + buildRepositoryPath(projectKey, repositorySlug);
+            final var urlString = localGitServerUrl + buildRepositoryPath(projectKey, repositorySlug);
             try {
                 this.uri = new URI(urlString);
             }
@@ -952,7 +850,7 @@ public class LocalGitService extends AbstractVersionControlService {
          */
 
         private String buildRepositoryPath(String projectKey, String repositorySlug) {
-            return "/" + projectKey + "/" + repositorySlug + ".git";
+            return "/" + projectKey + "/" + repositorySlug;
         }
     }
 }

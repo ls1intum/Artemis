@@ -123,8 +123,8 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
                 // Returns the opened repository instance, never null.
 
                 // Find the local repository depending on the name and return an opened instance. Must be closed later on.
-                String projectKey = name.split("-")[0].toUpperCase();
-                File gitDir = new File(localGitPath + File.separator + projectKey + File.separator + name + ".git");
+                //String projectKey = name.split("-")[0].toUpperCase();
+                File gitDir = new File(localGitPath + File.separator + name + ".git");
 
                 log.debug("Path to resolve repository from: {}", gitDir.getPath());
                 if (!gitDir.exists()) {
@@ -157,11 +157,6 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
             gs.addUploadPackFilter(new JGitFetchFilter(userRepository, authorizationCheckService));
             gs.addReceivePackFilter(new JGitPushFilter(userRepository, authorizationCheckService));
-
-//            ServletRegistrationBean<GitServlet> gitServletRegistrationBean = new ServletRegistrationBean<>();
-//            gitServletRegistrationBean.setServlet(gs);
-//            gitServletRegistrationBean.setUrlMappings(Collections.singletonList("/git/*"));
-//            gitServletRegistrationBean.setLoadOnStartup(1);
 
             log.info("Registering GitServlet");
             return new ServletRegistrationBean<GitServlet>(gs,"/git/*");

@@ -66,6 +66,10 @@ public class JGitPushFilter extends OncePerRequestFilter {
             return;
         }
 
+        // TODO: Add Webhooks -> notifies Artemis on Push
+
+        // TODO: Add branch protection (prevent rewriting the history (force-push) and deletion of branches).
+
         //Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         //boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
 
