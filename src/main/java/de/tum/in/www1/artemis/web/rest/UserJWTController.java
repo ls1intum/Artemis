@@ -56,6 +56,7 @@ public class UserJWTController {
      * Authorizes a User
      * @param loginVM       user credentials View Mode
      * @param userAgent     User Agent
+     * @param request      HTTP request
      * @param response      HTTP response
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
      */
@@ -88,6 +89,7 @@ public class UserJWTController {
      * Authorizes a User logged in with SAML2
      *
      * @param body      the body of the request. "true" to remember the user.
+     * @param request   HTTP request
      * @param response  HTTP response
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (user not activated)
      */
