@@ -877,15 +877,18 @@ public class ProgrammingExerciseService {
         cancelScheduledOperations(programmingExercise.getId());
 
         if (deleteBaseReposBuildPlans) {
-            final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
-            if (templateBuildPlanId != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
+            // TODO: Remove when "localci" profile is implemented.
+            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+                final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+                if (templateBuildPlanId != null) {
+                    continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
+                }
+                final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
+                if (solutionBuildPlanId != null) {
+                    continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
+                }
+                continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
             }
-            final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
-            if (solutionBuildPlanId != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
-            }
-            continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 
             if (programmingExercise.getTemplateRepositoryUrl() != null) {
                 versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);

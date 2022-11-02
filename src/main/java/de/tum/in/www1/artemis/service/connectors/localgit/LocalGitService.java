@@ -18,6 +18,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
@@ -173,29 +174,24 @@ public class LocalGitService extends AbstractVersionControlService {
 
     @Override
     public void deleteProject(String projectKey) {
-//        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey;
-//        log.info("Try to delete bitbucket project {}", projectKey);
-//        try {
-//            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
-//            log.info("Delete bitbucket project {} was successful", projectKey);
-//        }
-//        catch (Exception e) {
-//            log.error("Could not delete project", e);
-//        }
+        try {
+            String folderName =  localGitPath + File.separator + projectKey;
+            FileUtils.deleteDirectory(new File(folderName));
+        }
+        catch (IOException e) {
+            log.error("Could not delete project", e);
+        }
     }
 
     @Override
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
-//        final String projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-//        final String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
-//        final String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase();
-//        log.info("Delete repository {}", baseUrl);
-//        try {
-//            restTemplate.exchange(baseUrl, HttpMethod.DELETE, null, Void.class);
-//        }
-//        catch (Exception e) {
-//            log.error("Could not delete repository", e);
-//        }
+        try {
+            String folderName = localGitPath + repositoryUrl.folderNameForRepositoryUrl();
+            FileUtils.deleteDirectory(new File(folderName));
+        }
+        catch (IOException e) {
+            log.error("Could not delete repository", e);
+        }
     }
 
     @Override
