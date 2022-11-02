@@ -26,9 +26,3 @@ jenkins:
 server:
     port: 8080
     url: http://localhost:8080
-spring:
-    mail:
-        host: mailhog
-        port: 1025
-        username:
-        password:

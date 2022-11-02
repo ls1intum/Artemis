@@ -7,6 +7,9 @@ vi src/main/docker/gitlab/gitlab-gitlabci.env
 ```
 
 Run the following command to start GitLab and a GitLab Runner in a Docker container:
+<!--
+TODO: is there more to these variables then the non-secret settings? Can we integrate them in the docker-compose file?
+-->
 ```bash
 docker-compose -f src/main/docker/gitlab-gitlabci.yml --env-file src/main/docker/gitlab/gitlab-gitlabci.env up --build -d
 ```

@@ -1,4 +1,7 @@
+# ----------------------------------------------------------------------------------------------------------------------
 # GitLab-Jenkins-MySQL Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
 services:
     gitlab:
         extends:
@@ -8,10 +11,10 @@ services:
         extends:
             file: ./jenkins/jenkins.yml
             service: jenkins
-    artemis-mysql:
+    mysql:
         extends:
             file: mysql.yml
-            service: artemis-mysql
+            service: mysql
 
 networks:
     artemis:

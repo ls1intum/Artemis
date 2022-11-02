@@ -1,5 +1,9 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# MySQL base service
+# ----------------------------------------------------------------------------------------------------------------------
+
 services:
-    artemis-mysql:
+    mysql:
         container_name: artemis-mysql
         # Use this for arm64 processors (and remove the platform: linux/x86_64
         # image: ubuntu/mysql:8.0-21.10_beta

@@ -1,12 +1,9 @@
+#TODO: cache beforehand of the gradle dependencies which don't change often ...
+
+#-----------------------------------------------------------------------------------------------------------------------
+# build stage
+#-----------------------------------------------------------------------------------------------------------------------
 FROM ghcr.io/ls1intum/docker-jdk-node-yarn as builder
-
-#ARG PROFILE=prod
-
-RUN echo "Installing needed build dependencies" \
-  && apt-get update && apt-get install -y curl \
-  && curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
-  && apt-get install -y nodejs \
-  && npm install --location=global npm@latest
 
 WORKDIR /opt/artemis
 # TODO: make this more secure/performant and don't copy everything? or let this be handled just by the .dockerignore?
@@ -15,13 +12,14 @@ WORKDIR /opt/artemis
 COPY . .
 # TODO: would be obsolete after integration of PR5622
 ENV NODE_OPTIONS "--max_old_space_size=6144"
-# TODO: recheck why building -Pdev fails
 RUN ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
 
-
-
+#-----------------------------------------------------------------------------------------------------------------------
+# runtime stage
+#-----------------------------------------------------------------------------------------------------------------------
 FROM eclipse-temurin:17-jre
 
+# TODO: do we need all of these? If so why? Or should we maybe declare them somewhere else?
 ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     JHIPSTER_SLEEP=0 \
     JAVA_OPTS=""
@@ -29,8 +27,10 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
 # Specify profiles for Spring Boot
 ENV spring.profiles.active ""
 
+# Docker Compose: wget and netcat (service checks)
+# Artemis: wget(?), graphviz, locales
 RUN echo "Installing needed dependencies" \
-  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
+  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget netcat-openbsd\
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -38,7 +38,6 @@ RUN echo "Installing needed dependencies" \
 RUN echo "Fixing locales" \
   && sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
   && locale-gen
-
 ENV LC_ALL en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8

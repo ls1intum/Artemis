@@ -1,27 +1,30 @@
-# Artemis-Dev-MySQL Setup
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis-Dev-MySQL-GitLab-Jenkins Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
 services:
     artemis-app:
         extends:
             file: ./artemis/artemis.yml
             service: artemis-app
-        # TODO: change this to dev for the dev profile build
-#        build:
-#            args:
-#                PROFILE: dev
         ports:
             - 5005:5005 # Java Remote Debugging port declared in the java cmd options
+        command: >
+            /bin/sh -c
+            '/usr/local/bin/wait-for -t 0 artemis-mysql:3306
+            && /usr/local/bin/wait-for -t 0 http://gitlab/-/readiness
+            && /usr/local/bin/wait-for -t 0 http://jenkins:8080/login
+            && /run_artemis.sh'
         volumes:
-            - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml:ro
             - ./specialized-local-configs/artemis-dev-mysql-gitlab-jenkins-local.yml:/opt/artemis/config/application-local.yml:ro
+            - ./scripts/wait-for.sh:/usr/local/bin/wait-for:ro
         environment:
-            SPRING_PROFILES_ACTIVE: dev,jenkins,gitlab,artemis,scheduling,athene,saml2,docker,local
-        depends_on:
-            - artemis-mysql
-    artemis-mysql:
+            SPRING_PROFILES_ACTIVE: dev,jenkins,gitlab,artemis,scheduling,athene,docker,local
+            JAVA_REMOTE_DEBUG: true
+    mysql:
         extends:
             file: mysql.yml
-            service: artemis-mysql
-    #TODO: add waiting for gitlab and jenkins command above in artemis
+            service: mysql
     gitlab:
         extends:
             file: ./gitlab/gitlab.yml
@@ -30,14 +33,6 @@ services:
         extends:
             file: ./jenkins/jenkins.yml
             service: jenkins
-    saml-test:
-        extends:
-            file: ./saml-test/saml-test.yml
-            service: saml-test
-    mailhog:
-        extends:
-            file: ./mailhog/mailhog.yml
-            service: mailhog
 
 networks:
     artemis:

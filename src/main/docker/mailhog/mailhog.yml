@@ -1,13 +1,24 @@
-# Mailhog base service
+# ----------------------------------------------------------------------------------------------------------------------
+# Mailhog service
+# ----------------------------------------------------------------------------------------------------------------------
+
 services:
     mailhog:
-        container_name: mailhog
+        container_name: artemis-mailhog
         image: mailhog/mailhog
         ports:
             - 1025:1025
             - 8025:8025
         networks:
             - artemis
+
+# TODO: add mailconfigs or yml file here for artemis?
+#spring:
+#    mail:
+#        host: mailhog
+#        port: 1025
+#        username:
+#        password:
 
 networks:
     artemis:

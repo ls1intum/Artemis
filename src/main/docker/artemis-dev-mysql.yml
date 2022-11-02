@@ -1,0 +1,37 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis-Dev-MySQL Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
+# this is the default artemis development setup also linked to in the docker-compose.yml in the project root
+
+services:
+    artemis-app:
+        extends:
+            file: ./artemis/artemis.yml
+            service: artemis-app
+        ports:
+            - 5005:5005 # Java Remote Debugging port declared in the java cmd options
+        command: >
+            /bin/sh -c
+            '/usr/local/bin/wait-for -t 0 artemis-mysql:3306
+            && /run_artemis.sh'
+        environment:
+            JAVA_REMOTE_DEBUG: true
+        volumes:
+            - ./scripts/wait-for.sh:/usr/local/bin/wait-for:ro
+        depends_on:
+            - mysql
+    mysql:
+        extends:
+            file: mysql.yml
+            service: mysql
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+volumes:
+    artemis-mysql-data:
+        name: artemis-mysql-data
+    artemis-data:
+        name: artemis-data

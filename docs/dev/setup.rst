@@ -495,6 +495,8 @@ The easiest way to configure a local deployment via Docker is a deployment with 
 In the directory ``src/main/docker/`` you can find the following docker-compose files for different setups:
 
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
+* ``artemis-dev-mysql-gitlab-jenkins.yml``: **Artemis-Dev-MySQL-GitLab-Jenkins**
+  Setup containing the development build of Artemis, a MySQL DB, a GitLab and Jenkins instance
 * ``artemis-server-client-mysql.yml``: **Artemis-Server-Client-MySQL** Setup containing a separate client and server
   container which mount the code as volumes and are therefore just suited for development purposes.
   As Npm is used with its live reload mode to build and run the client, any change in the client’s codebase will trigger
@@ -535,7 +537,7 @@ Get a shell into the containers
 -  app container:
    ``docker-compose exec artemis-app bash``
 -  mysql container:
-   ``docker-compose exec artemis-mysql bash`` or directly into mysql ``docker-compose exec artemis-mysql mysql``
+   ``docker-compose exec mysql bash`` or directly into mysql ``docker-compose exec mysql mysql``
 
 Analog for other services
 

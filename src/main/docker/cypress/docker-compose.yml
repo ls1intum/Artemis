@@ -1,8 +1,8 @@
 services:
-    artemis-mysql:
+    mysql:
         extends:
             file: ../mysql.yml
-            service: artemis-mysql
+            service: mysql
         healthcheck:
             test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
             interval: 1s
@@ -44,7 +44,7 @@ services:
         networks:
             - artemis
         depends_on:
-            artemis-mysql:
+            mysql:
                 condition: service_healthy
 
     artemis-cypress:

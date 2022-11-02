@@ -1,4 +1,5 @@
-# this profile contains the default variables for the docker-compose setup
+# this profile contains the default variables for the docker-compose setups
+# TODO: check if this can be solved different without having to load the docker profile
 spring:
     datasource:
         url: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC

@@ -1,6 +1,10 @@
+# ----------------------------------------------------------------------------------------------------------------------
 # GitLab base service
+# ----------------------------------------------------------------------------------------------------------------------
+
 services:
     gitlab:
+        container_name: artemis-gitlab
         build: .
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab
@@ -13,7 +17,6 @@ services:
         ports:
             - "2222:22"
             - "8081:80"
-        container_name: gitlab
         networks:
             - artemis
 

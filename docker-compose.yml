@@ -1,19 +1,20 @@
-# TODO: check if we can use a symlink here?
-# Artemis-Dev-MySQL Setup (mirrored to the project root for a convenience start of docker-compose)
-# sync this file with src/main/docker/artemis-dev-mysql.yml
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis-Dev-MySQL Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
+# this links to /src/main/docker/artemis-dev-mysql.yml which is the default artemis development docker compose setup
+# just using a symlink doesn't work because of the relative paths ;)
+
 services:
     artemis-app:
         extends:
-            file: ./src/main/docker/artemis/artemis.yml
+            file: ./src/main/docker/artemis-dev-mysql.yml
             service: artemis-app
-        depends_on:
-            - artemis-mysql
-    artemis-mysql:
+    mysql:
         extends:
-            file: ./src/main/docker/mysql.yml
-            service: artemis-mysql
+            file: ./src/main/docker/artemis-dev-mysql.yml
+            service: mysql
 
-# keep the networks and volumes section in sync with the combined values from the used base service files
 networks:
     artemis:
         driver: "bridge"

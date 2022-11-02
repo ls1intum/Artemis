@@ -1,6 +1,10 @@
+# ----------------------------------------------------------------------------------------------------------------------
 # Jenkins base service
+# ----------------------------------------------------------------------------------------------------------------------
+
 services:
     jenkins:
+        container_name: artemis-jenkins
         build: .
         user: root
         volumes:
@@ -12,7 +16,6 @@ services:
             - /usr/bin/docker:/usr/bin/docker:ro
         ports:
             - "8082:8080"
-        container_name: jenkins
         networks:
             - artemis
         environment:

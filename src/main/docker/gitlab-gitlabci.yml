@@ -1,4 +1,7 @@
+# ----------------------------------------------------------------------------------------------------------------------
 # GitLab-GitLabCI Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
 services:
     gitlab:
         # TODO: check if the other settings can also be integrated into gitlab.yml
@@ -26,7 +29,7 @@ services:
         shm_size: '256m'
     gitlab-runner:
         image: gitlab/gitlab-runner:latest
-        container_name: gitlab-runner
+        container_name: artemis-gitlab-runner
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
             - /usr/local/bin/docker:/usr/bin/docker
