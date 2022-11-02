@@ -373,7 +373,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                     .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).toList();
         }
         else {
-            submissions = submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+            submissions = submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
             // automatic results are null in the received results list. We need to filter them out for the client to display the dashboard correctly
             submissions.forEach(Submission::removeNullResults);
         }
@@ -401,13 +401,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return a list of programming submissions for the given exercise id
      */
     public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
-        List<StudentParticipation> participations;
-        if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
-        }
-        else {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        }
+        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         List<ProgrammingSubmission> programmingSubmissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestLegalOrIllegalSubmission)
                 // filter out non submitted submissions if the flag is set to true

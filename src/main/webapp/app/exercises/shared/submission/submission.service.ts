@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Result } from 'app/entities/result.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { Submission, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Feedback } from 'app/entities/feedback.model';

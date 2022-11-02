@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute } from '@angular/router';
@@ -120,9 +120,8 @@ describe('LectureAttachmentsComponent', () => {
         expect(addAttachmentButton).not.toBeNull();
         addAttachmentButton.nativeElement.click();
         fixture.detectChanges();
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
-        comp.attachmentFile = fakeBlob;
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        comp.attachmentFile = fakeFile;
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).not.toBeNull();
         expect(comp.attachmentToBeCreated).not.toBeNull();
@@ -147,7 +146,7 @@ describe('LectureAttachmentsComponent', () => {
         const fakeBlob = {};
         fakeBlob['name'] = 'Test-File.pdf';
         fakeBlob['size'] = 100000000000000000;
-        comp.attachmentFile = fakeBlob as Blob;
+        comp.attachmentFile = fakeBlob as File;
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).not.toBeNull();
         expect(comp.attachmentToBeCreated).not.toBeNull();

@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -76,10 +77,7 @@ public class AuthorizationCheckService {
      * @return true if the passed user is at least an editor in the course, false otherwise
      */
     public boolean isAtLeastEditorInCourse(@NotNull Course course, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         return isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
     }
 
@@ -117,10 +115,7 @@ public class AuthorizationCheckService {
      * @return true if the passed user is at least a teaching assistant (also if the user is instructor or admin), false otherwise
      */
     public boolean isAtLeastTeachingAssistantForExercise(@NotNull Exercise exercise, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         return isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
@@ -142,10 +137,7 @@ public class AuthorizationCheckService {
      * @return true if the currently logged-in user is at least a student (also if the user is teaching assistant, instructor or admin), false otherwise
      */
     public boolean isAtLeastStudentForExercise(@NotNull Exercise exercise, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         return isStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user) || isAtLeastTeachingAssistantForExercise(exercise, user);
     }
 
@@ -170,10 +162,7 @@ public class AuthorizationCheckService {
      * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise
      */
     public boolean isAtLeastTeachingAssistantInCourse(@NotNull Course course, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         return isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user) || isAdmin(user);
     }
 
@@ -198,10 +187,7 @@ public class AuthorizationCheckService {
      * @return true if the passed user is at least a teaching assistant in the course (also if the user is instructor or admin), false otherwise
      */
     public boolean isAtLeastStudentInCourse(@NotNull Course course, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         return isStudentInCourse(course, user) || isTeachingAssistantInCourse(course, user) || isEditorInCourse(course, user) || isInstructorInCourse(course, user)
                 || isAdmin(user);
     }
@@ -295,10 +281,7 @@ public class AuthorizationCheckService {
      * @return true if the passed user is at least instructor in the course (also if the user is admin), false otherwise
      */
     public boolean isAtLeastInstructorInCourse(@NotNull Course course, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin(user);
     }
 
@@ -310,10 +293,7 @@ public class AuthorizationCheckService {
      * @return true, if user is instructor of this course, otherwise false
      */
     public boolean isInstructorInCourse(@NotNull Course course, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getInstructorGroupName());
     }
 
@@ -325,10 +305,7 @@ public class AuthorizationCheckService {
      * @return true, if user is an editor of this course, otherwise false
      */
     public boolean isEditorInCourse(@NotNull Course course, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getEditorGroupName());
     }
 
@@ -340,10 +317,7 @@ public class AuthorizationCheckService {
      * @return true, if user is teaching assistant of this course, otherwise false
      */
     public boolean isTeachingAssistantInCourse(@NotNull Course course, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getTeachingAssistantGroupName());
     }
 
@@ -355,10 +329,7 @@ public class AuthorizationCheckService {
      * @return true, if user is only student of this course, otherwise false
      */
     public boolean isOnlyStudentInCourse(@NotNull Course course, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getStudentGroupName()) && !isAtLeastTeachingAssistantInCourse(course, user);
     }
 
@@ -370,10 +341,7 @@ public class AuthorizationCheckService {
      * @return true, if user is student of this course, otherwise false
      */
     public boolean isStudentInCourse(@NotNull Course course, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         return user.getGroups().contains(course.getStudentGroupName());
     }
 
@@ -412,10 +380,7 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this participation, otherwise false
      */
     public boolean isOwnerOfParticipation(@NotNull StudentParticipation participation, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            // only retrieve the user and the groups if the user is null or the groups are missing (to save performance)
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         if (participation.getParticipant() == null) {
             return false;
         }
@@ -455,9 +420,7 @@ public class AuthorizationCheckService {
      * @return true, if user is allowed to see this exercise, otherwise false
      */
     public boolean isAllowedToSeeExercise(@NotNull Exercise exercise, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         if (isAdmin(user)) {
             return true;
         }
@@ -473,9 +436,7 @@ public class AuthorizationCheckService {
      * @return true if the user is allowed, false otherwise
      */
     public boolean isAllowedToSeeLectureUnit(@NotNull LectureUnit lectureUnit, @Nullable User user) {
-        if (user == null || user.getGroups() == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
+        user = loadUserIfNeeded(user);
         if (isAdmin(user)) {
             return true;
         }
@@ -486,7 +447,7 @@ public class AuthorizationCheckService {
     /**
      * NOTE: this method should only be used in a REST Call context, when the SecurityContext is correctly setup.
      * Preferably use the method isAdmin(user) below
-     *
+     * <p>
      * Checks if the currently logged-in user is an admin user
      *
      * @return true, if user is admin, otherwise false
@@ -601,6 +562,17 @@ public class AuthorizationCheckService {
         if (!isAllowedToAssessExercise(exercise, user, resultId)) {
             throw new AccessForbiddenException("You are not allowed to assess this exercise!");
         }
+    }
+
+    private User loadUserIfNeeded(@Nullable User user) {
+        if (user == null) {
+            user = userRepository.getUserWithGroupsAndAuthorities();
+        }
+        else if (user.getGroups() == null || !Hibernate.isInitialized(user.getGroups())) {
+            user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
+        }
+
+        return user;
     }
 
 }

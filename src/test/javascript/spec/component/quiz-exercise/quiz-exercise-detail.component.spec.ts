@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, EventEmitter, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgbDate, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -1455,6 +1455,7 @@ describe('QuizExercise Management Detail Component', () => {
             it('should set showExistingQuestionsFromCourse to given value', () => {
                 const element = document.createElement('input');
                 const control = { ...element, value: 'test' };
+                // @ts-ignore
                 const getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
                 comp.setExistingQuestionSourceToCourse();
                 expect(comp.showExistingQuestionsFromCourse).toBeTrue();
@@ -1516,8 +1517,11 @@ describe('QuizExercise Management Detail Component', () => {
                 verifyStub = jest.spyOn(comp, 'verifyAndImportQuestions').mockImplementation();
                 readAsText = jest.fn();
                 reader = new FileReader();
+                // @ts-ignore
                 reader = { ...reader, result: jsonContent };
+                // @ts-ignore
                 generateFileReaderStub = jest.spyOn(comp, 'generateFileReader').mockReturnValue({ ...reader, onload: null, readAsText });
+                // @ts-ignore
                 getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
             });
 

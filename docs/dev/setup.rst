@@ -26,26 +26,40 @@ following dependencies/tools on your machine:
    Boot <http://projects.spring.io/spring-boot>`__.
 2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__:
    Artemis uses Hibernate to store entities in a MySQL database.
-   Download and install the MySQL Community Server (8.0.x) and configure
-   the ‘root’ user with an empty password.
-   (In case you want to use a different password, make sure to change the value in
-   ``application-local.yml`` *(spring > datasource > password)* and in ``liquibase.gradle`` *(within the 'liquibaseCommand' as argument password)*).
-   The required Artemis scheme will be created / updated automatically at startup time of the
-   server application.
-   Alternatively, you can run the MySQL Database Server inside a Docker container using e.g. ``docker-compose -f src/main/docker/mysql.yml up``
-   In case you are using a computer with an arm64 processor you might want to change the used image
-   in the mysql.yml file. Using e.g. ``ubuntu/mysql:8.0-21.10_beta`` will let the MySQL database
-   run natively on arm64 processors.
+   Download and install the MySQL Community Server (8.0.x) and configure it according to section
+   `MySQL Setup <#mysql-setup>`__.
 3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=16.13.0 < 17) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
 4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=8.1.0) to
    manage client side dependencies. Npm is typically bundled with Node.js,
    but can also be installed separately.
+5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs within exercise task descriptions.
+   It's not necessary for a successful build,
+   but it's necessary for production setups as otherwise errors will show up during runtime. )
+6. ( A **version control** and **build** system is necessary for the **programming exercise** feature of Artemis.
+   There are multiple stacks available for the integration with Artemis:
 
+   * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
+   * GitLab and GitLab CI (under development, not yet production ready)
+   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. contents:: Contents of this Setup Guide
+    :local:
+    :depth: 1
+
+------------------------------------------------------------------------------------------------------------------------
 
 MySQL Setup
 ------------
+
+The required Artemis schema will be created / updated automatically at startup time of the
+server application.
+
+As an alternative to a native MySQL setup, you can run the MySQL Database Server inside a Docker container
+using e.g. ``docker-compose -f src/main/docker/mysql.yml up``.
 
 If you run your own MySQL server, make sure to specify the default ``character-set``
 as ``utf8mb4`` and the default ``collation`` as ``utf8mb4_unicode_ci``.
@@ -66,15 +80,29 @@ You can achieve this e.g. by using a ``my.cnf`` file in the location ``/etc``.
 Make sure the configuration file is used by MySQL when you start the server.
 You can find more information on `<https://dev.mysql.com/doc/refman/8.0/en/option-files.html>`__
 
+Users for MySQL
+^^^^^^^^^^^^^^^
+| For the development environment the default MySQL user is ‘root’ with an empty password.
+| (In case you want to use a different password, make sure to change the value in
+  ``application-local.yml`` *(spring > datasource > password)* and in ``liquibase.gradle``
+  *(within the 'liquibaseCommand' as argument password)*).
+
 Set empty root password for MySQL 8
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If you have problems connecting to the MySQL 8 database using an empty root password, you can try the following command to reset the root password to an empty password:
+"""""""""""""""""""""""""""""""""""
+If you have problems connecting to the MySQL 8 database using an empty root password, you can try the following command
+to reset the root password to an empty password:
 
 .. code::
 
     mysql -u root --execute "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY ''";
 
-Note: this should only be used in a development environment. The root password for a production environment should never be empty.
+.. warning::
+    Empty root passwords should only be used in a development environment.
+    The root password for a production environment must never be empty.
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. _Server Setup:
 
 Server Setup
 ------------
@@ -152,14 +180,6 @@ You can override the following configuration options in this file.
            # Bamboo: The token value you use for the Server Notification Plugin
            # Jenkins: The token value you use for the Server Notification Plugin and is stored under the notification-token credential above
            authentication-token: <token>
-       lti:
-           id: artemis_lti
-           oauth-key: artemis_lti_key
-           oauth-secret: <secret>    # only important for online courses on the edX platform, can typically be ignored
-           user-prefix-edx: edx_
-           user-prefix-u4i: u4i_
-           user-group-name-edx: edx
-           user-group-name-u4i: u4i
        git:
            name: Artemis
            email: artemis@in.tum.de
@@ -174,18 +194,6 @@ Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA,
 Bitbucket and Bamboo instances. It’s not necessary to fill all the
 fields, most of them can be left blank. Note that there is additional
 information about the setup for programming exercises provided:
-
-
-.. toctree::
-   :maxdepth: 1
-
-   Bamboo, Bitbucket and Jira <setup/bamboo-bitbucket-jira>
-   Jenkins and Gitlab <setup/jenkins-gitlab>
-   Common setup problems <setup/common-problems>
-   Multiple instances <setup/distributed>
-   Programming Exercise adjustments <setup/programming-exercises>
-   Kubernetes <setup/kubernetes>
-
 
 .. note::
    Be careful that you do not commit changes to ``application-artemis.yml``.
@@ -208,8 +216,10 @@ If you use a password, you need to adapt it in
 Run the server via a service configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This setup is recommended for production instances as it registers Artemis as a service and e.g. enables auto-restarting of Artemis after the VM running Artemis has been restarted.
-As alternative you could take a look at the section below about `deploying artemis as docker container <#run-the-server-via-docker>`__.
+This setup is recommended for production instances as it registers Artemis as a service and e.g. enables auto-restarting
+of Artemis after the VM running Artemis has been restarted.
+As alternative you could take a look at the section below about
+`deploying artemis as docker container <#run-the-server-via-docker>`__.
 For development setups, see the other guides below.
 
 This is a service file that works on Debian/Ubuntu (using systemd):
@@ -249,10 +259,12 @@ This is a service file that works on Debian/Ubuntu (using systemd):
 The following parts might also be useful for other (production) setups, even if this service file is not used:
 
 - ``-Djava.security.egd=file:/dev/./urandom``: This is required if repositories are cloned via SSH from the VCS.
-   The default (pseudo-)random-generator ``/dev/random`` is blocking which results in very bad performance when using SSH due to lack of entropy.
+   The default (pseudo-)random-generator ``/dev/random`` is blocking which results in very bad performance when using
+   SSH due to lack of entropy.
 
 
-The file should be placed at ``/etc/systemd/system/artemis.service`` and after running ``sudo systemctl daemon-reload``, you can start the service using ``sudo service artemis start``.
+The file should be placed at ``/etc/systemd/system/artemis.service`` and after running ``sudo systemctl daemon-reload``,
+you can start the service using ``sudo systemctl start artemis``.
 
 You can stop the service using ``sudo service artemis stop`` and restart it using ``sudo service artemis restart``.
 
@@ -312,17 +324,22 @@ Run the server via a run configuration in IntelliJ
 The project comes with some pre-configured run / debug configurations that are stored in the ``.idea`` directory.
 When you import the project into IntelliJ the run configurations will also be imported.
 
-The recommended way is to run the server and the client separated. This provides fast rebuilds of the server and hot module replacement in the client.
+The recommended way is to run the server and the client separated. This provides fast rebuilds of the server and hot
+module replacement in the client.
 
 * **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
-* **Artemis (Client):** Will execute ``npm install`` and ``npm run serve``. The client will be available at `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <#client-setup>`__).
+* **Artemis (Client):** Will execute ``npm install`` and ``npm run serve``. The client will be available at
+  `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <#client-setup>`__).
 
 Other run / debug configurations
 """"""""""""""""""""""""""""""""
 
-* **Artemis (Server & Client):** Will start the server and the client. The client will be available at `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
-* **Artemis (Server, Jenkins & Gitlab):** The server will be started separated from the client with the profiles ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
-* **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled (see `Athene Service <#athene-service>`__).
+* **Artemis (Server & Client):** Will start the server and the client. The client will be available at
+  `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
+* **Artemis (Server, Jenkins & GitLab):** The server will be started separated from the client with the profiles
+  ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
+* **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled
+  (see `Athene Service <#athene-service>`__).
 
 Run the server with Spring Boot and Spring profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -370,17 +387,18 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 
    ./gradlew bootRun --args='--spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling'
 
-As an alternative, you might want to use Jenkins and Gitlab with an
+As an alternative, you might want to use Jenkins and GitLab with an
 internal user management in Artemis, then you would use the profiles:
 
 ::
 
    dev,jenkins,gitlab,artemis,scheduling
 
-Configure Text Assessment Analytics Service:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Configure Text Assessment Analytics Service
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Text Assessment Analytics is an internal analytics service used to gather data regarding the features of the text assessment process. Certain assessment events are tracked:
+Text Assessment Analytics is an internal analytics service used to gather data regarding the features of the text
+assessment process. Certain assessment events are tracked:
 
 1. Adding new feedback on a manually selected block
 2. Adding new feedback on an automatically selected block
@@ -402,8 +420,7 @@ This feature is disabled by default. We can enable it by modifying the configura
    info:
       text-assessment-analytics-enabled: true
 
-
-..
+------------------------------------------------------------------------------------------------------------------------
 
 Client Setup
 ------------
@@ -449,7 +466,8 @@ above in Server Setup) and if you have configured
 ``application-artemis.yml`` correctly, then you should be able to login
 with your TUM Online account.
 
-In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or any other scripts from ``package.json``,
+In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or any other
+scripts from ``package.json``,
 you can add a memory limit parameter (``--max_old_space_size=5120``) in the script.
 You can do it by changing the **start** script in ``package.json`` from:
 
@@ -476,6 +494,8 @@ For further instructions on how to develop with JHipster, have a look at
 `Using JHipster in
 development <http://www.jhipster.tech/development>`__.
 
+------------------------------------------------------------------------------------------------------------------------
+
 Customize your Artemis instance
 -------------------------------
 
@@ -487,6 +507,92 @@ instead of the TUM defaults:
 * The privacy statement HTML → ``${artemisRunDirectory}/public/content/privacy_statement.html``
 * The imprint statement HTML → ``${artemisRunDirectory}/public/content/imprint.html``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/programming-exercises.rst.txt
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/bamboo-bitbucket-jira.rst.txt
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/jenkins-gitlab.rst.txt
+
+------------------------------------------------------------------------------------------------------------------------
+>>>>>>> origin/develop-deployment-wg
+
+Athene Service
+--------------
+
+The semi-automatic text assessment relies on the Athene_ service.
+To enable automatic text assessments, special configuration is required:
+
+Enable the ``athene`` Spring profile:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athene
+
+Configure API Endpoints:
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Athene service is running on a dedicated machine and is addressed via
+HTTP. We need to extend the configuration in the file
+``src/main/resources/config/application-artemis.yml`` like so:
+
+.. code:: yaml
+
+   artemis:
+     # ...
+     athene:
+       url: http://localhost
+       base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
+       token-validity-in-seconds: 10800
+
+.. _Athene: https://github.com/ls1intum/Athene
+
+------------------------------------------------------------------------------------------------------------------------
+
+Apollon Service
+---------------
+
+The `Apollon Converter`_ is needed to convert models from their JSON representaiton to PDF.
+Special configuration is required:
+
+Enable the ``apollon`` Spring profile:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,apollon
+
+Configure API Endpoints:
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Apollon conversion service is running on a dedicated machine and is adressed via
+HTTP. We need to extend the configuration in the file
+``src/main/resources/config/application-artemis.yml`` like so:
+
+.. code:: yaml
+
+   apollon:
+      conversion-service-url: http://localhost:8080
+
+
+.. _Apollon Converter: https://github.com/ls1intum/Apollon_converter
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/common-problems.rst.txt
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/distributed.rst.txt
+
+------------------------------------------------------------------------------------------------------------------------
 
 Alternative: Docker-Compose Setup
 ---------------------------------
@@ -548,61 +654,6 @@ Other useful commands
    ``docker-compose start <name of the service>``)
 -  Restart a service: ``docker-compose restart <name of the service>``
 
-Athene Service
---------------
+------------------------------------------------------------------------------------------------------------------------
 
-The semi-automatic text assessment relies on the Athene_ service.
-To enable automatic text assessments, special configuration is required:
-
-Enable the ``athene`` Spring profile:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-::
-
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athene
-
-Configure API Endpoints:
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-The Athene service is running on a dedicated machine and is addressed via
-HTTP. We need to extend the configuration in the file
-``src/main/resources/config/application-artemis.yml`` like so:
-
-.. code:: yaml
-
-   artemis:
-     # ...
-     athene:
-       url: http://localhost
-       base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-       token-validity-in-seconds: 10800
-
-.. _Athene: https://github.com/ls1intum/Athene
-
-Apollon Service
----------------
-
-The `Apollon Converter`_ is needed to convert models from their JSON representaiton to PDF.
-Special configuration is required:
-
-Enable the ``apollon`` Spring profile:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-::
-
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,apollon
-
-Configure API Endpoints:
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-The Apollon conversion service is running on a dedicated machine and is adressed via
-HTTP. We need to extend the configuration in the file
-``src/main/resources/config/application-artemis.yml`` like so:
-
-.. code:: yaml
-
-   apollon:
-      conversion-service-url: http://localhost:8080
-
-
-.. _Apollon Converter: https://github.com/ls1intum/Apollon_converter
+.. include:: setup/kubernetes.rst.txt

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, HostListener } from '@angular/core';
+import { Component, HostListener, Input, OnChanges } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';

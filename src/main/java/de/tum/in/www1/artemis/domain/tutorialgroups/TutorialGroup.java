@@ -8,15 +8,15 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 
 @Entity
@@ -62,8 +62,50 @@ public class TutorialGroup extends DomainObject {
     @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
     private Set<TutorialGroupRegistration> registrations = new HashSet<>();
 
+    // ==== Transient fields ====
+
+    /**
+     * This transient field is set to true if the user who requested the entity is registered for this tutorial group
+     */
+    @Transient
+    @JsonSerialize
+    private Boolean isUserRegistered;
+
+    /**
+     * This transient field is set to true if the user who requested the entity is the teaching assistant of this tutorial group
+     */
+    @Transient
+    @JsonSerialize
+    private Boolean isUserTutor;
+
+    /**
+     * This transient fields is set to the number of registered students for this tutorial group
+     */
+    @Transient
+    @JsonSerialize
+    private Integer numberOfRegisteredUsers;
+
+    /**
+     * This transient fields is set to the name of the teaching assistant of this tutorial group
+     */
+    @Transient
+    @JsonSerialize
+    private String teachingAssistantName;
+
+    /**
+     * This transient fields is set to the course title to which this tutorial group belongs
+     */
+    @Transient
+    @JsonSerialize
+    private String courseTitle;
+
     public TutorialGroup() {
         // Empty constructor needed for Jackson.
+    }
+
+    public TutorialGroup(Course course, String title) {
+        this.course = course;
+        this.title = title;
     }
 
     public TutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, Language language, User teachingAssistant,
@@ -150,4 +192,85 @@ public class TutorialGroup extends DomainObject {
     public void setCampus(String campus) {
         this.campus = campus;
     }
+
+    public Boolean getIsUserRegistered() {
+        return isUserRegistered;
+    }
+
+    public void setIsUserRegistered(Boolean userRegistered) {
+        isUserRegistered = userRegistered;
+    }
+
+    public Boolean getIsUserTutor() {
+        return isUserTutor;
+    }
+
+    public void setIsUserTutor(Boolean userTutor) {
+        isUserTutor = userTutor;
+    }
+
+    public Integer getNumberOfRegisteredUsers() {
+        return numberOfRegisteredUsers;
+    }
+
+    public void setNumberOfRegisteredUsers(Integer numberOfRegisteredUsers) {
+        this.numberOfRegisteredUsers = numberOfRegisteredUsers;
+    }
+
+    public String getTeachingAssistantName() {
+        return teachingAssistantName;
+    }
+
+    public void setTeachingAssistantName(String teachingAssistantName) {
+        this.teachingAssistantName = teachingAssistantName;
+    }
+
+    public String getCourseTitle() {
+        return courseTitle;
+    }
+
+    public void setCourseTitle(String courseTitle) {
+        this.courseTitle = courseTitle;
+    }
+
+    /**
+     * Sets the transient fields for the given user.
+     *
+     * @param user the user for which the transient fields should be set
+     */
+    public void setTransientPropertiesForUser(User user) {
+        if (Hibernate.isInitialized(registrations) && registrations != null) {
+            this.setIsUserRegistered(registrations.stream().anyMatch(registration -> registration.getStudent().equals(user)));
+            this.setNumberOfRegisteredUsers(registrations.size());
+        }
+        else {
+            this.setIsUserRegistered(null);
+            this.setNumberOfRegisteredUsers(null);
+        }
+
+        if (Hibernate.isInitialized(course) && course != null) {
+            this.setCourseTitle(course.getTitle());
+        }
+        else {
+            this.setCourseTitle(null);
+        }
+
+        if (Hibernate.isInitialized(teachingAssistant) && teachingAssistant != null) {
+            this.setTeachingAssistantName(teachingAssistant.getName());
+            this.isUserTutor = teachingAssistant.equals(user);
+        }
+        else {
+            this.setTeachingAssistantName(null);
+        }
+    }
+
+    /**
+     * Hides privacy sensitive information.
+     */
+    public void hidePrivacySensitiveInformation() {
+        this.setRegistrations(null);
+        this.setTeachingAssistant(null);
+        this.setCourse(null);
+    }
+
 }

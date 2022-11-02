@@ -1,4 +1,4 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { ArtemisTestModule } from '../../test.module';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
@@ -59,6 +59,15 @@ describe('TextAssessmentAreaComponent', () => {
         component.onAltToggle(eventMock, false);
         expect(spyOnAlt).toHaveBeenCalledOnce();
         expect(component.autoTextBlockAssessment).toBeFalse();
+    });
+
+    it('should not toggle on alt when manual selection forbidden', () => {
+        const spyOnAlt = jest.spyOn(component, 'onAltToggle');
+        const eventMock = new KeyboardEvent('keydown', { key: 'Alt' });
+        component.allowManualBlockSelection = false;
+        component.onAltToggle(eventMock, false);
+        expect(spyOnAlt).toHaveBeenCalledOnce();
+        expect(component.autoTextBlockAssessment).toBeTrue();
     });
 
     it('should add TextBlockRef if text block is added manually', () => {
