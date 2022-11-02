@@ -3,7 +3,7 @@
         <h4 *ngIf="!isImport && !programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
             Generate new Programming Exercise
         </h4>
-        <jhi-documentation-button></jhi-documentation-button>
+        <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
     </div>
     <h4 *ngIf="!isImport && programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
         Edit Programming Exercise

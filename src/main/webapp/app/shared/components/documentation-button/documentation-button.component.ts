@@ -3,6 +3,20 @@ import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 
 export enum DocumentationType {
     Course = 'courses/customizable/',
+    Lecture = 'lectures/',
+    Exercise = 'exercises/',
+    Quiz = 'exercises/quiz/',
+    Model = 'exercises/modeling/',
+    Programming = 'exercises/programming/',
+    Text = 'exercises/textual/',
+    FileUpload = 'exercises/file-upload/',
+    Notifications = 'notifications/',
+    LearningGoals = 'lectures/#learning-goals',
+    Communications = 'communication/',
+    Exams = 'exam_mode/',
+    PlagiarismChecks = 'plagiarism-check/',
+    Grading = 'grading/',
+    Units = 'lectures/#lecture-units',
 }
 
 @Component({

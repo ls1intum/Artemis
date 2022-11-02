@@ -15,6 +15,7 @@ import { UserSettingsCategory } from 'app/shared/constants/user-settings.constan
 import { Setting } from 'app/shared/user-settings/user-settings.model';
 import { faArchive, faBell, faCircleNotch, faCog, faEye, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { SessionStorageService } from 'ngx-webstorage';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 export const LAST_READ_STORAGE_KEY = 'lastNotificationRead';
@@ -44,6 +45,8 @@ export class NotificationSidebarComponent implements OnInit {
     notificationSettings: NotificationSetting[] = [];
     notificationTitleActivationMap: Map<string, boolean> = new Map<string, boolean>();
     subscriptionToNotificationSettingsChanges: Subscription;
+
+    documentationType = DocumentationType.Notifications;
 
     // Icons
     faTimes = faTimes;

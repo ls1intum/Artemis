@@ -5,7 +5,7 @@
                 <h4 *ngIf="!quizExercise.id" id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.quizExercise.home.createLabel">Create a new Quiz Exercise</h4>
                 <h4 *ngIf="!isImport && quizExercise.id" id="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.quizExercise.home.editLabel">Edit Quiz Exercise</h4>
                 <h4 *ngIf="isImport" id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.quizExercise.home.importLabel">Import Quiz Exercise</h4>
-                <jhi-documentation-button></jhi-documentation-button>
+                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
             </div>
             <h4>
                 <span class="badge bg-info align-text-top float-end">

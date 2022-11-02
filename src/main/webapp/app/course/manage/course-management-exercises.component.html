@@ -8,7 +8,7 @@
                     {{ 'artemisApp.course.exercises' | artemisTranslate }}
                 </span>
             </h3>
-            <jhi-documentation-button></jhi-documentation-button>
+            <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
         </div>
         <div class="col text-end align-self-center">
             <button id="toggleSearchButton" class="btn btn-primary" type="button" (click)="toggleSearch()">

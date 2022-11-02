@@ -23,6 +23,7 @@ import { ModelingEditorComponent } from '../shared/modeling-editor.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -53,6 +54,8 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     isImport: boolean;
     isExamMode: boolean;
     semiAutomaticAssessmentAvailable = true;
+
+    documentationType = DocumentationType.Model;
 
     // Icons
     faSave = faSave;

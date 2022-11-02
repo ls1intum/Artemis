@@ -12,6 +12,7 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -30,6 +31,9 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     pagingEnabled = true;
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
+
+    documentationType = DocumentationType.Communications;
+
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly pageType = PageType.OVERVIEW;

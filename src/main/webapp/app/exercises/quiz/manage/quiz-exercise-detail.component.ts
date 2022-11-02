@@ -29,6 +29,7 @@ import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/q
 import { cloneDeep } from 'lodash-es';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 // False-positives:
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -103,6 +104,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     /** Route params **/
     examId?: number;
     courseId?: number;
+
+    documentationType = DocumentationType.Quiz;
 
     // Icons
     faPlus = faPlus;

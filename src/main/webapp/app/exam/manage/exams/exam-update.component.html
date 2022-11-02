@@ -4,7 +4,7 @@
             <div *ngIf="!exam.id; else edit" class="d-flex align-items-center">
                 <h4 *ngIf="!isImport">{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</h4>
                 <h4 *ngIf="isImport">{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</h4>
-                <jhi-documentation-button></jhi-documentation-button>
+                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
             </div>
             <ng-template #edit>
                 <h4>{{ 'artemisApp.examManagement.editExam' | artemisTranslate }}</h4>

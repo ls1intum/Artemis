@@ -14,7 +14,7 @@
         <div class="header pt-4 px-3">
             <div class="d-flex header-icon justify-content-between align-items-baseline">
                 <div class="d-flex">
-                    <jhi-documentation-button></jhi-documentation-button>
+                    <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
                     <a class="ps-2" [routerLink]="['/user-settings/notifications']" (click)="toggleSidebar()">
                         <fa-icon class="ng-fa-icon" [icon]="faCog"></fa-icon>
                     </a>

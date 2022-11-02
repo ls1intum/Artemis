@@ -3,6 +3,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -22,6 +23,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     filteredModelingExercisesCount = 0;
     filteredFileUploadExercisesCount = 0;
     exerciseFilter: ExerciseFilter;
+
+    documentationType = DocumentationType.Exercise;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;

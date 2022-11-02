@@ -4,7 +4,7 @@
         <h4 *ngIf="!fileUploadExercise.id" id="jhi-file-upload-exercise-heading-create" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel">
             Create a new File Upload Exercise
         </h4>
-        <jhi-documentation-button></jhi-documentation-button>
+        <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
     </div>
     <div>
         <div class="form-group" [hidden]="!fileUploadExercise.id">
