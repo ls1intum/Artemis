@@ -259,7 +259,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void getTextSubmissionWithoutAssessment_noSubmittedSubmission_notFound() throws Exception {
+    void getTextSubmissionWithoutAssessment_noSubmittedSubmission_null() throws Exception {
         TextSubmission submission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, false);
         database.saveTextSubmission(finishedTextExercise, submission, "student1");
 
