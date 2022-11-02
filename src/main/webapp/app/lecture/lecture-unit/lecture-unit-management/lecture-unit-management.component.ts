@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';

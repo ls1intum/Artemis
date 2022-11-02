@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faCheck, faHandshakeAngle, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faCheck, faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mode/lecture-wizard-learning-goals.component';
 import { take } from 'rxjs/operators';
