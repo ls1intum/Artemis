@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -34,6 +34,7 @@ export class CourseMessagesComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         public messagingService: MessagingService,
         private alertService: AlertService,
+        public cdr: ChangeDetectorRef,
     ) {}
 
     onConversationSelected(conversation: Conversation | undefined) {
@@ -106,6 +107,7 @@ export class CourseMessagesComponent implements OnInit {
         this.messagingService.createConversation(this.course?.id!, newConversation).subscribe({
             next: (conversation: Conversation) => {
                 this.activeConversation = conversation;
+                this.refreshConversations$.next();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });

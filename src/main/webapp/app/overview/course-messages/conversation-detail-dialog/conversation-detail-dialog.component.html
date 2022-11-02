@@ -1,0 +1,30 @@
+<div *ngIf="course && conversation">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span>
+                <jhi-channel-icon *ngIf="conversation.type === CHANNEL" [isPublic]="conversation.isPublic!"></jhi-channel-icon>
+                {{ conversationService.getNameOfConversation(conversation) }}
+            </span>
+        </h4>
+        <button type="button" class="btn-close" (click)="clear()"></button>
+    </div>
+    <div>
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+                <a class="nav-link active" role="button" (click)="selectedTab = Tabs.MEMBERS">
+                    {{ 'artemisApp.messages.conversationDetail.tabs.members' | translate }}
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="modal-body">
+        <ng-container [ngSwitch]="selectedTab">
+            <jhi-conversation-members
+                *ngSwitchCase="Tabs.MEMBERS"
+                [conversation]="conversation"
+                [course]="course"
+                (changesPerformed)="changesWerePerformed = true"
+            ></jhi-conversation-members>
+        </ng-container>
+    </div>
+</div>

@@ -9,7 +9,7 @@
     <div>
         <div class="btn-toolbar p-2" role="toolbar" aria-label="Toolbar with button groups">
             <div class="btn-group me-2" role="group" aria-label="First group">
-                <button type="button" class="btn btn-outline-secondary">
+                <button type="button" class="btn btn-outline-secondary" (click)="openConversationDetailDialog($event)">
                     <fa-icon [icon]="faUserGroup"></fa-icon> {{ activeConversation.conversationParticipants?.length || 0 }}
                 </button>
                 <button type="button" class="btn btn-outline-secondary" (click)="openAddUsersDialog($event)">

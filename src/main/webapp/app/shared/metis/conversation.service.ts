@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -8,9 +8,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { ConversationType } from 'app/shared/metis/metis.util';
+import { User } from 'app/core/user/user.model';
 
 type EntityResponseType = HttpResponse<Conversation>;
 type EntityArrayResponseType = HttpResponse<Conversation[]>;
+
+export type UserSortDirection = 'asc' | 'desc';
+export type UserSortProperty = keyof User;
+export type UserSortingParameter = {
+    sortProperty: UserSortProperty;
+    sortDirection: UserSortDirection;
+};
 
 @Injectable({ providedIn: 'root' })
 export class ConversationService {
@@ -57,6 +65,18 @@ export class ConversationService {
     create(courseId: number, conversation: Conversation): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(conversation);
         return this.http.post<Conversation>(`${this.resourceUrl}${courseId}/conversations`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+    }
+
+    searchMembersOfConversation(courseId: number, conversationId: number, loginOrName: string, page: number, size: number): Observable<HttpResponse<User[]>> {
+        const sortingParameters: UserSortingParameter[] = [
+            { sortProperty: 'firstName', sortDirection: 'asc' },
+            { sortProperty: 'lastName', sortDirection: 'asc' },
+        ];
+        const params = this.creatSearchPagingParams(sortingParameters, page, size, loginOrName);
+        return this.http.get<User[]>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/members/search`, {
+            observe: 'response',
+            params,
+        });
     }
 
     /**
@@ -131,5 +151,15 @@ export class ConversationService {
             });
         }
         return res;
+    }
+
+    private creatSearchPagingParams(sortingParameters: UserSortingParameter[], page: number, size: number, loginOrName: string) {
+        let params = new HttpParams();
+        params = params.set('loginOrName', loginOrName);
+        for (const sortParameter of sortingParameters) {
+            params = params.append('sort', `${sortParameter.sortProperty},${sortParameter.sortDirection}`);
+        }
+        params = params.set('page', String(page));
+        return params.set('size', String(size));
     }
 }

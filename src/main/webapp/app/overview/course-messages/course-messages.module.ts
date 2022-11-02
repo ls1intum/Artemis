@@ -19,6 +19,8 @@ import { ChannelIconComponent } from './channels/channel-icon/channel-icon.compo
 import { ConversationAddUsersDialogComponent } from './conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { AddUsersFormComponent } from './conversation-add-users-dialog/add-users-form/add-users-form.component';
 import { CourseUsersSelectorModule } from 'app/shared/course-users-selector/course-users-selector.module';
+import { ConversationMembers } from './conversation-detail-dialog/conversation-members/conversation-members.component';
+import { ConversationDetailDialogComponent } from './conversation-detail-dialog/conversation-detail-dialog.component';
 
 const routes: Routes = [
     {
@@ -55,6 +57,8 @@ const routes: Routes = [
         ChannelIconComponent,
         ConversationAddUsersDialogComponent,
         AddUsersFormComponent,
+        ConversationMembers,
+        ConversationDetailDialogComponent,
     ],
 })
 export class CourseMessagesModule {}

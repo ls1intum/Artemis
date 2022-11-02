@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository.metis;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,4 +22,6 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             WHERE conversationParticipant.conversation.id = :#{#conversationId}
             """)
     List<ConversationParticipant> findConversationParticipantByConversationId(@Param("conversationId") Long conversationId);
+
+    Optional<ConversationParticipant> findConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 }

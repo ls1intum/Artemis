@@ -185,7 +185,7 @@ export class ConversationSidebarComponent implements AfterViewInit {
     };
 
     findConversationWithUser(user: User) {
-        return this.conversations.find((conversation) => conversation.conversationParticipants!.some((conversationParticipant) => conversationParticipant.user.id === user.id));
+        return this.directConversations.find((conversation) => conversation.conversationParticipants!.some((participant) => participant.user.id === user.id));
     }
 
     createNewConversationWithUser(user: User) {

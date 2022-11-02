@@ -7,6 +7,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-messages/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { from, Subject } from 'rxjs';
+import { ConversationDetailDialogComponent, ConversationDetailTabs } from 'app/overview/course-messages/conversation-detail-dialog/conversation-detail-dialog.component';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -33,6 +34,17 @@ export class ConversationHeaderComponent implements OnInit {
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.conversation = this.activeConversation;
+        from(modalRef.result).subscribe(() => {
+            this.refreshConversations$.next();
+        });
+    }
+
+    openConversationDetailDialog(event: MouseEvent) {
+        event.stopPropagation();
+        const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        modalRef.componentInstance.selectedTab = ConversationDetailTabs.MEMBERS;
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.conversation = this.activeConversation;
         from(modalRef.result).subscribe(() => {

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.metis.Conversation;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the Conversation entity.
@@ -46,4 +47,9 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
              ORDER BY conversation.lastMessageDate DESC
             """)
     List<Conversation> findActiveConversationsOfUserWithConversationParticipants(@Param("courseId") Long courseId, @Param("userId") Long userId);
+
+    default Conversation findByIdElseThrow(long conversationId) {
+        return this.findById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
+    }
+
 }

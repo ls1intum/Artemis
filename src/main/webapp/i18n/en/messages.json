@@ -31,6 +31,16 @@
                 "maxError": "You can only add {{ max }} users",
                 "addUserLabel": "Search for users in the course",
                 "maxUsersNote": "Note: You can only add {{ max }} users to this conversation"
+            },
+            "conversationDetail": {
+                "tabs": {
+                    "members": "Members"
+                },
+                "memberTab": {
+                    "findMembers": "Find members",
+                    "searching": "Searching...",
+                    "addUsers": "Add users"
+                }
             }
         }
     }

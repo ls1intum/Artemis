@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service.metis;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
@@ -150,8 +152,16 @@ public class ConversationService {
      * @param conversationId id of the conversation to fetch
      * @return fetched conversation
      */
-    public Conversation getConversationById(Long conversationId) {
+    public Conversation getConversationByIdWithConversationParticipants(Long conversationId) {
         return conversationRepository.findConversationByIdWithConversationParticipants(conversationId);
+    }
+
+    public Conversation getConversationById(Long conversationId) {
+        return conversationRepository.findByIdElseThrow(conversationId);
+    }
+
+    public boolean isMember(Long conversationId, Long userId) {
+        return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, userId).isPresent();
     }
 
     /**
@@ -264,5 +274,9 @@ public class ConversationService {
         readingParticipant.setLastRead(ZonedDateTime.now());
         conversationParticipantRepository.save(readingParticipant);
         return readingParticipant.getLastRead();
+    }
+
+    public Page<User> searchMembersOfConversation(Pageable pageable, Long conversationId, String searchTerm) {
+        return userRepository.searchAllByLoginOrNameInConversation(pageable, searchTerm, conversationId);
     }
 }

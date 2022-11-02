@@ -11,10 +11,13 @@ import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Conversation;
@@ -26,6 +29,7 @@ import de.tum.in.www1.artemis.service.metis.ChannelService;
 import de.tum.in.www1.artemis.service.metis.ConversationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for managing Conversation.
@@ -94,6 +98,29 @@ public class ConversationResource {
         }
     }
 
+    @GetMapping("/{courseId}/conversations/{conversationId}/members/search")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<User>> searchMembersOfConversation(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam("loginOrName") String loginOrName,
+            Pageable pageable) {
+        log.debug("REST request to get members of conversation : {} with login or name : {} in course: {}", conversationId, loginOrName, courseId);
+        if (pageable.getPageSize() > 20) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The page size must not be greater than 20");
+        }
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
+        checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var isMember = conversationService.isMember(conversationId, requestingUser.getId());
+        if (!isMember) {
+            throw new AccessForbiddenException("Only members of a conversation can search the members of a conversation.");
+        }
+        var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
+        var page = conversationService.searchMembersOfConversation(pageable, conversationId, searchTerm);
+        var headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
     @PostMapping("/{courseId}/conversations/{conversationId}/register")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> registerUsers(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestBody List<String> userLogins) {
@@ -105,7 +132,7 @@ public class ConversationResource {
         log.debug("REST request to register {} users to conversation : {}", userLogins.size(), conversationId);
         var course = courseRepository.findByIdElseThrow(courseId);
 
-        var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
+        var conversationFromDatabase = this.conversationService.getConversationByIdWithConversationParticipants(conversationId);
         checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -156,7 +183,7 @@ public class ConversationResource {
         log.debug("REST request to deregister {} users from the conversation : {}", userLogins.size(), conversationId);
         var course = courseRepository.findByIdElseThrow(courseId);
 
-        var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
+        var conversationFromDatabase = this.conversationService.getConversationByIdWithConversationParticipants(conversationId);
         checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();

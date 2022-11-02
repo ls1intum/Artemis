@@ -1,0 +1,55 @@
+<div *ngIf="course && conversation" class="container-fluid">
+    <div class="row">
+        <div class="col-auto">
+            <button type="button" class="btn btn-outline-secondary" (click)="openAddUsersDialog($event)">
+                <fa-icon [icon]="faUserPlus"></fa-icon>
+                {{ 'artemisApp.messages.conversationDetail.memberTab.addUsers' | artemisTranslate }}
+            </button>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="input-group col-12">
+            <span class="input-group-text">
+                <fa-icon [icon]="faMagnifyingGlass" size="xs"></fa-icon>
+            </span>
+            <input
+                type="text"
+                class="form-control"
+                [placeholder]="'artemisApp.messages.conversationDetail.memberTab.findMembers' | artemisTranslate"
+                id="searchQuery"
+                (input)="onSearchQueryInput($event)"
+            />
+        </div>
+        <div *ngIf="isSearching" class="col-12">
+            <small class="form-text text-muted d-inline-block">{{ 'artemisApp.messages.conversationDetail.memberTab.searching' | artemisTranslate }}</small>
+        </div>
+    </div>
+    <div class="row mt-2" *ngIf="members && members.length > 0">
+        <div class="col-12">
+            <ul class="list-group">
+                <li *ngFor="let user of members; let i = index; trackBy: trackIdentity" class="list-group-item d-flex justify-content-between align-items-center">
+                    <span class="d-inline-block">
+                        <fa-icon [icon]="faUser"></fa-icon>
+                        {{ getUserLabel(user) }}</span
+                    >
+                </li>
+            </ul>
+        </div>
+        <div class="col-12">
+            <div class="d-flex justify-content-center">
+                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
+            </div>
+            <div class="d-flex justify-content-center">
+                <ngb-pagination
+                    [collectionSize]="totalItems"
+                    [(page)]="page"
+                    [pageSize]="itemsPerPage"
+                    [maxSize]="5"
+                    [rotate]="true"
+                    [boundaryLinks]="true"
+                    (pageChange)="transition()"
+                ></ngb-pagination>
+            </div>
+        </div>
+    </div>
+</div>

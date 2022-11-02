@@ -115,7 +115,7 @@ public class AnswerMessageService extends PostingService {
             throw new AccessForbiddenException("Answer Post", existingAnswerPost.getId());
         }
         else {
-            return conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
+            return conversationService.getConversationByIdWithConversationParticipants(existingAnswerPost.getPost().getConversation().getId());
         }
     }
 

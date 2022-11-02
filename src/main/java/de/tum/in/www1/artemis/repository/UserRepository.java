@@ -160,6 +160,16 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
             @Param("idOfUser") Long idOfUser);
 
+    @Query("""
+             SELECT DISTINCT user
+             FROM User user
+             JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+             JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+             WHERE conversation.id = :#{#conversationId}
+             AND (:#{#loginOrName} = '' OR (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))
+            """)
+    Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId);
+
     /**
      * Search for all users by login or name in a group and convert them to {@link UserDTO}
      *

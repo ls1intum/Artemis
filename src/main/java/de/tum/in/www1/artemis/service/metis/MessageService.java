@@ -182,7 +182,7 @@ public class MessageService extends PostingService {
             throw new AccessForbiddenException("Post", existingMessagePost.getId());
         }
         else {
-            return conversationService.getConversationById(existingMessagePost.getConversation().getId());
+            return conversationService.getConversationByIdWithConversationParticipants(existingMessagePost.getConversation().getId());
         }
     }
 
