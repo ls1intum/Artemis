@@ -165,11 +165,11 @@ public class LtiResource {
             String jwt = tokenProvider.createToken(authentication, true);
             log.debug("created jwt token: {}", jwt);
             Duration duration = Duration.of(tokenProvider.getTokenValidity(true), ChronoUnit.MILLIS);
-            ResponseCookie responseCookie = JWTFilter.buildJWTCookie(jwt, duration, request.isSecure());
+            ResponseCookie responseCookie = JWTFilter.buildJWTCookie(jwt, duration);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
         }
         else {
-            ResponseCookie responseCookie = JWTFilter.buildJWTCookie("", Duration.ZERO, request.isSecure());
+            ResponseCookie responseCookie = JWTFilter.buildJWTCookie("", Duration.ZERO);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
             redirectUrlComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }
