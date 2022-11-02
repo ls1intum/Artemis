@@ -53,8 +53,8 @@ describe('Course management', () => {
                                 courseId = createCourseResponse.body!.id!;
                                 cy.visit(`/course-management/${courseId}/edit`).then(() => {
                                     cy.get(`#courseImageInput${courseId}`).should('exist');
-                                    cy.get('.delete-course-icon-container').should('exist');
-                                    cy.get('.delete-course-icon-container').then(($el) => {
+                                    cy.get('#icon-row').should('exist');
+                                    cy.get('#icon-row').then(($el) => {
                                         if ($el.find('button').length === 0) {
                                             cy.contains('Button is not found').should('not.exist');
                                         }
