@@ -142,4 +142,16 @@ export class LectureUpdateComponent implements OnInit {
         this.isSaving = false;
         onError(this.alertService, error);
     }
+
+    onDatesValuesChanged() {
+        if (this.lecture.startDate === undefined || this.lecture.endDate === undefined) {
+            return;
+        }
+
+        if (this.lecture.startDate.isSameOrBefore(this.lecture.endDate)) {
+            return;
+        }
+
+        this.lecture.endDate = this.lecture.startDate;
+    }
 }

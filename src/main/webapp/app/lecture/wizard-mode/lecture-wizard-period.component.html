@@ -6,6 +6,7 @@
             <jhi-date-time-picker
                 labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
                 [(ngModel)]="lecture.startDate"
+                (valueChange)="validateDatesFunction()"
                 name="startDate"
                 id="start-date"
             ></jhi-date-time-picker>
@@ -14,6 +15,7 @@
             <jhi-date-time-picker
                 labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
                 [(ngModel)]="lecture.endDate"
+                (valueChange)="validateDatesFunction()"
                 name="endDate"
                 id="end-date"
             ></jhi-date-time-picker>

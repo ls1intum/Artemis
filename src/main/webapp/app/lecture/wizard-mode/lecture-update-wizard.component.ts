@@ -16,6 +16,7 @@ import { take } from 'rxjs/operators';
 export class LectureUpdateWizardComponent implements OnInit {
     @Input() toggleModeFunction: () => void;
     @Input() saveLectureFunction: () => void;
+    @Input() validateDatesFunction: () => void;
     @Input() lecture: Lecture;
     @Input() isSaving: boolean;
     @Input() startDate: string;

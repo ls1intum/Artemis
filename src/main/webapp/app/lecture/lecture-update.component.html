@@ -4,6 +4,7 @@
             *ngIf="isShowingWizardMode"
             [toggleModeFunction]="toggleModeFunction"
             [saveLectureFunction]="saveLectureFunction"
+            [validateDatesFunction]="onDatesValuesChanged"
             [lecture]="lecture"
             [isSaving]="isSaving"
             [startDate]="startDate"
@@ -45,6 +46,7 @@
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.startDate"
+                            (valueChange)="onDatesValuesChanged()"
                             name="startDate"
                             id="start-date"
                         ></jhi-date-time-picker>
@@ -53,6 +55,7 @@
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.endDate"
+                            (valueChange)="onDatesValuesChanged()"
                             name="endDate"
                             id="end-date"
                         ></jhi-date-time-picker>

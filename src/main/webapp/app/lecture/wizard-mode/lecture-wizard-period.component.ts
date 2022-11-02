@@ -8,6 +8,7 @@ import { Lecture } from 'app/entities/lecture.model';
 export class LectureUpdateWizardPeriodComponent {
     @Input() currentStep: number;
     @Input() lecture: Lecture;
+    @Input() validateDatesFunction: () => void;
 
     constructor() {}
 }
