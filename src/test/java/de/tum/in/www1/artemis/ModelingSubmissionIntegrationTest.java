@@ -584,7 +584,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void getModelSubmissionWithoutAssessment_noSubmittedSubmission_notFound() throws Exception {
+    void getModelSubmissionWithoutAssessment_noSubmittedSubmission_null() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, false);
         database.addModelingSubmission(classExercise, submission, "student1");
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -595,7 +595,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void getModelSubmissionWithoutAssessment_noSubmissionWithoutAssessment_notFound() throws Exception {
+    void getModelSubmissionWithoutAssessment_noSubmissionWithoutAssessment_null() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student1", "tutor1");
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
