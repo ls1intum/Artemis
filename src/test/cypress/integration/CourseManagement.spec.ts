@@ -141,17 +141,6 @@ describe('Course management', () => {
                                 cy.visit(`/course-management/${courseId}/edit`).then(() => {
                                     cy.get(`#courseImageInput${courseId}`).should('exist');
                                     cy.get('#delete-course-icon').should('exist');
-                                    cy.get('#delete-course-icon').click();
-                                    cy.get('#delete-course-icon').should('not.exist');
-                                    cy.get('.no-image').should('exist');
-                                    cy.intercept(PUT, BASE_API + 'courses').as('updateCourseQuery');
-                                    cy.get('#save-entity').click();
-                                    cy.wait('@updateCourseQuery').then(() => {
-                                        cy.visit(`/course-management/${courseId}/edit`).then(() => {
-                                            cy.get('#delete-course-icon').should('not.exist');
-                                            cy.get('.no-image').should('exist');
-                                        });
-                                    });
                                 });
                             });
                     });
