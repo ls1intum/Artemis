@@ -165,8 +165,9 @@ public class ModelingSubmissionService extends SubmissionService {
     public Optional<ModelingSubmission> findRandomSubmissionWithoutExistingAssessment(boolean lockSubmission, int correctionRound, ModelingExercise modelingExercise,
             boolean isExamMode) {
         var submissionWithoutResult = super.getRandomAssessableSubmission(modelingExercise, isExamMode, correctionRound);
-        if (submissionWithoutResult.isEmpty())
+        if (submissionWithoutResult.isEmpty()) {
             return Optional.empty();
+        }
 
         ModelingSubmission modelingSubmission = (ModelingSubmission) submissionWithoutResult.get();
         if (lockSubmission) {
