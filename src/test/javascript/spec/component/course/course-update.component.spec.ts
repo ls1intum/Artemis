@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -25,7 +25,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import dayjs from 'dayjs/esm';
-import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
+import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
@@ -201,7 +201,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith({ ...entity });
+            expect(updateStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null });
             expect(comp.isSaving).toBeFalse();
         }));
 
@@ -234,7 +234,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
-            expect(createStub).toHaveBeenCalledWith({ ...entity });
+            expect(createStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null });
             expect(comp.isSaving).toBeFalse();
         }));
     });
@@ -285,6 +285,7 @@ describe('Course Management Update Component', () => {
             uploadStub.mockResolvedValue({ path: 'testPath' } as FileUploadResponse);
             comp.uploadCourseImage();
             const file = base64StringToBlob(croppedImage, 'image/*');
+            // @ts-ignore
             file['name'] = comp.courseImageFileName;
             expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
             expect(comp.showCropper).toBeFalse();

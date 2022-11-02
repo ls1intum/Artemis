@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NavigationEnd, NavigationStart, Router, RouterState } from '@angular/router';
 import { HttpTestingController } from '@angular/common/http/testing';

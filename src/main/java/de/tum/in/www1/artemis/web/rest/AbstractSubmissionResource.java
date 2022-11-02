@@ -67,7 +67,7 @@ public abstract class AbstractSubmissionResource {
         final boolean examMode = exercise.isExamExercise();
         List<Submission> submissions;
         if (assessedByTutor) {
-            submissions = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(exerciseId, user, examMode, correctionRound);
+            submissions = submissionService.getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(exerciseId, user, examMode, correctionRound);
         }
         else {
             submissions = submissionService.getAllSubmissionsForExercise(exerciseId, submittedOnly, examMode);

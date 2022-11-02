@@ -1,5 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { map, take } from 'rxjs/operators';

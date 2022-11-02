@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { forkJoin, Subscription } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -13,7 +13,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import dayjs from 'dayjs/esm';
-import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -324,11 +323,6 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
         if (studentExams) {
             this.studentExams = studentExams;
         }
-    }
-
-    formatDate(date: dayjs.Dayjs | Date | undefined) {
-        // TODO: we should try to use the artemis date pipe here
-        return date ? dayjs(date).format(defaultLongDateTimeFormat) : '';
     }
 
     /**

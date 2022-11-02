@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { combineLatest, Observable, of, Subject, merge } from 'rxjs';
-import { filter, map, switchMap, tap, catchError } from 'rxjs/operators';
+import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';

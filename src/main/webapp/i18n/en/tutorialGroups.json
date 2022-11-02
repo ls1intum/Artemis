@@ -60,6 +60,12 @@
                 },
                 "isOnlineInput": {
                     "label": "Does this tutorial group meet online or offline?"
+                },
+                "notificationInput": {
+                    "label": "Optional: Notification about Changes",
+                    "placeholder": "Notification Text.",
+                    "maxLengthValidationError": "Notification text is limited to {{ max }} characters!",
+                    "help": "If you want to inform the registered students and the assigned tutor about changes in this tutorial group, you can enter a notification text here. A notification containing the text will be sent."
                 }
             }
         },
@@ -90,7 +96,8 @@
                 "additionalInformationNotSet": "No additional Information set"
             },
             "registeredStudents": {
-                "title": "Registered Students"
+                "title": "Registered Students",
+                "capacityWarning": "The capacity of this tutorial group of {{ capacity }} has been reached. Are you sure you want to register more students?"
             }
         }
     }

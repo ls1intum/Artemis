@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { BehaviorSubject, lastValueFrom, of, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, lastValueFrom, of } from 'rxjs';
 import { range as _range } from 'lodash-es';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
@@ -18,7 +18,7 @@ import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient } from '@angular/common/http';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 describe('ProgrammingSubmissionService', () => {
