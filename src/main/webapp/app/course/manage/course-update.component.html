@@ -56,7 +56,7 @@
                     </div>
                     <div class="delete-course-icon-container col-sm-3 col-xl-2 mt-sm-3 mb-3">
                         <div>
-                            <button *ngIf="croppedImage && course.courseIcon" id="delete-course-icon" class="btn btn-danger btn-sm" (click)="deleteCourseIcon()">
+                            <button id="delete-course-icon" class="btn btn-danger btn-sm" (click)="deleteCourseIcon()">
                                 <fa-icon [icon]="faTimes"></fa-icon>
                                 <span jhiTranslate="artemisApp.course.delete.icon">Remove Icon</span>
                             </button>
