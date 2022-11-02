@@ -13,7 +13,7 @@ import { HelpIconComponentWithoutTranslationComponent } from 'app/shared/compone
 import { OpenCodeEditorButtonComponent } from 'app/shared/components/open-code-editor-button/open-code-editor-button.component';
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisCoursesRoutingModule, FeatureToggleModule, ClipboardModule],
