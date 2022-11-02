@@ -1,15 +1,5 @@
 <div>
-    <div *ngIf="isShowingWizardMode" style="background: #1abc9c; width: 100px; height: 100px"></div>
-    <!--<jhi-lecture-update-wizard
-        *ngIf="isShowingWizardMode"
-        [toggleModeFunction]="toggleModeFunction"
-        [saveLectureFunction]="saveLectureFunction"
-        [validateDatesFunction]="onDatesValuesChanged"
-        [lecture]="lecture"
-        [isSaving]="isSaving"
-        [startDate]="startDate"
-        [endDate]="endDate"
-    ></jhi-lecture-update-wizard>-->
+    <jhi-programming-exercise-update-wizard *ngIf="isShowingWizardMode" [toggleModeFunction]="toggleModeFunction" [isSaving]="isSaving"></jhi-programming-exercise-update-wizard>
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImport && !programmingExercise.id">
             <div class="flex-grow-1">

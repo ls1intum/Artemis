@@ -8,7 +8,10 @@
                 "generateLabel": "Neue Programmieraufgabe generieren",
                 "importLabel": "Programmieraufgabe importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
-                "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"
+                "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten",
+                "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
+                "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
+                "nextStepLabel": "Weiter"
             },
             "created": "Programmieraufgabe erstellt mit Title {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Title {{ param }}",
@@ -30,6 +33,15 @@
                 "title": "Programmieraufgabe",
                 "showTemplateSubmissions": "Zeige Template-Abgaben",
                 "showSolutionSubmissions": "Zeige Lösungsabgaben"
+            },
+            "wizardMode": {
+                "steps": {
+                    "generalInfoStepTitle": "Informationen",
+                    "difficultyStepTitle": "Schwierigkeit",
+                    "languageStepTitle": "Sprache",
+                    "gradingStepTitle": "Benotung",
+                    "problemStepTitle": "Problem"
+                }
             },
             "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",

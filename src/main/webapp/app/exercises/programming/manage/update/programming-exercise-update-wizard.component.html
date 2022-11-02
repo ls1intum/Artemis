@@ -1,0 +1,50 @@
+<div>
+    <!-- Bottom Navigation Bar -->
+    <div class="d-flex align-items-center">
+        <div class="me-3">
+            <button type="button" id="back" [disabled]="isSaving" class="btn btn-secondary" (click)="toggleWizardMode()">
+                <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.programmingExercise.home.switchToTraditionalModeLabel"
+                    >Switch to normal mode</span
+                >
+            </button>
+        </div>
+        <div class="flex-grow-1 d-flex justify-content-center">
+            <div class="flex-grow-1 d-flex justify-content-space-between ms-5 me-5 code-hint-generation-wrapper">
+                <jhi-programming-exercise-update-wizard-step
+                    [currentlySelected]="isCurrent(1)"
+                    [isPerformed]="isCompleted(1)"
+                    [labelTranslationKey]="'artemisApp.programmingExercise.wizardMode.steps.generalInfoStepTitle'"
+                ></jhi-programming-exercise-update-wizard-step>
+                <div class="connector" [ngClass]="isCompleted(1) ? 'check' : 'unset'"></div>
+                <jhi-programming-exercise-update-wizard-step
+                    [currentlySelected]="isCurrent(2)"
+                    [isPerformed]="isCompleted(2)"
+                    [labelTranslationKey]="'artemisApp.programmingExercise.wizardMode.steps.difficultyStepTitle'"
+                ></jhi-programming-exercise-update-wizard-step>
+                <div class="connector" [ngClass]="isCompleted(2) ? 'check' : 'unset'"></div>
+                <jhi-programming-exercise-update-wizard-step
+                    [currentlySelected]="isCurrent(3)"
+                    [isPerformed]="isCompleted(3)"
+                    [labelTranslationKey]="'artemisApp.programmingExercise.wizardMode.steps.languageStepTitle'"
+                ></jhi-programming-exercise-update-wizard-step>
+                <div class="connector" [ngClass]="isCompleted(3) ? 'check' : 'unset'"></div>
+                <jhi-programming-exercise-update-wizard-step
+                    [currentlySelected]="isCurrent(4)"
+                    [isPerformed]="isCompleted(4)"
+                    [labelTranslationKey]="'artemisApp.programmingExercise.wizardMode.steps.gradingStepTitle'"
+                ></jhi-programming-exercise-update-wizard-step>
+                <div class="connector" [ngClass]="isCompleted(4) ? 'check' : 'unset'"></div>
+                <jhi-programming-exercise-update-wizard-step
+                    [currentlySelected]="isCurrent(5)"
+                    [isPerformed]="isCompleted(5)"
+                    [labelTranslationKey]="'artemisApp.programmingExercise.wizardMode.steps.problemStepTitle'"
+                ></jhi-programming-exercise-update-wizard-step>
+            </div>
+        </div>
+        <div class="ms-3">
+            <button type="button" id="next" [disabled]="isSaving" class="btn btn-primary" (click)="next()">
+                <fa-icon [icon]="getNextIcon()"></fa-icon>&nbsp;<span [jhiTranslate]="getNextText()">Next</span>
+            </button>
+        </div>
+    </div>
+</div>
