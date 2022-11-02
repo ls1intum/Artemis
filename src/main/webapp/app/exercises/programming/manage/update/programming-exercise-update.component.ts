@@ -26,7 +26,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { faBan, faExclamationCircle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 
 @Component({
@@ -49,6 +49,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     isImport: boolean;
     isEdit: boolean;
     isExamMode: boolean;
+    isShowingWizardMode: boolean;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
@@ -123,6 +124,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
+    faHandShakeAngle = faHandshakeAngle;
     faQuestionCircle = faQuestionCircle;
     faExclamationCircle = faExclamationCircle;
 
@@ -141,6 +143,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
+
+    /**
+     * Activate or deactivate the wizard mode for easier exercise creation.
+     * This function is called by pressing "Switch to guided mode" when creating a new exercise
+     */
+    toggleWizardMode() {
+        this.isShowingWizardMode = !this.isShowingWizardMode;
+    }
 
     /**
      * Updates the name of the editedAuxiliaryRepository.
