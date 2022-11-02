@@ -34,7 +34,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { getNamesForAssessments } from '../assess/modeling-assessment.util';
-import { faGripLines, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 
 @Component({

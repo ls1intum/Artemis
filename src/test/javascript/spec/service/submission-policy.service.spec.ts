@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { LockRepositoryPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';

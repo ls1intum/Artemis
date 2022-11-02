@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Move to "In progress" column
         if: github.event.pull_request.draft == true
-        uses: alex-page/github-project-automation-plus@v0.8.1
+        uses: alex-page/github-project-automation-plus@v0.8.2
         with:
           project: Artemis Development
           column: In progress
