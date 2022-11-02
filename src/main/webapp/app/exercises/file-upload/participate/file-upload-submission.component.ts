@@ -21,9 +21,9 @@ import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } fro
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { getLatestSubmissionResult, getFirstResultWithComplaint } from 'app/entities/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
-import { checkSubsequentFeedbackInAssessment, Feedback } from 'app/entities/feedback.model';
+import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -169,9 +169,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission!.submitted = false;
                 const serverError = error.headers.get('X-artemisApp-error');
                 if (serverError) {
-                    this.alertService.error(serverError, { fileName: file['name'] });
+                    this.alertService.error(serverError, { fileName: file.name });
                 } else {
-                    this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
+                    this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file.name });
                 }
                 this.fileInput.nativeElement.value = '';
                 this.submissionFile = undefined;

@@ -46,7 +46,7 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
-        distribution: 'zulu'
+        distribution: 'temurin'
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
@@ -73,7 +73,7 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
-        distribution: 'zulu'
+        distribution: 'temurin'
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Code Style

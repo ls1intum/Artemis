@@ -1,6 +1,6 @@
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exam } from 'app/entities/exam.model';
-import { GET, BASE_API } from '../../support/constants';
+import { BASE_API, GET } from '../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
 import dayjs from 'dayjs/esm';
@@ -121,7 +121,7 @@ describe('Exam participation', () => {
         onlineEditor.deleteFile('MergeSort.java');
         onlineEditor.typeSubmission(submission, 'de.test');
         onlineEditor.submit();
-        onlineEditor.getResultScore().contains('100%').should('be.visible');
+        onlineEditor.getResultScore().contains('100%').and('be.visible');
     }
 
     function makeModelingExerciseSubmission() {

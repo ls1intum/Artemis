@@ -73,16 +73,32 @@ export class ResultService implements IResultService {
      * @param exercise the exercise where the result belongs to
      * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringDefinedParameters(result: Result, exercise: Exercise, short?: boolean): string {
+    private getResultStringDefinedParameters(result: Result, exercise: Exercise, short: boolean | undefined): string {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type !== ExerciseType.PROGRAMMING) {
-            return this.translateService.instant(`artemisApp.result.resultStringNonProgramming`, {
+            return this.getResultStringNonProgrammingExercise(relativeScore, points, short);
+        } else {
+            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
+        }
+    }
+
+    /**
+     * Generates the result string for a programming exercise. Contains the score and points
+     * @param relativeScore the achieved score in percent
+     * @param points the amount of achieved points
+     * @param short flag that indicates if the resultString should use the short format
+     */
+    private getResultStringNonProgrammingExercise(relativeScore: number, points: number, short: boolean | undefined): string {
+        if (short) {
+            return this.translateService.instant(`artemisApp.result.resultString.short`, {
+                relativeScore,
+            });
+        } else {
+            return this.translateService.instant(`artemisApp.result.resultString.nonProgramming`, {
                 relativeScore,
                 points,
             });
-        } else {
-            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
         }
     }
 
@@ -93,26 +109,22 @@ export class ResultService implements IResultService {
      * @param exercise the exercise where the result belongs to
      * @param relativeScore the achieved score in percent
      * @param points the amount of achieved points
+     * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, short?: boolean): string {
+    private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, short: boolean | undefined): string {
         let buildAndTestMessage: string;
         if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
-            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildFailed');
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildFailed');
         } else if (!result.testCaseCount) {
-            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulNoTests');
-        } else if (short) {
-            return this.translateService.instant(`artemisApp.result.resultStringNonProgramming`, {
-                relativeScore,
-                points,
-            });
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulNoTests');
         } else {
-            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulTests', {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulTests', {
                 numberOfTestsPassed: result.passedTestCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.passedTestCaseCount,
                 numberOfTestsTotal: result.testCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.testCaseCount,
             });
         }
 
-        let resultString = this.getBaseResultStringProgrammingExercise(result, exercise, relativeScore, points, buildAndTestMessage);
+        let resultString = this.getBaseResultStringProgrammingExercise(result, exercise, relativeScore, points, buildAndTestMessage, short);
 
         if (isResultPreliminary(result, exercise)) {
             resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
@@ -128,18 +140,37 @@ export class ResultService implements IResultService {
      * @param relativeScore the achieved score in percent
      * @param points the amount of achieved points
      * @param buildAndTestMessage the string containing information about the build. Either about the build failure or the passed tests
+     * @param short flag that indicates if the resultString should use the short format
      * @private
      */
-    private getBaseResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, buildAndTestMessage: string): string {
-        if (result.codeIssueCount && result.codeIssueCount > 0) {
-            return this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
+    private getBaseResultStringProgrammingExercise(
+        result: Result,
+        exercise: ProgrammingExercise,
+        relativeScore: number,
+        points: number,
+        buildAndTestMessage: string,
+        short: boolean | undefined,
+    ): string {
+        if (short) {
+            if (!result.testCaseCount) {
+                return this.translateService.instant('artemisApp.result.resultString.programmingShort', {
+                    relativeScore,
+                    buildAndTestMessage,
+                });
+            } else {
+                return this.translateService.instant('artemisApp.result.resultString.short', {
+                    relativeScore,
+                });
+            }
+        } else if (result.codeIssueCount && result.codeIssueCount > 0) {
+            return this.translateService.instant('artemisApp.result.resultString.programmingCodeIssues', {
                 relativeScore,
                 buildAndTestMessage,
                 numberOfIssues: result.codeIssueCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.codeIssueCount,
                 points,
             });
         } else {
-            return this.translateService.instant(`artemisApp.result.resultStringProgramming`, {
+            return this.translateService.instant(`artemisApp.result.resultString.programming`, {
                 relativeScore,
                 buildAndTestMessage,
                 points,

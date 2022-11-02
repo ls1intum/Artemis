@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { forkJoin, of, Subscription, zip } from 'rxjs';
+import { Subscription, forkJoin, of, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { take } from 'rxjs/operators';
@@ -22,7 +21,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { faCodeBranch, faDownload, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
@@ -322,11 +320,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.paramSub.unsubscribe();
         this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise);
-    }
-
-    formatDate(date: dayjs.Dayjs | Date | undefined) {
-        // TODO: we should try to use the artemis date pipe here
-        return date ? dayjs(date).format(defaultLongDateTimeFormat) : '';
     }
 
     /**

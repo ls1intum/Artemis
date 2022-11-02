@@ -22,6 +22,7 @@ export class TextblockAssessmentCardComponent {
     @Input() selected = false;
     @Input() readOnly: boolean;
     @Input() isConflictingFeedback: boolean;
+    @Input() isMissedFeedback: boolean;
     @Input() conflictMode: boolean;
     @Input() conflictType?: FeedbackConflictType;
     @Input() isLeftConflictingFeedback: boolean;
@@ -55,6 +56,9 @@ export class TextblockAssessmentCardComponent {
         if (this.readOnly && !this.isSelectableConflict) {
             return;
         }
+        if (this.textBlockRef && !this.textBlockRef.selectable) {
+            return;
+        }
 
         if (this.isSelectableConflict && this.selected) {
             this.didSelect.emit(undefined);
@@ -78,7 +82,7 @@ export class TextblockAssessmentCardComponent {
     unselect(): void {
         this.didSelect.emit(undefined);
         delete this.textBlockRef.feedback;
-        if (this.textBlockRef.block!.type === TextBlockType.MANUAL) {
+        if (this.textBlockRef.block!.type === TextBlockType.MANUAL && this.textBlockRef.deletable) {
             this.didDelete.emit(this.textBlockRef);
         }
         this.feedbackDidChange();
@@ -96,6 +100,9 @@ export class TextblockAssessmentCardComponent {
      * @param {Event} event - The drop event
      */
     connectStructuredGradingInstructionsWithTextBlock(event: Event) {
+        if (!this.textBlockRef.selectable) {
+            return;
+        }
         this.select();
         if (this.textBlockRef.feedback) {
             this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(this.textBlockRef.feedback, event);

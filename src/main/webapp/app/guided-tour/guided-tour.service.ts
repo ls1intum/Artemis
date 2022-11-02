@@ -4,7 +4,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash-es';
 import { AlertService } from 'app/core/util/alert.service';
-import { BehaviorSubject, fromEvent, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, fromEvent } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, mergeMap, switchMap } from 'rxjs/operators';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, ResetParticipation, UserInteractionEvent } from './guided-tour.constants';

@@ -1,4 +1,4 @@
-import { EMPTY, of, Subject } from 'rxjs';
+import { EMPTY, Subject, of } from 'rxjs';
 import { ServerDateService } from 'app/shared/server-date.service';
 import { ArtemisVersionInterceptor } from 'app/core/interceptor/artemis-version.interceptor';
 import { AlertService, AlertType } from 'app/core/util/alert.service';

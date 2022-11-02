@@ -5,11 +5,11 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import {
-    checkSubsequentFeedbackInAssessment,
     Feedback,
     FeedbackType,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
+    checkSubsequentFeedbackInAssessment,
 } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -69,7 +69,7 @@ export class ResultDetailComponent implements OnInit {
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
     readonly FeedbackItemType = FeedbackItemType;
-    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
@@ -105,6 +105,7 @@ export class ResultDetailComponent implements OnInit {
     commitHashURLTemplate?: string;
     commitHash?: string;
     commitUrl?: string;
+    manualFeedbackCount: number;
 
     ngxData: NgxChartsMultiSeriesDataEntry[] = [];
     labels: string[];
@@ -200,6 +201,8 @@ export class ResultDetailComponent implements OnInit {
                         this.feedbackList = this.createFeedbackItems(filteredFeedback);
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
                         this.backupFilteredFeedbackList = this.filteredFeedbackList;
+
+                        this.manualFeedbackCount = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Feedback).length;
 
                         if (this.showScoreChart) {
                             this.updateChart(this.feedbackList);

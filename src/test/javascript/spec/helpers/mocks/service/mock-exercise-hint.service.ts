@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { IExerciseHintService, ExerciseHintResponse } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
+import { ExerciseHintResponse, IExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 
 export class MockExerciseHintService implements IExerciseHintService {
