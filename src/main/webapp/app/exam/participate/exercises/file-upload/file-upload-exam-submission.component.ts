@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, Input, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';

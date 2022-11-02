@@ -1,11 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course-management.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Subject } from 'rxjs';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -21,11 +20,11 @@ import {
     faGraduationCap,
     faHeartBroken,
     faListAlt,
+    faPersonChalkboard,
     faTable,
     faTimes,
     faUserCheck,
     faWrench,
-    faPersonChalkboard,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 

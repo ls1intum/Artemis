@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -16,7 +16,7 @@ import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { routes } from 'app/exercises/file-upload/participate/file-upload-participation.route';
 import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
-import { createFileUploadSubmission, MockFileUploadSubmissionService } from '../../helpers/mocks/service/mock-file-upload-submission.service';
+import { MockFileUploadSubmissionService, createFileUploadSubmission } from '../../helpers/mocks/service/mock-file-upload-submission.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';

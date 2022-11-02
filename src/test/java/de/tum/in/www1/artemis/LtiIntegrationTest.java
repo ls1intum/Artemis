@@ -138,7 +138,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         }
 
         if (existingUser) {
-            jiraRequestMockProvider.mockGetUsernameForEmail(email, "existingUser");
+            jiraRequestMockProvider.mockGetUsernameForEmail(email, email, "existingUser");
         }
         else {
             jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(email);

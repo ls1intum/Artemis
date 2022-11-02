@@ -4,6 +4,10 @@ import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 public class AuthenticationIntegrationTestHelper {
 
+    public static final String LTI_USER_EMAIL = "tester@tum.invalid";
+
+    public static final String LTI_USER_EMAIL_UPPER_CASE = "Tester@Tum.Invalid";
+
     public static LtiLaunchRequestDTO setupDefaultLtiLaunchRequest() {
         LtiLaunchRequestDTO ltiLaunchRequest = new LtiLaunchRequestDTO();
         ltiLaunchRequest.setContext_id("contextId123");
@@ -14,7 +18,7 @@ public class AuthenticationIntegrationTestHelper {
         ltiLaunchRequest.setLaunch_presentation_locale("EN");
         ltiLaunchRequest.setLaunch_presentation_return_url("some.return.url.com");
         ltiLaunchRequest.setLis_outcome_service_url("some.outcome.service.url.com");
-        ltiLaunchRequest.setLis_person_contact_email_primary("tester@tum.invalid");
+        ltiLaunchRequest.setLis_person_contact_email_primary(LTI_USER_EMAIL);
         ltiLaunchRequest.setLis_person_sourcedid("somePersonSourceId");
         ltiLaunchRequest.setLis_result_sourcedid("someResultSourceId");
         ltiLaunchRequest.setLti_message_type("someMessageType");
