@@ -1080,27 +1080,61 @@ public class ProgrammingExerciseService {
      * @param updatedProgrammingExercise the updated exercise with new values
      */
     public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
-        ZonedDateTime now = ZonedDateTime.now();
-        if (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now)) {
-            if (Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+        if (!programmingExerciseBeforeUpdate.isReleased()) {
+            if (updatedProgrammingExercise.isReleased() && Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+                // There might be some repositories that have to be unlocked
                 unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
             }
-            else if (Boolean.TRUE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+            return;
+        }
+        if (!updatedProgrammingExercise.isReleased()) {
+            if (Boolean.TRUE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde())) {
+                // Hide exercise again and lock repos
                 lockAllRepositories(programmingExerciseBeforeUpdate.getId());
             }
+            return;
         }
 
+        boolean lockedUnlockedRepos = handleRepoAccessRightChangesDueDates(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        if (lockedUnlockedRepos) {
+            return;
+        }
+
+        handleRepoAccessRightChangesChangesOfflineIDE(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+    }
+
+    private boolean handleRepoAccessRightChangesDueDates(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+            ZonedDateTime now = ZonedDateTime.now();
+
             if (programmingExerciseBeforeUpdate.getDueDate() != null && programmingExerciseBeforeUpdate.getDueDate().isBefore(now)
                     && (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now))) {
                 // New due date allows students to continue working on exercise
                 unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
+                return true;
             }
             else if ((programmingExerciseBeforeUpdate.getDueDate() == null || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
                     && updatedProgrammingExercise.getDueDate() != null && updatedProgrammingExercise.getDueDate().isBefore(now)) {
                 // New due date forbids students to continue working on exercise
                 lockAllRepositories(programmingExerciseBeforeUpdate.getId());
+                return true;
             }
         }
+        return false;
+    }
+
+    private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+        if (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
+
+            if (Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+                unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
+                return true;
+            }
+            else if (Boolean.TRUE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+                lockAllRepositories(programmingExerciseBeforeUpdate.getId());
+                return true;
+            }
+        }
+        return false;
     }
 }

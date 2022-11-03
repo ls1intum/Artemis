@@ -37,6 +37,11 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
         programmingExercise1 = programmingExerciseRepository.findAll().get(0);
         programmingExercise2 = programmingExerciseRepository.findAll().get(1);
+
+        programmingExercise1.setReleaseDate(null);
+        programmingExercise2.setReleaseDate(null);
+        programmingExerciseRepository.save(programmingExercise1);
+        programmingExerciseRepository.save(programmingExercise2);
     }
 
     @AfterEach
@@ -125,6 +130,26 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
         programmingExercise2.setDueDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
         verify(instanceMessageSendService, never()).sendUnlockAllRepositories(programmingExercise1.getId());
+        verify(instanceMessageSendService, never()).sendLockAllRepositories(programmingExercise1.getId());
+    }
+
+    @Test
+    void shouldLockRepositoriesWhenExerciseGetsUnreleased() {
+        programmingExercise1.setAllowOfflineIde(true);
+        programmingExercise2.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+
+        verify(instanceMessageSendService, times(1)).sendLockAllRepositories(programmingExercise1.getId());
+        verify(instanceMessageSendService, never()).sendUnlockAllRepositories(programmingExercise1.getId());
+    }
+
+    @Test
+    void shouldUnlockRepositoriesWhenExerciseGetsReleasedImmediately() {
+        programmingExercise1.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        programmingExercise2.setAllowOfflineIde(true);
+        programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+
+        verify(instanceMessageSendService, times(1)).sendUnlockAllRepositories(programmingExercise1.getId());
         verify(instanceMessageSendService, never()).sendLockAllRepositories(programmingExercise1.getId());
     }
 }
