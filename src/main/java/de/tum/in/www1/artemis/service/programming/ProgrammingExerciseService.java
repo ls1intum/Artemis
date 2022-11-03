@@ -878,7 +878,7 @@ public class ProgrammingExerciseService {
 
         if (deleteBaseReposBuildPlans) {
             // TODO: Remove when "localci" profile is implemented.
-            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+            if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
                 final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
                 if (templateBuildPlanId != null) {
                     continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
@@ -923,6 +923,12 @@ public class ProgrammingExerciseService {
         if (programmingExercise.getTestRepositoryUrl() != null) {
             gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
         }
+
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
+            if (repo.getRepositoryUrl() != null) {
+                gitService.deleteLocalRepository(repo.getVcsRepositoryUrl());
+            }
+        });
 
         programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
 

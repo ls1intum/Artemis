@@ -95,13 +95,6 @@ public class LocalGitService extends AbstractVersionControlService {
     @Override
     public void configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean allowAccess) {
         for (User user : participation.getStudents()) {
-            String username = user.getLogin();
-
-            // This is a failsafe in case a user was not created in VCS on registration
-            if (!userExists(username)) {
-                throw new BitbucketException("The user was not created in Bitbucket and has to be manually added.");
-            }
-
             if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
                 // only add access to the repository if the offline IDE usage is NOT disallowed
                 // NOTE: null values are interpreted as offline IDE is allowed
@@ -208,27 +201,6 @@ public class LocalGitService extends AbstractVersionControlService {
         else {
             throw new LocalGitException("Could not find local git project.");
         }
-    }
-
-    /**
-     * Checks if an username exists on Bitbucket
-     *
-     * @param username the Bitbucket username to check
-     * @return true if it exists
-     * @throws BitbucketException any exception occurred on the Bitbucket server
-     */
-    public Boolean userExists(String username) throws BitbucketException {
-//        try {
-//            restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/users/" + username, HttpMethod.GET, null, Void.class);
-//        }
-//        catch (HttpClientErrorException e) {
-//            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-//                return false;
-//            }
-//            log.error("Could not check if user {} exists.", username, e);
-//            throw new BitbucketException("Could not check if user exists");
-//        }
-        return true;
     }
 
     /**
@@ -418,60 +390,8 @@ public class LocalGitService extends AbstractVersionControlService {
      * @param repositorySlug The repository's slug.
      * @param username       The user whom to give write permissions.
      */
-    // TODO: Refactor to also use setStudentRepositoryPermission.
     private void giveWritePermission(String projectKey, String repositorySlug, String username) throws BitbucketException {
-//        String url = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=" + username + "&permission=REPO_WRITE";
-//
-//        try {
-//            /*
-//             * This is an edge case. If a new users logs in and clicks on Start Exercise within 1 minute, the user does not yet exist in Bitbucket.
-//             */
-//            User user = null;
-//            for (int i = 0; i < MAX_GIVE_PERMISSIONS_RETRIES; i++) {
-//                try {
-//                    restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
-//                }
-//                catch (HttpClientErrorException e) {
-//
-//                    if (e.getResponseBodyAsString().contains("No such user")) {
-//                        if (user == null) {
-//                            user = userRepository.getUser();
-//                        }
-//                        if (user.getCreatedDate().plusSeconds(90).isAfter(Instant.now())) {
-//                            log.warn("Could not give write permissions to user {} because the user does not yet exist in Bitbucket. Trying again in 5s", username);
-//                            Thread.sleep(5000);
-//                            // if the last attempt fails, we throw an exception to make sure to exit this
-//                            // method with an exception
-//                            if (i == MAX_GIVE_PERMISSIONS_RETRIES - 1) {
-//                                throw e;
-//                            }
-//                        }
-//                        else {
-//                            throw e;
-//                        }
-//                    }
-//                    else {
-//                        throw e;
-//                    }
-//
-//                    // Try again if there was an exception
-//                    continue;
-//                }
-//                // Don't try again if everything went fine
-//                break;
-//            }
-//        }
-//        catch (HttpClientErrorException e) {
-//            log.error("Server Error on Bitbucket with message: '{}', body: '{}', headers: '{}', status text: '{}'.", e.getMessage(), e.getResponseBodyAsString(),
-//                e.getResponseHeaders(), e.getStatusText());
-//            log.error("Could not give write permission using {}", url, e);
-//            throw new BitbucketException("Error while giving repository permissions", e);
-//        }
-//        catch (Exception emAll) {
-//            log.error("Could not give write permission using {}", url, emAll);
-//            throw new BitbucketException("Error while giving repository permissions", emAll);
-//        }
-
+        // Not implemented.
     }
 
     @Override
@@ -518,17 +438,8 @@ public class LocalGitService extends AbstractVersionControlService {
      *                             READ_ONLY, WRITE)
      */
     private void setStudentRepositoryPermission(VcsRepositoryUrl repositoryUrl, String projectKey, String username, VersionControlRepositoryPermission repositoryPermission)
-        throws BitbucketException {
-//        String repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
-//        String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name="; // NAME&PERMISSION
-//        String url = baseUrl + username + "&permission=" + repositoryPermission;
-//        try {
-//            restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
-//        }
-//        catch (Exception e) {
-//            log.error("Could not give {} permissions using {}", repositoryPermission, url, e);
-//            throw new BitbucketException("Error while giving repository permissions", e);
-//        }
+        throws LocalGitException {
+//        Not implemented.
     }
 
     /**

@@ -25,15 +25,15 @@ public class LocalGitUserManagementService implements VcsUserManagementService {
 
     private final Logger log = LoggerFactory.getLogger(LocalGitUserManagementService.class);
 
-    private final LocalGitService bitbucketService;
+    private final LocalGitService localGitService;
 
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public LocalGitUserManagementService(LocalGitService bitbucketService, UserRepository userRepository, PasswordService passwordService,
+    public LocalGitUserManagementService(LocalGitService localGitService, UserRepository userRepository, PasswordService passwordService,
                                          ProgrammingExerciseRepository programmingExerciseRepository) {
-        this.bitbucketService = bitbucketService;
+        this.localGitService = localGitService;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
@@ -49,29 +49,7 @@ public class LocalGitUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void createVcsUser(User user, String password) throws VersionControlException {
-        if (!user.isInternal()) {
-            return;
-        }
-        if (bitbucketService.userExists(user.getLogin())) {
-            log.debug("Bitbucket user {} already exists", user.getLogin());
-            return;
-        }
-
-        log.debug("Bitbucket user {} does not exist yet", user.getLogin());
-        String displayName = user.getName() != null ? user.getName().trim() : null;
-        bitbucketService.createUser(user.getLogin(), password, user.getEmail(), displayName);
-
-        try {
-            // NOTE: we need to fetch the user here again to make sure that the groups are
-            // not lazy loaded.
-            User repoUser = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
-            bitbucketService.addUserToGroups(repoUser.getLogin(), repoUser.getGroups());
-        }
-        catch (BitbucketException e) {
-            /*
-             * This might throw exceptions, for example if the group does not exist on Bitbucket. We can safely ignore them.
-             */
-        }
+        // Not implemented.
     }
 
     /**
@@ -92,19 +70,7 @@ public class LocalGitUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, String newPassword) {
-        if (!user.isInternal()) {
-            return;
-        }
-        bitbucketService.updateUserDetails(vcsLogin, user.getEmail(), user.getName());
-        if (newPassword != null) {
-            bitbucketService.updateUserPassword(vcsLogin, newPassword);
-        }
-        if (addedGroups != null && !addedGroups.isEmpty()) {
-            bitbucketService.addUserToGroups(user.getLogin(), addedGroups);
-        }
-        if (removedGroups != null && !removedGroups.isEmpty()) {
-            bitbucketService.removeUserFromGroups(user.getLogin(), removedGroups);
-        }
+        // Not implemented.
     }
 
     /**
@@ -114,10 +80,7 @@ public class LocalGitUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void deleteVcsUser(String login) throws VersionControlException {
-        if (!userRepository.findOneByLogin(login).orElseThrow().isInternal()) {
-            return;
-        }
-        bitbucketService.deleteAndEraseUser(login);
+        // Not implemented.
     }
 
     /**
@@ -156,31 +119,6 @@ public class LocalGitUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
-        if (oldInstructorGroup.equals(updatedCourse.getInstructorGroupName()) && oldEditorGroup.equals(updatedCourse.getEditorGroupName())
-            && oldTeachingAssistantGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
-            // Do nothing if the group names didn't change
-            return;
+        // Not implemented.
         }
-
-        final List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
-        log.info("Update Bitbucket permissions for programming exercises: {}", programmingExercises.stream().map(ProgrammingExercise::getProjectKey).toList());
-
-        for (ProgrammingExercise programmingExercise : programmingExercises) {
-            if (!oldInstructorGroup.equals(updatedCourse.getInstructorGroupName())) {
-                bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), oldInstructorGroup, null);
-                bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), updatedCourse.getInstructorGroupName(), BitbucketPermission.PROJECT_ADMIN);
-            }
-            if (!oldEditorGroup.equals(updatedCourse.getEditorGroupName())) {
-                bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), oldEditorGroup, null);
-                bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), updatedCourse.getEditorGroupName(), BitbucketPermission.PROJECT_WRITE);
-            }
-            if (!oldEditorGroup.equals(updatedCourse.getTeachingAssistantGroupName())) {
-                bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), oldTeachingAssistantGroup, null);
-                if (programmingExercise.isCourseExercise() || programmingExercise.getExerciseGroup().getExam().isAfterLatestStudentExamEnd()) {
-                    bitbucketService.grantGroupPermissionToProject(programmingExercise.getProjectKey(), updatedCourse.getTeachingAssistantGroupName(),
-                        BitbucketPermission.PROJECT_READ);
-                }
-            }
-        }
-    }
 }

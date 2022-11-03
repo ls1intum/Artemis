@@ -7,6 +7,7 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
+
+    private final Environment environment;
 
     private final GitService gitService;
 
@@ -65,12 +68,13 @@ public class ParticipationService {
 
     private final CoverageReportRepository coverageReportRepository;
 
-    public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+    public ParticipationService(Environment environment, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
             ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, ParticipationRepository participationRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RatingRepository ratingRepository,
             ParticipantScoreRepository participantScoreRepository, UrlService urlService, CoverageReportRepository coverageReportRepository) {
+        this.environment = environment;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -199,13 +203,16 @@ public class ParticipationService {
         participation = copyRepository(participation);
         // Step 1b) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(exercise, participation);
-        // Step 2a) create the build plan (based on the BASE build plan)
-        participation = copyBuildPlan(participation);
-        // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
-        participation = configureBuildPlan(participation);
-        // Step 2c) we might need to perform an empty commit (as a workaround, depending on the CI system) here, because it should not trigger a new programming submission
-        // (when the web hook was already initialized, see below)
-        continuousIntegrationService.get().performEmptySetupCommit(participation);
+        // TODO: Remove when "localci" is implemented.
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+            // Step 2a) create the build plan (based on the BASE build plan)
+            participation = copyBuildPlan(participation);
+            // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
+            participation = configureBuildPlan(participation);
+            // Step 2c) we might need to perform an empty commit (as a workaround, depending on the CI system) here, because it should not trigger a new programming submission
+            // (when the web hook was already initialized, see below)
+            continuousIntegrationService.get().performEmptySetupCommit(participation);
+        }
         // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
         // Step 3) configure the web hook of the student repository
         participation = configureRepositoryWebHook(participation);
@@ -304,10 +311,12 @@ public class ParticipationService {
      */
     public ProgrammingExerciseStudentParticipation resumeProgrammingExercise(ProgrammingExerciseStudentParticipation participation) {
         // this method assumes that the student git repository already exists (compare startProgrammingExercise) so steps 1, 2 and 5 are not necessary
-        // Step 2a) create the build plan (based on the BASE build plan)
-        participation = copyBuildPlan(participation);
-        // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
-        participation = configureBuildPlan(participation);
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+            // Step 2a) create the build plan (based on the BASE build plan)
+            participation = copyBuildPlan(participation);
+            // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
+            participation = configureBuildPlan(participation);
+        }
         // Note: the repository webhook (step 1c) already exists, so we don't need to set it up again, the empty commit hook (step 2c) is also not necessary here
         // and must be handled by the calling method in case it would be necessary
         participation.setInitializationState(INITIALIZED);
@@ -609,7 +618,8 @@ public class ParticipationService {
             var repositoryUrl = programmingExerciseParticipation.getVcsRepositoryUrl();
             String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 
-            if (deleteBuildPlan && buildPlanId != null) {
+            // TODO: Remove check for "localgit" when "localci" is implemented.
+            if (deleteBuildPlan && buildPlanId != null && !Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
                 final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
                 continuousIntegrationService.get().deleteBuildPlan(projectKey, buildPlanId);
             }
