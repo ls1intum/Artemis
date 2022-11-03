@@ -1090,7 +1090,7 @@ public class ProgrammingExerciseService {
             }
         }
 
-        if (updatedProgrammingExercise.isAllowOfflineIde()) {
+        if (Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
             if (programmingExerciseBeforeUpdate.getDueDate() != null && programmingExerciseBeforeUpdate.getDueDate().isBefore(now)
                     && (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now))) {
                 // New due date allows students to continue working on exercise
