@@ -12,7 +12,7 @@ export class SubmissionResultStatusComponent {
 
     /**
      * @property exercise Exercise to which the submission's participation belongs
-     * @property studentParticipation Participation to which the submission belongs (optional, used for updating-result)
+     * @property studentParticipation Participation to which the submission belongs
      * @property updatingResultClass Class(es) that will be applied to the updating-result component
      * @property showBadge Flag whether a colored badge (saying e.g. "Graded") should be shown
      * @property showUngradedResults Flag whether ungraded results should also be shown
@@ -26,12 +26,4 @@ export class SubmissionResultStatusComponent {
     @Input() showIcon = true;
     @Input() short = false;
     @Input() triggerLastGraded = true;
-
-    /**
-     * If a student participation is supplied explicitly, use that one.
-     * Otherwise, use the first student participation on the exercise.
-     */
-    get participation() {
-        return this.studentParticipation ?? this.exercise.studentParticipations?.first();
-    }
 }

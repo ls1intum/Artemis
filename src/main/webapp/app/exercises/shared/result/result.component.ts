@@ -135,9 +135,6 @@ export class ResultComponent implements OnInit, OnChanges {
         // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
         this.submission = this.result?.submission;
 
-        console.log(this.result);
-        console.log(this.participation);
-
         this.evaluate();
 
         this.translate.onLangChange.subscribe(() => {
