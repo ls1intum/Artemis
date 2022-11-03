@@ -67,6 +67,12 @@ public interface InstanceMessageSendService {
     void sendLockAllRepositories(Long exerciseId);
 
     /**
+     * Send a message to the main server that all repositories without an individual due date after now of an exercise should be instantly locked
+     * @param exerciseId the id of the exercise that should be locked
+     */
+    void sendLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId);
+
+    /**
      * Send a message to the main server that the non-activated should be deleted.
      * @param userId the user id of the non-activated user
      */

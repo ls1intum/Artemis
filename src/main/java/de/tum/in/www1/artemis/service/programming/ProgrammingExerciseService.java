@@ -1115,8 +1115,8 @@ public class ProgrammingExerciseService {
             }
             else if ((programmingExerciseBeforeUpdate.getDueDate() == null || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
                     && updatedProgrammingExercise.getDueDate() != null && updatedProgrammingExercise.getDueDate().isBefore(now)) {
-                // New due date forbids students to continue working on exercise
-                lockAllRepositories(programmingExerciseBeforeUpdate.getId());
+                // New due date forbids students to continue working on exercise, if their individual due date does not override the new due date
+                instanceMessageSendService.sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExerciseBeforeUpdate.getId());
                 return true;
             }
         }
@@ -1125,7 +1125,6 @@ public class ProgrammingExerciseService {
 
     private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-
             if (Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
                 unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
                 return true;
