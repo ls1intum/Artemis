@@ -132,13 +132,12 @@ export class ResultComponent implements OnInit, OnChanges {
             captureException(new Error('The result component did not get a participation or result as parameter and can therefore not display the score'));
             return;
         }
-
         // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
         this.submission = this.result?.submission;
 
-        if (this.result) {
-            this.result.submission = this.result.submission ?? this.submission;
-        }
+        console.log(this.result);
+        console.log(this.participation);
+
         this.evaluate();
 
         this.translate.onLangChange.subscribe(() => {
