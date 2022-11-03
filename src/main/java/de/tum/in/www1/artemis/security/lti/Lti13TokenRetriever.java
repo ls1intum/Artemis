@@ -57,22 +57,21 @@ public class Lti13TokenRetriever {
      */
     public String getToken(ClientRegistration clientRegistration, String... scopes) {
         log.info("Trying to retrieve access token for client");
+
+        Objects.requireNonNull(clientRegistration, "You must supply a clientRegistration.");
+        if (scopes.length == 0) {
+            throw new IllegalArgumentException("You must supply some scopes to request.");
+        }
+
+        SignedJWT signedJWT = createJWT(clientRegistration);
+        if (signedJWT == null) {
+            return null;
+        }
+
+        MultiValueMap<String, String> formData = buildFormData(signedJWT, scopes);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         try {
-            if (scopes.length == 0) {
-                throw new IllegalArgumentException("You must supply some scopes to request.");
-            }
-            Objects.requireNonNull(clientRegistration, "You must supply a clientRegistration.");
-
-            SignedJWT signedJWT = createJWT(clientRegistration);
-
-            if (signedJWT == null) {
-                return null;
-            }
-
-            MultiValueMap<String, String> formData = buildFormData(signedJWT, scopes);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
             URI url = URI.create(clientRegistration.getProviderDetails().getTokenUri());
             RequestEntity<MultiValueMap<String, String>> requestEntity = new RequestEntity<>(formData, headers, HttpMethod.POST, url);
             ResponseEntity<String> exchange = restTemplate.exchange(requestEntity, String.class);

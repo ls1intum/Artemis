@@ -93,14 +93,7 @@ public class OAuth2JWKSService implements KeyPairService {
             keys = keys.stream().filter(jwk -> jwk != jwkToRemove).collect(Collectors.toList());
         }
 
-        if (clientRegistration != null) {
-            try {
-                keys.add(generateKey(clientRegistration));
-            }
-            catch (NoSuchAlgorithmException e) {
-                log.error("Could not generate key for clientRegistrationId {}", clientRegistration.getRegistrationId());
-            }
-        }
+        generateAndAddKey(clientRegistration, keys);
         this.jwkSet = new JWKSet(keys);
     }
 
@@ -109,32 +102,32 @@ public class OAuth2JWKSService implements KeyPairService {
     }
 
     private List<JWK> generateOAuth2ClientKeys() {
-
         List<JWK> keys = new LinkedList<>();
-
-        for (ClientRegistration clientRegistration : onlineCourseConfigurationService.getAllClientRegistrations()) {
-            try {
-                if (clientRegistration != null) {
-                    keys.add(generateKey(clientRegistration));
-                }
-            }
-            catch (NoSuchAlgorithmException e) {
-                log.error("Could not generate key for clientRegistrationId {}", clientRegistration.getRegistrationId());
-            }
-        }
-
+        onlineCourseConfigurationService.getAllClientRegistrations().forEach(c -> generateAndAddKey(c, keys));
         return keys;
     }
 
-    private JWK generateKey(ClientRegistration clientRegistration) throws NoSuchAlgorithmException {
-        KeyPair clientKeyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
-        String kid = kidGenerator.generateKey();
+    private void generateAndAddKey(ClientRegistration clientRegistration, List<JWK> keys) {
+        if (clientRegistration == null) {
+            return;
+        }
 
+        KeyPair clientKeyPair;
+        try {
+            clientKeyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+        }
+        catch (NoSuchAlgorithmException e) {
+            log.error("Could not generate key for clientRegistrationId {}", clientRegistration.getRegistrationId());
+            return;
+        }
+
+        String kid = kidGenerator.generateKey();
         RSAKey.Builder builder = new RSAKey.Builder((RSAPublicKey) clientKeyPair.getPublic()).keyUse(KeyUse.SIGNATURE).algorithm(JWSAlgorithm.RS256)
                 .privateKey(clientKeyPair.getPrivate()).keyID(kid);
 
         this.clientRegistrationIdToKeyId.put(clientRegistration.getRegistrationId(), kid);
 
-        return builder.build();
+        JWK jwk = builder.build();
+        keys.add(jwk);
     }
 }
