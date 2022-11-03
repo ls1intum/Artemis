@@ -79,6 +79,8 @@ public class CourseResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
+
     private final OAuth2JWKSService oAuth2JWKSService;
 
     private final CourseRepository courseRepository;
@@ -100,13 +102,15 @@ public class CourseResource {
     private final ExerciseRepository exerciseRepository;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            OAuth2JWKSService oAuth2JWKSService, AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository,
-            SubmissionService submissionService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService) {
+            OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
+            TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, AuditEventRepository auditEventRepository,
+            Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
+            Optional<CIUserManagementService> optionalCiUserManagementService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.oAuth2JWKSService = oAuth2JWKSService;
+        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.submissionService = submissionService;
@@ -145,17 +149,20 @@ public class CourseResource {
         course.validateRegistrationConfirmationMessage();
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndRegistrationEnabled();
-        course.validateOnlineCourseConfiguration();
         course.validateAccuracyOfScores();
         if (!course.isValidStartAndEndDate()) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
         }
 
+        onlineCourseConfigurationService.validateOnlineCourseConfiguration(course);
+
         courseService.createOrValidateGroups(course);
         Course result = courseRepository.save(course);
+
         if (course.isOnlineCourse()) {
             oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
         }
+
         return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
 
@@ -234,12 +241,13 @@ public class CourseResource {
         updatedCourse.validateRegistrationConfirmationMessage();
         updatedCourse.validateComplaintsAndRequestMoreFeedbackConfig();
         updatedCourse.validateOnlineCourseAndRegistrationEnabled();
-        updatedCourse.validateOnlineCourseConfiguration();
         updatedCourse.validateShortName();
         updatedCourse.validateAccuracyOfScores();
         if (!updatedCourse.isValidStartAndEndDate()) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
         }
+
+        onlineCourseConfigurationService.validateOnlineCourseConfiguration(updatedCourse);
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which

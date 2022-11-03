@@ -1,17 +1,15 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.LOGIN_REGEX;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
-import javax.persistence.*;
-
-import org.apache.commons.lang.StringUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Entity
 @Table(name = "online_course_configuration")
@@ -130,17 +128,5 @@ public class OnlineCourseConfiguration extends DomainObject {
 
     public void setTokenUri(String tokenUri) {
         this.tokenUri = tokenUri;
-    }
-
-    /**
-     * Validates the online course configuration
-     */
-    public void validate() {
-        if (StringUtils.isBlank(ltiKey) || StringUtils.isBlank(ltiSecret)) {
-            throw new BadRequestAlertException("Invalid online course configuration", ENTITY_NAME, "invalidOnlineCourseConfiguration");
-        }
-        if (StringUtils.isBlank(userPrefix) || !userPrefix.matches(LOGIN_REGEX)) {
-            throw new BadRequestAlertException("Invalid user prefix, must match login regex defined in Constants.java", ENTITY_NAME, "invalidUserPrefix");
-        }
     }
 }

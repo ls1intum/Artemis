@@ -684,19 +684,6 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Validates that there is an OnlineCourseConfiguration if the course is an online course
-     */
-    public void validateOnlineCourseConfiguration() {
-        if (isOnlineCourse()) {
-            OnlineCourseConfiguration ocConfiguration = getOnlineCourseConfiguration();
-            if (ocConfiguration == null) {
-                throw new BadRequestAlertException("Configuration must exist for online courses", ENTITY_NAME, "onlineCourseConfigurationMissing");
-            }
-            ocConfiguration.validate();
-        }
-    }
-
-    /**
      * Validates that the accuracy of the scores is between 0 and 5
      */
     public void validateAccuracyOfScores() {
