@@ -1,4 +1,23 @@
 <div>
+    <jhi-programming-exercise-update-wizard-info
+        class="form-step"
+        *ngIf="currentStep >= 1"
+        [isImport]="isImport"
+        [titleNamePattern]="titleNamePattern"
+        [programmingExercise]="programmingExercise"
+        [shortNamePattern]="shortNamePattern"
+        [invalidRepositoryNamePattern]="invalidRepositoryNamePattern"
+        [invalidDirectoryNamePattern]="invalidDirectoryNamePattern"
+        [updateRepositoryName]="updateRepositoryName"
+        [updateCheckoutDirectory]="updateCheckoutDirectory"
+        [refreshAuxiliaryRepositoryChecks]="refreshAuxiliaryRepositoryChecks"
+        [auxiliaryRepositoryDuplicateNames]="auxiliaryRepositoryDuplicateNames"
+        [auxiliaryRepositoryDuplicateDirectories]="auxiliaryRepositoryDuplicateDirectories"
+        [exerciseCategories]="exerciseCategories"
+        [existingCategories]="existingCategories"
+        [updateCategories]="updateCategories"
+    ></jhi-programming-exercise-update-wizard-info>
+
     <!-- Bottom Navigation Bar -->
     <div class="d-flex align-items-center">
         <div class="me-3">

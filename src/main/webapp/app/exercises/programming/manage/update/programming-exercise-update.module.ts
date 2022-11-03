@@ -18,8 +18,9 @@ import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
 import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-policy/submission-policy-update.module';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
-import { ProgrammingExerciseUpdateWizardComponent } from 'app/exercises/programming/manage/update/programming-exercise-update-wizard.component';
-import { ProgrammingExerciseUpdateWizardStepComponent } from 'app/exercises/programming/manage/update/programming-exercise-update-wizard-step.component';
+import { ProgrammingExerciseUpdateWizardComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { ProgrammingExerciseUpdateWizardStepComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-step.component';
+import { ProgrammingExerciseUpdateWizardInformationComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-information.component';
 
 @NgModule({
     imports: [
@@ -43,6 +44,7 @@ import { ProgrammingExerciseUpdateWizardStepComponent } from 'app/exercises/prog
         ProgrammingExerciseUpdateComponent,
         ProgrammingExerciseUpdateWizardComponent,
         ProgrammingExerciseUpdateWizardStepComponent,
+        ProgrammingExerciseUpdateWizardInformationComponent,
         ProgrammingExercisePlansAndRepositoriesPreviewComponent,
         AddAuxiliaryRepositoryButtonComponent,
         RemoveAuxiliaryRepositoryButtonComponent,
