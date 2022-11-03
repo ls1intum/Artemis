@@ -349,9 +349,7 @@ public class ProgrammingExerciseResource {
             updatedProgrammingExercise.setBonusPoints(0.0);
         }
 
-        // TODO: if isAllowOfflineIde changes, we might want to change access for all existing student participations
-        // false --> true: add access for students to all existing student participations
-        // true --> false: remove access for students from all existing student participations
+        programmingExerciseService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);

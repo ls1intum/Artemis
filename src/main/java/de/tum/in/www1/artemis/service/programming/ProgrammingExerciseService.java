@@ -1073,4 +1073,27 @@ public class ProgrammingExerciseService {
         programmingExerciseTaskRepository.deleteAll(tasks);
         programmingExerciseSolutionEntryRepository.deleteAll(solutionEntries);
     }
+
+    public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+        ZonedDateTime now = ZonedDateTime.now();
+        if (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now)) {
+            if (Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+                unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
+            }
+            else if (Boolean.TRUE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+                lockAllRepositories(programmingExerciseBeforeUpdate.getId());
+            }
+        }
+
+        if (programmingExerciseBeforeUpdate.getDueDate() != null && programmingExerciseBeforeUpdate.getDueDate().isBefore(now)
+                && (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now))) {
+            // New due date allows students to continue working on exercise
+            unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
+        }
+        else if ((programmingExerciseBeforeUpdate.getDueDate() == null || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
+                && updatedProgrammingExercise.getDueDate() != null && updatedProgrammingExercise.getDueDate().isBefore(now)) {
+            // New due date forbids students to continue working on exercise
+            lockAllRepositories(programmingExerciseBeforeUpdate.getId());
+        }
+    }
 }
