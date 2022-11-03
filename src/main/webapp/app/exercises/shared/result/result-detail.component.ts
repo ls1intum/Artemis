@@ -105,6 +105,10 @@ export class ResultDetailComponent implements OnInit {
     commitHashURLTemplate?: string;
     commitHash?: string;
     commitUrl?: string;
+
+    testCaseCount: number;
+    passedTestCaseCount: number;
+    scaFeedbackCount: number;
     manualFeedbackCount: number;
 
     ngxData: NgxChartsMultiSeriesDataEntry[] = [];
@@ -202,7 +206,7 @@ export class ResultDetailComponent implements OnInit {
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
                         this.backupFilteredFeedbackList = this.filteredFeedbackList;
 
-                        this.manualFeedbackCount = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Feedback).length;
+                        this.countFeedbacks();
 
                         if (this.showScoreChart) {
                             this.updateChart(this.feedbackList);
@@ -667,6 +671,7 @@ export class ResultDetailComponent implements OnInit {
         this.showOnlyNegativeFeedback = false;
         this.showOnlyPositiveFeedback = false;
         this.filteredFeedbackList = this.backupFilteredFeedbackList;
+        this.countFeedbacks();
     }
 
     /**
@@ -691,5 +696,17 @@ export class ResultDetailComponent implements OnInit {
         if (this.showOnlyNegativeFeedback || this.showOnlyPositiveFeedback) {
             this.filteredFeedbackList = this.filteredFeedbackList.filter(filterPredicate);
         }
+
+        this.countFeedbacks();
+    }
+
+    private countFeedbacks() {
+        const testCaseList = this.filteredFeedbackList.filter((feedback) => feedback.type === FeedbackItemType.Test);
+        this.testCaseCount = testCaseList.length;
+        this.passedTestCaseCount = testCaseList.filter((feedback) => feedback.positive).length;
+        this.scaFeedbackCount = this.filteredFeedbackList.filter((feedback) => feedback.type === FeedbackItemType.Issue).length;
+        this.manualFeedbackCount = this.filteredFeedbackList.filter(
+            (feedback) => feedback.type === FeedbackItemType.Feedback || feedback.type === FeedbackItemType.Subsequent,
+        ).length;
     }
 }
