@@ -41,6 +41,14 @@
                     "languageStepTitle": "Language",
                     "gradingStepTitle": "Grading",
                     "problemStepTitle": "Problem"
+                },
+                "detailedSteps": {
+                    "generalInfoStepTitle": "General Information",
+                    "generalInfoStepMessage": "Add some general information about the new exercise.",
+                    "difficultyStepTitle": "Difficulty",
+                    "languageStepTitle": "Language",
+                    "gradingStepTitle": "Grading",
+                    "problemStepTitle": "Problem"
                 }
             },
             "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students.",

@@ -41,6 +41,14 @@
                     "languageStepTitle": "Sprache",
                     "gradingStepTitle": "Benotung",
                     "problemStepTitle": "Problem"
+                },
+                "detailedSteps": {
+                    "generalInfoStepTitle": "Allgemeine Informationen",
+                    "generalInfoStepMessage": "Füge allgemeine Informationen über die neue Übung hinzu.",
+                    "difficultyStepTitle": "Difficulty",
+                    "languageStepTitle": "Language",
+                    "gradingStepTitle": "Grading",
+                    "problemStepTitle": "Problem"
                 }
             },
             "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein.",
