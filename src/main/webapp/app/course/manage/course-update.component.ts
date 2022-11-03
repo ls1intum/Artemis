@@ -123,13 +123,17 @@ export class CourseUpdateComponent implements OnInit {
             }
         });
 
+        const ltiKey = this.course.onlineCourseConfiguration?.ltiKey ?? Math.random().toString(36).slice(2, 12);
+        const ltiSecret = this.course.onlineCourseConfiguration?.ltiSecret ?? Math.random().toString(36).slice(2, 12);
+        const ltiRegistrationId = this.course.onlineCourseConfiguration?.registrationId ?? Math.random().toString(36).slice(2, 12);
+
         this.onlineCourseConfigurationForm = new FormGroup({
             id: new FormControl(this.course.onlineCourseConfiguration?.id),
             course: new FormControl(this.course),
-            ltiKey: new FormControl(this.course.onlineCourseConfiguration?.ltiKey),
-            ltiSecret: new FormControl(this.course.onlineCourseConfiguration?.ltiSecret),
+            ltiKey: new FormControl(ltiKey),
+            ltiSecret: new FormControl(ltiSecret),
             userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
-            registrationId: new FormControl(this.course.onlineCourseConfiguration?.registrationId),
+            registrationId: new FormControl(ltiRegistrationId),
             clientId: new FormControl(this.course.onlineCourseConfiguration?.clientId),
             authorizationUri: new FormControl(this.course.onlineCourseConfiguration?.authorizationUri),
             tokenUri: new FormControl(this.course.onlineCourseConfiguration?.tokenUri),
