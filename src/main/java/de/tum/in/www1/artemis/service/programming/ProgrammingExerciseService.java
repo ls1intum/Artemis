@@ -1074,6 +1074,11 @@ public class ProgrammingExerciseService {
         programmingExerciseSolutionEntryRepository.deleteAll(solutionEntries);
     }
 
+    /**
+     * Locks or unlocks the repository if necessary due to the changes in the programming exercise
+     * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
+     * @param updatedProgrammingExercise the updated exercise with new values
+     */
     public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         ZonedDateTime now = ZonedDateTime.now();
         if (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now)) {
@@ -1085,15 +1090,17 @@ public class ProgrammingExerciseService {
             }
         }
 
-        if (programmingExerciseBeforeUpdate.getDueDate() != null && programmingExerciseBeforeUpdate.getDueDate().isBefore(now)
-                && (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now))) {
-            // New due date allows students to continue working on exercise
-            unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
-        }
-        else if ((programmingExerciseBeforeUpdate.getDueDate() == null || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
-                && updatedProgrammingExercise.getDueDate() != null && updatedProgrammingExercise.getDueDate().isBefore(now)) {
-            // New due date forbids students to continue working on exercise
-            lockAllRepositories(programmingExerciseBeforeUpdate.getId());
+        if (updatedProgrammingExercise.isAllowOfflineIde()) {
+            if (programmingExerciseBeforeUpdate.getDueDate() != null && programmingExerciseBeforeUpdate.getDueDate().isBefore(now)
+                    && (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now))) {
+                // New due date allows students to continue working on exercise
+                unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
+            }
+            else if ((programmingExerciseBeforeUpdate.getDueDate() == null || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
+                    && updatedProgrammingExercise.getDueDate() != null && updatedProgrammingExercise.getDueDate().isBefore(now)) {
+                // New due date forbids students to continue working on exercise
+                lockAllRepositories(programmingExerciseBeforeUpdate.getId());
+            }
         }
     }
 }

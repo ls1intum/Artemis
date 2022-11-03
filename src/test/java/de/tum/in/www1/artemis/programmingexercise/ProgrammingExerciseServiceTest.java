@@ -77,7 +77,20 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
+    void shouldNotUnlockRepositoriesWhenOfflineIDEGetsAllowedAndDueDateInPast() {
+        programmingExercise1.setAllowOfflineIde(false);
+        programmingExercise2.setAllowOfflineIde(true);
+        programmingExercise1.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExercise2.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+        verify(instanceMessageSendService, never()).sendLockAllRepositories(programmingExercise1.getId());
+        verify(instanceMessageSendService, never()).sendUnlockAllRepositories(programmingExercise1.getId());
+    }
+
+    @Test
     void shouldLockRepositoriesWhenDueDateIsSetInThePast() {
+        programmingExercise2.setAllowOfflineIde(true);
+
         programmingExercise2.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
         verify(instanceMessageSendService, times(1)).sendLockAllRepositories(programmingExercise1.getId());
@@ -90,6 +103,8 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     void shouldUnlockRepositoriesWhenDueDateIsSetInTheFuture() {
+        programmingExercise2.setAllowOfflineIde(true);
+
         programmingExercise1.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
         verify(instanceMessageSendService, times(1)).sendUnlockAllRepositories(programmingExercise1.getId());
@@ -97,6 +112,19 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
         programmingExercise2.setDueDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
         verify(instanceMessageSendService, times(2)).sendUnlockAllRepositories(programmingExercise1.getId());
+        verify(instanceMessageSendService, never()).sendLockAllRepositories(programmingExercise1.getId());
+    }
+
+    @Test
+    void shouldNotUnlockRepositoriesWhenDueDateIsSetInTheFutureAndNoOfflineIDE() {
+        programmingExercise2.setAllowOfflineIde(false);
+
+        programmingExercise1.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+
+        programmingExercise2.setDueDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+        verify(instanceMessageSendService, never()).sendUnlockAllRepositories(programmingExercise1.getId());
         verify(instanceMessageSendService, never()).sendLockAllRepositories(programmingExercise1.getId());
     }
 }
