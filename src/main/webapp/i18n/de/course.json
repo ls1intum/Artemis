@@ -96,6 +96,11 @@
                 "authorizationUri": "Authorization URI",
                 "tokenUri": "Token URI",
                 "jwkSetUri": "JWKSet URI",
+                "ltiKeyTooltip": "Für LTI 1.0 verwendeter Schlüssel. Sie können diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
+                "ltiSecretTooltip": "Für LTI 1.0 verwendetes Geheimnis. Sie können diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
+                "userPrefixTooltip": "Präfix für die neuen Benutzer, die für diesen Kurs erstellt werden. Es wird empfohlen, einen Wert zu verwenden, der die Benutzer eindeutig als Teil dieses Kurses identifiziert.",
+                "registrationIdTooltip": "ID, die zur Identifizierung der Registrierung der Lernplattform verwendet wird. Diese muss für alle Kurse eindeutig sein. Sie können diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
+                "clientIdTooltip": "Es ist möglich, dieses Feld und die folgenden URI-Felder manuell zu konfigurieren, aber es wird dringend empfohlen, den Dynamic Registration Service zur automatischen Konfiguration zu verwenden.",
                 "form": {
                     "userPrefix": {
                         "forbidden": "Nutzer Präfix darf keine Sonderzeichen beinhalten."

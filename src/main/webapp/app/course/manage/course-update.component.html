@@ -370,14 +370,17 @@
                         </h4>
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.ltiKey" for="field_ltiKey">LTI Key</label>
+                            <jhi-help-icon placement="top" text="artemisApp.course.onlineCourseConfiguration.ltiKeyTooltip"></jhi-help-icon>
                             <input required type="text" class="form-control" name="ltiKey" id="field_ltiKey" formControlName="ltiKey" />
                         </div>
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.ltiSecret" for="field_ltiSecret">LTI Secret</label>
+                            <jhi-help-icon placement="top" text="artemisApp.course.onlineCourseConfiguration.ltiSecretTooltip"></jhi-help-icon>
                             <input required type="text" class="form-control" name="ltiSecret" id="field_ltiSecret" formControlName="ltiSecret" />
                         </div>
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.userPrefix" for="field_userPrefix">User Prefix</label>
+                            <jhi-help-icon placement="top" text="artemisApp.course.onlineCourseConfiguration.userPrefixTooltip"></jhi-help-icon>
                             <input required type="text" class="form-control" name="userPrefix" id="field_userPrefix" formControlName="userPrefix" />
                             <ng-container *ngIf="userPrefix.invalid && (userPrefix.dirty || userPrefix.touched)">
                                 <div *ngIf="(userPrefix.errors! | keyvalue | removekeys: ['required']).length > 0" class="alert alert-danger">
@@ -391,25 +394,27 @@
                             <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.registrationId" for="field_registrationId"
                                 >Registration Id</label
                             >
-                            <input required type="text" class="form-control" name="registrationId" id="field_registrationId" formControlName="registrationId" />
+                            <jhi-help-icon placement="top" text="artemisApp.course.onlineCourseConfiguration.registrationIdTooltip"></jhi-help-icon>
+                            <input type="text" class="form-control" name="registrationId" id="field_registrationId" formControlName="registrationId" />
                         </div>
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.clientId" for="field_clientId">Client Id</label>
-                            <input required type="text" class="form-control" name="clientId" id="field_clientId" formControlName="clientId" />
+                            <jhi-help-icon placement="top" text="artemisApp.course.onlineCourseConfiguration.clientIdTooltip"></jhi-help-icon>
+                            <input type="text" class="form-control" name="clientId" id="field_clientId" formControlName="clientId" />
                         </div>
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.authorizationUri" for="field_authorizationUri"
                                 >Authorization URI</label
                             >
-                            <input required type="text" class="form-control" name="authorizationUri" id="field_authorizationUri" formControlName="authorizationUri" />
+                            <input type="text" class="form-control" name="authorizationUri" id="field_authorizationUri" formControlName="authorizationUri" />
                         </div>
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.tokenUri" for="field_tokenUri">Token URI</label>
-                            <input required type="text" class="form-control" name="tokenUri" id="field_tokenUri" formControlName="tokenUri" />
+                            <input type="text" class="form-control" name="tokenUri" id="field_tokenUri" formControlName="tokenUri" />
                         </div>
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.jwkSetUri" for="field_jwkSetUri">JwkSet URI</label>
-                            <input required type="text" class="form-control" name="jwkSetUri" id="field_jwkSetUri" formControlName="jwkSetUri" />
+                            <input type="text" class="form-control" name="jwkSetUri" id="field_jwkSetUri" formControlName="jwkSetUri" />
                         </div>
                     </form>
                 </div>
