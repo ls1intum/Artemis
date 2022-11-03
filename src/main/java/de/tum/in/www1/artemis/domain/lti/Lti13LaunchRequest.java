@@ -19,8 +19,6 @@ public class Lti13LaunchRequest {
 
     private final Lti13AgsClaim agsClaim;
 
-    private final String clientRegistrationId;
-
     public Lti13LaunchRequest(OidcIdToken ltiIdToken, String clientRegistrationId) {
         this.iss = ltiIdToken.getClaim("iss");
         this.sub = ltiIdToken.getClaim("sub");
@@ -31,8 +29,6 @@ public class Lti13LaunchRequest {
         this.targetLinkUri = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
 
         this.agsClaim = Lti13AgsClaim.from(ltiIdToken).orElse(null);
-
-        this.clientRegistrationId = clientRegistrationId;
 
         Assert.notNull(iss, "Iss must not be empty in LTI 1.3 launch request");
         Assert.notNull(sub, "Sub must not be empty in LTI 1.3 launch request");
@@ -64,9 +60,5 @@ public class Lti13LaunchRequest {
 
     public Lti13AgsClaim getAgsClaim() {
         return agsClaim;
-    }
-
-    public String getClientRegistrationId() {
-        return clientRegistrationId;
     }
 }
