@@ -141,7 +141,7 @@ GitLab Server Quickstart
 
 The following steps describes how to set up the GitLab server in a semi-automated way.
 This is ideal as a quickstart for developers. For a more detailed setup, see
-`Manual Gitlab Server Setup <#gitlab-server-setup>`__.
+`Manual Gitlab Server Setup <#manual-gitlab-server-setup>`__.
 In a production setup, you have to at least change the root password (by either specifying it in step 1 or extracting
 the random password in step 2) and generate random access tokens (instead of the pre-defined values).
 Set the variable ``GENERATE_ACCESS_TOKENS`` to ``true`` in the ``gitlab-local-setup.sh`` script and use the generated
