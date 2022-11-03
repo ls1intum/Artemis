@@ -167,7 +167,7 @@ describe('Course management', () => {
             cy.get('.no-image').should('exist');
         });
 
-        after(() => {
+        afterEach(() => {
             if (!!courseId) {
                 artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
             }
