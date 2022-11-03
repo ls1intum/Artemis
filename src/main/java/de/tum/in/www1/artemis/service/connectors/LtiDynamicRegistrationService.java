@@ -68,8 +68,11 @@ public class LtiDynamicRegistrationService {
                 registrationToken);
 
         OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
+        if (onlineCourseConfiguration == null) {
+            onlineCourseConfiguration = new OnlineCourseConfiguration();
+            onlineCourseConfiguration.setCourse(course);
+        }
 
-        // Save client in tool
         onlineCourseConfiguration.setRegistrationId(clientRegistrationId);
         onlineCourseConfiguration.setClientId(clientRegistrationResponse.getClientId());
         onlineCourseConfiguration.setAuthorizationUri(platformConfiguration.getAuthorizationEndpoint());
