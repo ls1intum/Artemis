@@ -10,7 +10,7 @@ jobs:
 
       - name: Move to "Ready for review" column
         if: github.event.pull_request.draft == false
-        uses: alex-page/github-project-automation-plus@v0.8.1
+        uses: alex-page/github-project-automation-plus@v0.8.2
         with:
           project: Artemis Development
           column: Ready for review

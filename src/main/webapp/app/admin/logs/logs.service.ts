@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { LoggersResponse, Level } from './log.model';
+import { Level, LoggersResponse } from './log.model';
 
 @Injectable({ providedIn: 'root' })
 export class LogsService {

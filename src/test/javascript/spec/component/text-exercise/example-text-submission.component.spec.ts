@@ -1,8 +1,8 @@
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
@@ -121,6 +121,51 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
         expect(comp.state.constructor.name).toBe('EditState');
     }));
+
+    it('should mark text blocks not included in the example submission correctly', fakeAsync(() => {
+        // GIVEN
+        // @ts-ignore
+        activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
+        // @ts-ignore
+        activatedRouteSnapshot.queryParamMap.params = { toComplete: true };
+        jest.spyOn(exerciseService, 'find').mockReturnValue(httpResponse(exercise));
+        jest.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+        const textBlock1 = new TextBlock();
+        textBlock1.startIndex = 0;
+        textBlock1.endIndex = 4;
+        textBlock1.setTextFromSubmission(submission);
+        textBlock1.computeId();
+        const textBlock2 = new TextBlock();
+        textBlock2.startIndex = 5;
+        textBlock2.endIndex = 9;
+        textBlock2.setTextFromSubmission(submission);
+        textBlock2.computeId();
+        submission.blocks = [textBlock1, textBlock2];
+        submission.text = '123456789';
+        const feedback = Feedback.forText(textBlock2, 3, 'Test');
+        result.feedbacks = [feedback];
+
+        jest.spyOn(assessmentsService, 'getExampleResult').mockReturnValue(of(result));
+        // WHEN
+        comp.ngOnInit();
+        tick();
+        // THEN
+        verifyBlockIsInUnReferencedState(comp.textBlockRefs[0]);
+        verifyBlockIsInUnReferencedState(comp.textBlockRefs[1]);
+        verifyBlockIsInReferencedState(comp.textBlockRefs[2]);
+    }));
+
+    const verifyBlockIsInReferencedState = (block: TextBlockRef) => {
+        expect(block.deletable).toBeFalse();
+        expect(block.selectable).toBeTrue();
+        expect(block.highlighted).toBeTrue();
+    };
+
+    const verifyBlockIsInUnReferencedState = (block: TextBlockRef) => {
+        expect(block.deletable).toBeTrue();
+        expect(block.selectable).toBeFalse();
+        expect(block.highlighted).toBeFalse();
+    };
 
     it('should not fail while fetching submission with null result for existing example submission in tutorial submission mode', fakeAsync(() => {
         // GIVEN

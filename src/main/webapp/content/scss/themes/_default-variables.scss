@@ -409,6 +409,8 @@ $textblock-assessment-text-feedback-negative-active-decoration: $danger;
 $textblock-assessment-text-feedback-neutral-color: $gray-900;
 $textblock-assessment-text-feedback-neutral-background: $gray-100;
 $textblock-assessment-text-feedback-neutral-active-decoration: $gray-900;
+$textblock-assessment-text-feedback-highlighted-color: $gray-900;
+$textblock-assessment-text-feedback-highlighted-background: lightblue;
 $textblock-assessment-text-feedback-conflicting-color: $gray-900;
 $textblock-assessment-text-feedback-conflicting-background: $warning;
 $textblock-assessment-text-feedback-conflicting-active-decoration: $gray-900;
@@ -458,6 +460,7 @@ $artemis-alert-success-border: #3eb058;
 $artemis-alert-neutral-color: black;
 $artemis-alert-neutral-background: $gray-300;
 $artemis-alert-neutral-border: $gray-500;
+$artemis-alerts-shadow: rgba($black, 0.55);
 
 $close-circle-color: black;
 $close-circle-background: white;

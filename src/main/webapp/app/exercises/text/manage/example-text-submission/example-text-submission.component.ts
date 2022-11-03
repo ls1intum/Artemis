@@ -59,6 +59,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     UIStates = UIStates;
     selectedMode: ExampleSubmissionMode;
     ExampleSubmissionMode = ExampleSubmissionMode;
+    referencedBlocksInExampleSubmission: string[] = [];
 
     // Icons
     faSave = faSave;
@@ -138,6 +139,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             await this.fetchExampleResult();
             if (this.toComplete) {
                 this.state = State.forCompletion(this);
+                this.restrictSelectableTextBlocks();
                 this.textBlockRefs.forEach((ref) => delete ref.feedback);
                 this.validateFeedback();
             } else if (this.result?.id) {
@@ -153,16 +155,34 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         });
     }
 
+    private restrictSelectableTextBlocks() {
+        this.textBlockRefs.forEach((ref) => {
+            if (ref.block && this.referencedBlocksInExampleSubmission.includes(ref.block.id!)) {
+                ref.selectable = true;
+                ref.highlighted = true;
+                ref.deletable = false;
+            } else {
+                ref.selectable = false;
+                ref.highlighted = false;
+                ref.deletable = true;
+            }
+        });
+    }
+
     private fetchExampleResult(): Promise<void> {
         return new Promise((resolve) => {
             this.assessmentsService
                 .getExampleResult(this.exerciseId, this.submission?.id!)
                 .pipe(filter(notUndefined))
                 .subscribe((result) => {
-                    if (result) {
+                    if (result && result.id) {
                         this.result = result;
                         this.exampleSubmission.submission = this.submission = result.submission;
+                        this.updateExampleAssessmentSolution(result);
                     } else {
+                        if (result && !result.id) {
+                            this.updateExampleAssessmentSolution(result);
+                        }
                         this.result = new Result();
                         this.result.submission = this.submission;
                         this.submission!.results = [this.result];
@@ -418,5 +438,12 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
         this.selectedMode = mode;
         this.unsavedSubmissionChanges = true;
         this.exampleSubmission.usedForTutorial = mode === ExampleSubmissionMode.ASSESS_CORRECTLY;
+    }
+
+    private updateExampleAssessmentSolution(result: Result) {
+        if (result && result.feedbacks) {
+            this.referencedBlocksInExampleSubmission =
+                result.feedbacks.filter((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED && feedback.reference).map((feedback) => feedback.reference!) || [];
+        }
     }
 }

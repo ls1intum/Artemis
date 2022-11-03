@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Observable, of, EMPTY } from 'rxjs';
+import { EMPTY, Observable, of } from 'rxjs';
 import { IResultService, ResultsWithPointsArrayResponseType } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';

@@ -1,4 +1,9 @@
-<!-- <jhi-single-alert *ngFor="let alert of alerts" [alert]="alert"></jhi-single-alert> -->
+<div class="dismiss-all" *ngIf="(alerts?.length ?? 0) >= 2" @alertAnimation>
+    <div class="btn btn-secondary" (click)="alertService.closeAll()">
+        <fa-icon [icon]="times"></fa-icon>
+        <span jhiTranslate="artemisApp.alerts.dismissAll">Dismiss all</span>
+    </div>
+</div>
 <div class="alert-wrap" *ngFor="let alert of alerts" @alertAnimation>
     <div class="alert-inner" [ngClass]="alert.type.containerClassName">
         <div class="left">
