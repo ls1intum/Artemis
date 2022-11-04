@@ -34,7 +34,8 @@ following dependencies/tools on your machine:
 4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=8.1.0) to
    manage client side dependencies. Npm is typically bundled with Node.js,
    but can also be installed separately.
-5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs within exercise task descriptions.
+5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs within exercise task
+   descriptions.
    It's not necessary for a successful build,
    but it's necessary for production setups as otherwise errors will show up during runtime. )
 6. ( A **version control** and **build** system is necessary for the **programming exercise** feature of Artemis.
@@ -287,14 +288,20 @@ You can find the latest Artemis Dockerfile at ``src/main/docker/Dockerfile``.
 
 * The Dockerfile defines three Docker volumes
 
-    * ``/opt/artemis/config``: This will be used to store the configuration of Artemis in YAML files. If this directory is empty, the default configuration of Artemis will be copied upon container start.
+    * ``/opt/artemis/config``: This will be used to store the configuration of Artemis in YAML files.
+      If this directory is empty, the default configuration of Artemis will be copied upon container start.
 
       .. tip::
-        Instead of mounting this config directory, you can also use environment variables for the configuration as defined by the `Spring relaxed binding <https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables>`__.
-        You can either place those environment variables directly in the ``environment`` section, or create an `.env-file <https://docs.docker.com/compose/environment-variables/#the-env-file>`__.
-        When starting an Artemis container directly with the Docker-CLI, an .env-file can also be given via the ``--env-file`` option.
+        Instead of mounting this config directory, you can also use environment variables for the configuration as
+        defined by the
+        `Spring relaxed binding <https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables>`__.
+        You can either place those environment variables directly in the ``environment`` section,
+        or create an `.env-file <https://docs.docker.com/compose/environment-variables/#the-env-file>`__.
+        When starting an Artemis container directly with the Docker-CLI, an .env-file can also be given via the
+        ``--env-file`` option.
 
-        To ease the transition of an existing set of YAML configuration files into the environment variable style, a `helper script <https://github.com/b-fein/spring-yaml-to-env>`__ can be used.
+        To ease the transition of an existing set of YAML configuration files into the environment variable style, a
+        `helper script <https://github.com/b-fein/spring-yaml-to-env>`__ can be used.
 
     * ``/opt/artemis/data``: This directory should be used for any data (e.g., local clone of repositories).
       Therefore, configure Artemis to store this files into this directory. In order to do that, you have to change
@@ -326,7 +333,8 @@ module replacement in the client.
 
 * **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
 * **Artemis (Client):** Will execute ``npm install`` and ``npm run serve``. The client will be available at
-  `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <#client-setup>`__).
+  `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see
+  `Client Setup <#client-setup>`__).
 
 Other run / debug configurations
 """"""""""""""""""""""""""""""""
