@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,7 +16,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
     templateUrl: './clone-repo-button.component.html',
     styleUrls: ['./clone-repo-button.component.scss'],
 })
-export class CloneRepoButtonComponent implements OnInit {
+export class CloneRepoButtonComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
 
     @Input()
@@ -72,7 +72,14 @@ export class CloneRepoButtonComponent implements OnInit {
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
+    }
 
+    public setUseSSH(useSsh: boolean) {
+        this.useSsh = useSsh;
+        this.localStorage.store('useSsh', this.useSsh);
+    }
+
+    ngOnChanges() {
         if (this.participations?.length) {
             this.isTeamParticipation = !!this.participations.first()?.team;
             this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, true) ?? this.participations[0];
@@ -80,11 +87,6 @@ export class CloneRepoButtonComponent implements OnInit {
         } else if (this.repositoryUrl) {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
-    }
-
-    public setUseSSH(useSsh: boolean) {
-        this.useSsh = useSsh;
-        this.localStorage.store('useSsh', this.useSsh);
     }
 
     private getRepositoryUrl() {

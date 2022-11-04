@@ -1,5 +1,5 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Subject, of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
 import { TextExercise } from 'app/entities/text-exercise.model';

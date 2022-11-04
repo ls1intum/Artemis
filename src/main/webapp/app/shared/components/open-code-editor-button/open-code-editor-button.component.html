@@ -1,7 +1,7 @@
 <ng-container>
     <button
         jhi-exercise-action-button
-        [id]="'open-exercise-' + exercise.id"
+        [id]="'open-exercise-' + exerciseId"
         [buttonIcon]="faFolderOpen"
         class="open-code-editor"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -32,12 +32,12 @@
         <div class="form-check form-switch" *ngIf="participations && participations.length > 1">
             <input mdbCheckbox class="form-check-input" type="checkbox" [checked]="activeParticipation.testRun" (click)="switchPracticeMode()" />
             <label class="form-check-label">
-                {{ 'artemisApp.exerciseActions.practiceMode' | artemisTranslate }}
+                {{ 'artemisApp.exerciseActions.practiceMode.title' | artemisTranslate }}
             </label>
         </div>
         <button
             jhi-exercise-action-button
-            [id]="'open-exercise-' + exercise.id"
+            [id]="'open-exercise-popover-' + exerciseId"
             [buttonIcon]="faFolderOpen"
             class="open-code-editor"
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
