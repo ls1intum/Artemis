@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/complaints/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { TranslateService } from '@ngx-translate/core';
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -73,6 +75,7 @@ describe('ListOfComplaintsComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ArtemisDatePipe, useClass: TranslatePipeMock },
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
             ],
         })
             .compileComponents()
