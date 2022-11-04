@@ -28,12 +28,12 @@ GitLab
     Now edit the file ``src/main/docker/.env``.
 
 2. Start GitLab and the GitLab Runner
-    ..  code:: bash
+    .. code:: bash
 
         docker-compose -f src/main/docker/gitlab-gitlabci.yml --env-file src/main/docker/.env up --build -d
 
 3. Get your GitLab root password
-    ..  code:: bash
+    .. code:: bash
 
         docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
 
@@ -48,7 +48,8 @@ GitLab Runner
     Click on ``Register an instance runner`` and copy the registration token.
 
     Then execute this command with the registration token:
-    ..  code:: bash
+
+    .. code:: bash
 
         docker exec -it gitlab-runner gitlab-runner register \
         --non-interactive \
