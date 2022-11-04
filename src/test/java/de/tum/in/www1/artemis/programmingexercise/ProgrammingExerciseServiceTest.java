@@ -112,11 +112,11 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
         programmingExercise1.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, times(1)).sendUnlockAllRepositories(programmingExercise1.getId());
+        verify(instanceMessageSendService, times(1)).sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(programmingExercise1.getId());
 
         programmingExercise2.setDueDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, times(2)).sendUnlockAllRepositories(programmingExercise1.getId());
+        verify(instanceMessageSendService, times(2)).sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(programmingExercise1.getId());
         verify(instanceMessageSendService, never()).sendLockAllRepositories(programmingExercise1.getId());
     }
 

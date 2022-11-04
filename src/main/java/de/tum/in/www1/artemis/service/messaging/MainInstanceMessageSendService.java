@@ -72,6 +72,11 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
+    public void sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
+        instanceMessageReceiveService.processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(exerciseId);
+    }
+
+    @Override
     public void sendLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
         instanceMessageReceiveService.processLockAllRepositoriesWithoutLaterIndividualDueDate(exerciseId);
     }

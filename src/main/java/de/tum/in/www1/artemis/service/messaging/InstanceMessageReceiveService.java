@@ -109,9 +109,13 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processLockAllRepositories((message.getMessageObject()));
         });
+        hazelcastInstance.<Long>getTopic("programming-exercise-unlock-repositories-without-earlier-individual-due-date").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(message.getMessageObject());
+        });
         hazelcastInstance.<Long>getTopic("programming-exercise-lock-repositories-without-later-individual-due-date").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processLockAllRepositoriesWithoutLaterIndividualDueDate((message.getMessageObject()));
+            processLockAllRepositoriesWithoutLaterIndividualDueDate(message.getMessageObject());
         });
         hazelcastInstance.<Long>getTopic("user-management-remove-non-activated-user").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -204,6 +208,16 @@ public class InstanceMessageReceiveService {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are locked as fast as possible
         programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
+    }
+
+    public void processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
+        log.info("Received unlock all repositories without an individual due date before now for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Run the runnable immediately so that the repositories are locked as fast as possible
+        programmingExerciseScheduleService.unlockStudentRepositories(programmingExercise, participation -> {
+            ZonedDateTime individualDueDate = participation.getIndividualDueDate();
+            return individualDueDate == null || individualDueDate.isAfter(ZonedDateTime.now());
+        }).run();
     }
 
     public void processLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
