@@ -160,7 +160,6 @@ describe('ListOfComplaintsComponent', () => {
             comp.loadComplaints();
 
             expect(comp.complaintsToShow).toIncludeSameMembers([complaint3]);
-            expect(comp.hasStudentInformation).toBeFalse();
         });
 
         it('process complaints with student information', () => {
@@ -168,13 +167,11 @@ describe('ListOfComplaintsComponent', () => {
             comp.loadComplaints();
 
             expect(comp.complaintsToShow).toIncludeSameMembers([complaint3, complaint4]);
-            expect(comp.hasStudentInformation).toBeTrue();
 
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint5] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
             expect(comp.complaintsToShow).toIncludeSameMembers([complaint3]);
-            expect(comp.hasStudentInformation).toBeTrue();
         });
     });
 
