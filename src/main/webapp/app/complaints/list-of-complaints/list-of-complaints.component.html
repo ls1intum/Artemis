@@ -9,7 +9,7 @@
     </div>
 </div>
 <div class="col-12 mt-4">
-    <div class="alert alert-info" [hidden]="course.isAtLeastInstructor">
+    <div class="alert alert-info" [hidden]="course?.isAtLeastInstructor">
         <span *ngIf="!allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT">{{
             'artemisApp.complaint.listOfComplaints.loadAllComplaintsExplanation' | artemisTranslate
         }}</span>
