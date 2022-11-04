@@ -121,9 +121,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     @JsonIgnore
     @Override
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
-        List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
-        getBuild().jobs().forEach(job -> staticCodeAnalysisReports.addAll(job.staticCodeAnalysisReports()));
-        return staticCodeAnalysisReports;
+        return getBuild().jobs.stream().flatMap(job -> job.staticCodeAnalysisReports().stream()).toList();
     }
 
     @JsonIgnore
