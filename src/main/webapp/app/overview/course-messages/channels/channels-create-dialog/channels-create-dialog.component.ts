@@ -1,11 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ChannelFormData, ChannelType } from 'app/overview/course-messages/channels/channel-form/channel-form.component';
-import { ChannelService } from 'app/shared/metis/channel.service';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
-import { ConversationType } from 'app/shared/metis/metis.util';
 import { Course } from 'app/entities/course.model';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-channels-create-dialog',
@@ -16,14 +15,14 @@ export class ChannelsCreateDialogComponent implements OnInit {
     @Input()
     course: Course;
 
-    channelToCreate: Conversation = new Conversation();
+    channelToCreate: Channel = new Channel();
     isPublicChannel = true;
     isLoading = false;
 
     constructor(private channelService: ChannelService, private alertService: AlertService, private activeModal: NgbActiveModal) {}
 
     ngOnInit(): void {
-        this.channelToCreate = new Conversation();
+        this.channelToCreate = new Channel();
     }
 
     onChannelTypeChanged($event: ChannelType) {
@@ -41,7 +40,6 @@ export class ChannelsCreateDialogComponent implements OnInit {
     createChannel(formData: ChannelFormData) {
         const { name, description, isPublic } = formData;
 
-        this.channelToCreate.type = ConversationType.CHANNEL;
         this.channelToCreate.name = name ? name.trim() : undefined;
         this.channelToCreate.description = description ? description.trim() : undefined;
         this.channelToCreate.isPublic = isPublic;

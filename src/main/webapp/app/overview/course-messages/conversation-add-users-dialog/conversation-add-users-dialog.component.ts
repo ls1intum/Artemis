@@ -5,11 +5,13 @@ import { AddUsersFormData } from 'app/overview/course-messages/conversation-add-
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { Conversation, MAX_MEMBERS_IN_DIRECT_CONVERSATION } from 'app/entities/metis/conversation/conversation.model';
-import { ConversationType } from 'app/shared/metis/metis.util';
-import { ConversationService } from 'app/shared/metis/conversation.service';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { getAsChannel, isChannel } from 'app/entities/metis/conversation/channel.model';
+import { getAsGroupChat } from 'app/entities/metis/conversation/groupChat.model';
 
 @Component({
     selector: 'jhi-conversation-add-users-dialog',
@@ -17,8 +19,6 @@ import { onError } from 'app/shared/util/global.utils';
     styleUrls: ['./conversation-add-users-dialog.component.scss'],
 })
 export class ConversationAddUsersDialogComponent implements OnInit {
-    readonly CHANNEL = ConversationType.CHANNEL;
-    readonly DIRECT = ConversationType.DIRECT;
     readonly MAX_MEMBERS_IN_DIRECT_CONVERSATION = MAX_MEMBERS_IN_DIRECT_CONVERSATION;
 
     @Input()
@@ -27,7 +27,7 @@ export class ConversationAddUsersDialogComponent implements OnInit {
     @Input()
     conversation: Conversation;
 
-    constructor(private alertService: AlertService, private activeModal: NgbActiveModal, public conversationService: ConversationService) {}
+    constructor(private alertService: AlertService, private activeModal: NgbActiveModal, public conversationService: ConversationService, public channelService: ChannelService) {}
 
     ngOnInit(): void {}
 
@@ -39,18 +39,24 @@ export class ConversationAddUsersDialogComponent implements OnInit {
         this.activeModal.dismiss();
     }
 
+    getAsChannel = getAsChannel;
+    getAsGroupChat = getAsGroupChat;
+
     private addUsers(usersToAdd: User[]) {
         const userLogins = usersToAdd.map((user) => user.login!);
-        this.conversationService
-            .registerUsers(this.course.id!, this.conversation.id!, userLogins)
-            .pipe(
-                finalize(() => {
-                    this.activeModal.close();
-                }),
-            )
-            .subscribe({
-                next: () => {},
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+
+        if (isChannel(this.conversation)) {
+            this.channelService
+                .registerUsersToChannel(this.course.id!, this.conversation.id!, userLogins)
+                .pipe(
+                    finalize(() => {
+                        this.activeModal.close();
+                    }),
+                )
+                .subscribe({
+                    next: () => {},
+                    error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                });
+        }
     }
 }

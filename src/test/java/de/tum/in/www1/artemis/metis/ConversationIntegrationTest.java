@@ -20,11 +20,11 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.metis.Conversation;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.domain.metis.ConversationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
 
 class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -74,8 +74,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateConversation_badRequest() throws Exception {
-        Conversation conversationToSave = new Conversation();
-        conversationToSave.setType(ConversationType.DIRECT);
+        Conversation conversationToSave = new GroupChat();
 
         // conversation without required conversationParticipant
         createConversationBadRequest(conversationToSave);
@@ -130,8 +129,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     static Conversation directConversationToCreate(Course course, User conversatingUser) {
-        Conversation conversation = new Conversation();
-        conversation.setType(ConversationType.DIRECT);
+        Conversation conversation = new GroupChat();
 
         ConversationParticipant conversationParticipant2 = new ConversationParticipant();
         conversationParticipant2.setUser(conversatingUser);
@@ -148,8 +146,6 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(createdConversation.getId()).isNotNull();
         assertThat(createdConversation.getCreationDate()).isNotNull();
         assertThat(createdConversation.getLastMessageDate()).isNull();
-        assertThat(createdConversation.getType()).isEqualTo(ConversationType.DIRECT);
-        assertThat(createdConversation.getName()).isNull(); // Null for direct conversations
     }
 
     private void checkCreatedConversationParticipants(Set<ConversationParticipant> conversationParticipants) {

@@ -24,4 +24,16 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
     List<ConversationParticipant> findConversationParticipantByConversationId(@Param("conversationId") Long conversationId);
 
     Optional<ConversationParticipant> findConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
+
+    @Query("""
+            SELECT DISTINCT conversationParticipant
+            FROM ConversationParticipant conversationParticipant
+            JOIN conversationParticipant.user user
+            JOIN conversationParticipant.conversation conversation
+            WHERE user.id = :#{#userId}
+            """)
+    List<ConversationParticipant> findConversationParticipantByUserId(Long userId);
+
+    Integer countByConversationId(Long conversationId);
+
 }

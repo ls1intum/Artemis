@@ -4,9 +4,9 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelOverviewDTO, ChannelService } from 'app/shared/metis/channel.service';
+import { ChannelOverviewDTO, ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ChannelAction } from 'app/overview/course-messages/channels/channels-overview-dialog/channel-item/channel-item.component';
-import { ConversationService } from 'app/shared/metis/conversation.service';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 @Component({
     selector: 'jhi-channels-overview-dialog',
@@ -60,7 +60,7 @@ export class ChannelsOverviewDialogComponent implements OnInit {
     performChannelAction(channelAction: ChannelAction) {
         switch (channelAction.action) {
             case 'register':
-                this.conversationService.registerUsers(this.courseId, channelAction.channel.channelId).subscribe(() => {
+                this.channelService.registerUsersToChannel(this.courseId, channelAction.channel.channelId).subscribe(() => {
                     if (this.idsOfUnsubscribedChannels.includes(channelAction.channel.channelId)) {
                         this.idsOfUnsubscribedChannels = this.idsOfUnsubscribedChannels.filter((id) => id !== channelAction.channel.channelId);
                     }
@@ -69,7 +69,7 @@ export class ChannelsOverviewDialogComponent implements OnInit {
                 });
                 break;
             case 'deregister':
-                this.conversationService.deregisterUsers(this.courseId, channelAction.channel.channelId).subscribe(() => {
+                this.channelService.deregisterUsersFromChannel(this.courseId, channelAction.channel.channelId).subscribe(() => {
                     this.idsOfUnsubscribedChannels.push(channelAction.channel.channelId);
                     this.loadChannels();
                     this.channelActionPerformed = true;

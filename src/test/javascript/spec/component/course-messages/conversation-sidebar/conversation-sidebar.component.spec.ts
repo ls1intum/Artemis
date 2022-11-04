@@ -16,7 +16,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { ConversationService } from 'app/shared/metis/conversation.service';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MockConversationService } from '../../../helpers/mocks/service/mock-conversation.service';
 import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
 
@@ -140,7 +140,7 @@ describe('ConversationSidebarComponent', () => {
         component.ngOnInit();
         tick();
 
-        const usersConversations = component.findConversationWithUser(metisUser2);
+        const usersConversations = component.findGroupChatWithUser(metisUser2);
         expect(usersConversations).toBe(conversationBetweenUser1User2);
     }));
 
@@ -148,12 +148,12 @@ describe('ConversationSidebarComponent', () => {
         component.ngOnInit();
         tick();
 
-        const usersConversations = component.findConversationWithUser(metisUser3);
+        const usersConversations = component.findGroupChatWithUser(metisUser3);
         expect(usersConversations).toBeUndefined();
     }));
 
     it('should handle selection of a user from the search list with existing conversation', () => {
-        const spy = jest.spyOn(component, 'findConversationWithUser');
+        const spy = jest.spyOn(component, 'findGroupChatWithUser');
 
         component.conversations = conversationsOfUser1;
 
@@ -168,7 +168,7 @@ describe('ConversationSidebarComponent', () => {
     });
 
     it('should handle selection of a user from the search list without existing conversation', () => {
-        const findConversationWithUserStub = jest.spyOn(component, 'findConversationWithUser');
+        const findConversationWithUserStub = jest.spyOn(component, 'findGroupChatWithUser');
         component.conversations = conversationsOfUser1;
 
         // conversation doesn't exist, so it will be created and added to the beginning of the conversations
@@ -195,7 +195,7 @@ describe('ConversationSidebarComponent', () => {
         component.ngOnInit();
         tick();
 
-        const newConversationWithUser = component.createNewConversationWithUser(metisUser2);
+        const newConversationWithUser = component.createNewGroupChatWithUser(metisUser2);
         expect(newConversationWithUser.course).toBe(metisCourse);
         expect(newConversationWithUser.conversationParticipants!.first()?.user).toBe(metisUser2);
     }));

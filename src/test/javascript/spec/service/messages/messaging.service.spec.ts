@@ -21,7 +21,7 @@ import {
     metisCourse,
 } from '../../helpers/sample/metis-sample-data';
 import { MessagingService } from 'app/shared/metis/messaging.service';
-import { ConversationService } from 'app/shared/metis/conversation.service';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MockConversationService } from '../../helpers/mocks/service/mock-conversation.service';
 import { MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
 import { last, of } from 'rxjs';

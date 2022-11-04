@@ -1,9 +1,9 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
-import { ConversationService } from 'app/shared/metis/conversation.service';
-import { ConversationType } from 'app/shared/metis/metis.util';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { getAsChannel } from 'app/entities/metis/conversation/channel.model';
 
 export enum ConversationDetailTabs {
     MEMBERS = 'members',
@@ -22,10 +22,11 @@ export class ConversationDetailDialogComponent implements OnInit {
     @Input()
     selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
+    getAsChannel = getAsChannel;
+
     changesWerePerformed = false;
 
     Tabs = ConversationDetailTabs;
-    CHANNEL = ConversationType.CHANNEL;
     constructor(public conversationService: ConversationService, private activeModal: NgbActiveModal) {}
 
     ngOnInit(): void {}

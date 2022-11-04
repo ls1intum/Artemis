@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ConversationService } from 'app/shared/metis/conversation.service';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';

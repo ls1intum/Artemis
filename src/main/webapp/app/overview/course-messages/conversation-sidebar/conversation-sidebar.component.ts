@@ -10,10 +10,11 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
-import { ConversationType } from 'app/shared/metis/metis.util';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-messages/channels/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-messages/channels/channels-create-dialog/channels-create-dialog.component';
+import { Channel, isChannel } from 'app/entities/metis/conversation/channel.model';
+import { GroupChat, isGroupChat } from 'app/entities/metis/conversation/groupChat.model';
 
 @Component({
     selector: 'jhi-conversation-sidebar',
@@ -36,8 +37,11 @@ export class ConversationSidebarComponent implements AfterViewInit {
     @Input()
     set conversations(conversations: Conversation[]) {
         this.allConversations = conversations ?? [];
-        this.channelConversations = this.allConversations.filter((conversation) => conversation.type === ConversationType.CHANNEL).sort((a, b) => a.name!.localeCompare(b.name!));
-        this.directConversations = this.allConversations.filter((conversation) => conversation.type === ConversationType.DIRECT);
+        this.channelConversations = this.allConversations
+            .filter((conversation) => isChannel(conversation))
+            .map((channel) => channel as Channel)
+            .sort((a, b) => a.name!.localeCompare(b.name!));
+        this.directConversations = this.allConversations.filter((conversation) => isGroupChat(conversation)).map((groupChat) => groupChat as GroupChat);
     }
 
     @Input()
@@ -45,8 +49,8 @@ export class ConversationSidebarComponent implements AfterViewInit {
 
     allConversations: Conversation[] = [];
     starredConversations: Conversation[] = [];
-    channelConversations: Conversation[] = [];
-    directConversations: Conversation[] = [];
+    channelConversations: Channel[] = [];
+    directConversations: GroupChat[] = [];
 
     collapsed: boolean;
     isLoading = false;
@@ -133,7 +137,7 @@ export class ConversationSidebarComponent implements AfterViewInit {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
 
-        from(modalRef.result).subscribe((channel: Conversation) => {
+        from(modalRef.result).subscribe((channel: Channel) => {
             if (channel) {
                 this.createConversation(channel);
             }
@@ -157,10 +161,10 @@ export class ConversationSidebarComponent implements AfterViewInit {
      */
     onAutocompleteSelect = (user: User): void => {
         // ToDo: here müssen wir die find logik ändern wenn es gruppengespräche mit mehr nutzern gibt. Vielleiht id aus allen mitgliedern oder so?
-        const foundConversation = this.findConversationWithUser(user);
+        const foundConversation = this.findGroupChatWithUser(user);
         // if a conversation does not already exist with selected user
         if (foundConversation === undefined) {
-            const newConversation = this.createNewConversationWithUser(user);
+            const newConversation = this.createNewGroupChatWithUser(user);
             this.createConversation(newConversation);
         } else {
             // conversation with the found user already exists, so we select it
@@ -184,17 +188,16 @@ export class ConversationSidebarComponent implements AfterViewInit {
         return '';
     };
 
-    findConversationWithUser(user: User) {
+    findGroupChatWithUser(user: User) {
         return this.directConversations.find((conversation) => conversation.conversationParticipants!.some((participant) => participant.user.id === user.id));
     }
 
-    createNewConversationWithUser(user: User) {
-        const conversation = new Conversation();
-        conversation.type = ConversationType.DIRECT;
-        conversation.course = this.course!;
-        conversation.conversationParticipants = [this.createNewConversationParticipant(user)];
+    createNewGroupChatWithUser(user: User) {
+        const groupChat = new GroupChat();
+        groupChat.course = this.course!;
+        groupChat.conversationParticipants = [this.createNewConversationParticipant(user)];
 
-        return conversation;
+        return groupChat;
     }
 
     createNewConversationParticipant(user: User) {

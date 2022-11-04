@@ -1,4 +1,6 @@
-package de.tum.in.www1.artemis.service.metis.errors;
+package de.tum.in.www1.artemis.service.metis.conversation.errors;
+
+import static de.tum.in.www1.artemis.service.metis.conversation.ChannelService.CHANNEL_ENTITY_NAME;
 
 import java.io.Serial;
 import java.util.HashMap;
@@ -15,7 +17,7 @@ public class ChannelNameDuplicateException extends BadRequestAlertException {
     private static final String ERROR_KEY = "channelNameDuplicate";
 
     public ChannelNameDuplicateException(String channelName) {
-        super(ErrorConstants.CHANNEL_NAME_DUPLICATE, "Channel name already exists", "channel", ERROR_KEY, getParameters(channelName));
+        super(ErrorConstants.CHANNEL_NAME_DUPLICATE, "Channel name already exists", CHANNEL_ENTITY_NAME, ERROR_KEY, getParameters(channelName));
     }
 
     private static Map<String, Object> getParameters(String channelName) {

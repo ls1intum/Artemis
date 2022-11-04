@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.websocket.dto.metis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.metis.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 
 /**
  * DTO that is included as payload for conversation related websocket messages

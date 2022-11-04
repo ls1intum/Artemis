@@ -2,7 +2,8 @@ import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } fro
 import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { MessagingService } from 'app/shared/metis/messaging.service';
-import { ConversationService } from 'app/shared/metis/conversation.service';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { getAsChannel } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-sidebar-section',
@@ -28,6 +29,8 @@ export class SidebarSectionComponent {
 
     @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
 
+    getAsChannel = getAsChannel;
+
     // icon imports
     faChevronRight = faChevronRight;
     faMessage = faMessage;
@@ -37,15 +40,17 @@ export class SidebarSectionComponent {
     conversationsTrackByFn = (index: number, conversation: Conversation): number => conversation.id!;
 
     isConversationUnread(conversation: Conversation): boolean {
-        const conversationParticipant = conversation.conversationParticipants!.find(
-            (conversationParticipants) => conversationParticipants.user.id === this.courseMessagesService.userId,
-        )!;
-
-        if (this.activeConversation && conversation.id !== this.activeConversation.id && !!conversation.lastMessageDate && !!conversationParticipant.lastRead) {
-            if (conversationParticipant.lastRead.isBefore(conversation.lastMessageDate.subtract(1, 'second'), 'second')) {
-                return true;
-            }
-        }
+        // ToDo: Refactor as we do not have participants for course-wide conversations (dto or transient property)
+        //
+        // const conversationParticipant = conversation.conversationParticipants!.find(
+        //     (conversationParticipants) => conversationParticipants.user.id === this.courseMessagesService.userId,
+        // )!;
+        //
+        // if (this.activeConversation && conversation.id !== this.activeConversation.id && !!conversation.lastMessageDate && !!conversationParticipant.lastRead) {
+        //     if (conversationParticipant.lastRead.isBefore(conversation.lastMessageDate.subtract(1, 'second'), 'second')) {
+        //         return true;
+        //     }
+        // }
         return false;
     }
 }

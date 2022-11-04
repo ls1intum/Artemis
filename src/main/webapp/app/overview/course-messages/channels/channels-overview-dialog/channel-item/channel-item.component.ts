@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ChannelOverviewDTO } from 'app/shared/metis/channel.service';
+import { ChannelOverviewDTO } from 'app/shared/metis/conversations/channel.service';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view';
 export type ChannelAction = {

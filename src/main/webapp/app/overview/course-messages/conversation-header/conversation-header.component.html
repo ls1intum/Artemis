@@ -1,7 +1,9 @@
 <div *ngIf="activeConversation && course" class="conversation-header d-flex justify-content-between">
     <div>
         <h3 class="conversation-name d-inline-block rounded p-2">
-            <jhi-channel-icon *ngIf="activeConversation.type === CHANNEL" [isPublic]="activeConversation.isPublic!"></jhi-channel-icon>
+            <ng-container *ngIf="getAsChannel(activeConversation) as channel">
+                <jhi-channel-icon [isPublic]="channel.isPublic!"></jhi-channel-icon>
+            </ng-container>
             {{ conversationService.getNameOfConversation(activeConversation) }}
             <fa-icon [icon]="faChevronDown" size="xs"></fa-icon>
         </h3>
@@ -10,7 +12,7 @@
         <div class="btn-toolbar p-2" role="toolbar" aria-label="Toolbar with button groups">
             <div class="btn-group me-2" role="group" aria-label="First group">
                 <button type="button" class="btn btn-outline-secondary" (click)="openConversationDetailDialog($event)">
-                    <fa-icon [icon]="faUserGroup"></fa-icon> {{ activeConversation.conversationParticipants?.length || 0 }}
+                    <fa-icon [icon]="faUserGroup"></fa-icon> {{ activeConversation.numberOfMembers || 0 }}
                 </button>
                 <button type="button" class="btn btn-outline-secondary" (click)="openAddUsersDialog($event)">
                     <fa-icon [icon]="faUserPlus"></fa-icon>

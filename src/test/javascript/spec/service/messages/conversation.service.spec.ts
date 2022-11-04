@@ -2,7 +2,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 
-import { ConversationService } from 'app/shared/metis/conversation.service';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 import { conversationToCreateUser1, metisConversationsOfUser1, metisCourse } from '../../helpers/sample/metis-sample-data';

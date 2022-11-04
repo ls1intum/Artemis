@@ -2,7 +2,7 @@
     <div class="modal-header">
         <h4 class="modal-title">
             <span>
-                <jhi-channel-icon *ngIf="conversation.type === CHANNEL" [isPublic]="conversation.isPublic!"></jhi-channel-icon>
+                <jhi-channel-icon *ngIf="getAsChannel(conversation) as channel" [isPublic]="channel.isPublic!"></jhi-channel-icon>
                 {{ conversationService.getNameOfConversation(conversation) }}
             </span>
         </h4>

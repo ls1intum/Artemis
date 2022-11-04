@@ -13,14 +13,17 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.metis.Conversation;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.MessageRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
+import de.tum.in.www1.artemis.service.metis.conversation.GroupChatService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -31,14 +34,17 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 @Service
 public class MessageService extends PostingService {
 
+    private final GroupChatService groupChatService;
+
     private final ConversationService conversationService;
 
     private final MessageRepository messageRepository;
 
     protected MessageService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, MessageRepository messageRepository,
-            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
+            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository, GroupChatService groupChatService,
             ConversationService conversationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
+        this.groupChatService = groupChatService;
         this.conversationService = conversationService;
         this.messageRepository = messageRepository;
     }
@@ -69,9 +75,9 @@ public class MessageService extends PostingService {
             // set default value display priority -> NONE
             messagePost.setDisplayPriority(DisplayPriority.NONE);
 
-            if (messagePost.getConversation().getId() == null) {
+            if (messagePost.getConversation().getId() == null && messagePost.getConversation() instanceof GroupChat) {
                 // persist conversation for post if it is new
-                messagePost.setConversation(conversationService.createDirectConversation(courseId, messagePost.getConversation()));
+                messagePost.setConversation(groupChatService.createNewGroupChat(course, (GroupChat) messagePost.getConversation()));
             }
             conversation = conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), user);
             conversation.setLastMessageDate(conversationService.auditConversationReadTimeOfUser(conversation, user));

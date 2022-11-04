@@ -1,6 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { ConversationType, CourseWideContext, DisplayPriority, MetisPostAction, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { CourseWideContext, DisplayPriority, MetisPostAction, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -9,8 +9,9 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
 import { Attachment } from 'app/entities/attachment.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation-dto.model';
+import { GroupChat } from 'app/entities/metis/conversation/groupChat.model';
 
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/Metis-Attachment.pdf' } as Attachment;
 
@@ -256,7 +257,6 @@ const conversationParticipantTutor = { id: 3, user: metisTutor } as Conversation
 
 export const conversationBetweenUser1User2 = {
     id: 1,
-    type: ConversationType.DIRECT,
     conversationParticipants: [conversationParticipantUser1, conversationParticipantUser2],
     creationDate: undefined,
     lastMessageDate: undefined,
@@ -264,7 +264,6 @@ export const conversationBetweenUser1User2 = {
 
 export const conversationBetweenUser1Tutor = {
     id: 4,
-    type: ConversationType.DIRECT,
     conversationParticipants: [conversationParticipantUser1, conversationParticipantTutor],
     creationDate: undefined,
     lastMessageDate: undefined,
@@ -272,7 +271,6 @@ export const conversationBetweenUser1Tutor = {
 
 export const conversationBetweenUser2AndTutor = {
     id: 2,
-    type: ConversationType.DIRECT,
     conversationParticipants: [conversationParticipantUser2, conversationParticipantTutor],
     creationDate: undefined,
     lastMessageDate: undefined,
@@ -280,7 +278,6 @@ export const conversationBetweenUser2AndTutor = {
 
 export const directMessageUser1 = {
     id: 9,
-    type: ConversationType.DIRECT,
     author: metisUser1,
     content: 'user1directMessageToUser2',
     creationDate: undefined,
@@ -289,7 +286,6 @@ export const directMessageUser1 = {
 
 export const directMessageUser2 = {
     id: 10,
-    type: ConversationType.DIRECT,
     author: metisUser1,
     content: 'user2directMessageToUser1',
     creationDate: undefined,
@@ -310,16 +306,16 @@ export const conversationParticipantToCreateUser2 = {
 
 export const conversationToCreateUser1 = {
     course: metisCourse,
-    type: ConversationType.DIRECT,
+    type: ConversationType.GROUP_CHAT,
     conversationParticipants: [conversationParticipantToCreateUser2],
     creationDate: undefined,
     lastMessageDate: undefined,
-} as Conversation;
+} as GroupChat;
 
 export const conversationUser1 = {
     ...conversationToCreateUser1,
     id: 3,
-} as Conversation;
+} as GroupChat;
 
 export const conversationCreatedDTO = {
     conversation: conversationBetweenUser1Tutor,

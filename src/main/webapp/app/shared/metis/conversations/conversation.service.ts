@@ -7,10 +7,10 @@ import { Conversation } from 'app/entities/metis/conversation/conversation.model
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
-import { ConversationType } from 'app/shared/metis/metis.util';
 import { User } from 'app/core/user/user.model';
+import { isChannel } from 'app/entities/metis/conversation/channel.model';
+import { isGroupChat } from 'app/entities/metis/conversation/groupChat.model';
 
-type EntityResponseType = HttpResponse<Conversation>;
 type EntityArrayResponseType = HttpResponse<Conversation[]>;
 
 export type UserSortDirection = 'asc' | 'desc';
@@ -34,9 +34,9 @@ export class ConversationService {
             return participant.user.lastName ? `${participant.user.firstName} ${participant.user.lastName}` : participant.user.firstName!;
         };
 
-        if (conversation.type === ConversationType.CHANNEL) {
+        if (isChannel(conversation)) {
             return conversation.name ?? '';
-        } else if (conversation.type === ConversationType.DIRECT) {
+        } else if (isGroupChat(conversation)) {
             const userId = this.accountService.userIdentity?.id || 0;
             const participants = conversation.conversationParticipants?.filter((participant) => participant.user?.id !== userId);
             if (!participants || participants.length === 0) {
@@ -56,17 +56,6 @@ export class ConversationService {
         }
     }
 
-    /**
-     * creates a conversation
-     * @param {number} courseId                 ID of course the conversation will belong to
-     * @param {Conversation} conversation       conversation to create
-     * @return {Observable<EntityResponseType>} the created conversation
-     */
-    create(courseId: number, conversation: Conversation): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(conversation);
-        return this.http.post<Conversation>(`${this.resourceUrl}${courseId}/conversations`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
-    }
-
     searchMembersOfConversation(courseId: number, conversationId: number, loginOrName: string, page: number, size: number): Observable<HttpResponse<User[]>> {
         const sortingParameters: UserSortingParameter[] = [
             { sortProperty: 'firstName', sortDirection: 'asc' },
@@ -79,11 +68,6 @@ export class ConversationService {
         });
     }
 
-    /**
-     * gets all conversations for user within course by courseId
-     * @param {number} courseId                      ID of course the conversations belong to
-     * @return {Observable<EntityArrayResponseType>} conversations of user
-     */
     getConversationsOfUser(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Conversation[]>(`${this.resourceUrl}${courseId}/conversations`, {
@@ -92,25 +76,7 @@ export class ConversationService {
             .pipe(map(this.convertDateArrayFromServer));
     }
 
-    deregisterUsers(courseId: number, conversationId: number, logins?: string[]): Observable<HttpResponse<void>> {
-        // if no explicit login is give we assume self deregistration
-        const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
-
-        return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/deregister`, userLogins, { observe: 'response' });
-    }
-
-    registerUsers(courseId: number, conversationId: number, logins?: string[]): Observable<HttpResponse<void>> {
-        // if no explicit login is give we assume self registration
-        const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
-        return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/register`, userLogins, { observe: 'response' });
-    }
-
-    /**
-     * takes a conversation and converts the date from the client
-     * @param   {Conversation} conversation
-     * @return  {Conversation}
-     */
-    private convertDateFromClient(conversation: Conversation) {
+    public convertDateFromClient(conversation: Conversation) {
         return {
             ...conversation,
             creationDate: conversation.creationDate && dayjs(conversation.creationDate).isValid() ? dayjs(conversation.creationDate).toJSON() : undefined,
@@ -118,12 +84,7 @@ export class ConversationService {
         };
     }
 
-    /**
-     * takes a conversation and converts the date from the server
-     * @param   {HttpResponse<Conversation>} res
-     * @return  {HttpResponse<Conversation>}
-     */
-    private convertDateFromServer(res: HttpResponse<Conversation>): HttpResponse<Conversation> {
+    public convertDateFromServer(res: HttpResponse<Conversation>): HttpResponse<Conversation> {
         if (res.body) {
             res.body.creationDate = res.body.creationDate ? dayjs(res.body.creationDate) : undefined;
             res.body.lastMessageDate = res.body.lastMessageDate ? dayjs(res.body.lastMessageDate) : undefined;
@@ -134,12 +95,7 @@ export class ConversationService {
         return res;
     }
 
-    /**
-     * takes an array of conversations and converts the date from the server
-     * @param   {HttpResponse<Conversation[]>} res
-     * @return  {HttpResponse<Conversation[]>}
-     */
-    protected convertDateArrayFromServer(res: HttpResponse<Conversation[]>): HttpResponse<Conversation[]> {
+    public convertDateArrayFromServer(res: HttpResponse<Conversation[]>): HttpResponse<Conversation[]> {
         if (res.body) {
             res.body.forEach((conversation) => {
                 conversation.creationDate = conversation.creationDate ? dayjs(conversation.creationDate) : undefined;
