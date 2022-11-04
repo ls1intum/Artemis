@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ConversationReposito
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 
 @Service
 public class ConversationService {
@@ -142,20 +142,20 @@ public class ConversationService {
     /**
      * Broadcasts a conversation event in a course under a specific topic via websockets
      *
-     * @param conversationDTO object including the affected conversation as well as the action
-     * @param user            if not null, the user the message is specifically targeted to
+     * @param conversationWebsocketDTO object including the affected conversation as well as the action
+     * @param user                     if not null, the user the message is specifically targeted to
      */
-    public void broadcastForConversation(ConversationDTO conversationDTO, User user) {
-        String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + conversationDTO.getConversation().getCourse().getId();
+    public void broadcastForConversation(ConversationWebsocketDTO conversationWebsocketDTO, User user) {
+        String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + conversationWebsocketDTO.getConversation().getCourse().getId();
         String conversationParticipantTopicName = courseTopicName + "/conversations/user/";
 
         if (user == null) {
-            conversationDTO.getConversation().getConversationParticipants()
+            conversationWebsocketDTO.getConversation().getConversationParticipants()
                     .forEach(conversationParticipant -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
-                            conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationDTO));
+                            conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationWebsocketDTO));
         }
         else {
-            messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), conversationDTO);
+            messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), conversationWebsocketDTO);
         }
     }
 

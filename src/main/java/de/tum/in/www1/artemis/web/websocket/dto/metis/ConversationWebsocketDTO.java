@@ -8,13 +8,13 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
  * DTO that is included as payload for conversation related websocket messages
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ConversationDTO {
+public class ConversationWebsocketDTO {
 
     private Conversation conversation;
 
     private MetisCrudAction metisCrudAction;
 
-    public ConversationDTO(Conversation conversation, MetisCrudAction metisCrudAction) {
+    public ConversationWebsocketDTO(Conversation conversation, MetisCrudAction metisCrudAction) {
         this.conversation = conversation;
         this.metisCrudAction = metisCrudAction;
     }

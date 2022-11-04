@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 
 class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -68,7 +68,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(conversationRepository.findById(createdConversation.getId())).isNotEmpty();
 
         // members of the created conversation are only notified in case the first message within the conversation is created
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationDTO.class));
+        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationWebsocketDTO.class));
     }
 
     @Test
@@ -125,7 +125,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(createdConversation).isNull();
 
         // checks if members of the created conversation were not notified via broadcast
-        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationDTO.class));
+        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationWebsocketDTO.class));
     }
 
     static Conversation directConversationToCreate(Course course, User conversatingUser) {

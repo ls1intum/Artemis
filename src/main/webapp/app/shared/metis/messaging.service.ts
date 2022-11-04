@@ -5,7 +5,7 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation-dto.model';
+import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
 import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import dayjs from 'dayjs/esm';
@@ -18,6 +18,7 @@ import { isGroupChat } from 'app/entities/metis/conversation/groupChat.model';
 
 @Injectable()
 export class MessagingService implements OnDestroy {
+    // das alles auf DTO umändern
     private conversationsOfUser: Conversation[];
     private conversations$: ReplaySubject<Conversation[]> = new ReplaySubject<Conversation[]>(1);
     private conversation$ = new ReplaySubject<Conversation>(1);
@@ -93,7 +94,7 @@ export class MessagingService implements OnDestroy {
         this.subscribedChannel = channel;
         this.jhiWebsocketService.subscribe(channel);
 
-        this.jhiWebsocketService.receive(channel).subscribe((conversationDTO: ConversationDTO) => {
+        this.jhiWebsocketService.receive(channel).subscribe((conversationDTO: ConversationWebsocketDTO) => {
             conversationDTO.conversation.creationDate = conversationDTO.conversation.creationDate ? dayjs(conversationDTO.conversation.creationDate) : undefined;
             conversationDTO.conversation.lastMessageDate = conversationDTO.conversation.lastMessageDate ? dayjs(conversationDTO.conversation.lastMessageDate) : undefined;
             conversationDTO.conversation.conversationParticipants?.forEach((conversationParticipant) => {

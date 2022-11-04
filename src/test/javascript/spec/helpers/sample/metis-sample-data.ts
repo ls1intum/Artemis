@@ -10,7 +10,7 @@ import dayjs from 'dayjs/esm';
 import { Attachment } from 'app/entities/attachment.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation-dto.model';
+import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
 import { GroupChat } from 'app/entities/metis/conversation/groupChat.model';
 
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/Metis-Attachment.pdf' } as Attachment;
@@ -320,11 +320,11 @@ export const conversationUser1 = {
 export const conversationCreatedDTO = {
     conversation: conversationBetweenUser1Tutor,
     crudAction: MetisPostAction.CREATE,
-} as ConversationDTO;
+} as ConversationWebsocketDTO;
 
 export const conversationReadDTO = {
     conversation: conversationBetweenUser1Tutor,
     crudAction: MetisPostAction.READ_CONVERSATION,
-} as ConversationDTO;
+} as ConversationWebsocketDTO;
 
 export const metisConversationsOfUser1 = [conversationToCreateUser1];

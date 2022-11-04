@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.GroupChatService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
@@ -88,7 +88,7 @@ public class MessageService extends PostingService {
             conversationService.updateConversation(conversation);
 
             broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
-            conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.UPDATE), null);
+            conversationService.broadcastForConversation(new ConversationWebsocketDTO(conversation, MetisCrudAction.UPDATE), null);
 
             return savedMessage;
         }
@@ -120,7 +120,7 @@ public class MessageService extends PostingService {
             setAuthorRoleOfPostings(conversationPosts.getContent());
 
             conversationService.auditConversationReadTimeOfUser(conversation, user);
-            conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION), user);
+            conversationService.broadcastForConversation(new ConversationWebsocketDTO(conversation, MetisCrudAction.READ_CONVERSATION), user);
         }
         else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
