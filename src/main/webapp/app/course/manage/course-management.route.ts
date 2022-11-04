@@ -94,6 +94,7 @@ export const courseManagementState: Routes = [
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.lti.home.title',
         },
+        canActivate: [UserRouteAccessService],
     },
     {
         // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered
