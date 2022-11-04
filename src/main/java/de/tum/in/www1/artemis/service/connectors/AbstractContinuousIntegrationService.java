@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 public abstract class AbstractContinuousIntegrationService implements ContinuousIntegrationService {
@@ -77,33 +78,49 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
     private void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
         final var jobs = buildResult.getBuildJobs();
         final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
+
+        // 1) add feedback for failed and passed test cases
+        addTestCaseFeedbacksToResult(result, jobs, programmingExercise);
+
+        // 2) process static code analysis feedback
+        addStaticCodeAnalysisFeedbackToResult(result, buildResult, programmingExercise);
+
+        // 3) process testwise coverage analysis report
+        addTestwiseCoverageReportToResult(result, buildResult, programmingExercise);
+
+        // Relevant feedback is negative
+        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive()));
+    }
+
+    private void addTestCaseFeedbacksToResult(Result result, List<BuildJobDTOInterface> jobs, ProgrammingExercise programmingExercise) {
         final var programmingLanguage = programmingExercise.getProgrammingLanguage();
         final var projectType = programmingExercise.getProjectType();
 
         for (final var job : jobs) {
-            // 1) add feedback for failed test cases
             for (final var failedTest : job.getFailedTests()) {
                 result.addFeedback(feedbackRepository.createFeedbackFromTestCase(failedTest.getName(), failedTest.getMessage(), false, programmingLanguage, projectType));
             }
             result.setTestCaseCount(result.getTestCaseCount() + job.getFailedTests().size());
 
-            // 2) add feedback for passed test cases
             for (final var successfulTest : job.getSuccessfulTests()) {
                 result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getMessage(), true, programmingLanguage, projectType));
             }
+
             result.setTestCaseCount(result.getTestCaseCount() + job.getSuccessfulTests().size());
             result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.getSuccessfulTests().size());
         }
+    }
 
-        // 3) process static code analysis feedback
+    private void addStaticCodeAnalysisFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
         final var staticCodeAnalysisReports = buildResult.getStaticCodeAnalysisReports();
         if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
             var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
             result.addFeedbacks(scaFeedbackList);
             result.setCodeIssueCount(scaFeedbackList.size());
         }
+    }
 
-        // 4) process testwise coverage analysis report
+    private void addTestwiseCoverageReportToResult(Result result, AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise programmingExercise) {
         if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled())) {
             var report = buildResult.getTestwiseCoverageReports();
             if (report != null) {
@@ -112,9 +129,6 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
                 result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
             }
         }
-
-        // Relevant feedback is negative
-        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive()));
     }
 
     /**
