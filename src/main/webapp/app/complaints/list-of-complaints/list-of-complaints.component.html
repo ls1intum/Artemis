@@ -9,7 +9,7 @@
     </div>
 </div>
 <div class="col-12 mt-4">
-    <div class="alert alert-info" [hidden]="hasStudentInformation">
+    <div class="alert alert-info" [hidden]="course.isAtLeastInstructor">
         <span *ngIf="!allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT">{{
             'artemisApp.complaint.listOfComplaints.loadAllComplaintsExplanation' | artemisTranslate
         }}</span>
@@ -71,15 +71,15 @@
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorName' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="student.login" *ngIf="hasStudentInformation && isAtLeastInstructor">
+                    <th jhiSortBy="student.login" *ngIf="course?.isAtLeastInstructor">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="student.name" *ngIf="hasStudentInformation && isAtLeastInstructor">
+                    <th jhiSortBy="student.name" *ngIf="course?.isAtLeastInstructor">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.complaintResponse.reviewer.name" *ngIf="isAtLeastInstructor">
+                    <th jhiSortBy="result.complaintResponse.reviewer.name" *ngIf="course?.isAtLeastInstructor">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
@@ -121,15 +121,15 @@
                         <span>{{ complaint.result?.assessor?.name }}</span>
                     </td>
 
-                    <td *ngIf="hasStudentInformation && isAtLeastInstructor">
+                    <td *ngIf="course?.isAtLeastInstructor">
                         <span>{{ complaint.student?.login }}</span>
                     </td>
 
-                    <td *ngIf="hasStudentInformation && isAtLeastInstructor">
+                    <td *ngIf="course?.isAtLeastInstructor">
                         <span>{{ complaint.student?.name }}</span>
                     </td>
 
-                    <td *ngIf="isAtLeastInstructor">
+                    <td *ngIf="course?.isAtLeastInstructor">
                         <span>{{ complaint.complaintResponse?.reviewer?.name }}</span>
                     </td>
 

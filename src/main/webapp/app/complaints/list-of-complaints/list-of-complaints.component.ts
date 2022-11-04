@@ -5,6 +5,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Course } from 'app/entities/course.model';
 import { Observable } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -24,13 +25,13 @@ export class ListOfComplaintsComponent implements OnInit {
     readonly ComplaintType = ComplaintType;
 
     public complaints: Complaint[] = [];
-    public hasStudentInformation = false;
     public complaintType: ComplaintType;
 
     private courseId: number;
     private exerciseId: number;
     private tutorId: number;
     private examId?: number;
+    course?: Course;
     correctionRound?: number;
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
@@ -40,7 +41,6 @@ export class ListOfComplaintsComponent implements OnInit {
     isLoadingAllComplaints = false;
     filterOption?: number;
 
-    isAtLeastInstructor = false;
     loading = true;
     // Icons
     faSort = faSort;
@@ -103,7 +103,7 @@ export class ListOfComplaintsComponent implements OnInit {
         }
         this.subscribeToComplaintResponse(complaintResponse);
         this.courseManagementService.find(this.courseId).subscribe((response) => {
-            this.isAtLeastInstructor = response?.body?.isAtLeastInstructor ?? false;
+            this.course = response?.body!;
         });
     }
 
@@ -121,10 +121,6 @@ export class ListOfComplaintsComponent implements OnInit {
                     this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted !== undefined);
                 } else {
                     this.complaintsToShow = this.complaints;
-                }
-
-                if (this.complaints.some((complaint) => complaint.student)) {
-                    this.hasStudentInformation = true;
                 }
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
