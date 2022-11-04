@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.util.UUID;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,17 +68,8 @@ public class LtiDynamicRegistrationService {
         Lti13ClientRegistration clientRegistrationResponse = postClientRegistrationToPlatform(platformConfiguration.getRegistrationEndpoint(), course, clientRegistrationId,
                 registrationToken);
 
-        OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
-        if (onlineCourseConfiguration == null) {
-            onlineCourseConfiguration = new OnlineCourseConfiguration();
-            onlineCourseConfiguration.setCourse(course);
-        }
-
-        onlineCourseConfiguration.setRegistrationId(clientRegistrationId);
-        onlineCourseConfiguration.setClientId(clientRegistrationResponse.getClientId());
-        onlineCourseConfiguration.setAuthorizationUri(platformConfiguration.getAuthorizationEndpoint());
-        onlineCourseConfiguration.setJwkSetUri(platformConfiguration.getJwksUri());
-        onlineCourseConfiguration.setTokenUri(platformConfiguration.getTokenEndpoint());
+        OnlineCourseConfiguration onlineCourseConfiguration = createOrUpdateOnlineCourseConfiguration(course, clientRegistrationId, platformConfiguration,
+                clientRegistrationResponse);
         onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
 
         oAuth2JWKSService.updateKey(clientRegistrationId);
@@ -124,5 +116,24 @@ public class LtiDynamicRegistrationService {
             throw new BadRequestAlertException("Could not register configuration in external LMS", "LTI", "postConfigurationFailed");
         }
         return registrationResponse;
+    }
+
+    private OnlineCourseConfiguration createOrUpdateOnlineCourseConfiguration(Course course, String registrationId, Lti13PlatformConfiguration platformConfiguration,
+            Lti13ClientRegistration clientRegistrationResponse) {
+        OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
+        if (ocConfiguration == null) {
+            ocConfiguration = new OnlineCourseConfiguration();
+            ocConfiguration.setCourse(course);
+            ocConfiguration.setLtiKey(RandomStringUtils.random(12, true, true));
+            ocConfiguration.setLtiSecret(RandomStringUtils.random(12, true, true));
+            ocConfiguration.setUserPrefix(course.getShortName() + "_");
+        }
+
+        ocConfiguration.setRegistrationId(registrationId);
+        ocConfiguration.setClientId(clientRegistrationResponse.getClientId());
+        ocConfiguration.setAuthorizationUri(platformConfiguration.getAuthorizationEndpoint());
+        ocConfiguration.setJwkSetUri(platformConfiguration.getJwksUri());
+        ocConfiguration.setTokenUri(platformConfiguration.getTokenEndpoint());
+        return ocConfiguration;
     }
 }
