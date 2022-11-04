@@ -1,0 +1,69 @@
+GitLab CI and GitLab Setup
+--------------------------
+
+This section describes how to set up a programming exercise environment
+based on GitLab CI and GitLab.
+
+**Prerequisites:**
+
+* `Docker <https://docs.docker.com/install>`__
+* `Docker-Compose <https://docs.docker.com/compose/install/>`__
+
+.. contents:: Content of this section
+    :local:
+    :depth: 1
+
+
+GitLab
+^^^^^^
+
+GitLab
+""""""
+
+1. Configure GitLab
+    .. code:: bash
+
+        cp src/main/docker/env.example.gitlab-gitlabci.txt src/main/docker/.env
+
+    Now edit the file ``src/main/docker/.env``.
+
+2. Start GitLab and the GitLab Runner
+    .. code:: bash
+
+        docker-compose -f src/main/docker/gitlab-gitlabci.yml --env-file src/main/docker/.env up --build -d
+
+3. Get your GitLab root password
+    .. code:: bash
+
+        docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
+
+4. Generate an access token
+    Go to ``http://gitlab/-/profile/personal_access_tokens`` and generate a access token with all scopes
+
+GitLab Runner
+"""""""""""""
+
+1. Register a new runner
+    Login to your GitLab instance and open ``http://gitlab/admin/runners``.
+    Click on ``Register an instance runner`` and copy the registration token.
+
+    Then execute this command with the registration token:
+    .. code:: bash
+
+        docker exec -it gitlab-runner gitlab-runner register \
+        --non-interactive \
+        --executor "docker" \
+        --docker-image alpine:latest \
+        --url http://gitlab:80 \
+        --registration-token "PROJECT_REGISTRATION_TOKEN" \
+        --description "docker-runner" \
+        --maintenance-note "Test Runner" \
+        --tag-list "docker,artemis" \
+        --run-untagged="true" \
+        --locked="false" \
+        --access-level="not_protected"
+
+    **Note:** For local development, you might add ``--clone-url http://gateway.docker.internal:80`` or ``--clone-url http://172.17.0.1:80`` to the command above.
+
+    You should now find the runner in the list of runners (``http://gitlab/admin/runners``)
+
