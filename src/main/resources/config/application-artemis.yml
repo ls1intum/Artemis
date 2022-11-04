@@ -84,6 +84,7 @@ artemis:
         # Jenkins: The token value you use for the Server Notification Plugin and is stored under the notification-token credential above
         artemis-authentication-token-value: <token>
         build-timeout: 30 # Does cancel jenkins builds after 30 minutes to remove build that get stuck
+        notification-plugin: "ls1tum/artemis-notification-plugin:pr-1"
     git:
         name: Artemis
         email: artemis.in@tum.de
