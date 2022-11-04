@@ -6,7 +6,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { Observable } from 'rxjs';
+import { Observable, combineLatestWith } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
@@ -62,22 +62,25 @@ export class ListOfComplaintsComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        this.route.params.pipe(combineLatestWith(this.route.queryParams, this.route.data)).subscribe((result) => {
+            const params = result[0];
+            const queryParams = result[1];
+            const data = result[2];
+
             this.courseId = Number(params['courseId']);
             this.exerciseId = Number(params['exerciseId']);
             this.examId = Number(params['examId']);
-        });
-        this.route.queryParams.subscribe((queryParams) => {
+
             this.tutorId = Number(queryParams['tutorId']);
             this.correctionRound = Number(queryParams['correctionRound']);
-        });
-        this.route.data.subscribe((data) => (this.complaintType = data.complaintType));
-        this.route.queryParams.subscribe((queryParams) => {
             if (queryParams['filterOption']) {
                 this.filterOption = Number(queryParams['filterOption']);
             }
+
+            this.complaintType = data.complaintType;
+
+            this.loadComplaints();
         });
-        this.loadComplaints();
     }
 
     loadComplaints() {
