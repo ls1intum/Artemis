@@ -1,0 +1,245 @@
+<form name="editForm" role="form" novalidate>
+    <div class="modal-header">
+        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course?.title }">
+            LTI Configuration for course {{ course?.title }}
+        </h4>
+    </div>
+
+    <dt>
+        <span>{{ 'artemisApp.lti.dynamicRegistrationUrl' | artemisTranslate }}</span>
+    </dt>
+    <dd>
+        <span>{{ getDynamicRegistrationUrl() }}</span>
+        <jhi-copy-icon-button
+            [copyText]="getDynamicRegistrationUrl()"
+            [wasCopied]="wasCopiedKey == 'dynamicRegistrationUrl'"
+            [onCopyFinished]="onCopyFinished"
+            onCopyFinishedKey="dynamicRegistrationUrl"
+        ></jhi-copy-icon-button>
+    </dd>
+
+    <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs">
+        <ng-container ngbNavItem [ngbNavItem]="1">
+            <a ngbNavLink jhiTranslate="artemisApp.lti.generalConfiguration">General Configuration</a>
+            <ng-template ngbNavContent>
+                <dt>
+                    <span>{{ 'artemisApp.lti.ltiLaunchTarget' | artemisTranslate }}</span>
+                    <jhi-help-icon placement="top" text="artemisApp.lti.launchTargetTooltip"></jhi-help-icon>
+                </dt>
+                <dd>
+                    <span>New Window</span>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.scored' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>True</span>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.requestUsername' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>True</span>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.requestEmail' | artemisTranslate }}</span>
+                    <jhi-help-icon placement="top" text="artemisApp.lti.requestUserEmailTooltip"></jhi-help-icon>
+                </dt>
+                <dd>
+                    <span>True</span>
+                </dd>
+
+                <div class="form-group">
+                    <h4>
+                        {{ 'artemisApp.lti.customParameters' | artemisTranslate }}
+                        <jhi-copy-icon-button
+                            [copyText]="getFormattedCustomParameters()"
+                            [wasCopied]="wasCopiedKey == 'customParameters'"
+                            [onCopyFinished]="onCopyFinished"
+                            onCopyFinishedKey="customParameters"
+                        ></jhi-copy-icon-button>
+                    </h4>
+
+                    <dt>
+                        <span>{{ 'artemisApp.lti.requireExistingUser' | artemisTranslate }}</span>
+                        <jhi-help-icon placement="top" text="artemisApp.lti.requireExistingUserTooltip"></jhi-help-icon>
+                    </dt>
+                    <dd>
+                        <input type="checkbox" class="form-check-input" (change)="requireExistingUser = !requireExistingUser" [checked]="requireExistingUser" />
+                    </dd>
+
+                    <dt>
+                        <span>{{ 'artemisApp.lti.lookupByEmail' | artemisTranslate }}</span>
+                        <jhi-help-icon placement="top" text="artemisApp.lti.lookupUserByEmailTooltip"></jhi-help-icon>
+                    </dt>
+                    <dd>
+                        <input type="checkbox" class="form-check-input" (change)="lookupUserByEmail = !lookupUserByEmail" [checked]="lookupUserByEmail" />
+                    </dd>
+
+                    <textarea class="form-control" rows="3" [value]="getFormattedCustomParameters()" readonly></textarea>
+                </div>
+            </ng-template>
+        </ng-container>
+        <ng-container ngbNavItem [ngbNavItem]="2">
+            <a ngbNavLink jhiTranslate="artemisApp.lti.version10">LTI 1.0</a>
+            <ng-template ngbNavContent>
+                <dt>
+                    <span>{{ 'artemisApp.lti.ltiKey' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.ltiKey }}</span>
+                    <jhi-copy-icon-button
+                        [copyText]="onlineCourseConfiguration?.ltiKey ?? ''"
+                        [wasCopied]="wasCopiedKey == 'ltiKey'"
+                        [onCopyFinished]="onCopyFinished"
+                        onCopyFinishedKey="ltiKey"
+                    ></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.ltiSecret' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.ltiSecret }}</span>
+                    <jhi-copy-icon-button
+                        [copyText]="onlineCourseConfiguration?.ltiSecret ?? ''"
+                        [wasCopied]="wasCopiedKey == 'ltiSecret'"
+                        [onCopyFinished]="onCopyFinished"
+                        onCopyFinishedKey="ltiSecret"
+                    ></jhi-copy-icon-button>
+                </dd>
+            </ng-template>
+        </ng-container>
+        <ng-container ngbNavItem [ngbNavItem]="3">
+            <a ngbNavLink jhiTranslate="artemisApp.lti.version13">LTI 1.3</a>
+            <ng-template ngbNavContent>
+                <dt>
+                    <span>{{ 'artemisApp.lti.registrationId' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.registrationId }}</span>
+                    <jhi-copy-icon-button
+                        [copyText]="onlineCourseConfiguration?.registrationId ?? ''"
+                        [wasCopied]="wasCopiedKey == 'registrationId'"
+                        [onCopyFinished]="onCopyFinished"
+                        onCopyFinishedKey="registrationId"
+                    ></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.clientId' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.clientId }}</span>
+                    <jhi-copy-icon-button
+                        [copyText]="onlineCourseConfiguration?.clientId ?? ''"
+                        [wasCopied]="wasCopiedKey == 'clientId'"
+                        [onCopyFinished]="onCopyFinished"
+                        onCopyFinishedKey="clientId"
+                    ></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.authorizationUri' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.authorizationUri }}</span>
+                    <jhi-copy-icon-button
+                        [copyText]="onlineCourseConfiguration?.authorizationUri ?? ''"
+                        [wasCopied]="wasCopiedKey == 'authorizationUri'"
+                        [onCopyFinished]="onCopyFinished"
+                        onCopyFinishedKey="authorizationUri"
+                    ></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.tokenUri' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.tokenUri }}</span>
+                    <jhi-copy-icon-button
+                        [copyText]="onlineCourseConfiguration?.tokenUri ?? ''"
+                        [wasCopied]="wasCopiedKey == 'tokenUri'"
+                        [onCopyFinished]="onCopyFinished"
+                        onCopyFinishedKey="tokenUri"
+                    ></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.jwkSetUri' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.jwkSetUri }}</span>
+                    <jhi-copy-icon-button
+                        [copyText]="onlineCourseConfiguration?.jwkSetUri ?? ''"
+                        [wasCopied]="wasCopiedKey == 'jwkSetUri'"
+                        [onCopyFinished]="onCopyFinished"
+                        onCopyFinishedKey="jwkSetUri"
+                    ></jhi-copy-icon-button>
+                </dd>
+            </ng-template>
+        </ng-container>
+        <ng-container ngbNavItem [ngbNavItem]="4">
+            <a ngbNavLink jhiTranslate="artemisApp.lti.exercises">Exercises</a>
+            <ng-template ngbNavContent>
+                <div class="row">
+                    <div class="col-12 mx-auto">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="thead-dark">
+                                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                                        <th jhiSortBy="id">
+                                            id
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="type">
+                                            {{ 'artemisApp.exercise.type' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="title">
+                                            {{ 'artemisApp.exercise.title' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="launchUrl">
+                                            {{ 'artemisApp.lti.ltiLaunchUrl' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="releaseDate">
+                                            {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="dueDate">
+                                            {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="assessmentDueDate">
+                                            {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let exercise of exercises" id="exercise-{{ exercise.id }}">
+                                        <td>{{ exercise.id ? exercise.id : '' }}</td>
+                                        <td>{{ exercise.type ? exercise.type : '' }}</td>
+                                        <td>{{ exercise.title ? exercise.title : '' }}</td>
+                                        <td>{{ getExerciseLaunchUrl(exercise) }}</td>
+                                        <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                        <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                        <td>{{ exercise.assessmentDueDate ? exercise.assessmentDueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+        </ng-container>
+    </nav>
+    <div class="modal-body">
+        <div [ngbNavOutlet]="nav" class="mt-2"></div>
+    </div>
+</form>
