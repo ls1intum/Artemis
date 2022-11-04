@@ -1,3 +1,13 @@
+export class SimpleMatch {
+    start: number;
+    length: number;
+
+    constructor(start: number, length: number) {
+        this.start = start;
+        this.length = length;
+    }
+}
+
 /**
  * A `PlagiarismMatch` is a sequence of identical elements of both submissions.
  */

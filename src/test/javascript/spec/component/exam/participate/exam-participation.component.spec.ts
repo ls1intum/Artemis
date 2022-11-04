@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -179,7 +179,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.workingTime = 100;
         const loadTestRunStub = jest.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
         comp.ngOnInit();
-        expect(loadTestRunStub).toHaveBeenCalled();
+        expect(loadTestRunStub).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExam);
         expect(comp.exam).toEqual(studentExam.exam);
     });
@@ -194,7 +194,7 @@ describe('ExamParticipationComponent', () => {
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
         const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
         comp.ngOnInit();
-        expect(loadStudentExamSpy).toHaveBeenCalled();
+        expect(loadStudentExamSpy).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExam);
         expect(comp.exam).toEqual(studentExam.exam);
         expect(loadStudentExamWithExercisesForSummary).not.toHaveBeenCalled();
@@ -202,10 +202,26 @@ describe('ExamParticipationComponent', () => {
         studentExam.ended = true;
         studentExam.submitted = true;
         comp.ngOnInit();
-        expect(loadStudentExamSpy).toHaveBeenCalled();
-        expect(loadStudentExamWithExercisesForSummary).toHaveBeenCalled();
+        expect(loadStudentExamSpy).toHaveBeenCalledTimes(2);
+        expect(loadStudentExamWithExercisesForSummary).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExamWithExercises);
         expect(comp.studentExam).not.toEqual(studentExam);
+    });
+
+    it('should redirect to exam summary after test run is over', () => {
+        const studentExam = new StudentExam();
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', testRunId: '3' });
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        const loadTestRunWithExercisesForConductionSpy = jest.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(of(studentExam));
+        const submitStudentExamSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(studentExam));
+        comp.ngOnInit();
+        expect(loadTestRunWithExercisesForConductionSpy).toHaveBeenCalledOnce();
+        expect(comp.studentExam).toEqual(studentExam);
+        comp.onExamEndConfirmed();
+        expect(submitStudentExamSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'exams', 2, 'test-runs', 3, 'summary']);
     });
 
     it('should load new testExam if studentExam id is new', () => {
@@ -281,9 +297,9 @@ describe('ExamParticipationComponent', () => {
 
         comp.ngOnInit();
 
-        expect(loadStudentExamStub).toHaveBeenCalled();
-        expect(lastSaveFailedStub).toHaveBeenCalled();
-        expect(loadLocalStudentExamStub).toHaveBeenCalled();
+        expect(loadStudentExamStub).toHaveBeenCalledOnce();
+        expect(lastSaveFailedStub).toHaveBeenCalledOnce();
+        expect(loadLocalStudentExamStub).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(localStudentExam);
         expect(comp.studentExam).not.toEqual(studentExam);
         expect(comp.exam).toEqual(studentExam.exam);
@@ -327,7 +343,7 @@ describe('ExamParticipationComponent', () => {
         comp.examStarted(studentExam);
         expect(firstParticipation.submissions).toBeDefined();
         expect(firstParticipation.submissions!.length).toBeGreaterThan(0);
-        expect(latestPendingSubmissionSpy).toHaveBeenCalled();
+        expect(latestPendingSubmissionSpy).toHaveBeenCalledOnce();
         expect(firstExercise.studentParticipations![0].submissions![0].submitted).toBeTrue();
 
         // Sync exercises with submission
@@ -383,7 +399,7 @@ describe('ExamParticipationComponent', () => {
             expect(programmingSubmission.isSynced).toBeTrue();
             expect(participation).toEqual(createdParticipation);
         });
-        expect(courseExerciseServiceStub).toHaveBeenCalled();
+        expect(courseExerciseServiceStub).toHaveBeenCalledOnce();
     });
 
     it('should generate participation state when participation creation fails', () => {
@@ -399,7 +415,7 @@ describe('ExamParticipationComponent', () => {
         });
         const exercise = new ProgrammingExercise(new Course(), undefined);
         comp.createParticipationForExercise(exercise);
-        expect(courseExerciseServiceStub).toHaveBeenCalled();
+        expect(courseExerciseServiceStub).toHaveBeenCalledOnce();
     });
 
     describe('trigger save', () => {
@@ -477,7 +493,7 @@ describe('ExamParticipationComponent', () => {
         const submitSpy = jest.spyOn(examParticipationService, 'submitStudentExam').mockReturnValue(of(studentExam));
         comp.exam = new Exam();
         comp.onExamEndConfirmed();
-        expect(submitSpy).toHaveBeenCalled();
+        expect(submitSpy).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExam);
     });
 
@@ -487,8 +503,8 @@ describe('ExamParticipationComponent', () => {
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         comp.exam = new Exam();
         comp.onExamEndConfirmed();
-        expect(submitSpy).toHaveBeenCalled();
-        expect(alertErrorSpy).toHaveBeenCalled();
+        expect(submitSpy).toHaveBeenCalledOnce();
+        expect(alertErrorSpy).toHaveBeenCalledOnce();
     });
 
     describe('isOver', () => {
@@ -514,7 +530,7 @@ describe('ExamParticipationComponent', () => {
             comp.individualStudentEndDate = endDate;
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isOver()).toBeTrue();
-            expect(serverNowSpy).toHaveBeenCalled();
+            expect(serverNowSpy).toHaveBeenCalledOnce();
         });
         it('should not be over if individual end date is after server date', () => {
             const endDate = dayjs().add(1, 'days');
@@ -522,7 +538,7 @@ describe('ExamParticipationComponent', () => {
             comp.individualStudentEndDate = endDate;
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isOver()).toBeFalse();
-            expect(serverNowSpy).toHaveBeenCalled();
+            expect(serverNowSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -546,7 +562,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam.visibleDate = visibleDate;
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isVisible()).toBeTrue();
-            expect(serverNowSpy).toHaveBeenCalled();
+            expect(serverNowSpy).toHaveBeenCalledOnce();
         });
 
         it('should not be visible if visible date is before server date', () => {
@@ -556,7 +572,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam.visibleDate = visibleDate;
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isVisible()).toBeFalse();
-            expect(serverNowSpy).toHaveBeenCalled();
+            expect(serverNowSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -574,7 +590,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam.startDate = startDate;
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isActive()).toBeTrue();
-            expect(serverNowSpy).toHaveBeenCalled();
+            expect(serverNowSpy).toHaveBeenCalledOnce();
         });
 
         it('should not be active if start date is before server date', () => {
@@ -584,7 +600,7 @@ describe('ExamParticipationComponent', () => {
             comp.exam.startDate = startDate;
             const serverNowSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(date);
             expect(comp.isActive()).toBeFalse();
-            expect(serverNowSpy).toHaveBeenCalled();
+            expect(serverNowSpy).toHaveBeenCalledOnce();
         });
     });
 

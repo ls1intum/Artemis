@@ -17,6 +17,7 @@
                     <input
                         class="short-answer-question-container__input"
                         type="text"
+                        [maxLength]="maxCharacterCount"
                         [disabled]="clickDisabled"
                         value="{{ getSubmittedTextForSpotAsString(element) }}"
                         id="solution-{{ i }}-{{ j }}-{{ shortAnswerQuestion.id }}"
@@ -39,7 +40,9 @@
                 >
                     <input
                         class="short-answer-question-container__input {{ classifyInputField(element) }}"
+                        type="text"
                         disabled
+                        [maxLength]="maxCharacterCount"
                         value="{{ getTextForSpotAsString(element) }}"
                         size="{{ getSizeForSpot(element) }}"
                     />

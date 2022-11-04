@@ -410,6 +410,9 @@ public class RequestUtilService {
         if (responseType == Void.class && contentAsString.isEmpty()) {
             return (T) "";
         }
+        if (res.getResponse().getContentType() == null) {
+            return null;
+        }
         return mapper.readValue(contentAsString, responseType);
     }
 
@@ -472,6 +475,11 @@ public class RequestUtilService {
     public void getWithForwardedUrl(String path, HttpStatus expectedStatus, String expectedRedirectedUrl) throws Exception {
         mvc.perform(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(forwardedUrl(expectedRedirectedUrl)).andReturn();
         restoreSecurityContext();
+    }
+
+    public String getRedirectTarget(String path, HttpStatus expectedStatus) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andReturn();
+        return res.getResponse().getRedirectedUrl();
     }
 
     public void delete(String path, HttpStatus expectedStatus) throws Exception {

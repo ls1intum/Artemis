@@ -550,6 +550,12 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void searchForStudentsInCourse() throws Exception {
+        courseTestService.searchStudentsInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetAllEditorsInCourse() throws Exception {
         courseTestService.testGetAllEditorsInCourse();
     }
@@ -564,6 +570,18 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @WithMockUser(username = "tutor1", roles = "TA")
     void testGetAllStudentsOrTutorsOrInstructorsInCourse_AsTutor_forbidden() throws Exception {
         courseTestService.testGetAllStudentsOrTutorsOrInstructorsInCourse_AsTutor_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
+        courseTestService.testSearchStudentsAndTutorsAndInstructorsInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSearchStudentsAndTutorsAndInstructorsInOtherCourse_forbidden() throws Exception {
+        courseTestService.testSearchStudentsAndTutorsAndInstructorsInOtherCourseForbidden();
     }
 
     @Test
@@ -798,5 +816,41 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
         courseTestService.testCreateCourseWithInvalidStartAndEndDate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateInvalidOnlineCourse() throws Exception {
+        courseTestService.testCreateInvalidOnlineCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateValidOnlineCourse() throws Exception {
+        courseTestService.testCreateValidOnlineCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
+        courseTestService.testOnlineCourseConfigurationIsLazyLoaded();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateOnlineCourseConfiguration() throws Exception {
+        courseTestService.testUpdateOnlineCourseConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateCourseRemoveOnlineCourseConfiguration() throws Exception {
+        courseTestService.testUpdateCourseRemoveOnlineCourseConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
+        courseTestService.testDeleteCourseDeletesOnlineConfiguration();
     }
 }

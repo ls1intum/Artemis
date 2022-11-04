@@ -54,6 +54,7 @@ describe('HeaderExercisePageWithDetails', () => {
 
                 exercise = new ProgrammingExercise(undefined, undefined);
                 exercise.dueDate = undefined;
+                exercise.assessmentType = AssessmentType.AUTOMATIC;
                 component.exercise = exercise;
 
                 exam = new Exam();
@@ -87,6 +88,7 @@ describe('HeaderExercisePageWithDetails', () => {
 
     it('should set the icon according to the exercise due date', () => {
         exercise.dueDate = dayjs().subtract(2, 'days');
+        exercise.assessmentType = AssessmentType.MANUAL;
         const dueDate1 = dayjs().add(1, 'day');
         participation.individualDueDate = dueDate1;
         component.studentParticipation = participation;
@@ -102,7 +104,7 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-success', 'bg-success']);
 
         exercise.assessmentDueDate = dayjs().subtract(1, 'days');
-        exercise.course = { maxComplaintTimeDays: 7 } as Course;
+        component.course = { maxComplaintTimeDays: 7 } as Course;
         participation.results = [{ rated: true, completionDate: dayjs() } as Result];
         component.ngOnInit();
         expect(component.isNextDueDate).toStrictEqual([false, false, true, false]);

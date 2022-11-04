@@ -314,8 +314,8 @@
             </div>
             <div class="row row user-management-border-bottom">
                 <div class="col d-flex flex-row pt-3 pb-1">
-                    <h5 class="my-0">{{ 'userManagement.filter.registrationNumber.title' | artemisTranslate: { num: this.filters.registrationNumberFilter.size } }}</h5>
-                    <jhi-help-icon class="ps-1" placement="top" text="userManagement.filter.registrationNumber.tooltip"></jhi-help-icon>
+                    <h5 class="my-0">{{ 'artemisApp.userManagement.filter.registrationNumber.title' | artemisTranslate: { num: this.filters.registrationNumberFilter.size } }}</h5>
+                    <jhi-help-icon class="ps-1" placement="top" text="artemisApp.userManagement.filter.registrationNumber.tooltip"></jhi-help-icon>
                 </div>
             </div>
             <div class="row user-management-background-accent">
@@ -329,7 +329,9 @@
                                     [checked]="this.filters.registrationNumberFilter.has(registrationNumber)"
                                     type="radio"
                                 />
-                                <span class="ps-1">{{ 'userManagement.filter.registrationNumber.' + registrationNumber.toString().toLowerCase() | artemisTranslate }}</span>
+                                <span class="ps-1">
+                                    {{ 'artemisApp.userManagement.filter.registrationNumber.' + registrationNumber.toString().toLowerCase() | artemisTranslate }}
+                                </span>
                             </label>
                         </li>
                         <li class="col-3">
@@ -340,7 +342,7 @@
                                 [checked]="this.filters.registrationNumberFilter.size === 0"
                             />
                             <label class="form-check-label ps-1">
-                                {{ 'userManagement.filter.none' | artemisTranslate }}
+                                {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
                             </label>
                         </li>
                     </ul>

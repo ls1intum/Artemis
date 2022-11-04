@@ -12,7 +12,24 @@
                     "confirm": "Confirm"
                 }
             },
-            "startExercise": "<strong>Welcome to Artemis!</strong> Click the button <i>Start Exercise</i>!"
+            "startExercise": "<strong>Welcome to Artemis!</strong> Click the button <i>Start Exercise</i>!",
+            "ltiSuccessLoginRequired": "Successfully launched LTI exercise. Please login as user {{user}}.",
+            "lti": "LTI",
+            "configurationForExercise": "LTI configuration for exercise {{ title }}",
+            "ltiKey": "LTI Key",
+            "ltiSecret": "LTI Secret",
+            "ltiLaunchUrl": "LTI Launch URL",
+            "ltiLaunchTarget": "LTI Launch Target",
+            "scored": "Scored",
+            "requestUsername": "Request user's username",
+            "requestEmail": "Request user's email",
+            "customParameters": "Custom Parameters",
+            "requireExistingUser": "Require existing user",
+            "lookupByEmail": "Lookup user by email",
+            "launchTargetTooltip": "The recommended launch target is 'New Window' for the best user experience",
+            "requestUserEmailTooltip": "The user's email must be sent as it is required by Artemis to create or find the user",
+            "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",
+            "lookupUserByEmailTooltip": "If selected, Artemis will try to find an existing user with the provided email"
         }
     }
 }

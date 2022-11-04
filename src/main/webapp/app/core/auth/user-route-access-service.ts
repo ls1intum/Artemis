@@ -7,12 +7,14 @@ import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/
 import { first, switchMap } from 'rxjs/operators';
 import { from, lastValueFrom, of } from 'rxjs';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {
     constructor(
         private router: Router,
         private accountService: AccountService,
+        private alertService: AlertService,
         private stateStorageService: StateStorageService,
         private localStorage: LocalStorageService,
         private orionVersionValidator: OrionVersionValidator,
@@ -26,13 +28,8 @@ export class UserRouteAccessService implements CanActivate {
      * user is logged in, false otherwise.
      */
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
-        // save the jwt token from get parameter for lti launch requests for online course users
-        // Note: The following URL has to match the redirect URL in LtiResource.java in the method launch(...) shortly before the return
-        const regexPattern = new RegExp(/\/courses\/\d+\/exercises\/\d+/g);
-        if (regexPattern.test(state.url) && route.queryParams['jwt']) {
-            const jwt = route.queryParams['jwt'];
-            this.localStorage.store('authenticationToken', jwt);
-        }
+        const ltiRedirectUrl = this.handleLTIRedirect(route, state);
+        const urlToStore = ltiRedirectUrl ?? state.url;
 
         const authorities = route.data['authorities'];
 
@@ -61,13 +58,38 @@ export class UserRouteAccessService implements CanActivate {
                         // 1./2. Case: The Orion version is up-to-date/The connected client is a regular browser
                         if (isValidOrNoIDE) {
                             // Always check whether the user is logged in
-                            return from(this.checkLogin(authorities, state.url));
+                            return from(this.checkLogin(authorities, urlToStore));
                         }
                         // 3. Case: The Orion Version is not up-to-date
                         return of(false);
                     }),
                 ),
         );
+    }
+
+    /**
+     * Deal with the redirect for LTI users: saves the received jwt and displays an alert. Removes the params so this only happens once.
+     * @param route {ActivatedRouteSnapshot} The ActivatedRouteSnapshot of the route to activate.
+     * @param state {RouterStateSnapshot} The current RouterStateSnapshot.
+     */
+    private handleLTIRedirect(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): string {
+        // Note: The following URL has to match the redirect URL in LtiResource.java in the method launch(...) shortly before the return
+        const regexPattern = new RegExp(/\/courses\/\d+\/exercises\/\d+/g);
+        if (regexPattern.test(state.url)) {
+            const hasJwtParam = route.queryParams['jwt'] != undefined;
+            const hasAlertParam = route.queryParams['ltiSuccessLoginRequired'] != undefined;
+            if (hasJwtParam) {
+                const jwt = route.queryParams['jwt'];
+                this.localStorage.store('authenticationToken', jwt);
+            }
+            if (hasAlertParam) {
+                this.alertService.success('artemisApp.lti.ltiSuccessLoginRequired', { user: route.queryParams['ltiSuccessLoginRequired'] });
+            }
+            if (hasJwtParam || hasAlertParam) {
+                return state.url.split('?')[0]; // Removes the query parameters from the url so this is only done once
+            }
+        }
+        return state.url;
     }
 
     /**

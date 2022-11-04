@@ -66,7 +66,7 @@ describe('QuizExercise Statistic Footer Component', () => {
         examQuizExercise = { id: 43, quizStarted: true, course, quizQuestions: [question], exerciseGroup: { id: 11, exam: { id: 10 } } } as QuizExercise;
     });
 
-    it('Should load Quiz on Init', fakeAsync(() => {
+    it('should load Quiz on Init', fakeAsync(() => {
         // setup
         jest.useFakeTimers();
         const loadSpy = jest.spyOn(comp, 'loadQuiz');
@@ -78,7 +78,7 @@ describe('QuizExercise Statistic Footer Component', () => {
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
         // check
-        expect(accountSpy).toHaveBeenCalled();
+        expect(accountSpy).toHaveBeenCalledTimes(2);
         expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
         expect(loadSpy).toHaveBeenCalledWith(quizExercise);
         expect(comp.question).toEqual(question);
@@ -93,7 +93,7 @@ describe('QuizExercise Statistic Footer Component', () => {
         comp.loadQuiz(quizExercise);
 
         // check
-        expect(accountSpy).toHaveBeenCalled();
+        expect(accountSpy).toHaveBeenCalledOnce();
         expect(comp.quizExercise).toEqual(quizExercise);
         expect(comp.question).toEqual(question);
         expect(comp.waitingForQuizStart).toBeFalse();

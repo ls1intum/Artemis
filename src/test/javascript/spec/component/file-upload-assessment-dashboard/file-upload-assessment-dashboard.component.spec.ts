@@ -108,7 +108,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         // setup
         const exerciseServiceFindMock = jest.spyOn(exerciseService, 'find');
         exerciseServiceFindMock.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise1 })));
-        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
         getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
         // test for init values
         expect(component).toBeTruthy();
@@ -130,7 +130,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         // test getSubmissions
         const exerciseServiceFind = jest.spyOn(exerciseService, 'find');
         exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise1 })));
-        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
         getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
         const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
         isAtLeastInstructorInCourseStub.mockReturnValue(true);
@@ -145,7 +145,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
     }));
 
     it('should not get Submissions', () => {
-        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
         getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
         const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
         isAtLeastInstructorInCourseStub.mockReturnValue(true);
@@ -156,7 +156,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         component.ngOnInit();
 
         // check
-        expect(findExerciseStub).toHaveBeenCalled();
+        expect(findExerciseStub).toHaveBeenCalledOnce();
         expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise2.id, { submittedOnly: true });
         expect(component.submissions).toEqual([]);
         expect(component.filteredSubmissions).toEqual([]);
@@ -183,7 +183,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
         // check
         expect(modelAssServiceCancelAssSpy).toHaveBeenCalledWith(fileUploadSubmission2.id);
-        expect(windowSpy).toHaveBeenCalled();
+        expect(windowSpy).toHaveBeenCalledOnce();
     }));
 
     it('should sortRows', () => {

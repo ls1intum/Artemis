@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -40,8 +42,11 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -130,7 +135,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private ExamAccessService examAccessService;
 
     @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private BonusRepository bonusRepository;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
 
     private List<User> users;
 
@@ -1609,14 +1626,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         verify(programmingExerciseScheduleService, times(1)).unlockAllStudentRepositories(programmingExercise2);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "tutor1", roles = "TA")
-    void testGetExamForExamAssessmentDashboard() throws Exception {
+    @ValueSource(ints = { 0, 1, 2 })
+    void testGetExamForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
         User user = userRepo.findOneByLogin("student1").get();
         // we need an exam from the past, otherwise the tutor won't have access
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user, now().minusHours(3), now().minusHours(2), now().minusHours(1));
-        Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + course.getExams().iterator().next().getId() + "/exam-for-assessment-dashboard",
-                HttpStatus.OK, Exam.class);
+        Exam exam = course.getExams().iterator().next();
+
+        // Ensure the API endpoint works for all number of correctionRounds
+        exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRounds);
+        examRepository.save(exam);
+
+        Exam receivedExam = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-for-assessment-dashboard", HttpStatus.OK, Exam.class);
 
         // Test that the received exam has two text exercises
         assertThat(receivedExam.getExerciseGroups().get(0).getExercises()).as("Two exercises are returned").hasSize(2);
@@ -1696,9 +1719,72 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         return count;
     }
 
-    @Test
+    private void configureCourseAsBonusWithIndividualAndTeamResults(Course course, GradingScale bonusToGradingScale) {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        Long individualTextExerciseId = textExercise.getId();
+        database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+
+        Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        User student1 = userRepo.findOneByLogin("student1").get();
+        User tutor1 = userRepo.findOneByLogin("tutor1").get();
+        Long teamTextExerciseId = teamExercise.getId();
+        Long team1Id = database.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();
+        User student2 = userRepo.findOneByLogin("student2").get();
+        User student3 = userRepo.findOneByLogin("student3").get();
+        User tutor2 = userRepo.findOneByLogin("tutor2").get();
+        Long team2Id = database.createTeam(Set.of(student2, student3), tutor2, teamExercise, "team2").getId();
+
+        database.createParticipationSubmissionAndResult(individualTextExerciseId, student1, 10.0, 10.0, 50, true);
+
+        Team team1 = teamRepository.findById(team1Id).get();
+        var result = database.createParticipationSubmissionAndResult(teamTextExerciseId, team1, 10.0, 10.0, 40, true);
+        // Creating a second results for team1 to test handling multiple results.
+        database.createSubmissionAndResult((StudentParticipation) result.getParticipation(), 50, true);
+
+        var student2Result = database.createParticipationSubmissionAndResult(individualTextExerciseId, student2, 10.0, 10.0, 50, true);
+
+        var student3Result = database.createParticipationSubmissionAndResult(individualTextExerciseId, student3, 10.0, 10.0, 30, true);
+
+        Team team2 = teamRepository.findById(team2Id).get();
+        database.createParticipationSubmissionAndResult(teamTextExerciseId, team2, 10.0, 10.0, 80, true);
+
+        // Adding plagiarism cases
+        var bonusPlagiarismCase = new PlagiarismCase();
+        bonusPlagiarismCase.setStudent(student3);
+        bonusPlagiarismCase.setExercise(student3Result.getParticipation().getExercise());
+        bonusPlagiarismCase.setVerdict(PlagiarismVerdict.PLAGIARISM);
+        plagiarismCaseRepository.save(bonusPlagiarismCase);
+
+        var bonusPlagiarismCase2 = new PlagiarismCase();
+        bonusPlagiarismCase2.setStudent(student2);
+        bonusPlagiarismCase2.setExercise(student2Result.getParticipation().getExercise());
+        bonusPlagiarismCase2.setVerdict(PlagiarismVerdict.POINT_DEDUCTION);
+        bonusPlagiarismCase2.setVerdictPointDeduction(50);
+        plagiarismCaseRepository.save(bonusPlagiarismCase2);
+
+        BonusStrategy bonusStrategy = BonusStrategy.GRADES_CONTINUOUS;
+        bonusToGradingScale.setBonusStrategy(bonusStrategy);
+        gradingScaleRepository.save(bonusToGradingScale);
+
+        GradingScale sourceGradingScale = database.generateGradingScaleWithStickyStep(new double[] { 60, 40, 50 }, Optional.of(new String[] { "0", "0.3", "0.6" }), true, 1);
+        sourceGradingScale.setGradeType(GradeType.BONUS);
+        sourceGradingScale.setCourse(course);
+        gradingScaleRepository.save(sourceGradingScale);
+
+        var bonus = ModelFactory.generateBonus(bonusStrategy, -1.0, sourceGradingScale.getId(), bonusToGradingScale.getId());
+        bonusRepository.save(bonus);
+
+        course.setMaxPoints(100);
+        course.setPresentationScore(null);
+        courseRepo.save(course);
+
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetExamScore() throws Exception {
+    void testGetExamScore(boolean withCourseBonus) throws Exception {
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // TODO avoid duplicated code with StudentExamIntegrationTest
 
@@ -1766,7 +1852,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
         for (var exercise : exercisesInExam) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId());
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false);
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }
@@ -1830,11 +1916,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exerciseWithNoUsers.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.save(exerciseWithNoUsers);
 
-        GradingScale gradingScale = new GradingScale();
+        GradingScale gradingScale = database.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 }, Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0+" }), true,
+                1);
         gradingScale.setExam(exam);
-        gradingScale.setGradeType(GradeType.GRADE);
-        gradingScale.setGradeSteps(database.generateGradeStepSet(gradingScale, true));
         gradingScaleRepository.save(gradingScale);
+
+        long bonusCourseParticipationCount = 0;
+        if (withCourseBonus) {
+            configureCourseAsBonusWithIndividualAndTeamResults(course, gradingScale);
+            bonusCourseParticipationCount = 5; // Participations from the bonus course should be included in expected participation count.
+        }
+
+        final long expectedParticipationCount = 90 + bonusCourseParticipationCount; // 90 participations from the exam.
+        await().until(() -> participantScoreRepository.count() == expectedParticipationCount);
 
         var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
@@ -1922,6 +2016,35 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
             assertThat(studentResult.overallGrade()).isNotNull();
             assertThat(studentResult.hasPassed()).isNotNull();
+            assertThat(studentResult.mostSeverePlagiarismVerdict()).isNull();
+            if (withCourseBonus) {
+                String studentLogin = studentResult.login();
+                assertThat(studentResult.gradeWithBonus().bonusStrategy()).isEqualTo(BonusStrategy.GRADES_CONTINUOUS);
+                switch (studentLogin) {
+                    case "student1" -> {
+                        assertThat(studentResult.gradeWithBonus().mostSeverePlagiarismVerdict()).isNull();
+                        assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(10.0);
+                        assertThat(studentResult.gradeWithBonus().bonusGrade()).isEqualTo("0.0");
+                        assertThat(studentResult.gradeWithBonus().finalGrade()).isEqualTo("1.0");
+                    }
+                    case "student2" -> {
+                        assertThat(studentResult.gradeWithBonus().mostSeverePlagiarismVerdict()).isEqualTo(PlagiarismVerdict.POINT_DEDUCTION);
+                        assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(10.5);  // 10.5 = 8 + 5 * 50% plagiarism point deduction.
+                        assertThat(studentResult.gradeWithBonus().finalGrade()).isEqualTo("1.0");
+                    }
+                    case "student3" -> {
+                        assertThat(studentResult.gradeWithBonus().mostSeverePlagiarismVerdict()).isEqualTo(PlagiarismVerdict.PLAGIARISM);
+                        assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(0.0);
+                        assertThat(studentResult.gradeWithBonus().bonusGrade()).isEqualTo(GradeStep.PLAGIARISM_GRADE);
+                        assertThat(studentResult.gradeWithBonus().finalGrade()).isEqualTo("1.0");
+                    }
+                    default -> {
+                    }
+                }
+            }
+            else {
+                assertThat(studentResult.gradeWithBonus()).isNull();
+            }
 
             // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
             Set<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult().values().stream().map(ExamScoresDTO.ExerciseResult::exerciseId)
@@ -2291,18 +2414,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(expectedFilenames).contains(Path.of(filename));
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(ints = { 0, 1, 2 })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetStatsForExamAssessmentDashboardOneCorrectionRound() throws Exception {
-        testGetStatsForExamAssessmentDashboard(1);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetStatsForExamAssessmentDashboardTwoCorrectionRounds() throws Exception {
-        testGetStatsForExamAssessmentDashboard(2);
-    }
-
     void testGetStatsForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
@@ -2321,11 +2435,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfSubmissions()).isInstanceOf(DueDateStat.class);
         assertThat(stats.getTutorLeaderboardEntries()).isInstanceOf(List.class);
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isInstanceOf(DueDateStat[].class);
+        if (numberOfCorrectionRounds != 0) {
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isInstanceOf(DueDateStat[].class);
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
+        }
+        else {
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isNull();
+        }
         assertThat(stats.getNumberOfAssessmentLocks()).isZero();
         assertThat(stats.getNumberOfSubmissions().inTime()).isZero();
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
+
+        if (numberOfCorrectionRounds == 0) {
+            // We do not need any more assertions, as numberOfCorrectionRounds is only 0 for test exams (no manual assessment)
+            return;
+        }
 
         var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).isEmpty();
@@ -2356,7 +2480,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         int participationCounter = 0;
         List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
         for (var exercise : exercisesInExam) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId());
+            List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsResult(exercise.getId(), false);
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }

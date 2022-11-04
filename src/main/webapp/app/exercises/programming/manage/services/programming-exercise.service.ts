@@ -20,6 +20,7 @@ import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programmi
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -498,6 +499,10 @@ export class ProgrammingExerciseService {
     }
 
     getAllTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.get<ProgrammingExerciseTestCase[]>(`api/programming-exercise/${exerciseId}/test-cases`);
+        return this.http.get<ProgrammingExerciseTestCase[]>(`api/programming-exercises/${exerciseId}/test-cases`);
+    }
+
+    getBuildLogStatistics(exerciseId: number): Observable<BuildLogStatisticsDTO> {
+        return this.http.get<BuildLogStatisticsDTO>(`${this.resourceUrl}/${exerciseId}/build-log-statistics`);
     }
 }

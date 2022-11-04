@@ -1,11 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe, MockProviders } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProviders } from 'ng-mocks';
+
 describe('AttachmentUnitFormComponent', () => {
     let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentUnitFormComponent>;
     let attachmentUnitFormComponent: AttachmentUnitFormComponent;
@@ -13,7 +16,13 @@ describe('AttachmentUnitFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule],
-            declarations: [AttachmentUnitFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent)],
+            declarations: [
+                AttachmentUnitFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(FaIconComponent),
+                MockDirective(NgbTooltip),
+            ],
             providers: [MockProviders(TranslateService)],
             schemas: [],
         })
@@ -34,8 +43,7 @@ describe('AttachmentUnitFormComponent', () => {
     });
 
     it('should correctly set form values in edit mode', () => {
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
         attachmentUnitFormComponent.isEditMode = true;
         const formData: AttachmentUnitFormData = {
@@ -47,7 +55,7 @@ describe('AttachmentUnitFormComponent', () => {
                 updateNotificationText: 'lorem ipsum',
             },
             fileProperties: {
-                file: fakeBlob,
+                file: fakeFile,
                 fileName: 'lorem ipsum',
             },
         };
@@ -76,9 +84,8 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
-        attachmentUnitFormComponent.file = fakeBlob;
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        attachmentUnitFormComponent.file = fakeFile;
         const exampleFileName = 'lorem Ipsum';
         attachmentUnitFormComponent.fileName = exampleFileName;
 
@@ -91,7 +98,7 @@ describe('AttachmentUnitFormComponent', () => {
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalled();
+        expect(submitFormSpy).toHaveBeenCalledOnce();
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -101,7 +108,7 @@ describe('AttachmentUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
             },
             fileProperties: {
-                file: fakeBlob,
+                file: fakeFile,
                 fileName: exampleFileName,
             },
         });
@@ -119,11 +126,9 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
-        attachmentUnitFormComponent.file = fakeBlob;
-        const exampleFileName = 'lorem Ipsum';
-        attachmentUnitFormComponent.fileName = exampleFileName;
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        attachmentUnitFormComponent.file = fakeFile;
+        attachmentUnitFormComponent.fileName = 'lorem Ipsum';
 
         expect(attachmentUnitFormComponent.form.invalid).toBeTrue();
         const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
@@ -132,23 +137,18 @@ describe('AttachmentUnitFormComponent', () => {
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledTimes(0);
-        expect(submitFormEventSpy).toHaveBeenCalledTimes(0);
+        expect(submitFormSpy).not.toHaveBeenCalled();
+        expect(submitFormEventSpy).not.toHaveBeenCalled();
     });
 
     it('calls on file change on changed file', () => {
         const fakeBlob = new Blob([''], { type: 'application/pdf' });
+        // @ts-ignore
         fakeBlob['name'] = 'Test-File.pdf';
         const onFileChangeStub = jest.spyOn(attachmentUnitFormComponent, 'onFileChange');
         attachmentUnitFormComponentFixture.detectChanges();
         const fileInput = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         fileInput.dispatchEvent(new Event('change'));
         expect(onFileChangeStub).toHaveBeenCalledOnce();
-    });
-
-    it('sets file upload error correctly', () => {
-        attachmentUnitFormComponentFixture.detectChanges();
-        attachmentUnitFormComponent.setFileUploadError('lorem ipsum');
-        expect(attachmentUnitFormComponent.fileUploadErrorMessage).toBe('lorem ipsum');
     });
 });

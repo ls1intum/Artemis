@@ -373,7 +373,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                     .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).toList();
         }
         else {
-            submissions = submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
+            submissions = submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
             // automatic results are null in the received results list. We need to filter them out for the client to display the dashboard correctly
             submissions.forEach(Submission::removeNullResults);
         }
@@ -401,13 +401,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return a list of programming submissions for the given exercise id
      */
     public List<ProgrammingSubmission> getProgrammingSubmissions(long exerciseId, boolean submittedOnly, boolean examMode) {
-        List<StudentParticipation> participations;
-        if (examMode) {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
-        }
-        else {
-            participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exerciseId);
-        }
+        List<StudentParticipation> participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         List<ProgrammingSubmission> programmingSubmissions = new ArrayList<>();
         participations.stream().peek(participation -> participation.getExercise().setStudentParticipations(null)).map(StudentParticipation::findLatestLegalOrIllegalSubmission)
                 // filter out non submitted submissions if the flag is set to true
@@ -441,6 +435,26 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
+     * Return the next submission ordered by individual due date of its participation
+     * without a manual result.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
+     *
+     * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound     - the correction round we want our submission to have results for
+     * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    public Optional<ProgrammingSubmission> getNextAssessableSubmission(ProgrammingExercise programmingExercise, boolean examMode, int correctionRound) {
+        var submissionWithoutResult = super.getNextAssessableSubmission(programmingExercise, examMode, correctionRound);
+        if (submissionWithoutResult.isPresent()) {
+            ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
+            return Optional.of(programmingSubmission);
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Given an exercise id, find a random programming submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
      * assessment for the corresponding submission yet.
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
@@ -450,8 +464,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode, int correctionRound) {
-        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(programmingExercise, examMode, correctionRound);
+    public Optional<ProgrammingSubmission> getRandomAssessableSubmission(ProgrammingExercise programmingExercise, boolean examMode, int correctionRound) {
+        var submissionWithoutResult = super.getRandomAssessableSubmission(programmingExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
             return Optional.of(programmingSubmission);
@@ -472,20 +486,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         return (ProgrammingSubmission) manualResult.getSubmission();
     }
 
-    /**
-     * Get a programming submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
-     *
-     * @param exercise        the exercise the submission should belong to
-     * @param correctionRound - the correction round we want our submission to have results for
-     * @return a locked programming submission that needs an assessment
-     */
-    public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise, int correctionRound) {
-        ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.isExamExercise(), correctionRound)
-                .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
-        Result newManualResult = lockSubmission(programmingSubmission, correctionRound);
-        return (ProgrammingSubmission) newManualResult.getSubmission();
-    }
-
     // TODO SE: explain in what context this method is even called
 
     /**
@@ -498,7 +498,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     @Override
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
-    protected Result lockSubmission(Submission submission, int correctionRound) {
+    public Result lockSubmission(Submission submission, int correctionRound) {
         Optional<Result> optionalExistingResult;
         if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
             optionalExistingResult = Optional.of(submission.getLatestResult());
@@ -514,12 +514,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
             optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));
         }
 
-        // Create a new result (manual result) and try to reuse the existing submission with the latest commit hash
+        // Create a new manual result and try to reuse the existing submission with the latest commit hash
         ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
         Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
         // Copy automatic feedbacks into the manual result
         List<Feedback> automaticFeedbacks = new ArrayList<>();
         if (optionalExistingResult.isPresent()) {
@@ -539,6 +540,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         newResult = resultRepository.save(newResult);
         newResult.setAssessor(assessor);
         log.debug("Assessment locked with result id: {} for assessor: {}", newResult.getId(), newResult.getAssessor().getName());
+
         // Make sure that submission is set back after saving
         newResult.setSubmission(existingSubmission);
         return newResult;

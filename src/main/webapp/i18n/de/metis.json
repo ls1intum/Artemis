@@ -41,7 +41,7 @@
                 "exercise": "Aufgabe",
                 "lecture": "Vortrag"
             },
-            "discussion": {
+            "communication": {
                 "label": "Kommunikation",
                 "show": "Kommunikation anzeigen",
                 "hide": "Kommunikation einklappen"

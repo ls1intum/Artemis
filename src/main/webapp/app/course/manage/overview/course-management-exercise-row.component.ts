@@ -76,7 +76,7 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
 
     setIcon(exerciseType?: ExerciseType) {
         if (exerciseType) {
-            this.icon = getIcon(exerciseType) as IconProp;
+            this.icon = getIcon(exerciseType);
         }
     }
 }

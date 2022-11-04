@@ -1,11 +1,16 @@
 package de.tum.in.www1.artemis.service.connectors.gitlabci;
 
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
 import org.apache.commons.collections.CollectionUtils;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
+import de.tum.in.www1.artemis.repository.*;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.ProjectApi;
@@ -25,17 +30,13 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
-import de.tum.in.www1.artemis.repository.BuildPlanRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
@@ -94,10 +95,10 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private String artemisAuthenticationTokenValue;
 
     public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository,
-            BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
-            TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
+                           RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository,
+                           BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
+                           BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate);
         this.gitlab = gitlab;
         this.urlService = urlService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -332,6 +333,46 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         return Optional.empty();
     }
 
+    @Override
+    public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+                                                    List<BuildLogEntry> buildLogEntries) {
+        // In GitLab CI we get the logs from the maven command. Therefore, we cannot extract any information about the setup of the runner.
+        // In addition, static code analysis is not yet available.
+
+        if (buildLogEntries.isEmpty() || programmingLanguage != ProgrammingLanguage.JAVA) {
+            log.debug("No build logs statistics extracted for submission {}", programmingSubmission.getId());
+            // No logs received -> Do nothing
+            return;
+        }
+
+        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
+        ZonedDateTime testsStarted;
+        ZonedDateTime testsFinished;
+        ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
+        Integer dependenciesDownloadedCount;
+
+        if (ProjectType.isMavenProject(projectType)) {
+            testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
+            testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
+            dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
+        } else {
+            // A new, unsupported project type was used -> Log it but don't store it since it would only contain null-values
+            log.warn("Received unsupported project type {} for GitLabCIService.extractAndPersistBuildLogStatistics, will not store any build log statistics.", projectType);
+            return;
+        }
+
+        var testDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(testsStarted, testsFinished);
+        var totalJobDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(jobStarted, jobFinished);
+
+        // Set the duration to -1 for the durations, we cannot extract.
+        var time = ZonedDateTime.now();
+        var agentSetupDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time.minusSeconds(1));
+        var scaDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time.minusSeconds(1));
+
+        buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
+            dependenciesDownloadedCount);
+    }
+
     private String generateBuildPlanURL(ProgrammingExercise exercise) {
         programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
         // We need this workaround (&file-extension=.yml) since GitLab only accepts URLs ending with .yml.
@@ -349,14 +390,14 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
         // Extract test case feedback
         for (final var job : jobs) {
-            for (final var testCase : job.getTestCases()) {
+            for (final var testCase : job.testCases()) {
                 var feedbackMessages = extractMessageFromTestCase(testCase).map(List::of).orElse(List.of());
-                var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.getName(), feedbackMessages, testCase.isSuccessful(), programmingLanguage, projectType);
+                var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.name(), feedbackMessages, testCase.isSuccessful(), programmingLanguage, projectType);
                 result.addFeedback(feedback);
             }
 
-            int passedTestCasesAmount = (int) job.getTestCases().stream().filter(TestCaseDTO::isSuccessful).count();
-            result.setTestCaseCount(result.getTestCaseCount() + job.getTests());
+            int passedTestCasesAmount = (int) job.testCases().stream().filter(TestCaseDTO::isSuccessful).count();
+            result.setTestCaseCount(result.getTestCaseCount() + job.tests());
             result.setPassedTestCaseCount(result.getPassedTestCaseCount() + passedTestCasesAmount);
         }
 
@@ -385,25 +426,25 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
      * @return the most helpful message that can be added to an automatic {@link Feedback}.
      */
     private Optional<String> extractMessageFromTestCase(final TestCaseDTO testCase) {
-        var hasErrors = !CollectionUtils.isEmpty(testCase.getErrors());
-        var hasFailures = !CollectionUtils.isEmpty(testCase.getFailures());
-        var hasSuccessInfos = !CollectionUtils.isEmpty(testCase.getSuccessInfos());
+        var hasErrors = !CollectionUtils.isEmpty(testCase.errors());
+        var hasFailures = !CollectionUtils.isEmpty(testCase.failures());
+        var hasSuccessInfos = !CollectionUtils.isEmpty(testCase.successInfos());
         boolean successful = testCase.isSuccessful();
 
-        if (successful && hasSuccessInfos && testCase.getSuccessInfos().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(testCase.getSuccessInfos().get(0).getMostInformativeMessage());
+        if (successful && hasSuccessInfos && testCase.successInfos().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.successInfos().get(0).getMostInformativeMessage());
         }
-        else if (hasErrors && testCase.getErrors().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(testCase.getErrors().get(0).getMostInformativeMessage());
+        else if (hasErrors && testCase.errors().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.errors().get(0).getMostInformativeMessage());
         }
-        else if (hasFailures && testCase.getFailures().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(testCase.getFailures().get(0).getMostInformativeMessage());
+        else if (hasFailures && testCase.failures().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.failures().get(0).getMostInformativeMessage());
         }
-        else if (hasErrors && testCase.getErrors().get(0).getType() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType()));
+        else if (hasErrors && testCase.errors().get(0).type() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.errors().get(0).type()));
         }
-        else if (hasFailures && testCase.getFailures().get(0).getType() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType()));
+        else if (hasFailures && testCase.failures().get(0).type() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.failures().get(0).type()));
         }
         else if (!successful) {
             // this is an edge case which typically does not happen

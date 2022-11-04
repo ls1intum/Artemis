@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doReturn;
 
 import javax.mail.internet.MimeMessage;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,9 +24,11 @@ import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 
@@ -55,6 +58,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected GroupNotificationService groupNotificationService;
+
+    @SpyBean
+    protected TutorialGroupNotificationService tutorialGroupNotificationService;
 
     @SpyBean
     protected SingleUserNotificationService singleUserNotificationService;
@@ -90,13 +96,13 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     @SpyBean
-    protected ScoreService scoreService;
-
-    @SpyBean
     protected UrlService urlService;
 
     @SpyBean
     protected ScheduleService scheduleService;
+
+    @SpyBean
+    protected ParticipantScoreSchedulerService participantScoreSchedulerService;
 
     @SpyBean
     protected TextBlockService textBlockService;
@@ -115,10 +121,15 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
+    @AfterEach
+    void stopRunningTasks() {
+        participantScoreSchedulerService.shutdown();
+    }
+
     public void resetSpyBeans() {
-        Mockito.reset(ltiService, gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, messagingTemplate, examAccessService, mailService,
-                instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService, scheduleService, javaMailSender,
-                programmingTriggerService);
+        Mockito.reset(ltiService, gitService, groupNotificationService, tutorialGroupNotificationService, singleUserNotificationService, websocketMessagingService,
+                messagingTemplate, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
+                urlService, scheduleService, participantScoreSchedulerService, javaMailSender, programmingTriggerService);
     }
 
     @Override

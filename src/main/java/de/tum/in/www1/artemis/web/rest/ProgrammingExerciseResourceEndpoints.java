@@ -66,6 +66,8 @@ public final class ProgrammingExerciseResourceEndpoints {
 
     public static final String BUILD_PLAN = PROGRAMMING_EXERCISE + "/build-plan";
 
+    public static final String BUILD_LOG_STATISTICS = PROGRAMMING_EXERCISE + "/build-log-statistics";
+
     private ProgrammingExerciseResourceEndpoints() {
     }
 }

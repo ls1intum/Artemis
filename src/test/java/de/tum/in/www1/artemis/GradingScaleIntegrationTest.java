@@ -15,10 +15,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradeStep;
+import de.tum.in.www1.artemis.domain.GradeType;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -409,6 +411,48 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByExamId(exam.getId());
         assertThat(foundGradingScale).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetAllGradingScalesInInstructorGroupOnPageWithAdmin() throws Exception {
+
+        String url = "/api/grading-scales?pageSize=100&page=1&sortingOrder=DESCENDING&searchTerm=&sortedColumn=ID";
+        var result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        assertThat(result.getResultsOnPage()).isEmpty();
+
+        courseGradingScale.setGradeType(GradeType.BONUS);
+        gradingScaleRepository.save(courseGradingScale);
+
+        result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        assertThat(result.getResultsOnPage()).hasSize(1);
+
+        examGradingScale.setGradeType(GradeType.BONUS);
+        gradingScaleRepository.save(examGradingScale);
+
+        result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        assertThat(result.getResultsOnPage()).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGetAllGradingScalesInInstructorGroupOnPageWithInstructor() throws Exception {
+
+        String url = "/api/grading-scales?pageSize=100&page=1&sortingOrder=DESCENDING&searchTerm=&sortedColumn=ID";
+        var result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        assertThat(result.getResultsOnPage()).isEmpty();
+
+        courseGradingScale.setGradeType(GradeType.BONUS);
+        gradingScaleRepository.save(courseGradingScale);
+
+        result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        assertThat(result.getResultsOnPage()).hasSize(1);
+
+        examGradingScale.setGradeType(GradeType.BONUS);
+        gradingScaleRepository.save(examGradingScale);
+
+        result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
     /**

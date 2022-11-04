@@ -61,7 +61,7 @@ describe('Exercise Hint Expandable Component', () => {
         comp.hasUsed = true;
         const activateHintSpy = jest.spyOn(service, 'activateExerciseHint').mockReturnValue(of({ body: availableExerciseHint } as ExerciseHintResponse));
         comp.displayHintContent();
-        expect(activateHintSpy).toHaveBeenCalledTimes(0);
+        expect(activateHintSpy).not.toHaveBeenCalled();
     });
 
     it('should collapse exercise hint content', () => {

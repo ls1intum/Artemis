@@ -170,7 +170,7 @@ describe('Course Management Update Component', () => {
     });
 
     describe('save', () => {
-        it('Should call update service on save for existing entity', fakeAsync(() => {
+        it('should call update service on save for existing entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
             entity.id = 123;
@@ -201,11 +201,11 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith({ ...entity });
+            expect(updateStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null });
             expect(comp.isSaving).toBeFalse();
         }));
 
-        it('Should call create service on save for new entity', fakeAsync(() => {
+        it('should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
             const createStub = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
@@ -234,7 +234,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
-            expect(createStub).toHaveBeenCalledWith({ ...entity });
+            expect(createStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null });
             expect(comp.isSaving).toBeFalse();
         }));
     });
@@ -285,6 +285,7 @@ describe('Course Management Update Component', () => {
             uploadStub.mockResolvedValue({ path: 'testPath' } as FileUploadResponse);
             comp.uploadCourseImage();
             const file = base64StringToBlob(croppedImage, 'image/*');
+            // @ts-ignore
             file['name'] = comp.courseImageFileName;
             expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
             expect(comp.showCropper).toBeFalse();

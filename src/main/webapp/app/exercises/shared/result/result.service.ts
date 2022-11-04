@@ -18,6 +18,7 @@ import { isResultPreliminary } from 'app/exercises/programming/shared/utils/prog
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { captureException } from '@sentry/browser';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -54,10 +55,11 @@ export class ResultService implements IResultService {
      * If either of the arguments is undefined the error is forwarded to sentry and an empty string is returned
      * @param result the result containing all necessary information like the achieved points
      * @param exercise the exercise where the result belongs to
+     * @param short flag that indicates if the resultString should use the short format
      */
-    getResultString(result?: Result, exercise?: Exercise): string {
+    getResultString(result: Result | undefined, exercise: Exercise | undefined, short?: boolean): string {
         if (result && exercise) {
-            return this.getResultStringDefinedParameters(result, exercise);
+            return this.getResultStringDefinedParameters(result, exercise, short);
         } else {
             captureException('Tried to generate a result string, but either the result or exercise was undefined');
             return '';
@@ -69,17 +71,33 @@ export class ResultService implements IResultService {
      * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
      * @param result the result containing all necessary information like the achieved points
      * @param exercise the exercise where the result belongs to
+     * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringDefinedParameters(result: Result, exercise: Exercise): string {
+    private getResultStringDefinedParameters(result: Result, exercise: Exercise, short: boolean | undefined): string {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
-        if (exercise.type === ExerciseType.PROGRAMMING) {
-            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points);
+        if (exercise.type !== ExerciseType.PROGRAMMING) {
+            return this.getResultStringNonProgrammingExercise(relativeScore, points, short);
         } else {
-            return this.translateService.instant(`artemisApp.result.resultStringNonProgramming`, {
+            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
+        }
+    }
+
+    /**
+     * Generates the result string for a programming exercise. Contains the score and points
+     * @param relativeScore the achieved score in percent
+     * @param points the amount of achieved points
+     * @param short flag that indicates if the resultString should use the short format
+     */
+    private getResultStringNonProgrammingExercise(relativeScore: number, points: number, short: boolean | undefined): string {
+        if (short) {
+            return this.translateService.instant(`artemisApp.result.resultString.short`, {
+                relativeScore,
+            });
+        } else {
+            return this.translateService.instant(`artemisApp.result.resultString.nonProgramming`, {
                 relativeScore,
                 points,
-                maxPoints: exercise.maxPoints,
             });
         }
     }
@@ -91,21 +109,22 @@ export class ResultService implements IResultService {
      * @param exercise the exercise where the result belongs to
      * @param relativeScore the achieved score in percent
      * @param points the amount of achieved points
+     * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number): string {
+    private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, short: boolean | undefined): string {
         let buildAndTestMessage: string;
         if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
-            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildFailed');
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildFailed');
         } else if (!result.testCaseCount) {
-            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulNoTests');
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulNoTests');
         } else {
-            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultStringBuildSuccessfulTests', {
+            buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulTests', {
                 numberOfTestsPassed: result.passedTestCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.passedTestCaseCount,
                 numberOfTestsTotal: result.testCaseCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.testCaseCount,
             });
         }
 
-        let resultString = this.getBaseResultStringProgrammingExercise(result, exercise, relativeScore, points, buildAndTestMessage);
+        let resultString = this.getBaseResultStringProgrammingExercise(result, exercise, relativeScore, points, buildAndTestMessage, short);
 
         if (isResultPreliminary(result, exercise)) {
             resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
@@ -121,23 +140,40 @@ export class ResultService implements IResultService {
      * @param relativeScore the achieved score in percent
      * @param points the amount of achieved points
      * @param buildAndTestMessage the string containing information about the build. Either about the build failure or the passed tests
+     * @param short flag that indicates if the resultString should use the short format
      * @private
      */
-    private getBaseResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, buildAndTestMessage: string): string {
-        if (result.codeIssueCount && result.codeIssueCount > 0) {
-            return this.translateService.instant('artemisApp.result.resultStringProgrammingCodeIssues', {
+    private getBaseResultStringProgrammingExercise(
+        result: Result,
+        exercise: ProgrammingExercise,
+        relativeScore: number,
+        points: number,
+        buildAndTestMessage: string,
+        short: boolean | undefined,
+    ): string {
+        if (short) {
+            if (!result.testCaseCount) {
+                return this.translateService.instant('artemisApp.result.resultString.programmingShort', {
+                    relativeScore,
+                    buildAndTestMessage,
+                });
+            } else {
+                return this.translateService.instant('artemisApp.result.resultString.short', {
+                    relativeScore,
+                });
+            }
+        } else if (result.codeIssueCount && result.codeIssueCount > 0) {
+            return this.translateService.instant('artemisApp.result.resultString.programmingCodeIssues', {
                 relativeScore,
                 buildAndTestMessage,
                 numberOfIssues: result.codeIssueCount! >= this.maxValueProgrammingResultInts ? `${this.maxValueProgrammingResultInts}+` : result.codeIssueCount,
                 points,
-                maxPoints: exercise.maxPoints,
             });
         } else {
-            return this.translateService.instant(`artemisApp.result.resultStringProgramming`, {
+            return this.translateService.instant(`artemisApp.result.resultString.programming`, {
                 relativeScore,
                 buildAndTestMessage,
                 points,
-                maxPoints: exercise.maxPoints,
             });
         }
     }
@@ -227,8 +263,9 @@ export class ResultService implements IResultService {
 
     /**
      * Fetches all results for an exercise and returns them
+     * @param exercise of which the results with points should be fetched.
      */
-    getResults(exercise: Exercise) {
+    getResults(exercise: Exercise): Observable<HttpResponse<Result[]>> {
         return this.getResultsForExercise(exercise.id!, {
             withSubmissions: exercise.type === ExerciseType.MODELING,
         }).pipe(
@@ -288,5 +325,17 @@ export class ResultService implements IResultService {
         link.setAttribute('download', `${csvFileName}`);
         document.body.appendChild(link); // Required for FF
         link.click();
+    }
+
+    public static evaluateBadge(participation: Participation, result: Result): { badgeClass: string; text: string; tooltip: string } {
+        if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
+            const studentParticipation = participation as StudentParticipation;
+            if (studentParticipation.testRun) {
+                return { badgeClass: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
+            }
+        }
+        return result.rated
+            ? { badgeClass: 'bg-success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' }
+            : { badgeClass: 'bg-info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' };
     }
 }

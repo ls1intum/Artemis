@@ -24,6 +24,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -84,11 +86,16 @@ public class UserService {
 
     private final ExerciseHintActivationRepository exerciseHintActivationRepository;
 
+    private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+
+    private final TutorialGroupRepository tutorialGroupRepository;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository, InstanceMessageSendService instanceMessageSendService,
-            ExerciseHintActivationRepository exerciseHintActivationRepository) {
+            ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
+            TutorialGroupRepository tutorialGroupRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -103,6 +110,8 @@ public class UserService {
         this.studentScoreRepository = studentScoreRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.exerciseHintActivationRepository = exerciseHintActivationRepository;
+        this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
+        this.tutorialGroupRepository = tutorialGroupRepository;
     }
 
     /**
@@ -409,7 +418,7 @@ public class UserService {
      *
      * @param login user login string
      */
-    @Transactional // ok because entities are deleted
+    @Transactional // ok because of delete
     public void deleteUser(String login) {
         // Delete the user in the connected VCS if necessary (e.g. for GitLab)
         optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteVcsUser(login));
@@ -421,7 +430,7 @@ public class UserService {
         });
     }
 
-    @Transactional // ok because entities are deleted
+    @Transactional // ok because of delete
     protected void deleteUser(User user) {
         // TODO: before we can delete the user, we need to make sure that all associated objects are deleted as well (or the connection to user is set to null)
         // 1) All participation connected to the user (as student)
@@ -434,9 +443,18 @@ public class UserService {
         // 8) Remove the user from its teams
         // 9) Delete the submissionVersion / remove the user from the submissionVersion
         // 10) Delete the tutor participation
+        // 11) All tutorial group registrations of the student
+        // 12) Set teaching assistant to null for all tutorial groups taught by the user
 
-        studentScoreRepository.deleteAllByUser(user);
+        studentScoreRepository.deleteAllByUserId(user.getId());
         exerciseHintActivationRepository.deleteAllByUser(user);
+
+        tutorialGroupRegistrationRepository.deleteAllByStudent(user);
+        var taughtTutorialGroups = tutorialGroupRepository.findAllByTeachingAssistant(user);
+        for (var tutorialGroup : taughtTutorialGroups) {
+            tutorialGroup.setTeachingAssistant(null);
+        }
+        tutorialGroupRepository.saveAll(taughtTutorialGroups);
 
         userRepository.delete(user);
         clearUserCaches(user);

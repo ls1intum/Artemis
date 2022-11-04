@@ -60,11 +60,18 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
     @Query("""
             SELECT se FROM StudentExam se
+            LEFT JOIN FETCH se.exercises
+            WHERE se.exam.id = :#{#examId}
+            """)
+    Set<StudentExam> findAllWithExercisesByExamId(@Param("examId") Long examId);
+
+    @Query("""
+            SELECT se FROM StudentExam se
             LEFT JOIN FETCH se.exercises e
             WHERE se.exam.id = :#{#examId}
             	AND se.testRun = FALSE
             """)
-    Set<StudentExam> findAllWithExercisesByExamId(@Param("examId") Long examId);
+    Set<StudentExam> findAllWithoutTestRunsWithExercisesByExamId(@Param("examId") Long examId);
 
     @Query("""
             SELECT se FROM StudentExam se
@@ -125,6 +132,15 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             	AND se.user.id = :#{#userId}
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
+
+    /**
+     * Checks if any StudentExam exists for the given user (student) id in the given course.
+     * @param courseId the id of the course which should have the exam.
+     * @param examId the id of the exam
+     * @param userId the id of the user (student) who may or may not have a StudentExam
+     * @return True if the given user id has a matching StudentExam in the given exam and course, else false.
+     */
+    boolean existsByExam_CourseIdAndExamIdAndUserId(@Param("courseId") long courseId, @Param("examId") long examId, @Param("userId") long userId);
 
     @Query("""
             SELECT DISTINCT se FROM StudentExam se

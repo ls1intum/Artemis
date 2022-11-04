@@ -8,13 +8,12 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { CreateAttachmentUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-attachment-unit/create-attachment-unit.component';
-import { AttachmentService } from 'app/lecture/attachment.service';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { HttpResponse } from '@angular/common/http';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { By } from '@angular/platform-browser';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 
 @Component({ selector: 'jhi-attachment-unit-form', template: '' })
 class AttachmentUnitFormStubComponent {
@@ -30,16 +29,13 @@ class LectureUnitLayoutStubComponent {
 
 describe('CreateAttachmentUnitComponent', () => {
     let createAttachmentUnitComponentFixture: ComponentFixture<CreateAttachmentUnitComponent>;
-    let createAttachmentUnitComponent: CreateAttachmentUnitComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [AttachmentUnitFormStubComponent, LectureUnitLayoutStubComponent, CreateAttachmentUnitComponent],
             providers: [
-                MockProvider(AttachmentService),
                 MockProvider(AttachmentUnitService),
-                MockProvider(FileUploaderService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -75,7 +71,6 @@ describe('CreateAttachmentUnitComponent', () => {
             .compileComponents()
             .then(() => {
                 createAttachmentUnitComponentFixture = TestBed.createComponent(CreateAttachmentUnitComponent);
-                createAttachmentUnitComponent = createAttachmentUnitComponentFixture.componentInstance;
             });
     });
 
@@ -83,21 +78,13 @@ describe('CreateAttachmentUnitComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        createAttachmentUnitComponentFixture.detectChanges();
-        expect(createAttachmentUnitComponent).not.toBeNull();
-    });
-
     it('should upload file, send POST for attachment and post for attachment unit', fakeAsync(() => {
         const router: Router = TestBed.inject(Router);
-        const fileUploadService = TestBed.inject(FileUploaderService);
-        const attachmentService = TestBed.inject(AttachmentService);
         const attachmentUnitService = TestBed.inject(AttachmentUnitService);
 
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const formData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -106,16 +93,28 @@ describe('CreateAttachmentUnitComponent', () => {
                 updateNotificationText: 'lorem ipsum',
             },
             fileProperties: {
-                file: fakeBlob,
+                file: fakeFile,
                 fileName: 'lorem ipsum',
             },
         };
 
         const examplePath = '/path/to/file';
-        const uploadFileStub = jest.spyOn(fileUploadService, 'uploadFile').mockReturnValue(Promise.resolve({ path: examplePath }));
+
+        const attachment = new Attachment();
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.releaseDate = attachmentUnitFormData.formProperties.releaseDate;
+        attachment.name = attachmentUnitFormData.formProperties.name;
+        attachment.link = examplePath;
 
         const attachmentUnit = new AttachmentUnit();
-        attachmentUnit.description = formData.formProperties.description;
+        attachmentUnit.description = attachmentUnitFormData.formProperties.description;
+        attachmentUnit.attachment = attachment;
+
+        const formData = new FormData();
+        formData.append('file', fakeFile, attachmentUnitFormData.fileProperties.fileName);
+        formData.append('attachment', objectToJsonBlob(attachment));
+        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
 
         const attachmentUnitResponse: HttpResponse<AttachmentUnit> = new HttpResponse({
             body: attachmentUnit,
@@ -123,37 +122,17 @@ describe('CreateAttachmentUnitComponent', () => {
         });
         const createAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'create').mockReturnValue(of(attachmentUnitResponse));
 
-        const attachment = new Attachment();
-        attachment.version = 1;
-        attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = formData.formProperties.releaseDate;
-        attachment.name = formData.formProperties.name;
-        attachment.link = examplePath;
-
-        const attachmentResponse: HttpResponse<Attachment> = new HttpResponse({
-            body: attachment,
-            status: 201,
-        });
-        const createAttachmentStub = jest.spyOn(attachmentService, 'create').mockReturnValue(of(attachmentResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
         createAttachmentUnitComponentFixture.detectChanges();
 
         const attachmentUnitFormStubComponent: AttachmentUnitFormStubComponent = createAttachmentUnitComponentFixture.debugElement.query(
             By.directive(AttachmentUnitFormStubComponent),
         ).componentInstance;
-        attachmentUnitFormStubComponent.formSubmitted.emit(formData);
+        attachmentUnitFormStubComponent.formSubmitted.emit(attachmentUnitFormData);
 
         createAttachmentUnitComponentFixture.whenStable().then(() => {
-            expect(uploadFileStub).toHaveBeenCalledWith(formData.fileProperties.file, formData.fileProperties.fileName, { keepFileName: true });
-            expect(createAttachmentUnitStub).toHaveBeenCalledWith(attachmentUnit, 1);
-            const attachmentArgument: Attachment = createAttachmentStub.mock.calls[0][0];
-            expect(attachmentArgument.name).toEqual(attachment.name);
-            expect(attachmentArgument.releaseDate).toEqual(attachment.releaseDate);
-            expect(attachmentArgument.version).toEqual(attachment.version);
-            expect(attachmentArgument.link).toEqual(attachment.link);
-            expect(attachmentArgument.attachmentUnit).toEqual(attachmentUnit);
+            expect(createAttachmentUnitStub).toHaveBeenCalledWith(formData, 1);
             expect(navigateSpy).toHaveBeenCalledOnce();
-            navigateSpy.mockRestore();
         });
     }));
 });

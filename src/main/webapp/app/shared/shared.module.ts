@@ -21,10 +21,12 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
     declarations: [
+        LoadingIndicatorContainerComponent,
         CircularProgressBarComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
@@ -49,6 +51,7 @@ import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/con
         ArtemisSharedCommonModule,
         ArtemisSharedPipesModule,
         CircularProgressBarComponent,
+        LoadingIndicatorContainerComponent,
         AdditionalFeedbackComponent,
         HasAnyAuthorityDirective,
         ExtensionPointDirective,

@@ -63,6 +63,13 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
         this.database.resetDatabase();
     }
 
+    @Test
+    void testAuthenticationRedirect() throws Exception {
+        request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.UNAUTHORIZED);
+        final String redirectTarget = request.getRedirectTarget("/saml2/authenticate", HttpStatus.FOUND);
+        assertThat(redirectTarget).endsWith("/login");
+    }
+
     /**
      * This test checks the creation of a new SAML2 authenticated user.
      *
