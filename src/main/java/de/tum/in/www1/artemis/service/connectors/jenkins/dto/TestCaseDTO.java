@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,7 +45,7 @@ public record TestCaseDTO(String name, String classname, double time, List<TestC
 
     @Override
     public List<String> getMessage() {
-        return extractMessageFromTestCase().map(List::of).orElse(List.of());
+        return extractMessageFromTestCase().map(Collections::singletonList).orElse(Collections.emptyList());
     }
 
     private Optional<String> extractMessageFromTestCase() {

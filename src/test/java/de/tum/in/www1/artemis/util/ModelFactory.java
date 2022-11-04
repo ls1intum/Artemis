@@ -1033,8 +1033,8 @@ public class ModelFactory {
         final var testSuite = new TestSuiteDTO("TestSuiteName1", now().toEpochSecond(), 0, 0, failedTestNames.size(), successfulTestNames.size() + failedTestNames.size(),
                 new ArrayList<>());
         testSuite.testCases().addAll(successfulTestNames.stream().map(name -> new TestCaseDTO(name, "Class", 0d)).toList());
-        testSuite.testCases().addAll(failedTestNames.stream().map(name -> new TestCaseDTO(name, "Class", 0d,
-                new ArrayList<>(), List.of(new TestCaseDetailMessageDTO(name + " error message")), new ArrayList<>())).toList());
+        testSuite.testCases().addAll(failedTestNames.stream()
+                .map(name -> new TestCaseDTO(name, "Class", 0d, new ArrayList<>(), List.of(new TestCaseDetailMessageDTO(name + " error message")), new ArrayList<>())).toList());
 
         final var commitDTO = new CommitDTO(TestConstants.COMMIT_HASH_STRING, repoName, DEFAULT_BRANCH);
         final var staticCodeAnalysisReports = enableStaticAnalysisReports ? generateStaticCodeAnalysisReports(programmingLanguage) : new ArrayList<StaticCodeAnalysisReportDTO>();

@@ -89,7 +89,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         addTestwiseCoverageReportToResult(result, buildResult, programmingExercise);
 
         // Relevant feedback is negative
-        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive()));
+        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive() || feedback.getDetailText() != null));
     }
 
     private void addTestCaseFeedbacksToResult(Result result, List<BuildJobDTOInterface> jobs, ProgrammingExercise programmingExercise) {
