@@ -364,10 +364,10 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         var testDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(testsStarted, testsFinished);
         var totalJobDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(jobStarted, jobFinished);
 
-        // Set the duration to -1 for the durations, we cannot extract.
+        // Set the duration to 0 for the durations, we cannot extract.
         var time = ZonedDateTime.now();
-        var agentSetupDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time.minusSeconds(1));
-        var scaDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time.minusSeconds(1));
+        var agentSetupDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time);
+        var scaDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time);
 
         buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
             dependenciesDownloadedCount);
