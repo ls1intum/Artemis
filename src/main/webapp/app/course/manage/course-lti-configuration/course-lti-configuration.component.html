@@ -227,7 +227,15 @@
                                         <td>{{ exercise.id ? exercise.id : '' }}</td>
                                         <td>{{ exercise.type ? exercise.type : '' }}</td>
                                         <td>{{ exercise.title ? exercise.title : '' }}</td>
-                                        <td>{{ getExerciseLaunchUrl(exercise) }}</td>
+                                        <td>
+                                            {{ getExerciseLaunchUrl(exercise) }}
+                                            <jhi-copy-icon-button
+                                                [copyText]="getExerciseLaunchUrl(exercise)"
+                                                [wasCopied]="wasCopiedKey == getExerciseLaunchUrl(exercise)"
+                                                [onCopyFinished]="onCopyFinished"
+                                                [onCopyFinishedKey]="getExerciseLaunchUrl(exercise)"
+                                            ></jhi-copy-icon-button>
+                                        </td>
                                         <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
                                         <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
                                         <td>{{ exercise.assessmentDueDate ? exercise.assessmentDueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
