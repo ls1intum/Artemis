@@ -40,6 +40,7 @@
             "customParameters": "Custom Parameters",
             "requireExistingUser": "Require existing user",
             "lookupByEmail": "Lookup user by email",
+            "dynamicRegistrationTooltip": "You can use this URL to automatically register an LTI 1.3 Platform with this course.",
             "launchTargetTooltip": "The recommended launch target is 'New Window' for the best user experience",
             "requestUserEmailTooltip": "The user's email must be sent as it is required by Artemis to create or find the user",
             "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",

@@ -5,8 +5,9 @@
         </h4>
     </div>
 
-    <dt>
+    <dt class="mt-4">
         <span>{{ 'artemisApp.lti.dynamicRegistrationUrl' | artemisTranslate }}</span>
+        <jhi-help-icon placement="top" text="artemisApp.lti.dynamicRegistrationTooltip"></jhi-help-icon>
     </dt>
     <dd>
         <span>{{ getDynamicRegistrationUrl() }}</span>
@@ -18,7 +19,7 @@
         ></jhi-copy-icon-button>
     </dd>
 
-    <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs">
+    <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="mt-4 nav-tabs">
         <ng-container ngbNavItem [ngbNavItem]="1">
             <a ngbNavLink jhiTranslate="artemisApp.lti.generalConfiguration">General Configuration</a>
             <ng-template ngbNavContent>
