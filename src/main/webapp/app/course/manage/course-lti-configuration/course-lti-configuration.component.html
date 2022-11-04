@@ -11,12 +11,7 @@
     </dt>
     <dd>
         <span>{{ getDynamicRegistrationUrl() }}</span>
-        <jhi-copy-icon-button
-            [copyText]="getDynamicRegistrationUrl()"
-            [wasCopied]="wasCopiedKey == 'dynamicRegistrationUrl'"
-            [onCopyFinished]="onCopyFinished"
-            onCopyFinishedKey="dynamicRegistrationUrl"
-        ></jhi-copy-icon-button>
+        <jhi-copy-icon-button [copyText]="getDynamicRegistrationUrl()"></jhi-copy-icon-button>
     </dd>
 
     <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="mt-4 nav-tabs">
@@ -56,12 +51,7 @@
                 <div class="form-group">
                     <h4>
                         {{ 'artemisApp.lti.customParameters' | artemisTranslate }}
-                        <jhi-copy-icon-button
-                            [copyText]="getFormattedCustomParameters()"
-                            [wasCopied]="wasCopiedKey == 'customParameters'"
-                            [onCopyFinished]="onCopyFinished"
-                            onCopyFinishedKey="customParameters"
-                        ></jhi-copy-icon-button>
+                        <jhi-copy-icon-button [copyText]="getFormattedCustomParameters()"></jhi-copy-icon-button>
                     </h4>
 
                     <dt>
@@ -92,12 +82,7 @@
                 </dt>
                 <dd>
                     <span>{{ onlineCourseConfiguration?.ltiKey }}</span>
-                    <jhi-copy-icon-button
-                        [copyText]="onlineCourseConfiguration?.ltiKey ?? ''"
-                        [wasCopied]="wasCopiedKey == 'ltiKey'"
-                        [onCopyFinished]="onCopyFinished"
-                        onCopyFinishedKey="ltiKey"
-                    ></jhi-copy-icon-button>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiKey ?? ''"></jhi-copy-icon-button>
                 </dd>
 
                 <dt>
@@ -105,12 +90,7 @@
                 </dt>
                 <dd>
                     <span>{{ onlineCourseConfiguration?.ltiSecret }}</span>
-                    <jhi-copy-icon-button
-                        [copyText]="onlineCourseConfiguration?.ltiSecret ?? ''"
-                        [wasCopied]="wasCopiedKey == 'ltiSecret'"
-                        [onCopyFinished]="onCopyFinished"
-                        onCopyFinishedKey="ltiSecret"
-                    ></jhi-copy-icon-button>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiSecret ?? ''"></jhi-copy-icon-button>
                 </dd>
             </ng-template>
         </ng-container>
@@ -122,12 +102,7 @@
                 </dt>
                 <dd>
                     <span>{{ onlineCourseConfiguration?.registrationId }}</span>
-                    <jhi-copy-icon-button
-                        [copyText]="onlineCourseConfiguration?.registrationId ?? ''"
-                        [wasCopied]="wasCopiedKey == 'registrationId'"
-                        [onCopyFinished]="onCopyFinished"
-                        onCopyFinishedKey="registrationId"
-                    ></jhi-copy-icon-button>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.registrationId ?? ''"></jhi-copy-icon-button>
                 </dd>
 
                 <dt>
@@ -135,12 +110,7 @@
                 </dt>
                 <dd>
                     <span>{{ onlineCourseConfiguration?.clientId }}</span>
-                    <jhi-copy-icon-button
-                        [copyText]="onlineCourseConfiguration?.clientId ?? ''"
-                        [wasCopied]="wasCopiedKey == 'clientId'"
-                        [onCopyFinished]="onCopyFinished"
-                        onCopyFinishedKey="clientId"
-                    ></jhi-copy-icon-button>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.clientId ?? ''"></jhi-copy-icon-button>
                 </dd>
 
                 <dt>
@@ -148,12 +118,7 @@
                 </dt>
                 <dd>
                     <span>{{ onlineCourseConfiguration?.authorizationUri }}</span>
-                    <jhi-copy-icon-button
-                        [copyText]="onlineCourseConfiguration?.authorizationUri ?? ''"
-                        [wasCopied]="wasCopiedKey == 'authorizationUri'"
-                        [onCopyFinished]="onCopyFinished"
-                        onCopyFinishedKey="authorizationUri"
-                    ></jhi-copy-icon-button>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.authorizationUri ?? ''"></jhi-copy-icon-button>
                 </dd>
 
                 <dt>
@@ -161,12 +126,7 @@
                 </dt>
                 <dd>
                     <span>{{ onlineCourseConfiguration?.tokenUri }}</span>
-                    <jhi-copy-icon-button
-                        [copyText]="onlineCourseConfiguration?.tokenUri ?? ''"
-                        [wasCopied]="wasCopiedKey == 'tokenUri'"
-                        [onCopyFinished]="onCopyFinished"
-                        onCopyFinishedKey="tokenUri"
-                    ></jhi-copy-icon-button>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.tokenUri ?? ''"></jhi-copy-icon-button>
                 </dd>
 
                 <dt>
@@ -174,12 +134,7 @@
                 </dt>
                 <dd>
                     <span>{{ onlineCourseConfiguration?.jwkSetUri }}</span>
-                    <jhi-copy-icon-button
-                        [copyText]="onlineCourseConfiguration?.jwkSetUri ?? ''"
-                        [wasCopied]="wasCopiedKey == 'jwkSetUri'"
-                        [onCopyFinished]="onCopyFinished"
-                        onCopyFinishedKey="jwkSetUri"
-                    ></jhi-copy-icon-button>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.jwkSetUri ?? ''"></jhi-copy-icon-button>
                 </dd>
             </ng-template>
         </ng-container>
@@ -229,12 +184,7 @@
                                         <td>{{ exercise.title ? exercise.title : '' }}</td>
                                         <td>
                                             {{ getExerciseLaunchUrl(exercise) }}
-                                            <jhi-copy-icon-button
-                                                [copyText]="getExerciseLaunchUrl(exercise)"
-                                                [wasCopied]="wasCopiedKey == getExerciseLaunchUrl(exercise)"
-                                                [onCopyFinished]="onCopyFinished"
-                                                [onCopyFinishedKey]="getExerciseLaunchUrl(exercise)"
-                                            ></jhi-copy-icon-button>
+                                            <jhi-copy-icon-button [copyText]="getExerciseLaunchUrl(exercise)"></jhi-copy-icon-button>
                                         </td>
                                         <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
                                         <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>

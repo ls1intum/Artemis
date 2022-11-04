@@ -71,16 +71,4 @@ export class CourseLtiConfigurationComponent implements OnInit {
     sortRows() {
         this.sortService.sortByProperty(this.exercises, this.predicate, this.reverse);
     }
-
-    /**
-     * set wasCopied for 3 seconds on success for the received key
-     */
-    onCopyFinished = (successful: boolean, key: string): void => {
-        if (successful) {
-            this.wasCopiedKey = key;
-            setTimeout(() => {
-                this.wasCopiedKey = '';
-            }, 3000);
-        }
-    };
 }

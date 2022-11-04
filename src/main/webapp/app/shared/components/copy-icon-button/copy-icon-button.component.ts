@@ -6,11 +6,22 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons';
     templateUrl: './copy-icon-button.component.html',
 })
 export class CopyIconButtonComponent {
-    @Input() onCopyFinished: Function;
-    @Input() onCopyFinishedKey: string;
     @Input() copyText: string;
-    @Input() wasCopied: boolean;
+
+    wasCopied = false;
 
     // Icons
     faCopy = faCopy;
+
+    /**
+     * set wasCopied for 2 seconds on success for the received key
+     */
+    onCopyFinished = (successful: boolean): void => {
+        if (successful) {
+            this.wasCopied = true;
+            setTimeout(() => {
+                this.wasCopied = false;
+            }, 2000);
+        }
+    };
 }
