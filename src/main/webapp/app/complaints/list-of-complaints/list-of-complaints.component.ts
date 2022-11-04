@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -20,10 +21,11 @@ import { faExclamationTriangle, faFolderOpen, faSort } from '@fortawesome/free-s
     providers: [],
 })
 export class ListOfComplaintsComponent implements OnInit {
+    readonly ComplaintType = ComplaintType;
+
     public complaints: Complaint[] = [];
     public hasStudentInformation = false;
     public complaintType: ComplaintType;
-    ComplaintType = ComplaintType;
 
     private courseId: number;
     private exerciseId: number;
@@ -38,6 +40,7 @@ export class ListOfComplaintsComponent implements OnInit {
     isLoadingAllComplaints = false;
     filterOption?: number;
 
+    isAtLeastInstructor = false;
     loading = true;
     // Icons
     faSort = faSort;
@@ -55,6 +58,7 @@ export class ListOfComplaintsComponent implements OnInit {
         private sortService: SortService,
         private translateService: TranslateService,
         private artemisDatePipe: ArtemisDatePipe,
+        private courseManagementService: CourseManagementService,
     ) {}
 
     ngOnInit(): void {
@@ -98,6 +102,9 @@ export class ListOfComplaintsComponent implements OnInit {
             }
         }
         this.subscribeToComplaintResponse(complaintResponse);
+        this.courseManagementService.find(this.courseId).subscribe((response) => {
+            this.isAtLeastInstructor = response?.body?.isAtLeastInstructor ?? false;
+        });
     }
 
     subscribeToComplaintResponse(complaintResponse: Observable<HttpResponse<Complaint[]>>) {
