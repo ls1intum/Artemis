@@ -33,6 +33,8 @@
             "listOfComplaints": {
                 "exercise": "Übung",
                 "submissionId": "Einreichungs-ID",
+                "assessorLogin": "Bewertet von (Login)",
+                "assessorName": "Bewertet von (Name)",
                 "reviewerLogin": "Login Reviewer:in",
                 "reviewerName": "Name Reviewer:in",
                 "studentLogin": "Login",

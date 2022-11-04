@@ -67,12 +67,8 @@
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.submissionId' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.assessor.login">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerLogin' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
                     <th jhiSortBy="result.assessor.name">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorName' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="student.login" *ngIf="hasStudentInformation">
@@ -81,6 +77,10 @@
                     </th>
                     <th jhiSortBy="student.name" *ngIf="hasStudentInformation">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="result.complaintResponse.reviewer.name">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="submittedTime">
@@ -118,10 +118,6 @@
                     </td>
 
                     <td>
-                        <span>{{ complaint.result?.assessor?.login }}</span>
-                    </td>
-
-                    <td>
                         <span>{{ complaint.result?.assessor?.name }}</span>
                     </td>
 
@@ -131,6 +127,10 @@
 
                     <td *ngIf="hasStudentInformation">
                         <span>{{ complaint.student?.name }}</span>
+                    </td>
+
+                    <td>
+                        <span>{{ complaint.complaintResponse?.reviewer?.name }}</span>
                     </td>
 
                     <td>
