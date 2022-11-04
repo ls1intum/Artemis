@@ -20,8 +20,6 @@ export class CourseLtiConfigurationComponent implements OnInit {
 
     activeTab = 1;
 
-    wasCopiedKey = '';
-
     predicate = 'type';
     reverse = false;
 
