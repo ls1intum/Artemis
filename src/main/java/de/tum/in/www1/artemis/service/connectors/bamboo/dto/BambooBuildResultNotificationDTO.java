@@ -115,7 +115,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
     @Override
     public List<BuildJobDTOInterface> getBuildJobs() {
-        return getBuild().jobs().stream().map(job -> (BuildJobDTOInterface) job).toList();
+        return getBuild().jobs().stream().map(BuildJobDTOInterface.class::cast).toList();
     }
 
     @JsonIgnore
@@ -209,12 +209,12 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         @Override
         public List<TestCaseDTOInterface> getFailedTests() {
-            return failedTests.stream().map(test -> (TestCaseDTOInterface) test).toList();
+            return failedTests.stream().map(TestCaseDTOInterface.class::cast).toList();
         }
 
         @Override
         public List<TestCaseDTOInterface> getSuccessfulTests() {
-            return successfulTests.stream().map(test -> (TestCaseDTOInterface) test).toList();
+            return successfulTests.stream().map(TestCaseDTOInterface.class::cast).toList();
         }
     }
 

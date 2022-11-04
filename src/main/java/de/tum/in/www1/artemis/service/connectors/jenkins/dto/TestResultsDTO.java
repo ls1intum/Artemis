@@ -150,7 +150,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     }
 
     public List<BuildJobDTOInterface> getResults() {
-        return results.stream().map(testSuiteDTO -> (BuildJobDTOInterface) testSuiteDTO).toList();
+        return results.stream().map(BuildJobDTOInterface.class::cast).toList();
     }
 
     @Override
