@@ -48,9 +48,9 @@ public record TestCaseDTO(String name, String classname, double time, List<TestC
     }
 
     private Optional<String> extractMessageFromTestCase() {
-        var hasErrors = !CollectionUtils.isEmpty(errors());
-        var hasFailures = !CollectionUtils.isEmpty(failures());
-        var hasSuccessInfos = !CollectionUtils.isEmpty(successInfos());
+        boolean hasErrors = !CollectionUtils.isEmpty(errors());
+        boolean hasFailures = !CollectionUtils.isEmpty(failures());
+        boolean hasSuccessInfos = !CollectionUtils.isEmpty(successInfos());
         boolean successful = isSuccessful();
 
         if (successful && hasSuccessInfos && successInfos().get(0).getMostInformativeMessage() != null) {
