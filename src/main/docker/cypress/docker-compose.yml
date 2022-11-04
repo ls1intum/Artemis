@@ -1,5 +1,6 @@
 services:
     mysql:
+        # TODO: fix this
         extends:
             file: ../mysql.yml
             service: mysql
@@ -10,6 +11,7 @@ services:
             retries: 30
 
     artemis-app:
+        # TODO: check bamboo E2E pipeline and how we can integrate this here
         build:
             # This is required to copy the Artemis war file properly into the container
             context: ../../../..

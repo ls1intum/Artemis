@@ -285,13 +285,23 @@ Dockerfile
 
 You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfile``.
 
-* The Dockerfile defines three Docker volumes
+* The Dockerfile has multiple stages: A `build stage`, building the ``.war`` file, and a `runtime stage` with minimal
+  dependencies just for running artemis.
 
 .. TODO: add defaults and recheck config volume to docker-compose base service and Dockerfile
-         also recheck if the envs are still necessary
+   also recheck if the envs are still necessary
 
-    * ``/opt/artemis/config``: This will be used to store the configuration of Artemis in YAML files. If this directory
-      is empty, the default configuration of Artemis will be copied upon container start.
+* The Dockerfile defines three Docker volumes (at the specified paths inside the container):
+
+    * **/opt/artemis/config:**
+
+      This will be used to store additional configuration of Artemis in YAML files.
+      ``/src/main/resources/application-local.yml`` for instance is such an additional configuration file.
+      It should contain all custom configurations.
+      The other configurations like ``/src/main/resources/application.yml``, ... are built into the ``.war`` file and
+      therefore are not needed in this directory.
+
+      .. TODO: add better description here when this problem is solved how we handle configs
 
       .. tip::
         Instead of mounting this config directory, you can also use environment variables for the configuration as defined by the `Spring relaxed binding <https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables>`__.
@@ -300,16 +310,20 @@ You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfi
 
         To ease the transition of an existing set of YAML configuration files into the environment variable style, a `helper script <https://github.com/b-fein/spring-yaml-to-env>`__ can be used.
 
-    * ``/opt/artemis/data``: This directory should be used for any data (e.g., local clone of repositories).
-      Therefore, configure Artemis to store this files into this directory. In order to do that, you have to change
-      some properties in configuration files (i.e., ``artemis.repo-clone-path``, ``artemis.repo-download-clone-path``,
+    * **/opt/artemis/data:**
+
+      This directory should be used for any data (e.g., local clone of repositories).
+      This is preconfigured in the ``docker`` Java Spring profile (which sets the following values:
+      ``artemis.repo-clone-path``, ``artemis.repo-download-clone-path``,
       ``artemis.course-archives-path``, ``artemis.submission-export-path``, and ``artemis.file-upload-path``).
-      Otherwise you'll get permission failures.
-    * ``/opt/artemis/public/content``: This directory will be used for branding.
+
+    * **/opt/artemis/public/content:**
+
+      This directory will be used for branding.
       You can specify a favicon, ``imprint.html``, and ``privacy_statement.html`` here.
 
-* The startup script is located at ``src/main/docker/artemis/run_artemis.sh`` and contains all default environment
-  variables needed to start Artemis in a Docker container.
+* The startup script is located at ``src/main/docker/artemis/run_artemis.sh`` and is as a wrapper to start
+  the artemis Java application.
 
 * The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings
   (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
@@ -317,6 +331,35 @@ You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfi
     * LC_ALL ``en_US.UTF-8``
     * LANG ``en_US.UTF-8``
     * LANGUAGE ``en_US.UTF-8``
+
+.. _Docker Debugging:
+
+Debugging with Docker
+"""""""""""""""""""""
+
+| The Docker containers have the possibility to enable Java Remote Debugging via environment variables.
+| Via Java Remote Debugging you can use your preferred debugger on port 5005.
+  For IntelliJ you can use the `Remote Java Debugging for Docker` being shipped in the git repository.
+
+With the following environment variables you can configure the Remote Java Debugging inside the docker container:
+
+.. list-table::
+   :header-rows: 1
+
+   * - environment variable
+     - description
+     - possibles values
+   * - | JAVA_REMOTE_DEBUG
+     - | enables or disables the Java Remote Debugging
+       | in the Docker container
+     - | ``true`` to enable
+       | ``false`` to disable
+   * - | JAVA_REMOTE_DEBUG_SUSPEND
+     - | changes the start behaviour of the Java application,
+       | making it possible to suspend it until the debugger started
+     - | ``y`` to suspend the startup of the Java application
+       | ``n`` (default) to start the application right away
+
 
 Run the server via a run configuration in IntelliJ
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -521,7 +564,6 @@ instead of the TUM defaults:
 .. include:: setup/jenkins-gitlab.rst.txt
 
 ------------------------------------------------------------------------------------------------------------------------
->>>>>>> origin/develop-deployment-wg
 
 Athene Service
 --------------
@@ -613,46 +655,92 @@ In the directory ``src/main/docker/`` you can find the following docker-compose 
 * ``gitlab-jenkins.yml``: **GitLab-Jenkins** Setup containing a GitLab and Jenkins instance
 * ``gitlab-jenkins-mysql.yml``: **GitLab-Jenkins-MySQL** Setup containing a GitLab, Jenkins and MySQL DB instance
 
-There is also a single ``docker-compose.yml`` in the project root which mirrors the setup of ``artemis-dev-mysql.yml``.
-This should provide a quick way, without manual changes necessary, for new contributors to startup an Artemis instance.
+.. TODO: fix the implementation: currently you still have to create the file /src/main/resources/application-local.yaml
 
-For each service being used in these docker-compose files a base service is defined in the following files:
+.. tip::
+  There is also a single ``docker-compose.yml`` in the project root which mirrors the setup of ``artemis-dev-mysql.yml``.
+  This should provide a quick way, without manual changes necessary, for new contributors to startup an Artemis instance.
+
+For each service being used in these docker-compose files a **base service** (containing similar settings)
+is defined in the following files:
 
 * ``artemis/artemis.yml``: **Artemis Service**
 * ``mysql.yaml``: **MySQL DB Service**
 * ``gitlab/gitlab.yaml``: **GitLab Service**
 * ``jenkins/jenkins.yaml``: **Jenkins Service**
 
-(Native) Running and Debugging from IDEs is currently not supported.
+For testing mails or SAML logins you can append the following services to any setup with an artemis container:
+
+* ``mailhog/mailhog.yml``: **Mailhog Service** (email testing tool)
+* ``saml-test/saml-test.yaml``: **Saml-Test Service** (SAML Test Identity Provider for testing SAML features)
+
+An example command to run such an extended setup:
+
+.. code:: bash
+
+  docker-compose -f src/main/docker/artemis-dev-mysql.yml -f src/main/docker/mailhog/mailhog.yml up
+
+.. warning::
+  If you want to run multiple docker-compose setups in parallel on one host you might have to modify
+  volume, container and network names!
 
 Getting Started with Docker-Compose Setups
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To get started with one of the mentioned Docker-Compose Setups do the following:
 
+.. TODO: modify config part accordingly to config decision
+
 1. Install `docker <https://docs.docker.com/install/>`__ and `docker-compose <https://docs.docker.com/compose/install/>`__
 2. ( Depending on the chosen setup it's necessary to configure the Artemis configs like ``application-local.yml``
-   in the folder ``src/main/resources/config`` as described above. The default setup ``docker-compose.yml`` should
-   run without the default configurations, so no changes are required.)
-3. Run ``docker-compose up`` or ``docker-compose up -f src/main/docker/<setup to be launched>.yml``
+   in the folder ``src/main/resources/config`` as described in the section `Dockerfile <#dockerfile>`__.
+   The default setup ``docker-compose.yml`` should run without the default configurations, so no changes are required.)
+3. Run ``docker-compose up`` or ``docker-compose -f src/main/docker/<setup to be launched>.yml up``
 4. For Artemis instances go to http://localhost:8080 (http://localhost:9000 for the seperated server and client setup)
+
+Debugging with Docker
+^^^^^^^^^^^^^^^^^^^^^
+
+See the `Debugging with Docker <#docker-debugging>`__ section for detailed information.
+In all development docker-compose setups like ``artemis-dev-mysql.yml`` Java Remote Debugging is enabled by default.
+
+Service, Container and Volume names
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Service names for the usage within docker-compose are kept short, like ``mysql``, to make it easier
+to use them in a CLI.
+
+Container and volume names are prepended with ``artemis-`` in order to not interfere with other container or volume
+names on your system.
 
 Get a shell into the containers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. tip::
+  To keep the documentation short, we will use the standard form of ``docker-compose COMMAND`` from this point on.
+  You can use the following commands also with the ``-f src/main/docker/<setup to be launched>.yml`` argument pointing
+  to a specific setup.
 
 -  app container:
    ``docker-compose exec artemis-app bash``
 -  mysql container:
    ``docker-compose exec mysql bash`` or directly into mysql ``docker-compose exec mysql mysql``
 
-Analog for other services
+Analog for other services.
 
 Other useful commands
 ^^^^^^^^^^^^^^^^^^^^^
 
--  Stop a service: ``docker-compose stop <name of the service>`` (restart via
-   ``docker-compose start <name of the service>``)
--  Restart a service: ``docker-compose restart <name of the service>``
+- Start a setup in the background: ``docker-compose up -d``
+- Stop and remove containers of a setup: ``docker-compose down``
+- Stop, remove containers and volumes: ``docker-compose down -v``
+- Remove artemis related volumes/state: ``docker volume rm artemis-data artemis-mysql-data``
+
+  This is helpful in setups where you just want to delete the state of artemis
+  but not of Jenkins and GitLab for instance.
+- Stop a service: ``docker-compose stop <name of the service>`` (restart via
+  ``docker-compose start <name of the service>``)
+- Restart a service: ``docker-compose restart <name of the service>``
 
 ------------------------------------------------------------------------------------------------------------------------
 
