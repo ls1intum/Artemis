@@ -1,10 +1,11 @@
 <button
+    id="copyButton"
     class="btn btn-sm"
     type="button"
     ngbTooltip="{{ 'global.generic.copy' | artemisTranslate }}"
     *ngIf="copyText.length > 0"
     [cdkCopyToClipboard]="copyText"
-    (cdkCopyToClipboardCopied)="onCopyFinished($event)"
+    (cdkCopyToClipboardCopied)="onCopyFinished()"
     [class.btn-success]="wasCopied"
 >
     <fa-icon [icon]="faCopy"></fa-icon>

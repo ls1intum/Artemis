@@ -1,11 +1,11 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { Router } from '@angular/router';
-import { MockDirective, MockPipe, MockComponent, MockProvider } from 'ng-mocks';
+import { By } from '@angular/platform-browser';
+import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { SortService } from 'app/shared/service/sort.service';
@@ -17,17 +17,17 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTestModule } from '../../test.module';
+import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 
 describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
     let fixture: ComponentFixture<CourseLtiConfigurationComponent>;
     let courseService: CourseManagementService;
-    let sortService: SortService;
 
     let findWithExercisesStub: jest.SpyInstance;
 
@@ -56,14 +56,9 @@ describe('Course LTI Configuration Component', () => {
     const courseWithExercises = new Course();
     courseWithExercises.exercises = [textExercise, programmingExercise, quizExercise, fileUploadExercise, modelingExercise];
 
-    const parentRoute = {
-        data: of({ course }),
-    } as any as ActivatedRoute;
-    const route = { parent: parentRoute } as any as ActivatedRoute;
-    const router = new MockRouter();
-
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, NgbNavModule],
             declarations: [
                 CourseLtiConfigurationComponent,
                 MockDirective(TranslateDirective),
@@ -75,7 +70,6 @@ describe('Course LTI Configuration Component', () => {
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(SortService),
-                { provide: Router, useValue: router },
                 mockedActivatedRoute(
                     {},
                     {},
@@ -91,7 +85,6 @@ describe('Course LTI Configuration Component', () => {
                 fixture = TestBed.createComponent(CourseLtiConfigurationComponent);
                 comp = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
-                sortService = TestBed.inject(SortService);
                 findWithExercisesStub = jest.spyOn(courseService, 'findWithExercises');
             });
     });
@@ -122,5 +115,23 @@ describe('Course LTI Configuration Component', () => {
             expect(comp.exercises).toEqual(courseWithExercises.exercises);
             expect(findWithExercisesStub).toHaveBeenCalledOnce();
         });
+    });
+
+    it('should display exercises in exercise tab', () => {
+        findWithExercisesStub.mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: courseWithExercises,
+                    status: 200,
+                }),
+            ),
+        );
+        comp.ngOnInit();
+        comp.activeTab = 4;
+
+        fixture.detectChanges();
+
+        const tableRows = fixture.debugElement.queryAll(By.css('tbody > tr'));
+        expect(tableRows).toHaveLength(5);
     });
 });

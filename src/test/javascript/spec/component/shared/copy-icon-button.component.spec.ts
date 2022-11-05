@@ -5,7 +5,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { By } from '@angular/platform-browser';
 
 describe('JhiCopyIconButtonComponent', () => {
     let component: CopyIconButtonComponent;
@@ -22,27 +21,39 @@ describe('JhiCopyIconButtonComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', () => {
         component.copyText = 'text';
         fixture.detectChanges();
         expect(CopyIconButtonComponent).not.toBeNull();
-    }));
+    });
 
-    it('should not be hidden with text', fakeAsync(() => {
+    it('should not be hidden with text', () => {
         component.copyText = 'text';
-        expect(fixture.debugElement.query(By.css('.btn btn-sm'))).toBeTruthy();
-    }));
+        fixture.detectChanges();
 
-    it('should be hidden if text is empty', fakeAsync(() => {
+        const copyButton = fixture.debugElement.nativeElement.querySelector('#copyButton');
+        expect(copyButton).toBeTruthy();
+    });
+
+    it('should be hidden if text is empty', () => {
         component.copyText = '';
-        expect(fixture.debugElement.query(By.css('.btn btn-sm'))).toBeNull();
-    }));
+        fixture.detectChanges();
 
-    it('should show it was copied on click', fakeAsync(() => {
+        const copyButton = fixture.debugElement.nativeElement.querySelector('#copyButton');
+        expect(copyButton).toBeNull();
+    });
+
+    it('should show it was copied on click', () => {
         component.copyText = 'text';
+        fixture.detectChanges();
 
-        fixture.debugElement.query(By.css('.btn btn-sm')).nativeElement.click();
-        tick();
-        expect(component.wasCopied).toBeTrue();
-    }));
+        const copyButton = fixture.debugElement.nativeElement.querySelector('#copyButton');
+        copyButton.click();
+        fixture.whenStable().then(() => {
+            expect(component.wasCopied).toBeTrue();
+
+            jest.advanceTimersByTime(3000);
+            expect(component.wasCopied).toBeFalse();
+        });
+    });
 });

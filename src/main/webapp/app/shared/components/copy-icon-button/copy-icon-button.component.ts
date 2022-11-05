@@ -14,14 +14,12 @@ export class CopyIconButtonComponent {
     faCopy = faCopy;
 
     /**
-     * set wasCopied for 2 seconds on success for the received key
+     * set wasCopied for 2 seconds
      */
-    onCopyFinished = (successful: boolean): void => {
-        if (successful) {
-            this.wasCopied = true;
-            setTimeout(() => {
-                this.wasCopied = false;
-            }, 2000);
-        }
+    onCopyFinished = (): void => {
+        this.wasCopied = true;
+        setTimeout(() => {
+            this.wasCopied = false;
+        }, 2000);
     };
 }
