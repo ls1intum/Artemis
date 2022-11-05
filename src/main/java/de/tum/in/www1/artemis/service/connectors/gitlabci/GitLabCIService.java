@@ -66,6 +66,10 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private static final String VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME = "ARTEMIS_TEST_GIT_REPOSITORY_SLUG";
 
+    private static final String VARIABLE_TEST_GIT_TOKEN = "ARTEMIS_TEST_GIT_TOKEN";
+
+    private static final String VARIABLE_TEST_GIT_USER = "ARTEMIS_TEST_GIT_USER";
+
     private static final String VARIABLE_TEST_RESULTS_DIR_NAME = "ARTEMIS_TEST_RESULTS_DIR";
 
     private final GitLabApi gitlab;
@@ -93,6 +97,12 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
     private String artemisAuthenticationTokenValue;
+
+    @Value("${artemis.version-control.user}")
+    private String gitlabUser;
+
+    @Value("${artemis.version-control.token}")
+    private String gitlabToken;
 
     public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
                            RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository,
@@ -147,6 +157,10 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             updateVariable(repositoryPath, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch(), false);
             updateVariable(repositoryPath, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch(), false);
             updateVariable(repositoryPath, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, urlService.getRepositorySlugFromRepositoryUrlString(exercise.getTestRepositoryUrl()), true);
+            // TODO: Use a token that is only valid for the test repository for each programming exercise
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_TOKEN, gitlabToken, true);
+            // We do not mask this variable because GitLab requires that a masked string to be at least 8 characters long. This is not the case if you use the default user ('root').
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_USER, gitlabUser, false);
             updateVariable(repositoryPath, VARIABLE_TEST_RESULTS_DIR_NAME, "target/surefire-reports", true);
         }
         catch (GitLabApiException e) {
@@ -155,6 +169,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     private void updateVariable(String repositoryPath, String key, String value, boolean masked) throws GitLabApiException {
+        // TODO: We can even define the variables on group level
         gitlab.getProjectApi().createVariable(repositoryPath, key, value, Variable.Type.ENV_VAR, false, masked);
     }
 
