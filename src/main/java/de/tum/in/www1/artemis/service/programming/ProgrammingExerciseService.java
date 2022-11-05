@@ -917,8 +917,11 @@ public class ProgrammingExerciseService {
         if (templateProgrammingExerciseParticipation != null) {
             participationService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation.getId(), true);
         }
+
+        programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(programmingExerciseId);
+        log.debug("Delete programming exercises with student participations: {}", programmingExercise.getStudentParticipations());
         // This will also delete the template & solution participation.
-        programmingExerciseRepository.deleteById(programmingExercise.getId());
+        programmingExerciseRepository.deleteById(programmingExerciseId);
     }
 
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
