@@ -9,11 +9,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,14 +45,6 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
     @Query("select feedback from Feedback feedback where feedback.gradingInstruction.id in :gradingInstructionsIds")
     List<Feedback> findFeedbackByGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);
-
-    /**
-     * Delete all feedbacks that belong to the given result
-     * @param resultId the Id of the result where the feedbacks should be deleted
-     */
-    @Transactional // ok because of delete
-    @Modifying
-    void deleteByResult_Id(long resultId);
 
     /**
      * Save the given feedback elements to the database in case they are not yet connected to a result

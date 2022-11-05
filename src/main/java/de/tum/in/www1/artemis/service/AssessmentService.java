@@ -170,7 +170,6 @@ public class AssessmentService {
         // We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
         if (result != null && result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC) {
             participation.removeResult(result);
-            feedbackRepository.deleteByResult_Id(result.getId());
             resultService.deleteResult(result, true);
         }
     }
@@ -288,7 +287,6 @@ public class AssessmentService {
             throw new BadRequestAlertException("Result has a complaint", "result", "hasComplaint");
         }
         submission.getResults().remove(result);
-        feedbackRepository.deleteByResult_Id(result.getId());
         resultService.deleteResultReferences(result.getId(), true);
         // this keeps the result order intact and automatically deletes the result
         submissionRepository.save(submission);
