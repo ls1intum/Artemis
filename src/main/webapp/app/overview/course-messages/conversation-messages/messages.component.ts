@@ -101,6 +101,7 @@ export class MessagesComponent implements OnInit, AfterViewInit, OnDestroy {
 
     private onActiveConversationChange() {
         if (this.course && this._activeConversation) {
+            this.searchText = '';
             this.commandMetisToFetchPosts(true);
             this.createEmptyPost();
         }
@@ -160,7 +161,7 @@ export class MessagesComponent implements OnInit, AfterViewInit, OnDestroy {
 
     onSearch(): void {
         this.page = 1;
-        this.commandMetisToFetchPosts();
+        this.commandMetisToFetchPosts(true);
     }
 
     createEmptyPost(): void {

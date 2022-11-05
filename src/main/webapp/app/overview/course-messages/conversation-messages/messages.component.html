@@ -4,13 +4,7 @@
             <div class="row ps-0">
                 <!-- search bar -->
                 <div class="input-group col-10 px-0 mb-4">
-                    <input
-                        name="searchText"
-                        [(ngModel)]="searchText"
-                        class="form-control"
-                        (keyup.enter)="commandMetisToFetchPosts()"
-                        placeholder="{{ 'artemisApp.messages.searchBarPlaceholder' | artemisTranslate }}"
-                    />
+                    <input name="searchText" [(ngModel)]="searchText" class="form-control" placeholder="{{ 'artemisApp.messages.searchBarPlaceholder' | artemisTranslate }}" />
                     <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSearch()"></jhi-button>
                     <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSearch()"></jhi-button>
                 </div>
