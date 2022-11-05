@@ -4,7 +4,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { map, finalize } from 'rxjs';
+import { finalize, map } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';

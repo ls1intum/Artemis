@@ -1,8 +1,8 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { delay, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
