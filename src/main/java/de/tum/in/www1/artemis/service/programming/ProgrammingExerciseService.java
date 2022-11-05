@@ -918,7 +918,7 @@ public class ProgrammingExerciseService {
             participationService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation.getId(), true);
         }
         // This will also delete the template & solution participation.
-        programmingExerciseRepository.delete(programmingExercise);
+        programmingExerciseRepository.deleteById(programmingExercise.getId());
     }
 
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
