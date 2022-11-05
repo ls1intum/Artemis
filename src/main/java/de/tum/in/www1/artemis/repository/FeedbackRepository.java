@@ -9,9 +9,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +52,8 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
      * Delete all feedbacks that belong to the given result
      * @param resultId the Id of the result where the feedbacks should be deleted
      */
+    @Transactional // ok because of delete
+    @Modifying
     void deleteByResult_Id(long resultId);
 
     /**
