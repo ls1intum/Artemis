@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { faCircleNotch, faEnvelope, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { of, Subscription, switchMap, take } from 'rxjs';
+import { map, of, Subscription, switchMap, take } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
@@ -11,6 +11,7 @@ import { Channel, isChannelDto } from 'app/entities/metis/conversation/channel.m
 import { GroupChat, isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
 import { ActivatedRoute } from '@angular/router';
 import { ButtonType } from 'app/shared/components/button.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-messages',
@@ -65,7 +66,7 @@ export class MessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     constructor(
         private activatedRoute: ActivatedRoute,
         protected metisService: MetisService, // instance from course-messages.component
-        private courseCalculationService: CourseScoreCalculationService,
+        private courseManagementService: CourseManagementService,
     ) {}
 
     ngOnInit(): void {
@@ -74,7 +75,8 @@ export class MessagesComponent implements OnInit, AfterViewInit, OnDestroy {
                 take(1),
                 switchMap((params) => {
                     const courseId = Number(params.get('courseId'));
-                    return of(this.courseCalculationService.getCourse(courseId)); // use cached course
+                    // we need to load lecture and exercises too so that metis service can use it for references in post!
+                    return this.courseManagementService.findOneForDashboard(courseId).pipe(map((res) => res.body!));
                 }),
             )
             .subscribe((course: Course) => {
