@@ -707,6 +707,12 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testInvalidOnlineCourseNonUniqueRegistrationId() throws Exception {
+        courseTestService.testInvalidOnlineCourseNonUniqueRegistrationId();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateValidOnlineCourse() throws Exception {
         courseTestService.testCreateValidOnlineCourse();
     }

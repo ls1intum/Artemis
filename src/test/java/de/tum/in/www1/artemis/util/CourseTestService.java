@@ -2128,6 +2128,20 @@ public class CourseTestService {
         request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
     }
 
+    public void testInvalidOnlineCourseNonUniqueRegistrationId() throws Exception {
+        Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        OnlineCourseConfiguration oc1 = ModelFactory.generateOnlineCourseConfiguration(course1, "key", "secret", "prefix", null);
+        oc1.setRegistrationId("regId");
+
+        courseRepo.save(course1);
+
+        Course course2 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        OnlineCourseConfiguration oc2 = ModelFactory.generateOnlineCourseConfiguration(course2, "key", "secret", "prefix", null);
+        oc2.setRegistrationId("regId");
+
+        request.post("/api/courses", course2, HttpStatus.BAD_REQUEST);
+    }
+
     // Test
     public void testCreateValidOnlineCourse() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
