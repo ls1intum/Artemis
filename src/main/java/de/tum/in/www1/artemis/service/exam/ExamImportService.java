@@ -285,6 +285,7 @@ public class ExamImportService {
         // we do not support the following values as part of exam exercises
         newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         newExercise.setSubmissionPolicy(null);
+        newExercise.setVisibilityDate(null);
         newExercise.setReleaseDate(null);
         newExercise.setDueDate(null);
         newExercise.setAssessmentDueDate(null);

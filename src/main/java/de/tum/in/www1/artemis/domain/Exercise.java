@@ -867,7 +867,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      */
     public void validateDates() {
         // All fields are optional, so there is no error if none of them is set
-        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
+        if (getVisibilityDate() == null && getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
             return;
         }
         if (isExamExercise()) {
@@ -875,7 +875,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
         }
 
         // at least one is set, so we have to check the three possible errors
-        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+        boolean areDatesValid = (getVisibilityDate() == null || getReleaseDate() != null) && isNotAfterAndNotNull(getVisibilityDate(), getReleaseDate()) && isNotAfterAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
                 && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
 
         if (!areDatesValid) {

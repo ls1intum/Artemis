@@ -7,6 +7,12 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 
 public enum ExerciseLifecycle implements IExerciseLifecycle {
+    VISIBLE {
+        @Override
+        public ZonedDateTime getDateFromExercise(Exercise exercise) {
+            return exercise.getVisibilityDate();
+        }
+    },
     RELEASE {
 
         @Override

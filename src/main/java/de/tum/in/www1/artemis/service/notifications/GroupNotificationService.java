@@ -55,8 +55,12 @@ public class GroupNotificationService {
      * @param notificationText that is used for the notification process
      */
     public void notifyAboutExerciseUpdate(Exercise exercise, String notificationText) {
-        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            // Do not send an exercise-update notification before the release date of the exercise.
+        boolean beforeVisibility = exercise.getVisibilityDate() != null && exercise.getVisibilityDate().isAfter(ZonedDateTime.now());
+        boolean beforeRelease = exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now());
+
+
+        if (beforeVisibility && beforeRelease) {
+            // Do not send a notification before the release or visibility date of the exercise.
             return;
         }
 
@@ -147,8 +151,11 @@ public class GroupNotificationService {
      * @param notificationText that should be displayed
      */
     public void notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
-        // Do not send a notification before the release date of the exercise.
-        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+        boolean beforeVisibility = exercise.getVisibilityDate() != null && exercise.getVisibilityDate().isAfter(ZonedDateTime.now());
+        boolean beforeRelease = exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now());
+
+        // Do not send a notification before the release or visibility date of the exercise.
+        if (beforeVisibility && beforeRelease) {
             return;
         }
         notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, EDITOR, INSTRUCTOR }, EXERCISE_UPDATED, exercise, notificationText, userRepository.getUser());
