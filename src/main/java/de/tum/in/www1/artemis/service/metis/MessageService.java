@@ -14,12 +14,14 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.MessageRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
@@ -27,6 +29,9 @@ import de.tum.in.www1.artemis.service.metis.conversation.GroupChatService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
@@ -42,8 +47,8 @@ public class MessageService extends PostingService {
 
     protected MessageService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, MessageRepository messageRepository,
             AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository, GroupChatService groupChatService,
-            ConversationService conversationService) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
+            ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository) {
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.groupChatService = groupChatService;
         this.conversationService = conversationService;
         this.messageRepository = messageRepository;
@@ -62,7 +67,7 @@ public class MessageService extends PostingService {
         if (messagePost.getConversation() != null) {
 
             final User user = this.userRepository.getUserWithGroupsAndAuthorities();
-            Conversation conversation = null;
+            Conversation conversation;
 
             // checks
             if (messagePost.getId() != null) {
@@ -88,12 +93,32 @@ public class MessageService extends PostingService {
             conversationService.updateConversation(conversation);
 
             broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
-            conversationService.broadcastForConversation(new ConversationWebsocketDTO(conversation, MetisCrudAction.UPDATE), null);
+
+            // ToDo: Investigate if this means we really send one message for every channel participant and if we can optimize this
+            conversationService.broadcastForConversation(course, new ConversationWebsocketDTO(getConversationDTO(user, conversation), MetisCrudAction.UPDATE), null);
 
             return savedMessage;
         }
 
         // conversation object must be provided in all cases. we do not throw an exception here in order to not leak implementation details
+        return null;
+    }
+
+    private ConversationDTO getConversationDTO(User user, Conversation conversation) {
+        if (conversation instanceof Channel c) {
+            var channelDto = new ChannelDTO(c);
+            channelDto.setIsMember(true);
+            channelDto.setNumberOfMembers(conversationService.getMemberCount(c.getId()));
+            return channelDto;
+        }
+        else if (conversation instanceof GroupChat g) {
+            var groupChat = groupChatService.findByIdWithConversationParticipantsElseThrow(g.getId());
+            var groupDto = new GroupChatDTO(groupChat);
+            groupDto.setIsMember(true);
+            groupDto.setNumberOfMembers(groupChat.getConversationParticipants().size());
+            groupDto.setNamesOfOtherMembers(groupChatService.getNamesOfOtherMembers(groupChat, user));
+            return groupDto;
+        }
         return null;
     }
 
@@ -120,7 +145,9 @@ public class MessageService extends PostingService {
             setAuthorRoleOfPostings(conversationPosts.getContent());
 
             conversationService.auditConversationReadTimeOfUser(conversation, user);
-            conversationService.broadcastForConversation(new ConversationWebsocketDTO(conversation, MetisCrudAction.READ_CONVERSATION), user);
+
+            conversationService.broadcastForConversation(conversation.getCourse(),
+                    new ConversationWebsocketDTO(getConversationDTO(user, conversation), MetisCrudAction.READ_CONVERSATION), user);
         }
         else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
@@ -188,7 +215,7 @@ public class MessageService extends PostingService {
             throw new AccessForbiddenException("Post", existingMessagePost.getId());
         }
         else {
-            return conversationService.getConversationByIdWithConversationParticipants(existingMessagePost.getConversation().getId());
+            return conversationService.getConversationById(existingMessagePost.getConversation().getId());
         }
     }
 

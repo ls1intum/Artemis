@@ -4,10 +4,15 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelOverviewDTO, ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { ChannelAction } from 'app/overview/course-messages/channels/channels-overview-dialog/channel-item/channel-item.component';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
+export type ChannelActionType = 'register' | 'deregister' | 'view';
+export type ChannelAction = {
+    action: ChannelActionType;
+    channel: ChannelDTO;
+};
 @Component({
     selector: 'jhi-channels-overview-dialog',
     templateUrl: './channels-overview-dialog.component.html',
@@ -21,7 +26,7 @@ export class ChannelsOverviewDialogComponent implements OnInit {
 
     channelActionPerformed = false;
     isLoading = false;
-    channels: ChannelOverviewDTO[] = [];
+    channels: ChannelDTO[] = [];
     idsOfUnsubscribedChannels: number[] = [];
 
     constructor(
@@ -49,8 +54,8 @@ export class ChannelsOverviewDialogComponent implements OnInit {
         }
     }
 
-    trackIdentity(index: number, item: ChannelOverviewDTO) {
-        return item.channelId;
+    trackIdentity(index: number, item: ChannelDTO) {
+        return item.id!;
     }
 
     onChannelAction(channelAction: ChannelAction) {
@@ -60,23 +65,23 @@ export class ChannelsOverviewDialogComponent implements OnInit {
     performChannelAction(channelAction: ChannelAction) {
         switch (channelAction.action) {
             case 'register':
-                this.channelService.registerUsersToChannel(this.courseId, channelAction.channel.channelId).subscribe(() => {
-                    if (this.idsOfUnsubscribedChannels.includes(channelAction.channel.channelId)) {
-                        this.idsOfUnsubscribedChannels = this.idsOfUnsubscribedChannels.filter((id) => id !== channelAction.channel.channelId);
+                this.channelService.registerUsersToChannel(this.courseId, channelAction.channel.id!).subscribe(() => {
+                    if (this.idsOfUnsubscribedChannels.includes(channelAction.channel.id!)) {
+                        this.idsOfUnsubscribedChannels = this.idsOfUnsubscribedChannels.filter((id) => id !== channelAction.channel.id!);
                     }
                     this.loadChannels();
                     this.channelActionPerformed = true;
                 });
                 break;
             case 'deregister':
-                this.channelService.deregisterUsersFromChannel(this.courseId, channelAction.channel.channelId).subscribe(() => {
-                    this.idsOfUnsubscribedChannels.push(channelAction.channel.channelId);
+                this.channelService.deregisterUsersFromChannel(this.courseId, channelAction.channel.id!).subscribe(() => {
+                    this.idsOfUnsubscribedChannels.push(channelAction.channel.id!);
                     this.loadChannels();
                     this.channelActionPerformed = true;
                 });
                 break;
             case 'view':
-                this.activeModal.close(channelAction.channel.channelId);
+                this.activeModal.close(channelAction.channel.id!);
                 break;
         }
     }
@@ -85,13 +90,13 @@ export class ChannelsOverviewDialogComponent implements OnInit {
         this.channelService
             .getChannelsOfCourse(this.courseId)
             .pipe(
-                map((res: HttpResponse<ChannelOverviewDTO[]>) => res.body),
+                map((res: HttpResponse<ChannelDTO[]>) => res.body),
                 finalize(() => {
                     this.isLoading = false;
                 }),
             )
             .subscribe({
-                next: (channels: ChannelOverviewDTO[]) => {
+                next: (channels: ChannelDTO[]) => {
                     this.channels = channels ?? [];
                     this.noOfChannels = this.channels.length;
                 },

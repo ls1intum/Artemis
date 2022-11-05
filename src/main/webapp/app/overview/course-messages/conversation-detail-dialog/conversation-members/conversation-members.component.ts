@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
@@ -28,7 +28,8 @@ export class ConversationMembers implements OnInit {
     changesPerformed = new EventEmitter<void>();
 
     @Input()
-    conversation: Conversation;
+    conversation: ConversationDto;
+
     @Input()
     course: Course;
 

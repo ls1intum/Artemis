@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.MessageRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
@@ -36,8 +37,8 @@ public class AnswerMessageService extends PostingService {
 
     public AnswerMessageService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, MessageRepository messageRepository, ConversationService conversationService, ExerciseRepository exerciseRepository,
-            LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
+            LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate, ConversationParticipantRepository conversationParticipantRepository) {
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.answerPostRepository = answerPostRepository;
         this.messageRepository = messageRepository;
         this.conversationService = conversationService;
@@ -116,7 +117,7 @@ public class AnswerMessageService extends PostingService {
             throw new AccessForbiddenException("Answer Post", existingAnswerPost.getId());
         }
         else {
-            return conversationService.getConversationByIdWithConversationParticipants(existingAnswerPost.getPost().getConversation().getId());
+            return conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
         }
     }
 

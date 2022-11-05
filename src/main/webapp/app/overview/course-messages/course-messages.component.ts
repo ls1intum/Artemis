@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { Component, OnInit } from '@angular/core';
+import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -21,8 +21,8 @@ export class CourseMessagesComponent implements OnInit {
     // ToDo: vielleicht so einen Conversation Action listener machen, der dann die entsprechenden Methoden aufruft
     refreshConversations$ = new Subject<void>();
 
-    conversations: Conversation[];
-    activeConversation?: Conversation;
+    conversations: ConversationDto[];
+    activeConversation?: ConversationDto;
 
     isLoading = false;
     course: Course;
@@ -34,10 +34,9 @@ export class CourseMessagesComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         public messagingService: MessagingService,
         private alertService: AlertService,
-        public cdr: ChangeDetectorRef,
     ) {}
 
-    onConversationSelected(conversation: Conversation | undefined) {
+    onConversationSelected(conversation: ConversationDto | undefined) {
         this.activeConversation = conversation;
     }
 
@@ -70,7 +69,7 @@ export class CourseMessagesComponent implements OnInit {
                 next: (courseResult) => {
                     this.course = courseResult.body!;
                     this.messagingService.getConversationsOfUser(this.course.id!).subscribe(() => {
-                        this.messagingService.conversations.subscribe((conversations: Conversation[]) => {
+                        this.messagingService.conversations.subscribe((conversations: ConversationDto[]) => {
                             this.conversations = conversations ?? [];
                             if (this.conversations.length > 0 && !this.activeConversation) {
                                 // emit the value to fetch conversation posts on post overview tab

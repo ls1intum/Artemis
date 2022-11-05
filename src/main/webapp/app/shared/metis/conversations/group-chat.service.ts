@@ -3,9 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { map } from 'rxjs/operators';
-import { GroupChat } from 'app/entities/metis/conversation/groupChat.model';
-
-type EntityResponseType = HttpResponse<GroupChat>;
+import { GroupChat, GroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
 
 @Injectable({ providedIn: 'root' })
 export class GroupChatService {
@@ -13,8 +11,8 @@ export class GroupChatService {
 
     constructor(private http: HttpClient, private conversationService: ConversationService) {}
 
-    create(courseId: number, groupChat: GroupChat): Observable<EntityResponseType> {
+    create(courseId: number, groupChat: GroupChat): Observable<HttpResponse<GroupChatDto>> {
         const copy = this.conversationService.convertDateFromClient(groupChat);
-        return this.http.post<GroupChat>(`${this.resourceUrl}${courseId}/groupchats`, copy, { observe: 'response' }).pipe(map(this.conversationService.convertDateFromServer));
+        return this.http.post<GroupChatDto>(`${this.resourceUrl}${courseId}/group-chats`, copy, { observe: 'response' }).pipe(map(this.conversationService.convertDateFromServer));
     }
 }

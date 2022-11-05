@@ -8,33 +8,28 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 
 @Service
 public class ConversationService {
 
-    private static final String CONVERSATION_ENTITY_NAME = "messages.conversation";
-
-    private static final String CONVERSATION_DETAILS_ENTITY_NAME = "messages.conversationParticipant";
-
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     private final UserRepository userRepository;
-
-    private final CourseRepository courseRepository;
-
-    private final AuthorizationCheckService authorizationCheckService;
 
     private final ConversationRepository conversationRepository;
 
@@ -46,27 +41,26 @@ public class ConversationService {
 
     private final GroupChatRepository groupChatRepository;
 
-    private final ChannelService channelService;
+    private final GroupChatService groupChatService;
 
-    public ConversationService(UserRepository userRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
-            ChannelRepository channelRepository, ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository,
-            SimpMessageSendingOperations messagingTemplate, GroupChatRepository groupChatRepository, ChannelService channelService) {
+    public ConversationService(UserRepository userRepository, ChannelRepository channelRepository, ConversationParticipantRepository conversationParticipantRepository,
+            ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate, GroupChatRepository groupChatRepository,
+            GroupChatService groupChatService) {
         this.userRepository = userRepository;
-        this.courseRepository = courseRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.channelRepository = channelRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.conversationRepository = conversationRepository;
         this.messagingTemplate = messagingTemplate;
         this.groupChatRepository = groupChatRepository;
-        this.channelService = channelService;
+        this.groupChatService = groupChatService;
     }
 
     public void registerUsers(Set<User> usersToRegister, Conversation conversation) {
+        var conversationFromDatabase = conversationRepository.findByIdWithConversationParticipantsElseThrow(conversation.getId());
         var userThatNeedToBeRegistered = new HashSet<User>();
 
         for (User user : usersToRegister) {
-            var isRegistered = conversation.getConversationParticipants().stream()
+            var isRegistered = conversationFromDatabase.getConversationParticipants().stream()
                     .anyMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()));
             if (!isRegistered) {
                 userThatNeedToBeRegistered.add(user);
@@ -77,36 +71,28 @@ public class ConversationService {
         for (User user : userThatNeedToBeRegistered) {
             ConversationParticipant conversationParticipant = new ConversationParticipant();
             conversationParticipant.setUser(user);
-            conversationParticipant.setConversation(conversation);
+            conversationParticipant.setConversation(conversationFromDatabase);
             newConversationParticipants.add(conversationParticipant);
         }
         newConversationParticipants = conversationParticipantRepository.saveAll(newConversationParticipants);
-        conversation.getConversationParticipants().addAll(newConversationParticipants);
-        conversationRepository.save(conversation);
+        conversationFromDatabase.getConversationParticipants().addAll(newConversationParticipants);
+        conversationRepository.save(conversationFromDatabase);
     }
 
     public void deregisterUsers(Set<User> usersToDeregister, Conversation conversation) {
+        var conversationFromDatabase = conversationRepository.findByIdWithConversationParticipantsElseThrow(conversation.getId());
+
         var participantsToRemove = new HashSet<ConversationParticipant>();
 
         for (User user : usersToDeregister) {
-            var participant = conversation.getConversationParticipants().stream().filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()))
-                    .findFirst();
+            var participant = conversationFromDatabase.getConversationParticipants().stream()
+                    .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId())).findFirst();
             participant.ifPresent(participantsToRemove::add);
         }
 
-        conversation.getConversationParticipants().removeAll(participantsToRemove);
-        conversationRepository.save(conversation);
+        conversationFromDatabase.getConversationParticipants().removeAll(participantsToRemove);
+        conversationRepository.save(conversationFromDatabase);
         conversationParticipantRepository.deleteAll(participantsToRemove);
-    }
-
-    /**
-     * fetch conversation from database by conversationId
-     *
-     * @param conversationId id of the conversation to fetch
-     * @return fetched conversation
-     */
-    public Conversation getConversationByIdWithConversationParticipants(Long conversationId) {
-        return conversationRepository.findConversationByIdWithConversationParticipants(conversationId);
     }
 
     public Conversation getConversationById(Long conversationId) {
@@ -117,18 +103,28 @@ public class ConversationService {
         return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, userId).isPresent();
     }
 
-    public List<Conversation> getConversationsOfUser(Long courseId, User user) {
+    public Integer getMemberCount(Long channelId) {
+        return conversationParticipantRepository.countByConversationId(channelId);
+    }
 
-        // Note: Includes participants of group chats
-        var activeGroupChatsOfUser = groupChatRepository.findActiveGroupChatsOfUserWithConversationParticipants(courseId, user.getId());
-        activeGroupChatsOfUser.forEach(groupChat -> groupChat.setNumberOfMembers(groupChat.getConversationParticipants().size()));
-        activeGroupChatsOfUser.forEach(conversation -> filterSensitiveInformation(conversation, user));
+    public List<ConversationDTO> getConversationsOfUser(Long courseId, User user) {
 
-        // Note: Does NOT include participants of channels
-        var channelsOfUser = channelRepository.findChannelsOfUser(courseId, user.getId());
-        channelsOfUser.forEach(channel -> channel.setNumberOfMembers(channelService.getMemberCount(channel.getId())));
+        var activeGroupChatsOfUser = groupChatRepository.findActiveGroupChatsOfUserWithConversationParticipants(courseId, user.getId()).stream().map(groupChat -> {
+            var dto = new GroupChatDTO(groupChat);
+            dto.setIsMember(true);
+            dto.setNumberOfMembers(getMemberCount(groupChat.getId()));
+            dto.setNamesOfOtherMembers(groupChatService.getNamesOfOtherMembers(groupChat, user));
+            return dto;
+        }).toList();
 
-        var allConversations = new ArrayList<Conversation>();
+        var channelsOfUser = channelRepository.findChannelsOfUser(courseId, user.getId()).stream().map(channel -> {
+            var dto = new ChannelDTO(channel);
+            dto.setIsMember(true);
+            dto.setNumberOfMembers(getMemberCount(channel.getId()));
+            return dto;
+        }).toList();
+
+        var allConversations = new ArrayList<ConversationDTO>();
         allConversations.addAll(activeGroupChatsOfUser);
         allConversations.addAll(channelsOfUser);
 
@@ -139,20 +135,14 @@ public class ConversationService {
         conversationRepository.save(conversation);
     }
 
-    /**
-     * Broadcasts a conversation event in a course under a specific topic via websockets
-     *
-     * @param conversationWebsocketDTO object including the affected conversation as well as the action
-     * @param user                     if not null, the user the message is specifically targeted to
-     */
-    public void broadcastForConversation(ConversationWebsocketDTO conversationWebsocketDTO, User user) {
-        String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + conversationWebsocketDTO.getConversation().getCourse().getId();
+    public void broadcastForConversation(Course course, ConversationWebsocketDTO conversationWebsocketDTO, User user) {
+        String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + course.getId();
         String conversationParticipantTopicName = courseTopicName + "/conversations/user/";
 
         if (user == null) {
-            conversationWebsocketDTO.getConversation().getConversationParticipants()
-                    .forEach(conversationParticipant -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
-                            conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationWebsocketDTO));
+            var participants = conversationParticipantRepository.findConversationParticipantByConversationId(conversationWebsocketDTO.getConversation().getId());
+            participants.forEach(conversationParticipant -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
+                    conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationWebsocketDTO));
         }
         else {
             messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), conversationWebsocketDTO);
@@ -160,43 +150,17 @@ public class ConversationService {
     }
 
     public Conversation mayInteractWithConversationElseThrow(Long conversationId, User user) {
-        // use object fetched from database
-        Conversation conversation = conversationRepository.findConversationByIdWithConversationParticipants(conversationId);
-        if (conversation == null
-                || conversation.getConversationParticipants().stream().noneMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()))) {
+        Optional<Conversation> conversation = conversationRepository.findById(conversationId);
+        if (conversation.isEmpty() || !isMember(conversationId, user.getId())) {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
-
-        return conversation;
-    }
-
-    /**
-     * filters sensitive information such as last read times of other users
-     *
-     * @param user         user whose sensitive information will be preserved
-     * @param conversation object to be filtered for sensitive information
-     */
-    static void filterSensitiveInformation(Conversation conversation, User user) {
-        conversation.getConversationParticipants().forEach(conversationParticipant -> {
-            if (!conversationParticipant.getUser().getId().equals(user.getId())) {
-                conversationParticipant.filterSensitiveInformation();
-            }
-        });
-    }
-
-    /**
-     * Retrieve the entity name used in ResponseEntity
-     *
-     * @return conversation entity name
-     */
-    public String getEntityName() {
-        return CONVERSATION_ENTITY_NAME;
+        return conversation.get();
     }
 
     public ZonedDateTime auditConversationReadTimeOfUser(Conversation conversation, User user) {
         // update the last time user has read the conversation
-        ConversationParticipant readingParticipant = conversation.getConversationParticipants().stream()
-                .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId())).findAny().get();
+        ConversationParticipant readingParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversation.getId(), user.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Conversation participant not found!"));
         readingParticipant.setLastRead(ZonedDateTime.now());
         conversationParticipantRepository.save(readingParticipant);
         return readingParticipant.getLastRead();

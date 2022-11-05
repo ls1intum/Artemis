@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
 import tech.jhipster.web.util.PaginationUtil;
 
 @RestController
@@ -47,10 +48,10 @@ public class ConversationResource {
 
     @GetMapping("/{courseId}/conversations")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Conversation>> getConversationsOfUser(@PathVariable Long courseId) {
+    public ResponseEntity<List<ConversationDTO>> getConversationsOfUser(@PathVariable Long courseId) {
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        List<Conversation> conversations = conversationService.getConversationsOfUser(courseId, requestingUser);
+        var conversations = conversationService.getConversationsOfUser(courseId, requestingUser);
         return ResponseEntity.ok(new ArrayList<>(conversations));
     }
 

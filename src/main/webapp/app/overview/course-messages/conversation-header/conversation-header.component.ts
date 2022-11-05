@@ -1,13 +1,14 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { faChevronDown, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-messages/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { from, Subject } from 'rxjs';
 import { ConversationDetailDialogComponent, ConversationDetailTabs } from 'app/overview/course-messages/conversation-detail-dialog/conversation-detail-dialog.component';
-import { getAsChannel } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -20,7 +21,7 @@ export class ConversationHeaderComponent implements OnInit {
     @Input()
     course: Course;
     @Input()
-    activeConversation: Conversation;
+    activeConversation: ConversationDto;
 
     faUserPlus = faUserPlus;
     faUserGroup = faUserGroup;
@@ -28,7 +29,9 @@ export class ConversationHeaderComponent implements OnInit {
 
     constructor(public conversationService: ConversationService, private modalService: NgbModal) {}
 
-    getAsChannel = getAsChannel;
+    getAsChannel = getAsChannelDto;
+
+    getConversationName = getConversationName;
 
     ngOnInit(): void {}
 

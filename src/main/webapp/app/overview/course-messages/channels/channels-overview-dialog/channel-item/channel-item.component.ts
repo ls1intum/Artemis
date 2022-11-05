@@ -1,11 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ChannelOverviewDTO } from 'app/shared/metis/conversations/channel.service';
-
-export type ChannelActionType = 'register' | 'deregister' | 'view';
-export type ChannelAction = {
-    action: ChannelActionType;
-    channel: ChannelOverviewDTO;
-};
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelAction, ChannelActionType } from 'app/overview/course-messages/channels/channels-overview-dialog/channels-overview-dialog.component';
 
 @Component({
     selector: 'jhi-channel-item',
@@ -16,7 +11,7 @@ export class ChannelItemComponent {
     @Output()
     channelAction = new EventEmitter<ChannelAction>();
     @Input()
-    channel: ChannelOverviewDTO;
+    channel: ChannelDTO;
 
     isHover = false;
 

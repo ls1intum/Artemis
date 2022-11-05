@@ -6,7 +6,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
 import { CourseMessagesComponent } from 'app/overview/course-messages/course-messages.component';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
-import { MessagesComponent } from 'app/overview/course-messages/messages/messages.component';
+import { MessagesComponent } from 'app/overview/course-messages/conversation-messages/messages.component';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { ThreadSidebarComponent } from 'app/overview/course-messages/thread-sidebar/thread-sidebar.component';
 import { SidebarSectionComponent } from './conversation-sidebar/sidebar-section/sidebar-section.component';

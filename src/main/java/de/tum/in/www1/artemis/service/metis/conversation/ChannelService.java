@@ -63,10 +63,6 @@ public class ChannelService {
         return savedChannel;
     }
 
-    public Integer getMemberCount(Long channelId) {
-        return conversationParticipantRepository.countByConversationId(channelId);
-    }
-
     public void channelIsValidOrThrow(Long courseId, Channel channel) {
         if (!StringUtils.hasText(channel.getName())) {
             throw new BadRequestAlertException("A channel needs to have a name", CHANNEL_ENTITY_NAME, "nameMissing");

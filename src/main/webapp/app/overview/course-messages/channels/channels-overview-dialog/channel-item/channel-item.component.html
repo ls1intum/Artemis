@@ -2,14 +2,14 @@
     <div class="ms-2 me-auto">
         <div class="fw-bold">
             <span>
-                <jhi-channel-icon [isPublic]="channel.isPublic"></jhi-channel-icon>
+                <jhi-channel-icon [isPublic]="channel.isPublic!"></jhi-channel-icon>
             </span>
-            <span>{{ channel.channelName }}</span>
+            <span>{{ channel.name }}</span>
         </div>
         <span *ngIf="channel.isMember" class="badge bg-success rounded-pill">Joined</span>
-        <span> {{ channel.noOfMembers }} Members</span>
-        <div *ngIf="channel.channelDescription && channel.channelDescription.length > 0">
-            <span class="d-inline-block text-truncate long-text fst-italic"> {{ channel.channelDescription }}</span>
+        <span> {{ channel.numberOfMembers }} Members</span>
+        <div *ngIf="channel.description && channel.description.length > 0">
+            <span class="d-inline-block text-truncate long-text fst-italic"> {{ channel.description }}</span>
         </div>
     </div>
     <div [hidden]="!isHover">

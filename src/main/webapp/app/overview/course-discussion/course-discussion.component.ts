@@ -87,7 +87,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             this.posts = posts;
             this.isLoading = false;
         });
-        this.totalItemsSubscription = this.metisService.totalItems.pipe().subscribe((totalItems: number) => {
+        this.totalItemsSubscription = this.metisService.totalNumberOfPosts.pipe().subscribe((totalItems: number) => {
             this.totalItems = totalItems;
         });
     }

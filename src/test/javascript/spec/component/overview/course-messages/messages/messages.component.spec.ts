@@ -28,7 +28,7 @@ import { MockPostService } from '../../../../helpers/mocks/service/mock-post.ser
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
-import { MessagesComponent } from 'app/overview/course-messages/messages/messages.component';
+import { MessagesComponent } from 'app/overview/course-messages/conversation-messages/messages.component';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
 
@@ -129,7 +129,7 @@ describe('MessagesComponent', () => {
         initializeFixtureForCourseMessagesPage();
 
         component.conversation = conversationsOfUser1.first();
-        component.onSelectContext();
+        component.onSearch();
         expect(component.posts).toEqual(messagesBetweenUser1User2.slice().reverse());
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledOnce();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(component.currentPostContextFilter);
@@ -146,7 +146,7 @@ describe('MessagesComponent', () => {
     it('should auto scroll to the bottom of messages on init or if last message is displayed', fakeAsync(() => {
         initializeFixtureForCourseMessagesPage();
         component.conversation = conversationsOfUser1.first();
-        component.onSelectContext();
+        component.onSearch();
 
         tick();
         fixture.detectChanges();

@@ -8,13 +8,13 @@ import { User } from 'app/core/user/user.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-messages/channels/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-messages/channels/channels-create-dialog/channels-create-dialog.component';
-import { Channel, isChannel } from 'app/entities/metis/conversation/channel.model';
-import { GroupChat, isGroupChat } from 'app/entities/metis/conversation/groupChat.model';
+import { Channel, ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { GroupChat, GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
 
 @Component({
     selector: 'jhi-conversation-sidebar',
@@ -28,29 +28,29 @@ export class ConversationSidebarComponent implements AfterViewInit {
     @Input()
     course?: Course;
 
-    @Output() conversationSelected = new EventEmitter<Conversation | undefined>();
+    @Output() conversationSelected = new EventEmitter<ConversationDto | undefined>();
 
     @Output() channelOverViewModalResult = new EventEmitter<number | number[]>();
 
     @Output() newConversationCreated = new EventEmitter<Conversation>();
 
     @Input()
-    set conversations(conversations: Conversation[]) {
+    set conversations(conversations: ConversationDto[]) {
         this.allConversations = conversations ?? [];
         this.channelConversations = this.allConversations
-            .filter((conversation) => isChannel(conversation))
+            .filter((conversation) => isChannelDto(conversation))
             .map((channel) => channel as Channel)
             .sort((a, b) => a.name!.localeCompare(b.name!));
-        this.directConversations = this.allConversations.filter((conversation) => isGroupChat(conversation)).map((groupChat) => groupChat as GroupChat);
+        this.directConversations = this.allConversations.filter((conversation) => isGroupChatDto(conversation)).map((groupChat) => groupChat as GroupChat);
     }
 
     @Input()
-    activeConversation?: Conversation;
+    activeConversation?: ConversationDto;
 
-    allConversations: Conversation[] = [];
-    starredConversations: Conversation[] = [];
-    channelConversations: Channel[] = [];
-    directConversations: GroupChat[] = [];
+    allConversations: ConversationDto[] = [];
+    starredConversations: ConversationDto[] = [];
+    channelConversations: ChannelDTO[] = [];
+    directConversations: GroupChatDto[] = [];
 
     collapsed: boolean;
     isLoading = false;
@@ -161,13 +161,14 @@ export class ConversationSidebarComponent implements AfterViewInit {
      */
     onAutocompleteSelect = (user: User): void => {
         // ToDo: here müssen wir die find logik ändern wenn es gruppengespräche mit mehr nutzern gibt. Vielleiht id aus allen mitgliedern oder so?
-        const foundConversation = this.findGroupChatWithUser(user);
+        // vielleicht die ids der mitglieder sortieren und dann als string nehmen
+        const foundConversation = undefined;
         // if a conversation does not already exist with selected user
         if (foundConversation === undefined) {
             const newConversation = this.createNewGroupChatWithUser(user);
             this.createConversation(newConversation);
         } else {
-            // conversation with the found user already exists, so we select it
+            // conversation with the found user already exists, so we select it --> Logik funktioniert aber nicht mehr sobald mehr als 2 user in einem gruppengespräch sind
             this.conversationSelected.emit(foundConversation);
         }
     };
@@ -188,9 +189,10 @@ export class ConversationSidebarComponent implements AfterViewInit {
         return '';
     };
 
-    findGroupChatWithUser(user: User) {
-        return this.directConversations.find((conversation) => conversation.conversationParticipants!.some((participant) => participant.user.id === user.id));
-    }
+    // ToDo: hier müssen wir die find logik ändern wenn es gruppengespräche mit mehr nutzern gibt. Vielleiht id aus allen mitgliedern oder so?
+    // findGroupChatWithUser(user: User) {
+    //     return this.directConversations.find((conversation) => conversation.conversationParticipants!.some((participant) => participant.user.id === user.id));
+    // }
 
     createNewGroupChatWithUser(user: User) {
         const groupChat = new GroupChat();
@@ -206,7 +208,7 @@ export class ConversationSidebarComponent implements AfterViewInit {
         return conversationParticipant;
     }
 
-    onConversationSelected($event: Conversation) {
+    onConversationSelected($event: ConversationDto) {
         this.conversationSelected.emit($event);
     }
 }

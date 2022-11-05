@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
 public interface ChannelRepository extends JpaRepository<Channel, Long> {
@@ -40,9 +39,5 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
              ORDER BY channel.name
             """)
     Optional<Channel> findChannelByCourseIdAndName(@Param("courseId") Long courseId, @Param("name") String name);
-
-    default Channel findChannelElseThrow(long channelId) {
-        return this.findById(channelId).orElseThrow(() -> new EntityNotFoundException("Channel", channelId));
-    }
 
 }

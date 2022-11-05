@@ -15,7 +15,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -46,13 +45,6 @@ public abstract class Conversation extends DomainObject {
 
     @Column(name = "last_message_date")
     private ZonedDateTime lastMessageDate;
-
-    /**
-     * This transient fields is set to the number of participants in this conversation
-     */
-    @Transient
-    @JsonSerialize
-    private Integer numberOfMembers;
 
     public Conversation() {
     }
@@ -87,14 +79,6 @@ public abstract class Conversation extends DomainObject {
 
     public void setLastMessageDate(ZonedDateTime lastMessageDate) {
         this.lastMessageDate = lastMessageDate;
-    }
-
-    public Integer getNumberOfMembers() {
-        return numberOfMembers;
-    }
-
-    public void setNumberOfMembers(Integer numberOfMembers) {
-        this.numberOfMembers = numberOfMembers;
     }
 
 }

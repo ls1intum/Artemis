@@ -4,7 +4,7 @@
             <ng-container *ngIf="getAsChannel(activeConversation) as channel">
                 <jhi-channel-icon [isPublic]="channel.isPublic!"></jhi-channel-icon>
             </ng-container>
-            {{ conversationService.getNameOfConversation(activeConversation) }}
+            {{ getConversationName(activeConversation) }}
             <fa-icon [icon]="faChevronDown" size="xs"></fa-icon>
         </h3>
     </div>

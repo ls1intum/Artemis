@@ -3,7 +3,7 @@
         <h4 class="modal-title">
             <span>
                 <jhi-channel-icon *ngIf="getAsChannel(conversation) as channel" [isPublic]="channel.isPublic!"></jhi-channel-icon>
-                {{ conversationService.getNameOfConversation(conversation) }}
+                {{ getConversationName(conversation) }}
             </span>
         </h4>
         <button type="button" class="btn-close" (click)="clear()"></button>
@@ -12,7 +12,7 @@
         <ul class="nav nav-tabs">
             <li class="nav-item">
                 <a class="nav-link active" role="button" (click)="selectedTab = Tabs.MEMBERS">
-                    {{ 'artemisApp.messages.conversationDetail.tabs.members' | translate }}
+                    {{ 'artemisApp.messages.conversationDetail.tabs.members' | artemisTranslate }}
                 </a>
             </li>
         </ul>

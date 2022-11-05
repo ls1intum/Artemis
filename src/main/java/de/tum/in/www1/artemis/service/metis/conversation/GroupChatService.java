@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -29,6 +30,10 @@ public class GroupChatService {
         this.userRepository = userRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.groupChatRepository = groupChatRepository;
+    }
+
+    public GroupChat findByIdWithConversationParticipantsElseThrow(Long groupChatId) {
+        return groupChatRepository.findByIdWithConversationParticipantsElseThrow(groupChatId);
     }
 
     public GroupChat createNewGroupChat(Course course, GroupChat newGroupChat) {
@@ -82,5 +87,10 @@ public class GroupChatService {
         else {
             return existingGroupChatOptional.get();
         }
+    }
+
+    public List<String> getNamesOfOtherMembers(GroupChat groupChat, User requestingUser) {
+        return groupChat.getConversationParticipants().stream().map(ConversationParticipant::getUser).filter(user -> !user.getId().equals(requestingUser.getId()))
+                .map(User::getName).toList();
     }
 }

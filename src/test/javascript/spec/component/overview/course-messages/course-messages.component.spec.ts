@@ -4,7 +4,7 @@ import { getElement } from '../../../helpers/utils/general.utils';
 
 import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
 import { conversationBetweenUser1User2, directMessageUser1 } from '../../../helpers/sample/metis-sample-data';
-import { MessagesComponent } from 'app/overview/course-messages/messages/messages.component';
+import { MessagesComponent } from 'app/overview/course-messages/conversation-messages/messages.component';
 import { ThreadSidebarComponent } from 'app/overview/course-messages/thread-sidebar/thread-sidebar.component';
 import { MockComponent } from 'ng-mocks';
 

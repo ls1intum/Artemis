@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 
 // IMPORTANT NOTICE: The following strings have to be consistent with
-// the ones defined in Conversation.java
+// the ones defined in Conversation.java and ConversationDTO.java
 export enum ConversationType {
     GROUP_CHAT = 'groupChat',
     CHANNEL = 'channel',
@@ -12,15 +12,31 @@ export enum ConversationType {
 
 export const MAX_MEMBERS_IN_DIRECT_CONVERSATION = 6;
 
+/**
+ * Entity
+ */
 export abstract class Conversation implements BaseEntity {
+    public type?: ConversationType;
     public id?: number;
     public conversationParticipants?: ConversationParticipant[];
     public course: Course;
     public creationDate?: dayjs.Dayjs;
     public lastMessageDate?: dayjs.Dayjs;
-    public type?: ConversationType;
 
-    // calculated property
+    protected constructor(type: ConversationType) {
+        this.type = type;
+    }
+}
+
+/**
+ * DTO
+ */
+export abstract class ConversationDto {
+    public type?: ConversationType;
+    public id?: number;
+    public creationDate?: dayjs.Dayjs;
+    public lastMessageDate?: dayjs.Dayjs;
+    public isMember?: boolean;
     public numberOfMembers?: number;
 
     protected constructor(type: ConversationType) {

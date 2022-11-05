@@ -1,9 +1,10 @@
 import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { MessagingService } from 'app/shared/metis/messaging.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { getAsChannel } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannel, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
 
 @Component({
     selector: 'jhi-sidebar-section',
@@ -11,16 +12,16 @@ import { getAsChannel } from 'app/entities/metis/conversation/channel.model';
     styleUrls: ['./sidebar-section.component.scss'],
 })
 export class SidebarSectionComponent {
-    @Output() conversationSelected = new EventEmitter<Conversation>();
+    @Output() conversationSelected = new EventEmitter<ConversationDto>();
 
     @Input()
     label: string;
 
     @Input()
-    activeConversation?: Conversation;
+    activeConversation?: ConversationDto;
 
     @Input()
-    conversations: Conversation[] = [];
+    conversations: ConversationDto[] = [];
 
     @Input()
     isCollapsed = false;
@@ -29,7 +30,8 @@ export class SidebarSectionComponent {
 
     @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
 
-    getAsChannel = getAsChannel;
+    getAsChannel = getAsChannelDto;
+    getConversationName = getConversationName;
 
     // icon imports
     faChevronRight = faChevronRight;
@@ -37,9 +39,9 @@ export class SidebarSectionComponent {
 
     constructor(protected courseMessagesService: MessagingService, public conversationService: ConversationService) {}
 
-    conversationsTrackByFn = (index: number, conversation: Conversation): number => conversation.id!;
+    conversationsTrackByFn = (index: number, conversation: ConversationDto): number => conversation.id!;
 
-    isConversationUnread(conversation: Conversation): boolean {
+    isConversationUnread(conversation: ConversationDto): boolean {
         // ToDo: Refactor as we do not have participants for course-wide conversations (dto or transient property)
         //
         // const conversationParticipant = conversation.conversationParticipants!.find(
