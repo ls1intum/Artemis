@@ -113,7 +113,8 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @WithMockUser(username = "student1", roles = "USER")
     void shouldNotSaveBuildLogsForUnsuccessfulBuildInBuildLogRepository() throws JsonProcessingException {
         // The build did not fail, but also did not succeed -> Don't store
-        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), null, new ArrayList<>(), false);
+        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of("test2"), null, new ArrayList<>(),
+                false);
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
         programmingExerciseResultTestService.shouldNotSaveBuildLogsInBuildLogRepository(resultNotification);
