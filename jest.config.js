@@ -58,7 +58,7 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should be increase to at least 85%
-            statements: 84.6,
+            statements: 84.7,
             branches: 71.8,
             functions: 77.6,
             lines: 84.6,
