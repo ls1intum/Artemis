@@ -2132,12 +2132,16 @@ public class CourseTestService {
         Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         OnlineCourseConfiguration oc1 = ModelFactory.generateOnlineCourseConfiguration(course1, "key", "secret", "prefix", null);
         oc1.setRegistrationId("regId");
+        course1.setOnlineCourse(true);
+        course1.setOnlineCourseConfiguration(oc1);
 
         courseRepo.save(course1);
 
         Course course2 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         OnlineCourseConfiguration oc2 = ModelFactory.generateOnlineCourseConfiguration(course2, "key", "secret", "prefix", null);
         oc2.setRegistrationId("regId");
+        course2.setOnlineCourse(true);
+        course2.setOnlineCourseConfiguration(oc2);
 
         request.post("/api/courses", course2, HttpStatus.BAD_REQUEST);
     }
