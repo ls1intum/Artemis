@@ -75,6 +75,15 @@ public class Post extends Posting {
     @JsonIncludeProperties({ "id" })
     private PlagiarismCase plagiarismCase;
 
+    @Column(name = "resolved")
+    private boolean resolved;
+
+    @Column(name = "answer_count", columnDefinition = "int default 0")
+    private Integer answerCount;
+
+    @Column(name = "vote_count", columnDefinition = "int default 0")
+    private Integer voteCount;
+
     public String getTitle() {
         return title;
     }
@@ -193,6 +202,30 @@ public class Post extends Posting {
 
     public void setPlagiarismCase(PlagiarismCase plagiarismCase) {
         this.plagiarismCase = plagiarismCase;
+    }
+
+    public boolean isResolved() {
+        return resolved;
+    }
+
+    public void setResolved(boolean resolved) {
+        this.resolved = resolved;
+    }
+
+    public Integer getAnswerCount() {
+        return answerCount;
+    }
+
+    public void setAnswerCount(Integer answerCount) {
+        this.answerCount = answerCount;
+    }
+
+    public Integer getVoteCount() {
+        return voteCount;
+    }
+
+    public void setVoteCount(Integer voteCount) {
+        this.voteCount = voteCount;
     }
 
     /**
