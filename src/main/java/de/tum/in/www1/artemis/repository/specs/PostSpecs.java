@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.repository.specs;
 
-import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -152,18 +150,12 @@ public class PostSpecs {
             else {
                 Predicate postsWithoutCourseWideContext = criteriaBuilder.isNull(root.get(Post_.COURSE_WIDE_CONTEXT));
                 Predicate notAnnouncementPosts = criteriaBuilder.notEqual(root.get(Post_.COURSE_WIDE_CONTEXT), CourseWideContext.ANNOUNCEMENT);
+                Predicate notAnnouncement = criteriaBuilder.or(postsWithoutCourseWideContext, notAnnouncementPosts);
 
                 // Post should not have any answer that resolves
-                Subquery<Long> subQuery = query.subquery(Long.class);
-                Root<AnswerPost> subRoot = subQuery.from(AnswerPost.class);
-                Predicate subPredicate = criteriaBuilder.equal(subRoot.get(AnswerPost_.RESOLVES_POST), Boolean.TRUE);
-                Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(AnswerPost_.POST).get(Post_.ID));
-                subQuery.select(subRoot.get(AnswerPost_.ID)).where(criteriaBuilder.and(postBinder, subPredicate));
+                Predicate noResolvingAnswer = criteriaBuilder.isFalse(root.get(Post_.resolved));
 
-                Predicate notAnnouncement = criteriaBuilder.or(postsWithoutCourseWideContext, notAnnouncementPosts);
-                Predicate notResolves = criteriaBuilder.exists(subQuery).not();
-
-                return criteriaBuilder.and(notAnnouncement, notResolves);
+                return criteriaBuilder.and(notAnnouncement, noResolvingAnswer);
             }
         });
     }
@@ -233,22 +225,11 @@ public class PostSpecs {
                 }
                 else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
                     // sort by answer count
-                    Subquery<Long> subQuery = query.subquery(Long.class);
-                    Root<AnswerPost> subRoot = subQuery.from(AnswerPost.class);
-                    Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(AnswerPost_.POST).get(Post_.ID));
-                    subQuery.select(criteriaBuilder.count(subRoot.get(AnswerPost_.ID))).where(postBinder).groupBy(root.get(Post_.ID));
-
-                    sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
+                    sortCriterion = root.get(Post_.ANSWER_COUNT);
                 }
                 else if (postSortCriterion == PostSortCriterion.VOTES) {
                     // sort by votes via voteEmojiCount
-                    Subquery<Long> subQuery = query.subquery(Long.class);
-                    Root<Reaction> subRoot = subQuery.from(Reaction.class);
-                    Predicate postBinder = criteriaBuilder.equal(root.get(Post_.ID), subRoot.get(Reaction_.POST).get(Post_.ID));
-                    Predicate upVotes = criteriaBuilder.equal(subRoot.get(Reaction_.EMOJI_ID), VOTE_EMOJI_ID);
-                    subQuery.select(criteriaBuilder.count(subRoot.get(Reaction_.ID))).where(criteriaBuilder.and(postBinder, upVotes)).groupBy(root.get(Post_.ID));
-
-                    sortCriterion = criteriaBuilder.selectCase().when(criteriaBuilder.exists(subQuery).not(), 0).otherwise(subQuery.getSelection());
+                    sortCriterion = root.get(Post_.VOTE_COUNT);
                 }
 
                 orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
