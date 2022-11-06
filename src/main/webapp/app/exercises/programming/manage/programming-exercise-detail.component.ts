@@ -63,7 +63,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly ButtonSize = ButtonSize;
-    assessmentType = AssessmentType.SEMI_AUTOMATIC;
+    readonly AssessmentType = AssessmentType;
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
     supportsAuxiliaryRepositories: boolean;

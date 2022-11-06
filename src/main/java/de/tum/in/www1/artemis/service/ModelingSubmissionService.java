@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ModelingSubmissionService extends SubmissionService {
@@ -59,7 +58,7 @@ public class ModelingSubmissionService extends SubmissionService {
     /**
      * Get the modeling submission with the given ID from the database and lock the submission to prevent other tutors from receiving and assessing it.
      * Additionally, check if the submission lock limit has been reached.
-     *
+     * <p>
      * In case Compass is supported (and activated), this method also assigns a result with feedback suggestions to the submission
      *
      * @param submissionId     the id of the modeling submission
@@ -154,19 +153,23 @@ public class ModelingSubmissionService extends SubmissionService {
 
     /**
      * retrieves a modeling submission without assessment for the specified correction round and potentially locks the submission
-     *
+     * <p>
      * In case Compass is supported (and activated), this method also assigns a result with feedback suggestions to the submission
      *
      * @param lockSubmission whether the submission should be locked
      * @param correctionRound the correction round (0 = first correction, 1 = second correction
      * @param modelingExercise the modeling exercise for which a
      * @param isExamMode whether the exercise belongs to an exam
-     * @return a random modeling submission (potentially based on compass)
+     * @return a random modeling submission (potentially based on compass) if present
      */
-    public ModelingSubmission findRandomSubmissionWithoutExistingAssessment(boolean lockSubmission, int correctionRound, ModelingExercise modelingExercise, boolean isExamMode) {
-        var submissionWithoutResult = super.getRandomAssessableSubmission(modelingExercise, isExamMode, correctionRound)
-                .orElseThrow(() -> new EntityNotFoundException("Modeling submission for exercise " + modelingExercise.getId() + " could not be found"));
-        ModelingSubmission modelingSubmission = (ModelingSubmission) submissionWithoutResult;
+    public Optional<ModelingSubmission> findRandomSubmissionWithoutExistingAssessment(boolean lockSubmission, int correctionRound, ModelingExercise modelingExercise,
+            boolean isExamMode) {
+        var submissionWithoutResult = super.getRandomAssessableSubmission(modelingExercise, isExamMode, correctionRound);
+        if (submissionWithoutResult.isEmpty()) {
+            return Optional.empty();
+        }
+
+        ModelingSubmission modelingSubmission = (ModelingSubmission) submissionWithoutResult.get();
         if (lockSubmission) {
             if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
                 modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission, modelingExercise);
@@ -174,7 +177,8 @@ public class ModelingSubmissionService extends SubmissionService {
             }
             lockSubmission(modelingSubmission, correctionRound);
         }
-        return modelingSubmission;
+
+        return Optional.of(modelingSubmission);
     }
 
     /**
