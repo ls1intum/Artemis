@@ -133,8 +133,8 @@
                     ></fa-icon>
                 </div>
                 <div class="form-group">
-                    <label jhiTranslate="artemisApp.course.semester"></label>
-                    <select class="form-select" formControlName="semester">
+                    <label for="semester" jhiTranslate="artemisApp.course.semester"></label>
+                    <select id="semester" class="form-select" formControlName="semester">
                         <option *ngFor="let semester of getSemesters()" [value]="semester">{{ semester }}</option>
                     </select>
                 </div>
@@ -155,8 +155,8 @@
                     <input required type="number" class="form-control" name="accuracyOfScores" id="field_accuracyOfScores" min="0" max="5" formControlName="accuracyOfScores" />
                 </div>
                 <div class="form-group">
-                    <label jhiTranslate="artemisApp.course.defaultProgrammingLanguage"></label>
-                    <select class="form-select" formControlName="defaultProgrammingLanguage">
+                    <label for="programmingLanguage" jhiTranslate="artemisApp.course.defaultProgrammingLanguage"></label>
+                    <select id="programmingLanguage" class="form-select" formControlName="defaultProgrammingLanguage">
                         <option [ngValue]="null"></option>
                         <option *ngFor="let programmingLanguage of ProgrammingLanguage | keyvalue" [value]="programmingLanguage.key">{{ programmingLanguage.value }}</option>
                     </select>
@@ -419,8 +419,16 @@
                     </jhi-markdown-editor>
                 </div>
                 <div class="form-check">
-                    <input type="checkbox" class="form-check-input" [checked]="course.presentationScore !== 0" (change)="this.changePresentationScoreInput()" />
-                    <label class="form-control-label" jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</label>
+                    <input
+                        id="changePresentationScoreInput"
+                        type="checkbox"
+                        class="form-check-input"
+                        [checked]="course.presentationScore !== 0"
+                        (change)="this.changePresentationScoreInput()"
+                    />
+                    <label for="changePresentationScoreInput" class="form-control-label" jhiTranslate="artemisApp.course.presentationScoreEnabled.title"
+                        >Presentation Score Enabled</label
+                    >
                     <fa-icon
                         [icon]="faQuestionCircle"
                         class="text-secondary"
