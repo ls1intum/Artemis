@@ -42,9 +42,9 @@ public class Lti13TokenRetriever {
 
     private static final int JWT_LIFETIME = 60;
 
-    public Lti13TokenRetriever(OAuth2JWKSService keyPairService) {
+    public Lti13TokenRetriever(OAuth2JWKSService keyPairService, RestTemplate restTemplate) {
         this.oAuth2JWKSService = keyPairService;
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = restTemplate;
     }
 
     /**
@@ -93,9 +93,8 @@ public class Lti13TokenRetriever {
             throw new IllegalArgumentException("Failed to get JWK for client registration: " + clientRegistration.getRegistrationId());
         }
 
-        KeyPair keyPair;
         try {
-            keyPair = jwk.toRSAKey().toKeyPair();
+            KeyPair keyPair = jwk.toRSAKey().toKeyPair();
             RSASSASigner signer = new RSASSASigner(keyPair.getPrivate());
 
             JWTClaimsSet claimsSet = new JWTClaimsSet.Builder().issuer(clientRegistration.getClientId()).subject(clientRegistration.getClientId())

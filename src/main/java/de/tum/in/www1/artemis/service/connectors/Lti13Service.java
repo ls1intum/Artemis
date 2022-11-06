@@ -91,12 +91,6 @@ public class Lti13Service {
         Exercise exercise = targetExercise.get();
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        if (!course.getId().equals(exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
-            String message = "Exercise is not related to course for target link url: " + targetLinkUrl;
-            log.error(message);
-            throw new BadRequestAlertException("Course not found", "LTI", "ltiCourseNotFound");
-        }
-
         OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
         if (onlineCourseConfiguration == null) {
             String message = "Exercise is not related to course for target link url: " + targetLinkUrl;
@@ -155,8 +149,6 @@ public class Lti13Service {
      * @param participation The exercise participation for which a new result is available
      */
     public void onNewResult(StudentParticipation participation) {
-        var students = participation.getStudents();
-
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
         ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(course.getOnlineCourseConfiguration());
         if (clientRegistration == null) {
@@ -164,28 +156,26 @@ public class Lti13Service {
             return;
         }
 
-        if (students != null) {
-            students.forEach(student -> {
-                // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
-                // to launch the exercise (for example multiple lms)
-                Collection<LtiResourceLaunch> launches = launchRepository.findByUserAndExercise(student, participation.getExercise());
+        participation.getStudents().forEach(student -> {
+            // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
+            // to launch the exercise (for example multiple lms)
+            Collection<LtiResourceLaunch> launches = launchRepository.findByUserAndExercise(student, participation.getExercise());
 
-                if (launches.isEmpty()) {
-                    return;
-                }
+            if (launches.isEmpty()) {
+                return;
+            }
 
-                Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
-                if (result.isEmpty()) {
-                    log.error("onNewResult triggered for participation " + participation.getId() + " but no result could be found");
-                    return;
-                }
+            if (result.isEmpty()) {
+                log.error("onNewResult triggered for participation " + participation.getId() + " but no result could be found");
+                return;
+            }
 
-                String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
+            String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
 
-                launches.forEach(launch -> submitScore(launch, clientRegistration, concatenatedFeedbacks, result.get().getScore()));
-            });
-        }
+            launches.forEach(launch -> submitScore(launch, clientRegistration, concatenatedFeedbacks, result.get().getScore()));
+        });
     }
 
     protected void submitScore(LtiResourceLaunch launch, ClientRegistration clientRegistration, String comment, Double score) {

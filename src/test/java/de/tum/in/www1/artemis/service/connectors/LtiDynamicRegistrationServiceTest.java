@@ -85,6 +85,18 @@ class LtiDynamicRegistrationServiceTest {
     }
 
     @Test
+    void badRequestWhenRegistrationEndpointEmpty() {
+        Lti13PlatformConfiguration platformConfiguration = new Lti13PlatformConfiguration();
+        platformConfiguration.setAuthorizationEndpoint("auth");
+        platformConfiguration.setJwksUri("uri");
+        platformConfiguration.setTokenEndpoint("token");
+
+        when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
+
+        assertThrows(BadRequestAlertException.class, () -> ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, registrationToken));
+    }
+
+    @Test
     void badRequestWhenGetPostClientRegistrationFails() {
 
         when(restTemplate.getForEntity(eq(openIdConfigurationUrl), any())).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
@@ -102,6 +114,19 @@ class LtiDynamicRegistrationServiceTest {
                 .thenReturn(ResponseEntity.accepted().body(clientRegistrationResponse));
 
         ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, registrationToken);
+
+        verify(onlineCourseConfigurationRepository).save(any());
+        verify(oAuth2JWKSService).updateKey(any());
+    }
+
+    @Test
+    void performDynamicRegistrationSuccessWithoutToken() {
+
+        when(restTemplate.getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class)).thenReturn(ResponseEntity.accepted().body(platformConfiguration));
+        when(restTemplate.postForEntity(eq(platformConfiguration.getRegistrationEndpoint()), any(), eq(Lti13ClientRegistration.class)))
+                .thenReturn(ResponseEntity.accepted().body(clientRegistrationResponse));
+
+        ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, null);
 
         verify(onlineCourseConfigurationRepository).save(any());
         verify(oAuth2JWKSService).updateKey(any());

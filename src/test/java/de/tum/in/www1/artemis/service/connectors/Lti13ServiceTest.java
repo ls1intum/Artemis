@@ -113,7 +113,25 @@ class Lti13ServiceTest {
     @Test
     void performLaunch_exerciseNotFound() {
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
+        doReturn("https://some-artemis-domain.org/courses/1/exercises/100000").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
+
+        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void performLaunch_exerciseNotFoundInvalidPath() {
+        OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         doReturn("https://some-artemis-domain.org/with/invalid/path/to/exercise/11").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
+
+        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void performLaunch_malformedUrl() {
+        OidcIdToken oidcIdToken = mock(OidcIdToken.class);
+        doReturn("path").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
         assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
         verify(userRepository, never()).save(any());
@@ -165,6 +183,74 @@ class Lti13ServiceTest {
         doReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
         assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+    }
+
+    @Test
+    void onNewResultNoOnlineCourseConfiguration() {
+        Course course = new Course();
+        course.setId(1L);
+        Exercise exercise = new ProgrammingExercise() {
+        };
+        exercise.setCourse(course);
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(exercise);
+
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        doReturn(null).when(onlineCourseConfigurationService).getClientRegistration(any());
+
+        lti13Service.onNewResult(participation);
+
+        verifyNoInteractions(resultRepository);
+        verifyNoInteractions(restTemplate);
+    }
+
+    @Test
+    void onNewResultNoLaunchesForUser() {
+        Course course = new Course();
+        course.setId(1L);
+        User user = new User();
+        user.setId(1L);
+        Exercise exercise = new ProgrammingExercise() {
+        };
+        exercise.setCourse(course);
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(exercise);
+        participation.setParticipant(user);
+        participation.setId(1L);
+
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        doReturn(mock(ClientRegistration.class)).when(onlineCourseConfigurationService).getClientRegistration(any());
+        doReturn(Collections.emptyList()).when(launchRepository).findByUserAndExercise(user, exercise);
+
+        lti13Service.onNewResult(participation);
+
+        verifyNoInteractions(resultRepository);
+        verifyNoInteractions(restTemplate);
+    }
+
+    @Test
+    void onNewResultNoResultForUser() {
+        Course course = new Course();
+        course.setId(1L);
+        User user = new User();
+        user.setId(1L);
+        Exercise exercise = new ProgrammingExercise() {
+        };
+        exercise.setCourse(course);
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(exercise);
+        participation.setParticipant(user);
+        participation.setId(1L);
+        LtiResourceLaunch launch = new LtiResourceLaunch();
+
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        doReturn(null).when(onlineCourseConfigurationService).getClientRegistration(any());
+        doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
+        doReturn(Optional.empty()).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+
+        lti13Service.onNewResult(participation);
+
+        verifyNoInteractions(restTemplate);
     }
 
     @Test

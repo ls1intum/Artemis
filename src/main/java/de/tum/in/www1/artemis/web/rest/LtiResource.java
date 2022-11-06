@@ -138,16 +138,15 @@ public class LtiResource {
      */
     private void sendRedirect(HttpServletRequest request, HttpServletResponse response, Exercise exercise) throws IOException {
 
-        UriComponentsBuilder redirectUrlComponentsBuilder = UriComponentsBuilder.newInstance().scheme(request.getScheme()).host(request.getServerName());
-        if (request.getServerPort() != 80 && request.getServerPort() != 443) {
-            redirectUrlComponentsBuilder.port(request.getServerPort());
-        }
-        redirectUrlComponentsBuilder.pathSegment("courses").pathSegment(exercise.getCourseViaExerciseGroupOrCourseMember().getId().toString()).pathSegment("exercises")
-                .pathSegment(exercise.getId().toString());
+        UriComponentsBuilder uriBuilder = buildRedirect(request);
+        uriBuilder.pathSegment("courses") //
+                .pathSegment(exercise.getCourseViaExerciseGroupOrCourseMember().getId().toString()) //
+                .pathSegment("exercises") //
+                .pathSegment(exercise.getId().toString()); //
 
-        lti10Service.addLtiQueryParams(redirectUrlComponentsBuilder);
+        lti10Service.addLtiQueryParams(uriBuilder);
 
-        String redirectUrl = redirectUrlComponentsBuilder.build().toString();
+        String redirectUrl = uriBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);
         response.sendRedirect(redirectUrl);
     }
@@ -173,14 +172,11 @@ public class LtiResource {
             return;
         }
 
-        UriComponentsBuilder redirectUrlComponentsBuilder = UriComponentsBuilder.newInstance().scheme(request.getScheme()).host(request.getServerName());
-        if (request.getServerPort() != 80 && request.getServerPort() != 443) {
-            redirectUrlComponentsBuilder.port(request.getServerPort());
-        }
-        redirectUrlComponentsBuilder.path(LOGIN_REDIRECT_CLIENT_PATH);
-        redirectUrlComponentsBuilder.queryParam("state", state);
-        redirectUrlComponentsBuilder.queryParam("id_token", idToken);
-        String redirectUrl = redirectUrlComponentsBuilder.build().toString();
+        UriComponentsBuilder uriBuilder = buildRedirect(request);
+        uriBuilder.path(LOGIN_REDIRECT_CLIENT_PATH);
+        uriBuilder.queryParam("state", state);
+        uriBuilder.queryParam("id_token", idToken);
+        String redirectUrl = uriBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);
         response.sendRedirect(redirectUrl);
     }
@@ -199,5 +195,13 @@ public class LtiResource {
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfiguration, registrationToken);
+    }
+
+    private UriComponentsBuilder buildRedirect(HttpServletRequest request) {
+        UriComponentsBuilder redirectUrlComponentsBuilder = UriComponentsBuilder.newInstance().scheme(request.getScheme()).host(request.getServerName());
+        if (request.getServerPort() != 80 && request.getServerPort() != 443) {
+            redirectUrlComponentsBuilder.port(request.getServerPort());
+        }
+        return redirectUrlComponentsBuilder;
     }
 }
