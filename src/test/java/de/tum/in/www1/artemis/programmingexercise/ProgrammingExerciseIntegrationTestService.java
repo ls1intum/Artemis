@@ -7,6 +7,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKe
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -1421,7 +1422,7 @@ class ProgrammingExerciseIntegrationTestService {
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
         request.getMvc()
-                .perform(MockMvcRequestBuilders.patch(new URI(ROOT + endpoint)).contentType(MediaType.APPLICATION_JSON)
+                .perform(MockMvcRequestBuilders.patch(new URI(ROOT + endpoint)).with(csrf()).contentType(MediaType.APPLICATION_JSON)
                         .content(request.getObjectMapper().writeValueAsString(updates)))
                 .andExpect(status().isBadRequest()) //
                 .andExpect(jsonPath("$.errorKey").value("settingNegative")) //

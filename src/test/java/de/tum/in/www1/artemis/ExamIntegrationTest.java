@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -3064,7 +3065,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
-        request.getMvc().perform(post("/api/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
+        request.getMvc()
+                .perform(post("/api/courses/" + course1.getId() + "/exam-import").with(csrf()).contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(exam)))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertThat(result.getResolvedException().getMessage()).isEqualTo("Exam contains programming exercise(s) with invalid short name."));
     }

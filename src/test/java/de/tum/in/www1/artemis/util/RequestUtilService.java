@@ -1,13 +1,18 @@
 package de.tum.in.www1.artemis.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import javax.annotation.Nullable;
@@ -57,7 +62,7 @@ public class RequestUtilService {
     public <T, R> R postWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(paramValue);
         MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.multipart(new URI(path)).file(file).file(json)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.multipart(new URI(path)).file(file).file(json).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
             return null;
@@ -83,7 +88,7 @@ public class RequestUtilService {
         if (httpHeaders != null) {
             requestBuilder = requestBuilder.headers(httpHeaders);
         }
-        MvcResult res = mvc.perform(requestBuilder).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(requestBuilder.with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (withLocation && !expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
@@ -99,7 +104,7 @@ public class RequestUtilService {
         });
         final var content = new LinkedMultiValueMap<String, String>();
         content.setAll(jsonMap);
-        final var res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
+        final var res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).with(csrf()).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
     }
 
@@ -119,12 +124,12 @@ public class RequestUtilService {
         if (httpHeaders != null) {
             request = request.headers(httpHeaders);
         }
-        mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        mvc.perform(request.with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
     }
 
     public MockHttpServletResponse postWithoutResponseBody(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).with(csrf()).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         return res.getResponse();
     }
@@ -144,7 +149,7 @@ public class RequestUtilService {
         if (httpHeaders != null) {
             request.headers(httpHeaders);
         }
-        MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(request.with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         if (expectedResponseHeaders != null) {
             for (String headerKey : expectedResponseHeaders.keySet()) {
                 assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
@@ -165,7 +170,7 @@ public class RequestUtilService {
         if (httpHeaders != null) {
             request = request.headers(httpHeaders);
         }
-        MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(request.with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
@@ -210,7 +215,7 @@ public class RequestUtilService {
         if (params != null) {
             request = request.params(params);
         }
-        MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(request.with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
@@ -248,7 +253,8 @@ public class RequestUtilService {
 
     public File postWithResponseBodyFile(String path, Object body, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).accept(MediaType.APPLICATION_OCTET_STREAM))
+        MvcResult res = mvc.perform(
+                MockMvcRequestBuilders.post(new URI(path)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(jsonBody).accept(MediaType.APPLICATION_OCTET_STREAM))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
@@ -263,7 +269,7 @@ public class RequestUtilService {
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody)).andReturn();
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(jsonBody)).andReturn();
         restoreSecurityContext();
         if (res.getResponse().getStatus() >= 299) {
             return null;
@@ -286,7 +292,7 @@ public class RequestUtilService {
     public <T, R> R putWithResponseBodyAndParams(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable MultiValueMap<String, String> params,
             Map<String, String> expectedResponseHeaders) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).params(params))
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(jsonBody).params(params))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
 
@@ -308,7 +314,8 @@ public class RequestUtilService {
     }
 
     public <R> R patchWithResponseBody(String path, String body, Class<R> responseType, HttpStatus expectedStatus, MediaType mediaType) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.patch(new URI(path)).contentType(mediaType).content(body)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.patch(new URI(path)).with(csrf()).contentType(mediaType).content(body)).andExpect(status().is(expectedStatus.value()))
+                .andReturn();
         restoreSecurityContext();
 
         if (res.getResponse().getStatus() >= 299) {
@@ -336,14 +343,14 @@ public class RequestUtilService {
             requestBuilder = requestBuilder.content(jsonBody);
         }
 
-        mvc.perform(requestBuilder).andExpect(status().is(expectedStatus.value()));
+        mvc.perform(requestBuilder.with(csrf())).andExpect(status().is(expectedStatus.value()));
         restoreSecurityContext();
 
     }
 
     public <T, R> List<R> putWithResponseBodyList(String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
                 .andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
@@ -356,13 +363,13 @@ public class RequestUtilService {
             requestBuilder = requestBuilder.content(jsonBody);
         }
 
-        mvc.perform(requestBuilder).andExpect(status().is(expectedStatus.value()));
+        mvc.perform(requestBuilder.with(csrf())).andExpect(status().is(expectedStatus.value()));
         restoreSecurityContext();
     }
 
     public void putAndExpectError(String path, Object body, HttpStatus expectedStatus, String expectedErrorKey) throws Exception {
         final var jsonBody = mapper.writeValueAsString(body);
-        final var response = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
+        final var response = mvc.perform(MockMvcRequestBuilders.put(new URI(path)).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(jsonBody))
                 .andExpect(status().is(expectedStatus.value())).andReturn().getResponse();
         restoreSecurityContext();
 
@@ -500,22 +507,23 @@ public class RequestUtilService {
     }
 
     public void getWithForwardedUrl(String path, HttpStatus expectedStatus, String expectedRedirectedUrl) throws Exception {
-        mvc.perform(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andExpect(forwardedUrl(expectedRedirectedUrl)).andReturn();
+        mvc.perform(MockMvcRequestBuilders.get(new URI(path)).with(csrf())).andExpect(status().is(expectedStatus.value())).andExpect(forwardedUrl(expectedRedirectedUrl))
+                .andReturn();
         restoreSecurityContext();
     }
 
     public String getRedirectTarget(String path, HttpStatus expectedStatus) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path))).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         return res.getResponse().getRedirectedUrl();
     }
 
     public void delete(String path, HttpStatus expectedStatus) throws Exception {
-        mvc.perform(MockMvcRequestBuilders.delete(new URI(path))).andExpect(status().is(expectedStatus.value())).andReturn();
+        mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).with(csrf())).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
     }
 
     public void delete(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
-        mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).with(csrf()).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
     }
 

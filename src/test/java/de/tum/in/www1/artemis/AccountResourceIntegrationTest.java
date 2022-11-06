@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
@@ -429,7 +430,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
-        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(createdUser.getEmail());
+        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(createdUser.getEmail());
         request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
         ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
 
@@ -450,7 +451,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
-        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(createdUser.getLogin());
+        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(createdUser.getLogin());
         request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
         ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
 
@@ -493,7 +494,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         String resetKeyBefore = userBefore.get().getResetKey();
 
         // init password reset
-        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content("invalidemail");
+        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).with(csrf()).contentType(MediaType.APPLICATION_JSON).content("invalidemail");
         request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
         ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
 
@@ -516,7 +517,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         user.setInternal(false);
         userRepository.saveAndFlush(user);
 
-        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(email);
+        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(email);
         request.getMvc().perform(req).andExpect(status().is(HttpStatus.BAD_REQUEST.value())).andReturn();
         ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
     }
