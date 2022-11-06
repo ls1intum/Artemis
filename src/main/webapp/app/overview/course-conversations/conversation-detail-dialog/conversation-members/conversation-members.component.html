@@ -1,4 +1,4 @@
-<div *ngIf="course && conversation" class="container-fluid">
+<div *ngIf="metisConversationService && course && activeConversation" class="container-fluid">
     <div class="row">
         <div class="col-auto">
             <button type="button" class="btn btn-outline-secondary" (click)="openAddUsersDialog($event)">

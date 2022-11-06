@@ -1,12 +1,12 @@
-<div *ngIf="course && conversation">
+<div *ngIf="_metisConversationService && course && activeConversation">
     <div class="modal-header">
         <h4 class="modal-title">
-            <span *ngIf="getAsChannel(conversation) as channel">
+            <span *ngIf="getAsChannel(activeConversation) as channel">
                 {{ 'artemisApp.messages.addUsers.addUsersToChannel' | artemisTranslate }}
                 <jhi-channel-icon [isPublic]="channel.isPublic!"></jhi-channel-icon>
                 {{ getConversationName(channel) }}
             </span>
-            <span *ngIf="getAsGroupChat(conversation)">
+            <span *ngIf="getAsGroupChat(activeConversation)">
                 {{ 'artemisApp.messages.addUsers.addUsersToConversation' | artemisTranslate }}
             </span>
         </h4>
@@ -14,7 +14,7 @@
     </div>
     <div class="modal-body">
         <jhi-add-users-form
-            [maxSelectable]="getAsChannel(conversation) ? undefined : MAX_MEMBERS_IN_DIRECT_CONVERSATION - (conversation.numberOfMembers || 0)"
+            [maxSelectable]="getAsChannel(activeConversation) ? undefined : MAX_MEMBERS_IN_DIRECT_CONVERSATION - (activeConversation.numberOfMembers || 0)"
             [courseId]="course.id!"
             (formSubmitted)="onFormSubmitted($event)"
         >

@@ -1,9 +1,9 @@
-<div *ngIf="course && conversation">
+<div *ngIf="_metisConversationService && course && activeConversation">
     <div class="modal-header">
         <h4 class="modal-title">
             <span>
-                <jhi-channel-icon *ngIf="getAsChannel(conversation) as channel" [isPublic]="channel.isPublic!"></jhi-channel-icon>
-                {{ getConversationName(conversation) }}
+                <jhi-channel-icon *ngIf="getAsChannel(activeConversation) as channel" [isPublic]="channel.isPublic!"></jhi-channel-icon>
+                {{ getConversationName(activeConversation) }}
             </span>
         </h4>
         <button type="button" class="btn-close" (click)="clear()"></button>
@@ -20,9 +20,10 @@
     <div class="modal-body">
         <ng-container [ngSwitch]="selectedTab">
             <jhi-conversation-members
-                *ngSwitchCase="Tabs.MEMBERS"
-                [conversation]="conversation"
                 [course]="course"
+                [activeConversation]="activeConversation"
+                [metisConversationService]="_metisConversationService"
+                *ngSwitchCase="Tabs.MEMBERS"
                 (changesPerformed)="changesWerePerformed = true"
             ></jhi-conversation-members>
         </ng-container>

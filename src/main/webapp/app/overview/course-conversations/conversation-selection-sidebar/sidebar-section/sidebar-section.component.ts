@@ -37,7 +37,7 @@ export class SidebarSectionComponent {
     faChevronRight = faChevronRight;
     faMessage = faMessage;
 
-    constructor(protected courseMessagesService: MetisConversationService, public conversationService: ConversationService) {}
+    constructor(public conversationService: ConversationService) {}
 
     conversationsTrackByFn = (index: number, conversation: ConversationDto): number => conversation.id!;
 

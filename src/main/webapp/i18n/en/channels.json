@@ -12,6 +12,7 @@
         },
         "pages": {
             "createChannel": {
+                "button": "Create New Channel",
                 "titlePublicChannel": "Create a public channel",
                 "titlePrivateChannel": "Create a private channel",
                 "description": "A channel is a way to group people together around a project, a topic, or just for fun. You can create as many channels as you want."

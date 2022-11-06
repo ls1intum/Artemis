@@ -12,6 +12,7 @@
         },
         "pages": {
             "createChannel": {
+                "button": "Neuen Kanal erstellen",
                 "titlePublicChannel": "Einen öffentlichen Kanal erstellen",
                 "titlePrivateChannel": "Einen privaten Kanal erstellen",
                 "description": "Ein Kanal ist eine Möglichkeit, Studierende für ein Projekt, ein Thema oder einfach nur zum Spaß zusammenzubringen. Du kannst so viele Kanäle erstellen, wie du möchtest."

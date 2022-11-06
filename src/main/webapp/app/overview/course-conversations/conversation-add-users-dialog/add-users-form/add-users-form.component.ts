@@ -9,7 +9,6 @@ export interface AddUsersFormData {
 @Component({
     selector: 'jhi-add-users-form',
     templateUrl: './add-users-form.component.html',
-    styleUrls: ['./add-users-form.component.scss'],
 })
 export class AddUsersFormComponent implements OnInit, OnChanges {
     @Output() formSubmitted: EventEmitter<AddUsersFormData> = new EventEmitter<AddUsersFormData>();

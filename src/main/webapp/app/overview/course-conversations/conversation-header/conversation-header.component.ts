@@ -1,11 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { faChevronDown, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/conversation-add-users-dialog/conversation-add-users-dialog.component';
-import { from } from 'rxjs';
 import { ConversationDetailDialogComponent, ConversationDetailTabs } from 'app/overview/course-conversations/conversation-detail-dialog/conversation-detail-dialog.component';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
@@ -25,7 +23,6 @@ export class ConversationHeaderComponent implements OnInit {
     faChevronDown = faChevronDown;
 
     constructor(
-        public conversationService: ConversationService,
         private modalService: NgbModal,
         // instantiated at course-conversation.component.ts
         public metisConversationService: MetisConversationService,
@@ -49,21 +46,13 @@ export class ConversationHeaderComponent implements OnInit {
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.conversation = this.activeConversation;
-        from(modalRef.result).subscribe(() => {
-            // ToDo: refresh conversation
-        });
+        modalRef.componentInstance.metisConversationService = this.metisConversationService;
     }
 
     openConversationDetailDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.selectedTab = ConversationDetailTabs.MEMBERS;
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.conversation = this.activeConversation;
-        from(modalRef.result).subscribe(() => {
-            // ToDo: refresh conversation
-        });
+        modalRef.componentInstance.metisConversationService = this.metisConversationService;
     }
 }

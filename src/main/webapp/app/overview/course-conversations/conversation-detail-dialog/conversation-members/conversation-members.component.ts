@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
@@ -11,6 +11,7 @@ import { from, map, Subject } from 'rxjs';
 import { faMagnifyingGlass, faUser, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 interface SearchQuery {
     searchTerm: string;
@@ -19,19 +20,18 @@ interface SearchQuery {
 @Component({
     selector: 'jhi-conversation-members',
     templateUrl: './conversation-members.component.html',
-    styleUrls: ['./conversation-members.component.scss'],
 })
 export class ConversationMembers implements OnInit {
     private readonly search$ = new Subject<SearchQuery>();
+    @Input()
+    course: Course;
+    @Input()
+    public activeConversation: ConversationDto;
+    @Input()
+    metisConversationService: MetisConversationService;
 
     @Output()
     changesPerformed = new EventEmitter<void>();
-
-    @Input()
-    conversation: ConversationDto;
-
-    @Input()
-    course: Course;
 
     members: User[] = [];
     // page information
@@ -55,8 +55,7 @@ export class ConversationMembers implements OnInit {
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.conversation = this.conversation;
+        modalRef.componentInstance.metisConversationService = this.metisConversationService;
         from(modalRef.result).subscribe(() => {
             this.search$.next({
                 searchTerm: this.searchTerm,
@@ -90,7 +89,9 @@ export class ConversationMembers implements OnInit {
                     this.isSearching = true;
                     this.searchTerm = searchTerm;
                 }),
-                switchMap(() => this.conversationService.searchMembersOfConversation(this.course.id!, this.conversation.id!, this.searchTerm, this.page - 1, this.itemsPerPage)),
+                switchMap(() =>
+                    this.conversationService.searchMembersOfConversation(this.course.id!, this.activeConversation.id!, this.searchTerm, this.page - 1, this.itemsPerPage),
+                ),
             )
             .subscribe({
                 next: (res: HttpResponse<User[]>) => {
@@ -115,16 +116,16 @@ export class ConversationMembers implements OnInit {
         });
     }
 
-    getUserLabel(user: User) {
+    getUserLabel({ firstName, lastName, login }: User) {
         let label = '';
-        if (user.firstName) {
-            label += user.firstName + ' ';
+        if (firstName) {
+            label += `${firstName} `;
         }
-        if (user.lastName) {
-            label += user.lastName + ' ';
+        if (lastName) {
+            label += `${lastName} `;
         }
-        if (user.login) {
-            label += '(' + user.login + ')';
+        if (login) {
+            label += `(${login})`;
         }
         return label.trim();
     }
