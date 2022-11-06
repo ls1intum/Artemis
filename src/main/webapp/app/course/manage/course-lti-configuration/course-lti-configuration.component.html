@@ -5,16 +5,7 @@
         </h4>
     </div>
 
-    <dt class="mt-4">
-        <span>{{ 'artemisApp.lti.dynamicRegistrationUrl' | artemisTranslate }}</span>
-        <jhi-help-icon placement="top" text="artemisApp.lti.dynamicRegistrationTooltip"></jhi-help-icon>
-    </dt>
-    <dd>
-        <span>{{ getDynamicRegistrationUrl() }}</span>
-        <jhi-copy-icon-button [copyText]="getDynamicRegistrationUrl()"></jhi-copy-icon-button>
-    </dd>
-
-    <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="mt-4 nav-tabs">
+    <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mt-4">
         <ng-container ngbNavItem [ngbNavItem]="1">
             <a ngbNavLink jhiTranslate="artemisApp.lti.generalConfiguration">General Configuration</a>
             <ng-template ngbNavContent>
@@ -98,6 +89,31 @@
             <a ngbNavLink jhiTranslate="artemisApp.lti.version13">LTI 1.3</a>
             <ng-template ngbNavContent>
                 <dt>
+                    <span>{{ 'artemisApp.lti.dynamicRegistrationUrl' | artemisTranslate }}</span>
+                    <jhi-help-icon placement="top" text="artemisApp.lti.dynamicRegistrationTooltip"></jhi-help-icon>
+                </dt>
+                <dd>
+                    <span>{{ getDynamicRegistrationUrl() }}</span>
+                    <jhi-copy-icon-button [copyText]="getDynamicRegistrationUrl()"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.deepLinkingUrl' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ getDeepLinkingUrl() }}</span>
+                    <jhi-copy-icon-button [copyText]="getDeepLinkingUrl()"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.keysetUrl' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ getKeysetUrl() }}</span>
+                    <jhi-copy-icon-button [copyText]="getKeysetUrl()"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
                     <span>{{ 'artemisApp.lti.registrationId' | artemisTranslate }}</span>
                 </dt>
                 <dd>
@@ -160,7 +176,11 @@
                                             <fa-icon [icon]="faSort"></fa-icon>
                                         </th>
                                         <th jhiSortBy="launchUrl">
-                                            {{ 'artemisApp.lti.ltiLaunchUrl' | artemisTranslate }}
+                                            {{ 'artemisApp.lti.lti10LaunchUrl' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="launchUrl">
+                                            {{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}
                                             <fa-icon [icon]="faSort"></fa-icon>
                                         </th>
                                         <th jhiSortBy="releaseDate">
@@ -183,8 +203,12 @@
                                         <td>{{ exercise.type ? exercise.type : '' }}</td>
                                         <td>{{ exercise.title ? exercise.title : '' }}</td>
                                         <td>
-                                            {{ getExerciseLaunchUrl(exercise) }}
-                                            <jhi-copy-icon-button [copyText]="getExerciseLaunchUrl(exercise)"></jhi-copy-icon-button>
+                                            {{ getExerciseLti10LaunchUrl(exercise) }}
+                                            <jhi-copy-icon-button [copyText]="getExerciseLti10LaunchUrl(exercise)"></jhi-copy-icon-button>
+                                        </td>
+                                        <td>
+                                            {{ getExerciseLti13LaunchUrl(exercise) }}
+                                            <jhi-copy-icon-button [copyText]="getExerciseLti13LaunchUrl(exercise)"></jhi-copy-icon-button>
                                         </td>
                                         <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
                                         <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>

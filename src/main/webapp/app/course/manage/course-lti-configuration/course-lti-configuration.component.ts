@@ -49,14 +49,35 @@ export class CourseLtiConfigurationComponent implements OnInit {
      * Gets the dynamic registration url
      */
     getDynamicRegistrationUrl(): string {
-        return `${SERVER_API_URL}/lti/dynamic-registration/${this.course.id}`;
+        return `${SERVER_API_URL}/lti/dynamic-registration/${this.course.id}`; // Needs to match url in lti.route
     }
 
     /**
-     * Gets the launch url for an exercise
+     * Gets the deep linking url
      */
-    getExerciseLaunchUrl(exercise: Exercise): string {
-        return `${SERVER_API_URL}/courses/${this.course.id}/exercises/${exercise.id}`;
+    getDeepLinkingUrl(): string {
+        return `${SERVER_API_URL}/api/lti13/deep-linking/${this.course.id}`; // Needs to match url in CustomLti13Configurer
+    }
+
+    /**
+     * Gets the keyset url
+     */
+    getKeysetUrl(): string {
+        return `${SERVER_API_URL}/.well-known/jwks.json`; // Needs to match url in CustomLti13Configurer
+    }
+
+    /**
+     * Gets the LTI 1.0 launch url for an exercise
+     */
+    getExerciseLti10LaunchUrl(exercise: Exercise): string {
+        return `${SERVER_API_URL}/api/lti/launch/${exercise.id}`; // Needs to match url in LtiResource
+    }
+
+    /**
+     * Gets the LTI 1.3 launch url for an exercise
+     */
+    getExerciseLti13LaunchUrl(exercise: Exercise): string {
+        return `${SERVER_API_URL}/courses/${this.course.id}/exercises/${exercise.id}`; // Needs to match url in Lti13Service
     }
 
     /**
