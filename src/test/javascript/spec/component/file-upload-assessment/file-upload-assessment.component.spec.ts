@@ -205,12 +205,12 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.busy).toBeFalse();
         });
 
-        it('should get 404 error when loading optimal submission', () => {
+        it('should get null submission when loading optimal submission', () => {
             navigateByUrlStub.mockReturnValue(Promise.resolve(true));
             const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ status: 404 })));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(null));
             fixture.detectChanges();
             expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
             expect(comp.busy).toBeTrue();
@@ -519,8 +519,7 @@ describe('FileUploadAssessmentComponent', () => {
 
         it('should not alert when no next result is found', () => {
             const alertServiceSpy = jest.spyOn(alertService, 'error');
-            const errorResponse = new HttpErrorResponse({ error: 'Not Found', status: 404 });
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => errorResponse));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(null));
 
             comp.assessNext();
 

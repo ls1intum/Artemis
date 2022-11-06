@@ -719,7 +719,6 @@ export class ResultDetailComponent implements OnInit {
 
     private countFeedbacks() {
         const testCaseList = this.filteredFeedbackList.filter((feedback) => feedback.type === FeedbackItemType.Test);
-        console.log(testCaseList);
         if (this.numberOfAggregatedTestCases && (this.showOnlyPositiveFeedback || !this.showOnlyNegativeFeedback)) {
             this.testCaseCount = testCaseList.length + this.numberOfAggregatedTestCases - 1;
             this.passedTestCaseCount = testCaseList.filter((feedback) => feedback.positive).length + this.numberOfAggregatedTestCases - 1;

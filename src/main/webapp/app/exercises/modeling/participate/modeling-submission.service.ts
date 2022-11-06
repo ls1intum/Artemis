@@ -114,7 +114,7 @@ export class ModelingSubmissionService {
     }
 
     /**
-     * Get latest submission for a given participation
+     * Get the latest submission for a given participation
      * @param {number} participationId - Id of the participation
      */
     getLatestSubmissionForModelingEditor(participationId: number): Observable<ModelingSubmission> {
