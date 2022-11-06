@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
@@ -90,6 +91,20 @@ class Lti10ServiceTest {
     }
 
     @Test
+    void performLaunchNoOutcomeUrl() {
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any(), any());
+
+        launchRequest.setLis_outcome_service_url("");
+
+        lti10Service.performLaunch(launchRequest, exercise, onlineCourseConfiguration);
+
+        verify(ltiOutcomeUrlRepository, times(1)).findByUserAndExercise(user, exercise);
+        verify(ltiOutcomeUrlRepository, times(0)).save(any());
+    }
+
+    @Test
     void verifyRequest_onlineCourseConfigurationNotSpecified() {
         HttpServletRequest request = mock(HttpServletRequest.class);
         String message = lti10Service.verifyRequest(request, null);
@@ -106,6 +121,18 @@ class Lti10ServiceTest {
         request.setRequestURI(url);
         String message = lti10Service.verifyRequest(request, onlineCourseConfiguration);
         assertThat("LTI signature verification failed with message: Failed to validate: parameter_absent; error: bad_request, launch result: null").isEqualTo(message);
+    }
+
+    @Test
+    void onNewResultNoOnlinecCourseConfiguration() {
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(exercise);
+        course.setOnlineCourseConfiguration(null);
+        when(courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId())).thenReturn(course);
+
+        assertThrows(IllegalStateException.class, () -> lti10Service.onNewResult(participation));
+
+        verifyNoInteractions(resultRepository);
     }
 
     @Test

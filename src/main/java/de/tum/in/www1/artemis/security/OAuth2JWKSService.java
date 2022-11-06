@@ -14,7 +14,6 @@ import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.stereotype.Component;
 
-import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -22,14 +21,13 @@ import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
-import uk.ac.ox.ctl.lti13.KeyPairService;
 
 /**
  * This Service is responsible to manage JWKs for all OAuth2 ClientRegistrations.
  * On initialisation, each ClientRegistration gets assigned a fresh generated RSAKey.
  */
 @Component
-public class OAuth2JWKSService implements KeyPairService {
+public class OAuth2JWKSService {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
@@ -41,27 +39,9 @@ public class OAuth2JWKSService implements KeyPairService {
 
     private JWKSet jwkSet;
 
-    public OAuth2JWKSService(OnlineCourseConfigurationService onlineCourseConfigurationService) throws NoSuchAlgorithmException {
+    public OAuth2JWKSService(OnlineCourseConfigurationService onlineCourseConfigurationService) {
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.jwkSet = new JWKSet(generateOAuth2ClientKeys());
-    }
-
-    @Override
-    public KeyPair getKeyPair(String clientRegistrationId) {
-        try {
-            JWK jwk = this.getJWK(clientRegistrationId);
-            return jwk != null ? jwk.toRSAKey().toKeyPair() : null;
-        }
-        catch (JOSEException e) {
-            log.error(e.getMessage());
-            return null;
-        }
-    }
-
-    @Override
-    public String getKeyId(String clientRegistrationId) {
-        JWK jwk = this.getJWK(clientRegistrationId);
-        return jwk != null ? jwk.getKeyID() : null;
     }
 
     /**

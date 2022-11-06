@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -71,12 +70,10 @@ public class LtiService {
      * @param lastName the user's lastname if we create a new user
      * @param requireExistingUser false if it's not allowed to create new users
      * @param lookupUserByEmail false if it's not allowed to find existing users with the provided email
-     * @throws InternalAuthenticationServiceException if no email is provided, this exception will be thrown
-     * @throws ArtemisAuthenticationException if the user cannot be authenticated, this exception will be thrown
-     * @throws AuthenticationException        internal Spring exception that might be thrown as well
+     * @throws InternalAuthenticationServiceException if no email is provided, or if no user can be authenticated, this exception will be thrown
      */
     public void authenticateLtiUser(String email, String userId, String username, String firstName, String lastName, boolean requireExistingUser, boolean lookupUserByEmail)
-            throws ArtemisAuthenticationException, AuthenticationException {
+            throws InternalAuthenticationServiceException {
         if (SecurityUtils.isAuthenticated()) {
             // 1. Case: User is already signed in. We are done here.
             return;
