@@ -23,10 +23,10 @@
                 "codeIssue": {
                     "name": "Codeissue",
                     "title": "{{ scaCategory }} Issue in Datei {{ location }}",
-                    "line": "at line {{ line }}",
-                    "lines": "at lines {{ from }}-{{ to }}",
-                    "column": "column {{ column }}",
-                    "columns": "columns {{ from }}-{{ to }}"
+                    "line": "in Zeile {{ line }}",
+                    "lines": "in Zeilen {{ from }}-{{ to }}",
+                    "column": "Spalte {{ column }}",
+                    "columns": "Spalten {{ from }}-{{ to }}"
                 },
                 "test": {
                     "name": "Testfall",

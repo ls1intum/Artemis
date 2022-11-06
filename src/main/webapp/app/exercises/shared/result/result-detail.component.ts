@@ -719,12 +719,13 @@ export class ResultDetailComponent implements OnInit {
 
     private countFeedbacks() {
         const testCaseList = this.filteredFeedbackList.filter((feedback) => feedback.type === FeedbackItemType.Test);
-        if (this.showOnlyPositiveFeedback || !this.showOnlyNegativeFeedback) {
+        console.log(testCaseList);
+        if (this.numberOfAggregatedTestCases && (this.showOnlyPositiveFeedback || !this.showOnlyNegativeFeedback)) {
             this.testCaseCount = testCaseList.length + this.numberOfAggregatedTestCases - 1;
             this.passedTestCaseCount = testCaseList.filter((feedback) => feedback.positive).length + this.numberOfAggregatedTestCases - 1;
         } else {
             this.testCaseCount = testCaseList.length;
-            this.passedTestCaseCount = 0;
+            this.passedTestCaseCount = testCaseList.filter((feedback) => feedback.positive).length;
         }
 
         this.scaFeedbackCount = this.filteredFeedbackList.filter((feedback) => feedback.type === FeedbackItemType.Issue).length;
