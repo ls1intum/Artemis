@@ -154,22 +154,13 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     openCreateChannelDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
-
-        from(modalRef.result).subscribe((channel: Channel) => {
-            if (channel) {
-                this.createConversation(channel);
-            }
-        });
+        modalRef.componentInstance.metisConversationService = this.metisConversationService;
     }
 
     openChannelOverviewDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
-        modalRef.componentInstance.courseId = this.course?.id!;
-
-        from(modalRef.result).subscribe((result: number[] | number) => {
-            // ToDo
-        });
+        modalRef.componentInstance.metisConversationService = this.metisConversationService;
     }
 
     /**t
@@ -184,16 +175,13 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         // if a conversation does not already exist with selected user
         if (foundConversation === undefined) {
             const newConversation = this.createNewGroupChatWithUser(user);
-            this.createConversation(newConversation);
+            // this.createConversation(newConversation);
         } else {
             // conversation with the found user already exists, so we select it --> Logik funktioniert aber nicht mehr sobald mehr als 2 user in einem gruppengespräch sind
             this.metisConversationService.setActiveConversation(foundConversation);
         }
     };
 
-    private createConversation(newConversation: Conversation) {
-        // ToDO:
-    }
     /**
      * Formats the results in the autocomplete overlay.
      *

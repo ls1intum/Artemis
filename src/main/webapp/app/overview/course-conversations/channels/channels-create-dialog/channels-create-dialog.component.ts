@@ -1,29 +1,28 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/channels/channel-form/channel-form.component';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Component({
     selector: 'jhi-channels-create-dialog',
     templateUrl: './channels-create-dialog.component.html',
-    styleUrls: ['./channels-create-dialog.component.scss'],
 })
-export class ChannelsCreateDialogComponent implements OnInit {
+export class ChannelsCreateDialogComponent {
     @Input()
-    course: Course;
+    set metisConversationService(metisConversationService: MetisConversationService) {
+        this._metisConversationService = metisConversationService;
+        this.course = this._metisConversationService.course!;
+    }
+    _metisConversationService: MetisConversationService;
 
+    course: Course;
     channelToCreate: Channel = new Channel();
     isPublicChannel = true;
-    isLoading = false;
-
     constructor(private channelService: ChannelService, private alertService: AlertService, private activeModal: NgbActiveModal) {}
-
-    ngOnInit(): void {
-        this.channelToCreate = new Channel();
-    }
 
     onChannelTypeChanged($event: ChannelType) {
         this.isPublicChannel = $event === 'PUBLIC';
@@ -45,6 +44,10 @@ export class ChannelsCreateDialogComponent implements OnInit {
         this.channelToCreate.isPublic = isPublic;
         this.channelToCreate.course = this.course;
 
-        this.activeModal.close(this.channelToCreate);
+        this._metisConversationService.createNewConversation(this.channelToCreate).subscribe({
+            complete: () => {
+                this.activeModal.close();
+            },
+        });
     }
 }

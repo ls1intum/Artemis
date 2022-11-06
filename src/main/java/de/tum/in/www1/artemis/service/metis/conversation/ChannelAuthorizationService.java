@@ -46,16 +46,14 @@ public class ChannelAuthorizationService {
 
     public void isAllowedToRegisterUsersToChannel(@NotNull Course course, @NotNull Channel channel, List<String> userLogins, @Nullable User user) {
         user = getUserIfNecessary(user);
-
-        var isChannelMember = isMember(channel.getId(), user.getId());
-        if (!isChannelMember) {
-            throw new AccessForbiddenException("User is not a member of the channel");
-        }
-
         var isSelfRegistrationRequest = userLogins.size() == 1 && userLogins.get(0).equals(user.getLogin());
         // PUBLIC -> Self Registration or Instructor Registration
         if (Boolean.TRUE.equals(channel.getIsPublic())) {
             if (!isSelfRegistrationRequest) {
+                var isChannelMember = isMember(channel.getId(), user.getId());
+                if (!isChannelMember) {
+                    throw new AccessForbiddenException("User is not a member of the channel");
+                }
                 authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
             }
         }

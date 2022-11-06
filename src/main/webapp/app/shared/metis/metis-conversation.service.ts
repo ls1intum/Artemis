@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { catchError, EMPTY, finalize, map, Observable, of, ReplaySubject, switchMap } from 'rxjs';
+import { catchError, EMPTY, finalize, map, Observable, of, ReplaySubject, switchMap, tap } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -7,13 +7,15 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
 import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { isGroupChat } from 'app/entities/metis/conversation/groupChat.model';
+import { isChannel } from 'app/entities/metis/conversation/channel.model';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -34,7 +36,7 @@ export class MetisConversationService implements OnDestroy {
 
     private subscribedConversationMembershipTopic?: string;
     private userId: number;
-    private courseId: number;
+    private _courseId: number;
     constructor(
         private courseManagementService: CourseManagementService,
         private groupChatService: GroupChatService,
@@ -84,14 +86,14 @@ export class MetisConversationService implements OnDestroy {
         if (!this._course) {
             throw new Error('Course is not set. The service does not seem to be initialized.');
         }
-        this._isLoading = true;
-        this._isLoading$.next(this._isLoading);
-        return this.conversationService.getConversationsOfUser(this._course.id!).pipe(
+        this.setIsLoading(true);
+        return this.conversationService.getConversationsOfUser(this._courseId).pipe(
             map((conversations: HttpResponse<ConversationDto[]>) => {
                 return conversations.body ?? [];
             }),
             catchError((res: HttpErrorResponse) => {
                 onError(this.alertService, res);
+                this.setIsLoading(false);
                 return of([]);
             }),
             map((conversations: ConversationDto[]) => {
@@ -113,8 +115,37 @@ export class MetisConversationService implements OnDestroy {
             // refresh complete
             switchMap(() => EMPTY),
             finalize(() => {
-                this._isLoading = false;
-                this._isLoading$.next(this._isLoading);
+                this.setIsLoading(false);
+            }),
+        );
+    }
+
+    public createNewConversation(newConversation: Conversation): Observable<never> {
+        this.setIsLoading(true);
+        let createConversationObservable: Observable<HttpResponse<ConversationDto>>;
+        if (isGroupChat(newConversation)) {
+            createConversationObservable = this.groupChatService.create(this._courseId, newConversation);
+        } else if (isChannel(newConversation)) {
+            createConversationObservable = this.channelService.create(this._courseId, newConversation);
+        } else {
+            throw new Error('Conversation type not supported');
+        }
+        return createConversationObservable.pipe(
+            tap((conversation: HttpResponse<ConversationDto>) => {
+                this._activeConversation = conversation.body!;
+            }),
+            catchError((res: HttpErrorResponse) => {
+                onError(this.alertService, res);
+                if (res.error && res.error.title) {
+                    this.alertService.addErrorAlert(res.error.title, res.error.message, res.error.params);
+                } else {
+                    onError(this.alertService, res);
+                }
+                this.setIsLoading(false);
+                return of(null);
+            }),
+            switchMap(() => {
+                return this.forceRefresh();
             }),
         );
     }
@@ -123,9 +154,8 @@ export class MetisConversationService implements OnDestroy {
         if (!courseId) {
             throw new Error('CourseId is not set. The service cannot be initialized.');
         }
-        this.courseId = courseId;
-        this._isLoading = true;
-        this._isLoading$.next(this._isLoading);
+        this._courseId = courseId;
+        this.setIsLoading(true);
         return this.courseManagementService.findOneForDashboard(courseId).pipe(
             map((course: HttpResponse<Course>) => {
                 return course.body;
@@ -139,6 +169,7 @@ export class MetisConversationService implements OnDestroy {
             }),
             catchError((res: HttpErrorResponse) => {
                 onError(this.alertService, res);
+                this.setIsLoading(false);
                 return of([]);
             }),
             map((conversations: ConversationDto[]) => {
@@ -152,10 +183,14 @@ export class MetisConversationService implements OnDestroy {
             // service is ready to use and cached values can be received via the respective replay subjects
             switchMap(() => EMPTY),
             finalize(() => {
-                this._isLoading = false;
-                this._isLoading$.next(this._isLoading);
+                this.setIsLoading(false);
             }),
         );
+    }
+
+    private setIsLoading(value: boolean) {
+        this._isLoading = value;
+        this._isLoading$.next(this._isLoading);
     }
 
     /**

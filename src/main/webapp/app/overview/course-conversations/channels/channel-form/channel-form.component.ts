@@ -14,7 +14,6 @@ const channelRegex: RegExp = new RegExp('^[a-z0-9-]{1}[a-z0-9-]{0,20}$');
 @Component({
     selector: 'jhi-channel-form',
     templateUrl: './channel-form.component.html',
-    styleUrls: ['./channel-form.component.scss'],
 })
 export class ChannelFormComponent implements OnInit, OnChanges {
     formData: ChannelFormData = {
