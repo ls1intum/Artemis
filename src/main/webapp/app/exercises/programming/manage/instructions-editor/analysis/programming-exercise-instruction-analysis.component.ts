@@ -44,10 +44,11 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
                 tap((analysis: ProblemStatementAnalysis) => this.emitAnalysis(analysis)),
             )
             .subscribe();
+        this.analyzeTasks();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if ((changes.problemStatement || changes.exerciseTestCases) && this.exerciseTestCases && this.problemStatement && this.taskRegex) {
+        if (changes.problemStatement || changes.exerciseTestCases) {
             this.analyzeTasks();
         }
     }
@@ -64,7 +65,9 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
      * The method makes sure to filter out duplicates in the test case list.
      */
     analyzeTasks() {
-        this.delayedAnalysisSubject.next();
+        if (this.exerciseTestCases && this.problemStatement && this.taskRegex) {
+            this.delayedAnalysisSubject.next();
+        }
     }
 
     private emitAnalysis(analysis: ProblemStatementAnalysis) {
