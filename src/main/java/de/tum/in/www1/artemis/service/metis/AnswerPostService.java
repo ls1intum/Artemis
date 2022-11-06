@@ -76,6 +76,11 @@ public class AnswerPostService extends PostingService {
         // on creation of an answer post, we set the resolves_post field to false per default
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
+
+        // increase answerCount of post needed for sorting
+        post.setAnswerCount(post.getAnswerCount() != null ? post.getAnswerCount() + 1 : 1);
+        postRepository.save(post);
+
         this.preparePostAndBroadcast(savedAnswerPost, course);
         sendNotification(post, answerPost, course);
 
@@ -109,6 +114,8 @@ public class AnswerPostService extends PostingService {
             // check if requesting user is allowed to mark this answer post as resolving, i.e. if user is author or original post or at least tutor
             mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());
+            existingAnswerPost.getPost().setResolved(answerPost.doesResolvePost());
+            postRepository.save(existingAnswerPost.getPost());
         }
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
@@ -148,15 +155,20 @@ public class AnswerPostService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         AnswerPost answerPost = this.findById(answerPostId);
+        Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
+
         mayUpdateOrDeletePostingElseThrow(answerPost, user, course);
+
+        // decrease answerCount of post needed for sorting
+        post.setAnswerCount(post.getAnswerCount() - 1);
+        postRepository.save(post);
 
         // delete
         answerPostRepository.deleteById(answerPostId);
 
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
-        Post updatedPost = answerPost.getPost();
-        updatedPost.removeAnswerPost(answerPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+        post.removeAnswerPost(answerPost);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course);
     }
 
     /**
