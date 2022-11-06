@@ -96,9 +96,9 @@ Ignoring this will lead to inconsistent spacing between icons and text.
 10. Labels
 ==========
 
-Use labels to explain inputs like text fields and checkboxes.
-Labels help screen readers to associate the label with the input.
-Additionally they allow the label to act as an input themself (e.g. the label also activates the checkbox).
+Use labels to caption inputs like text fields and checkboxes.
+Associated labels help screen readers to read out the text of the label when the input is focused.
+Additionally they allow the label to act as an input itself (e.g. the label also activates the checkbox).
 Make sure to associate them by putting the input inside the label component or by adding the for attribute in the label referencing the id of the input.
 
 Do one of these:
@@ -374,7 +374,7 @@ Some parts of these guidelines are adapted from https://github.com/microsoft/Typ
 
 Ensure that the layout of your page or component shrinks accordingly and adapts to all display sizes (responsive design).
 
-Prefer using the ``.container`` class (https://getbootstrap.com/docs/5.2/layout/containers/) when you want limit the page width on extra-large screens.
+Prefer using the ``.container`` class (https://getbootstrap.com/docs/5.2/layout/containers/) when you want to limit the page width on extra-large screens.
 Do not use the following for this purpose if it can be avoided:
 
 .. code-block:: html
