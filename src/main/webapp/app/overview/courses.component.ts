@@ -96,12 +96,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
                 );
                 this.nextRelevantExercise = this.findNextRelevantExercise();
             },
-            error: (response: string) => this.onError(response),
         });
-    }
-
-    private onError(error: string) {
-        this.alertService.error('error.unexpectedError', { error });
     }
 
     findNextRelevantExercise() {
