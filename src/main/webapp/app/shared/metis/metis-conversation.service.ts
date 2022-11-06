@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { map, Observable, of, ReplaySubject } from 'rxjs';
+import { catchError, EMPTY, map, Observable, of, ReplaySubject, switchMap } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -7,36 +7,35 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
 import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { AlertService } from 'app/core/util/alert.service';
-import { onError } from 'app/shared/util/global.utils';
-import { catchError } from 'rxjs/operators';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { isGroupChat } from 'app/entities/metis/conversation/groupChat.model';
-import { isChannel } from 'app/entities/metis/conversation/channel.model';
+import { onError } from 'app/shared/util/global.utils';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
  */
 @Injectable()
 export class MetisConversationService implements OnDestroy {
-    private conversationCache: ConversationDto[] = [];
-    private conversationsOfUser$: ReplaySubject<ConversationDto[]> = new ReplaySubject<ConversationDto[]>(1);
-
-    // ToDo: Why do we need this?
-    private conversation$ = new ReplaySubject<ConversationDto>(1);
+    // Stores the conversation of the course where the current user is a member
+    private _conversationsOfUser: ConversationDto[] = [];
+    private _conversationsOfUser$: ReplaySubject<ConversationDto[]> = new ReplaySubject<ConversationDto[]>(1);
+    // Stores the currently selected conversation
+    private _activeConversation: ConversationDto | undefined = undefined;
+    private _activeConversation$: ReplaySubject<ConversationDto | undefined> = new ReplaySubject<ConversationDto | undefined>(1);
 
     private subscribedConversationMembershipTopic?: string;
-    userId: number;
+    private userId: number;
+    private courseId: number;
 
     constructor(
         private groupChatService: GroupChatService,
         private channelService: ChannelService,
         protected conversationService: ConversationService,
         private jhiWebsocketService: JhiWebsocketService,
-        protected accountService: AccountService,
-        protected alertService: AlertService,
+        private accountService: AccountService,
+        private alertService: AlertService,
     ) {
         this.accountService.identity().then((user: User) => {
             this.userId = user.id!;
@@ -50,53 +49,94 @@ export class MetisConversationService implements OnDestroy {
         }
     }
 
-    // ToDo: This method is currently just called with the group chat .
-    //  Maybe it should be removed and the group chat should be handled in the same way as the channel or vice versa??
-    createConversation(courseId: number, conversation: Conversation): Observable<ConversationDto> {
-        let createConversationObservable: Observable<HttpResponse<ConversationDto>>;
-        if (isGroupChat(conversation)) {
-            createConversationObservable = this.groupChatService.create(courseId, conversation);
-        } else if (isChannel(conversation)) {
-            createConversationObservable = this.channelService.create(courseId, conversation);
-        } else {
-            throw new Error('Conversation type not supported');
+    get conversationsOfUser$(): Observable<ConversationDto[]> {
+        return this._conversationsOfUser$.asObservable();
+    }
+    get activeConversation$(): Observable<ConversationDto | undefined> {
+        return this._activeConversation$.asObservable();
+    }
+
+    public setActiveConversation(conversation: ConversationDto | undefined) {
+        const cachedConversation = this._conversationsOfUser.find((conversationInCache) => conversationInCache.id === conversation?.id);
+        if (!cachedConversation) {
+            throw new Error('The conversation is not part of the cache. Therefore, it cannot be set as active conversation.');
         }
-
-        createConversationObservable.pipe(map((res: HttpResponse<ConversationDto>) => res.body!)).subscribe({
-            next: (receivedConversation: ConversationDto) => {
-                this.conversationCache.unshift(receivedConversation);
-                this.conversationsOfUser$.next(this.conversationCache);
-                // ToDo: Why do we need this?
-                this.conversation$.next(receivedConversation);
-            },
-            error: (res: HttpErrorResponse) => {
-                if (res.error && res.error.title) {
-                    this.alertService.addErrorAlert(res.error.title, res.error.message, res.error.params);
-                } else {
-                    onError(this.alertService, res);
-                }
-            },
-        });
-        // ToDo: Why do we need this?
-        return this.conversation$;
+        this._activeConversation = cachedConversation;
+        this._activeConversation$.next(this._activeConversation);
     }
 
-    get conversations$(): Observable<ConversationDto[]> {
-        return this.conversationsOfUser$.asObservable();
-    }
-
-    setUpConversationService(courseId: number): Observable<ConversationDto[]> {
-        return this.conversationService.getConversationsOfUser(courseId).pipe(
-            map((res: HttpResponse<ConversationDto[]>) => {
-                this.conversationCache = res.body!;
-                this.conversationsOfUser$.next(this.conversationCache);
-                this.subscribeToConversationMembershipTopic(courseId, this.userId);
-                return this.conversationCache;
+    public forceRefresh(): Observable<never> {
+        if (!this.courseId) {
+            throw new Error('CourseId is not set. The service does not seem to be initialized.');
+        }
+        return this.conversationService.getConversationsOfUser(this.courseId).pipe(
+            map((conversations: HttpResponse<ConversationDto[]>) => {
+                return conversations.body ?? [];
             }),
+            catchError((res: HttpErrorResponse) => {
+                onError(this.alertService, res);
+                return of([]);
+            }),
+            map((conversations: ConversationDto[]) => {
+                this._conversationsOfUser = conversations;
+                this._conversationsOfUser$.next(this._conversationsOfUser);
+
+                // we check if the active conversation still is part of the conversations of the user, otherwise we reset it
+                if (this._activeConversation) {
+                    const cachedActiveConversation = this._conversationsOfUser.find((conversationInCache) => conversationInCache.id === this._activeConversation?.id);
+                    if (!cachedActiveConversation) {
+                        this._activeConversation = undefined;
+                    } else {
+                        this._activeConversation = cachedActiveConversation;
+                    }
+                }
+                this._activeConversation$.next(this._activeConversation);
+                return;
+            }),
+            // refresh complete
+            switchMap(() => EMPTY),
         );
     }
 
-    subscribeToConversationMembershipTopic(courseId: number, userId: number) {
+    public setUpConversationService(courseId: number): Observable<never> {
+        if (!courseId) {
+            throw new Error('CourseId is not set. The service cannot be initialized.');
+        }
+        this.courseId = courseId;
+        return this.conversationService.getConversationsOfUser(this.courseId).pipe(
+            map((conversations: HttpResponse<ConversationDto[]>) => {
+                return conversations.body ?? [];
+            }),
+            catchError((res: HttpErrorResponse) => {
+                onError(this.alertService, res);
+                return of([]);
+            }),
+            map((conversations: ConversationDto[]) => {
+                this._conversationsOfUser = conversations;
+                this._conversationsOfUser$.next(this._conversationsOfUser);
+                this._activeConversation = undefined;
+                this._activeConversation$.next(this._activeConversation);
+                this.subscribeToConversationMembershipTopic(courseId, this.userId);
+                return;
+            }),
+            // service is ready to use and cached values can be received via the replay subjects
+            switchMap(() => EMPTY),
+        );
+    }
+
+    /**
+     * Via this Topic, users are informed about changes to which conversations they are a part of
+     *
+     * Users will be notified via this topic about the following events:
+     * - GroupChats: When the creator of a group chat starts the conversation by sending the first message (group chat shows up when first message is sent)
+     * - Channels: When the user is added to the channel (channel shows up when user is added)
+     */
+    private getConversationMembershipTopic(courseId: number, userId: number) {
+        const courseTopicName = '/user' + MetisWebsocketChannelPrefix + 'courses/' + courseId;
+        return courseTopicName + '/conversations/user/' + userId;
+    }
+
+    private subscribeToConversationMembershipTopic(courseId: number, userId: number) {
         // already subscribed to the topic -> nothing to do
         if (this.subscribedConversationMembershipTopic) {
             return;
@@ -107,11 +147,11 @@ export class MetisConversationService implements OnDestroy {
         this.subscribedConversationMembershipTopic = conversationMembershipTopic;
 
         this.jhiWebsocketService.receive(conversationMembershipTopic).subscribe((websocketDTO: ConversationWebsocketDTO) => {
-            this.onWebsocketMessageReceived(websocketDTO);
+            this.onConversationMembershipMessageReceived(websocketDTO);
         });
     }
 
-    private onWebsocketMessageReceived(websocketDTO: ConversationWebsocketDTO) {
+    private onConversationMembershipMessageReceived(websocketDTO: ConversationWebsocketDTO) {
         const conversationDTO = this.conversationService.convertServerDates(websocketDTO.conversation);
         const action = websocketDTO.crudAction;
 
@@ -129,62 +169,59 @@ export class MetisConversationService implements OnDestroy {
                 this.handleDeleteConversation(conversationDTO);
                 break;
         }
-        this.conversationsOfUser$.next(this.conversationCache);
+        this._conversationsOfUser$.next(this._conversationsOfUser);
     }
 
     private handleCreateConversation(createdConversation: ConversationDto) {
-        const indexOfCachedConversation = this.conversationCache.findIndex((cachedConversation) => cachedConversation.id === createdConversation.id);
+        const conversationsCopy = [...this._conversationsOfUser];
+        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === createdConversation.id);
         if (indexOfCachedConversation === -1) {
-            this.conversationCache.push(createdConversation);
+            // create new array to trigger change detection
+            conversationsCopy.push(createdConversation);
         } else {
             console.error('Conversation with id ' + createdConversation.id + " already exists in cache, but was sent as 'CREATE' action");
-            this.conversationCache[indexOfCachedConversation] = createdConversation;
+            conversationsCopy[indexOfCachedConversation] = createdConversation;
         }
+        this._conversationsOfUser = conversationsCopy;
     }
 
     private handleDeleteConversation(deletedConversation: ConversationDto) {
-        const indexOfCachedConversation = this.conversationCache.findIndex((cachedConversation) => cachedConversation.id === deletedConversation.id);
+        const conversationsCopy = [...this._conversationsOfUser];
+        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === deletedConversation.id);
         if (indexOfCachedConversation !== -1) {
-            this.conversationCache.splice(indexOfCachedConversation, 1);
+            conversationsCopy.splice(indexOfCachedConversation, 1);
         } else {
             console.error('Conversation with id ' + deletedConversation.id + " doesn't exist in cache, but was sent as 'DELETE' action");
         }
+        this._conversationsOfUser = conversationsCopy;
     }
 
     private handleUpdateConversation(updatedConversation: ConversationDto) {
-        const indexOfCachedConversation = this.conversationCache.findIndex((cachedConversation) => cachedConversation.id === updatedConversation.id);
+        const conversationsCopy = [...this._conversationsOfUser];
+        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === updatedConversation.id);
         if (indexOfCachedConversation === -1) {
             console.error('Conversation with id ' + updatedConversation.id + " doesn't exist in cache, but was sent as 'UPDATE' action");
-            this.conversationCache.push(updatedConversation);
+            conversationsCopy.push(updatedConversation);
         } else {
-            this.conversationCache[indexOfCachedConversation] = updatedConversation;
+            conversationsCopy[indexOfCachedConversation] = updatedConversation;
         }
+        this._conversationsOfUser = conversationsCopy;
     }
 
     private handleReadConversation(readConversation: ConversationDto) {
-        const indexOfCachedConversation = this.conversationCache.findIndex((cachedConversation) => cachedConversation.id === readConversation.id);
+        const conversationsCopy = [...this._conversationsOfUser];
+        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === readConversation.id);
         if (indexOfCachedConversation === -1) {
             console.error('Conversation with id ' + readConversation.id + " doesn't exist in cache, but was sent as 'READ_CONVERSATION' action");
-            this.conversationCache.push(readConversation);
+            conversationsCopy.push(readConversation);
         } else {
-            this.conversationCache[indexOfCachedConversation] = readConversation;
+            conversationsCopy[indexOfCachedConversation] = readConversation;
         }
+        this._conversationsOfUser = conversationsCopy;
 
         // ToDo: Investigate how to handle the last read case now that we do not send the conversation particpants naymore
         // conversationDTO.conversation.conversationParticipants?.forEach((conversationParticipant) => {
         //     conversationParticipant.lastRead = conversationParticipant.lastRead ? dayjs(conversationParticipant.lastRead) : undefined;
         // });
-    }
-
-    /**
-     * Via this Topic, users are informed about changes to which conversations they are a part of
-     *
-     * Users will be notified via this topic about the following events:
-     * - GroupChats: When the creator of a group chat starts the conversation by sending the first message (group chat shows up when first message is sent)
-     * - Channels: When the user is added to the channel (channel shows up when user is added)
-     */
-    private getConversationMembershipTopic(courseId: number, userId: number) {
-        const courseTopicName = '/user' + MetisWebsocketChannelPrefix + 'courses/' + courseId;
-        return courseTopicName + '/conversations/user/' + userId;
     }
 }
