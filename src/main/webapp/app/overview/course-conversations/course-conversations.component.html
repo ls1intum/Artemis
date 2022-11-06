@@ -1,25 +1,18 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="row mt-2" *ngIf="course">
-        <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
-            <jhi-conversation-selection-sidebar
-                [course]="course"
-                [activeConversation]="activeConversation"
-                [conversations]="conversations"
-                [refreshConversations$]="refreshConversations$"
-                (conversationSelected)="onConversationSelected($event)"
-                (channelOverViewModalResult)="onChannelOverViewModalResult($event)"
-                (newConversationCreated)="onNewConversationCreated($event)"
-            >
-            </jhi-conversation-selection-sidebar>
-        </div>
-        <div class="col pe-0 flex-grow-1">
-            <ng-container *ngIf="activeConversation">
-                <jhi-conversation-header [activeConversation]="activeConversation!" [course]="course" [refreshConversations$]="refreshConversations$"></jhi-conversation-header>
-                <jhi-conversation-messages [activeConversation]="activeConversation!" [course]="course" (openThread)="setPostInThread($event)"> </jhi-conversation-messages>
-            </ng-container>
-        </div>
-        <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
-            <jhi-conversation-thread-sidebar *ngIf="showPostThread" [activePost]="postInThread" (closePostThread)="showPostThread = false"> </jhi-conversation-thread-sidebar>
-        </div>
+    <div class="row mt-2" *ngIf="isServiceSetUp">
+        <ng-container>
+            <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+                <jhi-conversation-selection-sidebar> </jhi-conversation-selection-sidebar>
+            </div>
+            <div class="col pe-0 flex-grow-1">
+                <ng-container *ngIf="activeConversation">
+                    <jhi-conversation-header></jhi-conversation-header>
+                    <jhi-conversation-messages (openThread)="setPostInThread($event)"> </jhi-conversation-messages>
+                </ng-container>
+            </div>
+            <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+                <jhi-conversation-thread-sidebar *ngIf="showPostThread" [activePost]="postInThread" (closePostThread)="showPostThread = false"> </jhi-conversation-thread-sidebar>
+            </div>
+        </ng-container>
     </div>
 </jhi-loading-indicator-container>

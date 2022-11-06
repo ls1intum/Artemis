@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { catchError, EMPTY, map, Observable, of, ReplaySubject, switchMap } from 'rxjs';
+import { catchError, EMPTY, finalize, map, Observable, of, ReplaySubject, switchMap } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -12,6 +12,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -24,12 +26,17 @@ export class MetisConversationService implements OnDestroy {
     // Stores the currently selected conversation
     private _activeConversation: ConversationDto | undefined = undefined;
     private _activeConversation$: ReplaySubject<ConversationDto | undefined> = new ReplaySubject<ConversationDto | undefined>(1);
+    // Stores the course for which the service is setup -> should not change during the lifetime of the service
+    private _course: Course | undefined = undefined;
+    // Stores if the service is currently loading data
+    private _isLoading = false;
+    private _isLoading$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
 
     private subscribedConversationMembershipTopic?: string;
     private userId: number;
     private courseId: number;
-
     constructor(
+        private courseManagementService: CourseManagementService,
         private groupChatService: GroupChatService,
         private channelService: ChannelService,
         protected conversationService: ConversationService,
@@ -56,6 +63,14 @@ export class MetisConversationService implements OnDestroy {
         return this._activeConversation$.asObservable();
     }
 
+    get course(): Course | undefined {
+        return this._course;
+    }
+
+    get isLoading$(): Observable<boolean> {
+        return this._isLoading$.asObservable();
+    }
+
     public setActiveConversation(conversation: ConversationDto | undefined) {
         const cachedConversation = this._conversationsOfUser.find((conversationInCache) => conversationInCache.id === conversation?.id);
         if (!cachedConversation) {
@@ -66,10 +81,12 @@ export class MetisConversationService implements OnDestroy {
     }
 
     public forceRefresh(): Observable<never> {
-        if (!this.courseId) {
-            throw new Error('CourseId is not set. The service does not seem to be initialized.');
+        if (!this._course) {
+            throw new Error('Course is not set. The service does not seem to be initialized.');
         }
-        return this.conversationService.getConversationsOfUser(this.courseId).pipe(
+        this._isLoading = true;
+        this._isLoading$.next(this._isLoading);
+        return this.conversationService.getConversationsOfUser(this._course.id!).pipe(
             map((conversations: HttpResponse<ConversationDto[]>) => {
                 return conversations.body ?? [];
             }),
@@ -95,6 +112,10 @@ export class MetisConversationService implements OnDestroy {
             }),
             // refresh complete
             switchMap(() => EMPTY),
+            finalize(() => {
+                this._isLoading = false;
+                this._isLoading$.next(this._isLoading);
+            }),
         );
     }
 
@@ -103,7 +124,16 @@ export class MetisConversationService implements OnDestroy {
             throw new Error('CourseId is not set. The service cannot be initialized.');
         }
         this.courseId = courseId;
-        return this.conversationService.getConversationsOfUser(this.courseId).pipe(
+        this._isLoading = true;
+        this._isLoading$.next(this._isLoading);
+        return this.courseManagementService.findOneForDashboard(courseId).pipe(
+            map((course: HttpResponse<Course>) => {
+                return course.body;
+            }),
+            switchMap((course: Course) => {
+                this._course = course;
+                return this.conversationService.getConversationsOfUser(this._course.id ?? 0);
+            }),
             map((conversations: HttpResponse<ConversationDto[]>) => {
                 return conversations.body ?? [];
             }),
@@ -119,8 +149,12 @@ export class MetisConversationService implements OnDestroy {
                 this.subscribeToConversationMembershipTopic(courseId, this.userId);
                 return;
             }),
-            // service is ready to use and cached values can be received via the replay subjects
+            // service is ready to use and cached values can be received via the respective replay subjects
             switchMap(() => EMPTY),
+            finalize(() => {
+                this._isLoading = false;
+                this._isLoading$.next(this._isLoading);
+            }),
         );
     }
 

@@ -1,14 +1,15 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { faChevronDown, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/conversation-add-users-dialog/conversation-add-users-dialog.component';
-import { from, Subject } from 'rxjs';
+import { from } from 'rxjs';
 import { ConversationDetailDialogComponent, ConversationDetailTabs } from 'app/overview/course-conversations/conversation-detail-dialog/conversation-detail-dialog.component';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -16,24 +17,34 @@ import { getConversationName } from 'app/shared/metis/conversations/conversation
     styleUrls: ['./conversation-header.component.scss'],
 })
 export class ConversationHeaderComponent implements OnInit {
-    @Input()
-    refreshConversations$ = new Subject<void>();
-    @Input()
     course: Course;
-    @Input()
-    activeConversation: ConversationDto;
+    activeConversation?: ConversationDto;
 
     faUserPlus = faUserPlus;
     faUserGroup = faUserGroup;
     faChevronDown = faChevronDown;
 
-    constructor(public conversationService: ConversationService, private modalService: NgbModal) {}
+    constructor(
+        public conversationService: ConversationService,
+        private modalService: NgbModal,
+        // instantiated at course-conversation.component.ts
+        public metisConversationService: MetisConversationService,
+    ) {}
 
     getAsChannel = getAsChannelDto;
 
     getConversationName = getConversationName;
 
-    ngOnInit(): void {}
+    ngOnInit(): void {
+        this.course = this.metisConversationService.course!;
+        this.subscribeToActiveConversation();
+    }
+
+    private subscribeToActiveConversation() {
+        this.metisConversationService.activeConversation$.subscribe((conversation: ConversationDto) => {
+            this.activeConversation = conversation;
+        });
+    }
 
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
@@ -41,7 +52,7 @@ export class ConversationHeaderComponent implements OnInit {
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.conversation = this.activeConversation;
         from(modalRef.result).subscribe(() => {
-            this.refreshConversations$.next();
+            // ToDo: refresh conversation
         });
     }
 
@@ -52,7 +63,7 @@ export class ConversationHeaderComponent implements OnInit {
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.conversation = this.activeConversation;
         from(modalRef.result).subscribe(() => {
-            this.refreshConversations$.next();
+            // ToDo: refresh conversation
         });
     }
 }

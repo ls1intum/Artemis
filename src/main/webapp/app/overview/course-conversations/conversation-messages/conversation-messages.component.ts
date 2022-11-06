@@ -9,6 +9,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { Channel, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat, isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
 import { ButtonType } from 'app/shared/components/button.component';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Component({
     selector: 'jhi-conversation-messages',
@@ -25,16 +26,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     messages: QueryList<any>;
     @ViewChild('container')
     content: ElementRef;
-
-    @Input()
     course?: Course;
-
-    @Input() set activeConversation(newActiveConversation: ConversationDto) {
-        if (!this._activeConversation || this._activeConversation.id !== newActiveConversation.id) {
-            this._activeConversation = newActiveConversation;
-            this.onActiveConversationChange();
-        }
-    }
 
     previousScrollDistanceFromTop: number;
     // as set for the css class '.posting-infinite-scroll-container'
@@ -66,16 +58,21 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     constructor(
         protected metisService: MetisService, // instance from course-messages.component
+        public metisConversationService: MetisConversationService, // instance from course-messages.component
     ) {}
 
     ngOnInit(): void {
-        if (this.course) {
-            this.setupMetis();
-            this.subscribeToMetis();
-            if (this._activeConversation) {
-                this.onActiveConversationChange();
-            }
-        }
+        this.course = this.metisConversationService.course!;
+        this.setupMetis();
+        this.subscribeToMetis();
+        this.subscribeToActiveConversation();
+    }
+
+    private subscribeToActiveConversation() {
+        this.metisConversationService.activeConversation$.subscribe((conversation: ConversationDto) => {
+            this._activeConversation = conversation;
+            this.onActiveConversationChange();
+        });
     }
 
     ngAfterViewInit() {

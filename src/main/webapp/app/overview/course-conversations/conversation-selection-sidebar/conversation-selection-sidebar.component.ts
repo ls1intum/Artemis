@@ -1,9 +1,8 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import interact from 'interactjs';
-import { ActivatedRoute } from '@angular/router';
 import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
-import { from, Observable, of, Subject } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -15,47 +14,16 @@ import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversatio
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/channels/channels-create-dialog/channels-create-dialog.component';
 import { Channel, ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat, GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Component({
     selector: 'jhi-conversation-selection-sidebar',
     styleUrls: ['./conversation-selection-sidebar.component.scss'],
     templateUrl: './conversation-selection-sidebar.component.html',
 })
-export class ConversationSelectionSidebarComponent implements AfterViewInit {
-    @Input()
-    refreshConversations$ = new Subject<void>();
-
-    @Input()
+export class ConversationSelectionSidebarComponent implements AfterViewInit, OnInit {
     course?: Course;
-
-    @Output() conversationSelected = new EventEmitter<ConversationDto | undefined>();
-
-    @Output() channelOverViewModalResult = new EventEmitter<number | number[]>();
-
-    @Output() newConversationCreated = new EventEmitter<Conversation>();
-
-    @Input()
-    set conversations(conversations: ConversationDto[]) {
-        this.allConversations = conversations ?? [];
-        this.channelConversations = this.allConversations
-            .filter((conversation) => isChannelDto(conversation))
-            .map((channel) => channel as Channel)
-            .sort((a, b) => a.name!.localeCompare(b.name!));
-        this.groupChats = this.allConversations
-            .filter((conversation) => isGroupChatDto(conversation))
-            .map((groupChat) => groupChat as GroupChat)
-            .sort((a, b) => {
-                // sort by last message date
-                const aLastMessageDate = a.lastMessageDate ? a.lastMessageDate : a.creationDate;
-                const bLastMessageDate = b.lastMessageDate ? b.lastMessageDate : b.creationDate;
-                // newest messages at the top of the list
-                return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
-            });
-    }
-
-    @Input()
     activeConversation?: ConversationDto;
-
     allConversations: ConversationDto[] = [];
     starredConversations: ConversationDto[] = [];
     channelConversations: ChannelDTO[] = [];
@@ -75,7 +43,48 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit {
     faConversation = faComments;
     faPlus = faPlus;
 
-    constructor(private courseManagementService: CourseManagementService, private activatedRoute: ActivatedRoute, private modalService: NgbModal) {}
+    constructor(
+        private courseManagementService: CourseManagementService,
+        private modalService: NgbModal,
+        // instantiated at course-conversation.component.ts
+        public metisConversationService: MetisConversationService,
+    ) {}
+
+    ngOnInit(): void {
+        this.course = this.metisConversationService.course;
+        this.subscribeToActiveConversation();
+        this.subscribeToConversationsOfUser();
+    }
+
+    private subscribeToActiveConversation() {
+        this.metisConversationService.activeConversation$.subscribe((conversation: ConversationDto) => {
+            this.activeConversation = conversation;
+        });
+    }
+
+    private subscribeToConversationsOfUser() {
+        this.metisConversationService.conversationsOfUser$.subscribe((conversations: ConversationDto[]) => {
+            this.onConversationsUpdate(conversations);
+        });
+    }
+
+    onConversationsUpdate(conversations: ConversationDto[]) {
+        this.allConversations = conversations ?? [];
+        this.channelConversations = this.allConversations
+            .filter((conversation) => isChannelDto(conversation))
+            .map((channel) => channel as Channel)
+            .sort((a, b) => a.name!.localeCompare(b.name!));
+        this.groupChats = this.allConversations
+            .filter((conversation) => isGroupChatDto(conversation))
+            .map((groupChat) => groupChat as GroupChat)
+            .sort((a, b) => {
+                // sort by last message date
+                const aLastMessageDate = a.lastMessageDate ? a.lastMessageDate : a.creationDate;
+                const bLastMessageDate = b.lastMessageDate ? b.lastMessageDate : b.creationDate;
+                // newest messages at the top of the list
+                return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
+            });
+    }
 
     ngAfterViewInit(): void {
         // allows the conversation sidebar to be resized towards the right-hand side
@@ -159,7 +168,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit {
         modalRef.componentInstance.courseId = this.course?.id!;
 
         from(modalRef.result).subscribe((result: number[] | number) => {
-            this.channelOverViewModalResult.emit(result);
+            // ToDo
         });
     }
 
@@ -178,12 +187,12 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit {
             this.createConversation(newConversation);
         } else {
             // conversation with the found user already exists, so we select it --> Logik funktioniert aber nicht mehr sobald mehr als 2 user in einem gruppengespräch sind
-            this.conversationSelected.emit(foundConversation);
+            this.metisConversationService.setActiveConversation(foundConversation);
         }
     };
 
     private createConversation(newConversation: Conversation) {
-        this.newConversationCreated.emit(newConversation);
+        // ToDO:
     }
     /**
      * Formats the results in the autocomplete overlay.
@@ -218,6 +227,6 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit {
     }
 
     onConversationSelected($event: ConversationDto) {
-        this.conversationSelected.emit($event);
+        this.metisConversationService.setActiveConversation($event);
     }
 }
