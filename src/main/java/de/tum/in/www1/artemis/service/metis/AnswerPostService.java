@@ -50,7 +50,7 @@ public class AnswerPostService extends PostingService {
     /**
      * Checks course, user and answer post and associated post validity,
      * determines the associated post, the answer post's author,
-     * sets to approved if author is at least a tutor,
+     * sets resolves post to false by default,
      * persists the answer post, and sends a notification to affected user groups
      *
      * @param courseId   id of the course the answer post belongs to
