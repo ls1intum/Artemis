@@ -7,7 +7,6 @@ import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { VERSION } from 'app/app.constants';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -118,7 +117,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private sessionStorage: SessionStorageService,
         private accountService: AccountService,
         private profileService: ProfileService,
-        private participationWebsocketService: ParticipationWebsocketService,
         public guidedTourService: GuidedTourService,
         private router: Router,
         private route: ActivatedRoute,
@@ -680,12 +678,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     logout() {
         this.collapseNavbar();
-        this.router.navigate(['/']).then((res) => {
-            if (res) {
-                this.participationWebsocketService.resetLocalCache();
-                this.loginService.logout(true);
-            }
-        });
+        this.loginService.logout(true);
     }
 
     toggleNavbar() {

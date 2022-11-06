@@ -69,8 +69,6 @@ export class LoginService {
     logout(wasInitiatedByUser: boolean) {
         this.logoutWasForceful = !wasInitiatedByUser;
 
-        this.accountService.authenticate(undefined);
-
         if (wasInitiatedByUser) {
             this.authServerProvider
                 .logout()
@@ -86,6 +84,7 @@ export class LoginService {
     }
 
     private onLogout(): void {
+        this.accountService.authenticate(undefined);
         this.alertService.closeAll();
         this.notificationService.cleanUp();
         this.router.navigateByUrl('/');
