@@ -173,10 +173,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private boolean needsToBeScheduledDueToDates(ProgrammingExercise exercise) {
         final ZonedDateTime now = ZonedDateTime.now();
 
-        // Exercises with a visibility date in the future must be scheduled
-        if (exercise.getVisibilityDate() != null && now.isBefore(exercise.getVisibilityDate())) {
-            return true;
-        }
         // Exercises with a release date in the future must be scheduled
         if (exercise.getReleaseDate() != null && now.isBefore(exercise.getReleaseDate())) {
             return true;
@@ -207,7 +203,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @param exerciseId the id of the exercise for which the tasks should be cancelled
      */
     public void cancelAllScheduledTasks(Long exerciseId) {
-        scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.VISIBLE);
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.RELEASE);
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.DUE);
         scheduleService.cancelScheduledTaskForLifecycle(exerciseId, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);

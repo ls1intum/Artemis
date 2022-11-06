@@ -38,13 +38,13 @@ public abstract class BaseExercise extends DomainObject {
     @Column(name = "assessment_type")
     private AssessmentType assessmentType;
 
-    @Column(name = "visibility_date")
-    @JsonView(QuizView.Before.class)
-    private ZonedDateTime visibilityDate;
-
     @Column(name = "release_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime releaseDate;
+
+    @Column(name = "start_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime startDate;
 
     @Column(name = "due_date")
     @JsonView(QuizView.Before.class)
@@ -121,12 +121,12 @@ public abstract class BaseExercise extends DomainObject {
         this.releaseDate = releaseDate;
     }
 
-    public ZonedDateTime getVisibilityDate() {
-        return visibilityDate;
+    public ZonedDateTime getStartDate() {
+        return startDate;
     }
 
-    public void setVisibilityDate(ZonedDateTime visibilityDate) {
-        this.visibilityDate = visibilityDate;
+    public void setStartDate(ZonedDateTime startDate) {
+        this.startDate = startDate;
     }
 
     public ZonedDateTime getDueDate() {

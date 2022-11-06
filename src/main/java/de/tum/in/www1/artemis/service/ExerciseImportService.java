@@ -39,7 +39,7 @@ public abstract class ExerciseImportService {
         newExercise.setIncludedInOverallScore(importedExercise.getIncludedInOverallScore());
         newExercise.setAssessmentType(importedExercise.getAssessmentType());
         newExercise.setProblemStatement(importedExercise.getProblemStatement());
-        newExercise.setVisibilityDate(importedExercise.getVisibilityDate());
+        newExercise.setStartDate(importedExercise.getStartDate());
         newExercise.setReleaseDate(importedExercise.getReleaseDate());
         newExercise.setDueDate(importedExercise.getDueDate());
         newExercise.setAssessmentDueDate(importedExercise.getAssessmentDueDate());

@@ -165,6 +165,13 @@ public class ParticipationResource {
             }
         }
 
+        // if the user is a student and the exercise has a start date, they cannot start the exercise before the start date
+        if (exercise.getStartDate() != null && exercise.getStartDate().isAfter(now())) {
+            if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+                throw new AccessForbiddenException("Students cannot start an exercise before the start date");
+            }
+        }
+
         // Also don't allow participations if the feature is disabled
         if (exercise instanceof ProgrammingExercise) {
             // fetch additional objects needed for the startExercise method below

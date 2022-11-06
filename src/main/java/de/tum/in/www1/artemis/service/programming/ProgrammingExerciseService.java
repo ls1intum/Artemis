@@ -730,11 +730,11 @@ public class ProgrammingExerciseService {
 
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
-        programmingExerciseBeforeUpdate.setVisibilityDate(programmingExercise.getVisibilityDate());
+        programmingExerciseBeforeUpdate.setStartDate(programmingExercise.getStartDate());
         programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
         programmingExerciseBeforeUpdate.setAssessmentDueDate(programmingExercise.getAssessmentDueDate());
 
-        programmingExercise.setVisibilityDate(updatedProgrammingExercise.getVisibilityDate());
+        programmingExercise.setStartDate(updatedProgrammingExercise.getStartDate());
         programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
         programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());

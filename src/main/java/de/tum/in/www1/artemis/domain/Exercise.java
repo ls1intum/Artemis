@@ -13,7 +13,9 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -789,14 +791,17 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * <p>
      * Currently, exercise start dates are the same for all users
      *
-     * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date.
+     * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date or start date.
      */
     @JsonIgnore
-    public ZonedDateTime getIndividualReleaseDate() {
+    public ZonedDateTime getRepositoryUnlockDate() {
         if (isExamExercise()) {
             return getExerciseGroup().getExam().getStartDate();
         }
         else {
+            var startDate = getStartDate();
+            if (startDate != null)
+                return startDate;
             return getReleaseDate();
         }
     }
@@ -867,7 +872,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      */
     public void validateDates() {
         // All fields are optional, so there is no error if none of them is set
-        if (getVisibilityDate() == null && getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
+        if (getReleaseDate() == null && getStartDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
             return;
         }
         if (isExamExercise()) {
@@ -875,7 +880,11 @@ public abstract class Exercise extends BaseExercise implements Completable {
         }
 
         // at least one is set, so we have to check the three possible errors
-        boolean areDatesValid = (getVisibilityDate() == null || getReleaseDate() != null) && isNotAfterAndNotNull(getVisibilityDate(), getReleaseDate()) && isNotAfterAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate()) && isNotAfterAndNotNull(getReleaseDate(), getStartDate())
+                && isNotAfterAndNotNull(getStartDate(), getDueDate()) //
+                && isValidAssessmentDueDate(getStartDate(), getDueDate(), getAssessmentDueDate()) //
+                && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate()) //
+                && isValidExampleSolutionPublicationDate(getStartDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore())
                 && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
 
         if (!areDatesValid) {

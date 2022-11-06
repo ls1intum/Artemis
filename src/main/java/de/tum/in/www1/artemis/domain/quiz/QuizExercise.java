@@ -412,7 +412,7 @@ public class QuizExercise extends Exercise {
         // reset unchangeable attributes: ( dueDate, releaseDate, question.points)
         this.setDueDate(originalQuizExercise.getDueDate());
         this.setReleaseDate(originalQuizExercise.getReleaseDate());
-        this.setVisibilityDate(originalQuizExercise.getVisibilityDate());
+        this.setStartDate(originalQuizExercise.getStartDate());
 
         // cannot update batches
         this.setQuizBatches(originalQuizExercise.getQuizBatches());
