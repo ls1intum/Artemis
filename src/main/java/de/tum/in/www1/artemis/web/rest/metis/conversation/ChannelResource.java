@@ -101,7 +101,7 @@ public class ChannelResource {
 
         channelAuthorizationService.isAllowedToRegisterUsersToChannel(course, channelFromDatabase, userLogins, requestingUser);
         var usersToRegister = findUsersInDatabase(userLogins);
-        conversationService.registerUsers(usersToRegister, channelFromDatabase);
+        conversationService.registerUsers(course, usersToRegister, channelFromDatabase);
         return ResponseEntity.noContent().build();
     }
 
@@ -124,7 +124,7 @@ public class ChannelResource {
 
         var usersToDeRegister = findUsersInDatabase(userLogins);
 
-        conversationService.deregisterUsers(usersToDeRegister, channelFromDatabase);
+        conversationService.deregisterUsers(course, usersToDeRegister, channelFromDatabase);
         return ResponseEntity.noContent().build();
     }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -8,16 +8,16 @@ import { Subject, switchMap, take } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { finalize } from 'rxjs/operators';
-import { MessagingService } from 'app/shared/metis/messaging.service';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
-    selector: 'jhi-course-messages',
-    templateUrl: './course-messages.component.html',
-    providers: [MetisService, MessagingService],
+    selector: 'jhi-course-conversations',
+    templateUrl: './course-conversations.component.html',
+    providers: [MetisService, MetisConversationService],
 })
-export class CourseMessagesComponent implements OnInit {
+export class CourseConversationsComponent implements OnInit {
     // ToDo: vielleicht so einen Conversation Action listener machen, der dann die entsprechenden Methoden aufruft
     refreshConversations$ = new Subject<void>();
 
@@ -32,8 +32,10 @@ export class CourseMessagesComponent implements OnInit {
     constructor(
         private courseManagementService: CourseManagementService,
         private activatedRoute: ActivatedRoute,
-        public messagingService: MessagingService,
+        public messagingService: MetisConversationService,
         private alertService: AlertService,
+
+        private cdr: ChangeDetectorRef,
     ) {}
 
     onConversationSelected(conversation: ConversationDto | undefined) {
@@ -51,7 +53,7 @@ export class CourseMessagesComponent implements OnInit {
 
     refreshConversations() {
         this.isLoading = true;
-        return this.messagingService.getConversationsOfUser(this.course?.id!).pipe(finalize(() => (this.isLoading = false)));
+        return this.messagingService.setUpConversationService(this.course?.id!).pipe(finalize(() => (this.isLoading = false)));
     }
 
     ngOnInit(): void {
@@ -68,14 +70,16 @@ export class CourseMessagesComponent implements OnInit {
             .subscribe({
                 next: (courseResult) => {
                     this.course = courseResult.body!;
-                    this.messagingService.getConversationsOfUser(this.course.id!).subscribe(() => {
-                        this.messagingService.conversations.subscribe((conversations: ConversationDto[]) => {
+                    this.messagingService.setUpConversationService(this.course.id!).subscribe((conversationDTOs) => {
+                        this.conversations = conversationDTOs;
+                        this.messagingService.conversations$.subscribe((conversations: ConversationDto[]) => {
                             this.conversations = conversations ?? [];
                             if (this.conversations.length > 0 && !this.activeConversation) {
                                 // emit the value to fetch conversation posts on post overview tab
                                 // ToDo: Überlegen welche conversation hier ausgewählt werden soll
                                 this.activeConversation = this.conversations.first()!;
                             }
+                            this.cdr.detectChanges();
                         });
                     });
                 },

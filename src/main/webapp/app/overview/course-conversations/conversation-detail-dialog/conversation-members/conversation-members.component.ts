@@ -10,7 +10,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { from, map, Subject } from 'rxjs';
 import { faMagnifyingGlass, faUser, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ConversationAddUsersDialogComponent } from 'app/overview/course-messages/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/conversation-add-users-dialog/conversation-add-users-dialog.component';
 
 interface SearchQuery {
     searchTerm: string;

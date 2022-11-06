@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { ChannelFormData, ChannelType } from 'app/overview/course-messages/channels/channel-form/channel-form.component';
+import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/channels/channel-form/channel-form.component';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';

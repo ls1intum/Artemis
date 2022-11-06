@@ -29,14 +29,14 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.repository.metis.MessageRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private MessageRepository messageRepository;
+    private ConversationMessageRepository conversationMessageRepository;
 
     private List<Post> existingPostsAndConversationPosts;
 
@@ -99,7 +99,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         PostContextFilter postContextFilter = new PostContextFilter();
         postContextFilter.setConversationId(createdPost.getConversation().getId());
-        assertThat(messageRepository.findMessages(postContextFilter, Pageable.unpaged())).hasSize(1);
+        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged())).hasSize(1);
 
         // both conversation participants should be notified
         verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
@@ -116,7 +116,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notCreatedPost).isNull();
-        assertThat(messageRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
+        assertThat(conversationMessageRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
 
         // conversation participants should not be notified
         verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
@@ -203,7 +203,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Post conversationPostToDelete = existingConversationPosts.get(0);
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.OK);
 
-        assertThat(messageRepository.count()).isEqualTo(existingPostsAndConversationPosts.size() - 1);
+        assertThat(conversationMessageRepository.count()).isEqualTo(existingPostsAndConversationPosts.size() - 1);
         // both conversation participants should be notified
         verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
@@ -215,7 +215,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Post conversationPostToDelete = existingConversationPosts.get(0);
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.FORBIDDEN);
 
-        assertThat(messageRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
+        assertThat(conversationMessageRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
         // conversation participants should not be notified
         verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }

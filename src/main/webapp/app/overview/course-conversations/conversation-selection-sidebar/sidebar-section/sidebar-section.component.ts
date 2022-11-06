@@ -1,7 +1,7 @@
 import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { MessagingService } from 'app/shared/metis/messaging.service';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { getAsChannel, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
@@ -37,7 +37,7 @@ export class SidebarSectionComponent {
     faChevronRight = faChevronRight;
     faMessage = faMessage;
 
-    constructor(protected courseMessagesService: MessagingService, public conversationService: ConversationService) {}
+    constructor(protected courseMessagesService: MetisConversationService, public conversationService: ConversationService) {}
 
     conversationsTrackByFn = (index: number, conversation: ConversationDto): number => conversation.id!;
 

@@ -28,13 +28,13 @@ import { MockPostService } from '../../../../helpers/mocks/service/mock-post.ser
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
-import { MessagesComponent } from 'app/overview/course-messages/conversation-messages/messages.component';
+import { ConversationMessagesComponent } from 'app/overview/course-conversations/conversation-messages/conversation-messages.component';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
 
 describe('MessagesComponent', () => {
-    let component: MessagesComponent;
-    let fixture: ComponentFixture<MessagesComponent>;
+    let component: ConversationMessagesComponent;
+    let fixture: ComponentFixture<ConversationMessagesComponent>;
     let courseManagementService: CourseManagementService;
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
@@ -54,7 +54,7 @@ describe('MessagesComponent', () => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             declarations: [
-                MessagesComponent,
+                ConversationMessagesComponent,
                 MockComponent(PostingThreadComponent),
                 MockComponent(PostCreateEditModalComponent),
                 MockComponent(MessageInlineInputComponent),
@@ -81,7 +81,7 @@ describe('MessagesComponent', () => {
             .then(() => {
                 courseManagementService = TestBed.inject(CourseManagementService);
                 jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
-                fixture = TestBed.createComponent(MessagesComponent);
+                fixture = TestBed.createComponent(ConversationMessagesComponent);
                 component = fixture.componentInstance;
                 metisService = fixture.debugElement.injector.get(MetisService);
                 metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');

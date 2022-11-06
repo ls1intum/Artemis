@@ -43,33 +43,35 @@ export class ConversationService {
             .pipe(map(this.convertDateArrayFromServer));
     }
 
-    public convertDateFromClient(conversation: Conversation) {
-        return {
-            ...conversation,
-            creationDate: conversation.creationDate && dayjs(conversation.creationDate).isValid() ? dayjs(conversation.creationDate).toJSON() : undefined,
-            lastMessageDate: conversation.lastMessageDate && dayjs(conversation.lastMessageDate).isValid() ? dayjs(conversation.lastMessageDate).toJSON() : undefined,
-        };
-    }
+    public convertDateFromClient = (conversation: Conversation) => ({
+        ...conversation,
+        creationDate: conversation.creationDate && dayjs(conversation.creationDate).isValid() ? dayjs(conversation.creationDate).toJSON() : undefined,
+        lastMessageDate: conversation.lastMessageDate && dayjs(conversation.lastMessageDate).isValid() ? dayjs(conversation.lastMessageDate).toJSON() : undefined,
+    });
 
-    public convertDateFromServer(res: HttpResponse<ConversationDto>): HttpResponse<ConversationDto> {
+    public convertDateFromServer = (res: HttpResponse<ConversationDto>): HttpResponse<ConversationDto> => {
         if (res.body) {
-            res.body.creationDate = res.body.creationDate ? dayjs(res.body.creationDate) : undefined;
-            res.body.lastMessageDate = res.body.lastMessageDate ? dayjs(res.body.lastMessageDate) : undefined;
+            this.convertServerDates(res.body);
         }
         return res;
-    }
+    };
 
-    public convertDateArrayFromServer(res: HttpResponse<ConversationDto[]>): HttpResponse<ConversationDto[]> {
+    public convertServerDates = (conversation: ConversationDto) => {
+        conversation.creationDate = conversation.creationDate ? dayjs(conversation.creationDate) : undefined;
+        conversation.lastMessageDate = conversation.lastMessageDate ? dayjs(conversation.lastMessageDate) : undefined;
+        return conversation;
+    };
+
+    public convertDateArrayFromServer = (res: HttpResponse<ConversationDto[]>): HttpResponse<ConversationDto[]> => {
         if (res.body) {
             res.body.forEach((conversation) => {
-                conversation.creationDate = conversation.creationDate ? dayjs(conversation.creationDate) : undefined;
-                conversation.lastMessageDate = conversation.lastMessageDate ? dayjs(conversation.lastMessageDate) : undefined;
+                this.convertServerDates(conversation);
             });
         }
         return res;
-    }
+    };
 
-    private creatSearchPagingParams(sortingParameters: UserSortingParameter[], page: number, size: number, loginOrName: string) {
+    private creatSearchPagingParams = (sortingParameters: UserSortingParameter[], page: number, size: number, loginOrName: string) => {
         let params = new HttpParams();
         params = params.set('loginOrName', loginOrName);
         for (const sortParameter of sortingParameters) {
@@ -77,5 +79,5 @@ export class ConversationService {
         }
         params = params.set('page', String(page));
         return params.set('size', String(size));
-    }
+    };
 }

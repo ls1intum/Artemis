@@ -63,7 +63,7 @@ const routes: Routes = [
             },
             {
                 path: 'messages',
-                loadChildren: () => import('./course-messages/course-messages.module').then((m) => m.CourseMessagesModule),
+                loadChildren: () => import('./course-conversations/course-conversations.module').then((m) => m.CourseConversationsModule),
             },
             {
                 path: 'tutorial-groups',

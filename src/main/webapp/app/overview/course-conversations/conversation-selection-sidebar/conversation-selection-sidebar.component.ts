@@ -11,17 +11,17 @@ import { Course } from 'app/entities/course.model';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelsOverviewDialogComponent } from 'app/overview/course-messages/channels/channels-overview-dialog/channels-overview-dialog.component';
-import { ChannelsCreateDialogComponent } from 'app/overview/course-messages/channels/channels-create-dialog/channels-create-dialog.component';
+import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/channels/channels-overview-dialog/channels-overview-dialog.component';
+import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/channels/channels-create-dialog/channels-create-dialog.component';
 import { Channel, ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat, GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
 
 @Component({
-    selector: 'jhi-conversation-sidebar',
-    styleUrls: ['./conversation-sidebar.component.scss'],
-    templateUrl: './conversation-sidebar.component.html',
+    selector: 'jhi-conversation-selection-sidebar',
+    styleUrls: ['./conversation-selection-sidebar.component.scss'],
+    templateUrl: './conversation-selection-sidebar.component.html',
 })
-export class ConversationSidebarComponent implements AfterViewInit {
+export class ConversationSelectionSidebarComponent implements AfterViewInit {
     @Input()
     refreshConversations$ = new Subject<void>();
 
@@ -41,7 +41,16 @@ export class ConversationSidebarComponent implements AfterViewInit {
             .filter((conversation) => isChannelDto(conversation))
             .map((channel) => channel as Channel)
             .sort((a, b) => a.name!.localeCompare(b.name!));
-        this.directConversations = this.allConversations.filter((conversation) => isGroupChatDto(conversation)).map((groupChat) => groupChat as GroupChat);
+        this.groupChats = this.allConversations
+            .filter((conversation) => isGroupChatDto(conversation))
+            .map((groupChat) => groupChat as GroupChat)
+            .sort((a, b) => {
+                // sort by last message date
+                const aLastMessageDate = a.lastMessageDate ? a.lastMessageDate : a.creationDate;
+                const bLastMessageDate = b.lastMessageDate ? b.lastMessageDate : b.creationDate;
+                // newest messages at the top of the list
+                return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
+            });
     }
 
     @Input()
@@ -50,7 +59,7 @@ export class ConversationSidebarComponent implements AfterViewInit {
     allConversations: ConversationDto[] = [];
     starredConversations: ConversationDto[] = [];
     channelConversations: ChannelDTO[] = [];
-    directConversations: GroupChatDto[] = [];
+    groupChats: GroupChatDto[] = [];
 
     collapsed: boolean;
     isLoading = false;

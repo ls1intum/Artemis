@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @SuppressWarnings("unused")
 @Repository
-public interface MessageRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
+public interface ConversationMessageRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
 
     /**
      * Generates SQL Query via specifications to find and sort Messages
@@ -37,4 +37,6 @@ public interface MessageRepository extends JpaRepository<Post, Long>, JpaSpecifi
     default Post findMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).filter(post -> post.getConversation() != null).orElseThrow(() -> new EntityNotFoundException("Message", postId));
     }
+
+    Integer countByConversationId(Long conversationId);
 }

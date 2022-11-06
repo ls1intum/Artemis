@@ -1,26 +1,31 @@
-import { CourseMessagesComponent } from 'app/overview/course-messages/course-messages.component';
+import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { getElement } from '../../../helpers/utils/general.utils';
 
-import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
+import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/conversation-selection-sidebar/conversation-selection-sidebar.component';
 import { conversationBetweenUser1User2, directMessageUser1 } from '../../../helpers/sample/metis-sample-data';
-import { MessagesComponent } from 'app/overview/course-messages/conversation-messages/messages.component';
-import { ThreadSidebarComponent } from 'app/overview/course-messages/thread-sidebar/thread-sidebar.component';
+import { ConversationMessagesComponent } from 'app/overview/course-conversations/conversation-messages/conversation-messages.component';
+import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { MockComponent } from 'ng-mocks';
 
 describe('CourseMessagesComponent', () => {
-    let fixture: ComponentFixture<CourseMessagesComponent>;
-    let component: CourseMessagesComponent;
+    let fixture: ComponentFixture<CourseConversationsComponent>;
+    let component: CourseConversationsComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [CourseMessagesComponent, MockComponent(ConversationSidebarComponent), MockComponent(MessagesComponent), MockComponent(ThreadSidebarComponent)],
+            declarations: [
+                CourseConversationsComponent,
+                MockComponent(ConversationSelectionSidebarComponent),
+                MockComponent(ConversationMessagesComponent),
+                MockComponent(ConversationThreadSidebarComponent),
+            ],
             providers: [],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CourseMessagesComponent);
+                fixture = TestBed.createComponent(CourseConversationsComponent);
                 component = fixture.componentInstance;
             });
     });
@@ -46,7 +51,7 @@ describe('CourseMessagesComponent', () => {
     it('should not open thread sidebar on page load', () => {
         expect(component.showPostThread).toBeFalse();
         fixture.detectChanges();
-        const conversationSidebarComponent = getElement(fixture.debugElement, 'jhi-thread-sidebar') as ThreadSidebarComponent;
+        const conversationSidebarComponent = getElement(fixture.debugElement, 'jhi-thread-sidebar') as ConversationThreadSidebarComponent;
         expect(conversationSidebarComponent).toBeNull();
     });
 
@@ -60,7 +65,7 @@ describe('CourseMessagesComponent', () => {
 
         fixture.detectChanges();
 
-        const conversationSidebarComponent = getElement(fixture.debugElement, 'jhi-thread-sidebar') as ThreadSidebarComponent;
+        const conversationSidebarComponent = getElement(fixture.debugElement, 'jhi-thread-sidebar') as ConversationThreadSidebarComponent;
         expect(conversationSidebarComponent).not.toBeNull();
     });
 
@@ -75,7 +80,7 @@ describe('CourseMessagesComponent', () => {
 
         fixture.detectChanges();
 
-        const conversationSidebarComponent = getElement(fixture.debugElement, 'jhi-thread-sidebar') as ThreadSidebarComponent;
+        const conversationSidebarComponent = getElement(fixture.debugElement, 'jhi-thread-sidebar') as ConversationThreadSidebarComponent;
         expect(conversationSidebarComponent).toBeNull();
     });
 });

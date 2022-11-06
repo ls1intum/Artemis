@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -23,6 +25,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 @Service
 public class ConversationService {
@@ -55,7 +58,7 @@ public class ConversationService {
         this.groupChatService = groupChatService;
     }
 
-    public void registerUsers(Set<User> usersToRegister, Conversation conversation) {
+    public void registerUsers(Course course, Set<User> usersToRegister, Conversation conversation) {
         var conversationFromDatabase = conversationRepository.findByIdWithConversationParticipantsElseThrow(conversation.getId());
         var userThatNeedToBeRegistered = new HashSet<User>();
 
@@ -77,9 +80,12 @@ public class ConversationService {
         newConversationParticipants = conversationParticipantRepository.saveAll(newConversationParticipants);
         conversationFromDatabase.getConversationParticipants().addAll(newConversationParticipants);
         conversationRepository.save(conversationFromDatabase);
+
+        var websocketDTO = new ConversationWebsocketDTO(convertConversationToDTO(conversationFromDatabase), MetisCrudAction.CREATE);
+        broadcastOnConversationMembershipChannel(course, websocketDTO, usersToRegister);
     }
 
-    public void deregisterUsers(Set<User> usersToDeregister, Conversation conversation) {
+    public void deregisterUsers(Course course, Set<User> usersToDeregister, Conversation conversation) {
         var conversationFromDatabase = conversationRepository.findByIdWithConversationParticipantsElseThrow(conversation.getId());
 
         var participantsToRemove = new HashSet<ConversationParticipant>();
@@ -93,6 +99,26 @@ public class ConversationService {
         conversationFromDatabase.getConversationParticipants().removeAll(participantsToRemove);
         conversationRepository.save(conversationFromDatabase);
         conversationParticipantRepository.deleteAll(participantsToRemove);
+        var websocketDTO = new ConversationWebsocketDTO(convertConversationToDTO(conversationFromDatabase), MetisCrudAction.DELETE);
+        broadcastOnConversationMembershipChannel(course, websocketDTO, usersToDeregister);
+
+    }
+
+    public ConversationDTO convertConversationToDTO(Conversation conversation) {
+        var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
+        ConversationDTO dto = null;
+        if (conversation instanceof Channel channel) {
+            dto = new ChannelDTO(channel);
+        }
+        else if (conversation instanceof GroupChat groupChat) {
+            dto = new GroupChatDTO(groupChat);
+            ((GroupChatDTO) dto).setNamesOfOtherMembers(groupChatService.getNamesOfOtherMembers(groupChat, requestingUser));
+        }
+        if (dto != null) {
+            dto.setIsMember(isMember(conversation.getId(), requestingUser.getId()));
+            dto.setNumberOfMembers(getMemberCount(conversation.getId()));
+        }
+        return dto;
     }
 
     public Conversation getConversationById(Long conversationId) {
@@ -112,7 +138,7 @@ public class ConversationService {
         var activeGroupChatsOfUser = groupChatRepository.findActiveGroupChatsOfUserWithConversationParticipants(courseId, user.getId()).stream().map(groupChat -> {
             var dto = new GroupChatDTO(groupChat);
             dto.setIsMember(true);
-            dto.setNumberOfMembers(getMemberCount(groupChat.getId()));
+            dto.setNumberOfMembers(groupChat.getConversationParticipants().size());
             dto.setNamesOfOtherMembers(groupChatService.getNamesOfOtherMembers(groupChat, user));
             return dto;
         }).toList();
@@ -131,22 +157,18 @@ public class ConversationService {
         return allConversations;
     }
 
-    public void updateConversation(Conversation conversation) {
-        conversationRepository.save(conversation);
+    public Conversation updateConversation(Conversation conversation) {
+        return conversationRepository.save(conversation);
     }
 
-    public void broadcastForConversation(Course course, ConversationWebsocketDTO conversationWebsocketDTO, User user) {
+    public void broadcastOnConversationMembershipChannel(Course course, ConversationWebsocketDTO conversationWebsocketDTO, Set<User> usersToMessage) {
         String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + course.getId();
         String conversationParticipantTopicName = courseTopicName + "/conversations/user/";
+        usersToMessage.forEach(user -> sendToConversationMembershipChannel(conversationWebsocketDTO, user, conversationParticipantTopicName));
+    }
 
-        if (user == null) {
-            var participants = conversationParticipantRepository.findConversationParticipantByConversationId(conversationWebsocketDTO.getConversation().getId());
-            participants.forEach(conversationParticipant -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
-                    conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationWebsocketDTO));
-        }
-        else {
-            messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), conversationWebsocketDTO);
-        }
+    private void sendToConversationMembershipChannel(ConversationWebsocketDTO conversationWebsocketDTO, User user, String conversationParticipantTopicName) {
+        messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), conversationWebsocketDTO);
     }
 
     public Conversation mayInteractWithConversationElseThrow(Long conversationId, User user) {

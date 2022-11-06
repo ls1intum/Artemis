@@ -5,11 +5,11 @@ import { faArrowLeft, faChevronLeft, faGripLinesVertical, faXmark } from '@forta
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 @Component({
-    selector: 'jhi-thread-sidebar',
-    templateUrl: './thread-sidebar.component.html',
-    styleUrls: ['./thread-sidebar.component.scss'],
+    selector: 'jhi-conversation-thread-sidebar',
+    templateUrl: './conversation-thread-sidebar.component.html',
+    styleUrls: ['./conversation-thread-sidebar.component.scss'],
 })
-export class ThreadSidebarComponent implements AfterViewInit {
+export class ConversationThreadSidebarComponent implements AfterViewInit {
     @Output() closePostThread = new EventEmitter<void>();
 
     post?: Post;

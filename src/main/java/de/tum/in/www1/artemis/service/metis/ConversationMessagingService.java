@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
@@ -13,6 +15,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
@@ -21,8 +24,8 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.MessageRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.GroupChatService;
@@ -37,71 +40,53 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
-public class MessageService extends PostingService {
+public class ConversationMessagingService extends PostingService {
 
     private final GroupChatService groupChatService;
 
     private final ConversationService conversationService;
 
-    private final MessageRepository messageRepository;
+    private final ConversationMessageRepository conversationMessageRepository;
 
-    protected MessageService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, MessageRepository messageRepository,
-            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository, GroupChatService groupChatService,
-            ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository) {
+    protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
+            ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate,
+            UserRepository userRepository, GroupChatService groupChatService, ConversationService conversationService,
+            ConversationParticipantRepository conversationParticipantRepository) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.groupChatService = groupChatService;
         this.conversationService = conversationService;
-        this.messageRepository = messageRepository;
+        this.conversationMessageRepository = conversationMessageRepository;
     }
 
-    /**
-     * Checks course, user and post message validity,
-     * determines the post's author, persists the post,
-     * and sends a notification to affected user groups
-     *
-     * @param courseId    id of the course the post belongs to
-     * @param messagePost message post to create
-     * @return created message post that was persisted
-     */
     public Post createMessage(Long courseId, Post messagePost) {
-        if (messagePost.getConversation() != null) {
-
-            final User user = this.userRepository.getUserWithGroupsAndAuthorities();
-            Conversation conversation;
-
-            // checks
-            if (messagePost.getId() != null) {
-                throw new BadRequestAlertException("A new message post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
-            }
-            final Course course = preCheckUserAndCourse(user, courseId);
-
-            // set author to current user
-            messagePost.setAuthor(user);
-            // set default value display priority -> NONE
-            messagePost.setDisplayPriority(DisplayPriority.NONE);
-
-            if (messagePost.getConversation().getId() == null && messagePost.getConversation() instanceof GroupChat) {
-                // persist conversation for post if it is new
-                messagePost.setConversation(groupChatService.createNewGroupChat(course, (GroupChat) messagePost.getConversation()));
-            }
-            conversation = conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), user);
-            conversation.setLastMessageDate(conversationService.auditConversationReadTimeOfUser(conversation, user));
-
-            Post savedMessage = messageRepository.save(messagePost);
-            savedMessage.setConversation(conversation);
-
-            conversationService.updateConversation(conversation);
-
-            broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
-
-            // ToDo: Investigate if this means we really send one message for every channel participant and if we can optimize this
-            conversationService.broadcastForConversation(course, new ConversationWebsocketDTO(getConversationDTO(user, conversation), MetisCrudAction.UPDATE), null);
-
-            return savedMessage;
+        if (messagePost.getId() != null) {
+            throw new BadRequestAlertException("A new message post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
+        if (messagePost.getConversation() == null || messagePost.getConversation().getId() == null) {
+            throw new BadRequestAlertException("A new message post must have a conversation", METIS_POST_ENTITY_NAME, "conversationnotset");
+        }
+        var author = this.userRepository.getUserWithGroupsAndAuthorities();
+        var course = preCheckUserAndCourse(author, courseId);
+        messagePost.setAuthor(author);
+        messagePost.setDisplayPriority(DisplayPriority.NONE);
+        var conversation = conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), author);
+        // update last message date and conversation read time of user at the same time
+        conversation.setLastMessageDate(conversationService.auditConversationReadTimeOfUser(conversation, author));
+        var savedMessage = conversationMessageRepository.save(messagePost);
+        savedMessage.setConversation(conversation);
+        conversation = conversationService.updateConversation(conversation);
+        broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
 
-        // conversation object must be provided in all cases. we do not throw an exception here in order to not leak implementation details
-        return null;
+        if (conversation instanceof GroupChat) {
+            var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
+            if (getNumberOfPosts == 1) { // first message in group chat --> notify all participants that a conversation with them has been created
+                var participants = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream()
+                        .map(ConversationParticipant::getUser).filter(Objects::nonNull).collect(Collectors.toSet());
+                conversationService.broadcastOnConversationMembershipChannel(course, new ConversationWebsocketDTO(getConversationDTO(author, conversation), MetisCrudAction.CREATE),
+                        participants);
+            }
+        }
+        return savedMessage;
     }
 
     private ConversationDTO getConversationDTO(User user, Conversation conversation) {
@@ -137,7 +122,7 @@ public class MessageService extends PostingService {
 
             Conversation conversation = conversationService.mayInteractWithConversationElseThrow(postContextFilter.getConversationId(), user);
 
-            conversationPosts = messageRepository.findMessages(postContextFilter, pageable);
+            conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable);
 
             // protect sample solution, grading instructions, etc.
             conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -146,8 +131,8 @@ public class MessageService extends PostingService {
 
             conversationService.auditConversationReadTimeOfUser(conversation, user);
 
-            conversationService.broadcastForConversation(conversation.getCourse(),
-                    new ConversationWebsocketDTO(getConversationDTO(user, conversation), MetisCrudAction.READ_CONVERSATION), user);
+            conversationService.broadcastOnConversationMembershipChannel(conversation.getCourse(),
+                    new ConversationWebsocketDTO(getConversationDTO(user, conversation), MetisCrudAction.READ_CONVERSATION), Set.of(user));
         }
         else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
@@ -174,13 +159,13 @@ public class MessageService extends PostingService {
         }
         final Course course = preCheckUserAndCourse(user, courseId);
 
-        Post existingMessage = messageRepository.findMessagePostByIdElseThrow(postId);
+        Post existingMessage = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
 
         // update: allow overwriting of values only for depicted fields
         existingMessage.setContent(messagePost.getContent());
 
-        Post updatedPost = messageRepository.save(existingMessage);
+        Post updatedPost = conversationMessageRepository.save(existingMessage);
         updatedPost.setConversation(conversation);
 
         // emit a post update via websocket
@@ -201,11 +186,11 @@ public class MessageService extends PostingService {
 
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
-        Post post = messageRepository.findMessagePostByIdElseThrow(postId);
+        Post post = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         post.setConversation(mayUpdateOrDeleteMessageElseThrow(post, user));
 
         // delete
-        messageRepository.deleteById(postId);
+        conversationMessageRepository.deleteById(postId);
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
     }
 

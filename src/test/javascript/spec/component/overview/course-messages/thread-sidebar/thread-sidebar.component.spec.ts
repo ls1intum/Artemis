@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ThreadSidebarComponent } from 'app/overview/course-messages/thread-sidebar/thread-sidebar.component';
+import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { directMessageUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { PostComponent } from 'app/shared/metis/post/post.component';
@@ -11,14 +11,14 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ThreadSidebarComponent', () => {
-    let fixture: ComponentFixture<ThreadSidebarComponent>;
-    let component: ThreadSidebarComponent;
+    let fixture: ComponentFixture<ConversationThreadSidebarComponent>;
+    let component: ConversationThreadSidebarComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockModule(FormsModule)],
             declarations: [
-                ThreadSidebarComponent,
+                ConversationThreadSidebarComponent,
                 MockComponent(PostComponent),
                 MockComponent(MessageReplyInlineInputComponent),
                 MockPipe(ArtemisTranslatePipe),
@@ -29,7 +29,7 @@ describe('ThreadSidebarComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ThreadSidebarComponent);
+                fixture = TestBed.createComponent(ConversationThreadSidebarComponent);
                 component = fixture.componentInstance;
             });
     });

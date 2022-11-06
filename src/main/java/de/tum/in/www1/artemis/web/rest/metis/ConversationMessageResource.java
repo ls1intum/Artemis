@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.service.metis.MessageService;
+import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
@@ -26,12 +26,12 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @RestController
 @RequestMapping("/api")
-public class MessageResource {
+public class ConversationMessageResource {
 
-    private final MessageService messageService;
+    private final ConversationMessagingService conversationMessagingService;
 
-    public MessageResource(MessageService messageService) {
-        this.messageService = messageService;
+    public ConversationMessageResource(ConversationMessagingService conversationMessagingService) {
+        this.conversationMessagingService = conversationMessagingService;
     }
 
     /**
@@ -45,7 +45,7 @@ public class MessageResource {
     @PostMapping("courses/{courseId}/messages")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
-        Post createdMessage = messageService.createMessage(courseId, post);
+        Post createdMessage = conversationMessagingService.createMessage(courseId, post);
         // creation of message posts should not trigger entity creation alert
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessage.getId())).body(createdMessage);
     }
@@ -62,7 +62,7 @@ public class MessageResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Post>> getMessages(@ApiParam Pageable pageable, PostContextFilter postContextFilter) {
 
-        Page<Post> coursePosts = messageService.getMessages(pageable, postContextFilter);
+        Page<Post> coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
 
         return new ResponseEntity<>(coursePosts.getContent(), headers, HttpStatus.OK);
@@ -80,7 +80,7 @@ public class MessageResource {
     @PutMapping("courses/{courseId}/messages/{messageId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody Post messagePost) {
-        Post updatedMessagePost = messageService.updateMessage(courseId, messageId, messagePost);
+        Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, messagePost);
         return new ResponseEntity<>(updatedMessagePost, null, HttpStatus.OK);
     }
 
@@ -95,7 +95,7 @@ public class MessageResource {
     @DeleteMapping("courses/{courseId}/messages/{messageId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteMessage(@PathVariable Long courseId, @PathVariable Long messageId) {
-        messageService.deleteMessageById(courseId, messageId);
+        conversationMessagingService.deleteMessageById(courseId, messageId);
         // deletion of message posts should not trigger entity deletion alert
         return ResponseEntity.ok().build();
     }

@@ -1,24 +1,21 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { faCircleNotch, faEnvelope, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { map, of, Subscription, switchMap, take } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Channel, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat, isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
-import { ActivatedRoute } from '@angular/router';
 import { ButtonType } from 'app/shared/components/button.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
-    selector: 'jhi-messages',
-    templateUrl: './messages.component.html',
-    styleUrls: ['./messages.component.scss'],
+    selector: 'jhi-conversation-messages',
+    templateUrl: './conversation-messages.component.html',
+    styleUrls: ['./conversation-messages.component.scss'],
 })
-export class MessagesComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly PageType = PageType;
     readonly ButtonType = ButtonType;
 
@@ -28,6 +25,9 @@ export class MessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     messages: QueryList<any>;
     @ViewChild('container')
     content: ElementRef;
+
+    @Input()
+    course?: Course;
 
     @Input() set activeConversation(newActiveConversation: ConversationDto) {
         if (!this._activeConversation || this._activeConversation.id !== newActiveConversation.id) {
@@ -42,10 +42,11 @@ export class MessagesComponent implements OnInit, AfterViewInit, OnDestroy {
 
     private scrollBottomSubscription: Subscription;
     private postInThread: Post;
-    course?: Course;
+
     currentPostContextFilter?: PostContextFilter;
     searchText?: string;
     _activeConversation?: ConversationDto;
+
     newPost?: Post;
     posts: Post[] = [];
     totalNumberOfPosts = 0;
@@ -64,31 +65,17 @@ export class MessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     faCircleNotch = faCircleNotch;
 
     constructor(
-        private activatedRoute: ActivatedRoute,
         protected metisService: MetisService, // instance from course-messages.component
-        private courseManagementService: CourseManagementService,
     ) {}
 
     ngOnInit(): void {
-        this.activatedRoute
-            .parent!.parent!.paramMap.pipe(
-                take(1),
-                switchMap((params) => {
-                    const courseId = Number(params.get('courseId'));
-                    // we need to load lecture and exercises too so that metis service can use it for references in post!
-                    return this.courseManagementService.findOneForDashboard(courseId).pipe(map((res) => res.body!));
-                }),
-            )
-            .subscribe((course: Course) => {
-                if (course) {
-                    this.course = course;
-                    this.setupMetis();
-                    this.subscribeToMetis();
-                    if (this._activeConversation) {
-                        this.onActiveConversationChange();
-                    }
-                }
-            });
+        if (this.course) {
+            this.setupMetis();
+            this.subscribeToMetis();
+            if (this._activeConversation) {
+                this.onActiveConversationChange();
+            }
+        }
     }
 
     ngAfterViewInit() {

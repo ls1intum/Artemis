@@ -3,13 +3,13 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
-import { CourseMessagesComponent } from 'app/overview/course-messages/course-messages.component';
+import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/conversation-selection-sidebar/conversation-selection-sidebar.component';
+import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
-import { MessagesComponent } from 'app/overview/course-messages/conversation-messages/messages.component';
+import { ConversationMessagesComponent } from 'app/overview/course-conversations/conversation-messages/conversation-messages.component';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
-import { ThreadSidebarComponent } from 'app/overview/course-messages/thread-sidebar/thread-sidebar.component';
-import { SidebarSectionComponent } from './conversation-sidebar/sidebar-section/sidebar-section.component';
+import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/conversation-thread-sidebar/conversation-thread-sidebar.component';
+import { SidebarSectionComponent } from './conversation-selection-sidebar/sidebar-section/sidebar-section.component';
 import { ChannelsOverviewDialogComponent } from './channels/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelItemComponent } from './channels/channels-overview-dialog/channel-item/channel-item.component';
 import { ChannelFormComponent } from './channels/channel-form/channel-form.component';
@@ -29,7 +29,7 @@ const routes: Routes = [
         data: {
             pageTitle: 'artemisApp.messages.label',
         },
-        component: CourseMessagesComponent,
+        component: CourseConversationsComponent,
     },
 ];
 
@@ -44,10 +44,10 @@ const routes: Routes = [
         CourseUsersSelectorModule,
     ],
     declarations: [
-        CourseMessagesComponent,
-        ConversationSidebarComponent,
-        ThreadSidebarComponent,
-        MessagesComponent,
+        CourseConversationsComponent,
+        ConversationSelectionSidebarComponent,
+        ConversationThreadSidebarComponent,
+        ConversationMessagesComponent,
         SidebarSectionComponent,
         ChannelsOverviewDialogComponent,
         ChannelItemComponent,
@@ -61,4 +61,4 @@ const routes: Routes = [
         ConversationDetailDialogComponent,
     ],
 })
-export class CourseMessagesModule {}
+export class CourseConversationsModule {}
