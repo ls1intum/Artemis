@@ -73,6 +73,11 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             comp.exerciseTestCases = testCases;
 
             comp.ngOnInit();
+            tick(500);
+
+            // check first analysis
+            expect(comp.missingTestCases).toEqual(missingTestCases);
+            expect(comp.invalidTestCases).toEqual(invalidTestCases);
 
             triggerChanges(comp, { property: 'problemStatement', currentValue: problemStatement, previousValue: 'dolet amat', firstChange: false });
             tick(500); // Update is debounced, otherwise we would send updates on every change.
@@ -83,7 +88,8 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             expect(comp.invalidTestCases).toEqual(invalidTestCases);
 
             // Check that an event with the updated analysis is emitted.
-            expect(emitAnalysisSpy).toHaveBeenCalledOnce();
+            // We expect two calls, once in ngOnInit and once in ngOnChanges
+            expect(emitAnalysisSpy).toHaveBeenCalledTimes(2);
             expect(emitAnalysisSpy).toHaveBeenCalledWith(completeAnalysis);
 
             // Check rendered html.
@@ -93,6 +99,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             // Test cases are not ok according to the analysis.
             expect(testCaseOk).toBeNull();
             expect(testCaseIssues).not.toBeNull();
+            tick(500);
         }));
 
         describe('Analysis service integration test', () => {
