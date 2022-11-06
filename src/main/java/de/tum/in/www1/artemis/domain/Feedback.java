@@ -419,4 +419,9 @@ public class Feedback extends DomainObject {
         }
         return totalScore;
     }
+
+    @JsonIgnore
+    public boolean hasDetails() {
+        return !isPositive() || detailText != null;
+    }
 }

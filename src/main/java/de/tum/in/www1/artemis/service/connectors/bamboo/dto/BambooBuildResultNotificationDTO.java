@@ -128,7 +128,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     @JsonIgnore
     @Override
     public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
-        return getBuild().jobs().flatMap(job -> job.testwiseCoverageReport().stream()).toList();
+        return getBuild().jobs().stream().flatMap(job -> job.testwiseCoverageReport().stream()).toList();
     }
 
     private Optional<String> getCommitHashFromRepo(String repoName) {

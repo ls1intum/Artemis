@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -88,8 +89,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         // 3) process testwise coverage analysis report
         addTestwiseCoverageReportToResult(result, buildResult, programmingExercise);
 
-        // Relevant feedback is negative
-        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive() || feedback.getDetailText() != null));
+        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(Feedback::hasDetails));
     }
 
     private void addTestCaseFeedbacksToResult(Result result, List<BuildJobDTOInterface> jobs, ProgrammingExercise programmingExercise) {
