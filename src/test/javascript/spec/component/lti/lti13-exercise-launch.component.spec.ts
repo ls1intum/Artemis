@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
-import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpClient } from '@angular/common/http';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -74,8 +74,8 @@ describe('Lti13ExerciseLaunchComponentTest', () => {
         expect(httpStub).not.toHaveBeenCalled();
     });
 
-    it('onInit success to call launch endpoint', () => {
-        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ body: { targetLinkUri: 'targetLink' } }));
+    it('onInit no targetLinkUri', () => {
+        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({}));
 
         expect(comp.isLaunching).toBeTrue();
 
@@ -85,6 +85,18 @@ describe('Lti13ExerciseLaunchComponentTest', () => {
         expect(httpStub).toHaveBeenCalledWith(`/api/lti13/auth-login`, expect.anything(), expect.anything());
 
         expect(comp.isLaunching).toBeFalse();
+    });
+
+    it('onInit success to call launch endpoint', () => {
+        const targetLink = window.location.host + '/targetLink';
+        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ targetLinkUri: targetLink }));
+
+        expect(comp.isLaunching).toBeTrue();
+
+        comp.ngOnInit();
+
+        expect(httpStub).toHaveBeenCalledOnce();
+        expect(httpStub).toHaveBeenCalledWith(`/api/lti13/auth-login`, expect.anything(), expect.anything());
     });
 
     it('onInit launch fails on error', () => {
