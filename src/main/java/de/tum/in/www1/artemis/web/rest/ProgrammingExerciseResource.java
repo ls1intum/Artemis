@@ -350,10 +350,12 @@ public class ProgrammingExerciseResource {
             updatedProgrammingExercise.setBonusPoints(0.0);
         }
 
-        programmingExerciseService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
-
         // Only save after checking for errors
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(programmingExerciseBeforeUpdate, updatedProgrammingExercise,
+                notificationText);
+
+        programmingExerciseService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, savedProgrammingExercise);
+
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         return ResponseEntity.ok(savedProgrammingExercise);

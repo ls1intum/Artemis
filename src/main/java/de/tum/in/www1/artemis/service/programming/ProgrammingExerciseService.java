@@ -411,21 +411,22 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * @param programmingExercise the changed programming exercise with its new values
+     * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
+     * @param updatedProgrammingExercise the changed programming exercise with its new values
      * @param notificationText    optional text about the changes for a notification
      * @return the updates programming exercise from the database
      */
-    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
-        setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
-        connectAuxiliaryRepositoriesToExercise(programmingExercise);
+    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
+            @Nullable String notificationText) {
+        setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
+        connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
-        final ProgrammingExercise programmingExerciseBeforeUpdate = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
         // TODO: in case of an exam exercise, this is not necessary
-        scheduleOperations(programmingExercise.getId());
+        scheduleOperations(updatedProgrammingExercise.getId());
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
     }
