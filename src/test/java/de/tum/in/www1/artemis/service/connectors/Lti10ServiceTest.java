@@ -100,8 +100,7 @@ class Lti10ServiceTest {
 
         lti10Service.performLaunch(launchRequest, exercise, onlineCourseConfiguration);
 
-        verify(ltiOutcomeUrlRepository, times(1)).findByUserAndExercise(user, exercise);
-        verify(ltiOutcomeUrlRepository, times(0)).save(any());
+        verifyNoInteractions(ltiOutcomeUrlRepository);
     }
 
     @Test
