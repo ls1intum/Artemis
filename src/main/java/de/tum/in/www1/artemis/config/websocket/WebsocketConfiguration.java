@@ -8,6 +8,8 @@ import java.security.Principal;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -33,12 +35,14 @@ import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.util.StringUtils;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.DelegatingWebSocketMessageBrokerConfiguration;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
+import org.springframework.web.util.WebUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterators;
@@ -51,6 +55,8 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.jwt.JWTFilter;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -66,6 +72,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
     private final ObjectMapper objectMapper;
+
+    private final TokenProvider tokenProvider;
 
     private final TaskScheduler messageBrokerTaskScheduler;
 
@@ -89,11 +97,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
+    public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
             UserRepository userRepository, ExamRepository examRepository) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
+        this.tokenProvider = tokenProvider;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseRepository = exerciseRepository;
@@ -187,8 +196,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     @NotNull Map<String, Object> attributes) {
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
+                    return isJWTCookieValid(servletRequest.getServletRequest());
                 }
-                return true;
+                return false;
             }
 
             @Override
@@ -198,6 +208,17 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 }
             }
         };
+    }
+
+    private boolean isJWTCookieValid(HttpServletRequest request) {
+        Cookie token = WebUtils.getCookie(request, JWTFilter.JWT_COOKIE_NAME);
+
+        if (token == null) {
+            return false;
+        }
+
+        String jwt = token.getValue();
+        return StringUtils.hasText(jwt) && this.tokenProvider.validateTokenForAuthority(jwt);
     }
 
     private DefaultHandshakeHandler defaultHandshakeHandler() {
