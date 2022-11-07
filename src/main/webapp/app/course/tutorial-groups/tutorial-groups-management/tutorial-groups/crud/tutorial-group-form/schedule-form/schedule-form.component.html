@@ -109,7 +109,7 @@
                     class="form-control"
                 />
                 <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="period"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
-                <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period></owl-date-time>
+                <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" [pickerMode]="'dialog'" #period></owl-date-time>
             </div>
             <div *ngIf="periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)" class="alert alert-danger">
                 <div *ngIf="periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required">
