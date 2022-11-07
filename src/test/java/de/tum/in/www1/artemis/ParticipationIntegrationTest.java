@@ -190,6 +190,15 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = "tutor1")
+    void participateInTextExercise_releaseDateReachedStartDateNotReachedAsTutor() throws Exception {
+        textExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(1));
+        textExercise.setStartDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepo.save(textExercise);
+        request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
+    }
+
+    @Test
     @WithMockUser(username = "student1")
     void participateInTextExercise_releaseDateReachedStartDateReached() throws Exception {
         textExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(2));
