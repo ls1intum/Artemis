@@ -2,7 +2,7 @@ plugins {
     // %static-code-analysis-start%
     id 'checkstyle'
     id 'pmd'
-    id 'com.github.spotbugs' version '5.0.12'
+    id 'com.github.spotbugs' version '5.0.13'
     // %static-code-analysis-stop%
     // %record-testwise-coverage-start%
     id "com.teamscale" version "26.0.1"
@@ -112,6 +112,7 @@ test {
         }
     }
     defaultCharacterEncoding = 'UTF-8'
+    testLogging.showStandardStreams = true
     useJUnitPlatform()
 }
 
@@ -141,6 +142,7 @@ task behaviorTests(type: Test) {
 // %static-code-analysis-start%
 checkstyle {
     configFile = file("$scaConfigDirectory/checkstyle-configuration.xml")
+    configDirectory.set(file(scaConfigDirectory))
     ignoreFailures = true
     // exclude the test files
     checkstyleTest.enabled = false
