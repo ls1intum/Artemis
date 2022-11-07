@@ -77,7 +77,7 @@ public class ReactionService {
             }
 
             // save post
-            postService.updateWithReaction(post, reaction, courseId);
+            postService.addReaction(post, reaction, courseId);
         }
         else {
             AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
@@ -112,15 +112,14 @@ public class ReactionService {
         if (reaction.getPost() != null) {
             updatedPost = reaction.getPost();
             updatedPost.setConversation(mayInteractWithConversationIfConversationMessage(user, updatedPost));
-            updatedPost.removeReaction(reaction);
 
             if (reaction.getEmojiId().equals(VOTE_EMOJI_ID)) {
                 // decrease voteCount of post needed for sorting
                 updatedPost.setVoteCount(updatedPost.getVoteCount() - 1);
-
-                // save post
-                postService.updateWithReaction(updatedPost, reaction, courseId);
             }
+
+            // remove reaction and persist post
+            postService.removeReaction(updatedPost, reaction, courseId);
         }
         else {
             AnswerPost updatedAnswerPost = reaction.getAnswerPost();
