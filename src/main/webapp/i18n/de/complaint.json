@@ -51,7 +51,7 @@
                 "showOnlyAddressedComplaints": "Ausschließlich adressierte Beschwerden anzeigen",
                 "hideAddressedComplaints": "Adressierte Beschwerden ausblenden",
                 "loadAllComplaints": "Alle Beschwerden laden",
-                "loadAllComplaintsExplanation": "Die Liste zeigt nur eingereichte Beschwerden über dich an. Mittels des Buttons können alle Beschwerden über alle Reviewer:innen geladen werden: ",
+                "loadAllComplaintsExplanation": "Die Liste zeigt nur eingereichte Beschwerden über dich an. Mittels des Buttons können alle Beschwerden über alle Tutor:innen geladen werden: ",
                 "allComplaintsLoaded": "Alle Beschwerden geladen",
                 "noComplaintsToShow": "Es gibt im Moment keine anzeigbaren Beschwerden."
             },

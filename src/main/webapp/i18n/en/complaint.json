@@ -51,7 +51,7 @@
                 "showOnlyAddressedComplaints": "Only show addressed complaints",
                 "hideAddressedComplaints": "Hide addressed complaints",
                 "loadAllComplaints": "Load all complaints",
-                "loadAllComplaintsExplanation": "The list only shows filed complaints about your assessments. You can load all complaints about all reviewers by clicking this button: ",
+                "loadAllComplaintsExplanation": "The list only shows filed complaints about your assessments. You can load all complaints about all assessors by clicking this button: ",
                 "allComplaintsLoaded": "All complaints loaded",
                 "noComplaintsToShow": "There are no complaints to show at the moment"
             },
