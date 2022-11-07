@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
  * REST controller for managing TextAssessmentEventResource.
  */
 @RestController
-@RequestMapping("/api/analytics/text-assessment")
+@RequestMapping("/api/event-insights/text-assessment")
 public class TextAssessmentEventResource {
 
     private final Logger log = LoggerFactory.getLogger(TextAssessmentEventResource.class);
