@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { combineLatest, take, switchMap, finalize, Subject } from 'rxjs';
+import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';

@@ -3,7 +3,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { finalize, combineLatest } from 'rxjs';
+import { combineLatest, finalize } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { faPencil, faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
