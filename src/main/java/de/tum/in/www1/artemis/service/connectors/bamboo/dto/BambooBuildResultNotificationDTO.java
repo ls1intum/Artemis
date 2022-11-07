@@ -116,7 +116,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     @JsonIgnore
     @Override
     public List<BuildJobDTOInterface> getBuildJobs() {
-        return getBuild().jobs().stream().map(BuildJobDTOInterface.class::cast).toList();
+        return new ArrayList<>(getBuild().jobs());
     }
 
     @JsonIgnore

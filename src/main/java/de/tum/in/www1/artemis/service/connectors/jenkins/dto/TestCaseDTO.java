@@ -45,10 +45,10 @@ public record TestCaseDTO(String name, String classname, double time, List<TestC
 
     @Override
     public List<String> getMessage() {
-        return extractMessageFromTestCase().map(Collections::singletonList).orElse(Collections.emptyList());
+        return extractMessage().map(Collections::singletonList).orElse(Collections.emptyList());
     }
 
-    private Optional<String> extractMessageFromTestCase() {
+    private Optional<String> extractMessage() {
         boolean hasErrors = !CollectionUtils.isEmpty(errors());
         boolean hasFailures = !CollectionUtils.isEmpty(failures());
         boolean hasSuccessInfos = !CollectionUtils.isEmpty(successInfos());
