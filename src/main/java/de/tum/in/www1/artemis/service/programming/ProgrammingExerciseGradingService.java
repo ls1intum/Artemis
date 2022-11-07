@@ -146,7 +146,7 @@ public class ProgrammingExerciseGradingService {
 
                 continuousIntegrationService.get().extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
-                if (!buildResult.isBuildSuccessful()) {
+                if (latestSubmission.isBuildFailed()) {
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
                     var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
 
