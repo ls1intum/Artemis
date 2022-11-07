@@ -296,9 +296,9 @@ You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfi
     * **/opt/artemis/config:**
 
       This will be used to store additional configuration of Artemis in YAML files.
-      ``/src/main/resources/application-local.yml`` for instance is such an additional configuration file.
+      ``src/main/resources/application-local.yml`` for instance is such an additional configuration file.
       It should contain all custom configurations.
-      The other configurations like ``/src/main/resources/application.yml``, ... are built into the ``.war`` file and
+      The other configurations like ``src/main/resources/application.yml``, ... are built into the ``.war`` file and
       therefore are not needed in this directory.
 
       .. TODO: add better description here when this problem is solved how we handle configs
