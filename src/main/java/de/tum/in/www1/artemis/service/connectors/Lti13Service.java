@@ -116,7 +116,7 @@ public class Lti13Service {
      * @return the username for the LTI user
      */
     @NotNull
-    private String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
+    protected String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 
         if (!StringUtils.isEmpty(ltiIdToken.getPreferredUsername())) {
@@ -179,7 +179,7 @@ public class Lti13Service {
     }
 
     protected void submitScore(LtiResourceLaunch launch, ClientRegistration clientRegistration, String comment, Double score) {
-        String scoreLineItemUrl = launch.getScoreLineItemUrl();
+        String scoreLineItemUrl = getScoresUrl(launch.getScoreLineItemUrl());
         if (scoreLineItemUrl == null) {
             return;
         }
@@ -197,7 +197,7 @@ public class Lti13Service {
         String body = getScoreBody(launch.getSub(), comment, score);
         HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
         try {
-            restTemplate.postForEntity(getScoresUrl(launch.getScoreLineItemUrl()), httpRequest, Object.class);
+            restTemplate.postForEntity(scoreLineItemUrl, httpRequest, Object.class);
             log.info("Submitted score for " + launch.getUser().getLogin() + " to client" + clientRegistration.getClientId());
         }
         catch (HttpClientErrorException e) {
@@ -207,6 +207,9 @@ public class Lti13Service {
     }
 
     private String getScoresUrl(String lineItemUrl) {
+        if (StringUtils.isEmpty(lineItemUrl)) {
+            return null;
+        }
         StringBuilder builder = new StringBuilder(lineItemUrl);
         int index = lineItemUrl.indexOf("?");
         if (index == -1) {

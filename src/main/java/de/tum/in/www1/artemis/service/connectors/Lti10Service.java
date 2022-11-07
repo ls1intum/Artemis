@@ -2,11 +2,8 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
@@ -82,11 +79,9 @@ public class Lti10Service {
         try {
             LtiVerificationResult ltiResult = ltiVerifier.verify(request, onlineCourseConfiguration.getLtiSecret());
             if (!ltiResult.getSuccess()) {
-                String requestString = httpServletRequestToString(request);
                 final var message = "LTI signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError() + ", launch result: "
                         + ltiResult.getLtiLaunchResult();
                 log.error(message);
-                log.error("Request: {}", requestString);
                 return message;
             }
         }
@@ -97,41 +92,6 @@ public class Lti10Service {
         // this is the success case
         log.info("LTI Oauth Request Verification successful");
         return null;
-    }
-
-    /**
-     * helper method to print a request with all its elements
-     *
-     * @param request the http request
-     * @return a string with all debug information
-     */
-    private String httpServletRequestToString(HttpServletRequest request) {
-        StringBuilder requestString = new StringBuilder();
-
-        requestString.append("Request Method = [").append(request.getMethod()).append("], ");
-        requestString.append("Request URL Path = [").append(request.getRequestURL()).append("], ");
-
-        String headers = Collections.list(request.getHeaderNames()).stream().map(headerName -> headerName + " : " + Collections.list(request.getHeaders(headerName)))
-                .collect(Collectors.joining(", "));
-
-        if (headers.isEmpty()) {
-            requestString.append("Request headers: NONE,");
-        }
-        else {
-            requestString.append("Request headers: [").append(headers).append("],");
-        }
-
-        String parameters = Collections.list(request.getParameterNames()).stream().map(p -> p + " : " + Arrays.asList(request.getParameterValues(p)))
-                .collect(Collectors.joining(", "));
-
-        if (parameters.isEmpty()) {
-            requestString.append("Request parameters: NONE.");
-        }
-        else {
-            requestString.append("Request parameters: [").append(parameters).append("].");
-        }
-
-        return requestString.toString();
     }
 
     /**
@@ -161,7 +121,7 @@ public class Lti10Service {
      * @return the username for the LTI user
      */
     @NotNull
-    private String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest, OnlineCourseConfiguration onlineCourseConfiguration) {
+    protected String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 
         if (!StringUtils.isEmpty(launchRequest.getExt_user_username())) {
@@ -187,7 +147,7 @@ public class Lti10Service {
      * @param launchRequest the LTI launch request
      * @return the first name for the LTI user
      */
-    private String getUserFirstNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
+    protected String getUserFirstNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
         return launchRequest.getLis_person_name_given() != null ? launchRequest.getLis_person_name_given() : "";
     }
 
@@ -197,7 +157,7 @@ public class Lti10Service {
      * @param launchRequest the LTI launch request
      * @return the last name for the LTI user
      */
-    private String getUserLastNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
+    protected String getUserLastNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
         if (!StringUtils.isEmpty(launchRequest.getLis_person_name_family())) {
             return launchRequest.getLis_person_name_family();
         }
