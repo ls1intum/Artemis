@@ -1,9 +1,7 @@
 import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
-import { Language } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { getDayTranslationKey } from '../weekdays';
 
 @Component({
     selector: 'jhi-tutorial-groups-table',
@@ -11,6 +9,8 @@ import { getDayTranslationKey } from '../weekdays';
     styleUrls: ['./tutorial-groups-table.component.scss'],
 })
 export class TutorialGroupsTableComponent {
+    @ContentChild(TemplateRef) extraColumn: TemplateRef<any>;
+
     @Input()
     showIdColumn = false;
 
@@ -23,14 +23,9 @@ export class TutorialGroupsTableComponent {
     @Input()
     tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;
 
-    @ContentChild(TemplateRef) extraColumn: TemplateRef<any>;
-
     sortingPredicate = 'title';
     ascending = true;
     faSort = faSort;
-    GERMAN = Language.GERMAN;
-    ENGLISH = Language.ENGLISH;
-    getDayTranslationKey = getDayTranslationKey;
 
     constructor(private sortService: SortService) {}
 

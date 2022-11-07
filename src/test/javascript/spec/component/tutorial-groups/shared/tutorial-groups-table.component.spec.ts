@@ -10,6 +10,7 @@ import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleMod
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { Component, Input, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { TutorialGroupRowStubComponent } from '../stubs/tutorial-groups-table-stub.component';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumn {
@@ -52,6 +53,7 @@ describe('TutorialGroupTableWrapperTest', () => {
         TestBed.configureTestingModule({
             declarations: [
                 TutorialGroupsTableComponent,
+                TutorialGroupRowStubComponent,
                 MockWrapper,
                 MockExtraColumn,
                 MockPipe(ArtemisTranslatePipe),

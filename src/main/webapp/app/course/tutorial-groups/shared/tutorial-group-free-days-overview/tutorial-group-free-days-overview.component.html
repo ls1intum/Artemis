@@ -4,7 +4,7 @@
             <ul class="list-group">
                 <li *ngFor="let freeDay of tutorialGroupFreeDays" class="list-group-item d-flex justify-content-between align-items-center">
                     <span [ngClass]="{ 'opacity-50': isInThePast(freeDay) }">
-                        {{ freeDay.start | artemisDate: 'long-date':false:timeZone }}
+                        {{ freeDay.start | artemisDate: 'long-date':false:timeZone:true }}
                     </span>
                     <button
                         *ngIf="freeDay.reason && freeDay.reason.trim().length > 0"

@@ -31,6 +31,8 @@
         </div>
     </td>
     <td [class.table-danger]="isCancelled" *ngIf="extraColumn">
-        <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }"></ng-template>
+        <div class="extra-buttons">
+            <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }"></ng-template>
+        </div>
     </td>
 </ng-container>

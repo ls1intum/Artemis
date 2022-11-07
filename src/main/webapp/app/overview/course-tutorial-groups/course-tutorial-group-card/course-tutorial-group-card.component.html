@@ -6,7 +6,7 @@
         <div class="d-flex justify-content-center align-items-center">
             <fa-icon [icon]="faPersonChalkboard" size="2x"></fa-icon>
             <span *ngIf="tutorialGroup.nextSession" class="ms-2 card-text">
-                {{ tutorialGroup.nextSession.start | artemisDate: 'long-date':false }}
+                {{ tutorialGroup.nextSession.start | artemisDate: 'long-date':false:undefined:true }}
                 {{ tutorialGroup.nextSession.start | artemisDate: 'time':false! }} -
                 {{ tutorialGroup.nextSession.end | artemisDate: 'time':false! }}
             </span>

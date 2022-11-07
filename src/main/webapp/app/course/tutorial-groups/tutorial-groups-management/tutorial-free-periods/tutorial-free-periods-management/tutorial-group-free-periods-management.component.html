@@ -21,7 +21,7 @@
             </div>
         </div>
         <div class="table-responsive" *ngIf="tutorialGroupFreePeriods && tutorialGroupFreePeriods.length > 0">
-            <table class="table table-bordered">
+            <table class="table table-sm table-hover">
                 <thead>
                     <tr>
                         <th>{{ 'global.field.id' | artemisTranslate }}</th>
@@ -31,7 +31,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let freePeriod of tutorialGroupFreePeriods" [ngClass]="{ 'opacity-50': isInThePast(freePeriod) }">
+                    <tr *ngFor="let freePeriod of tutorialGroupFreePeriods" [ngClass]="{ 'opacity-50': isInThePast(freePeriod) }" class="free-period-row">
                         <td>
                             {{ freePeriod.id }}
                         </td>
@@ -43,13 +43,15 @@
                             <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>
                         </td>
                         <td>
-                            <jhi-tutorial-group-free-period-row-buttons
-                                [course]="course"
-                                [tutorialGroupConfiguration]="tutorialGroupsConfiguration"
-                                [tutorialFreePeriod]="freePeriod"
-                                (tutorialFreePeriodDeleted)="loadAll()"
-                            >
-                            </jhi-tutorial-group-free-period-row-buttons>
+                            <div class="extra-buttons">
+                                <jhi-tutorial-group-free-period-row-buttons
+                                    [course]="course"
+                                    [tutorialGroupConfiguration]="tutorialGroupsConfiguration"
+                                    [tutorialFreePeriod]="freePeriod"
+                                    (tutorialFreePeriodDeleted)="loadAll()"
+                                >
+                                </jhi-tutorial-group-free-period-row-buttons>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
