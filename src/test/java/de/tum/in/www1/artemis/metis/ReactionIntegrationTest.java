@@ -17,12 +17,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
@@ -97,7 +100,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testCreateVoteReaction() throws Exception {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
-        Reaction reactionToSaveOnPost = createVoteReactionOnPost(postReactedOn);
+        Reaction reactionToSaveOnPost = createVoteReactionOnPost(postReactedOn, null);
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
@@ -247,80 +250,74 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetPostsForCourse_OrderByVoteCountDESC() throws Exception {
-        // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
-        // TODO: https://github.com/h2database/h2database/issues/408
+        PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
+        SortingOrder sortingOrder = SortingOrder.DESCENDING;
 
-        // PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
-        // SortingOrder sortingOrder = SortingOrder.DESCENDING;
-        //
-        // User student1 = database.getUserByLogin("student1");
-        // User student2 = database.getUserByLogin("student2");
-        //
-        // // student 1 is the author of the post and reacts on this post
-        // Post postReactedOn = existingPostsWithAnswers.get(0);
-        // createVoteReactionOnPost(postReactedOn, student1);
-        //
-        // Post postReactedOn2 = existingPostsWithAnswers.get(1);
-        // createVoteReactionOnPost(postReactedOn2, student1);
-        // createVoteReactionOnPost(postReactedOn2, student2);
-        //
-        // var params = new LinkedMultiValueMap<String, String>();
-        //
-        // // ordering only available in course discussions page, where paging is enabled
-        // params.add("pagingEnabled", "true");
-        // params.add("page", "0");
-        // params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
-        //
-        // params.add("postSortCriterion", sortCriterion.toString());
-        // params.add("sortingOrder", sortingOrder.toString());
-        //
-        // List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        //
-        // Long numberOfMaxVotesSeenOnAnyPost = Long.MAX_VALUE;
-        // for (int i = 0; i < returnedPosts.size(); i++) {
-        // Long numberOfVotes = returnedPosts.get(i).getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
-        // assertThat(numberOfVotes).isLessThanOrEqualTo(numberOfMaxVotesSeenOnAnyPost);
-        // numberOfMaxVotesSeenOnAnyPost = numberOfVotes;
-        // }
+        User student1 = database.getUserByLogin("student1");
+        User student2 = database.getUserByLogin("student2");
+
+        // student 1 is the author of the post and reacts on this post
+        Post postReactedOn = existingPostsWithAnswers.get(0);
+        createVoteReactionOnPost(postReactedOn, student1);
+
+        Post postReactedOn2 = existingPostsWithAnswers.get(1);
+        createVoteReactionOnPost(postReactedOn2, student1);
+        createVoteReactionOnPost(postReactedOn2, student2);
+
+        var params = new LinkedMultiValueMap<String, String>();
+
+        // ordering only available in course discussions page, where paging is enabled
+        params.add("pagingEnabled", "true");
+        params.add("page", "0");
+        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
+
+        params.add("postSortCriterion", sortCriterion.toString());
+        params.add("sortingOrder", sortingOrder.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+
+        Long numberOfMaxVotesSeenOnAnyPost = Long.MAX_VALUE;
+        for (int i = 0; i < returnedPosts.size(); i++) {
+            Long numberOfVotes = returnedPosts.get(i).getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
+            assertThat(numberOfVotes).isLessThanOrEqualTo(numberOfMaxVotesSeenOnAnyPost);
+            numberOfMaxVotesSeenOnAnyPost = numberOfVotes;
+        }
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetPostsForCourse_OrderByVoteCountASC() throws Exception {
-        // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
-        // TODO: https://github.com/h2database/h2database/issues/408
+        PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
+        SortingOrder sortingOrder = SortingOrder.ASCENDING;
 
-        // PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
-        // SortingOrder sortingOrder = SortingOrder.ASCENDING;
-        //
-        // User student1 = database.getUserByLogin("student1");
-        // User student2 = database.getUserByLogin("student2");
-        //
-        // Post postReactedOn = existingPostsWithAnswers.get(0);
-        // createVoteReactionOnPost(postReactedOn, student1);
-        // createVoteReactionOnPost(postReactedOn, student2);
-        //
-        // Post post2ReactedOn = existingPostsWithAnswers.get(1);
-        // createVoteReactionOnPost(post2ReactedOn, student2);
-        //
-        // var params = new LinkedMultiValueMap<String, String>();
-        //
-        // // ordering only available in course discussions page, where paging is enabled
-        // params.add("pagingEnabled", "true");
-        // params.add("page", "0");
-        // params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
-        //
-        // params.add("postSortCriterion", sortCriterion.toString());
-        // params.add("sortingOrder", sortingOrder.toString());
-        //
-        // List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        //
-        // Long numberOfMaxVotesSeenOnAnyPost = 0L;
-        // for (int i = 0; i < returnedPosts.size(); i++) {
-        // Long numberOfVotes = returnedPosts.get(i).getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
-        // assertThat(numberOfVotes).isGreaterThanOrEqualTo(numberOfMaxVotesSeenOnAnyPost);
-        // numberOfMaxVotesSeenOnAnyPost = numberOfVotes;
-        // }
+        User student1 = database.getUserByLogin("student1");
+        User student2 = database.getUserByLogin("student2");
+
+        Post postReactedOn = existingPostsWithAnswers.get(0);
+        createVoteReactionOnPost(postReactedOn, student1);
+        createVoteReactionOnPost(postReactedOn, student2);
+
+        Post post2ReactedOn = existingPostsWithAnswers.get(1);
+        createVoteReactionOnPost(post2ReactedOn, student2);
+
+        var params = new LinkedMultiValueMap<String, String>();
+
+        // ordering only available in course discussions page, where paging is enabled
+        params.add("pagingEnabled", "true");
+        params.add("page", "0");
+        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
+
+        params.add("postSortCriterion", sortCriterion.toString());
+        params.add("sortingOrder", sortingOrder.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+
+        Long numberOfMaxVotesSeenOnAnyPost = 0L;
+        for (int i = 0; i < returnedPosts.size(); i++) {
+            Long numberOfVotes = returnedPosts.get(i).getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
+            assertThat(numberOfVotes).isGreaterThanOrEqualTo(numberOfMaxVotesSeenOnAnyPost);
+            numberOfMaxVotesSeenOnAnyPost = numberOfVotes;
+        }
     }
 
     // DELETE
@@ -346,7 +343,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testDeleteOwnVoteReaction() throws Exception {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
-        Reaction reactionToSaveOnPost = createVoteReactionOnPost(postReactedOn);
+        Reaction reactionToSaveOnPost = createVoteReactionOnPost(postReactedOn, null);
 
         Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
         // should increase post's vote count
@@ -423,8 +420,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         return reaction;
     }
 
-    private Reaction createVoteReactionOnPost(Post postReactedOn) {
+    private Reaction createVoteReactionOnPost(Post postReactedOn, User user) {
         Reaction reaction = new Reaction();
+        reaction.setUser(user);
         reaction.setEmojiId(VOTE_EMOJI_ID);
         reaction.setPost(postReactedOn);
         return reaction;

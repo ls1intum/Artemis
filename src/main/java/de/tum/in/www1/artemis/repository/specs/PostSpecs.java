@@ -243,11 +243,13 @@ public class PostSpecs {
     /**
      * Creates the specification to get distinct Posts
      *
-     * @return specification that adds the keyword distinct to the query
+     * @return  specification that adds the keyword GROUP BY to the query since DISTINCT and ORDER BY keywords are
+     *          incompatible with each other at server tests
+     *          https://github.com/h2database/h2database/issues/408
      */
     public static Specification<Post> distinct() {
         return (root, query, criteriaBuilder) -> {
-            query.distinct(true);
+            query.groupBy(root.get(Post_.ID));
             return null;
         };
     }
