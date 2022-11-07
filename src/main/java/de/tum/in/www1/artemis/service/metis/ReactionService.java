@@ -71,7 +71,7 @@ public class ReactionService {
             // save reaction
             savedReaction = reactionRepository.save(reaction);
 
-            if (reaction.getEmojiId().equals(VOTE_EMOJI_ID)) {
+            if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
                 // increase voteCount of post needed for sorting
                 post.setVoteCount(post.getVoteCount() + 1);
             }
