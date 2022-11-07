@@ -5,15 +5,17 @@
             <div class="col-auto">
                 <label class="form-label" for="period">{{ 'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate }}</label>
                 <div class="input-group">
+                    <input formControlName="period" [owlDateTime]="period" class="d-none" [selectMode]="'range'" />
                     <input
                         name="period"
-                        required
                         id="period"
-                        formControlName="period"
-                        [owlDateTime]="period"
-                        placeholder="YYYY-MM-DD - YYYY-MM-DD"
+                        required
+                        [class.is-invalid]="isPeriodInvalid"
+                        (focus)="markPeriodAsTouched()"
+                        [value]="periodControl?.value | artemisDateRange: 'long-date':undefined:true"
+                        [owlDateTimeTrigger]="period"
+                        readonly
                         class="form-control"
-                        [selectMode]="'range'"
                     />
                     <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="period">
                         <fa-icon [icon]="faCalendarAlt"></fa-icon>

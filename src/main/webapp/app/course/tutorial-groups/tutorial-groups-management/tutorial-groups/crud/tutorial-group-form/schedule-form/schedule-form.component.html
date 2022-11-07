@@ -1,12 +1,12 @@
 <ng-container [formGroup]="parentFormGroup">
-    <div formGroupName="schedule">
+    <div formGroupName="schedule" style="border: 0">
         <div>
             <h3>{{ 'artemisApp.forms.scheduleForm.formTitle' | artemisTranslate }}</h3>
         </div>
         <div>
             <!-- repetition frequency -->
             <label for="repetitionFrequency">{{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.label' | artemisTranslate }}</label>
-            <div class="input-group">
+            <div class="input-group small-input">
                 <input id="repetitionFrequency" type="number" class="form-control" formControlName="repetitionFrequency" />
                 <div class="input-group-text">{{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.weeks' | artemisTranslate }}</div>
             </div>
@@ -15,10 +15,10 @@
                     {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.minValidationError' | artemisTranslate: { min: 1 } }}
                 </div>
                 <div *ngIf="repetitionFrequencyControl?.errors?.max">
-                    {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.maxValidationError' | artemisTranslate: { min: 7 } }}
+                    {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.maxValidationError' | artemisTranslate: { max: 7 } }}
                 </div>
                 <div *ngIf="repetitionFrequencyControl?.errors?.required">
-                    {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.requiredValidationError' | artemisTranslate: { min: 7 } }}
+                    {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.requiredValidationError' | artemisTranslate }}
                 </div>
             </div>
             <!-- weekday -->
@@ -96,28 +96,24 @@
             </div>
             <label class="form-label" for="period">{{ 'artemisApp.forms.scheduleForm.periodInput.label' | artemisTranslate }}</label>
             <div class="input-group">
+                <input formControlName="period" [owlDateTime]="period" class="d-none" [selectMode]="'range'" />
                 <input
                     name="period"
                     id="period"
                     required
-                    formControlName="period"
-                    [owlDateTime]="period"
-                    placeholder="YYYY-MM-DD - YYYY-MM-DD"
+                    [class.is-invalid]="isPeriodInvalid"
+                    (focus)="markPeriodAsTouched()"
+                    [value]="periodControl?.value | artemisDateRange: 'long-date':undefined:true"
+                    [owlDateTimeTrigger]="period"
+                    readonly
                     class="form-control"
-                    [selectMode]="'range'"
                 />
                 <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="period"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
                 <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period></owl-date-time>
             </div>
-            <div class="form-text">
-                {{ 'artemisApp.forms.scheduleForm.periodInput.label' | artemisTranslate }}
-            </div>
             <div *ngIf="periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)" class="alert alert-danger">
                 <div *ngIf="periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required">
                     {{ 'artemisApp.createConfiguration.periodInput.requiredValidationError' | artemisTranslate }}
-                </div>
-                <div *ngIf="periodControl?.errors?.owlDateTimeParse">
-                    {{ 'artemisApp.forms.scheduleForm.periodInput.parseError' | artemisTranslate }}
                 </div>
                 <div *ngIf="periodControl?.errors?.owlDateTimeRange">
                     {{ 'artemisApp.forms.scheduleForm.periodInput.invalidRangeError' | artemisTranslate }}
@@ -126,7 +122,7 @@
         </div>
         <div *ngIf="createdSessions.length > 0">
             <span>{{ 'artemisApp.forms.scheduleForm.sessionCreationInfo' | artemisTranslate }} </span>
-            <span class="font-weight-bold" *ngFor="let session of createdSessions">{{ session | artemisDate: 'short-date' }} | </span>
+            <span class="badge bg-info m-1" *ngFor="let session of createdSessions"> {{ session | artemisDate: 'long-date':false:undefined:true }} </span>
         </div>
     </div>
 </ng-container>

@@ -71,4 +71,18 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit, OnChanges {
             reason: [undefined],
         });
     }
+
+    markDateAsTouched() {
+        if (this.dateControl) {
+            this.dateControl.markAsTouched();
+        }
+    }
+
+    get isDateInvalid() {
+        if (this.dateControl) {
+            return this.dateControl.invalid && (this.dateControl.touched || this.dateControl.dirty);
+        } else {
+            return false;
+        }
+    }
 }

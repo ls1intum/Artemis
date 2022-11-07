@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
@@ -11,6 +11,7 @@ import { NgbTimepickerModule } from '@ng-bootstrap/ng-bootstrap';
 import '@angular/localize/init';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 describe('TutorialGroupSessionForm', () => {
     let fixture: ComponentFixture<TutorialGroupSessionFormComponent>;
@@ -26,7 +27,7 @@ describe('TutorialGroupSessionForm', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule],
-            declarations: [TutorialGroupSessionFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+            declarations: [TutorialGroupSessionFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockPipe(ArtemisDatePipe)],
         })
             .compileComponents()
             .then(() => {

@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -22,6 +22,7 @@ import '@angular/localize/init';
 import { Language } from 'app/entities/course.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
+import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -66,6 +67,7 @@ describe('TutorialGroupFormComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisDatePipe),
+                MockPipe(ArtemisDateRangePipe),
             ],
             providers: [
                 MockProvider(CourseManagementService, {

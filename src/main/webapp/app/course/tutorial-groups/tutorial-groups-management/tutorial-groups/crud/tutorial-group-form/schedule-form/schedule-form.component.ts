@@ -108,4 +108,18 @@ export class ScheduleFormComponent implements OnInit {
 
         this.parentFormGroup.addControl('schedule', this.formGroup);
     }
+
+    get isPeriodInvalid() {
+        if (this.periodControl) {
+            return this.periodControl.invalid && (this.periodControl.touched || this.periodControl.dirty);
+        } else {
+            return false;
+        }
+    }
+
+    markPeriodAsTouched() {
+        if (this.periodControl) {
+            this.periodControl.markAsTouched();
+        }
+    }
 }

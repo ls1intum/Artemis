@@ -38,7 +38,6 @@ import { TutorialGroupsRegistrationImportDialog } from './tutorial-groups/tutori
 import { TutorialGroupsImportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { TutorialGroupsChecklistComponent } from './tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-
 @NgModule({
     imports: [
         RouterModule.forChild(tutorialGroupManagementRoutes),

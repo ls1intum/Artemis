@@ -2,7 +2,7 @@
     <td [class.table-danger]="isCancelled" *ngIf="showIdColumn">{{ session.id }}</td>
     <td [class.table-danger]="isCancelled">
         <span>
-            {{ session.start | artemisDate: 'short-date':false:timeZone! }}
+            {{ session.start | artemisDate: 'short-date':false:timeZone!:true }}
             {{ session.start | artemisDate: 'time':false:timeZone! }} -
             {{ session.end | artemisDate: 'time':false:timeZone! }}
         </span>

@@ -37,7 +37,7 @@
                         </td>
                         <!-- Only support for one day right now, so only show "start" date -->
                         <td>
-                            {{ freePeriod.start | artemisDate: 'long-date':false:course.timeZone }}
+                            {{ freePeriod.start | artemisDate: 'long-date':false:course.timeZone:true }}
                         </td>
                         <td>
                             <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>

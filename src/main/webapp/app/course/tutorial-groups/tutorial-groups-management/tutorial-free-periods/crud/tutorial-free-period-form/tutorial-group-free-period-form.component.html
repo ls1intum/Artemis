@@ -10,16 +10,24 @@
             <div>
                 <label class="form-label" for="date">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate }}</label>
                 <div class="input-group">
-                    <input name="date" id="date" required formControlName="date" [owlDateTime]="date" placeholder="YYYY-MM-DD" class="form-control" />
+                    <input formControlName="date" required [owlDateTime]="date" class="d-none" />
+                    <input
+                        name="date"
+                        id="date"
+                        required
+                        [class.is-invalid]="isDateInvalid"
+                        (focus)="markDateAsTouched()"
+                        [value]="dateControl?.value | artemisDate: 'long-date':false:undefined:true"
+                        [owlDateTimeTrigger]="date"
+                        readonly
+                        class="form-control"
+                    />
                     <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="date"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
                     <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #date></owl-date-time>
                 </div>
                 <div *ngIf="dateControl?.invalid && (dateControl?.dirty || dateControl?.touched)" class="alert alert-danger">
                     <div *ngIf="dateControl?.errors?.required">
                         {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError' | artemisTranslate }}
-                    </div>
-                    <div *ngIf="dateControl?.errors?.owlDateTimeParse">
-                        {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.parseError' | artemisTranslate }}
                     </div>
                 </div>
             </div>

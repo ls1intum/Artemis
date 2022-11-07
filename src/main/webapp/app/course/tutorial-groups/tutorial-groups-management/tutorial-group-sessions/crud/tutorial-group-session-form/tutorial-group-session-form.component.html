@@ -10,7 +10,18 @@
             <div>
                 <label class="form-label" for="date">{{ 'artemisApp.forms.sessionForm.dateInput.label' | artemisTranslate }}</label>
                 <div class="input-group">
-                    <input name="date" id="date" required formControlName="date" [owlDateTime]="date" placeholder="YYYY-MM-DD" class="form-control" />
+                    <input formControlName="date" [owlDateTime]="date" class="d-none" />
+                    <input
+                        name="date"
+                        id="date"
+                        required
+                        [class.is-invalid]="isDateInvalid"
+                        (focus)="markDateAsTouched()"
+                        [value]="dateControl?.value | artemisDate: 'long-date':false:undefined:true"
+                        [owlDateTimeTrigger]="date"
+                        readonly
+                        class="form-control"
+                    />
                     <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="date"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
                     <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #date></owl-date-time>
                 </div>

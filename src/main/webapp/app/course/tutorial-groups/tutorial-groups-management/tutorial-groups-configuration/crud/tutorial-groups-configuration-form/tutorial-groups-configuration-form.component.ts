@@ -58,4 +58,18 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     submitForm() {
         this.formSubmitted.emit({ ...this.form.value });
     }
+
+    get isPeriodInvalid() {
+        if (this.periodControl) {
+            return this.periodControl.invalid && (this.periodControl.touched || this.periodControl.dirty);
+        } else {
+            return false;
+        }
+    }
+
+    markPeriodAsTouched() {
+        if (this.periodControl) {
+            this.periodControl.markAsTouched();
+        }
+    }
 }
