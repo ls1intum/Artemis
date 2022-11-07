@@ -422,6 +422,6 @@ public class Feedback extends DomainObject {
 
     @JsonIgnore
     public boolean hasDetails() {
-        return !isPositive() || detailText != null;
+        return !Boolean.TRUE.equals(isPositive()) || detailText != null || gradingInstruction != null;
     }
 }
