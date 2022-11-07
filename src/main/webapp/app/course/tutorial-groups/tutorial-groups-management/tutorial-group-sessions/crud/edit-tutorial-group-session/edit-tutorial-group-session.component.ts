@@ -1,67 +1,45 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
-import { ActivatedRoute, Router } from '@angular/router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { combineLatest } from 'rxjs';
-import { finalize, map, switchMap, take } from 'rxjs/operators';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { finalize } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { Course } from 'app/entities/course.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-session',
     templateUrl: './edit-tutorial-group-session.component.html',
 })
-export class EditTutorialGroupSessionComponent implements OnInit {
-    isLoading = false;
-    session: TutorialGroupSession;
-    formData: TutorialGroupSessionFormData;
+export class EditTutorialGroupSessionComponent {
+    @Input()
+    tutorialGroup: TutorialGroup;
+
+    @Input()
     course: Course;
-    tutorialGroupId: number;
-    sessionId: number;
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private courseManagementService: CourseManagementService,
-        private router: Router,
-        private tutorialGroupService: TutorialGroupsService,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private alertService: AlertService,
-    ) {}
+    _tutorialGroupSession: TutorialGroupSession;
 
-    ngOnInit(): void {
-        this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
-            .pipe(
-                take(1),
-                switchMap(([params, { course }]) => {
-                    this.sessionId = Number(params.get('sessionId'));
-                    this.tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.course = course;
-                    return this.tutorialGroupSessionService.getOneOfTutorialGroup(this.course.id!, this.tutorialGroupId, this.sessionId);
-                }),
-                map((res: HttpResponse<TutorialGroupSession>) => res.body),
-                finalize(() => (this.isLoading = false)),
-            )
-            .subscribe({
-                next: (session) => {
-                    if (session) {
-                        this.session = session;
-                        this.formData = {
-                            date: session.start?.tz(this.course.timeZone).toDate(),
-                            startTime: session.start?.tz(this.course.timeZone).format('HH:mm:ss'),
-                            endTime: session.end?.tz(this.course.timeZone).format('HH:mm:ss'),
-                            location: session.location,
-                        };
-                    }
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+    @Input()
+    set session(tutorialGroupSession: TutorialGroupSession) {
+        this._tutorialGroupSession = tutorialGroupSession;
+        if (this._tutorialGroupSession) {
+            this.formData = {
+                date: tutorialGroupSession.start?.tz(this.course.timeZone).toDate(),
+                startTime: tutorialGroupSession.start?.tz(this.course.timeZone).format('HH:mm:ss'),
+                endTime: tutorialGroupSession.end?.tz(this.course.timeZone).format('HH:mm:ss'),
+                location: tutorialGroupSession.location,
+            };
+        }
     }
+
+    isLoading = false;
+    formData?: TutorialGroupSessionFormData = undefined;
+
+    constructor(private activeModal: NgbActiveModal, private tutorialGroupSessionService: TutorialGroupSessionService, private alertService: AlertService) {}
 
     updateSession(formData: TutorialGroupSessionFormData) {
         const { date, startTime, endTime, location } = formData;
@@ -76,7 +54,7 @@ export class EditTutorialGroupSessionComponent implements OnInit {
         this.isLoading = true;
 
         this.tutorialGroupSessionService
-            .update(this.course.id!, this.tutorialGroupId, this.sessionId, tutorialGroupSessionDTO)
+            .update(this.course.id!, this.tutorialGroup.id!, this._tutorialGroupSession.id!, tutorialGroupSessionDTO)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -84,9 +62,16 @@ export class EditTutorialGroupSessionComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups', this.tutorialGroupId, 'sessions']);
+                    this.activeModal.close();
                 },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                error: (res: HttpErrorResponse) => {
+                    onError(this.alertService, res);
+                    this.clear();
+                },
             });
+    }
+
+    clear() {
+        this.activeModal.dismiss();
     }
 }

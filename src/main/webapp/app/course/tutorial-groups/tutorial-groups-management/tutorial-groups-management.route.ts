@@ -7,12 +7,10 @@ import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
-import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
 import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/detail/tutorial-group-management-detail.component';
 import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
 import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
-import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
 import { EditTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
 import { Routes } from '@angular/router';
@@ -55,24 +53,6 @@ export const tutorialGroupManagementRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'configuration/:tutorialGroupsConfigurationId/tutorial-free-days/create',
-        component: CreateTutorialGroupFreePeriodComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.pages.createTutorialFreePeriod.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: 'configuration/:tutorialGroupsConfigurationId/tutorial-free-days/:tutorialGroupFreePeriodId/edit',
-        component: EditTutorialGroupFreePeriodComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.pages.editTutorialFreePeriod.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: 'create',
         component: CreateTutorialGroupComponent,
         data: {
@@ -87,24 +67,6 @@ export const tutorialGroupManagementRoutes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.pages.editTutorialGroup.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':tutorialGroupId/sessions/create',
-        component: CreateTutorialGroupSessionComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.pages.createTutorialSession.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':tutorialGroupId/sessions/:sessionId/edit',
-        component: EditTutorialGroupSessionComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.pages.editTutorialSession.title',
         },
         canActivate: [UserRouteAccessService],
     },

@@ -9,14 +9,10 @@
         }}
     </button>
     <!-- Edit -->
-    <a
-        [id]="'edit-' + tutorialGroupSession.id"
-        [routerLink]="['/course-management', course.id!, 'tutorial-groups', tutorialGroupId, 'sessions', tutorialGroupSession.id, 'edit']"
-        class="btn btn-warning btn-sm me-1"
-    >
+    <button type="button" [id]="'edit-' + tutorialGroupSession.id" (click)="openEditSessionDialog($event)" class="btn btn-warning btn-sm me-1">
         <fa-icon [icon]="faWrench"></fa-icon>
         <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
-    </a>
+    </button>
     <!-- Delete -->
     <button
         [id]="'delete-' + tutorialGroupSession.id"

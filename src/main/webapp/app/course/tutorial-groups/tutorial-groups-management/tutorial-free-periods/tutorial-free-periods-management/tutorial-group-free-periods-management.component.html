@@ -4,14 +4,10 @@
             <div class="d-flex justify-content-between">
                 <h4>{{ 'artemisApp.pages.tutorialFreePeriodsManagement.title' | artemisTranslate }}</h4>
                 <div>
-                    <a
-                        class="btn btn-primary"
-                        id="create-tutorial-free-day"
-                        [routerLink]="['/course-management', course.id!, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'tutorial-free-days', 'create']"
-                    >
+                    <button type="button" class="btn btn-primary" id="create-tutorial-free-day" (click)="openCreateFreeDayDialog($event)">
                         <fa-icon [icon]="faPlus"></fa-icon>
                         <span>{{ 'artemisApp.pages.tutorialFreePeriodsManagement.createFreePeriodButton' | artemisTranslate }}</span>
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -49,6 +45,7 @@
                                     [tutorialGroupConfiguration]="tutorialGroupsConfiguration"
                                     [tutorialFreePeriod]="freePeriod"
                                     (tutorialFreePeriodDeleted)="loadAll()"
+                                    (tutorialFreePeriodEdited)="loadAll()"
                                 >
                                 </jhi-tutorial-group-free-period-row-buttons>
                             </div>

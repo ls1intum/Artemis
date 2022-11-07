@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
+import { Subject, combineLatest, finalize, from, switchMap, take } from 'rxjs';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -11,6 +11,8 @@ import { SortService } from 'app/shared/service/sort.service';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 
 @Component({
     selector: 'jhi-tutorial-free-periods',
@@ -34,6 +36,8 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private alertService: AlertService,
         private sortService: SortService,
+
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit(): void {
@@ -70,5 +74,15 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
+    }
+
+    openCreateFreeDayDialog(event: MouseEvent) {
+        event.stopPropagation();
+        const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupFreePeriodComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.tutorialGroupConfigurationId = this.tutorialGroupsConfiguration.id!;
+        from(modalRef.result).subscribe(() => {
+            this.loadAll();
+        });
     }
 }

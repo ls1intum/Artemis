@@ -23,7 +23,7 @@
                         class="form-control"
                     />
                     <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="date"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
-                    <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #date></owl-date-time>
+                    <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #date [pickerMode]="'dialog'"></owl-date-time>
                 </div>
                 <div *ngIf="dateControl?.invalid && (dateControl?.dirty || dateControl?.touched)" class="alert alert-danger">
                     <div *ngIf="dateControl?.errors?.required">

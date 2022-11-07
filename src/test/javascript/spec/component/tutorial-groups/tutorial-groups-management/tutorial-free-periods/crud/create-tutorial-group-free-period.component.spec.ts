@@ -2,8 +2,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { Router } from '@angular/router';
-import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
@@ -18,8 +16,8 @@ import {
     generateExampleTutorialGroupFreePeriod,
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
 } from '../../../helpers/tutorialGroupFreePeriodExampleModel';
-import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { Course } from 'app/entities/course.model';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CreateTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupFreePeriodComponent>;
@@ -27,7 +25,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
     let tutorialGroupFreePeriodService: TutorialGroupFreePeriodService;
     const course = { id: 1, timeZone: 'Europe/Berlin' } as Course;
     const configurationId = 1;
-    const router = new MockRouter();
+    let activeModal: NgbActiveModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -38,17 +36,15 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
                 TutorialGroupFreePeriodFormStubComponent,
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [
-                MockProvider(TutorialGroupFreePeriodService),
-                MockProvider(AlertService),
-                { provide: Router, useValue: router },
-                mockedActivatedRoute({ tutorialGroupsConfigurationId: configurationId }, {}, { course }, {}),
-            ],
+            providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
         })
             .compileComponents()
             .then(() => {
+                activeModal = TestBed.inject(NgbActiveModal);
                 fixture = TestBed.createComponent(CreateTutorialGroupFreePeriodComponent);
                 component = fixture.componentInstance;
+                component.tutorialGroupConfigurationId = configurationId;
+                component.course = course;
                 tutorialGroupFreePeriodService = TestBed.inject(TutorialGroupFreePeriodService);
             });
     });
@@ -62,7 +58,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should send POST request upon form submission and navigate', () => {
+    it('should send POST request upon form submission and close modal', () => {
         fixture.detectChanges();
         const exampleFreePeriod = generateExampleTutorialGroupFreePeriod({});
         delete exampleFreePeriod.id;
@@ -73,7 +69,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
         });
 
         const createStub = jest.spyOn(tutorialGroupFreePeriodService, 'create').mockReturnValue(of(createResponse));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const closeSpy = jest.spyOn(activeModal, 'close');
 
         const sessionForm: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
 
@@ -83,7 +79,6 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
 
         expect(createStub).toHaveBeenCalledOnce();
         expect(createStub).toHaveBeenCalledWith(course.id!, configurationId, formDataToTutorialGroupFreePeriodDTO(formData));
-        expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id!, 'tutorial-groups', 'configuration', configurationId, 'tutorial-free-days']);
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 });

@@ -4,14 +4,10 @@
             <div class="d-flex justify-content-between">
                 <h4>{{ 'artemisApp.pages.tutorialGroupSessionManagement.title' | artemisTranslate }} - {{ tutorialGroup.title }}</h4>
                 <div>
-                    <a
-                        id="create-session-button"
-                        class="btn btn-primary"
-                        [routerLink]="['/course-management', course.id!, 'tutorial-groups', tutorialGroup.id, 'sessions', 'create']"
-                    >
+                    <button type="button" id="create-session-button" class="btn btn-primary" (click)="openCreateSessionDialog($event)">
                         <fa-icon [icon]="faPlus"></fa-icon>
                         <span>{{ 'artemisApp.pages.tutorialGroupSessionManagement.createSessionButton' | artemisTranslate }}</span>
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -55,9 +51,10 @@
                     <jhi-tutorial-group-session-row-buttons
                         [tutorialGroupSession]="session"
                         [course]="course"
-                        [tutorialGroupId]="tutorialGroup.id!"
+                        [tutorialGroup]="tutorialGroup"
                         (cancelOrActivatePressed)="loadAll()"
                         (tutorialGroupSessionDeleted)="loadAll()"
+                        (tutorialGroupEdited)="loadAll()"
                     ></jhi-tutorial-group-session-row-buttons>
                 </ng-template>
             </jhi-tutorial-group-sessions-table>

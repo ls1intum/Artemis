@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { combineLatest } from 'rxjs';
+import { combineLatest, from } from 'rxjs';
 import { finalize, map, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -12,6 +12,8 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 
 @Component({
     selector: 'jhi-session-management',
@@ -21,10 +23,17 @@ import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays
 export class TutorialGroupSessionsManagementComponent implements OnInit {
     isLoading = false;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private tutorialGroupService: TutorialGroupsService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private tutorialGroupService: TutorialGroupsService,
+        private alertService: AlertService,
+        private modalService: NgbModal,
+    ) {}
 
     faPlus = faPlus;
 
+    tutorialGroupId: number;
     course: Course;
     tutorialGroup: TutorialGroup;
     sessions: TutorialGroupSession[] = [];
@@ -68,5 +77,15 @@ export class TutorialGroupSessionsManagementComponent implements OnInit {
                     onError(this.alertService, res);
                 },
             });
+    }
+
+    openCreateSessionDialog(event: MouseEvent) {
+        event.stopPropagation();
+        const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupSessionComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
+        from(modalRef.result).subscribe(() => {
+            this.loadAll();
+        });
     }
 }

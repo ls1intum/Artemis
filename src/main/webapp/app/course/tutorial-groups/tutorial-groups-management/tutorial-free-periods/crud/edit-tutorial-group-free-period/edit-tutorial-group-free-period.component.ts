@@ -1,68 +1,50 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest, finalize, map, switchMap, take } from 'rxjs';
+import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-free-period',
     templateUrl: './edit-tutorial-group-free-period.component.html',
 })
-export class EditTutorialGroupFreePeriodComponent implements OnInit {
+export class EditTutorialGroupFreePeriodComponent {
     isLoading = false;
-    freePeriod: TutorialGroupFreePeriod;
+
+    _freePeriod: TutorialGroupFreePeriod;
+    @Input()
+    set freePeriod(period: TutorialGroupFreePeriod) {
+        this._freePeriod = period;
+        if (this._freePeriod && this.course) {
+            this.formData = {
+                date: this._freePeriod.start?.tz(this.course.timeZone).toDate(),
+                reason: this._freePeriod.reason,
+            };
+        }
+    }
+
+    @Input()
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
-    formData: TutorialGroupFreePeriodFormData;
 
+    @Input()
     course: Course;
-    tutorialGroupConfigurationId: number;
-    tutorialGroupFreePeriodId: number;
 
+    formData: TutorialGroupFreePeriodFormData;
     constructor(
-        private activatedRoute: ActivatedRoute,
-        private courseManagementService: CourseManagementService,
+        private activeModal: NgbActiveModal,
         private router: Router,
         private tutorialGroupService: TutorialGroupsService,
         private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
         private alertService: AlertService,
     ) {}
-
-    ngOnInit(): void {
-        this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
-            .pipe(
-                take(1),
-                switchMap(([params, { course }]) => {
-                    this.course = course;
-                    this.tutorialGroupsConfiguration = course.tutorialGroupsConfiguration;
-                    this.tutorialGroupConfigurationId = this.tutorialGroupsConfiguration.id!;
-                    this.tutorialGroupFreePeriodId = Number(params.get('tutorialGroupFreePeriodId'));
-                    return this.tutorialGroupFreePeriodService.getOneOfConfiguration(course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodId);
-                }),
-                map((res: HttpResponse<TutorialGroupFreePeriod>) => res.body),
-                finalize(() => (this.isLoading = false)),
-            )
-            .subscribe({
-                next: (tutorialGroupFreePeriod) => {
-                    if (tutorialGroupFreePeriod) {
-                        this.freePeriod = tutorialGroupFreePeriod;
-                        this.formData = {
-                            date: tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
-                            reason: tutorialGroupFreePeriod.reason,
-                        };
-                    }
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
-    }
 
     updateTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
         const { date, reason } = formData;
@@ -74,7 +56,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnInit {
         this.isLoading = true;
 
         this.tutorialGroupFreePeriodService
-            .update(this.course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodId, tutorialGroupFreePeriodDto)
+            .update(this.course.id!, this.tutorialGroupsConfiguration.id!, this._freePeriod.id!, tutorialGroupFreePeriodDto)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -82,9 +64,16 @@ export class EditTutorialGroupFreePeriodComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups', 'configuration', this.tutorialGroupConfigurationId, 'tutorial-free-days']);
+                    this.activeModal.close();
                 },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                error: (res: HttpErrorResponse) => {
+                    this.clear();
+                    onError(this.alertService, res);
+                },
             });
+    }
+
+    clear() {
+        this.activeModal.dismiss();
     }
 }

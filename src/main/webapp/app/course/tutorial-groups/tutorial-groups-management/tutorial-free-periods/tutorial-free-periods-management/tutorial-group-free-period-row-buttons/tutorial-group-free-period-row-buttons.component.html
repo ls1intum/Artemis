@@ -1,13 +1,9 @@
 <div class="btn-group flex-btn-group-container">
     <!-- Edit -->
-    <a
-        [id]="'edit-' + tutorialFreePeriod.id"
-        [routerLink]="['/course-management', course.id, 'tutorial-groups', 'configuration', tutorialGroupConfiguration.id!, 'tutorial-free-days', tutorialFreePeriod.id!, 'edit']"
-        class="btn btn-warning btn-sm me-1"
-    >
+    <button type="button" [id]="'edit-' + tutorialFreePeriod.id" (click)="openEditFreeDayDialog($event)" class="btn btn-warning btn-sm me-1">
         <fa-icon [icon]="faWrench"></fa-icon>
         <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
-    </a>
+    </button>
     <!-- Delete -->
     <button
         [id]="'delete-' + tutorialFreePeriod.id"

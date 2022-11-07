@@ -1,4 +1,15 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <h3>{{ 'artemisApp.pages.createTutorialFreePeriod.title' | artemisTranslate }}</h3>
-    <jhi-tutorial-free-period-form [timeZone]="course.timeZone!" [isEditMode]="false" (formSubmitted)="createTutorialGroupFreePeriod($event)"></jhi-tutorial-free-period-form>
+    <div *ngIf="course && tutorialGroupConfigurationId">
+        <div class="modal-header">
+            <h4 class="modal-title">{{ 'artemisApp.pages.createTutorialFreePeriod.title' | artemisTranslate }}</h4>
+            <button type="button" class="btn-close" (click)="clear()"></button>
+        </div>
+        <div class="modal-body">
+            <jhi-tutorial-free-period-form
+                [timeZone]="course.timeZone!"
+                [isEditMode]="false"
+                (formSubmitted)="createTutorialGroupFreePeriod($event)"
+            ></jhi-tutorial-free-period-form>
+        </div>
+    </div>
 </jhi-loading-indicator-container>
