@@ -28,7 +28,7 @@
         <property name="fileNamePattern" value="module\-info\.java$"/>
     </module>
 
-    <!-- Allows to supress checks for certain files -->
+    <!-- Allows to suppress checks for certain files -->
     <!-- See https://checkstyle.sourceforge.io/config_filters.html#SuppressionFilter -->
     <!-- <module name="SuppressionFilter"> -->
     <!--    <property name="file" value="${config_loc}/checkstyle-suppressions.xml"/> -->
