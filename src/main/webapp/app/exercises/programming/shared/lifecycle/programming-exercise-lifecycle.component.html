@@ -11,9 +11,12 @@
                 tooltipText="artemisApp.programmingExercise.timeline.releaseDateTooltip"
             ></jhi-programming-exercise-test-schedule-date-picker>
             <jhi-programming-exercise-test-schedule-date-picker
-                *ngIf="exercise.releaseDate"
+                *ngIf="!isExamMode"
                 [(ngModel)]="exercise.startDate"
                 (ngModelChange)="updateStartDate($event)"
+                (onDateReset)="exercise.startDate = undefined"
+                [startAt]="exercise.releaseDate"
+                [min]="exercise.releaseDate"
                 [readOnly]="readOnly"
                 class="test-schedule-date px-1"
                 label="artemisApp.exercise.startDate"

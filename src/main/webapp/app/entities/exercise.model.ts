@@ -126,6 +126,7 @@ export abstract class Exercise implements BaseEntity {
     public teamMode?: boolean;
     public assessmentDueDateError?: boolean;
     public dueDateError?: boolean;
+    public startDateError?: boolean;
     public exampleSolutionPublicationDateError?: boolean;
     public exampleSolutionPublicationDateWarning?: boolean;
     public loading?: boolean;
@@ -145,6 +146,7 @@ export abstract class Exercise implements BaseEntity {
         this.teamMode = false; // default value
         this.assessmentDueDateError = false;
         this.dueDateError = false;
+        this.startDateError = false;
         this.exampleSolutionPublicationDateError = false;
         this.presentationScoreEnabled = false; // default value;
         this.allowComplaintsForAutomaticAssessments = false; // default value;

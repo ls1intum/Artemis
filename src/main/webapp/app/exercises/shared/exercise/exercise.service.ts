@@ -72,15 +72,20 @@ export class ExerciseService {
      */
     validateDate(exercise: Exercise) {
         exercise.dueDateError = this.hasDueDateError(exercise);
+        exercise.startDateError = this.hasStartDateError(exercise);
         exercise.assessmentDueDateError = this.hasAssessmentDueDateError(exercise);
 
         exercise.exampleSolutionPublicationDateError = this.hasExampleSolutionPublicationDateError(exercise);
         exercise.exampleSolutionPublicationDateWarning = this.hasExampleSolutionPublicationDateWarning(exercise);
     }
 
+    hasStartDateError(exercise: Exercise) {
+        return exercise.startDate && exercise.releaseDate && dayjs(exercise.startDate).isBefore(exercise.releaseDate);
+    }
+
     hasDueDateError(exercise: Exercise) {
-        const releaseDateError = exercise.releaseDate && exercise.dueDate ? dayjs(exercise.dueDate).isBefore(exercise.releaseDate) : false;
-        const startDateError = exercise.startDate && exercise.dueDate ? dayjs(exercise.dueDate).isBefore(exercise.startDate) : false;
+        const releaseDateError = exercise.releaseDate && exercise.dueDate && dayjs(exercise.dueDate).isBefore(exercise.releaseDate);
+        const startDateError = exercise.startDate && exercise.dueDate && dayjs(exercise.dueDate).isBefore(exercise.startDate);
         return releaseDateError || startDateError;
     }
 
@@ -106,8 +111,8 @@ export class ExerciseService {
     hasExampleSolutionPublicationDateError(exercise: Exercise) {
         if (exercise.exampleSolutionPublicationDate) {
             return (
-                dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.releaseDate || null) ||
-                (dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate || null) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
+                dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.releaseDate) ||
+                (dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
             );
         }
         return false;
@@ -294,6 +299,7 @@ export class ExerciseService {
     static convertExerciseResponseDatesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body) {
             res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
+            res.body.startDate = convertDateFromServer(res.body.startDate);
             res.body.dueDate = convertDateFromServer(res.body.dueDate);
             res.body.assessmentDueDate = convertDateFromServer(res.body.assessmentDueDate);
             res.body.exampleSolutionPublicationDate = convertDateFromServer(res.body.exampleSolutionPublicationDate);
