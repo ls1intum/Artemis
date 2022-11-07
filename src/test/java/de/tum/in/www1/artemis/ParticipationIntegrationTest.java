@@ -172,6 +172,33 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = "student2")
+    void participateInTextExercise_noReleaseDateStartDateNotReached() throws Exception {
+        textExercise.setReleaseDate(null);
+        textExercise.setStartDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepo.save(textExercise);
+        request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student2")
+    void participateInTextExercise_releaseDateReachedStartDateNotReached() throws Exception {
+        textExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(1));
+        textExercise.setStartDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepo.save(textExercise);
+        request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void participateInTextExercise_releaseDateReachedStartDateReached() throws Exception {
+        textExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(2));
+        textExercise.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        exerciseRepo.save(textExercise);
+        request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
+    }
+
+    @Test
     @WithMockUser(username = "student3")
     void participateInTextExercise_notStudentInCourse() throws Exception {
         request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
