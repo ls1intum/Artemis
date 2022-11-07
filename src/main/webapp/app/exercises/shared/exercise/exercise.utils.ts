@@ -197,7 +197,8 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
 };
 
 export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean => {
-    return !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
+    const beforeStartDateStudent = !exercise.isAtLeastTutor && exercise.startDate && exercise.startDate.isBefore(dayjs());
+    return !beforeStartDateStudent && (!exercise.dueDate || dayjs().isBefore(exercise.dueDate));
 };
 
 export const isResumeExerciseAvailable = (exercise: Exercise, studentParticipation?: StudentParticipation): boolean => {

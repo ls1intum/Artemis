@@ -101,6 +101,24 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
     }
 
     /**
+     * Sets the new start date and updates "due date" and "after due date" if the start date is after the due date
+     * Does not propagate changes to dates other than start date if readOnly is true.
+     *
+     * @param newReleaseDate The new release date
+     */
+    updateStartDate(newStartDate?: dayjs.Dayjs) {
+        this.exercise.startDate = newStartDate;
+        if (this.readOnly) {
+            // Changes from parent component are allowed but no cascading changes should be made in read-only mode.
+            return;
+        }
+        if (this.exerciseService.hasDueDateError(this.exercise)) {
+            this.updateDueDate(newStartDate!);
+        }
+        this.updateExampleSolutionPublicationDate(newStartDate);
+    }
+
+    /**
      * Updates the due Date of the programming exercise
      * @param dueDate the new dueDate
      */

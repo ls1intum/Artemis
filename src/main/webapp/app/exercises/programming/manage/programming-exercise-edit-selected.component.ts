@@ -74,6 +74,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
      */
     setNewValues(programmingExercise: ProgrammingExercise) {
         programmingExercise.releaseDate = this.newProgrammingExercise.releaseDate;
+        programmingExercise.startDate = this.newProgrammingExercise.startDate;
         programmingExercise.dueDate = this.newProgrammingExercise.dueDate;
         programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = this.newProgrammingExercise.buildAndTestStudentSubmissionsAfterDueDate;
         programmingExercise.assessmentType = this.newProgrammingExercise.assessmentType;

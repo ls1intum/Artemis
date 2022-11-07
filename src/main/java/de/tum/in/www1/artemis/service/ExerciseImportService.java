@@ -41,6 +41,7 @@ public abstract class ExerciseImportService {
         newExercise.setProblemStatement(importedExercise.getProblemStatement());
         newExercise.setStartDate(importedExercise.getStartDate());
         newExercise.setReleaseDate(importedExercise.getReleaseDate());
+        newExercise.setStartDate(importedExercise.getStartDate());
         newExercise.setDueDate(importedExercise.getDueDate());
         newExercise.setAssessmentDueDate(importedExercise.getAssessmentDueDate());
         newExercise.setExampleSolutionPublicationDate(null); // This should not be imported.

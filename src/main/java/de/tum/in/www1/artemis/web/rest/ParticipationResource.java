@@ -6,6 +6,7 @@ import static java.time.ZonedDateTime.now;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -155,11 +156,11 @@ public class ParticipationResource {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Participant participant = user;
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
         // if the user is a student and the exercise has a release date, they cannot start the exercise before the release date
-        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
+        ZonedDateTime releaseOrStartDate = exercise.getRepositoryUnlockDate();
+        if (releaseOrStartDate != null && releaseOrStartDate.isAfter(now())) {
             if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
                 throw new AccessForbiddenException("Students cannot start an exercise before the release date");
             }
@@ -183,11 +184,11 @@ public class ParticipationResource {
         }
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to
+        Participant participant = user;
         if (exercise.isTeamMode()) {
             participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "cannotStart"));
         }
-
         StudentParticipation participation = participationService.startExercise(exercise, participant, true);
 
         if (exercise.isExamExercise() && exercise instanceof ProgrammingExercise) {

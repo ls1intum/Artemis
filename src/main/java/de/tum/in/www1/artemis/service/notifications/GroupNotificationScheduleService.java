@@ -48,7 +48,6 @@ public class GroupNotificationScheduleService {
      * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
      */
     private void checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate) {
-
         final ZonedDateTime initialReleaseDate = exerciseBeforeUpdate.getReleaseDate();
         final ZonedDateTime updatedReleaseDate = exerciseAfterUpdate.getReleaseDate();
         ZonedDateTime timeNow = ZonedDateTime.now();

@@ -79,7 +79,9 @@ export class ExerciseService {
     }
 
     hasDueDateError(exercise: Exercise) {
-        return exercise.releaseDate && exercise.dueDate ? dayjs(exercise.dueDate).isBefore(exercise.releaseDate) : false;
+        const releaseDateError = exercise.releaseDate && exercise.dueDate ? dayjs(exercise.dueDate).isBefore(exercise.releaseDate) : false;
+        const startDateError = exercise.startDate && exercise.dueDate ? dayjs(exercise.dueDate).isBefore(exercise.startDate) : false;
+        return releaseDateError || startDateError;
     }
 
     private hasAssessmentDueDateError(exercise: Exercise) {
@@ -245,6 +247,7 @@ export class ExerciseService {
     static convertExerciseDatesFromServer(exercise?: Exercise) {
         if (exercise) {
             exercise.releaseDate = convertDateFromServer(exercise.releaseDate);
+            exercise.startDate = convertDateFromServer(exercise.startDate);
             exercise.dueDate = convertDateFromServer(exercise.dueDate);
             exercise.assessmentDueDate = convertDateFromServer(exercise.assessmentDueDate);
             exercise.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(exercise.studentParticipations);
@@ -277,6 +280,7 @@ export class ExerciseService {
     static convertExerciseDatesFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
             releaseDate: convertDateFromClient(exercise.releaseDate),
+            startDate: convertDateFromClient(exercise.startDate),
             dueDate: convertDateFromClient(exercise.dueDate),
             assessmentDueDate: convertDateFromClient(exercise.assessmentDueDate),
             exampleSolutionPublicationDate: convertDateFromClient(exercise.exampleSolutionPublicationDate),

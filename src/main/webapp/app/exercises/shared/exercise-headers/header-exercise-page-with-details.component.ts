@@ -39,9 +39,10 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
     public exerciseCategories: ExerciseCategory[];
     public dueDate?: dayjs.Dayjs;
+    public isBeforeStartDate: boolean;
     public programmingExercise?: ProgrammingExercise;
     public individualComplaintDeadline?: dayjs.Dayjs;
-    public isNextDueDate: boolean[];
+    public nextDueDateIndex?: number;
     public statusBadges: string[];
     public canComplainLaterOn: boolean;
     public achievedPoints?: number;
@@ -65,6 +66,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             this.setIsNextDueDateExamMode();
         } else {
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
+            this.isBeforeStartDate = this.exercise.startDate ? this.exercise.startDate.isAfter(dayjs()) : !!this.exercise.releaseDate?.isAfter(dayjs());
             if (this.course) {
                 this.individualComplaintDeadline = this.complaintService.getIndividualComplaintDueDate(this.exercise, this.course, this.studentParticipation);
             }
@@ -103,15 +105,15 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
      * 1: Publish Results Date
      */
     private setIsNextDueDateExamMode() {
-        this.isNextDueDate = [false, false];
         const now = dayjs();
         if (this.exam?.endDate && now.isBefore(this.exam?.endDate)) {
-            this.isNextDueDate[0] = true;
+            this.nextDueDateIndex = 0;
             this.statusBadges = ['bg-success', 'bg-success'];
         } else if (this.exam?.publishResultsDate && now.isBefore(this.exam?.publishResultsDate)) {
-            this.isNextDueDate[1] = true;
+            this.nextDueDateIndex = 1;
             this.statusBadges = ['bg-danger', 'bg-success'];
         } else {
+            this.nextDueDateIndex = undefined;
             this.statusBadges = ['bg-danger', 'bg-danger'];
         }
     }
@@ -119,28 +121,32 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     /**
      * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
      * Arrays (for badge class (= statusBadges) and highlighting (= isNextDueDate)) consist of
-     * 0: Submission Due Date
-     * 1: Assessment Due Date
-     * 2: Individual Complaint Deadline
-     * 3: Complaint Possible (Yes / No)
+     * 0: Start Date (either release date or start date if set)
+     * 1: Submission Due Date
+     * 2: Assessment Due Date
+     * 3: Individual Complaint Deadline
+     * 4: Complaint Possible (Yes / No)
      */
     private setIsNextDueDateCourseMode() {
-        this.isNextDueDate = [false, false, false, false];
         const now = dayjs();
-        if (this.dueDate && now.isBefore(this.dueDate)) {
-            this.isNextDueDate[0] = true;
-            this.statusBadges = ['bg-success', 'bg-success', 'bg-success'];
+        if (this.isBeforeStartDate) {
+            this.nextDueDateIndex = 0;
+            this.statusBadges = ['bg-success', 'bg-success', 'bg-success', 'bg-success'];
+        } else if (this.dueDate && now.isBefore(this.dueDate)) {
+            this.nextDueDateIndex = 1;
+            this.statusBadges = ['bg-danger', 'bg-success', 'bg-success', 'bg-success'];
         } else if (this.exercise.assessmentDueDate && now.isBefore(this.exercise.assessmentDueDate)) {
-            this.isNextDueDate[1] = true;
-            this.statusBadges = ['bg-danger', 'bg-success', 'bg-success'];
+            this.nextDueDateIndex = 2;
+            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-success', 'bg-success'];
         } else if (this.individualComplaintDeadline && now.isBefore(this.individualComplaintDeadline)) {
-            this.isNextDueDate[2] = true;
-            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-success'];
+            this.nextDueDateIndex = 3;
+            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger', 'bg-success'];
         } else if (this.canComplainLaterOn) {
-            this.isNextDueDate[3] = true;
-            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger'];
+            this.nextDueDateIndex = 4;
+            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger', 'bg-danger'];
         } else {
-            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger'];
+            this.nextDueDateIndex = undefined;
+            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger', 'bg-danger'];
         }
     }
 

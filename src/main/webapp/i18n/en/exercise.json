@@ -76,6 +76,7 @@
             "title": "Title",
             "shortName": "Short Name",
             "releaseDate": "Release Date",
+            "startDate": "Start Date",
             "dueDate": "Due Date",
             "dueDateError": "Due Date must be after Release Date. Please check your selection again",
             "assessmentDueDate": "Assessment Due Date",

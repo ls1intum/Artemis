@@ -14,6 +14,13 @@ public enum ExerciseLifecycle implements IExerciseLifecycle {
             return exercise.getReleaseDate();
         }
     },
+    START {
+
+        @Override
+        public ZonedDateTime getDateFromExercise(Exercise exercise) {
+            return exercise.getStartDate();
+        }
+    },
     DUE {
 
         @Override

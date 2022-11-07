@@ -280,6 +280,7 @@
                 "assessmentTypeTooltipAutomaticAssessment": "The type of assessment after the deadline: No manual assessment",
                 "assessmentTypeTooltipManualAssessment": "The type of assessment after the deadline: Manual assessment by a tutors and complaints allowed if possible",
                 "releaseDateTooltip": "The release date of the exercise. Students will only be able to participate in the exercise starting on the specified date.",
+                "startDateTooltip": "The start date of the exercise. If this date is set, students can only see the exercise but not participate in it.",
                 "dueDateTooltip": "The deadline, upon which submitting and committing new code will be deactivated for all students.",
                 "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. These generated results will be marked as 'graded' even though the due date has passed.",
                 "alertNewDueDate": "The due date has been set to the release date!",

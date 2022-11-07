@@ -799,10 +799,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
             return getExerciseGroup().getExam().getStartDate();
         }
         else {
-            var startDate = getStartDate();
-            if (startDate != null)
-                return startDate;
-            return getReleaseDate();
+            return getStartDate() != null ? getStartDate() : getReleaseDate();
         }
     }
 

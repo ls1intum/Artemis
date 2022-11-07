@@ -190,6 +190,8 @@
                 "rated": "Bewertet",
                 "practice": "Übung",
                 "assessmentType": "Bewertung:",
+                "startDate": "Startdatum:",
+                "startDateTooltip": "Student:innen können diese Aufgabe ab {{date}} bearbeiten.",
                 "submissionDue": "Abgabe bis:",
                 "submissionDueTooltip": "Die Abgabe ist bis {{date}} möglich.",
                 "assessmentDue": "Bewertung bis:",

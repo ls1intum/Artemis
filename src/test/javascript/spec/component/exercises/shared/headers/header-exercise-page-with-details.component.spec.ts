@@ -66,8 +66,8 @@ describe('HeaderExercisePageWithDetails', () => {
         component.ngOnInit();
 
         expect(component.exerciseCategories).toEqual([]);
-        expect(component.isNextDueDate).toStrictEqual([false, false, false, false]);
-        expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-danger']);
+        expect(component.nextDueDateIndex).toBeUndefined();
+        expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-danger', 'bg-danger']);
         // @ts-ignore
         expect(component.icon.iconName).toBe('keyboard');
 
@@ -82,67 +82,80 @@ describe('HeaderExercisePageWithDetails', () => {
         component.ngOnInit();
 
         expect(component.exerciseCategories).toEqual(categories);
-        expect(component.isNextDueDate).toStrictEqual([false, false]);
+        expect(component.nextDueDateIndex).toBeUndefined();
         expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger']);
     });
 
     it('should set the icon according to the exercise due date', () => {
         exercise.dueDate = dayjs().subtract(2, 'days');
         exercise.assessmentType = AssessmentType.MANUAL;
+
+        exercise.releaseDate = dayjs().add(1, 'day');
+        component.ngOnInit();
+        expect(component.nextDueDateIndex).toBe(0);
+        expect(component.statusBadges).toStrictEqual(['bg-success', 'bg-success', 'bg-success', 'bg-success']);
+
+        exercise.releaseDate = undefined;
+        exercise.startDate = dayjs().add(1, 'day');
+        component.ngOnInit();
+        expect(component.nextDueDateIndex).toBe(0);
+        expect(component.statusBadges).toStrictEqual(['bg-success', 'bg-success', 'bg-success', 'bg-success']);
+
+        exercise.startDate = undefined;
         const dueDate1 = dayjs().add(1, 'day');
         participation.individualDueDate = dueDate1;
         component.studentParticipation = participation;
         component.ngOnInit();
         expect(component.dueDate).toEqual(dueDate1);
-        expect(component.isNextDueDate).toStrictEqual([true, false, false, false]);
-        expect(component.statusBadges).toStrictEqual(['bg-success', 'bg-success', 'bg-success']);
+        expect(component.nextDueDateIndex).toBe(1);
+        expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-success', 'bg-success', 'bg-success']);
 
         participation.individualDueDate = undefined;
         exercise.assessmentDueDate = dayjs().add(2, 'days');
         component.ngOnInit();
-        expect(component.isNextDueDate).toStrictEqual([false, true, false, false]);
-        expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-success', 'bg-success']);
+        expect(component.nextDueDateIndex).toBe(2);
+        expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-success', 'bg-success']);
 
         exercise.assessmentDueDate = dayjs().subtract(1, 'days');
         component.course = { maxComplaintTimeDays: 7 } as Course;
         participation.results = [{ rated: true, completionDate: dayjs() } as Result];
         component.ngOnInit();
-        expect(component.isNextDueDate).toStrictEqual([false, false, true, false]);
-        expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-success']);
+        expect(component.nextDueDateIndex).toBe(3);
+        expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-danger', 'bg-success']);
 
         participation.submissionCount = 1;
         participation.results = [{ rated: false } as Result];
         exercise.assessmentType = AssessmentType.MANUAL;
         exercise.dueDate = dayjs().subtract(3, 'months');
         component.ngOnInit();
-        expect(component.isNextDueDate).toStrictEqual([false, false, false, true]);
-        expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-danger']);
+        expect(component.nextDueDateIndex).toBe(4);
+        expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-danger', 'bg-danger']);
 
         exercise.assessmentDueDate = dayjs().subtract(2, 'months');
         participation.results = [{ rated: true, completionDate: dayjs().subtract(1, 'month') } as Result];
         component.ngOnInit();
-        expect(component.isNextDueDate).toStrictEqual([false, false, false, false]);
-        expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-danger']);
+        expect(component.nextDueDateIndex).toBeUndefined();
+        expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger', 'bg-danger', 'bg-danger']);
     });
 
     it('should set the icon according to the exam end date', () => {
         exam.endDate = dayjs().subtract(1, 'day');
         component.exam = exam;
         component.ngOnInit();
-        expect(component.isNextDueDate).toStrictEqual([false, false]);
+        expect(component.nextDueDateIndex).toBeUndefined();
         expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-danger']);
 
         exam.publishResultsDate = dayjs().add(12, 'hours');
         component.exam = exam;
         component.ngOnInit();
-        expect(component.isNextDueDate).toStrictEqual([false, true]);
+        expect(component.nextDueDateIndex).toBe(1);
         expect(component.statusBadges).toStrictEqual(['bg-danger', 'bg-success']);
 
         exam.publishResultsDate = dayjs().subtract(12, 'hours');
         exam.endDate = dayjs().add(1, 'day');
         component.exam = exam;
         component.ngOnInit();
-        expect(component.isNextDueDate).toStrictEqual([true, false]);
+        expect(component.nextDueDateIndex).toBe(0);
         expect(component.statusBadges).toStrictEqual(['bg-success', 'bg-success']);
     });
 

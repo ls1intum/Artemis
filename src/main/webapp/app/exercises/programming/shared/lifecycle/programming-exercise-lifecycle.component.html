@@ -10,6 +10,15 @@
                 label="artemisApp.exercise.releaseDate"
                 tooltipText="artemisApp.programmingExercise.timeline.releaseDateTooltip"
             ></jhi-programming-exercise-test-schedule-date-picker>
+            <jhi-programming-exercise-test-schedule-date-picker
+                *ngIf="exercise.releaseDate"
+                [(ngModel)]="exercise.startDate"
+                (ngModelChange)="updateStartDate($event)"
+                [readOnly]="readOnly"
+                class="test-schedule-date px-1"
+                label="artemisApp.exercise.startDate"
+                tooltipText="artemisApp.programmingExercise.timeline.startDateTooltip"
+            ></jhi-programming-exercise-test-schedule-date-picker>
             <div class="test-schedule-date px-1">
                 <div class="mb-2 text-nowrap">
                     <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>

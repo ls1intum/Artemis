@@ -75,6 +75,7 @@ export abstract class Exercise implements BaseEntity {
     public title?: string;
     public shortName?: string;
     public releaseDate?: dayjs.Dayjs;
+    public startDate?: dayjs.Dayjs;
     public dueDate?: dayjs.Dayjs;
     public assessmentDueDate?: dayjs.Dayjs;
     public maxPoints?: number;
@@ -256,6 +257,7 @@ export function getExerciseUrlSegment(exerciseType?: ExerciseType): string {
 
 export function resetDates(exercise: Exercise) {
     exercise.releaseDate = undefined;
+    exercise.startDate = undefined;
     exercise.dueDate = undefined;
     exercise.assessmentDueDate = undefined;
     exercise.exampleSolutionPublicationDate = undefined;

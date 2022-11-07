@@ -62,14 +62,14 @@
     <div class="right-col">
         <ng-template [ngIf]="exam" [ngIfElse]="courseMode">
             <ng-container *ngIf="!isTestRun">
-                <div [class.fw-500]="isNextDueDate[0]">
+                <div [class.fw-500]="nextDueDateIndex === 0">
                     {{ 'artemisApp.exam.endDate' | artemisTranslate }}
                     {{ exam?.endDate | artemisDate }}
                     <span *ngIf="exam?.endDate && !isTestRun" [ngClass]="statusBadges[0]" class="badge">
                         {{ exam?.endDate | artemisTimeAgo }}
                     </span>
                 </div>
-                <div [class.fw-500]="isNextDueDate[1]">
+                <div [class.fw-500]="nextDueDateIndex === 1">
                     {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}
                     {{ exam?.publishResultsDate | artemisDate }}
                     <span *ngIf="exam?.publishResultsDate" [ngClass]="statusBadges[1]" class="badge">
@@ -79,37 +79,49 @@
             </ng-container>
         </ng-template>
         <ng-template #courseMode>
-            <div *ngIf="dueDate" [class.fw-500]="isNextDueDate[0]">
-                {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
+            <div *ngIf="isBeforeStartDate" [class.fw-500]="nextDueDateIndex === 0">
+                {{ 'artemisApp.courseOverview.exerciseDetails.startDate' | artemisTranslate }}
                 <span
                     [ngClass]="statusBadges[0]"
+                    class="badge"
+                    [ngbTooltip]="
+                        'artemisApp.courseOverview.exerciseDetails.startDateTooltip' | artemisTranslate: { date: exercise.startDate ?? exercise.releaseDate | artemisDate }
+                    "
+                >
+                    {{ exercise.startDate ?? exercise.releaseDate | artemisTimeAgo }}
+                </span>
+            </div>
+            <div *ngIf="dueDate" [class.fw-500]="nextDueDateIndex === 1">
+                {{ 'artemisApp.courseOverview.exerciseDetails.submissionDue' | artemisTranslate }}
+                <span
+                    [ngClass]="statusBadges[1]"
                     class="badge"
                     [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate | artemisDate }"
                 >
                     {{ dueDate | artemisTimeAgo }}
                 </span>
             </div>
-            <div *ngIf="exercise.assessmentDueDate" [class.fw-500]="isNextDueDate[1]">
+            <div *ngIf="exercise.assessmentDueDate" [class.fw-500]="nextDueDateIndex === 2">
                 {{ 'artemisApp.courseOverview.exerciseDetails.assessmentDue' | artemisTranslate }}
                 <span
-                    [ngClass]="statusBadges[1]"
+                    [ngClass]="statusBadges[2]"
                     class="badge"
                     [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.assessmentDueTooltip' | artemisTranslate: { date: exercise.assessmentDueDate | artemisDate }"
                 >
                     {{ exercise.assessmentDueDate | artemisTimeAgo }}
                 </span>
             </div>
-            <div *ngIf="individualComplaintDeadline" [class.fw-500]="isNextDueDate[2]">
+            <div *ngIf="individualComplaintDeadline" [class.fw-500]="nextDueDateIndex === 3">
                 {{ 'artemisApp.courseOverview.exerciseDetails.complaintDue' | artemisTranslate }}
                 <span
-                    [ngClass]="statusBadges[2]"
+                    [ngClass]="statusBadges[3]"
                     class="badge"
                     [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintDueTooltip' | artemisTranslate: { date: individualComplaintDeadline | artemisDate }"
                 >
                     {{ individualComplaintDeadline | artemisTimeAgo }}
                 </span>
             </div>
-            <div *ngIf="canComplainLaterOn" [class.fw-500]="isNextDueDate[3]">
+            <div *ngIf="canComplainLaterOn" [class.fw-500]="nextDueDateIndex === 4">
                 {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
                 <span
                     class="badge bg-success"
