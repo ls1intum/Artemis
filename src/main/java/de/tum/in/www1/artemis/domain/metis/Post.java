@@ -78,11 +78,11 @@ public class Post extends Posting {
     @Column(name = "resolved")
     private boolean resolved;
 
-    @Column(name = "answer_count", columnDefinition = "int default 0")
-    private Integer answerCount;
+    @Column(name = "answer_count")
+    private int answerCount;
 
-    @Column(name = "vote_count", columnDefinition = "int default 0")
-    private Integer voteCount;
+    @Column(name = "vote_count")
+    private int voteCount;
 
     public String getTitle() {
         return title;
@@ -212,19 +212,19 @@ public class Post extends Posting {
         this.resolved = resolved;
     }
 
-    public Integer getAnswerCount() {
+    public int getAnswerCount() {
         return answerCount;
     }
 
-    public void setAnswerCount(Integer answerCount) {
+    public void setAnswerCount(int answerCount) {
         this.answerCount = answerCount;
     }
 
-    public Integer getVoteCount() {
+    public int getVoteCount() {
         return voteCount;
     }
 
-    public void setVoteCount(Integer voteCount) {
+    public void setVoteCount(int voteCount) {
         this.voteCount = voteCount;
     }
 

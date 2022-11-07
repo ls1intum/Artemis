@@ -22,21 +22,21 @@
                     AS derived_table WHERE post_id = post.id);
         </sql>
         <sql>
-            UPDATE post set answer_count = (
+            UPDATE post set answer_count = IFNULL((
                 SELECT number_of_answers FROM (
                     SELECT answer_post.post_id, count(answer_post.id) AS number_of_answers FROM post
                     LEFT OUTER JOIN answer_post ON post.id=answer_post.post_id
                     GROUP BY post.id)
-                AS derived_table WHERE post_id = post.id);
+                AS derived_table WHERE post_id = post.id), 0);
         </sql>
         <sql>
-            UPDATE post set vote_count = (
+            UPDATE post set vote_count = IFNULL((
                 SELECT number_of_votes FROM (
                     SELECT post_id, count(reaction.id) AS number_of_votes FROM post
                     LEFT OUTER JOIN reaction ON post.id=reaction.post_id
                     WHERE reaction.emoji_id = 'heavy_plus_sign'
                     GROUP BY post.id)
-                AS derived_table WHERE post_id = post.id);
+                AS derived_table WHERE post_id = post.id), 0);
         </sql>
     </changeSet>
 </databaseChangeLog>
