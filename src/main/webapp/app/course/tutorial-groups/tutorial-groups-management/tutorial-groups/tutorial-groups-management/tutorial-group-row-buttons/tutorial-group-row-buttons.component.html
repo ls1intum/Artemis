@@ -1,14 +1,15 @@
 <div class="btn-group flex-btn-group-container" *ngIf="course && tutorialGroup">
     <!-- Sessions -->
-    <a
+    <button
+        type="button"
         *ngIf="isAtLeastInstructor || tutorialGroup.isUserTutor"
         [id]="'sessions-' + tutorialGroup.id"
-        [routerLink]="['/course-management', course.id!, 'tutorial-groups', tutorialGroup.id, 'sessions']"
+        (click)="openSessionDialog($event)"
         class="btn btn-primary btn-sm me-1"
     >
         <fa-icon [icon]="faCalendar"></fa-icon>
         <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.rowButtons.sessions' | artemisTranslate }}</span>
-    </a>
+    </button>
     <!-- Registered Students -->
     <button
         *ngIf="isAtLeastInstructor || tutorialGroup.isUserTutor"

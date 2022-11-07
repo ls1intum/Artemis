@@ -2,7 +2,6 @@
  * parent 'course-management/:courseId/tutorial-groups'
  */
 import { Authority } from 'app/shared/constants/authority.constants';
-import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
 import { TutorialGroupManagementDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/detail/tutorial-group-management-detail.component';
@@ -64,15 +63,6 @@ export const tutorialGroupManagementRoutes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.pages.editTutorialGroup.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':tutorialGroupId/sessions',
-        component: TutorialGroupSessionsManagementComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.pages.tutorialGroupSessionManagement.title',
         },
         canActivate: [UserRouteAccessService],
     },

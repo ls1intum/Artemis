@@ -1,17 +1,10 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="row tutorial-group-session-management" *ngIf="tutorialGroup">
-        <div class="col-12">
-            <div class="d-flex justify-content-between">
-                <h4>{{ 'artemisApp.pages.tutorialGroupSessionManagement.title' | artemisTranslate }} - {{ tutorialGroup.title }}</h4>
-                <div>
-                    <button type="button" id="create-session-button" class="btn btn-primary" (click)="openCreateSessionDialog($event)">
-                        <fa-icon [icon]="faPlus"></fa-icon>
-                        <span>{{ 'artemisApp.pages.tutorialGroupSessionManagement.createSessionButton' | artemisTranslate }}</span>
-                    </button>
-                </div>
-            </div>
+    <div class="row tutorial-group-session-management" *ngIf="isInitialized">
+        <div class="col-12 modal-header">
+            <h4>{{ 'artemisApp.pages.tutorialGroupSessionManagement.title' | artemisTranslate }} - {{ tutorialGroup.title }}</h4>
+            <button type="button" class="btn-close" (click)="clear()"></button>
         </div>
-        <div class="col-12" *ngIf="tutorialGroup.tutorialGroupSchedule">
+        <div class="col-12" *ngIf="tutorialGroup.tutorialGroupSchedule" class="modal-body">
             <!-- Schedule -->
             <dt>
                 <span>{{ 'artemisApp.entities.tutorialGroup.schedule' | artemisTranslate }}</span>
@@ -45,7 +38,13 @@
                 >
             </dd>
         </div>
-        <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
+        <div class="my-2">
+            <button type="button" id="create-session-button" class="btn btn-primary" (click)="openCreateSessionDialog($event)">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span>{{ 'artemisApp.pages.tutorialGroupSessionManagement.createSessionButton' | artemisTranslate }}</span>
+            </button>
+        </div>
+        <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3 modal-body">
             <jhi-tutorial-group-sessions-table [sessions]="sessions" [timeZone]="course.timeZone" [showIdColumn]="true" [tutorialGroup]="tutorialGroup">
                 <ng-template let-session>
                     <jhi-tutorial-group-session-row-buttons

@@ -7,6 +7,7 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutor
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
+import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 
 @Component({
     selector: 'jhi-tutorial-group-row-buttons',
@@ -29,6 +30,14 @@ export class TutorialGroupRowButtonsComponent {
     faCalendar = faCalendarAlt;
 
     public constructor(private tutorialGroupsService: TutorialGroupsService, private modalService: NgbModal) {}
+
+    openSessionDialog(event: MouseEvent) {
+        event.stopPropagation();
+        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupSessionsManagementComponent, { size: 'xl', scrollable: false, backdrop: 'static' });
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.tutorialGroupId = this.tutorialGroup.id!;
+        modalRef.componentInstance.initialize();
+    }
 
     openRegistrationDialog(event: MouseEvent) {
         event.stopPropagation();

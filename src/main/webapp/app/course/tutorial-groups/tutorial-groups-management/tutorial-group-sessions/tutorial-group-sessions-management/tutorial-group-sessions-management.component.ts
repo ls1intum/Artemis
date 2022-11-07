@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, Input } from '@angular/core';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { combineLatest, from } from 'rxjs';
-import { finalize, map, switchMap, take } from 'rxjs/operators';
+import { from } from 'rxjs';
+import { finalize, map } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -12,7 +11,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 
 @Component({
@@ -20,41 +19,39 @@ import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/
     templateUrl: './tutorial-group-sessions-management.component.html',
     styleUrls: ['./tutorial-group-sessions-management.component.scss'],
 })
-export class TutorialGroupSessionsManagementComponent implements OnInit {
+export class TutorialGroupSessionsManagementComponent {
     isLoading = false;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-    ) {}
 
     faPlus = faPlus;
 
+    @Input()
     tutorialGroupId: number;
+    @Input()
     course: Course;
     tutorialGroup: TutorialGroup;
     sessions: TutorialGroupSession[] = [];
     tutorialGroupSchedule: TutorialGroupSchedule;
 
-    getDayTranslationKey = getDayTranslationKey;
+    isInitialized = false;
 
-    ngOnInit(): void {
-        this.loadAll();
+    constructor(private tutorialGroupService: TutorialGroupsService, private alertService: AlertService, private modalService: NgbModal, private activeModal: NgbActiveModal) {}
+
+    initialize() {
+        if (!this.tutorialGroupId || !this.course) {
+            console.error('Error: Component not fully configured');
+        } else {
+            this.isInitialized = true;
+            this.loadAll();
+        }
     }
 
+    getDayTranslationKey = getDayTranslationKey;
     loadAll() {
         this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
+        return this.tutorialGroupService
+            .getOneOfCourse(this.course.id!, this.tutorialGroupId)
             .pipe(
-                take(1),
-                switchMap(([params, { course }]) => {
-                    const tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.course = course;
-                    return this.tutorialGroupService.getOneOfCourse(this.course.id!, tutorialGroupId).pipe(finalize(() => (this.isLoading = false)));
-                }),
+                finalize(() => (this.isLoading = false)),
                 map((res: HttpResponse<TutorialGroup>) => {
                     return res.body;
                 }),
@@ -70,12 +67,8 @@ export class TutorialGroupSessionsManagementComponent implements OnInit {
                             this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;
                         }
                     }
-                    this.isLoading = false;
                 },
-                error: (res: HttpErrorResponse) => {
-                    this.isLoading = false;
-                    onError(this.alertService, res);
-                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
 
@@ -88,5 +81,9 @@ export class TutorialGroupSessionsManagementComponent implements OnInit {
         from(modalRef.result).subscribe(() => {
             this.loadAll();
         });
+    }
+
+    clear() {
+        this.activeModal.dismiss();
     }
 }
