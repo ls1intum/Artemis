@@ -304,9 +304,9 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         database.assertSensitiveInformationHidden(returnedPosts);
 
         int numberOfMaxAnswersSeenOnAnyPost = Integer.MAX_VALUE;
-        for (int i = 0; i < returnedPosts.size(); i++) {
-            assertThat(returnedPosts.get(i).getAnswers().size()).isLessThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
-            numberOfMaxAnswersSeenOnAnyPost = returnedPosts.get(i).getAnswers().size();
+        for (Post post : returnedPosts) {
+            assertThat(post.getAnswers().size()).isLessThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
+            numberOfMaxAnswersSeenOnAnyPost = post.getAnswers().size();
         }
     }
 

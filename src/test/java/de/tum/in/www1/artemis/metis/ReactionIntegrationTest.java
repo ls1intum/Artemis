@@ -277,8 +277,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
 
         Long numberOfMaxVotesSeenOnAnyPost = Long.MAX_VALUE;
-        for (int i = 0; i < returnedPosts.size(); i++) {
-            Long numberOfVotes = returnedPosts.get(i).getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
+        for (Post post : returnedPosts) {
+            Long numberOfVotes = post.getReactions().stream().filter(reaction -> reaction.getEmojiId().equals(VOTE_EMOJI_ID)).count();
             assertThat(numberOfVotes).isLessThanOrEqualTo(numberOfMaxVotesSeenOnAnyPost);
             numberOfMaxVotesSeenOnAnyPost = numberOfVotes;
         }
