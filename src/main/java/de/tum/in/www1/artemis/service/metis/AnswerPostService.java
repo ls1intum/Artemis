@@ -68,6 +68,9 @@ public class AnswerPostService extends PostingService {
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
 
+        // increase answerCount of post needed for sorting
+        post.setAnswerCount(post.getAnswerCount() + 1);
+
         // use post from database rather than user input
         answerPost.setPost(post);
         // set author to current user
@@ -76,9 +79,6 @@ public class AnswerPostService extends PostingService {
         // on creation of an answer post, we set the resolves_post field to false per default
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
-
-        // increase answerCount of post needed for sorting
-        post.setAnswerCount(post.getAnswerCount() != null ? post.getAnswerCount() + 1 : 1);
         postRepository.save(post);
 
         this.preparePostAndBroadcast(savedAnswerPost, course);
@@ -114,7 +114,8 @@ public class AnswerPostService extends PostingService {
             // check if requesting user is allowed to mark this answer post as resolving, i.e. if user is author or original post or at least tutor
             mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());
-            existingAnswerPost.getPost().setResolved(answerPost.doesResolvePost());
+            // sets the post as resolved if there exists any resolving answer
+            existingAnswerPost.getPost().setResolved(existingAnswerPost.getPost().getAnswers().stream().anyMatch(answerPost1 -> answerPost1.doesResolvePost()));
             postRepository.save(existingAnswerPost.getPost());
         }
         else {

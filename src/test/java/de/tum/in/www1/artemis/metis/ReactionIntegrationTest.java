@@ -93,6 +93,20 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testCreateVoteReaction() throws Exception {
+        // student 1 is the author of the post and reacts on this post
+        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Reaction reactionToSaveOnPost = createVoteReactionOnPost(postReactedOn);
+
+        Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
+        checkCreatedReaction(reactionToSaveOnPost, createdReaction);
+        assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
+        // should increase post's vote count
+        assertThat(database.postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
+    }
+
+    @Test
     @WithMockUser(username = "tutor2", roles = "USER")
     void testCreateOwnPostReactionOnAnotherUsersConversationMessage() throws Exception {
         // tutor1 is the author of the message and tutor2 reacts on this post
@@ -329,6 +343,26 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    void testDeleteOwnVoteReaction() throws Exception {
+        // student 1 is the author of the post and reacts on this post
+        Post postReactedOn = existingPostsWithAnswers.get(0);
+        Reaction reactionToSaveOnPost = createVoteReactionOnPost(postReactedOn);
+
+        Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
+        // should increase post's vote count
+        assertThat(database.postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
+
+        // student 1 deletes their reaction on this post
+        request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
+
+        assertThat(postReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(postReactedOn.getId()));
+        assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
+        // should decrease post's vote count
+        assertThat(database.postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void testDeleteOwnAnswerPostReaction() throws Exception {
         // student 1 is the author of the post and reacts on this post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
@@ -389,12 +423,10 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         return reaction;
     }
 
-    private Reaction createVoteReactionOnPost(Post postReactedOn, User user) {
+    private Reaction createVoteReactionOnPost(Post postReactedOn) {
         Reaction reaction = new Reaction();
-        reaction.setUser(user);
         reaction.setEmojiId(VOTE_EMOJI_ID);
         reaction.setPost(postReactedOn);
-        reactionRepository.save(reaction);
         return reaction;
     }
 
