@@ -30,6 +30,7 @@ describe(`ErrorHandlerInterceptor`, () => {
         const mockHandler = {
             handle: () => throwError(() => error),
         };
+        jest.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
 
         errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 

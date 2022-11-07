@@ -89,7 +89,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             builder.file(filePart);
         }
 
-        return builder.file(attachmentUnitPart).file(attachmentPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        return builder.file(attachmentUnitPart).file(attachmentPart).with(csrf()).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
     }
 
     private MockHttpServletRequestBuilder buildCreateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment, @NotNull String fileContent)
