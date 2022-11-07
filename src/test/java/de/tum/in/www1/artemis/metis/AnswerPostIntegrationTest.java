@@ -287,9 +287,6 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetPostsForCourse_OrderByAnswerCountDESC() throws Exception {
-        PostSortCriterion sortCriterion = PostSortCriterion.ANSWER_COUNT;
-        SortingOrder sortingOrder = SortingOrder.DESCENDING;
-
         var params = new LinkedMultiValueMap<String, String>();
 
         // ordering only available in course discussions page, where paging is enabled
@@ -297,8 +294,8 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         params.add("page", "0");
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
 
-        params.add("postSortCriterion", sortCriterion.toString());
-        params.add("sortingOrder", sortingOrder.toString());
+        params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
+        params.add("sortingOrder", SortingOrder.DESCENDING.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
@@ -313,9 +310,6 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetPostsForCourse_OrderByAnswerCountASC() throws Exception {
-        PostSortCriterion sortCriterion = PostSortCriterion.ANSWER_COUNT;
-        SortingOrder sortingOrder = SortingOrder.ASCENDING;
-
         var params = new LinkedMultiValueMap<String, String>();
 
         // ordering only available in course discussions page, where paging is enabled
@@ -323,8 +317,8 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         params.add("page", "0");
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
 
-        params.add("postSortCriterion", sortCriterion.toString());
-        params.add("sortingOrder", sortingOrder.toString());
+        params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
+        params.add("sortingOrder", SortingOrder.ASCENDING.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
