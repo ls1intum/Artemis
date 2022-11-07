@@ -197,7 +197,8 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
 };
 
 export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean => {
-    const beforeStartDateStudent = !exercise.isAtLeastTutor && exercise.startDate && dayjs(exercise.startDate).isBefore(dayjs());
+    console.log(exercise.isAtLeastTutor);
+    const beforeStartDateStudent = exercise.isAtLeastTutor === false && exercise.startDate && dayjs().isBefore(exercise.startDate);
     return !beforeStartDateStudent && (!exercise.dueDate || dayjs().isBefore(exercise.dueDate));
 };
 
