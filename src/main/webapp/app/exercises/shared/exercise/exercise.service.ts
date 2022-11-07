@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exercise, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
@@ -15,6 +15,10 @@ import { User } from 'app/core/user/user.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -39,6 +43,7 @@ export class ExerciseService {
         private accountService: AccountService,
         private translateService: TranslateService,
         private entityTitleService: EntityTitleService,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -426,6 +431,7 @@ export class ExerciseService {
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.setAccessRightsExerciseEntityResponseType(exerciseRes);
         this.sendExerciseTitleToTitleService(exerciseRes?.body);
+        this.setBuildPlanUrlToParticipations(exerciseRes?.body);
         return exerciseRes;
     }
 
@@ -437,7 +443,10 @@ export class ExerciseService {
         ExerciseService.convertExerciseArrayDatesFromServer(exerciseResArray);
         ExerciseService.convertExerciseCategoryArrayFromServer(exerciseResArray);
         this.setAccessRightsExerciseEntityArrayResponseType(exerciseResArray);
-        exerciseResArray?.body?.forEach(this.sendExerciseTitleToTitleService.bind(this));
+        exerciseResArray?.body?.forEach((exercise) => {
+            this.sendExerciseTitleToTitleService(exercise);
+            this.setBuildPlanUrlToParticipations(exercise);
+        });
         return exerciseResArray;
     }
 
@@ -461,6 +470,15 @@ export class ExerciseService {
         this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise?.id], exercise?.title);
         if (exercise?.course) {
             this.entityTitleService.setTitle(EntityType.COURSE, [exercise.course.id], exercise.course.title);
+        }
+    }
+
+    private setBuildPlanUrlToParticipations(exercise: Exercise | undefined | null) {
+        if (exercise?.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).publishBuildPlanUrl) {
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                const programmingParticipations = exercise?.studentParticipations as ProgrammingExerciseStudentParticipation[];
+                setBuildPlanUrlForProgrammingParticipations(profileInfo, programmingParticipations, (exercise as ProgrammingExercise).projectKey);
+            });
         }
     }
 
