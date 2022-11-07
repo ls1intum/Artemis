@@ -79,7 +79,7 @@
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.complaintResponse.reviewer.name" *ngIf="course?.isAtLeastInstructor">
+                    <th jhiSortBy="complaintResponse.reviewer.name" *ngIf="course?.isAtLeastInstructor">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
