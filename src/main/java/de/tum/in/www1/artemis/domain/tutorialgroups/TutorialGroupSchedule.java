@@ -85,9 +85,6 @@ public class TutorialGroupSchedule extends DomainObject {
         this.tutorialGroupSessions = tutorialGroupSessions;
     }
 
-    public TutorialGroupSchedule() {
-    }
-
     public TutorialGroup getTutorialGroup() {
         return tutorialGroup;
     }

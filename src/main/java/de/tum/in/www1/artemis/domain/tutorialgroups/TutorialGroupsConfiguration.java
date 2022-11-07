@@ -99,9 +99,6 @@ public class TutorialGroupsConfiguration extends DomainObject {
         }
     }
 
-    public TutorialGroupsConfiguration() {
-    }
-
     public Set<TutorialGroupFreePeriod> getTutorialGroupFreePeriods() {
         return tutorialGroupFreePeriods;
     }

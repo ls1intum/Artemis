@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupFreePeriodResource;
 
-public class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegrationTest {
+class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
     @Override
     void testJustForInstructorEndpoints() throws Exception {
@@ -58,7 +58,7 @@ public class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGrou
     void create_overlapsWithExistingScheduledSession_shouldCancelSession() throws Exception {
         // given
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule();
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroup_Id(tutorialGroup.getId()).get();
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).get();
 
         var dto = createTutorialGroupFreePeriodDTO(firstAugustMonday, "Holiday");
         // when

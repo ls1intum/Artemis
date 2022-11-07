@@ -51,7 +51,7 @@ public class TutorialGroupsConfigurationService {
         tutorialGroupFreePeriodRepository.deleteAll(tutorialGroupFreePeriods);
 
         // recreate schedules sessions with new time zone
-        var schedules = tutorialGroupScheduleRepository.getAllByTutorialGroup_Course(course);
+        var schedules = tutorialGroupScheduleRepository.getAllByTutorialGroupCourse(course);
         var newSessions = new ArrayList<TutorialGroupSession>();
         for (TutorialGroupSchedule schedule : schedules) {
             var tutorialGroupConfiguration = new TutorialGroupsConfiguration();

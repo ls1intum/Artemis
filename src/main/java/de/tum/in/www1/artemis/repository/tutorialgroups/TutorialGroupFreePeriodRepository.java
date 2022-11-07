@@ -5,11 +5,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
@@ -21,19 +19,15 @@ public interface TutorialGroupFreePeriodRepository extends JpaRepository<Tutoria
     @Query("""
             SELECT tutorialGroupFreePeriod
             FROM TutorialGroupFreePeriod tutorialGroupFreePeriod
-            WHERE tutorialGroupFreePeriod.start <= :#{#to_inclusive} AND tutorialGroupFreePeriod.end >= :#{#from_inclusive}
+            WHERE tutorialGroupFreePeriod.start <= :#{#toInclusive} AND tutorialGroupFreePeriod.end >= :#{#fromInclusive}
             AND tutorialGroupFreePeriod.tutorialGroupsConfiguration.course = :#{#course}""")
-    Optional<TutorialGroupFreePeriod> findOverlappingInSameCourse(@Param("course") Course course, @Param("from_inclusive") ZonedDateTime from_inclusive,
-            @Param("to_inclusive") ZonedDateTime to_inclusive);
+    Optional<TutorialGroupFreePeriod> findOverlappingInSameCourse(@Param("course") Course course, @Param("fromInclusive") ZonedDateTime fromInclusive,
+            @Param("toInclusive") ZonedDateTime toInclusive);
 
     default TutorialGroupFreePeriod findByIdElseThrow(Long tutorialGroupFreePeriodId) {
         return findById(tutorialGroupFreePeriodId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupFreePeriod", tutorialGroupFreePeriodId));
     }
 
     Set<TutorialGroupFreePeriod> findAllByTutorialGroupsConfigurationCourseId(Long courseId);
-
-    @Modifying
-    @Transactional
-    void deleteByTutorialGroupsConfigurationCourse(Course course);
 
 }

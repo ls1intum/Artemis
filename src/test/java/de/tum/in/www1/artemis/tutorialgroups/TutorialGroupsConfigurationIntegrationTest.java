@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.*;
 
-public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIntegrationTest {
+class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
     @BeforeEach
     void deleteExistingConfiguration() {
@@ -65,7 +65,7 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void create_configurationAlreadyExists_shouldReturnBadRequest() throws Exception {
         // given
-        var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, firstAugustMonday, firstSeptemberMonday);
+        databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, firstAugustMonday, firstSeptemberMonday);
         // when
         request.postWithResponseBody(getTutorialGroupsConfigurationPath(), buildExampleConfiguration(), TutorialGroupsConfiguration.class, HttpStatus.BAD_REQUEST);
         // then
@@ -92,7 +92,7 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
         // given
         var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, firstAugustMonday, firstSeptemberMonday);
         var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule();
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroup_Id(tutorialGroupWithSchedule.getId()).get();
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroupWithSchedule.getId()).get();
         this.buildAndSaveExampleIndividualTutorialGroupSession(tutorialGroupWithSchedule.getId(), firstSeptemberMonday);
         databaseUtilService.addTutorialGroupFreeDay(configuration.getId(), fourthAugustMonday, "Holiday");
 

@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupSessionResource;
 
-public class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrationTest {
+class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
     void testJustForInstructorEndpoints() throws Exception {
         // none
@@ -90,7 +90,7 @@ public class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIn
         databaseUtilService.changeUser("instructor1");
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule();
         databaseUtilService.changeUser("tutor1");
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroup_Id(tutorialGroup.getId()).get();
+        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).get();
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         assertThat(sessions).hasSize(2);
         var firstAugustMondaySession = sessions.get(0);

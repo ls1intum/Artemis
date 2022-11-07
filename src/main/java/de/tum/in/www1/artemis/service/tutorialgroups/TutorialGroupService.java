@@ -9,7 +9,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.persistence.Persistence;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
@@ -72,7 +71,7 @@ public class TutorialGroupService {
      */
     public void setTransientPropertiesForUser(User user, TutorialGroup tutorialGroup) {
 
-        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "registrations") && tutorialGroup.getRegistrations() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, "registrations") && tutorialGroup.getRegistrations() != null) {
             tutorialGroup.setIsUserRegistered(tutorialGroup.getRegistrations().stream().anyMatch(registration -> registration.getStudent().equals(user)));
             tutorialGroup.setNumberOfRegisteredUsers(tutorialGroup.getRegistrations().size());
         }
@@ -81,14 +80,14 @@ public class TutorialGroupService {
             tutorialGroup.setNumberOfRegisteredUsers(null);
         }
 
-        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "course") && tutorialGroup.getCourse() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, "course") && tutorialGroup.getCourse() != null) {
             tutorialGroup.setCourseTitle(tutorialGroup.getCourse().getTitle());
         }
         else {
             tutorialGroup.setCourseTitle(null);
         }
 
-        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "teachingAssistant") && tutorialGroup.getTeachingAssistant() != null) {
+        if (getPersistenceUtil().isLoaded(tutorialGroup, "teachingAssistant") && tutorialGroup.getTeachingAssistant() != null) {
             tutorialGroup.setTeachingAssistantName(tutorialGroup.getTeachingAssistant().getName());
             tutorialGroup.setIsUserTutor(tutorialGroup.getTeachingAssistant().equals(user));
         }
@@ -467,27 +466,30 @@ public class TutorialGroupService {
      * @return true if the user is allowed, false otherwise
      */
     public boolean isAllowedToSeePrivateTutorialGroupInformation(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
-        var persistenceUtil = Persistence.getPersistenceUtil();
-        if (user == null || !persistenceUtil.isLoaded(user, "authorities") || !persistenceUtil.isLoaded(user, "groups") || user.getGroups() == null
-                || user.getAuthorities() == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
+        var userToCheck = user;
+        var persistenceUtil = getPersistenceUtil();
+        if (userToCheck == null || !persistenceUtil.isLoaded(userToCheck, "authorities") || !persistenceUtil.isLoaded(userToCheck, "groups") || userToCheck.getGroups() == null
+                || userToCheck.getAuthorities() == null) {
+            userToCheck = userRepository.getUserWithGroupsAndAuthorities();
         }
-        if (authorizationCheckService.isAdmin(user)) {
+        if (authorizationCheckService.isAdmin(userToCheck)) {
             return true;
         }
 
-        var courseInitialized = persistenceUtil.isLoaded(tutorialGroup, "course");
-        var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroup, "teachingAssistant");
+        var tutorialGroupToCheck = tutorialGroup;
 
-        if (!courseInitialized || !teachingAssistantInitialized || tutorialGroup.getCourse() == null || tutorialGroup.getTeachingAssistant() == null) {
-            tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndCourseElseThrow(tutorialGroup.getId());
+        var courseInitialized = persistenceUtil.isLoaded(tutorialGroupToCheck, "course");
+        var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroupToCheck, "teachingAssistant");
+
+        if (!courseInitialized || !teachingAssistantInitialized || tutorialGroupToCheck.getCourse() == null || tutorialGroupToCheck.getTeachingAssistant() == null) {
+            tutorialGroupToCheck = tutorialGroupRepository.findByIdWithTeachingAssistantAndCourseElseThrow(tutorialGroupToCheck.getId());
         }
 
-        Course course = tutorialGroup.getCourse();
-        if (authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
+        Course course = tutorialGroupToCheck.getCourse();
+        if (authorizationCheckService.isAtLeastInstructorInCourse(course, userToCheck)) {
             return true;
         }
-        return (tutorialGroup.getTeachingAssistant() != null && tutorialGroup.getTeachingAssistant().equals(user));
+        return (tutorialGroupToCheck.getTeachingAssistant() != null && tutorialGroupToCheck.getTeachingAssistant().equals(userToCheck));
     }
 
     /**
@@ -513,50 +515,6 @@ public class TutorialGroupService {
         // ToDo: Clarify if this is the correct permission check
         if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
             throw new AccessForbiddenException("The user is not allowed to modify the sessions of tutorial group: " + tutorialGroup.getId());
-        }
-    }
-
-    /**
-     * Determines if a user is allowed to see private information about a tutorial group such as the list of registered students
-     *
-     * @param tutorialGroup the tutorial group for which to check permission
-     * @param user          the user for which to check permission
-     * @return true if the user is allowed, false otherwise
-     */
-    public boolean isAllowedToSeePrivateTutorialGroupInformation(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
-        var persistenceUtil = Persistence.getPersistenceUtil();
-        if (user == null || !persistenceUtil.isLoaded(user, "authorities") || !persistenceUtil.isLoaded(user, "groups") || user.getGroups() == null
-                || user.getAuthorities() == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
-        if (authorizationCheckService.isAdmin(user)) {
-            return true;
-        }
-
-        var courseInitialized = persistenceUtil.isLoaded(tutorialGroup, "course");
-        var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroup, "teachingAssistant");
-
-        if (!courseInitialized || !teachingAssistantInitialized || tutorialGroup.getCourse() == null || tutorialGroup.getTeachingAssistant() == null) {
-            tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndCourseElseThrow(tutorialGroup.getId());
-        }
-
-        Course course = tutorialGroup.getCourse();
-        if (authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
-            return true;
-        }
-        return (tutorialGroup.getTeachingAssistant() != null && tutorialGroup.getTeachingAssistant().equals(user));
-    }
-
-    /**
-     * Checks if a user is allowed to change the registrations of a tutorial group
-     *
-     * @param tutorialGroup the tutorial group for which to check permission
-     * @param user          the user for which to check permission
-     */
-    public void isAllowedToChangeRegistrationsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
-        // ToDo: Clarify if this is the correct permission check
-        if (!isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
-            throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
         }
     }
 
