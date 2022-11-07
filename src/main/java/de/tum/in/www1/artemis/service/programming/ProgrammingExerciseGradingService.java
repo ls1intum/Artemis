@@ -669,7 +669,7 @@ public class ProgrammingExerciseGradingService {
                 && testCases.stream().noneMatch(test -> test.getTestName().equalsIgnoreCase(feedback.getText())));
 
         // If there are no feedbacks left after filtering those not valid, also setHasFeedback to false.
-        if (result.getFeedbacks().stream().noneMatch(feedback -> Boolean.TRUE.equals(feedback.hasDetails())
+        if (result.getFeedbacks().stream().noneMatch(feedback -> feedback.hasDetails()
                 || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED)))) {
             result.setHasFeedback(false);
         }
