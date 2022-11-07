@@ -86,7 +86,7 @@ export class ExerciseService {
     hasDueDateError(exercise: Exercise) {
         const releaseDateError = exercise.releaseDate && exercise.dueDate && dayjs(exercise.dueDate).isBefore(exercise.releaseDate);
         const startDateError = exercise.startDate && exercise.dueDate && dayjs(exercise.dueDate).isBefore(exercise.startDate);
-        return releaseDateError || startDateError;
+        return !!releaseDateError || !!startDateError;
     }
 
     private hasAssessmentDueDateError(exercise: Exercise) {
