@@ -210,6 +210,10 @@ public class InstanceMessageReceiveService {
         programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
     }
 
+    /**
+     * Unlocks all repositories that do not have an individual due date before now
+     * @param exerciseId the id of the programming exercises where the repos should be unlocked
+     */
     public void processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
         log.info("Received unlock all repositories without an individual due date before now for programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
@@ -220,6 +224,10 @@ public class InstanceMessageReceiveService {
         }).run();
     }
 
+    /**
+     * Locks all repositories that do not have an individual due date after now
+     * @param exerciseId the id of the programming exercises where the repos should be locked
+     */
     public void processLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
         log.info("Received lock all repositories without an individual due date after now for programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);

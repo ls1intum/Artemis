@@ -1104,6 +1104,12 @@ public class ProgrammingExerciseService {
         handleRepoAccessRightChangesChangesOfflineIDE(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
     }
 
+    /**
+     * Checks if the repos have to be locked/unlocked based on the new due date. Individual due dates are considered, so not all repositories might get locked/unlocked
+     * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
+     * @param updatedProgrammingExercise the updated exercise with new values
+     * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
+     */
     private boolean handleRepoAccessRightChangesDueDates(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
             ZonedDateTime now = ZonedDateTime.now();
@@ -1124,6 +1130,12 @@ public class ProgrammingExerciseService {
         return false;
     }
 
+    /**
+     * Checks if the repos have to be locked/unlocked based on the allowance of offline IDEs. The read access in the VCS is only necessary when working with an offline IDE
+     * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
+     * @param updatedProgrammingExercise the updated exercise with new values
+     * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
+     */
     private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
             // Not using Boolean.FALSE.equals(...) since it might be null
