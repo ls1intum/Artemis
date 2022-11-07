@@ -1,4 +1,4 @@
-import { TestBed, tick, fakeAsync } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
@@ -211,7 +211,7 @@ describe('TextAssessment Service', () => {
         service.addTextAssessmentEvent(assessmentEvent).subscribe((response) => {
             expect(response.status).toBe(200);
         });
-        const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}api/analytics/text-assessment/events`, method: 'POST' });
+        const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}api/event-insights/text-assessment/events`, method: 'POST' });
         mockRequest.flush(mockResponse);
         tick();
     }));
@@ -353,7 +353,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => expect(resp).toBe(responseNumberOfTutors));
 
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/analytics/text-assessment/courses/1/text-exercises/1/tutors-involved`,
+            url: `${SERVER_API_URL}api/event-insights/text-assessment/courses/1/text-exercises/1/tutors-involved`,
             method: 'GET',
         });
         req.flush(responseNumberOfTutors);

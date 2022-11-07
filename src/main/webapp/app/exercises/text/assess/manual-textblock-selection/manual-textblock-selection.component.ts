@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextBlock } from 'app/entities/text-block.model';

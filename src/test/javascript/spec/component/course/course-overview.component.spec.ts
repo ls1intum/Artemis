@@ -1,5 +1,5 @@
-import { of, Subject } from 'rxjs';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { Subject, of } from 'rxjs';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';

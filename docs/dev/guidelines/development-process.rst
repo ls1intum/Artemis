@@ -69,7 +69,7 @@ Reviewer
     * make sure you can easily understand the code.
     * make sure that (extensive) comments are present where deemed necessary.
     * performance is reasonable (e.g. number of database queries or HTTP calls).
-* Submit your comments and status ((thumbs up) Approve or (thumbs down) Request Changes) using GitHub.
+* Submit your comments and status (👍 Approve or 👎 Request Changes) using GitHub.
     * Explain what you did (test, review code) and on which test server in the review comment.
 
 4. Respond to review
@@ -89,7 +89,7 @@ Reviewer
 * Respond to questions raised by the reviewer.
 * Mark conversations as resolved if the change is sufficient.
 
-Iterate steps 3 & 4 until ready for merge (all reviewers approve (thumbs up))
+Iterate steps 3 & 4 until ready for merge (all reviewers approve 👍)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 5. Merge
@@ -102,11 +102,11 @@ Stale Bot
 =========
 
 If the pull request doesn't have any activity for at least 7 days, the stale bot will mark the PR as `stale`.
-The `stale` status can simply be removed by adding a comment or a commit to the PR. 
+The `stale` status can simply be removed by adding a comment or a commit to the PR.
 After the PR is marked as `stale`, the bot waits another 14 days until the PR will be closed (21 days in total).
-Adding activity to the PR will remove the `stale` label again and reset the stale timer. 
+Adding activity to the PR will remove the `stale` label again and reset the stale timer.
 To prevent the bot from adding the `stale` label to the PR in the first place, the `no-stale` label can be used.
-This label should only be utilized if the PR is blocked by another PR or the PR needs help from another developer. 
+This label should only be utilized if the PR is blocked by another PR or the PR needs help from another developer.
 
 A full documentation on this bit can be found here:
 https://github.com/actions/stale

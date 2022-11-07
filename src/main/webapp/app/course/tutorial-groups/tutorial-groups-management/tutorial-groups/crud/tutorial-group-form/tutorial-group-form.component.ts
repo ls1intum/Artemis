@@ -5,7 +5,7 @@ import { Course, CourseGroup, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { catchError, concat, finalize, forkJoin, map, merge, Observable, of, OperatorFunction, Subject } from 'rxjs';
+import { Observable, OperatorFunction, Subject, catchError, concat, finalize, forkJoin, map, merge, of } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
