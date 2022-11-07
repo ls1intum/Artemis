@@ -186,6 +186,7 @@ export class ParticipationService {
         if (participations?.length) {
             combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
+            combinedParticipation.buildPlanUrl = participations[0].buildPlanUrl;
             this.mergeResultsAndSubmissions(combinedParticipation, participations);
         }
         return combinedParticipation;
