@@ -2,8 +2,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { Router } from '@angular/router';
-import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -20,8 +18,9 @@ import {
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSessionFormStubComponent } from '../../../stubs/tutorial-group-session-form-stub.component';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
-import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { Course } from 'app/entities/course.model';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 describe('CreateTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupSessionComponent>;
@@ -29,28 +28,25 @@ describe('CreateTutorialGroupSessionComponent', () => {
     let tutorialGroupService: TutorialGroupsService;
     let tutorialGroupSessionService: TutorialGroupSessionService;
     const course = { id: 2, timeZone: 'Europe/Berlin' } as Course;
-    const tutorialGroupId = 1;
+    let tutorialGroup: TutorialGroup;
+    let activeModal: NgbActiveModal;
 
     let findTutorialGroupSpy: jest.SpyInstance;
-
-    const router = new MockRouter();
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [CreateTutorialGroupSessionComponent, LoadingIndicatorContainerStubComponent, TutorialGroupSessionFormStubComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                MockProvider(TutorialGroupsService),
-                MockProvider(TutorialGroupSessionService),
-                MockProvider(AlertService),
-                { provide: Router, useValue: router },
-                mockedActivatedRoute({ tutorialGroupId }, {}, { course }, {}),
-            ],
+            providers: [MockProvider(TutorialGroupsService), MockProvider(TutorialGroupSessionService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
         })
             .compileComponents()
             .then(() => {
+                tutorialGroup = generateExampleTutorialGroup({ id: 1 });
+                activeModal = TestBed.inject(NgbActiveModal);
                 fixture = TestBed.createComponent(CreateTutorialGroupSessionComponent);
                 component = fixture.componentInstance;
+                component.course = course;
+                component.tutorialGroup = tutorialGroup;
+
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupSessionService = TestBed.inject(TutorialGroupSessionService);
 
@@ -65,11 +61,9 @@ describe('CreateTutorialGroupSessionComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(findTutorialGroupSpy).toHaveBeenCalledOnce();
-        expect(findTutorialGroupSpy).toHaveBeenCalledWith(course.id!, tutorialGroupId);
     });
 
-    it('should send POST request upon form submission and navigate', () => {
+    it('should send POST request upon form submission and close modal', () => {
         fixture.detectChanges();
         const exampleSession = generateExampleTutorialGroupSession({});
         delete exampleSession.id;
@@ -80,7 +74,7 @@ describe('CreateTutorialGroupSessionComponent', () => {
         });
 
         const createStub = jest.spyOn(tutorialGroupSessionService, 'create').mockReturnValue(of(createResponse));
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const closeSpy = jest.spyOn(activeModal, 'close');
 
         const sessionForm: TutorialGroupSessionFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormStubComponent)).componentInstance;
 
@@ -89,8 +83,7 @@ describe('CreateTutorialGroupSessionComponent', () => {
         sessionForm.formSubmitted.emit(formData);
 
         expect(createStub).toHaveBeenCalledOnce();
-        expect(createStub).toHaveBeenCalledWith(course.id!, tutorialGroupId, formDataToTutorialGroupSessionDTO(formData));
-        expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id!, 'tutorial-groups', tutorialGroupId, 'sessions']);
+        expect(createStub).toHaveBeenCalledWith(course.id!, tutorialGroup.id!, formDataToTutorialGroupSessionDTO(formData));
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 });
