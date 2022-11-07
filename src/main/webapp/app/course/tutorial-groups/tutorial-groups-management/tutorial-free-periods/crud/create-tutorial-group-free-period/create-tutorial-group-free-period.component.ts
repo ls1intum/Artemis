@@ -22,7 +22,17 @@ export class CreateTutorialGroupFreePeriodComponent {
     @Input()
     course: Course;
 
+    isInitialized = false;
+
     constructor(private activeModal: NgbActiveModal, private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService, private alertService: AlertService) {}
+
+    initialize() {
+        if (!this.tutorialGroupConfigurationId || !this.course) {
+            console.error('Error: Component not fully configured');
+        } else {
+            this.isInitialized = true;
+        }
+    }
     createTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
         const { date, reason } = formData;
 

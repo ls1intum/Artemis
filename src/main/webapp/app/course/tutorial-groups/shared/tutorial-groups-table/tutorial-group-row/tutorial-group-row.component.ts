@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { getDayTranslationKey } from '../../weekdays';
-import { Language } from 'app/entities/course.model';
+import { Course, Language } from 'app/entities/course.model';
 
 @Component({
     selector: '[jhi-tutorial-group-row]',
@@ -18,6 +18,8 @@ export class TutorialGroupRowComponent {
     @Input() extraColumn: TemplateRef<any>;
 
     @Input() tutorialGroup: TutorialGroup;
+
+    @Input() course: Course;
 
     @Input()
     tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;

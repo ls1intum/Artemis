@@ -61,7 +61,8 @@ export class TutorialGroupSessionRowButtonsComponent {
         const modalRef: NgbModalRef = this.modalService.open(EditTutorialGroupSessionComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
-        modalRef.componentInstance.session = this.tutorialGroupSession;
+        modalRef.componentInstance.tutorialGroupSession = this.tutorialGroupSession;
+        modalRef.componentInstance.initialize();
         from(modalRef.result).subscribe(() => {
             this.tutorialGroupEdited.emit();
         });

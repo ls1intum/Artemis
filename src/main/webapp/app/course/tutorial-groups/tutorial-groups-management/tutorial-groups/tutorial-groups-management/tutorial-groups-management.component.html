@@ -28,13 +28,14 @@
                 </div>
             </div>
             <ng-container *ngIf="tutorialGroups?.length">
-                <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [courseId]="courseId" [tutorialGroupClickHandler]="onTutorialGroupSelected" [showIdColumn]="true">
+                <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [course]="course" [tutorialGroupClickHandler]="onTutorialGroupSelected" [showIdColumn]="true">
                     <ng-template let-tutorialGroup>
                         <jhi-tutorial-group-row-buttons
-                            [courseId]="courseId"
+                            [course]="course"
                             [isAtLeastInstructor]="isAtLeastInstructor"
                             [tutorialGroup]="tutorialGroup"
                             (tutorialGroupDeleted)="loadTutorialGroups()"
+                            (registrationsChanged)="loadTutorialGroups()"
                         >
                         </jhi-tutorial-group-row-buttons>
                     </ng-template>

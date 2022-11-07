@@ -10,7 +10,7 @@
                 <ng-template let-tutorialGroup>
                     <td>
                         <jhi-tutorial-group-row-buttons
-                            [courseId]="course.id!"
+                            [course]="course"
                             [isAtLeastInstructor]="isAtLeastInstructor"
                             [tutorialGroup]="tutorialGroup"
                             (tutorialGroupDeleted)="onTutorialGroupDeleted()"

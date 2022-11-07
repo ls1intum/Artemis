@@ -21,25 +21,29 @@ export class EditTutorialGroupSessionComponent {
     @Input()
     course: Course;
 
-    _tutorialGroupSession: TutorialGroupSession;
-
     @Input()
-    set session(tutorialGroupSession: TutorialGroupSession) {
-        this._tutorialGroupSession = tutorialGroupSession;
-        if (this._tutorialGroupSession) {
-            this.formData = {
-                date: tutorialGroupSession.start?.tz(this.course.timeZone).toDate(),
-                startTime: tutorialGroupSession.start?.tz(this.course.timeZone).format('HH:mm:ss'),
-                endTime: tutorialGroupSession.end?.tz(this.course.timeZone).format('HH:mm:ss'),
-                location: tutorialGroupSession.location,
-            };
-        }
-    }
+    tutorialGroupSession: TutorialGroupSession;
 
     isLoading = false;
     formData?: TutorialGroupSessionFormData = undefined;
 
+    isInitialized = false;
+
     constructor(private activeModal: NgbActiveModal, private tutorialGroupSessionService: TutorialGroupSessionService, private alertService: AlertService) {}
+
+    initialize() {
+        if (!this.tutorialGroupSession || !this.course || !this.tutorialGroup) {
+            console.error('Error: Component not fully configured');
+        } else {
+            this.formData = {
+                date: this.tutorialGroupSession.start?.tz(this.course.timeZone).toDate(),
+                startTime: this.tutorialGroupSession.start?.tz(this.course.timeZone).format('HH:mm:ss'),
+                endTime: this.tutorialGroupSession.end?.tz(this.course.timeZone).format('HH:mm:ss'),
+                location: this.tutorialGroupSession.location,
+            };
+            this.isInitialized = true;
+        }
+    }
 
     updateSession(formData: TutorialGroupSessionFormData) {
         const { date, startTime, endTime, location } = formData;
@@ -54,7 +58,7 @@ export class EditTutorialGroupSessionComponent {
         this.isLoading = true;
 
         this.tutorialGroupSessionService
-            .update(this.course.id!, this.tutorialGroup.id!, this._tutorialGroupSession.id!, tutorialGroupSessionDTO)
+            .update(this.course.id!, this.tutorialGroup.id!, this.tutorialGroupSession.id!, tutorialGroupSessionDTO)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

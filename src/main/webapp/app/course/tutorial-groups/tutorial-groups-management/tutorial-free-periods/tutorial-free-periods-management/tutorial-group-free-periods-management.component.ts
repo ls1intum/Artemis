@@ -81,6 +81,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
         const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupFreePeriodComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupConfigurationId = this.tutorialGroupsConfiguration.id!;
+        modalRef.componentInstance.initialize();
         from(modalRef.result).subscribe(() => {
             this.loadAll();
         });

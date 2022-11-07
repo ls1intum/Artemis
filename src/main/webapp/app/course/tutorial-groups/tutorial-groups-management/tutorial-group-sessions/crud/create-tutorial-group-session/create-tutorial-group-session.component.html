@@ -1,5 +1,5 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div *ngIf="course && tutorialGroup">
+    <div *ngIf="isInitialized">
         <div class="modal-header">
             <h4 class="modal-title">{{ 'artemisApp.pages.createTutorialSession.title' | artemisTranslate }}</h4>
             <button type="button" class="btn-close" (click)="clear()"></button>

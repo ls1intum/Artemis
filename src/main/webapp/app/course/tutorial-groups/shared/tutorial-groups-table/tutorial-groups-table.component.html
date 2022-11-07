@@ -60,6 +60,7 @@
                 id="tutorial-group-row-{{ tutorialGroup.id }}"
                 [ngClass]="{ 'table-success': tutorialGroup.isUserRegistered, 'table-info': tutorialGroup.isUserTutor }"
                 [tutorialGroup]="tutorialGroup"
+                [course]="course"
                 [extraColumn]="extraColumn"
                 [showIdColumn]="showIdColumn"
                 [tutorialGroupClickHandler]="tutorialGroupClickHandler"

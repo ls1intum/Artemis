@@ -43,8 +43,9 @@ export class TutorialGroupFreePeriodRowButtonsComponent {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(EditTutorialGroupFreePeriodComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.freePeriod = this.tutorialFreePeriod;
+        modalRef.componentInstance.tutorialGroupFreePeriod = this.tutorialFreePeriod;
         modalRef.componentInstance.tutorialGroupsConfiguration = this.tutorialGroupConfiguration;
+        modalRef.componentInstance.initialize();
         from(modalRef.result).subscribe(() => {
             this.tutorialFreePeriodEdited.emit();
         });

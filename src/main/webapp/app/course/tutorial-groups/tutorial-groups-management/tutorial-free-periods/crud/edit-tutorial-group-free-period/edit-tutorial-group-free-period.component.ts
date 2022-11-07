@@ -19,23 +19,16 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 export class EditTutorialGroupFreePeriodComponent {
     isLoading = false;
 
-    _freePeriod: TutorialGroupFreePeriod;
     @Input()
-    set freePeriod(period: TutorialGroupFreePeriod) {
-        this._freePeriod = period;
-        if (this._freePeriod && this.course) {
-            this.formData = {
-                date: this._freePeriod.start?.tz(this.course.timeZone).toDate(),
-                reason: this._freePeriod.reason,
-            };
-        }
-    }
+    tutorialGroupFreePeriod: TutorialGroupFreePeriod;
 
     @Input()
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
 
     @Input()
     course: Course;
+
+    isInitialized = false;
 
     formData: TutorialGroupFreePeriodFormData;
     constructor(
@@ -45,6 +38,18 @@ export class EditTutorialGroupFreePeriodComponent {
         private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
         private alertService: AlertService,
     ) {}
+
+    initialize() {
+        if (!this.tutorialGroupFreePeriod || !this.course || !this.tutorialGroupsConfiguration) {
+            console.error('Error: Component not fully configured');
+        } else {
+            this.formData = {
+                date: this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
+                reason: this.tutorialGroupFreePeriod.reason,
+            };
+            this.isInitialized = true;
+        }
+    }
 
     updateTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
         const { date, reason } = formData;
@@ -56,7 +61,7 @@ export class EditTutorialGroupFreePeriodComponent {
         this.isLoading = true;
 
         this.tutorialGroupFreePeriodService
-            .update(this.course.id!, this.tutorialGroupsConfiguration.id!, this._freePeriod.id!, tutorialGroupFreePeriodDto)
+            .update(this.course.id!, this.tutorialGroupsConfiguration.id!, this.tutorialGroupFreePeriod.id!, tutorialGroupFreePeriodDto)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

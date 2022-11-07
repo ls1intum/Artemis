@@ -30,7 +30,7 @@
     <div class="row">
         <div class="col-12" [ngClass]="{ 'col-xl-8': tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0 }">
             <ng-container [ngSwitch]="selectedFilter">
-                <jhi-course-tutorial-groups-overview *ngSwitchCase="'all'" [tutorialGroups]="tutorialGroups" [courseId]="courseId"></jhi-course-tutorial-groups-overview>
+                <jhi-course-tutorial-groups-overview *ngSwitchCase="'all'" [tutorialGroups]="tutorialGroups" [course]="course"></jhi-course-tutorial-groups-overview>
                 <jhi-course-tutorial-groups-registered
                     *ngSwitchCase="'registered'"
                     [registeredTutorialGroups]="registeredTutorialGroups"

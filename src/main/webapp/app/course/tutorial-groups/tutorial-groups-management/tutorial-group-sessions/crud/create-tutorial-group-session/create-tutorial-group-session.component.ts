@@ -1,5 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { Component, Input } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -24,7 +23,17 @@ export class CreateTutorialGroupSessionComponent {
     @Input()
     course: Course;
 
+    isInitialized = false;
+
     constructor(private activeModal: NgbActiveModal, private tutorialGroupSessionService: TutorialGroupSessionService, private alertService: AlertService) {}
+
+    initialize() {
+        if (!this.course || !this.tutorialGroup) {
+            console.error('Error: Component not fully configured');
+        } else {
+            this.isInitialized = true;
+        }
+    }
 
     createTutorialGroupSession(formData: TutorialGroupSessionFormData) {
         const { date, startTime, endTime, location } = formData;

@@ -281,6 +281,7 @@
             },
             "registeredStudents": {
                 "title": "Registrierte Studierende",
+                "header": "Registrierte Studierende von {{ title }}",
                 "capacityWarning": "Die Kapazität der Übungsgruppe von {{ capacity }} ist erreicht! Bist du sicher, dass du noch mehr Studierende hinzufügen möchtest?"
             },
             "createTutorialSession": {

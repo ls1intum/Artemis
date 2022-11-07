@@ -2,6 +2,7 @@ import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-tutorial-groups-table',
@@ -18,7 +19,7 @@ export class TutorialGroupsTableComponent {
     tutorialGroups: TutorialGroup[] = [];
 
     @Input()
-    courseId: number;
+    course: Course;
 
     @Input()
     tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;

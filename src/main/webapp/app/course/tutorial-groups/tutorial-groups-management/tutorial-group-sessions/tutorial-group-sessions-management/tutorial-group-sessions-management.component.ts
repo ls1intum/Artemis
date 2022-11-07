@@ -84,6 +84,7 @@ export class TutorialGroupSessionsManagementComponent implements OnInit {
         const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupSessionComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
+        modalRef.componentInstance.initialize();
         from(modalRef.result).subscribe(() => {
             this.loadAll();
         });
