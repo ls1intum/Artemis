@@ -16,7 +16,8 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
     let fixture: ComponentFixture<ProgrammingExerciseLifecycleComponent>;
 
-    const nextDueDate = dayjs().add(5, 'days');
+    const startDate = dayjs().add(5, 'days');
+    const nextDueDate = dayjs().add(6, 'days');
     const afterDueDate = dayjs().add(7, 'days');
     const exampleSolutionPublicationDate = dayjs().add(9, 'days');
     let exercise: ProgrammingExercise;
@@ -40,6 +41,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 exercise = {
                     id: 42,
                     dueDate: nextDueDate,
+                    startDate,
                     buildAndTestStudentSubmissionsAfterDueDate: afterDueDate,
                     exampleSolutionPublicationDate,
                 } as ProgrammingExercise;
@@ -54,6 +56,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.exercise = exercise;
         comp.updateReleaseDate(undefined);
 
+        expect(comp.exercise.startDate).toEqual(startDate);
         expect(comp.exercise.dueDate).toEqual(nextDueDate);
         expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
         expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
@@ -64,6 +67,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         const newRelease = dayjs().add(6, 'days');
         comp.updateReleaseDate(newRelease);
 
+        expect(comp.exercise.startDate).toEqual(newRelease);
         expect(comp.exercise.dueDate).toEqual(newRelease);
         expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
         expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
@@ -75,9 +79,30 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.updateReleaseDate(newRelease);
 
         expect(comp.exercise.releaseDate).toEqual(newRelease);
+        expect(comp.exercise.startDate).toEqual(newRelease);
         expect(comp.exercise.dueDate).toEqual(newRelease);
         expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(newRelease);
         expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newRelease);
+    });
+
+    it('should only reset the due date if the start date is between the due date and the after due date', () => {
+        comp.exercise = exercise;
+        const newStart = dayjs().add(6, 'days');
+        comp.updateStartDate(newStart);
+
+        expect(comp.exercise.dueDate).toEqual(newStart);
+        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(afterDueDate);
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exampleSolutionPublicationDate);
+    });
+
+    it('should reset the due date, the after due date and the example solution publication date if the new start date is after all dates', () => {
+        comp.exercise = exercise;
+        const newStart = dayjs().add(10, 'days');
+        comp.updateStartDate(newStart);
+
+        expect(comp.exercise.dueDate).toEqual(newStart);
+        expect(comp.exercise.buildAndTestStudentSubmissionsAfterDueDate).toEqual(newStart);
+        expect(comp.exercise.exampleSolutionPublicationDate).toEqual(newStart);
     });
 
     it('should reset the example solution publication date if the new due date is later', () => {
