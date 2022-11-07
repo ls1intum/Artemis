@@ -183,7 +183,7 @@ public class Complaint extends DomainObject {
      */
     public void filterForeignReviewer(User user) {
         User assessor = result.getAssessor();
-        if (!assessor.equals(user)) {
+        if (assessor != null && !assessor.equals(user)) {
             result.setAssessor(null);
         }
     }
