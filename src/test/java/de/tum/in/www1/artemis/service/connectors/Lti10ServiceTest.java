@@ -1,21 +1,27 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper;
 import de.tum.in.www1.artemis.domain.*;
@@ -36,6 +42,9 @@ class Lti10ServiceTest {
 
     @Mock
     private ResultRepository resultRepository;
+
+    @Mock
+    private HttpClient client;
 
     @Mock
     private LtiService ltiService;
@@ -59,6 +68,8 @@ class Lti10ServiceTest {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
         lti10Service = new Lti10Service(userRepository, ltiOutcomeUrlRepository, resultRepository, courseRepository, ltiService);
+        ReflectionTestUtils.setField(lti10Service, "client", client);
+
         course = new Course();
         course.setId(100L);
         course.setOnlineCourse(true);
@@ -66,6 +77,7 @@ class Lti10ServiceTest {
         onlineCourseConfiguration.setCourse(course);
         onlineCourseConfiguration.setLtiKey("key");
         onlineCourseConfiguration.setLtiSecret("secret");
+        onlineCourseConfiguration.setUserPrefix("prefix");
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         exercise = new TextExercise();
         exercise.setCourse(course);
@@ -75,7 +87,7 @@ class Lti10ServiceTest {
         user.setPassword("password");
         user.setGroups(new HashSet<>(Collections.singleton(LtiService.LTI_GROUP_NAME)));
         ltiOutcomeUrl = new LtiOutcomeUrl();
-        ltiOutcomeUrl.setUrl("testUrl");
+        ltiOutcomeUrl.setUrl("http://testUrl.com");
     }
 
     @Test
@@ -111,6 +123,77 @@ class Lti10ServiceTest {
     }
 
     @Test
+    void createUsernameFromLaunchRequest_fromUsername() {
+        launchRequest.setExt_user_username("john");
+
+        String username = lti10Service.createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration);
+
+        assertEquals("prefix_john", username);
+    }
+
+    @Test
+    void createUsernameFromLaunchRequest_fromPersonId() {
+        launchRequest.setExt_user_username("");
+        launchRequest.setLis_person_sourcedid("johnid");
+
+        String username = lti10Service.createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration);
+
+        assertEquals("prefix_johnid", username);
+    }
+
+    @Test
+    void createUsernameFromLaunchRequest_fromUserId() {
+        launchRequest.setExt_user_username("");
+        launchRequest.setLis_person_sourcedid("");
+        launchRequest.setUser_id("userid");
+
+        String username = lti10Service.createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration);
+
+        assertEquals("prefix_userid", username);
+    }
+
+    @Test
+    void createUsernameFromLaunchRequest_fromEmail() {
+        launchRequest.setExt_user_username("");
+        launchRequest.setLis_person_sourcedid("");
+        launchRequest.setUser_id("");
+        launchRequest.setLis_person_contact_email_primary("jon.snow@email.com");
+
+        String username = lti10Service.createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration);
+
+        assertEquals("prefix_jon.snow", username);
+    }
+
+    @Test
+    void getUserLastNameFromLaunchRequest_fromFamilyName() {
+        launchRequest.setLis_person_name_family("snow");
+
+        String lastname = lti10Service.getUserLastNameFromLaunchRequest(launchRequest);
+
+        assertEquals("snow", lastname);
+    }
+
+    @Test
+    void getUserLastNameFromLaunchRequest_fromSourceId() {
+        launchRequest.setLis_person_name_family("");
+        launchRequest.setLis_person_sourcedid("sourceId");
+
+        String lastname = lti10Service.getUserLastNameFromLaunchRequest(launchRequest);
+
+        assertEquals("sourceId", lastname);
+    }
+
+    @Test
+    void getUserLastNameFromLaunchRequest_empty() {
+        launchRequest.setLis_person_name_family("");
+        launchRequest.setLis_person_sourcedid("");
+
+        String lastname = lti10Service.getUserLastNameFromLaunchRequest(launchRequest);
+
+        assertEquals("", lastname);
+    }
+
+    @Test
     void verifyRequest_unsuccessfulVerification() {
         onlineCourseConfiguration.setLtiSecret("secret");
 
@@ -135,9 +218,10 @@ class Lti10ServiceTest {
     }
 
     @Test
-    void onNewResult() {
+    void onNewResult_invalidUrl() {
         onlineCourseConfiguration.setLtiKey("oauthKey");
         onlineCourseConfiguration.setLtiSecret("oauthSecret");
+        ltiOutcomeUrl.setUrl("invalid");
 
         StudentParticipation participation = new StudentParticipation();
         User user = new User();
@@ -153,6 +237,34 @@ class Lti10ServiceTest {
         lti10Service.onNewResult(participation);
         verify(resultRepository, times(1)).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
         verify(courseRepository, times(1)).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        verifyNoInteractions(client);
+    }
+
+    @Test
+    void onNewResult() throws IOException {
+        onlineCourseConfiguration.setLtiKey("oauthKey");
+        onlineCourseConfiguration.setLtiSecret("oauthSecret");
+
+        StudentParticipation participation = new StudentParticipation();
+        User user = new User();
+        participation.setParticipant(user);
+        participation.setExercise(exercise);
+        participation.setId(27L);
+        Result result = new Result();
+        result.setScore(3D);
+        ltiOutcomeUrlRepositorySetup(user);
+        when(resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(27L)).thenReturn(Optional.of(result));
+        when(courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId())).thenReturn(course);
+        HttpResponse response = mock(HttpResponse.class);
+        StatusLine statusLine = mock(StatusLine.class);
+        when(response.getStatusLine()).thenReturn(statusLine);
+        when(statusLine.getStatusCode()).thenReturn(200);
+        when(client.execute(any())).thenReturn(response);
+
+        lti10Service.onNewResult(participation);
+        verify(resultRepository, times(1)).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
+        verify(courseRepository, times(1)).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        verify(client, times(1)).execute(any());
     }
 
     private void ltiOutcomeUrlRepositorySetup(User user) {

@@ -18,6 +18,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.nimbusds.jose.shaded.json.JSONObject;
 import com.nimbusds.jose.shaded.json.parser.JSONParser;
@@ -65,7 +66,11 @@ class Lti13ServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    private OidcIdToken oidcIdToken;
+
     private String clientRegistrationId;
+
+    private OnlineCourseConfiguration onlineCourseConfiguration;
 
     @BeforeEach
     void init() {
@@ -73,6 +78,9 @@ class Lti13ServiceTest {
         lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
                 onlineCourseConfigurationService, restTemplate);
         clientRegistrationId = "clientId";
+        onlineCourseConfiguration = new OnlineCourseConfiguration();
+        onlineCourseConfiguration.setUserPrefix("prefix");
+        oidcIdToken = mock(OidcIdToken.class);
     }
 
     @Test
@@ -89,7 +97,6 @@ class Lti13ServiceTest {
         doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
 
-        OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
         when(oidcIdToken.getClaim("iss")).thenReturn("http://otherDomain.com");
@@ -108,6 +115,33 @@ class Lti13ServiceTest {
 
         verify(launchRepository).findByIssAndSubAndDeploymentIdAndResourceLinkId("http://otherDomain.com", "1", "1", "resourceLinkUrl");
         verify(launchRepository).save(any());
+    }
+
+    @Test
+    void performLaunch_invalidToken() {
+        long exerciseId = 134;
+        Exercise exercise = new TextExercise();
+        exercise.setId(exerciseId);
+
+        long courseId = 12;
+        Course course = new Course();
+        course.setId(courseId);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        exercise.setCourse(course);
+        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+
+        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
+
+        User user = new User();
+        doReturn(user).when(userRepository).getUserWithGroupsAndAuthorities();
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any(), any());
+
+        assertThrows(IllegalArgumentException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+
+        verifyNoInteractions(launchRepository);
     }
 
     @Test
@@ -186,6 +220,58 @@ class Lti13ServiceTest {
     }
 
     @Test
+    void createUsernameFromLaunchRequest_fromUsername() {
+        when(oidcIdToken.getPreferredUsername()).thenReturn("john");
+
+        String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
+
+        assertEquals("prefix_john", username);
+    }
+
+    @Test
+    void createUsernameFromLaunchRequest_fromFullname() {
+        when(oidcIdToken.getPreferredUsername()).thenReturn("");
+        when(oidcIdToken.getGivenName()).thenReturn("jon");
+        when(oidcIdToken.getFamilyName()).thenReturn("snow");
+
+        String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
+
+        assertEquals("prefix_jonsnow", username);
+    }
+
+    @Test
+    void createUsernameFromLaunchRequest_fromEmailNoFamilyName() {
+        when(oidcIdToken.getPreferredUsername()).thenReturn("");
+        when(oidcIdToken.getGivenName()).thenReturn("john");
+        when(oidcIdToken.getFamilyName()).thenReturn("");
+        when(oidcIdToken.getEmail()).thenReturn("jon.snow@email.com");
+
+        String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
+
+        assertEquals("prefix_jon.snow", username);
+    }
+
+    @Test
+    void createUsernameFromLaunchRequest_fromEmail() {
+        when(oidcIdToken.getPreferredUsername()).thenReturn("");
+        when(oidcIdToken.getGivenName()).thenReturn("");
+        when(oidcIdToken.getFamilyName()).thenReturn("");
+        when(oidcIdToken.getEmail()).thenReturn("jon.snow@email.com");
+
+        String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
+
+        assertEquals("prefix_jon.snow", username);
+    }
+
+    @Test
+    void addLtiQueryParamsCallLtiService() {
+
+        lti13Service.addLtiQueryParams(UriComponentsBuilder.newInstance());
+
+        verify(ltiService, times(1)).addLtiQueryParams(any());
+    }
+
+    @Test
     void onNewResultNoOnlineCourseConfiguration() {
         Course course = new Course();
         course.setId(1L);
@@ -242,11 +328,75 @@ class Lti13ServiceTest {
         participation.setParticipant(user);
         participation.setId(1L);
         LtiResourceLaunch launch = new LtiResourceLaunch();
+        ClientRegistration clientRegistration = mock(ClientRegistration.class);
 
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
-        doReturn(null).when(onlineCourseConfigurationService).getClientRegistration(any());
+        doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.empty()).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+
+        lti13Service.onNewResult(participation);
+
+        verifyNoInteractions(restTemplate);
+    }
+
+    @Test
+    void onNewResultNoScoreUrl() {
+        Result result = new Result();
+        double scoreGiven = 60D;
+        result.setScore(scoreGiven);
+
+        Feedback feedback = new Feedback();
+        feedback.setDetailText("Not so good");
+        result.addFeedback(feedback);
+
+        Course course = new Course();
+        course.setId(1L);
+        User user = new User();
+        user.setId(1L);
+        Exercise exercise = new ProgrammingExercise() {
+        };
+        exercise.setCourse(course);
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(exercise);
+        participation.setParticipant(user);
+        participation.setId(1L);
+        LtiResourceLaunch launch = new LtiResourceLaunch();
+        ClientRegistration clientRegistration = mock(ClientRegistration.class);
+
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
+        doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
+        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+
+        lti13Service.onNewResult(participation);
+
+        verifyNoInteractions(restTemplate);
+    }
+
+    @Test
+    void onNewResultTokenFails() {
+        Result result = new Result();
+        double scoreGiven = 60D;
+        result.setScore(scoreGiven);
+
+        Feedback feedback = new Feedback();
+        feedback.setDetailText("Not so good");
+        result.addFeedback(feedback);
+
+        State state = getValidStateForNewResult(result);
+        LtiResourceLaunch launch = state.getLti13ResourceLaunch();
+        User user = state.getUser();
+        Exercise exercise = state.getExercise();
+        StudentParticipation participation = state.getParticipation();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        ClientRegistration clientRegistration = state.getClientRegistration();
+
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
+        doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
+        doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
+        doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        doReturn(null).when(tokenRetriever).getToken(eq(clientRegistration), eq(Scopes.AGS_SCORE));
 
         lti13Service.onNewResult(participation);
 
