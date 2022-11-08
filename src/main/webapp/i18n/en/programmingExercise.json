@@ -46,6 +46,7 @@
                     "generalInfoStepTitle": "General Information",
                     "generalInfoStepMessage": "Add some general information about the new exercise.",
                     "difficultyStepTitle": "Difficulty",
+                    "difficultyStepMessage": "Set the difficulty for the new exercise.",
                     "languageStepTitle": "Language",
                     "gradingStepTitle": "Grading",
                     "problemStepTitle": "Problem"

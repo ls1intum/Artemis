@@ -21,6 +21,7 @@ import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-p
 import { ProgrammingExerciseUpdateWizardComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 import { ProgrammingExerciseUpdateWizardStepComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-step.component';
 import { ProgrammingExerciseUpdateWizardInformationComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-information.component';
+import { ProgrammingExerciseUpdateWizardDifficultyComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-difficulty.component';
 
 @NgModule({
     imports: [
@@ -45,6 +46,7 @@ import { ProgrammingExerciseUpdateWizardInformationComponent } from 'app/exercis
         ProgrammingExerciseUpdateWizardComponent,
         ProgrammingExerciseUpdateWizardStepComponent,
         ProgrammingExerciseUpdateWizardInformationComponent,
+        ProgrammingExerciseUpdateWizardDifficultyComponent,
         ProgrammingExercisePlansAndRepositoriesPreviewComponent,
         AddAuxiliaryRepositoryButtonComponent,
         RemoveAuxiliaryRepositoryButtonComponent,

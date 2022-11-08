@@ -18,6 +18,13 @@
         [updateCategories]="updateCategories"
     ></jhi-programming-exercise-update-wizard-info>
 
+    <jhi-programming-exercise-update-wizard-difficulty
+        class="form-step"
+        *ngIf="currentStep >= 2"
+        [isImport]="isImport"
+        [programmingExercise]="programmingExercise"
+    ></jhi-programming-exercise-update-wizard-difficulty>
+
     <!-- Bottom Navigation Bar -->
     <div class="d-flex align-items-center">
         <div class="me-3">
