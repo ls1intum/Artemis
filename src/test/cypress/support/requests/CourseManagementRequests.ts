@@ -7,7 +7,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { BASE_API, DELETE, GET, POST, PUT } from '../constants';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
-import { dayjsToString, generateUUID } from '../utils';
+import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
 import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs/esm';
 import { CypressCredentials } from '../users';
@@ -74,10 +74,12 @@ export class CourseManagementRequests {
             course.editorGroupName = Cypress.env('editorGroupName');
             course.instructorGroupName = Cypress.env('instructorGroupName');
         }
+        const formData = new FormData();
+        formData.append('course', new File([JSON.stringify(course)], 'course', { type: 'application/json' }));
         return cy.request({
             url: BASE_API + 'courses',
             method: POST,
-            body: course,
+            body: formData,
         });
     }
 
@@ -629,4 +631,13 @@ export enum CypressExerciseType {
     MODELING,
     TEXT,
     QUIZ,
+}
+
+export function convertCourseAfterMultiPart(response: Cypress.Response<Course>): Course {
+    // Cypress currently has some issues with our multipart request, parsing this not as an object but as an ArrayBuffer
+    // Once this is fixed (and hence the expect statements below fail), we can remove the additional parsing
+    expect(response.body).not.to.be.an('object');
+    expect(response.body).to.be.an('ArrayBuffer');
+
+    return parseArrayBufferAsJsonObject(response.body as ArrayBuffer);
 }
