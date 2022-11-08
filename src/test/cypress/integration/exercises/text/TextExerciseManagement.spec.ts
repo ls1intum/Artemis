@@ -6,6 +6,7 @@ import { DELETE } from '../../../support/constants';
 import { generateUUID } from '../../../support/utils';
 import { artemis } from '../../../support/ArtemisTesting';
 import dayjs from 'dayjs/esm';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
 // The user management object
 const users = artemis.users;
@@ -27,7 +28,7 @@ describe('Text exercise management', () => {
     before(() => {
         cy.login(users.getAdmin());
         courseManagement.createCourse().then((response) => {
-            course = response.body;
+            course = convertCourseAfterMultiPart(response);
         });
     });
 
