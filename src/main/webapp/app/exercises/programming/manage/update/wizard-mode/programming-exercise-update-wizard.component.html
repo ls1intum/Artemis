@@ -25,6 +25,33 @@
         [programmingExercise]="programmingExercise"
     ></jhi-programming-exercise-update-wizard-difficulty>
 
+    <jhi-programming-exercise-update-wizard-language
+        class="form-step"
+        *ngIf="currentStep >= 3"
+        [isImport]="isImport"
+        [programmingExercise]="programmingExercise"
+        [appNamePatternForSwift]="appNamePatternForSwift"
+        [modePickerOptions]="modePickerOptions"
+        [withDependencies]="withDependencies"
+        [packageNameRequired]="packageNameRequired"
+        [packageNamePattern]="packageNamePattern"
+        [supportsJava]="supportsJava"
+        [supportsPython]="supportsPython"
+        [supportsC]="supportsC"
+        [supportsHaskell]="supportsHaskell"
+        [supportsKotlin]="supportsKotlin"
+        [supportsVHDL]="supportsVHDL"
+        [supportsAssembler]="supportsAssembler"
+        [supportsSwift]="supportsSwift"
+        [supportsOCaml]="supportsOCaml"
+        [supportsEmpty]="supportsEmpty"
+        [selectedProgrammingLanguage]="selectedProgrammingLanguage"
+        [onProgrammingLanguageChange]="onProgrammingLanguageChange"
+        [projectTypes]="projectTypes"
+        [selectedProjectType]="selectedProjectType"
+        [onProjectTypeChange]="onProjectTypeChange"
+    ></jhi-programming-exercise-update-wizard-language>
+
     <!-- Bottom Navigation Bar -->
     <div class="d-flex align-items-center">
         <div class="me-3">

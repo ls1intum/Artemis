@@ -47,7 +47,8 @@
                     "generalInfoStepMessage": "Füge allgemeine Informationen über die neue Übung hinzu.",
                     "difficultyStepTitle": "Schwierigkeit",
                     "difficultyStepMessage": "Lege die Schwierigkeit für die neue Übung fest.",
-                    "languageStepTitle": "Language",
+                    "languageStepTitle": "Programmiersprache",
+                    "languageStepMessage": "Lege die gewählte Programmiersprache sowie den Projekttyp für die neue Übung fest.",
                     "gradingStepTitle": "Grading",
                     "problemStepTitle": "Problem"
                 }

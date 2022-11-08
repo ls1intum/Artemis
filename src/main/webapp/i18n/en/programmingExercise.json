@@ -47,7 +47,8 @@
                     "generalInfoStepMessage": "Add some general information about the new exercise.",
                     "difficultyStepTitle": "Difficulty",
                     "difficultyStepMessage": "Set the difficulty for the new exercise.",
-                    "languageStepTitle": "Language",
+                    "languageStepTitle": "Programming Language",
+                    "languageStepMessage": "Specify the chosen programming language as well as the project type for the new exercise.",
                     "gradingStepTitle": "Grading",
                     "problemStepTitle": "Problem"
                 }
