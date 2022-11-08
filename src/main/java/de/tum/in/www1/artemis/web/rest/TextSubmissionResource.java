@@ -220,19 +220,19 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        final TextSubmission textSubmission;
-        if (lockSubmission) {
-            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise, exercise.isExamExercise(), correctionRound);
-            textAssessmentService.prepareSubmissionForAssessment(textSubmission, textSubmission.getResultForCorrectionRound(correctionRound));
+        Optional<TextSubmission> optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise,
+                skipAssessmentOrderOptimization, exercise.isExamExercise(), correctionRound);
+
+        // No more unassessed submissions
+        if (optionalTextSubmission.isEmpty()) {
+            return ResponseEntity.ok(null);
         }
-        else {
-            Optional<TextSubmission> optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise,
-                    skipAssessmentOrderOptimization, exercise.isExamExercise(), correctionRound);
-            if (optionalTextSubmission.isEmpty()) {
-                // TODO: in this case we should simply return an empty response, because this is not an error if all submissions have been corrected
-                throw new EntityNotFoundException("No submission found to be assessed");
-            }
-            textSubmission = optionalTextSubmission.get();
+
+        final TextSubmission textSubmission = optionalTextSubmission.get();
+
+        if (lockSubmission) {
+            textSubmissionService.lockTextSubmissionToBeAssessed(optionalTextSubmission.get(), correctionRound);
+            textAssessmentService.prepareSubmissionForAssessment(textSubmission, textSubmission.getResultForCorrectionRound(correctionRound));
         }
 
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
