@@ -1076,20 +1076,21 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Locks or unlocks the repository if necessary due to the changes in the programming exercise
+     * Locks or unlocks the repository if necessary due to the changes in the programming exercise.
+     * Notice: isAllowOfflineIde() == null means that the offline IDE is allowed
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
      * @param updatedProgrammingExercise the updated exercise with new values
      */
     public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (!programmingExerciseBeforeUpdate.isReleased()) {
-            if (updatedProgrammingExercise.isReleased() && Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+            if (updatedProgrammingExercise.isReleased() && !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
                 // There might be some repositories that have to be unlocked
                 unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
             }
             return;
         }
         if (!updatedProgrammingExercise.isReleased()) {
-            if (Boolean.TRUE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde())) {
+            if (!Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde())) {
                 // Hide exercise again and lock repos
                 lockAllRepositories(programmingExerciseBeforeUpdate.getId());
             }
@@ -1111,7 +1112,7 @@ public class ProgrammingExerciseService {
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
     private boolean handleRepoAccessRightChangesDueDates(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
-        if (Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+        if (!Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
             ZonedDateTime now = ZonedDateTime.now();
 
             if (programmingExerciseBeforeUpdate.getDueDate() != null && programmingExerciseBeforeUpdate.getDueDate().isBefore(now)
@@ -1138,12 +1139,11 @@ public class ProgrammingExerciseService {
      */
     private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            // Not using Boolean.FALSE.equals(...) since it might be null
-            if (!Boolean.TRUE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+            if (Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
                 unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
                 return true;
             }
-            else if (Boolean.TRUE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+            else if (!Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
                 lockAllRepositories(programmingExerciseBeforeUpdate.getId());
                 return true;
             }

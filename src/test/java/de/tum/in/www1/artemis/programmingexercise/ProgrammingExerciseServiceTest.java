@@ -94,8 +94,6 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     void shouldLockRepositoriesWhenDueDateIsSetInThePast() {
-        programmingExercise2.setAllowOfflineIde(true);
-
         programmingExercise2.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
         verify(instanceMessageSendService, times(1)).sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExercise1.getId());
@@ -108,8 +106,6 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     void shouldUnlockRepositoriesWhenDueDateIsSetInTheFuture() {
-        programmingExercise2.setAllowOfflineIde(true);
-
         programmingExercise1.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
         verify(instanceMessageSendService, times(1)).sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(programmingExercise1.getId());
@@ -122,6 +118,7 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     void shouldNotUnlockRepositoriesWhenDueDateIsSetInTheFutureAndNoOfflineIDE() {
+        programmingExercise1.setAllowOfflineIde(false);
         programmingExercise2.setAllowOfflineIde(false);
 
         programmingExercise1.setDueDate(ZonedDateTime.now().minusHours(1));
@@ -135,7 +132,6 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     void shouldLockRepositoriesWhenExerciseGetsUnreleased() {
-        programmingExercise1.setAllowOfflineIde(true);
         programmingExercise2.setReleaseDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
 
@@ -146,7 +142,6 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
     @Test
     void shouldUnlockRepositoriesWhenExerciseGetsReleasedImmediately() {
         programmingExercise1.setReleaseDate(ZonedDateTime.now().plusHours(1));
-        programmingExercise2.setAllowOfflineIde(true);
         programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
 
         verify(instanceMessageSendService, times(1)).sendUnlockAllRepositories(programmingExercise1.getId());
