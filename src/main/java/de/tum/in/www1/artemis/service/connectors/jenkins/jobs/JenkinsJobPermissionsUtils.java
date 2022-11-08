@@ -16,6 +16,7 @@ public class JenkinsJobPermissionsUtils {
     private static final String USER_PERMISSIONS_PREFIX = "USER:";
 
     private JenkinsJobPermissionsUtils() {
+        throw new IllegalAccessError("Utility Class");
     }
 
     public static void removePermissionsFromFolder(Document jobConfig, Set<JenkinsJobPermission> permissionsToRemove, Set<String> userLogins) throws DOMException {
