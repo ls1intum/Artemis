@@ -1,5 +1,8 @@
 <div class="modal-header">
-    <h4 class="modal-title">Feedback</h4>
+    <h4 class="modal-title">
+        <ng-container *ngIf="taskName; else noTaskDescription">{{ 'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName } }}</ng-container>
+        <ng-template #noTaskDescription>{{ 'artemisApp.result.detail.feedback' | artemisTranslate }}</ng-template>
+    </h4>
     <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()"></button>
 </div>
 <div class="modal-body position-relative" id="result-detail-body">

@@ -20,9 +20,10 @@
             "detail": {
                 "title": "Bewertung",
                 "feedback": "Feedback",
+                "feedbackForTask": "Feedback for task: {{ taskName }}",
                 "codeIssue": {
                     "name": "Code Issue",
-                    "title": "{{ scaCategory }} Issue in file {{ location }}",
+                    "title": "{{ scaCategory }} Issue in File {{ location }}",
                     "line": "at line {{ line }}",
                     "lines": "at lines {{ from }}-{{ to }}",
                     "column": "column {{ column }}",

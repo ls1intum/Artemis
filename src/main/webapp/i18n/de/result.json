@@ -20,6 +20,7 @@
             "detail": {
                 "title": "Bewertung",
                 "feedback": "Feedback",
+                "feedbackForTask": "Feedback für Teilaufgabe: {{ taskName }}",
                 "codeIssue": {
                     "name": "Codeissue",
                     "title": "{{ scaCategory }} Issue in Datei {{ location }}",

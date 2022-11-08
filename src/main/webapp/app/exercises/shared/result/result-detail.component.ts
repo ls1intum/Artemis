@@ -92,6 +92,7 @@ export class ResultDetailComponent implements OnInit {
      */
     @Input() showMissingAutomaticFeedbackInformation = false;
     @Input() latestIndividualDueDate?: dayjs.Dayjs;
+    @Input() taskName?: string;
 
     isLoading = false;
     loadingFailed = false;
@@ -371,17 +372,17 @@ export class ResultDetailComponent implements OnInit {
      */
     private getIssueLocation(issue: StaticCodeAnalysisIssue): string {
         const lineText =
-            ' ' + !issue.endLine || issue.startLine === issue.endLine
+            !issue.endLine || issue.startLine === issue.endLine
                 ? this.translateService.instant('artemisApp.result.detail.codeIssue.line', { line: issue.startLine })
                 : this.translateService.instant('artemisApp.result.detail.codeIssue.lines', { from: issue.startLine, to: issue.endLine });
-        let columnText = '';
         if (issue.startColumn) {
-            columnText =
-                ' ' + !issue.endColumn || issue.startColumn === issue.endColumn
+            const columnText =
+                !issue.endColumn || issue.startColumn === issue.endColumn
                     ? this.translateService.instant('artemisApp.result.detail.codeIssue.column', { line: issue.startColumn })
                     : this.translateService.instant('artemisApp.result.detail.codeIssue.columns', { from: issue.startColumn, to: issue.endColumn });
+            return `${issue.filePath} ${lineText} ${columnText}`;
         }
-        return issue.filePath + lineText + columnText;
+        return `${issue.filePath} ${lineText}`;
     }
 
     /**
@@ -720,6 +721,7 @@ export class ResultDetailComponent implements OnInit {
     private countFeedbacks() {
         const testCaseList = this.filteredFeedbackList.filter((feedback) => feedback.type === FeedbackItemType.Test);
         if (this.numberOfAggregatedTestCases && (this.showOnlyPositiveFeedback || !this.showOnlyNegativeFeedback)) {
+            // The positive test feedbacks were aggregated to one, so we have to add the number but subtract one, since the aggregated test case is in the testCaseList
             this.testCaseCount = testCaseList.length + this.numberOfAggregatedTestCases - 1;
             this.passedTestCaseCount = testCaseList.filter((feedback) => feedback.positive).length + this.numberOfAggregatedTestCases - 1;
         } else {
