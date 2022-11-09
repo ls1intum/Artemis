@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.List;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -17,7 +18,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 /**
@@ -61,39 +61,26 @@ public class TextAssessmentEventResource {
     }
 
     /**
-     * Get events/{courseId} : Retrieve all the events from the 'text_assessment_event' table by course id
-     * @param courseId the id of the course to filter by
-     * @return returns a List of TextAssessmentEvent's
-     */
-    @GetMapping("event-insights/text-assessment/events/{courseId}")
-    @EnforceAdmin
-    // TODO /admin
-    public ResponseEntity<List<TextAssessmentEvent>> getEventsByCourseId(@PathVariable Long courseId) {
-        List<TextAssessmentEvent> events = textAssessmentEventRepository.findAllByCourseId(courseId);
-        return ResponseEntity.ok().body(events);
-    }
-
-    /**
-     * POST events : Adds an assessment event into the text_assessment_event table.
+     * POST event-insights/text-assessment/events : Adds an assessment event into the text_assessment_event table.
      * @param event to be added
      * @return the status of the finished request
      */
     @PostMapping("event-insights/text-assessment/events")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) {
+    public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) throws URISyntaxException {
         log.debug("REST request to save assessmentEvent : {}", event);
 
         // Check if the text assessment analytics feature is enabled
         // Save the event if it is valid. All other requests are considered bad requests.
         if (isTextAssessmentAnalyticsEnabled() && validateEvent(event)) {
             textAssessmentEventRepository.save(event);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.created(new URI("/api/admin/event-insights/text-assessment/events/" + event.getCourseId())).build();
         }
         return ResponseEntity.badRequest().build();
     }
 
     /**
-     * GET courses/{courseId}/text-exercises/{exerciseId}/tutors-involved : get the number of the tutors involved in the list of events
+     * GET event-insights/text-assessment/courses/{courseId}/text-exercises/{exerciseId}/tutors-involved : get the number of the tutors involved in the list of events
      * @param courseId the id of the course to query events for
      * @param exerciseId the id of the exercise to query events for
      * @return an integer representing the number of tutors involved for the respective course and exercise
