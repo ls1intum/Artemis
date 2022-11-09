@@ -315,7 +315,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     private void cookieAssertions(Cookie cookie, boolean logoutCookie) {
         assertThat(cookie.isHttpOnly()).isTrue();
-        // assertThat(cookie.getSecure()).isTrue();
+        assertThat(cookie.getSecure()).isTrue();
         assertThat(cookie.getPath()).isEqualTo("/");
 
         if (logoutCookie) {

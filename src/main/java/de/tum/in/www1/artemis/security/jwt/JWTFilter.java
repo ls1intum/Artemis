@@ -51,7 +51,7 @@ public class JWTFilter extends GenericFilterBean {
 
         return ResponseCookie.from(JWT_COOKIE_NAME, jwt).httpOnly(true) // Must be httpOnly
                 .sameSite("Lax") // Must be Lax to allow navigation links to Artemis to work
-                .secure(false) // Should only be secure when using https, otherwise in environments using http (cypress) browsers don't set the cookie
+                .secure(true) // Must be secure
                 .path("/") // Must be "/" to be sent in ALL request
                 .maxAge(duration) // Duration should match the duration of the jwt
                 .build(); // Build cookie
