@@ -190,7 +190,7 @@ public class CourseResource {
 
         var timeZoneChanged = (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() != null && !existingCourse.getTimeZone().equals(courseUpdate.getTimeZone()));
 
-        if (!Objects.equals(existingCourse.getShortName(), updatedCourse.getShortName())) {
+        if (!Objects.equals(existingCourse.getShortName(), courseUpdate.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
 
