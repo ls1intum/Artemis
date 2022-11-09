@@ -92,7 +92,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
         result.setHasFeedback(result.getFeedbacks().stream().anyMatch(Feedback::hasDetails));
     }
 
-    private void addTestCaseFeedbacksToResult(Result result, List<BuildJobDTOInterface> jobs, ProgrammingExercise programmingExercise) {
+    private void addTestCaseFeedbacksToResult(Result result, List<? extends BuildJobDTOInterface> jobs, ProgrammingExercise programmingExercise) {
         final var programmingLanguage = programmingExercise.getProgrammingLanguage();
         final var projectType = programmingExercise.getProjectType();
 
