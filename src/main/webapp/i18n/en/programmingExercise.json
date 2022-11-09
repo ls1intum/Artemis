@@ -50,7 +50,8 @@
                     "languageStepTitle": "Programming Language",
                     "languageStepMessage": "Specify the chosen programming language as well as the project type for the new exercise.",
                     "gradingStepTitle": "Grading",
-                    "problemStepTitle": "Problem"
+                    "problemStepTitle": "Problem Statement",
+                    "problemStepMessage": "Specify the problem statement for the new exercise."
                 }
             },
             "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students.",

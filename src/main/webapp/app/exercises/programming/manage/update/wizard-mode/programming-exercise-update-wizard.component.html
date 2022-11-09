@@ -52,6 +52,24 @@
         [onProjectTypeChange]="onProjectTypeChange"
     ></jhi-programming-exercise-update-wizard-language>
 
+    <jhi-programming-exercise-update-wizard-problem
+        class="form-step"
+        *ngIf="currentStep >= 5"
+        [isImport]="isImport"
+        [programmingExercise]="programmingExercise"
+        [problemStatementLoaded]="problemStatementLoaded"
+        [templateParticipationResultLoaded]="templateParticipationResultLoaded"
+        [hasUnsavedChanges]="hasUnsavedChanges"
+        [rerenderSubject]="rerenderSubject"
+        [sequentialTestRunsAllowed]="sequentialTestRunsAllowed"
+        [checkoutSolutionRepositoryAllowed]="checkoutSolutionRepositoryAllowed"
+        [validIdeSelection]="validIdeSelection"
+        [inProductionEnvironment]="inProductionEnvironment"
+        [recreateBuildPlans]="recreateBuildPlans"
+        [onRecreateBuildPlanOrUpdateTemplateChange]="onRecreateBuildPlanOrUpdateTemplateChange"
+        [updateTemplate]="updateTemplate"
+    ></jhi-programming-exercise-update-wizard-problem>
+
     <!-- Bottom Navigation Bar -->
     <div class="d-flex align-items-center">
         <div class="me-3">

@@ -6,6 +6,8 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard',
@@ -58,6 +60,19 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() projectTypes: ProjectType[];
     @Input() selectedProjectType: ProjectType;
     @Input() onProjectTypeChange: (projectType: ProjectType) => ProjectType;
+
+    // Problem Step
+    @Input() problemStatementLoaded: boolean;
+    @Input() templateParticipationResultLoaded: boolean;
+    @Input() hasUnsavedChanges: boolean;
+    @Input() rerenderSubject: Subject<void>;
+    @Input() sequentialTestRunsAllowed: boolean;
+    @Input() checkoutSolutionRepositoryAllowed: boolean;
+    @Input() validIdeSelection: () => boolean | undefined;
+    @Input() inProductionEnvironment: boolean;
+    @Input() recreateBuildPlans: boolean;
+    @Input() onRecreateBuildPlanOrUpdateTemplateChange: () => void;
+    @Input() updateTemplate: boolean;
 
     currentStep: number;
 

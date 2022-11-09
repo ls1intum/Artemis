@@ -50,7 +50,8 @@
                     "languageStepTitle": "Programmiersprache",
                     "languageStepMessage": "Lege die gewählte Programmiersprache sowie den Projekttyp für die neue Übung fest.",
                     "gradingStepTitle": "Grading",
-                    "problemStepTitle": "Problem"
+                    "problemStepTitle": "Aufgabenstellung",
+                    "problemStepMessage": "Lege die Aufgabenstellung für die neue Übung fest."
                 }
             },
             "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein.",

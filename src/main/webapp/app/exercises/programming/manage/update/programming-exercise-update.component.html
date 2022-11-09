@@ -37,6 +37,17 @@
         [projectTypes]="projectTypes"
         [selectedProjectType]="selectedProjectType"
         [onProjectTypeChange]="onProjectTypeChange"
+        [problemStatementLoaded]="problemStatementLoaded"
+        [templateParticipationResultLoaded]="templateParticipationResultLoaded"
+        [hasUnsavedChanges]="hasUnsavedChanges"
+        [rerenderSubject]="rerenderSubject"
+        [sequentialTestRunsAllowed]="sequentialTestRunsAllowed"
+        [checkoutSolutionRepositoryAllowed]="checkoutSolutionRepositoryAllowed"
+        [validIdeSelection]="validIdeSelection"
+        [inProductionEnvironment]="inProductionEnvironment"
+        [recreateBuildPlans]="recreateBuildPlans"
+        [onRecreateBuildPlanOrUpdateTemplateChange]="onRecreateBuildPlanOrUpdateTemplateChange"
+        [updateTemplate]="updateTemplate"
     ></jhi-programming-exercise-update-wizard>
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImport && !programmingExercise.id">
