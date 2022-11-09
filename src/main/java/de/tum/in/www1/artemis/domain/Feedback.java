@@ -425,6 +425,11 @@ public class Feedback extends DomainObject {
         return totalScore;
     }
 
+    /**
+     * Checks whether the feedback contains any additional feedback text
+     *
+     * @return true if the feedback contains additional feedback text, false otherwise
+     */
     @JsonIgnore
     public boolean hasDetails() {
         return !Boolean.TRUE.equals(isPositive()) || detailText != null || gradingInstruction != null;

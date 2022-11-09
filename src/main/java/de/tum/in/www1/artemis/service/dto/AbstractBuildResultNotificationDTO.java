@@ -54,12 +54,27 @@ public abstract class AbstractBuildResultNotificationDTO {
 
     public abstract List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage);
 
+    /**
+     * Gets the build jobs that are part of the build result.
+     *
+     * @return list of build jobs.
+     */
     @JsonIgnore
     public abstract List<? extends BuildJobDTOInterface> getBuildJobs();
 
+    /**
+     * Gets the static code analysis reports that are part of the build result.
+     *
+     * @return list of static code analysis reports.
+     */
     @JsonIgnore
     public abstract List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports();
 
+    /**
+     * Gets the testwise coverage reports that are part of the build result.
+     *
+     * @return list of testwise coverage reports.
+     */
     @JsonIgnore
     public abstract List<TestwiseCoverageReportDTO> getTestwiseCoverageReports();
 }
