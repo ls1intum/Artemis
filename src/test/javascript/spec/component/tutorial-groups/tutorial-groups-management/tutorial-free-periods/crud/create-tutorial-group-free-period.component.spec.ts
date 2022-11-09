@@ -45,6 +45,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
                 component = fixture.componentInstance;
                 component.tutorialGroupConfigurationId = configurationId;
                 component.course = course;
+                component.initialize();
                 tutorialGroupFreePeriodService = TestBed.inject(TutorialGroupFreePeriodService);
             });
     });

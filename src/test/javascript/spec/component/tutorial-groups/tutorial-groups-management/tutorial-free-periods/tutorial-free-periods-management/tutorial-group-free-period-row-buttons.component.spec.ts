@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
@@ -10,12 +10,12 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 import { generateExampleTutorialGroupFreePeriod } from '../../../helpers/tutorialGroupFreePeriodExampleModel';
-import { MockRouter } from '../../../../../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Course } from 'app/entities/course.model';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
 
 describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodRowButtonsComponent>;
@@ -24,8 +24,6 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     const course = { id: 1 } as Course;
     let configuration: TutorialGroupsConfiguration;
     let tutorialFreePeriod: TutorialGroupFreePeriod;
-
-    const router = new MockRouter();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -37,7 +35,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [MockProvider(TutorialGroupFreePeriodService), { provide: Router, useValue: router }],
+            providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(NgbModal)],
         })
             .compileComponents()
             .then(() => {
@@ -65,25 +63,33 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should navigate to edit page when edit button is clicked', fakeAsync(() => {
-        fixture.detectChanges();
-        const navigateSpy = jest.spyOn(router, 'navigateByUrl');
+    it('should open the edit free day dialog when the respective button is clicked', fakeAsync(() => {
+        const modalService = TestBed.inject(NgbModal);
+        const mockModalRef = {
+            componentInstance: {
+                course: undefined,
+                tutorialGroupFreePeriod: undefined,
+                tutorialGroupsConfiguration: undefined,
 
-        const editButton = fixture.debugElement.nativeElement.querySelector('#edit-' + tutorialFreePeriod.id);
-        editButton.click();
+                initialize: () => {},
+            },
+            result: of(),
+        };
+        const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+
+        fixture.detectChanges();
+        const openDialogSpy = jest.spyOn(component, 'openEditFreeDayDialog');
+
+        const button = fixture.debugElement.nativeElement.querySelector('#edit-' + tutorialFreePeriod.id);
+        button.click();
 
         fixture.whenStable().then(() => {
-            expect(navigateSpy).toHaveBeenCalledOnce();
-            expect(navigateSpy).toHaveBeenCalledWith([
-                '/course-management',
-                course.id,
-                'tutorial-groups',
-                'configuration',
-                configuration.id,
-                'tutorial-free-days',
-                tutorialFreePeriod.id,
-                'edit',
-            ]);
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(modalOpenSpy).toHaveBeenCalledOnce();
+            expect(modalOpenSpy).toHaveBeenCalledWith(EditTutorialGroupFreePeriodComponent, { backdrop: 'static', scrollable: false, size: 'lg' });
+            expect(mockModalRef.componentInstance.tutorialGroupFreePeriod).toEqual(tutorialFreePeriod);
+            expect(mockModalRef.componentInstance.tutorialGroupsConfiguration).toEqual(configuration);
+            expect(mockModalRef.componentInstance.course).toEqual(course);
         });
     }));
 

@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
@@ -9,7 +9,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { Router } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
@@ -17,24 +16,27 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutor
 import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
-import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupSessionRowStubComponent, TutorialGroupSessionsTableStubComponent } from '../../../stubs/tutorial-group-sessions-table-stub.component';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 @Component({ selector: 'jhi-tutorial-group-session-row-buttons', template: '' })
 class TutorialGroupSessionRowButtonsStubComponent {
     @Input() course: Course;
-    @Input() tutorialGroupId: number;
+    @Input() tutorialGroup: TutorialGroup;
     @Input() tutorialGroupSession: TutorialGroupSession;
 
     @Output() tutorialGroupSessionDeleted = new EventEmitter<void>();
+    @Output() tutorialGroupEdited = new EventEmitter<void>();
     @Output() cancelOrActivatePressed = new EventEmitter<void>();
 }
 describe('TutorialGroupSessionsManagement', () => {
     let fixture: ComponentFixture<TutorialGroupSessionsManagementComponent>;
     let component: TutorialGroupSessionsManagementComponent;
-    const courseId = 1;
+    let activeModal: NgbActiveModal;
+    let modalService: NgbModal;
+
     const tutorialGroupId = 2;
 
     let tutorialGroupService: TutorialGroupsService;
@@ -43,12 +45,12 @@ describe('TutorialGroupSessionsManagement', () => {
     let pastSession: TutorialGroupSession;
     let upcomingSession: TutorialGroupSession;
     let tutorialGroup: TutorialGroup;
+
     const course = {
-        id: courseId,
+        id: 1,
         timeZone: 'Europe/Berlin',
     } as Course;
 
-    const router = new MockRouter();
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
@@ -61,18 +63,14 @@ describe('TutorialGroupSessionsManagement', () => {
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
             ],
-            providers: [
-                MockProvider(TutorialGroupsService),
-                MockProvider(AlertService),
-                SortService,
-                { provide: Router, useValue: router },
-                mockedActivatedRoute({ tutorialGroupId }, {}, { course }, {}),
-            ],
+            providers: [MockProvider(TutorialGroupsService), MockProvider(AlertService), MockProvider(NgbActiveModal), MockProvider(NgbModal), SortService],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupSessionsManagementComponent);
                 component = fixture.componentInstance;
+                activeModal = TestBed.inject(NgbActiveModal);
+                modalService = TestBed.inject(NgbModal);
 
                 pastSession = generateExampleTutorialGroupSession({
                     id: 1,
@@ -91,6 +89,10 @@ describe('TutorialGroupSessionsManagement', () => {
 
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
                 getOneOfCourseSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
+
+                component.course = course;
+                component.tutorialGroupId = tutorialGroupId;
+                component.initialize();
             });
     });
 
@@ -102,22 +104,24 @@ describe('TutorialGroupSessionsManagement', () => {
         fixture.detectChanges();
         expect(component).toBeTruthy();
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
-        expect(getOneOfCourseSpy).toHaveBeenCalledWith(courseId, tutorialGroupId);
+        expect(getOneOfCourseSpy).toHaveBeenCalledWith(course.id!, tutorialGroupId);
         expect(component.tutorialGroup).toEqual(tutorialGroup);
         expect(component.tutorialGroupSchedule).toEqual(tutorialGroup.tutorialGroupSchedule);
-        expect(component.course.id).toEqual(courseId);
+        expect(component.course).toEqual(course);
     });
 
-    it('should navigate to create session page', fakeAsync(() => {
+    it('should open create session dialog', fakeAsync(() => {
         fixture.detectChanges();
-        const navigateSpy = jest.spyOn(router, 'navigateByUrl');
+        const openSpy = jest
+            .spyOn(modalService, 'open')
+            .mockReturnValue({ componentInstance: { tutorialGroup: undefined, course: undefined, initialize: () => {} }, result: of() } as any);
 
         const editButton = fixture.debugElement.nativeElement.querySelector('#create-session-button');
         editButton.click();
 
         fixture.whenStable().then(() => {
-            expect(navigateSpy).toHaveBeenCalledOnce();
-            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups', tutorialGroup.id, 'sessions', 'create']);
+            expect(openSpy).toHaveBeenCalledOnce();
+            expect(openSpy).toHaveBeenCalledWith(CreateTutorialGroupSessionComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         });
     }));
 });

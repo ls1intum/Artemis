@@ -1,11 +1,9 @@
 import { Component, Input } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -31,13 +29,7 @@ export class EditTutorialGroupFreePeriodComponent {
     isInitialized = false;
 
     formData: TutorialGroupFreePeriodFormData;
-    constructor(
-        private activeModal: NgbActiveModal,
-        private router: Router,
-        private tutorialGroupService: TutorialGroupsService,
-        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
-        private alertService: AlertService,
-    ) {}
+    constructor(private activeModal: NgbActiveModal, private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService, private alertService: AlertService) {}
 
     initialize() {
         if (!this.tutorialGroupFreePeriod || !this.course || !this.tutorialGroupsConfiguration) {

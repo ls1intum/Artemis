@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
@@ -22,6 +22,8 @@ import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { Course } from 'app/entities/course.model';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 
 @Component({ selector: 'jhi-tutorial-group-free-period-row-buttons', template: '' })
 class TutorialGroupRowButtonsStubComponent {
@@ -61,6 +63,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(AlertService),
+                MockProvider(NgbModal),
                 SortService,
                 { provide: Router, useValue: router },
                 mockedActivatedRoute({}, {}, { course }, {}),
@@ -106,13 +109,26 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should navigate to create page', fakeAsync(() => {
+    it('should open the create free day dialog when the respective button is clicked', fakeAsync(() => {
+        const modalService = TestBed.inject(NgbModal);
+        const mockModalRef = {
+            componentInstance: { course: undefined, tutorialGroupConfigurationId: undefined, initialize: () => {} },
+            result: of(),
+        };
+        const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+
         fixture.detectChanges();
-        const navigateSpy = jest.spyOn(router, 'navigateByUrl');
-        const createButton = fixture.debugElement.nativeElement.querySelector('#create-tutorial-free-day');
-        createButton.click();
+        const openDialogSpy = jest.spyOn(component, 'openCreateFreeDayDialog');
+
+        const button = fixture.debugElement.nativeElement.querySelector('#create-tutorial-free-day');
+        button.click();
+
         fixture.whenStable().then(() => {
-            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups', 'configuration', configuration.id, 'tutorial-free-days', 'create']);
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(modalOpenSpy).toHaveBeenCalledOnce();
+            expect(modalOpenSpy).toHaveBeenCalledWith(CreateTutorialGroupFreePeriodComponent, { backdrop: 'static', scrollable: false, size: 'lg' });
+            expect(mockModalRef.componentInstance.tutorialGroupConfigurationId).toEqual(configuration.id);
+            expect(mockModalRef.componentInstance.course).toEqual(course);
         });
     }));
 

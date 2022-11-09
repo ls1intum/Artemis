@@ -43,7 +43,7 @@ export class TutorialGroupSessionRowButtonsComponent {
         });
     };
 
-    openCancellationModal(session: TutorialGroupSession): void {
+    openCancellationDialog(session: TutorialGroupSession): void {
         const modalRef = this.modalService.open(CancellationModalComponent);
         modalRef.componentInstance.tutorialGroupSession = session;
         modalRef.componentInstance.course = this.course;

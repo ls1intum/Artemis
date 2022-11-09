@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -25,18 +24,16 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 describe('CreateTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupSessionComponent>;
     let component: CreateTutorialGroupSessionComponent;
-    let tutorialGroupService: TutorialGroupsService;
     let tutorialGroupSessionService: TutorialGroupSessionService;
     const course = { id: 2, timeZone: 'Europe/Berlin' } as Course;
     let tutorialGroup: TutorialGroup;
     let activeModal: NgbActiveModal;
 
-    let findTutorialGroupSpy: jest.SpyInstance;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [CreateTutorialGroupSessionComponent, LoadingIndicatorContainerStubComponent, TutorialGroupSessionFormStubComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(TutorialGroupsService), MockProvider(TutorialGroupSessionService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
+            providers: [MockProvider(TutorialGroupSessionService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
         })
             .compileComponents()
             .then(() => {
@@ -46,11 +43,9 @@ describe('CreateTutorialGroupSessionComponent', () => {
                 component = fixture.componentInstance;
                 component.course = course;
                 component.tutorialGroup = tutorialGroup;
+                component.initialize();
 
-                tutorialGroupService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupSessionService = TestBed.inject(TutorialGroupSessionService);
-
-                findTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: generateExampleTutorialGroup({}) })));
             });
     });
 

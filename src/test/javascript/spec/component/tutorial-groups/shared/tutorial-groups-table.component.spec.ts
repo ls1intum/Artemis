@@ -11,6 +11,8 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { Component, Input, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { TutorialGroupRowStubComponent } from '../stubs/tutorial-groups-table-stub.component';
+import { Course } from 'app/entities/course.model';
+import { By } from '@angular/platform-browser';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumn {
@@ -20,7 +22,7 @@ class MockExtraColumn {
 @Component({
     selector: 'jhi-mock-wrapper',
     template: `
-        <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [courseId]="courseId" [showIdColumn]="true">
+        <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [course]="course" [showIdColumn]="true">
             <ng-template let-tutorialGroup>
                 <jhi-mock-extra-column [tutorialGroup]="tutorialGroup"></jhi-mock-extra-column>
             </ng-template>
@@ -32,7 +34,7 @@ class MockWrapper {
     tutorialGroups: TutorialGroup[];
 
     @Input()
-    courseId: number;
+    course: Course;
 
     @ViewChild(TutorialGroupsTableComponent)
     tutorialGroupTableInstance: TutorialGroupsTableComponent;
@@ -48,6 +50,10 @@ describe('TutorialGroupTableWrapperTest', () => {
     let mockExtraColumns: MockExtraColumn[];
     let tutorialGroupOne: TutorialGroup;
     let tutorialGroupTwo: TutorialGroup;
+    const course = {
+        id: 1,
+        title: 'Test Course',
+    } as Course;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -71,7 +77,7 @@ describe('TutorialGroupTableWrapperTest', () => {
                 tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
                 tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
                 component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo];
-                component.courseId = 1;
+                component.course = course;
                 fixture.detectChanges();
                 tableInstance = component.tutorialGroupTableInstance;
                 mockExtraColumns = component.mockExtraColumns.toArray();
@@ -84,7 +90,7 @@ describe('TutorialGroupTableWrapperTest', () => {
 
     it('should pass the tutorialGroup to the headers', () => {
         expect(tableInstance.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
-        expect(tableInstance.courseId).toBe(1);
+        expect(tableInstance.course).toEqual(course);
         expect(mockExtraColumns).toHaveLength(2);
         mockExtraColumns.sort((a, b) => a.tutorialGroup!.id! - b.tutorialGroup!.id!);
         expect(mockExtraColumns[0].tutorialGroup).toEqual(tutorialGroupOne);
@@ -99,11 +105,16 @@ describe('TutorialGroupsTableComponent', () => {
 
     let tutorialGroupOne: TutorialGroup;
     let tutorialGroupTwo: TutorialGroup;
+    const course = {
+        id: 1,
+        title: 'Test Course',
+    } as Course;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
                 TutorialGroupsTableComponent,
+                TutorialGroupRowStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
@@ -119,7 +130,7 @@ describe('TutorialGroupsTableComponent', () => {
                 tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
                 tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
                 component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo];
-                component.courseId = 1;
+                component.course = course;
                 component.showIdColumn = true;
             });
     });
@@ -151,8 +162,11 @@ describe('TutorialGroupsTableComponent', () => {
         const tutorialGroupClickHandler = jest.fn();
         component.tutorialGroupClickHandler = tutorialGroupClickHandler;
         fixture.detectChanges();
-        const courseLink = fixture.debugElement.nativeElement.querySelector('#id-1');
-        courseLink.click();
+        // get first instance of tutorialGroupRowStubComponent
+        const tutorialGroupRowStubComponents = fixture.debugElement.queryAll(By.directive(TutorialGroupRowStubComponent));
+        expect(tutorialGroupRowStubComponents).toHaveLength(2);
+        tutorialGroupRowStubComponents[0].componentInstance.tutorialGroupClickHandler(tutorialGroupOne);
+
         expect(tutorialGroupClickHandler).toHaveBeenCalledOnce();
         expect(tutorialGroupClickHandler).toHaveBeenCalledWith(tutorialGroupOne);
     });

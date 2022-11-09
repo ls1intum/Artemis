@@ -1,6 +1,6 @@
 import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-tutorial-groups-table',
@@ -20,7 +20,7 @@ export class TutorialGroupsTableStubComponent {
     tutorialGroups: TutorialGroup[] = [];
 
     @Input()
-    courseId: number;
+    course: Course;
 
     @Input()
     tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;
@@ -48,6 +48,8 @@ export class TutorialGroupRowStubComponent {
     @Input() extraColumn: TemplateRef<any>;
 
     @Input() tutorialGroup: TutorialGroup;
+
+    @Input() course: Course;
 
     @Input()
     tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;

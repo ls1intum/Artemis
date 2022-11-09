@@ -36,7 +36,6 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private alertService: AlertService,
         private sortService: SortService,
-
         private modalService: NgbModal,
     ) {}
 
