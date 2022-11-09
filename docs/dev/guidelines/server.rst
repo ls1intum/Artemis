@@ -293,24 +293,46 @@ For more details, please visit the :doc:`./criteria-builder` page.
 21. REST endpoint best practices for authorization
 ==================================================
 
-To prevent unauthorized access to resources Artemis employs a two-step system:
+To reject unauthorized requests as early as possible, Artemis employs a two-step system:
 
-#. ``PreAuthorize`` annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
+#. ``PreAuthorize`` and ``Enforce`` annotations are responsible for blocking users with wrong or missing authorization roles without querying the database.
 #. The ``AuthorizationCheckService`` is responsible for checking access rights to individual resources by querying the database.
 
-Because the first method without database queries is substantially faster, always annotate your REST endpoints with ``@PreAuthorize``. Pass the role with the *least* permissions as parameter to the ``hasRole`` method.
+Because the first method without database queries is substantially faster, always annotate your REST endpoints with the corresponding annotation. Always use the annotation for the minimum role that has access.
 The following example makes the call only accessible to ADMIN and INSTRUCTOR users:
 
 .. code-block:: java
 
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
+        var exercise = programmingExerciseRepository.findById(exerciseId);
+        authCheckService.isAtLeastInstructorForExercise(exercise);
+        [...]
+        return ResponseEntity.ok(programmingExerciseRepository.findById(exerciseId));
     }
 
 Artemis distinguishes between six different roles: ADMIN, INSTRUCTOR, EDITOR, TA (teaching assistant), USER and ANONYMOUS.
 Each of the roles has the all the access rights of the roles following it, e.g. ANONYMOUS has almost no rights, while ADMIN users can access every page.
 
-If a user passes the ``PreAuthorize`` check, the access to individual resources like courses and exercises still has to be checked. (A user can be a teaching assistant in one course, but only a student in another, for example.)
+The table contains all annotations for the corresponding minimum role. Different annotations get used during migration.
+
++------------------+----------------------------------------+
+| **Minimum Role** | **Endpoint Annotation**                |
++------------------+----------------------------------------+
+| ADMIN            | @EnforceAdmin                          |
++------------------+----------------------------------------+
+| INSTRUCTOR       | @PreAuthorize("hasRole('INSTRUCTOR')") |
++------------------+----------------------------------------+
+| EDITOR           | @PreAuthorize("hasRole('Editor')")     |
++------------------+----------------------------------------+
+| TA               | @PreAuthorize("hasRole('TA')")         |
++------------------+----------------------------------------+
+| USER             | @PreAuthorize("hasRole('USER')")       |
++------------------+----------------------------------------+
+| ANONYMOUS        | @PreAuthorize("permitAll()")           |
++------------------+----------------------------------------+
+
+If a user passes the pre-authorization, the access to individual resources like courses and exercises still has to be checked. For example, a user can be a teaching assistant in one course, but only a student in another.
 However, do not fetch the user from the database yourself (unless you need to re-use the user object), but only hand a role to the ``AuthorizationCheckService``:
 
 .. code-block:: java
