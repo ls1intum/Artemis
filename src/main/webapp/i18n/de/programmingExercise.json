@@ -49,7 +49,8 @@
                     "difficultyStepMessage": "Lege die Schwierigkeit für die neue Übung fest.",
                     "languageStepTitle": "Programmiersprache",
                     "languageStepMessage": "Lege die gewählte Programmiersprache sowie den Projekttyp für die neue Übung fest.",
-                    "gradingStepTitle": "Grading",
+                    "gradingStepTitle": "Benotung",
+                    "gradingStepMessage": "Lege fest, wie Studenten bei dieser Übung benotet werden sollen.",
                     "problemStepTitle": "Aufgabenstellung",
                     "problemStepMessage": "Lege die Aufgabenstellung für die neue Übung fest."
                 }

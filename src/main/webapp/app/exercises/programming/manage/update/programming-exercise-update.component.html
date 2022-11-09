@@ -48,6 +48,9 @@
         [recreateBuildPlans]="recreateBuildPlans"
         [onRecreateBuildPlanOrUpdateTemplateChange]="onRecreateBuildPlanOrUpdateTemplateChange"
         [updateTemplate]="updateTemplate"
+        [staticCodeAnalysisAllowed]="staticCodeAnalysisAllowed"
+        [onStaticCodeAnalysisChanged]="onStaticCodeAnalysisChanged"
+        [maxPenaltyPattern]="maxPenaltyPattern"
     ></jhi-programming-exercise-update-wizard>
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImport && !programmingExercise.id">

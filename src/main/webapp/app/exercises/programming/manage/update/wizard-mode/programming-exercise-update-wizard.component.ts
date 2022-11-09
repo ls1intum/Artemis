@@ -61,6 +61,11 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() selectedProjectType: ProjectType;
     @Input() onProjectTypeChange: (projectType: ProjectType) => ProjectType;
 
+    // Grading Step
+    @Input() staticCodeAnalysisAllowed: boolean;
+    @Input() onStaticCodeAnalysisChanged: () => void;
+    @Input() maxPenaltyPattern: string;
+
     // Problem Step
     @Input() problemStatementLoaded: boolean;
     @Input() templateParticipationResultLoaded: boolean;

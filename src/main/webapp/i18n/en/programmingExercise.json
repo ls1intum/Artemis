@@ -50,6 +50,7 @@
                     "languageStepTitle": "Programming Language",
                     "languageStepMessage": "Specify the chosen programming language as well as the project type for the new exercise.",
                     "gradingStepTitle": "Grading",
+                    "gradingStepMessage": "Specify how students should be graded when completing this exercise.",
                     "problemStepTitle": "Problem Statement",
                     "problemStepMessage": "Specify the problem statement for the new exercise."
                 }

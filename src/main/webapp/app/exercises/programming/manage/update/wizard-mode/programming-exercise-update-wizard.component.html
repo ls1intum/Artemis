@@ -52,6 +52,16 @@
         [onProjectTypeChange]="onProjectTypeChange"
     ></jhi-programming-exercise-update-wizard-language>
 
+    <jhi-programming-exercise-update-wizard-grading
+        class="form-step"
+        *ngIf="currentStep >= 4"
+        [isImport]="isImport"
+        [programmingExercise]="programmingExercise"
+        [staticCodeAnalysisAllowed]="staticCodeAnalysisAllowed"
+        [onStaticCodeAnalysisChanged]="onStaticCodeAnalysisChanged"
+        [maxPenaltyPattern]="maxPenaltyPattern"
+    ></jhi-programming-exercise-update-wizard-grading>
+
     <jhi-programming-exercise-update-wizard-problem
         class="form-step"
         *ngIf="currentStep >= 5"
