@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -220,7 +219,7 @@ public class TextExerciseResource {
      * @param courseId id of the course of which all the exercises should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of textExercises in body
      */
-    @GetMapping(value = "courses/{courseId}/text-exercises")
+    @GetMapping("courses/{courseId}/text-exercises")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<TextExercise>> getTextExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
@@ -357,23 +356,6 @@ public class TextExerciseResource {
         }
 
         return ResponseEntity.ok(participation);
-    }
-
-    /**
-     * POST /text-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment
-     * (clustering task) for given exercise id As the clustering can be performed on a different
-     * node, this will always return 200, despite an error could occur on the other node.
-     *
-     * @param exerciseId id of the exercised that for which the automatic assessment should be
-     *                   triggered
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PostMapping("text-exercises/{exerciseId}/trigger-automatic-assessment")
-    @EnforceAdmin
-    // TODO: /admin
-    public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {
-        instanceMessageSendService.sendTextExerciseInstantClustering(exerciseId);
-        return ResponseEntity.ok().build();
     }
 
     /**
@@ -516,7 +498,7 @@ public class TextExerciseResource {
      * (Internal Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("text-exercises/re-evaluate")
+    @PutMapping("text-exercises/{exerciseId}/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody TextExercise textExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
