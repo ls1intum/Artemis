@@ -1,4 +1,4 @@
-# this profile contains the default variables for the docker-compose setups
+# this profile contains the default variables for the docker compose setups
 # TODO: check if this can be solved different without having to load the docker profile
 spring:
     datasource:

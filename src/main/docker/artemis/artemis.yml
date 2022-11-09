@@ -20,7 +20,7 @@ services:
             - artemis-data:/opt/artemis/data
             - ../../resources/config/application-local.yml:/opt/artemis/config/application-local.yml:ro
         # environments can also be used for custom overrides (alternative to application-local.yml volume)
-        # the following environments are necessary for docker images orchestrated by docker-compose
+        # the following environments are necessary for docker images orchestrated by docker compose
         environment:
             _JAVA_OPTIONS: -Xmx5120m -Xms2560m
             SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,athene,docker,local

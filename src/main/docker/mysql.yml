@@ -15,7 +15,7 @@ services:
         ports:
             - 3306:3306
         command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
-        # mbind: Operation not permitted workaround for docker-compose (see https://github.com/docker-library/mysql/issues/303)
+        # mbind: Operation not permitted workaround for docker compose (see https://github.com/docker-library/mysql/issues/303)
         cap_add:
             - SYS_NICE  # CAP_SYS_NICE
         networks:
