@@ -8,6 +8,58 @@
         </div>
         <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="false" [readOnly]="false"></jhi-programming-exercise-lifecycle>
     </div>
+    <div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && staticCodeAnalysisAllowed">
+        <div class="form-check custom-control custom-checkbox">
+            <input
+                type="checkbox"
+                class="form-check-input custom-control-input"
+                id="field_staticCodeAnalysisEnabled"
+                name="staticCodeAnalysisEnabled"
+                [disabled]="!!programmingExercise.sequentialTestRuns || (!isImport && !!programmingExercise.id)"
+                [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
+                (change)="onStaticCodeAnalysisChanged()"
+            />
+            <label class="form-check-label custom-control-label" for="field_staticCodeAnalysisEnabled" jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">
+                Enable Static Code Analysis</label
+            >
+            <fa-icon
+                [icon]="faQuestionCircle"
+                class="text-secondary"
+                placement="auto"
+                ngbTooltip="{{ 'artemisApp.programmingExercise.enableStaticCodeAnalysis.description' | artemisTranslate }}"
+            ></fa-icon>
+        </div>
+        <ng-container *ngIf="programmingExercise.staticCodeAnalysisEnabled">
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty"
+                >Max Static Code Analysis Penalty</label
+            >
+            <fa-icon
+                [icon]="faQuestionCircle"
+                class="text-secondary"
+                placement="auto"
+                ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate }}"
+            ></fa-icon>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">%</span>
+                </div>
+                <input
+                    type="number"
+                    [pattern]="maxPenaltyPattern"
+                    class="form-control"
+                    name="maxPenalty"
+                    id="field_maxPenalty"
+                    [(ngModel)]="programmingExercise.maxStaticCodeAnalysisPenalty"
+                    #maxPenalty="ngModel"
+                />
+            </div>
+            <ng-container *ngFor="let e of maxPenalty.errors! | keyvalue">
+                <div *ngIf="maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)" class="alert alert-danger">
+                    <div [jhiTranslate]="'artemisApp.exercise.form.maxPenalty' + '.' + e.key"></div>
+                </div>
+            </ng-container>
+        </ng-container>
+    </div>
     <div class="form-group">
         <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScore' + (programmingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate }}</label>
         <div>
@@ -67,58 +119,6 @@
             <ngb-alert [dismissible]="false" [type]="'info'">
                 <span>{{ 'artemisApp.programmingExercise.submissionPolicy.editInGradingInformation' | artemisTranslate }}</span>
             </ngb-alert>
-        </ng-container>
-    </div>
-    <div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && staticCodeAnalysisAllowed">
-        <div class="form-check custom-control custom-checkbox">
-            <input
-                type="checkbox"
-                class="form-check-input custom-control-input"
-                id="field_staticCodeAnalysisEnabled"
-                name="staticCodeAnalysisEnabled"
-                [disabled]="!!programmingExercise.sequentialTestRuns || (!isImport && !!programmingExercise.id)"
-                [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
-                (change)="onStaticCodeAnalysisChanged()"
-            />
-            <label class="form-check-label custom-control-label" for="field_staticCodeAnalysisEnabled" jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">
-                Enable Static Code Analysis</label
-            >
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary"
-                placement="auto"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.enableStaticCodeAnalysis.description' | artemisTranslate }}"
-            ></fa-icon>
-        </div>
-        <ng-container *ngIf="programmingExercise.staticCodeAnalysisEnabled">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty"
-                >Max Static Code Analysis Penalty</label
-            >
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary"
-                placement="auto"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate }}"
-            ></fa-icon>
-            <div class="input-group">
-                <div class="input-group-prepend">
-                    <span class="input-group-text">%</span>
-                </div>
-                <input
-                    type="number"
-                    [pattern]="maxPenaltyPattern"
-                    class="form-control"
-                    name="maxPenalty"
-                    id="field_maxPenalty"
-                    [(ngModel)]="programmingExercise.maxStaticCodeAnalysisPenalty"
-                    #maxPenalty="ngModel"
-                />
-            </div>
-            <ng-container *ngFor="let e of maxPenalty.errors! | keyvalue">
-                <div *ngIf="maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)" class="alert alert-danger">
-                    <div [jhiTranslate]="'artemisApp.exercise.form.maxPenalty' + '.' + e.key"></div>
-                </div>
-            </ng-container>
         </ng-container>
     </div>
     <jhi-presentation-score-checkbox [exercise]="programmingExercise"></jhi-presentation-score-checkbox>
