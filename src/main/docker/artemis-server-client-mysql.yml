@@ -12,6 +12,8 @@
 
 services:
   artemis-server:
+    # TODO: the command is outdated: either see the ansible script or the docs at
+    # https://artemis-platform.readthedocs.io/en/latest/dev/setup/#run-the-server-via-a-service-configuration
     command: >
       sh -c "(apt update && apt install -y fontconfig ttf-dejavu graphviz || true)
       && ./gradlew build -x webapp -x test -x jacocoTestCoverageVerification -x spotlessCheck -x checkstyleMain -x checkstyleTest
