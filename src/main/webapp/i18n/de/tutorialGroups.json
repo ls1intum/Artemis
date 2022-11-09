@@ -1,7 +1,8 @@
 {
     "artemisApp": {
         "errors": {
-            "scheduleOverlapsWithSession": "Der Zeitplan überschneidet sich mit den folgenden Sitzungen: {{ sessions }}"
+            "scheduleOverlapsWithSession": "Der Zeitplan überschneidet sich mit den folgenden Sitzungen: {{ sessions }}",
+            "sessionOverlapsWithSession": "Die Sitzung überschneidet sich mit folgenden Sitzungen: {{ sessions }}"
         },
         "generic": {
             "offline": "Offline",

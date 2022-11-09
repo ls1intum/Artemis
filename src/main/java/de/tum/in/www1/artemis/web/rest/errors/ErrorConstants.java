@@ -44,6 +44,8 @@ public final class ErrorConstants {
 
     public static final URI SCHEDULE_OVERLAPS_WITH_SESSION = URI.create(PROBLEM_BASE_URL + "/schedule-overlaps-with-session");
 
+    public static final URI SESSION_OVERLAPS_WITH_SESSION = URI.create(PROBLEM_BASE_URL + "/session-overlaps-with-session");
+
     private ErrorConstants() {
     }
 }

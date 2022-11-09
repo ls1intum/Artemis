@@ -6,7 +6,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -29,6 +31,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.SessionOverlapsWithSessionException;
 
 @RestController
 @RequestMapping("/api")
@@ -121,7 +124,7 @@ public class TutorialGroupSessionResource {
         sessionToUpdate.setEnd(updatedSession.getEnd());
         sessionToUpdate.setLocation(updatedSession.getLocation());
 
-        isValidTutorialGroupSession(sessionToUpdate);
+        isValidTutorialGroupSession(sessionToUpdate, ZoneId.of(configuration.getCourse().getTimeZone()));
 
         // if the session belongs to a schedule we have to cut the connection to mark that it does not follow the schedule anymore
         if (sessionToUpdate.getTutorialGroupSchedule() != null) {
@@ -196,7 +199,7 @@ public class TutorialGroupSessionResource {
         TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(configuration);
         newSession.setTutorialGroup(tutorialGroup);
         checkEntityIdMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
-        isValidTutorialGroupSession(newSession);
+        isValidTutorialGroupSession(newSession, ZoneId.of(configuration.getCourse().getTimeZone()));
 
         var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroup.getCourse(), newSession.getStart(), newSession.getEnd());
         if (overlappingPeriod.isPresent()) {
@@ -280,15 +283,15 @@ public class TutorialGroupSessionResource {
         });
     }
 
-    private void isValidTutorialGroupSession(TutorialGroupSession tutorialGroupSession) {
-        this.checkForOverlapWithOtherSessions(tutorialGroupSession);
+    private void isValidTutorialGroupSession(TutorialGroupSession tutorialGroupSession, ZoneId zoneId) {
+        this.checkForOverlapWithOtherSessions(tutorialGroupSession, zoneId);
     }
 
-    private void checkForOverlapWithOtherSessions(TutorialGroupSession session) {
+    private void checkForOverlapWithOtherSessions(TutorialGroupSession session, ZoneId zoneId) {
         var overlappingSessions = tutorialGroupSessionRepository.findOverlappingInSameTutorialGroup(session.getTutorialGroup(), session.getStart(), session.getEnd()).stream()
-                .filter(overlappingSession -> !overlappingSession.getId().equals(session.getId())).toList();
+                .filter(overlappingSession -> !overlappingSession.getId().equals(session.getId())).collect(Collectors.toSet());
         if (!overlappingSessions.isEmpty()) {
-            throw new BadRequestAlertException("The given session overlaps with another session in the same tutorial group", ENTITY_NAME, "overlapping");
+            throw new SessionOverlapsWithSessionException(overlappingSessions, zoneId);
         }
     }
 

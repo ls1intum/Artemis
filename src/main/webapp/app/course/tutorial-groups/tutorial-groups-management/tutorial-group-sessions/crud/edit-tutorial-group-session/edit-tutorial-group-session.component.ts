@@ -4,7 +4,6 @@ import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutoria
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -69,10 +68,21 @@ export class EditTutorialGroupSessionComponent {
                     this.activeModal.close();
                 },
                 error: (res: HttpErrorResponse) => {
-                    onError(this.alertService, res);
+                    this.onError(res);
                     this.clear();
                 },
             });
+    }
+
+    onError(httpErrorResponse: HttpErrorResponse) {
+        const error = httpErrorResponse.error;
+        if (error && error.errorKey && error.errorKey === 'sessionOverlapsWithSession') {
+            this.alertService.error(error.message, error.params);
+        } else {
+            this.alertService.error('error.unexpectedError', {
+                error: httpErrorResponse.message,
+            });
+        }
     }
 
     clear() {

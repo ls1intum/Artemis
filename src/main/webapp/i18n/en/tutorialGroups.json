@@ -1,7 +1,8 @@
 {
     "artemisApp": {
         "errors": {
-            "scheduleOverlapsWithSession": "The schedule overlaps with the following sessions: {{ sessions }}"
+            "scheduleOverlapsWithSession": "The schedule overlaps with the following sessions: {{ sessions }}",
+            "sessionOverlapsWithSession": "The session overlaps with the following sessions: {{ sessions }}"
         },
         "generic": {
             "offline": "Offline",
