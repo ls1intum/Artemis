@@ -24,12 +24,12 @@ public record TestSuiteDTO(String name, double time, int errors, int skipped, in
     }
 
     @Override
-    public List<TestCaseDTOInterface> getFailedTests() {
-        return testCases.stream().filter(testCase -> !testCase.isSuccessful()).map(TestCaseDTOInterface.class::cast).toList();
+    public List<? extends TestCaseDTOInterface> getFailedTests() {
+        return testCases.stream().filter(testCase -> !testCase.isSuccessful()).toList();
     }
 
     @Override
-    public List<TestCaseDTOInterface> getSuccessfulTests() {
-        return testCases.stream().filter(TestCaseDTO::isSuccessful).map(TestCaseDTOInterface.class::cast).toList();
+    public List<? extends TestCaseDTOInterface> getSuccessfulTests() {
+        return testCases.stream().filter(TestCaseDTO::isSuccessful).toList();
     }
 }

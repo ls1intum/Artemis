@@ -7,8 +7,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public interface BuildJobDTOInterface {
 
     @JsonIgnore
-    List<TestCaseDTOInterface> getFailedTests();
+    List<? extends TestCaseDTOInterface> getFailedTests();
 
     @JsonIgnore
-    List<TestCaseDTOInterface> getSuccessfulTests();
+    List<? extends TestCaseDTOInterface> getSuccessfulTests();
 }

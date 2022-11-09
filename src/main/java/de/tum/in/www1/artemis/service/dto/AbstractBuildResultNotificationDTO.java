@@ -55,7 +55,7 @@ public abstract class AbstractBuildResultNotificationDTO {
     public abstract List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage);
 
     @JsonIgnore
-    public abstract List<BuildJobDTOInterface> getBuildJobs();
+    public abstract List<? extends BuildJobDTOInterface> getBuildJobs();
 
     @JsonIgnore
     public abstract List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports();

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -150,8 +149,8 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return commits;
     }
 
-    public List<BuildJobDTOInterface> getResults() {
-        return new ArrayList<>(results);
+    public List<TestSuiteDTO> getResults() {
+        return results;
     }
 
     @Override
@@ -182,7 +181,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     }
 
     @Override
-    public List<BuildJobDTOInterface> getBuildJobs() {
+    public List<? extends BuildJobDTOInterface> getBuildJobs() {
         return getResults();
     }
 
