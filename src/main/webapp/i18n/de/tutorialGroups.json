@@ -33,7 +33,8 @@
                 "teachingAssistant": "Tutor:in",
                 "registrations": "Registrierungen",
                 "schedule": "Sitzungsplan",
-                "sessions": "Sitzungen"
+                "sessions": "Sitzungen",
+                "nextSession": "Nächste Sitzung"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Wochentag",
@@ -249,11 +250,13 @@
             },
             "tutorialGroupSessionManagement": {
                 "title": "Sitzungsverwaltung",
+                "currentDate": "Aktuelles Datum:",
                 "createSessionButton": "Neue Sitzung hinzufügen",
                 "timeZoneExplanation": "Jede Sitzung wird in der Zeitzone {{ timeZone }} angezeigt",
-                "divider": " Bevorstehende ↑ Vergangene ↓",
+                "divider": "Nächste Sitzung: ↑",
                 "cancelled": "Sitzung abgesagt",
                 "noReason": "Kein Grund angegeben",
+                "showAll": "Zeige alle Sitzungen ↓ ",
                 "differsFromSchedule": "Die Sitzung findet an einem anderen Ort oder Datum statt als im Sitzungsplan!",
                 "rowButtons": {
                     "sessions": "Sitzungen",

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
@@ -21,6 +21,7 @@ import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({ selector: 'jhi-tutorial-groups-course-information', template: '' })
 class MockTutorialGroupsCourseInformationComponent {
@@ -63,6 +64,7 @@ describe('TutorialGroupsManagementComponent', () => {
                 TutorialGroupRowButtonsStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
+                MockDirective(NgbTooltip),
                 MockRouterLinkDirective,
                 MockTutorialGroupsImportButtonComponent,
             ],

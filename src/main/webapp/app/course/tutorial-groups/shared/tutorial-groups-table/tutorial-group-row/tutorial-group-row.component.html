@@ -47,6 +47,14 @@
     <td>
         <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.campus }} </span>
     </td>
+    <td>
+        <span *ngIf="tutorialGroup.nextSession; else no_session">
+            {{ tutorialGroup.nextSession.start | artemisDate: 'short-date':false:timeZone!:true }}
+            {{ tutorialGroup.nextSession.start | artemisDate: 'time':false:timeZone! }} -
+            {{ tutorialGroup.nextSession.end | artemisDate: 'time':false:timeZone! }}
+        </span>
+        <ng-template #no_session></ng-template>
+    </td>
     <td *ngIf="extraColumn">
         <div class="extra-buttons">
             <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>

@@ -10,7 +10,7 @@ import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
 import { Component, Input, IterableDiffers } from '@angular/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({ selector: 'jhi-side-panel', template: '' })
 class MockSidePanel {

@@ -1,4 +1,9 @@
 <div class="table-responsive tutorial-groups-table">
+    <div class="col-12 mb-2">
+        <div class="alert alert-info">
+            {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate: { timeZone: timeZoneUsedForDisplay } }}
+        </div>
+    </div>
     <table class="table table-sm table-hover">
         <thead>
             <tr jhiSort [(predicate)]="sortingPredicate" [(ascending)]="ascending" (sortChange)="sortRows()">
@@ -50,6 +55,10 @@
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.campus' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
+                <th jhiSortBy="nextSession">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.nextSession' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
                 <th *ngIf="extraColumn"></th>
             </tr>
         </thead>
@@ -64,6 +73,7 @@
                 [extraColumn]="extraColumn"
                 [showIdColumn]="showIdColumn"
                 [tutorialGroupClickHandler]="tutorialGroupClickHandler"
+                [timeZone]="timeZone"
             ></tr>
         </tbody>
     </table>

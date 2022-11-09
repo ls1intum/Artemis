@@ -21,6 +21,8 @@ export class TutorialGroupRowComponent {
 
     @Input() course: Course;
 
+    @Input() timeZone?: string = undefined;
+
     @Input()
     tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;
 

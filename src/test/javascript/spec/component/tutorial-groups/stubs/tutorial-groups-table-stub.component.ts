@@ -23,6 +23,9 @@ export class TutorialGroupsTableStubComponent {
     course: Course;
 
     @Input()
+    timeZone: string;
+
+    @Input()
     tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;
 
     @ContentChild(TemplateRef) extraColumn: TemplateRef<any>;
@@ -50,6 +53,8 @@ export class TutorialGroupRowStubComponent {
     @Input() tutorialGroup: TutorialGroup;
 
     @Input() course: Course;
+
+    @Input() timeZone: string;
 
     @Input()
     tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;

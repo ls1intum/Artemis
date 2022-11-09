@@ -13,6 +13,7 @@ import { Component, Input, QueryList, ViewChild, ViewChildren } from '@angular/c
 import { TutorialGroupRowStubComponent } from '../stubs/tutorial-groups-table-stub.component';
 import { Course } from 'app/entities/course.model';
 import { By } from '@angular/platform-browser';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumn {
@@ -63,6 +64,7 @@ describe('TutorialGroupTableWrapperTest', () => {
                 MockWrapper,
                 MockExtraColumn,
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
                 MockDirective(SortDirective),
@@ -116,6 +118,7 @@ describe('TutorialGroupsTableComponent', () => {
                 TutorialGroupsTableComponent,
                 TutorialGroupRowStubComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
                 MockDirective(SortDirective),

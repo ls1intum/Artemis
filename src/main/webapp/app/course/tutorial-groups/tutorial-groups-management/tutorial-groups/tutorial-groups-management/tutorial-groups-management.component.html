@@ -31,7 +31,13 @@
                 </div>
             </div>
             <ng-container *ngIf="tutorialGroups?.length; else intro">
-                <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [course]="course" [tutorialGroupClickHandler]="onTutorialGroupSelected" [showIdColumn]="true">
+                <jhi-tutorial-groups-table
+                    [tutorialGroups]="tutorialGroups"
+                    [course]="course"
+                    [tutorialGroupClickHandler]="onTutorialGroupSelected"
+                    [showIdColumn]="true"
+                    [timeZone]="course.timeZone"
+                >
                     <ng-template let-tutorialGroup>
                         <jhi-tutorial-group-row-buttons
                             [course]="course"

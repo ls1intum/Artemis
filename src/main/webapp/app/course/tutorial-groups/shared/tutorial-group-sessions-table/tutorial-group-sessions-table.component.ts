@@ -28,7 +28,7 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
 
     upcomingSessions: TutorialGroupSession[] = [];
     pastSessions: TutorialGroupSession[] = [];
-
+    isCollapsed = true;
     get numberOfColumns(): number {
         let numberOfColumns = this.tutorialGroup.tutorialGroupSchedule ? 3 : 2;
         if (this.extraColumn) {

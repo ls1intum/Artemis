@@ -33,7 +33,8 @@
                 "teachingAssistant": "Tutor",
                 "registrations": "Registrations",
                 "schedule": "Schedule",
-                "sessions": "Sessions"
+                "sessions": "Sessions",
+                "nextSession": "Next Session"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Day of Week",
@@ -249,11 +250,13 @@
             },
             "tutorialGroupSessionManagement": {
                 "title": "Tutorial Group Session Management",
+                "currentDate": "Current Date:",
                 "createSessionButton": "Create New Tutorial Group Session",
                 "timeZoneExplanation": "Every session displayed in the time zone {{ timeZone }}",
-                "divider": "UPCOMING ↑ PAST ↓",
+                "divider": "Next Session: ↑",
                 "cancelled": "Session Cancelled",
                 "noReason": "No reason given",
+                "showAll": "Show All Sessions ↓ ",
                 "differsFromSchedule": "This session has a different date or location than the schedule!",
                 "rowButtons": {
                     "sessions": "Sessions",

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
@@ -34,7 +33,6 @@ class TutorialGroupSessionRowButtonsStubComponent {
 describe('TutorialGroupSessionsManagement', () => {
     let fixture: ComponentFixture<TutorialGroupSessionsManagementComponent>;
     let component: TutorialGroupSessionsManagementComponent;
-    let activeModal: NgbActiveModal;
     let modalService: NgbModal;
 
     const tutorialGroupId = 2;
@@ -69,7 +67,6 @@ describe('TutorialGroupSessionsManagement', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupSessionsManagementComponent);
                 component = fixture.componentInstance;
-                activeModal = TestBed.inject(NgbActiveModal);
                 modalService = TestBed.inject(NgbModal);
 
                 pastSession = generateExampleTutorialGroupSession({
