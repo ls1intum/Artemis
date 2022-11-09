@@ -6,7 +6,6 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -123,9 +122,5 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
 
     getNextText() {
         return this.currentStep < 5 ? 'artemisApp.programmingExercise.home.nextStepLabel' : 'entity.action.finish';
-    }
-
-    toggleWizardMode() {
-        this.toggleModeFunction();
     }
 }
