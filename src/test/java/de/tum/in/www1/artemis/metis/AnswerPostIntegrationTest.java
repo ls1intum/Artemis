@@ -84,37 +84,24 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateAnswerPostInLecture() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
-
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdAnswerPost);
-        // should not be automatically post resolving
-        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
-        // should increment answer count
-        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
+        testAnswerPostCreation(answerPostToSave);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateAnswerPostInExercise() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
-
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdAnswerPost);
-        // should not be automatically post resolving
-        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
-        // should increment answer count
-        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
+        testAnswerPostCreation(answerPostToSave);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateAnswerPostCourseWide() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+        testAnswerPostCreation(answerPostToSave);
+    }
 
+    private void testAnswerPostCreation(AnswerPost answerPostToSave) throws Exception {
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
