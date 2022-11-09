@@ -64,9 +64,10 @@
             "tutorialGroupForm": {
                 "titleInput": {
                     "label": "Titel",
-                    "placeholder": "Gruppe 1: Montag {{ from }} - {{ to }}",
+                    "placeholder": "G1 Mo {{ from }}-{{ to }}",
                     "requiredValidationError": "Titel ist erforderlich!",
-                    "maxLengthValidationError": "Der Titel kann max {{ max }} Zeichen lang sein!"
+                    "maxLengthValidationError": "Der Titel kann max {{ max }} Zeichen lang sein!",
+                    "regexValidationError": "Titel dürfen nur Buchstaben, Zahlen, Leerzeichen und Bindestriche enthalten."
                 },
                 "teachingAssistantInput": {
                     "label": "Tutor:in",

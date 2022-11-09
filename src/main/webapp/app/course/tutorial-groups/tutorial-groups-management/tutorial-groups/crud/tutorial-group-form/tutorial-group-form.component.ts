@@ -33,7 +33,7 @@ export class UserWithLabel extends User {
     label: string;
 }
 
-const nonWhitespaceRegExp: RegExp = new RegExp('\\S');
+const titleRegex: RegExp = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
 
 @Component({
     selector: 'jhi-tutorial-group-form',
@@ -201,7 +201,8 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         }
 
         this.form = this.fb.group({
-            title: [undefined, [Validators.required, Validators.maxLength(255), Validators.pattern(nonWhitespaceRegExp)]],
+            // Note: We restrict the title so 19 characters so we can create a 20char communication channel name with the prefix $ from the tite
+            title: [undefined, [Validators.required, Validators.maxLength(19), Validators.pattern(titleRegex)]],
             teachingAssistant: [undefined, [Validators.required]],
             capacity: [undefined, [Validators.min(1)]],
             isOnline: [false, [Validators.required]],

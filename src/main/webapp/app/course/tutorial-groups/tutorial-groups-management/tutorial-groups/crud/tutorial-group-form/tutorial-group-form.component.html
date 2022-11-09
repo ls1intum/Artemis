@@ -12,11 +12,14 @@
                     [placeholder]="'artemisApp.forms.tutorialGroupForm.titleInput.placeholder' | artemisTranslate: { from: '12:00', to: '13:00' }"
                 />
                 <div *ngIf="titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)" class="alert alert-danger">
-                    <div *ngIf="titleControl?.errors?.required || titleControl?.errors?.pattern">
+                    <div *ngIf="titleControl?.errors?.required">
                         {{ 'artemisApp.forms.tutorialGroupForm.titleInput.requiredValidationError' | artemisTranslate }}
                     </div>
                     <div *ngIf="titleControl?.errors?.maxlength">
-                        {{ 'artemisApp.forms.tutorialGroupForm.titleInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
+                        {{ 'artemisApp.forms.tutorialGroupForm.titleInput.maxLengthValidationError' | artemisTranslate: { max: '19' } }}
+                    </div>
+                    <div *ngIf="!titleControl?.errors?.required && !titleControl?.errors?.maxlength && titleControl?.errors?.pattern">
+                        {{ 'artemisApp.forms.tutorialGroupForm.titleInput.regexValidationError' | artemisTranslate }}
                     </div>
                 </div>
             </div>

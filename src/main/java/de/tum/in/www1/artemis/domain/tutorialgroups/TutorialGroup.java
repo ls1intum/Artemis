@@ -28,7 +28,7 @@ public class TutorialGroup extends DomainObject {
     private Course course;
 
     @Column(name = "title")
-    @Size(min = 1, max = 256)
+    @Size(min = 1, max = 19)
     @NotNull
     private String title;
 

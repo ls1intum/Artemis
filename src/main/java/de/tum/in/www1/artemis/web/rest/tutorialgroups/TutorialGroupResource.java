@@ -46,6 +46,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("/api")
 public class TutorialGroupResource {
 
+    private static final String TITLE_REGEX = "^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$";
+
     public static final String ENTITY_NAME = "tutorialGroup";
 
     private final Logger log = LoggerFactory.getLogger(TutorialGroupResource.class);
@@ -201,7 +203,7 @@ public class TutorialGroupResource {
 
         tutorialGroup.setCourse(course);
         trimStringFields(tutorialGroup);
-        checkTitleIsUnique(tutorialGroup);
+        checkTitleIsValid(tutorialGroup);
 
         // persist first without schedule
         TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
@@ -279,7 +281,7 @@ public class TutorialGroupResource {
 
         trimStringFields(updatedTutorialGroup);
         if (!oldTutorialGroup.getTitle().equals(updatedTutorialGroup.getTitle())) {
-            checkTitleIsUnique(updatedTutorialGroup);
+            checkTitleIsValid(updatedTutorialGroup);
         }
 
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
@@ -425,9 +427,12 @@ public class TutorialGroupResource {
         }
     }
 
-    private void checkTitleIsUnique(TutorialGroup tutorialGroup) {
+    private void checkTitleIsValid(TutorialGroup tutorialGroup) {
         if (tutorialGroupRepository.existsByTitleAndCourse(tutorialGroup.getTitle(), tutorialGroup.getCourse())) {
             throw new BadRequestException("A tutorial group with this title already exists in the course.");
+        }
+        if (!tutorialGroup.getTitle().matches(TITLE_REGEX)) {
+            throw new BadRequestException("Title can only contain letters, numbers, spaces and dashes.");
         }
     }
 
