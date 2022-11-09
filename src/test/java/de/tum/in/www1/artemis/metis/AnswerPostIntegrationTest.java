@@ -663,6 +663,23 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
     }
 
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testDeleteResolvingAnswerPost_asTutor() throws Exception {
+        AnswerPost answerPostToDeleteWhichResolves = existingAnswerPosts.get(3);
+
+        request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDeleteWhichResolves.getId(), HttpStatus.OK);
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
+
+        Post persistedPost = database.postRepository.findPostByIdElseThrow(answerPostToDeleteWhichResolves.getPost().getId());
+
+        // should update post resolved status to false
+        assertThat(persistedPost.isResolved()).isFalse();
+
+        // should decrement answerCount
+        assertThat(persistedPost.getAnswerCount()).isEqualTo(answerPostToDeleteWhichResolves.getPost().getAnswerCount() - 1);
+    }
+
     // HELPER METHODS
 
     private AnswerPost createAnswerPost(Post post) {

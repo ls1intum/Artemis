@@ -145,7 +145,8 @@ public class AnswerPostService extends PostingService {
 
     /**
      * Checks course and user validity,
-     * determines authority to delete post and deletes the post
+     * determines authority to delete and deletes the answer post
+     * reduces answerCount of post and updates resolved status
      *
      * @param courseId     id of the course the answer post belongs to
      * @param answerPostId id of the answer post to delete
@@ -160,15 +161,20 @@ public class AnswerPostService extends PostingService {
 
         mayUpdateOrDeletePostingElseThrow(answerPost, user, course);
 
+        // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
+        post.removeAnswerPost(answerPost);
+
         // decrease answerCount of post needed for sorting
         post.setAnswerCount(post.getAnswerCount() - 1);
+
+        // sets the post as resolved if there exists any resolving answer
+        post.setResolved(post.getAnswers().stream().anyMatch(answerPost1 -> answerPost1.doesResolvePost()));
+        // deletes the answerPost from database and persists updates on the post properties
         postRepository.save(post);
 
         // delete
         answerPostRepository.deleteById(answerPostId);
 
-        // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
-        post.removeAnswerPost(answerPost);
         broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course);
     }
 
