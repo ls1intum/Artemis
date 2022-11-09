@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
@@ -89,7 +88,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             builder.file(filePart);
         }
 
-        return builder.file(attachmentUnitPart).file(attachmentPart).with(csrf()).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        return builder.file(attachmentUnitPart).file(attachmentPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
     }
 
     private MockHttpServletRequestBuilder buildCreateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment, @NotNull String fileContent)
@@ -99,7 +98,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         var filePart = new MockMultipartFile("file", "testFile.pdf", MediaType.TEXT_PLAIN_VALUE, fileContent.getBytes(StandardCharsets.UTF_8));
 
         return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lecture1.getId() + "/attachment-units").file(attachmentUnitPart).file(attachmentPart)
-                .file(filePart).with(csrf()).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+                .file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
     }
 
     @AfterEach
