@@ -22,6 +22,7 @@ import {
     faUserCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
     selector: 'jhi-course-management-card',
@@ -74,6 +75,7 @@ export class CourseManagementCardComponent implements OnChanges {
     faPersonChalkboard = faPersonChalkboard;
 
     readonly FeatureToggle = FeatureToggle;
+    readonly ProfileToggle = ProfileToggle;
 
     ngOnChanges() {
         // Only sort one time once loaded

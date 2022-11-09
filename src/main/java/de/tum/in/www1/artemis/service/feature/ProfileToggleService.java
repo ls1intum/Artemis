@@ -4,6 +4,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.cluster.InitialMembershipEvent;
@@ -16,6 +18,8 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 @Service
 public class ProfileToggleService {
+
+    private final Logger log = LoggerFactory.getLogger(ProfileToggleService.class);
 
     private static final String TOPIC_PROFILE_TOGGLES = "/topic/management/profile-toggles";
 
@@ -47,23 +51,23 @@ public class ProfileToggleService {
     }
 
     private void sendUpdate(Set<Member> members) {
-        System.err.println("Sending membership event");
+        log.debug("Sending membership update");
         websocketMessagingService.sendMessage(TOPIC_PROFILE_TOGGLES, enabledProfiles(members));
     }
 
     /**
      * Get all profiles that are currently enabled on the system
      *
-     * @return A list of enabled features
+     * @return A list of enabled profiles (on the whole system)
      */
-    public Set<String> enabledProfiles(Set<Member> members) {
+    private Set<String> enabledProfiles(Set<Member> members) {
         return members.stream().flatMap(member -> Stream.of(member.getAttributes().getOrDefault("profiles", "").split(","))).collect(Collectors.toSet());
     }
 
     /**
-     * Get all features that are currently enabled on the system
+     * Get all profiles that are currently enabled on the system
      *
-     * @return A list of enabled features
+     * @return A list of enabled profiles (on the whole system)
      */
     public Set<String> enabledProfiles() {
         return enabledProfiles(hazelcastInstance.getCluster().getMembers());

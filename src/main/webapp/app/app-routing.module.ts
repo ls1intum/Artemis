@@ -3,6 +3,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ProfileAccessService } from 'app/shared/profile-toggle/profile-access.service';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -26,6 +28,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'courses/:courseId/lectures/:lectureId',
                     loadChildren: () => import('./overview/course-lectures/course-lecture-details.module').then((m) => m.ArtemisCourseLectureDetailsModule),
+                    canLoad: [ProfileAccessService],
+                    data: {
+                        profile: ProfileToggle.LECTURE,
+                    },
                 },
                 {
                     // TODO: check that the LTI integration still works correctly (if not, we should implement it differently)

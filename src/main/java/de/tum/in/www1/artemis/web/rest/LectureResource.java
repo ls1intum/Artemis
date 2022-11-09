@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @RestController
 @RequestMapping("/api")
-@Profile("lecture")
+@Profile("!decoupling || lecture") // TODO: Remove !decoupling
 public class LectureResource {
 
     private final Logger log = LoggerFactory.getLogger(LectureResource.class);

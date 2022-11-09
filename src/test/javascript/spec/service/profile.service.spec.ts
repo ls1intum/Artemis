@@ -154,7 +154,7 @@ describe('Profile Service', () => {
         openApiEnabled: true,
         sentry: { dsn: 'https://ceeb3e72ec094684aefbb132f87231f2@sentry.ase.in.tum.de/2' },
         features: [FeatureToggle.ProgrammingExercises, FeatureToggle.PlagiarismChecks],
-        combinedProfiles: [ProfileToggle.Scheduling],
+        combinedProfiles: [ProfileToggle.LECTURE],
         buildPlanURLTemplate: 'https://artemistest2jenkins.ase.in.tum.de/job/{projectKey}/job/{buildPlanId}',
         commitHashURLTemplate: 'https://artemistest2gitlab.ase.in.tum.de/{projectKey}/{repoSlug}/-/commit/{commitHash}',
         sshCloneURLTemplate: 'ssh://git@artemistest2gitlab.ase.in.tum.de:2222/',

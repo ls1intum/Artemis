@@ -211,6 +211,7 @@
         </a>
         <a
             *ngIf="course.isAtLeastEditor"
+            [jhiProfileToggleLink]="ProfileToggle.LECTURE"
             [routerLink]="['/course-management', course.id, 'lectures']"
             class="btn btn-primary me-1 mb-1"
             [ngbTooltip]="'entity.action.lecture' | artemisTranslate"
