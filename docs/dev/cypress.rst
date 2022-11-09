@@ -14,7 +14,7 @@ Therefore, the current setup only dynamically deploys the Artemis server and con
 Artemis Deployment on Bamboo Build Agent
 ----------------------------------------
 Every execution of the Cypress test suite requires its own deployment of Artemis. The easiest way to accomplish this is to deploy Artemis locally on the build agent, which executes the Cypress tests.
-Using docker-compose we can start a MySQL database and the Artemis server locally on the build agent and connect it to the prelive system in the university data center.
+Using ``docker compose`` we can start a MySQL database and the Artemis server locally on the build agent and connect it to the prelive system in the university data center.
 
 .. figure:: cypress/cypress_bamboo_deployment_diagram.svg
    :align: center
@@ -76,7 +76,7 @@ This build plan is automatically executed every 8 hours and verifies that test s
    Artemis Deployment on test environment for Cypress
 
 The difference of this setup is that the Artemis server is deployed on a separate environment which already contains the necessary configuration files for the Artemis server to connect to the prelive system.
-The Docker image for the Cypress container should be exactly the same as the Cypress image used in the docker-compose file for the deployment on a Bamboo build agent.
+The Docker image for the Cypress container should be exactly the same as the Cypress image used in the *docker compose* file for the deployment on a Bamboo build agent.
 
 Maintenance
 -----------

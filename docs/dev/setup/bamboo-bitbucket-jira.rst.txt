@@ -32,15 +32,15 @@ setup is present.
 Docker-Compose
 ^^^^^^^^^^^^^^
 
-Before you start the docker-compose, check if the bamboo version in the
+Before you start the *docker compose*, check if the bamboo version in the
 ``build.gradle`` (search for ``com.atlassian.bamboo:bamboo-specs``) is
 equal to the bamboo version number in the docker compose in
 ``src/main/docker/atlassian.yml``
 If the version number is not equal, adjust the version number.
-Further details about the docker-compose setup can be found in ``src/main/docker``
+Further details about the *docker compose* setup can be found in ``src/main/docker``
 
-Execute the docker-compose file e.g. with
-``docker-compose -f src/main/docker/atlassian.yml up -d``.
+Execute the *docker compose* file e.g. with
+``docker compose -f src/main/docker/atlassian.yml up -d``.
 
 Error Handling: It can happen that there is an overload with other
 docker networks

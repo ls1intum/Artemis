@@ -59,7 +59,7 @@ The required Artemis schema will be created / updated automatically at startup t
 server application.
 
 As an alternative to a native MySQL setup, you can run the MySQL Database Server inside a Docker container
-using e.g. ``docker-compose -f src/main/docker/mysql.yml up``.
+using e.g. ``docker compose -f src/main/docker/mysql.yml up``.
 
 If you run your own MySQL server, make sure to specify the default ``character-set``
 as ``utf8mb4`` and the default ``collation`` as ``utf8mb4_unicode_ci``.
@@ -288,7 +288,7 @@ You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfi
 * The Dockerfile has multiple stages: A `build stage`, building the ``.war`` file, and a `runtime stage` with minimal
   dependencies just for running artemis.
 
-.. TODO: add defaults and recheck config volume to docker-compose base service and Dockerfile
+.. TODO: add defaults and recheck config volume to docker compose base service and Dockerfile
    also recheck if the envs are still necessary
 
 * The Dockerfile defines three Docker volumes (at the specified paths inside the container):
@@ -639,8 +639,8 @@ HTTP. We need to extend the configuration in the file
 Alternative: Docker-Compose Setup
 ---------------------------------
 
-The easiest way to configure a local deployment via Docker is a deployment with a docker-compose file.
-In the directory ``src/main/docker/`` you can find the following docker-compose files for different setups:
+The easiest way to configure a local deployment via Docker is a deployment with a *docker compose* file.
+In the directory ``src/main/docker/`` you can find the following *docker compose* files for different setups:
 
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
 * ``artemis-dev-mysql-gitlab-jenkins.yml``: **Artemis-Dev-MySQL-GitLab-Jenkins**
@@ -661,7 +661,7 @@ In the directory ``src/main/docker/`` you can find the following docker-compose 
   There is also a single ``docker-compose.yml`` in the project root which mirrors the setup of ``artemis-dev-mysql.yml``.
   This should provide a quick way, without manual changes necessary, for new contributors to startup an Artemis instance.
 
-For each service being used in these docker-compose files a **base service** (containing similar settings)
+For each service being used in these *docker compose* files a **base service** (containing similar settings)
 is defined in the following files:
 
 * ``artemis/artemis.yml``: **Artemis Service**
@@ -678,10 +678,10 @@ An example command to run such an extended setup:
 
 .. code:: bash
 
-  docker-compose -f src/main/docker/artemis-dev-mysql.yml -f src/main/docker/mailhog/mailhog.yml up
+  docker compose -f src/main/docker/artemis-dev-mysql.yml -f src/main/docker/mailhog/mailhog.yml up
 
 .. warning::
-  If you want to run multiple docker-compose setups in parallel on one host you might have to modify
+  If you want to run multiple *docker compose* setups in parallel on one host you might have to modify
   volume, container and network names!
 
 Getting Started with Docker-Compose Setups
@@ -691,23 +691,24 @@ To get started with one of the mentioned Docker-Compose Setups do the following:
 
 .. TODO: modify config part accordingly to config decision
 
-1. Install `docker <https://docs.docker.com/install/>`__ and `docker-compose <https://docs.docker.com/compose/install/>`__
+1. Install `docker <https://docs.docker.com/install/>`__ (``docker compose`` is shipped as part of docker and is used in
+   this project instead of the Python implementation ``docker-compose``)
 2. ( Depending on the chosen setup it's necessary to configure the Artemis configs like ``application-local.yml``
    in the folder ``src/main/resources/config`` as described in the section `Dockerfile <#dockerfile>`__.
    The default setup ``docker-compose.yml`` should run without the default configurations, so no changes are required.)
-3. Run ``docker-compose up`` or ``docker-compose -f src/main/docker/<setup to be launched>.yml up``
+3. Run ``docker compose up`` or ``docker compose -f src/main/docker/<setup to be launched>.yml up``
 4. For Artemis instances go to http://localhost:8080 (http://localhost:9000 for the seperated server and client setup)
 
 Debugging with Docker
 ^^^^^^^^^^^^^^^^^^^^^
 
 See the `Debugging with Docker <#docker-debugging>`__ section for detailed information.
-In all development docker-compose setups like ``artemis-dev-mysql.yml`` Java Remote Debugging is enabled by default.
+In all development *docker compose* setups like ``artemis-dev-mysql.yml`` Java Remote Debugging is enabled by default.
 
 Service, Container and Volume names
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Service names for the usage within docker-compose are kept short, like ``mysql``, to make it easier
+Service names for the usage within *docker compose* are kept short, like ``mysql``, to make it easier
 to use them in a CLI.
 
 Container and volume names are prepended with ``artemis-`` in order to not interfere with other container or volume
@@ -717,30 +718,30 @@ Get a shell into the containers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. tip::
-  To keep the documentation short, we will use the standard form of ``docker-compose COMMAND`` from this point on.
+  To keep the documentation short, we will use the standard form of ``docker compose COMMAND`` from this point on.
   You can use the following commands also with the ``-f src/main/docker/<setup to be launched>.yml`` argument pointing
   to a specific setup.
 
 -  app container:
-   ``docker-compose exec artemis-app bash``
+   ``docker compose exec artemis-app bash``
 -  mysql container:
-   ``docker-compose exec mysql bash`` or directly into mysql ``docker-compose exec mysql mysql``
+   ``docker compose exec mysql bash`` or directly into mysql ``docker compose exec mysql mysql``
 
 Analog for other services.
 
 Other useful commands
 ^^^^^^^^^^^^^^^^^^^^^
 
-- Start a setup in the background: ``docker-compose up -d``
-- Stop and remove containers of a setup: ``docker-compose down``
-- Stop, remove containers and volumes: ``docker-compose down -v``
+- Start a setup in the background: ``docker compose up -d``
+- Stop and remove containers of a setup: ``docker compose down``
+- Stop, remove containers and volumes: ``docker compose down -v``
 - Remove artemis related volumes/state: ``docker volume rm artemis-data artemis-mysql-data``
 
   This is helpful in setups where you just want to delete the state of artemis
   but not of Jenkins and GitLab for instance.
-- Stop a service: ``docker-compose stop <name of the service>`` (restart via
-  ``docker-compose start <name of the service>``)
-- Restart a service: ``docker-compose restart <name of the service>``
+- Stop a service: ``docker compose stop <name of the service>`` (restart via
+  ``docker compose start <name of the service>``)
+- Restart a service: ``docker compose restart <name of the service>``
 
 ------------------------------------------------------------------------------------------------------------------------
 
