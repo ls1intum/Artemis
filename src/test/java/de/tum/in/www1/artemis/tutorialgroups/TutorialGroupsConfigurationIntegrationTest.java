@@ -1,12 +1,15 @@
 package de.tum.in.www1.artemis.tutorialgroups;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -111,7 +114,9 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         var course = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(exampleCourseId);
         course.setTimeZone("Europe/Berlin");
         course.setTutorialGroupsConfiguration(null);
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(exampleCourseId);
         assertThat(course.getTutorialGroupsConfiguration()).isNotNull();

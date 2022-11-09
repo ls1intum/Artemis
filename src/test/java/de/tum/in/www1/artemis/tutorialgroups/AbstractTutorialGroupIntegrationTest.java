@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
+import de.tum.in.www1.artemis.util.CourseTestService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -36,6 +37,9 @@ import de.tum.in.www1.artemis.util.ModelFactory;
  * Contains useful methods for testing the tutorial groups feature.
  */
 abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Autowired
+    CourseTestService courseTestService;
 
     @Autowired
     UserRepository userRepository;
