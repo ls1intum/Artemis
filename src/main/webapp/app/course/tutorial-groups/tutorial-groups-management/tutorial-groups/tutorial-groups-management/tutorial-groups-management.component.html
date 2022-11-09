@@ -2,7 +2,10 @@
     <div class="row">
         <div class="col-12 col-xl-10">
             <div class="d-flex justify-content-between">
-                <h4>{{ 'artemisApp.pages.tutorialGroupsManagement.title' | artemisTranslate }}</h4>
+                <h4>
+                    {{ 'artemisApp.pages.tutorialGroupsManagement.title' | artemisTranslate }}
+                    <span class="badge rounded-pill text-bg-warning ms-1" ngbTooltip="{{ 'artemisApp.generic.betaWarning' | artemisTranslate }}">BETA</span>
+                </h4>
                 <div *ngIf="isAtLeastInstructor">
                     <a
                         class="btn btn-primary"
@@ -27,7 +30,7 @@
                     <jhi-tutorial-groups-import-button [courseId]="courseId" (importFinished)="loadTutorialGroups()"></jhi-tutorial-groups-import-button>
                 </div>
             </div>
-            <ng-container *ngIf="tutorialGroups?.length">
+            <ng-container *ngIf="tutorialGroups?.length; else intro">
                 <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [course]="course" [tutorialGroupClickHandler]="onTutorialGroupSelected" [showIdColumn]="true">
                     <ng-template let-tutorialGroup>
                         <jhi-tutorial-group-row-buttons
@@ -41,11 +44,19 @@
                     </ng-template>
                 </jhi-tutorial-groups-table>
             </ng-container>
+            <ng-template #intro>
+                <div>
+                    <div class="alert alert-success" role="alert">
+                        <span class="badge rounded-pill text-bg-warning ms-1" ngbTooltip="{{ 'artemisApp.generic.betaWarning' | artemisTranslate }}">BETA</span>
+                        {{ 'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate }}
+                    </div>
+                </div>
+            </ng-template>
         </div>
         <div class="col-12 col-xl-2">
             <jhi-tutorial-groups-course-information [tutorialGroups]="tutorialGroups"></jhi-tutorial-groups-course-information>
             <div class="mt-1" *ngIf="tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0">
-                <jhi-tutorial-group-free-days-overview [timeZone]="course.timeZone" [tutorialGroupFreeDays]="tutorialGroupFreeDays"> </jhi-tutorial-group-free-days-overview>
+                <jhi-tutorial-group-free-days-overview [timeZone]="course.timeZone" [tutorialGroupFreeDays]="tutorialGroupFreeDays"></jhi-tutorial-group-free-days-overview>
             </div>
         </div>
     </div>

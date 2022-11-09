@@ -17,7 +17,8 @@
                 "saturday": "Samstag",
                 "sunday": "Sonntag"
             },
-            "timeZone": "Zeitzone: {{ timeZone }}"
+            "timeZone": "Zeitzone: {{ timeZone }}",
+            "betaWarning": "Diese Funktion befindet sich derzeit im Beta-Stadium. Es können Bugs und Änderungen auftreten. Bitte melde Fehler unter: https://github.com/ls1intum/Artemis/issues "
         },
         "entities": {
             "tutorialGroup": {
@@ -192,6 +193,7 @@
         },
         "pages": {
             "tutorialGroupsManagement": {
+                "intro": "Willkommen auf der Seite zur Verwaltung der Übungsgrupen! Eine Beta-Funktion von Artemis, die es ermöglicht, wöchentliche Online- und Offline-Übungsgruppen zu verwalten.",
                 "title": "Übungsgruppen-Verwaltung",
                 "freePeriodsButtons": "Freie Tage",
                 "creatTutorialGroupButton": "Neue Übungsgruppe",
