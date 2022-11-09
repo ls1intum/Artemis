@@ -108,11 +108,11 @@ describe('Course Management Service', () => {
 
     it('should update course', fakeAsync(() => {
         courseManagementService
-            .update({ ...course })
+            .update(1, { ...course })
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
 
-        const req = httpMock.expectOne({ method: 'PUT', url: resourceUrl });
+        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1` });
         req.flush(returnedFromService);
         tick();
     }));

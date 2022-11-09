@@ -371,7 +371,12 @@ public class Feedback extends DomainObject {
         // For manual result each feedback needs to have a credit. If no credit is set, we set it to 0.0
         feedback.setCredits(Objects.requireNonNullElse(getCredits(), 0.0));
         feedback.setText(getText());
-        feedback.setPositive(isPositive());
+        if (isPositive() == null) {
+            feedback.setPositiveViaCredits();
+        }
+        else {
+            feedback.setPositive(isPositive());
+        }
         feedback.setReference(getReference());
         feedback.setVisibility(getVisibility());
         feedback.setGradingInstruction(getGradingInstruction());
@@ -422,6 +427,6 @@ public class Feedback extends DomainObject {
 
     @JsonIgnore
     public boolean hasDetails() {
-        return !isPositive() || detailText != null;
+        return !Boolean.TRUE.equals(isPositive()) || detailText != null || gradingInstruction != null;
     }
 }
