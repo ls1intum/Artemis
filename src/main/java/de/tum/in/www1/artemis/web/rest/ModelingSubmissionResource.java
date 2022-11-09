@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.validation.Valid;
@@ -95,7 +96,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     /**
      * PUT /exercises/{exerciseId}/modeling-submissions : Updates an existing modeling submission or creates a new one.
      * This function is called by the modeling editor for saving and submitting modeling submissions.
-     * The submit specific handling occurs in the ModelingSubmissionService.handleModelingSubmission() and save() methods.
+     * Submit specific handling occurs in the ModelingSubmissionService.handleModelingSubmission() and save() methods.
      *
      * @param exerciseId         the id of the exercise for which to init a participation
      * @param modelingSubmission the modelingSubmission to update
@@ -254,15 +255,19 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        var modelingSubmission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode);
+        var submission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode)
+            .orElse(null);
 
-        // needed to show the grading criteria in the assessment view
-        List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        modelingExercise.setGradingCriteria(gradingCriteria);
-        // Make sure the exercise is connected to the participation in the json response
-        modelingSubmission.getParticipation().setExercise(modelingExercise);
-        this.modelingSubmissionService.hideDetails(modelingSubmission, user);
-        return ResponseEntity.ok(modelingSubmission);
+        if (Objects.nonNull(submission)) {
+            // needed to show the grading criteria in the assessment view
+            List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+            modelingExercise.setGradingCriteria(gradingCriteria);
+            // Make sure the exercise is connected to the participation in the json response
+            submission.getParticipation().setExercise(modelingExercise);
+            this.modelingSubmissionService.hideDetails(submission, user);
+        }
+
+        return ResponseEntity.ok(submission);
     }
 
     /**
