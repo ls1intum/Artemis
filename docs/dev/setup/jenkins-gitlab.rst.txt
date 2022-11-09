@@ -312,9 +312,9 @@ Start GitLab
        gitlab-ctl renew-le-certs
 
 8. Login to GitLab using the Artemis admin account and go to the profile
-   settings (upper right corned → *Settings*)
+   settings (upper right corner → *Preferences*)
 
-   .. figure:: setup/jenkins-gitlab/gitlab_setting_button.png
+   .. figure:: setup/jenkins-gitlab/gitlab_preferences_button.png
       :align: center
 
 GitLab Access Token
@@ -421,11 +421,11 @@ GitLab Access Token
     ``<ssh-private-key-password>`` is the password used to secure the private key. It is also needed for the
     configuration of Artemis, but can be omitted if no password was set (e.g. for development environments).
 
-Reconfigure GitLab
+16. Reconfigure GitLab
 
-::
+    ::
 
-   gitlab-ctl reconfigure
+        gitlab-ctl reconfigure
 
 Upgrade GitLab
 """"""""""""""
