@@ -722,25 +722,25 @@ Get a shell into the containers
   to a specific setup.
 
 -  app container:
-   ``docker-compose exec artemis-app bash``
+   ``docker compose exec artemis-app bash``
 -  mysql container:
-   ``docker-compose exec mysql bash`` or directly into mysql ``docker-compose exec mysql mysql``
+   ``docker compose exec mysql bash`` or directly into mysql ``docker-compose exec mysql mysql``
 
 Analog for other services.
 
 Other useful commands
 ^^^^^^^^^^^^^^^^^^^^^
 
-- Start a setup in the background: ``docker-compose up -d``
-- Stop and remove containers of a setup: ``docker-compose down``
-- Stop, remove containers and volumes: ``docker-compose down -v``
+- Start a setup in the background: ``docker compose up -d``
+- Stop and remove containers of a setup: ``docker compose down``
+- Stop, remove containers and volumes: ``docker compose down -v``
 - Remove artemis related volumes/state: ``docker volume rm artemis-data artemis-mysql-data``
 
   This is helpful in setups where you just want to delete the state of artemis
   but not of Jenkins and GitLab for instance.
-- Stop a service: ``docker-compose stop <name of the service>`` (restart via
-  ``docker-compose start <name of the service>``)
-- Restart a service: ``docker-compose restart <name of the service>``
+- Stop a service: ``docker compose stop <name of the service>`` (restart via
+  ``docker compose start <name of the service>``)
+- Restart a service: ``docker compose restart <name of the service>``
 
 ------------------------------------------------------------------------------------------------------------------------
 

@@ -16,10 +16,10 @@ docker-compose -f atlassian.yml up -d
 Start atlassian stack which can execute `C` builds: 
 
 ```
-docker-compose -f atlassian.yml -f atlassian/atlassian.c.override.yml up -d 
+docker compose -f atlassian.yml -f atlassian/atlassian.c.override.yml up -d 
 ```
 
 Start atlassian stack which can execute `swift` builds: 
 ```
-docker-compose -f atlassian.yml -f atlassian/atlassian.swift.override.yml up -d 
+docker compose -f atlassian.yml -f atlassian/atlassian.swift.override.yml up -d 
 ```
