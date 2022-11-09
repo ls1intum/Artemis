@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -34,8 +35,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  * REST controller for managing Exercise.
  */
 @RestController
-@RequestMapping("/api")
-@PreAuthorize("hasRole('ADMIN')")
+@RequestMapping("api/")
 public class ExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
@@ -95,7 +95,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{exerciseId}")
+    @GetMapping("exercises/{exerciseId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
 
@@ -145,7 +145,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{exerciseId}/for-assessment-dashboard")
+    @GetMapping("exercises/{exerciseId}/for-assessment-dashboard")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Exercise> getExerciseForAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -182,8 +182,9 @@ public class ExerciseResource {
      *
      * @return the ResponseEntity with status 200 (OK) and a list of exercises.
      */
-    @GetMapping("/exercises/upcoming")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("exercises/upcoming")
+    @EnforceAdmin
+    // TODO /admin
     public ResponseEntity<Set<Exercise>> getUpcomingExercises() {
         log.debug("REST request to get all upcoming exercises");
         authCheckService.checkIsAdminElseThrow(null);
@@ -197,7 +198,7 @@ public class ExerciseResource {
      * @param exerciseId the id of the exercise
      * @return the title of the exercise wrapped in an ResponseEntity or 404 Not Found if no exercise with that id exists
      */
-    @GetMapping("/exercises/{exerciseId}/title")
+    @GetMapping("exercises/{exerciseId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
         final var title = exerciseRepository.getExerciseTitle(exerciseId);
@@ -210,7 +211,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the stats, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{exerciseId}/stats-for-assessment-dashboard")
+    @GetMapping("exercises/{exerciseId}/stats-for-assessment-dashboard")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForExerciseAssessmentDashboard(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -225,7 +226,7 @@ public class ExerciseResource {
      * @param exerciseId exercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/exercises/{exerciseId}/reset")
+    @DeleteMapping("exercises/{exerciseId}/reset")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId) {
         log.debug("REST request to reset Exercise : {}", exerciseId);
@@ -242,7 +243,7 @@ public class ExerciseResource {
      * @param deleteRepositories whether repositories should be deleted or not
      * @return ResponseEntity with status
      */
-    @DeleteMapping("/exercises/{exerciseId}/cleanup")
+    @DeleteMapping("exercises/{exerciseId}/cleanup")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> cleanup(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean deleteRepositories) {
@@ -260,7 +261,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to get the repos from
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @GetMapping("/exercises/{exerciseId}/details")
+    @GetMapping("exercises/{exerciseId}/details")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Exercise> getExerciseDetails(@PathVariable Long exerciseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -315,7 +316,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to toggle the second correction
      * @return the ResponseEntity with status 200 (OK) and new state of the correction toggle state
      */
-    @PutMapping("/exercises/{exerciseId}/toggle-second-correction")
+    @PutMapping("exercises/{exerciseId}/toggle-second-correction")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Boolean> toggleSecondCorrectionEnabled(@PathVariable Long exerciseId) {
         log.debug("toggleSecondCorrectionEnabled for exercise with id: {}", exerciseId);
@@ -330,7 +331,7 @@ public class ExerciseResource {
      * @param exerciseId the exerciseId of the exercise to get the latest due date from
      * @return the ResponseEntity with status 200 (OK) and the latest due date
      */
-    @GetMapping("/exercises/{exerciseId}/latest-due-date")
+    @GetMapping("exercises/{exerciseId}/latest-due-date")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ZonedDateTime> getLatestDueDate(@PathVariable Long exerciseId) {
         log.debug("getLatestDueDate for exercise with id: {}", exerciseId);

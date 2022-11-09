@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AssessmentDashboardService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.SubmissionService;
@@ -52,7 +53,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing Exam.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ExamResource {
 
     private final Logger log = LoggerFactory.getLogger(ExamResource.class);
@@ -128,7 +129,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new exam, or with status 400 (Bad Request) if the exam has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/courses/{courseId}/exams")
+    @PostMapping("courses/{courseId}/exams")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Exam> createExam(@PathVariable Long courseId, @RequestBody Exam exam) throws URISyntaxException {
         log.debug("REST request to create an exam : {}", exam);
@@ -163,7 +164,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated exam
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/courses/{courseId}/exams")
+    @PutMapping("courses/{courseId}/exams")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody Exam updatedExam) throws URISyntaxException {
         log.debug("REST request to update an exam : {}", updatedExam);
@@ -226,7 +227,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exam, or with status 400 (Bad Request) if the exam has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/courses/{courseId}/exam-import")
+    @PostMapping("courses/{courseId}/exam-import")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException {
         log.debug("REST request to import an exam : {}", examToBeImported);
@@ -359,7 +360,7 @@ public class ExamResource {
      * @param search Pageable with all relevant information
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
-    @GetMapping("/exams")
+    @GetMapping("exams")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises, PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -372,7 +373,7 @@ public class ExamResource {
      * @param examId the exam to find
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
-    @GetMapping("/exams/{examId}")
+    @GetMapping("exams/{examId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Exam> getExamForImportWithExercises(@PathVariable Long examId) {
         log.debug("REST request to get exam : {} for import with exercises", examId);
@@ -392,7 +393,7 @@ public class ExamResource {
      * @param withExerciseGroups boolean flag whether to include all exercise groups of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}")
+    @GetMapping("courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents,
             @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
@@ -433,7 +434,7 @@ public class ExamResource {
      * @param examId the id of the exam
      * @return the title of the exam wrapped in an ResponseEntity or 404 Not Found if no exam with that id exists
      */
-    @GetMapping(value = "/exams/{examId}/title")
+    @GetMapping("exams/{examId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
         final var title = examRepository.getExamTitle(examId);
@@ -447,7 +448,7 @@ public class ExamResource {
      * @param examId   the exam to find
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/statistics")
+    @GetMapping("courses/{courseId}/exams/{examId}/statistics")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ExamChecklistDTO> getExamStatistics(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam statistics: {}", examId);
@@ -470,7 +471,7 @@ public class ExamResource {
      * @param examId   the exam to find
      * @return the ResponseEntity with status 200 (OK) and with the found ExamScoreDTO as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/scores")
+    @GetMapping("courses/{courseId}/exams/{examId}/scores")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ExamScoresDTO> getExamScore(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
@@ -488,7 +489,7 @@ public class ExamResource {
      * @param examId   the id of the exam that contains the exercises
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard")
+    @GetMapping("courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Exam> getExamForAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard");
@@ -525,7 +526,7 @@ public class ExamResource {
      * @param examId   the id of the exam that contains the exercises
      * @return data about an exam test run including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard")
+    @GetMapping("courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Exam> getExamForTestRunAssessmentDashboard(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request /courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard");
@@ -551,7 +552,7 @@ public class ExamResource {
      * @param examId   - the id of the exam to retrieve stats from
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/stats-for-exam-assessment-dashboard")
+    @GetMapping("courses/{courseId}/exams/{examId}/stats-for-exam-assessment-dashboard")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForExamAssessmentDashboard(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request /courses/{courseId}/stats-for-exam-assessment-dashboard");
@@ -568,7 +569,7 @@ public class ExamResource {
      * @param courseId the course to which the exam belongs
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
-    @GetMapping("/courses/{courseId}/exams")
+    @GetMapping("courses/{courseId}/exams")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Exam>> getExamsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all exams for Course : {}", courseId);
@@ -586,7 +587,7 @@ public class ExamResource {
      * @param courseId the course to which the exam belongs
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
-    @GetMapping("/courses/{courseId}/exams-for-user")
+    @GetMapping("courses/{courseId}/exams-for-user")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Exam>> getExamsWithQuizExercisesForUser(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -606,8 +607,9 @@ public class ExamResource {
      *
      * @return the ResponseEntity with status 200 (OK) and a list of exams.
      */
-    @GetMapping("/courses/upcoming-exams")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("courses/upcoming-exams")
+    @EnforceAdmin
+    // TODO /admin
     public ResponseEntity<List<Exam>> getCurrentAndUpcomingExams() {
         log.debug("REST request to get all upcoming exams");
 
@@ -627,7 +629,7 @@ public class ExamResource {
      * @param examId   the id of the exam to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/courses/{courseId}/exams/{examId}")
+    @DeleteMapping("courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to delete exam : {}", examId);
@@ -652,7 +654,7 @@ public class ExamResource {
      * @param examId   the id of the exam to reset
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/courses/{courseId}/exams/{examId}/reset")
+    @DeleteMapping("courses/{courseId}/exams/{examId}/reset")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Exam> resetExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to reset exam : {}", examId);
@@ -685,7 +687,7 @@ public class ExamResource {
      * @param studentLogin the login of the user who should get student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping("courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<StudentDTO> addStudentToExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to exam : {}", studentLogin, examId);
@@ -722,7 +724,7 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return the list of student exams with their corresponding users
      */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-student-exams")
+    @PostMapping("courses/{courseId}/exams/{examId}/generate-student-exams")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<StudentExam>> generateStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
@@ -772,7 +774,7 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return the list of student exams with their corresponding users
      */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-missing-student-exams")
+    @PostMapping("courses/{courseId}/exams/{examId}/generate-missing-student-exams")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<StudentExam>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
@@ -805,7 +807,7 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return ResponseEntity the number of evaluated quiz exercises
      */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises")
+    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> evaluateQuizExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to evaluate quiz exercises of exam {}", examId);
@@ -835,7 +837,7 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return the number of unlocked exercises
      */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
+    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/unlock-all-repositories")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to unlock all repositories of exam {}", examId);
@@ -856,7 +858,7 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return the number of locked exercises
      */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
+    @PostMapping("courses/{courseId}/exams/{examId}/student-exams/lock-all-repositories")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to lock all repositories of exam {}", examId);
@@ -883,7 +885,7 @@ public class ExamResource {
      * @param studentDtos the list of students (with at least registration number) who should get access to the exam
      * @return the list of students who could not be registered for the exam, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/students")
+    @PostMapping("courses/{courseId}/exams/{examId}/students")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<StudentDTO>> addStudentsToExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<StudentDTO> studentDtos) {
         log.debug("REST request to add {} as students to exam {}", studentDtos, examId);
@@ -901,7 +903,7 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping(value = "/courses/{courseId}/exams/{examId}/register-course-students")
+    @PostMapping("courses/{courseId}/exams/{examId}/register-course-students")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> registerCourseStudents(@PathVariable Long courseId, @PathVariable Long examId) {
         // get all students enrolled in the course
@@ -930,7 +932,7 @@ public class ExamResource {
      * @param withParticipationsAndSubmission request param deciding whether participations and submissions should also be deleted
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping(value = "/courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping("courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeStudentFromExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin,
             @RequestParam(defaultValue = "false") boolean withParticipationsAndSubmission) {
@@ -963,7 +965,7 @@ public class ExamResource {
      * @param withParticipationsAndSubmission request param deciding whether participations and submissions should also be deleted
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping(value = "/courses/{courseId}/exams/{examId}/students")
+    @DeleteMapping("courses/{courseId}/exams/{examId}/students")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeAllStudentsFromExam(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestParam(defaultValue = "false") boolean withParticipationsAndSubmission) {
@@ -991,7 +993,7 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found student exam (without exercises) as body
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/start")
+    @GetMapping("courses/{courseId}/exams/{examId}/start")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentExam> getStudentExamForStart(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
@@ -1009,7 +1011,7 @@ public class ExamResource {
      * @param orderedExerciseGroups the exercise groups of the exam in the desired order.
      * @return the list of exercise groups
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/exercise-groups-order")
+    @PutMapping("courses/{courseId}/exams/{examId}/exercise-groups-order")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<ExerciseGroup>> updateOrderOfExerciseGroups(@PathVariable Long courseId, @PathVariable Long examId,
             @RequestBody List<ExerciseGroup> orderedExerciseGroups) {
@@ -1048,7 +1050,7 @@ public class ExamResource {
      * @return the ResponseEntity with status 200 (OK) and with the found exam as body or NotFound if it could not be
      * determined
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/latest-end-date")
+    @GetMapping("courses/{courseId}/exams/{examId}/latest-end-date")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ExamInformationDTO> getLatestIndividualEndDateOfExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get latest individual end date of exam : {}", examId);
@@ -1066,7 +1068,7 @@ public class ExamResource {
      * @param examId   - the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/lockedSubmissions")
+    @GetMapping("courses/{courseId}/exams/{examId}/lockedSubmissions")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<Submission>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
@@ -1092,7 +1094,7 @@ public class ExamResource {
      * @param examId   the id of the exam to archive
      * @return empty
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/archive")
+    @PutMapping("courses/{courseId}/exams/{examId}/archive")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Void> archiveExam(@PathVariable Long courseId, @PathVariable Long examId) {
@@ -1121,7 +1123,7 @@ public class ExamResource {
      * @param examId   The id of the archived exam
      * @return ResponseEntity with status
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/download-archive")
+    @GetMapping("courses/{courseId}/exams/{examId}/download-archive")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Resource> downloadExamArchive(@PathVariable Long courseId, @PathVariable Long examId) throws FileNotFoundException {
         log.info("REST request to download archive of exam : {}", examId);

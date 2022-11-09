@@ -11,10 +11,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuditEventService;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
@@ -24,8 +24,7 @@ import tech.jhipster.web.util.ResponseUtil;
  * REST controller for getting the audit events.
  */
 @RestController
-@RequestMapping("/management/audits")
-@PreAuthorize("hasRole('ADMIN')")
+@RequestMapping("management/audits/")
 public class AuditResource {
 
     private final AuditEventService auditEventService;
@@ -40,6 +39,8 @@ public class AuditResource {
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
+    @EnforceAdmin
+    // TODO: /admin
     @GetMapping
     public ResponseEntity<List<AuditEvent>> getAll(@ApiParam Pageable pageable) {
         Page<AuditEvent> page = auditEventService.findAll(pageable);
@@ -55,6 +56,8 @@ public class AuditResource {
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
+    @EnforceAdmin
+    // TODO: /admin
     @GetMapping(params = { "fromDate", "toDate" })
     public ResponseEntity<List<AuditEvent>> getByDates(@RequestParam(value = "fromDate") LocalDate fromDate, @RequestParam(value = "toDate") LocalDate toDate,
             @ApiParam Pageable pageable) {
@@ -73,7 +76,9 @@ public class AuditResource {
      * @param id the id of the entity to get
      * @return the ResponseEntity with status 200 (OK) and the AuditEvent in body, or status 404 (Not Found)
      */
-    @GetMapping("/{id:.+}")
+    @EnforceAdmin
+    // TODO: /admin
+    @GetMapping("{id:.+}")
     public ResponseEntity<AuditEvent> get(@PathVariable Long id) {
         return ResponseUtil.wrapOrNotFound(auditEventService.find(id));
     }

@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.StatisticsService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
@@ -28,8 +29,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
  * REST controller for managing statistics.
  */
 @RestController
-@RequestMapping("/api")
-@PreAuthorize("hasRole('TA')")
+@RequestMapping("api/")
 public class StatisticsResource {
 
     private final Logger log = LoggerFactory.getLogger(StatisticsResource.class);
@@ -59,7 +59,8 @@ public class StatisticsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/data")
-    @PreAuthorize("hasRole('ADMIN')")
+    @EnforceAdmin
+    // TODO /admin
     public ResponseEntity<List<Integer>> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType) {
         log.debug("REST request to get graph data");
         return ResponseEntity.ok(this.statisticsService.getChartData(span, periodIndex, graphType, StatisticsView.ARTEMIS, null));

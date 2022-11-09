@@ -17,13 +17,14 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 /**
  * REST controller for managing TextAssessmentEventResource.
  */
 @RestController
-@RequestMapping("/api/event-insights/text-assessment")
+@RequestMapping("api/")
 public class TextAssessmentEventResource {
 
     private final Logger log = LoggerFactory.getLogger(TextAssessmentEventResource.class);
@@ -64,8 +65,9 @@ public class TextAssessmentEventResource {
      * @param courseId the id of the course to filter by
      * @return returns a List of TextAssessmentEvent's
      */
-    @GetMapping("events/{courseId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("event-insights/text-assessment/events/{courseId}")
+    @EnforceAdmin
+    // TODO /admin
     public ResponseEntity<List<TextAssessmentEvent>> getEventsByCourseId(@PathVariable Long courseId) {
         List<TextAssessmentEvent> events = textAssessmentEventRepository.findAllByCourseId(courseId);
         return ResponseEntity.ok().body(events);
@@ -76,7 +78,7 @@ public class TextAssessmentEventResource {
      * @param event to be added
      * @return the status of the finished request
      */
-    @PostMapping("events")
+    @PostMapping("event-insights/text-assessment/events")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> addAssessmentEvent(@RequestBody TextAssessmentEvent event) {
         log.debug("REST request to save assessmentEvent : {}", event);
@@ -96,7 +98,7 @@ public class TextAssessmentEventResource {
      * @param exerciseId the id of the exercise to query events for
      * @return an integer representing the number of tutors involved for the respective course and exercise
      */
-    @GetMapping("courses/{courseId}/text-exercises/{exerciseId}/tutors-involved")
+    @GetMapping("event-insights/text-assessment/courses/{courseId}/text-exercises/{exerciseId}/tutors-involved")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> getNumberOfTutorsInvolved(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();

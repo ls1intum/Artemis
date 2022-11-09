@@ -20,6 +20,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.SystemNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -29,7 +30,7 @@ import tech.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing SystemNotification. */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class SystemNotificationResource {
 
     private final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);
@@ -55,8 +56,9 @@ public class SystemNotificationResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new system notification, or with status 400 (Bad Request) if the system notification has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/system-notifications")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("system-notifications")
+    @EnforceAdmin
+    // TODO /admin
     public ResponseEntity<Notification> createSystemNotification(@RequestBody SystemNotification systemNotification) throws URISyntaxException {
         log.debug("REST request to save SystemNotification : {}", systemNotification);
         if (systemNotification.getId() != null) {
@@ -76,8 +78,9 @@ public class SystemNotificationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated notification, or with status 400 (Bad Request) if the system notification is not valid, or with
      *         status 500 (Internal Server Error) if the system notification couldn't be updated
      */
-    @PutMapping("/system-notifications")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("system-notifications")
+    @EnforceAdmin
+    // TODO /admin
     public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotification systemNotification) {
         log.debug("REST request to update SystemNotification : {}", systemNotification);
         if (systemNotification.getId() == null) {
@@ -108,7 +111,7 @@ public class SystemNotificationResource {
      * @param pageable instance of the pageable interface to enable paging
      * @return the list of system notifications
      */
-    @GetMapping("/system-notifications")
+    @GetMapping("system-notifications")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<SystemNotification>> getAllSystemNotifications(@ApiParam Pageable pageable) {
         log.debug("REST request to get all Courses the user has access to");
@@ -123,7 +126,7 @@ public class SystemNotificationResource {
      * @param id the id of the system notification to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
-    @GetMapping("/system-notifications/{id}")
+    @GetMapping("system-notifications/{id}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SystemNotification> getSystemNotification(@PathVariable Long id) {
         log.debug("REST request to get SystemNotification : {}", id);
@@ -137,8 +140,9 @@ public class SystemNotificationResource {
      * @param id the id of the system notification to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/system-notifications/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("system-notifications/{id}")
+    @EnforceAdmin
+    // TODO /admin
     public ResponseEntity<Void> deleteSystemNotification(@PathVariable Long id) {
         log.debug("REST request to delete SystemNotification : {}", id);
         systemNotificationRepository.deleteById(id);
@@ -152,7 +156,7 @@ public class SystemNotificationResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
-    @GetMapping("/system-notifications/active")
+    @GetMapping("system-notifications/active")
     public List<SystemNotification> getActiveAndFutureSystemNotifications() {
         log.debug("REST request to get relevant system notifications");
         return systemNotificationService.findAllActiveAndFutureSystemNotifications();
