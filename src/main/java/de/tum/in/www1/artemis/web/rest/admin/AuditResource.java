@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.admin;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -24,7 +24,7 @@ import tech.jhipster.web.util.ResponseUtil;
  * REST controller for getting the audit events.
  */
 @RestController
-@RequestMapping("management/audits/")
+@RequestMapping("api/admin/")
 public class AuditResource {
 
     private final AuditEventService auditEventService;
@@ -40,8 +40,7 @@ public class AuditResource {
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
     @EnforceAdmin
-    // TODO: /admin
-    @GetMapping
+    @GetMapping("audits")
     public ResponseEntity<List<AuditEvent>> getAll(@ApiParam Pageable pageable) {
         Page<AuditEvent> page = auditEventService.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
@@ -57,8 +56,7 @@ public class AuditResource {
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
     @EnforceAdmin
-    // TODO: /admin
-    @GetMapping(params = { "fromDate", "toDate" })
+    @GetMapping(value = ("audits"), params = { "fromDate", "toDate" })
     public ResponseEntity<List<AuditEvent>> getByDates(@RequestParam(value = "fromDate") LocalDate fromDate, @RequestParam(value = "toDate") LocalDate toDate,
             @ApiParam Pageable pageable) {
 
@@ -77,8 +75,7 @@ public class AuditResource {
      * @return the ResponseEntity with status 200 (OK) and the AuditEvent in body, or status 404 (Not Found)
      */
     @EnforceAdmin
-    // TODO: /admin
-    @GetMapping("{id:.+}")
+    @GetMapping("audits/{id:.+}")
     public ResponseEntity<AuditEvent> get(@PathVariable Long id) {
         return ResponseUtil.wrapOrNotFound(auditEventService.find(id));
     }
