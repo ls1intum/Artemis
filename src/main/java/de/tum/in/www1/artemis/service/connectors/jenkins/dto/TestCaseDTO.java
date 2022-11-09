@@ -9,6 +9,7 @@ import org.apache.commons.collections.CollectionUtils;
 
 import com.fasterxml.jackson.annotation.*;
 
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -48,6 +49,10 @@ public record TestCaseDTO(String name, String classname, double time, List<TestC
         return extractMessage().map(Collections::singletonList).orElse(Collections.emptyList());
     }
 
+    /**
+     * Extracts the most helpful message from the test case received from the continuous integration system.
+     * @return the most helpful message that can be added to an automatic {@link Feedback}.
+     */
     private Optional<String> extractMessage() {
         boolean hasErrors = !CollectionUtils.isEmpty(errors());
         boolean hasFailures = !CollectionUtils.isEmpty(failures());
