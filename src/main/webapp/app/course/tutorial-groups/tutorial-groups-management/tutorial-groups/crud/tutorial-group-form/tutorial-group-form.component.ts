@@ -130,11 +130,14 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         }
     }
 
-    get scheduleChanged() {
+    get showScheduledChangedWarning() {
         if (!this.isEditMode) {
             return false;
         }
         const originalHasSchedule = !!this.existingScheduleFormDate;
+        if (!originalHasSchedule) {
+            return false;
+        }
         const updateHasSchedule = this.configureSchedule && this.form.value.schedule;
 
         if (originalHasSchedule && !updateHasSchedule) {

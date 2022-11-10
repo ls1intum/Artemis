@@ -133,7 +133,7 @@
                     {{ 'artemisApp.forms.scheduleForm.configureRecurringSchedule' | artemisTranslate }}
                 </label>
             </div>
-            <div *ngIf="scheduleChanged" class="alert alert-danger" role="alert">
+            <div *ngIf="showScheduledChangedWarning" class="alert alert-danger" role="alert">
                 {{ 'artemisApp.forms.scheduleForm.scheduleChangeWarning' | artemisTranslate }}
             </div>
             <hr />
