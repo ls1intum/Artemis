@@ -16,6 +16,7 @@ import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
@@ -321,12 +322,23 @@ public class TutorialGroupService {
     private Set<TutorialGroup> findOrCreateTutorialGroups(Course course, Set<TutorialGroupRegistrationImportDTO> registrations) {
         var titlesMentionedInRegistrations = registrations.stream().map(TutorialGroupRegistrationImportDTO::title).filter(Objects::nonNull).map(String::trim)
                 .collect(Collectors.toSet());
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
 
         var foundTutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId()).stream()
                 .filter(tutorialGroup -> titlesMentionedInRegistrations.contains(tutorialGroup.getTitle())).collect(Collectors.toSet());
         var tutorialGroupsToCreate = titlesMentionedInRegistrations.stream()
-                .filter(title -> foundTutorialGroups.stream().noneMatch(tutorialGroup -> tutorialGroup.getTitle().equals(title))).map(title -> new TutorialGroup(course, title))
-                .collect(Collectors.toSet());
+                .filter(title -> foundTutorialGroups.stream().noneMatch(tutorialGroup -> tutorialGroup.getTitle().equals(title))).map(title -> {
+                    var tutorialGroup = new TutorialGroup();
+                    tutorialGroup.setTitle(title);
+                    tutorialGroup.setCourse(course);
+                    // default values for the tutorial group
+                    tutorialGroup.setLanguage(Language.GERMAN);
+                    tutorialGroup.setCapacity(1);
+                    tutorialGroup.setTeachingAssistant(requestingUser);
+                    tutorialGroup.setIsOnline(false);
+                    tutorialGroup.setCampus("Campus");
+                    return tutorialGroup;
+                }).collect(Collectors.toSet());
 
         var tutorialGroupsMentionedInRegistrations = new HashSet<>(foundTutorialGroups);
         tutorialGroupsMentionedInRegistrations.addAll(tutorialGroupRepository.saveAll(tutorialGroupsToCreate));
