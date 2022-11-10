@@ -197,7 +197,7 @@
         },
         "pages": {
             "tutorialGroupsManagement": {
-                "intro": "Willkommen auf der Seite zur Verwaltung der Übungsgrupen! Eine Beta-Funktion von Artemis, die es ermöglicht, wöchentliche Online- und Offline-Übungsgruppen zu verwalten.",
+                "intro": "Willkommen auf der Seite zur Verwaltung der Übungsgrupen! Eine Beta-Funktion von Artemis, die es ermöglicht, wöchentliche Online- und Offline-Übungsgruppen zu verwalten. Du kannst damit beginnen, Übungsgruppen aus einer CSV-Datei zu importieren oder manuell eine neue Übungsgruppe zu erstellen.",
                 "title": "Übungsgruppen-Verwaltung",
                 "freePeriodsButtons": "Freie Tage",
                 "creatTutorialGroupButton": "Neue Übungsgruppe",

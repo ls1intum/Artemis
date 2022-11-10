@@ -197,7 +197,7 @@
         },
         "pages": {
             "tutorialGroupsManagement": {
-                "intro": "Welcome to the tutorial group management page! A beta feature of Artemis that allows you to manage online and offline weekly tutorial groups",
+                "intro": "Welcome to the tutorial group management page! A beta feature of Artemis that allows you to manage online and offline weekly tutorial groups. Start by either importing tutorial groups from a CSV file or by creating a new tutorial group manually.",
                 "title": "Tutorial Groups Management",
                 "freePeriodsButtons": "Holidays",
                 "creatTutorialGroupButton": "Create New Tutorial Group",
