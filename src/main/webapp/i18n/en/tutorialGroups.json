@@ -187,7 +187,7 @@
                 },
                 "periodInput": {
                     "label": "Tutorial Group Period",
-                    "explanation": "The period in which the tutorial groups occur in the semester. This will the default schedule of every tutorial group. It can be overridden by individual schedules.",
+                    "explanation": "The period in which the tutorial groups occur in the semester. This will the default schedule of every tutorial group. It can be overridden by individual schedules. For example, if you enter '01-01-2020 - 01-06-2020' here, all tutorial groups will have a default schedule from '01-01-2020 - 01-06-2020' by default. You can change this later for individual tutorial groups.",
                     "requiredValidationError": "You need to select a period!",
                     "parseError": "Period must be in the format 'YYYY-MM-DD - YYYY-MM-DD'",
                     "invalidRangeError": "Period must be a valid date range"

@@ -187,7 +187,7 @@
                 },
                 "periodInput": {
                     "label": "Übungsgruppen-Zeitraum",
-                    "explanation": "Der Zeitraum, in dem die Übungsgruppen im Semester stattfinden. Dies ist der Standardplan jeder Übungsgruppe. Er kann individuell für jede Übungsgruppe angepasst werden.",
+                    "explanation": "Der Zeitraum, in dem die Übungsgruppen im Semester stattfinden. Dies ist der Standardplan für jede Übungsgruppe. Er kann durch individuelle Zeitpläne überschrieben werden. Wenn du hier z.B. '01-01-2020 - 01-06-2020' eingibst, haben alle Übungsgruppen standardmäßig einen Zeitplan von '01-01-2020 - 01-06-2020'. Du kannst dies später für einzelne Übungsgruppen ändern.",
                     "requiredValidationError": "Ein Zeitraum muss angegeben werden!",
                     "parseError": "Der Zeitraum muss im Format 'YYYY-MM-DD - YYYY-MM-DD' sein",
                     "invalidRangeError": "Der Zeitraum muss ein gültiger Datumsbereich sein"
