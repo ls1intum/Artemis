@@ -8,6 +8,7 @@
                 </h4>
                 <div *ngIf="isAtLeastInstructor">
                     <a
+                        ngbTooltip="{{ 'artemisApp.pages.tutorialFreePeriodsManagement.explanation' | artemisTranslate }}"
                         class="btn btn-primary"
                         *ngIf="course?.tutorialGroupsConfiguration"
                         [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'tutorial-free-days']"

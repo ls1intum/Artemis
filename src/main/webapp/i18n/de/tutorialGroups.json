@@ -237,6 +237,7 @@
                 "sessionsNotFound": "Keine Sitzungen gefunden"
             },
             "tutorialFreePeriodsManagement": {
+                "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",
                 "title": "Freie Tage verwalten",
                 "createFreePeriodButton": "Neuen freien Tag hinzufügen",
                 "timeZoneExplanation": "Jeder Tag wird in der Zeitzone {{ timeZone }} angezeigt",

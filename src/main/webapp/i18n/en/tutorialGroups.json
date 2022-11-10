@@ -237,6 +237,7 @@
                 "sessionsNotFound": "No sessions found"
             },
             "tutorialFreePeriodsManagement": {
+                "explanation": "Define course wide days on which no tutorial groups should take place. This can be used to define holidays or other days on which no tutorial groups should take place.",
                 "title": "Tutorial Free Days Management",
                 "createFreePeriodButton": "Add New Free Day",
                 "timeZoneExplanation": "Every day displayed in the time zone {{ timeZone }}",
