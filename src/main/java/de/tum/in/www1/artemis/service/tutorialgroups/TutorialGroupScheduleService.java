@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.service.tutorialgroups;
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.getFirstDateOfWeekDay;
 
 import java.time.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
@@ -50,14 +47,7 @@ public class TutorialGroupScheduleService {
         // Generate Sessions
         var individualSessions = generateSessions(tutorialGroupsConfiguration, tutorialGroupSchedule);
         // check for overlap with existing individual sessions
-        var overlappingIndividualSessions = new HashSet<TutorialGroupSession>();
-        for (var individualSession : individualSessions) {
-            var overlappingSession = tutorialGroupSessionRepository.findOverlappingIndividualSessionsInSameTutorialGroup(tutorialGroup, individualSession.getStart(),
-                    individualSession.getEnd());
-            if (!overlappingSession.isEmpty()) {
-                overlappingIndividualSessions.addAll(overlappingSession);
-            }
-        }
+        var overlappingIndividualSessions = findOverlappingExistingSessions(tutorialGroup, individualSessions);
         if (!overlappingIndividualSessions.isEmpty()) {
             throw new ScheduleOverlapsWithSessionException(overlappingIndividualSessions, ZoneId.of(tutorialGroupsConfiguration.getCourse().getTimeZone()));
         }
@@ -72,6 +62,19 @@ public class TutorialGroupScheduleService {
             individualSession.setTutorialGroup(savedSchedule.getTutorialGroup());
         }
         tutorialGroupSessionRepository.saveAll(individualSessions);
+    }
+
+    @NotNull
+    private Set<TutorialGroupSession> findOverlappingExistingSessions(TutorialGroup tutorialGroup, List<TutorialGroupSession> individualSessions) {
+        var overlappingIndividualSessions = new HashSet<TutorialGroupSession>();
+        for (var individualSession : individualSessions) {
+            var overlappingSession = tutorialGroupSessionRepository.findOverlappingIndividualSessionsInSameTutorialGroup(tutorialGroup, individualSession.getStart(),
+                    individualSession.getEnd());
+            if (!overlappingSession.isEmpty()) {
+                overlappingIndividualSessions.addAll(overlappingSession);
+            }
+        }
+        return overlappingIndividualSessions;
     }
 
     /**
