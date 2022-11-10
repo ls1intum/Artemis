@@ -104,7 +104,7 @@ public class BonusResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/bonus/calculate-raw")
     @EnforceAdmin
-    // TODO: /admin
+    // TODO: Ignore this in automated tests as this is only used for testing purposes
     public ResponseEntity<BonusExampleDTO> calculateGradeWithBonus(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam BonusStrategy bonusStrategy,
             @RequestParam Double calculationSign, @RequestParam Double bonusToPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
 
