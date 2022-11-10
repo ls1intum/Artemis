@@ -1,6 +1,8 @@
 <div>
     <jhi-programming-exercise-update-wizard
         *ngIf="isShowingWizardMode"
+        (onNextStep)="nextWizardStep()"
+        [currentStep]="currentWizardModeStep"
         [toggleModeFunction]="toggleModeFunction"
         [isSaving]="isSaving"
         [isImport]="isImport"

@@ -43,6 +43,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private translationBasePath = 'artemisApp.programmingExercise.';
 
     toggleModeFunction = () => this.toggleWizardMode();
+    currentWizardModeStep = 1;
 
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
@@ -152,6 +153,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     toggleWizardMode() {
         this.isShowingWizardMode = !this.isShowingWizardMode;
+    }
+
+    /**
+     * Progress to the next step of the wizard mode
+     */
+    nextWizardStep() {
+        this.currentWizardModeStep++;
     }
 
     /**

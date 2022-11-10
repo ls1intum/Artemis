@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faArrowRight, faCheck, faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
@@ -16,6 +16,9 @@ import { Subject } from 'rxjs';
 export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() toggleModeFunction: () => void;
     @Input() isSaving: boolean;
+
+    @Input() currentStep: number;
+    @Output() onNextStep: EventEmitter<any> = new EventEmitter();
 
     @Input() isImport: boolean;
 
@@ -78,8 +81,6 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() onRecreateBuildPlanOrUpdateTemplateChange: () => void;
     @Input() updateTemplate: boolean;
 
-    currentStep: number;
-
     // Icons
     faCheck = faCheck;
     faHandShakeAngle = faHandshakeAngle;
@@ -92,14 +93,10 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        this.currentStep = 1;
     }
 
-    /**
-     * Progress to the next step of the wizard mode
-     */
-    next() {
-        this.currentStep++;
+    nextStep() {
+        this.onNextStep.emit();
     }
 
     /**
