@@ -1,7 +1,6 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { Course } from '../../../../main/webapp/app/entities/course.model';
 import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
-import { ArtemisRequests } from '../../support/requests/ArtemisRequests';
 import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { generateUUID } from '../../support/utils';
 
