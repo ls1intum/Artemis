@@ -115,7 +115,7 @@ public class AnswerPostService extends PostingService {
             mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());
             // sets the post as resolved if there exists any resolving answer
-            existingAnswerPost.getPost().setResolved(existingAnswerPost.getPost().getAnswers().stream().anyMatch(answerPost1 -> answerPost1.doesResolvePost()));
+            existingAnswerPost.getPost().setResolved(existingAnswerPost.getPost().isResolved() || answerPost.doesResolvePost());
             postRepository.save(existingAnswerPost.getPost());
         }
         else {
