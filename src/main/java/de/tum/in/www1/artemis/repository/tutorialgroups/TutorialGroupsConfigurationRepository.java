@@ -14,8 +14,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface TutorialGroupsConfigurationRepository extends JpaRepository<TutorialGroupsConfiguration, Long> {
 
     @Query("""
-                    SELECT tutorialGroupConfiguration
-                FROM TutorialGroupsConfiguration tutorialGroupConfiguration LEFT JOIN tutorialGroupConfiguration.tutorialGroupFreePeriods
+            SELECT tutorialGroupConfiguration
+            FROM TutorialGroupsConfiguration tutorialGroupConfiguration LEFT JOIN tutorialGroupConfiguration.tutorialGroupFreePeriods
             WHERE tutorialGroupConfiguration.id = :#{#tutorialGroupConfigurationId}
             """)
     Optional<TutorialGroupsConfiguration> findByIdWithEagerTutorialGroupFreePeriods(@Param("tutorialGroupConfigurationId") Long tutorialGroupConfigurationId);
