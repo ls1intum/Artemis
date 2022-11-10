@@ -79,7 +79,7 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
                 FROM TutorialGroupSession tutorialGroupSession
                 WHERE tutorialGroupSession.start <= :#{#end} AND tutorialGroupSession.end >= :#{#start}
                 AND tutorialGroupSession.status = de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus.CANCELLED
-            AND tutorialGroupSession.tutorialGroup.course = :#{#course}""")
+                AND tutorialGroupSession.tutorialGroup.course = :#{#course}""")
     Set<TutorialGroupSession> findAllCancelledBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
     default TutorialGroupSession findByIdElseThrow(long tutorialGroupSessionId) {
