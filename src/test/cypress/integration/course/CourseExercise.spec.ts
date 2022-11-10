@@ -1,23 +1,36 @@
 import { artemis } from '../../support/ArtemisTesting';
 import { Course } from '../../../../main/webapp/app/entities/course.model';
 import multipleChoiceQuizTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
+import { ArtemisRequests } from '../../support/requests/ArtemisRequests';
+import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { generateUUID } from '../../support/utils';
 
 // Accounts
 const admin = artemis.users.getAdmin();
 
 // Requests
+const artemisRequests = artemis.requests;
 const courseManagementRequest = artemis.requests.courseManagement;
 
 // Page Objects
 const courseExercisePage = artemis.pageobjects.course.exercise;
 
+// Common primitives
+let courseName: string;
+let courseShortName: string;
+
 describe('Course Exercise', () => {
     let course: Course;
+    let courseId: number;
 
     before('Create course', () => {
         cy.login(admin);
-        courseManagementRequest.createCourse().then((response) => {
-            course = response.body;
+        const uid = generateUUID();
+        courseName = 'Cypress course' + uid;
+        courseShortName = 'cypress' + uid;
+        artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).then((response) => {
+            course = convertCourseAfterMultiPart(response);
+            courseId = course.id!;
         });
     });
 
@@ -38,7 +51,7 @@ describe('Course Exercise', () => {
             });
         });
 
-        it('should filter exercises based on search term', function () {
+        it('should filter exercises based on title', function () {
             cy.visit(`/courses/${course.id}/exercises`);
             cy.get(`#exercise-card-${exercise1.id}`).should('be.visible');
             cy.get(`#exercise-card-${exercise2.id}`).should('be.visible');
@@ -57,6 +70,8 @@ describe('Course Exercise', () => {
     });
 
     after('Delete Course', () => {
-        courseManagementRequest.deleteCourse(course.id!);
+        if (!!courseId) {
+            artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
+        }
     });
 });
