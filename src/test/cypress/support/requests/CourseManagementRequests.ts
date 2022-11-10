@@ -49,9 +49,10 @@ export class CourseManagementRequests {
      * @param customizeGroups whether the predefined groups should be used (so we don't have to wait more than a minute between course and programming exercise creation)
      * @param courseName the title of the course (will generate default name if not provided)
      * @param courseShortName the short name (will generate default name if not provided)
-     * @param courseIcon the course icon path (default: null)
      * @param start the start date of the course (default: now() - 2 hours)
      * @param end the end date of the course (default: now() + 2 hours)
+     * @param fileName the course icon file name (default: undefined)
+     * @param file the course icon file blob (default: undefined)
      * @returns <Chainable> request response
      */
     createCourse(
@@ -60,7 +61,8 @@ export class CourseManagementRequests {
         courseShortName = 'cypress' + generateUUID(),
         start = day().subtract(2, 'hours'),
         end = day().add(2, 'hours'),
-        courseIcon?: string,
+        fileName?: string,
+        file?: Blob,
     ): Cypress.Chainable<Cypress.Response<Course>> {
         const course = new Course();
         course.title = courseName;
@@ -68,7 +70,6 @@ export class CourseManagementRequests {
         course.testCourse = true;
         course.startDate = start;
         course.endDate = end;
-        course.courseIcon = courseIcon;
 
         const allowGroupCustomization: boolean = Cypress.env('allowGroupCustomization');
         if (customizeGroups && allowGroupCustomization) {
@@ -79,6 +80,9 @@ export class CourseManagementRequests {
         }
         const formData = new FormData();
         formData.append('course', new File([JSON.stringify(course)], 'course', { type: 'application/json' }));
+        if (file) {
+            formData.append('file', file, fileName);
+        }
         return cy.request({
             url: BASE_API + 'courses',
             method: POST,

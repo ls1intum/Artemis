@@ -2323,7 +2323,7 @@ public class CourseTestService {
         assertThat(course.getCourseIcon()).as("course icon was set correctly").isEqualTo(iconPath);
 
         course.setCourseIcon(null);
-        request.put("/api/courses", course, HttpStatus.OK);
+        request.putWithMultipartFile("/api/courses/" + course.getId(), course, "course", null, Course.class, HttpStatus.OK);
 
         course = courseRepo.findByIdElseThrow(course.getId());
         assertThat(course.getCourseIcon()).as("course icon was deleted correctly").isNull();
