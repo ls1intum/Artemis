@@ -1,0 +1,45 @@
+<div *ngIf="exercise">
+    <!-- HEADER INFORMATION START -->
+    <jhi-header-exercise-page-with-details [exercise]="exercise" [course]="exercise?.exerciseGroup?.exam?.course">
+        <span pagetitle>{{ exercise.title }}</span>
+    </jhi-header-exercise-page-with-details>
+    <!-- HEADER INFORMATION END -->
+    <!-- EXERCISE ACTIONS START -->
+    <div class="row">
+        <div class="col pe-0 flex-grow-1">
+            <!-- EXERCISE ACTIONS END -->
+            <!-- PROBLEM STATEMENT START -->
+            <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement" id="problem-statement">
+                <div class="col-12 col-md-12 markdown-preview problem-statement">
+                    <h3>{{ 'artemisApp.courseOverview.exerciseDetails.problemStatement' | artemisTranslate }}</h3>
+                    <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>
+                </div>
+            </div>
+            <!-- PROBLEM STATEMENT END -->
+            <ng-container *ngIf="exampleSolutionUML || exampleSolution || isProgrammingExerciseExampleSolutionPublished">
+                <div class="row mb-2 mt-2 align-items-baseline">
+                    <div class="control-label" (click)="changeExampleSolution()">
+                        <span class="h3 pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</span>
+                        <fa-icon class="pe-3" [icon]="exampleSolutionCollapsed ? faAngleDown : faAngleUp"></fa-icon>
+                    </div>
+                </div>
+                <dl class="row-md jh-entity-details markdown-preview" *ngIf="!exampleSolutionCollapsed">
+                    <dd *ngIf="exampleSolutionUML && modelingExercise" class="editor-outline-background">
+                        <jhi-modeling-editor
+                            [readOnly]="true"
+                            [diagramType]="modelingExercise.diagramType!"
+                            [umlModel]="exampleSolutionUML!"
+                            [withExplanation]="!!modelingExercise.exampleSolutionExplanation"
+                            [explanation]="modelingExercise.exampleSolutionExplanation || ''"
+                        ></jhi-modeling-editor>
+                    </dd>
+                    <dd *ngIf="exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolution"></dd>
+                    <!--                    TODO: Ata -->
+                    <!--                    <dd *ngIf="isProgrammingExerciseExampleSolutionPublished" class="editor-outline-background">-->
+                    <!--                        <jhi-programming-exercise-example-solution-repo-download class="ms-2" [exerciseId]="exercise.id!"></jhi-programming-exercise-example-solution-repo-download>-->
+                    <!--                    </dd>-->
+                </dl>
+            </ng-container>
+        </div>
+    </div>
+</div>

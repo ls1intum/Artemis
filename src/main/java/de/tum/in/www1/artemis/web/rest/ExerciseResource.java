@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -69,11 +70,13 @@ public class ExerciseResource {
 
     private final ParticipationRepository participationRepository;
 
+    private final ExamAccessService examAccessService;
+
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
-            ParticipationRepository participationRepository) {
+            ParticipationRepository participationRepository, ExamAccessService examAccessService) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -87,6 +90,7 @@ public class ExerciseResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizBatchService = quizBatchService;
         this.participationRepository = participationRepository;
+        this.examAccessService = examAccessService;
     }
 
     /**
@@ -136,6 +140,37 @@ public class ExerciseResource {
 
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         exercise.setGradingCriteria(gradingCriteria);
+        return ResponseEntity.ok(exercise);
+    }
+
+    /**
+     * TODO: Ata
+     * @param exerciseId
+     * @return
+     */
+    @GetMapping("/exercises/{exerciseId}/example-solution")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Exercise> getExerciseForExampleSolution(@PathVariable Long exerciseId) {
+
+        log.debug("REST request to get exercise with example solution: {}", exerciseId);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        if (exercise.isExamExercise()) {
+            examAccessService.checkExamExerciseForExampleSolutionAccessElseThrow(exercise);
+        }
+        else {
+            // Course exercise
+            if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
+                throw new AccessForbiddenException("You are not allowed to see this exercise!");
+            }
+            if (!exercise.isExampleSolutionPublished()) {
+                throw new AccessForbiddenException("Example solution for exercise is not published yet!");
+            }
+        }
+
+        exercise.filterSensitiveInformation();
         return ResponseEntity.ok(exercise);
     }
 

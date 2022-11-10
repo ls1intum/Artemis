@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { LtiConfiguration } from 'app/entities/lti-configuration.model';
@@ -146,6 +146,19 @@ export class ExerciseService {
                     }
                 }
                 return res;
+            }),
+        );
+    }
+
+    /**
+     * Get basic exercise information for the purpose of displaying its example solution. If the example solution is not yet
+     * published, returns error.
+     * @param { number } exerciseId - Id of the exercise to get the example solution
+     */
+    getExerciseForExampleSolution(exerciseId: number): Observable<EntityResponseType> {
+        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/example-solution`, { observe: 'response' }).pipe(
+            tap((res: EntityResponseType) => {
+                this.processExerciseEntityResponse(res);
             }),
         );
     }

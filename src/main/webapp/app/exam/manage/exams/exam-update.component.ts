@@ -12,7 +12,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCheckDouble, faExclamationTriangle, faFont, faSave } from '@fortawesome/free-solid-svg-icons';
 import { tap } from 'rxjs/operators';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
@@ -149,7 +149,15 @@ export class ExamUpdateComponent implements OnInit {
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
         const examValidWorkingTime = this.validateWorkingTime;
-        return examConductionDatesValid && examReviewDatesValid && examNumberOfCorrectionsValid && examMaxPointsValid && examValidWorkingTime;
+        const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
+        return (
+            examConductionDatesValid &&
+            examReviewDatesValid &&
+            examNumberOfCorrectionsValid &&
+            examMaxPointsValid &&
+            examValidWorkingTime &&
+            examValidExampleSolutionPublicationDate
+        );
     }
 
     get isValidVisibleDate(): boolean {
@@ -277,6 +285,18 @@ export class ExamUpdateComponent implements OnInit {
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
         return this.exam.examStudentReviewStart !== undefined && dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
+    }
+
+    get isValidExampleSolutionPublicationDate(): boolean {
+        // allow instructors to leave exampleSolutionPublicationDate unset
+        if (!this.exam.exampleSolutionPublicationDate) {
+            return true;
+        }
+        // dayjs.isBefore(null) is always false so exampleSolutionPublicationDate is valid if the visibleDate and endDate is not set
+        return !(
+            dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.visibleDate || null) ||
+            dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
+        );
     }
 
     /**

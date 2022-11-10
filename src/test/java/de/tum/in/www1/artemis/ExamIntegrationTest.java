@@ -855,7 +855,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Test for bad request, when visibleDate equals the startDate
         Exam examF = ModelFactory.generateExam(course);
         examF.setVisibleDate(examF.getStartDate());
-        return List.of(examA, examB, examC, examD, examE, examF);
+        // Test for bad request, when exampleSolutionPublicationDate is before the visibleDate
+        Exam examG = ModelFactory.generateExam(course);
+        examG.setExampleSolutionPublicationDate(examG.getVisibleDate().minusHours(1));
+        return List.of(examA, examB, examC, examD, examE, examF, examG);
     }
 
     @Test
@@ -1036,6 +1039,26 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.patch("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId() + "/student-exams/" + studentExam.getId() + "/working-time",
                 3, HttpStatus.OK);
         verify(instanceMessageSendService, times(2)).sendModelingExerciseSchedule(modelingExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_exampleSolutionPublicationDateChanged() throws Exception {
+        var modelingExercise = database.addCourseExamExerciseGroupWithOneModelingExercise();
+        var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
+
+        assertThat(modelingExercise.isExampleSolutionPublished()).isFalse();
+        examWithModelingEx.setVisibleDate(now().minusHours(5));
+        examWithModelingEx.setStartDate(examWithModelingEx.getVisibleDate().plusMinutes(1));
+        examWithModelingEx.setEndDate(examWithModelingEx.getStartDate().plusMinutes(1));
+        examWithModelingEx.setPublishResultsDate(examWithModelingEx.getEndDate().plusMinutes(1));
+        examWithModelingEx.setExampleSolutionPublicationDate(examWithModelingEx.getPublishResultsDate().plusMinutes(1));
+        request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
+
+        Exam fetchedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examWithModelingEx.getId());
+        Exercise exercise = fetchedExam.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
+        assertThat(exercise.isExampleSolutionPublished()).isTrue();
+
     }
 
     @Test

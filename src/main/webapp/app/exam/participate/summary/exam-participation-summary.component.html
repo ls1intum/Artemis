@@ -71,6 +71,13 @@
                     >Plagiarism Case</span
                 >
             </a>
+            <a
+                *ngIf="'TODO: Ata'"
+                class="btn btn-primary ms-4 float-end"
+                [routerLink]="['/courses', courseId, 'exams', studentExam.exam?.id, 'exercises', exercise.id, 'example-solution']"
+            >
+                <span jhiTranslate="artemisApp.exam.examSummary.viewExampleSolution">View Example Solution</span>
+            </a>
             <!-- prettier-ignore -->
             <h5>{{ exercise.title }} [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}
                 <span

@@ -22,6 +22,7 @@ import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
+import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';
 
 @NgModule({
     imports: [
@@ -50,6 +51,7 @@ import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
         ExamInformationComponent,
         ExamPointsSummaryComponent,
         TestRunRibbonComponent,
+        ExampleSolutionComponent,
     ],
     exports: [ExamParticipationSummaryComponent, ExamInformationComponent, TestRunRibbonComponent],
 })

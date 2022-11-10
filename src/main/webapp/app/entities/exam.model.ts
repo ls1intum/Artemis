@@ -17,6 +17,7 @@ export class Exam implements BaseEntity {
     public publishResultsDate?: dayjs.Dayjs;
     public examStudentReviewStart?: dayjs.Dayjs;
     public examStudentReviewEnd?: dayjs.Dayjs;
+    public exampleSolutionPublicationDate?: dayjs.Dayjs;
     // grace period in seconds - time in which students can still submit even though working time is over
     public gracePeriod?: number;
     public examiner?: string;

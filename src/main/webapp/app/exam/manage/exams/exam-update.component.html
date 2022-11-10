@@ -207,6 +207,19 @@
                 </div>
             </div>
             <hr />
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.TODO: Ata">TODO: Ata</h5>
+            <div class="row mb-3">
+                <div class="col-sm-6">
+                    <jhi-date-time-picker
+                        class="form-element"
+                        name="exampleSolutionPublicationDate"
+                        labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
+                        [(ngModel)]="exam.exampleSolutionPublicationDate"
+                        [error]="!isValidExampleSolutionPublicationDate"
+                    ></jhi-date-time-picker>
+                </div>
+            </div>
+            <hr />
             <!-- Section Texts-->
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.text">Exam Texts</h5>
             <div class="form-group">

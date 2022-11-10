@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
@@ -81,11 +82,13 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final ExamAccessService examAccessService;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -96,6 +99,7 @@ public class ProgrammingExerciseExportImportResource {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.examAccessService = examAccessService;
     }
 
     /**
@@ -399,7 +403,8 @@ public class ProgrammingExerciseExportImportResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/export-solution-repository : sends a solution repository as a zip file without .git directory.
+     * GET /programming-exercises/:exerciseId/export-solution-repository : sends a solution repository for
+     * an exam or course programming exercise as a zip file without .git directory.
      *
      * @param exerciseId The id of the programming exercise
      * @return ResponseEntity with status
@@ -410,6 +415,9 @@ public class ProgrammingExerciseExportImportResource {
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportSolutionRepository(@PathVariable long exerciseId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        if (programmingExercise.isExamExercise()) {
+            examAccessService.checkExamExerciseForExampleSolutionAccessElseThrow(programmingExercise);
+        }
         Role atLeastRole = programmingExercise.isExampleSolutionPublished() ? Role.STUDENT : Role.TEACHING_ASSISTANT;
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(atLeastRole, programmingExercise, null);
         long start = System.nanoTime();
