@@ -118,7 +118,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
      */
     private isTimeOfComplaintValid(): boolean {
         if (!this.isExamMode) {
-            return this.canFileActionWithCompletionDate(this.result!.completionDate!, this.course?.maxComplaintTimeDays);
+            return this.canFileActionWithCompletionDate(this.course?.maxComplaintTimeDays);
         }
         return this.isWithinExamReviewPeriod();
     }
@@ -128,16 +128,19 @@ export class ComplaintsStudentViewComponent implements OnInit {
      */
     private isTimeOfFeedbackRequestValid(): boolean {
         if (!this.isExamMode) {
-            return this.canFileActionWithCompletionDate(this.result!.completionDate!, this.course?.maxRequestMoreFeedbackTimeDays);
+            return this.canFileActionWithCompletionDate(this.course?.maxRequestMoreFeedbackTimeDays);
         }
         return false;
     }
 
     /**
-     * Checks if a complaint (either actual complaint or more feedback request) can be filed
-     * The result's completionDate specifies the date when the assessment was submitted
+     * This function checks whether the student is allowed to submit a complaint / more feedback request or not.
+     * This is allowed within the corresponding number of days set in the course after the student received the result.
+     * This starts from the latest of these three points in time: Completion date of result, due date, assessment due date of exercise
+     *
+     * @param actionThresholdInDays the number of days that the student has to file a complaint / more feedback request
      */
-    private canFileActionWithCompletionDate(completionDate: dayjs.Dayjs, actionThresholdInDays?: number): boolean {
+    private canFileActionWithCompletionDate(actionThresholdInDays: number | undefined): boolean {
         // Especially for programming exercises: If there is not yet a manual result for a manual correction, no action should be allowed
         if (
             !this.result!.assessmentType ||
@@ -148,14 +151,15 @@ export class ComplaintsStudentViewComponent implements OnInit {
         if (!actionThresholdInDays) {
             return false;
         }
-        const isWithinThreshold = dayjs().isSameOrBefore(dayjs(completionDate).add(actionThresholdInDays, 'day'));
-        if (!this.exercise.assessmentDueDate) {
-            return isWithinThreshold;
+        let startOfComplaintTime = this.result?.completionDate;
+        startOfComplaintTime =
+            !startOfComplaintTime || (this.exercise.dueDate && this.exercise.dueDate.isAfter(startOfComplaintTime)) ? this.exercise.dueDate : startOfComplaintTime;
+        startOfComplaintTime =
+            this.exercise.assessmentDueDate && this.exercise.assessmentDueDate.isAfter(startOfComplaintTime) ? this.exercise.assessmentDueDate : startOfComplaintTime;
+        if (!startOfComplaintTime) {
+            return false;
         }
-        if (dayjs().isAfter(dayjs(this.exercise.assessmentDueDate))) {
-            return isWithinThreshold || dayjs().isSameOrBefore(dayjs(this.exercise.assessmentDueDate).add(actionThresholdInDays, 'day'));
-        }
-        return false;
+        return dayjs().isSameOrBefore(dayjs(startOfComplaintTime).add(actionThresholdInDays, 'day'));
     }
 
     /**

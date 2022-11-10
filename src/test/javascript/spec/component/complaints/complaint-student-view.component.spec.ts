@@ -233,6 +233,32 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(component.timeOfComplaintValid).toBeFalse();
         }));
 
+        it('should be available if result was before deadline', fakeAsync(() => {
+            const exercise: Exercise = { id: 1, teamMode: false, course, dueDate: dayjs() } as Exercise;
+            const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days') } as Result;
+            component.exercise = exercise;
+            component.result = resultDateOutOfLimits;
+
+            fixture.detectChanges();
+            tick(100);
+
+            expect(component.timeOfFeedbackRequestValid).toBeTrue();
+            expect(component.timeOfComplaintValid).toBeTrue();
+        }));
+
+        it('should be available if result was before assessment due date', fakeAsync(() => {
+            const exercise: Exercise = { id: 1, teamMode: false, course, dueDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days'), assessmentDueDate: dayjs() } as Exercise;
+            const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'days') } as Result;
+            component.exercise = exercise;
+            component.result = resultDateOutOfLimits;
+
+            fixture.detectChanges();
+            tick(100);
+
+            expect(component.timeOfFeedbackRequestValid).toBeTrue();
+            expect(component.timeOfComplaintValid).toBeTrue();
+        }));
+
         it('complaints should be available if feedback requests disabled', fakeAsync(() => {
             component.exercise = {
                 ...courseExercise,
