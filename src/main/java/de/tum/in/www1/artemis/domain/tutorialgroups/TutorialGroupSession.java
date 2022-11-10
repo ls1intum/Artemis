@@ -23,36 +23,55 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 public class TutorialGroupSession extends DomainObject {
 
     /**
-     * NOTE: Stored in UTC in the database
+     * NOTE: Stored in UTC in the database, therefore we use ZonedDateTime. Will be converted to UTC by Hibernate.
      */
     @Column(name = "start")
     private ZonedDateTime start;
 
     /**
-     * NOTE: Stored in UTC in the database
+     * NOTE: Stored in UTC in the database, therefore we use ZonedDateTime. Will be converted to UTC by Hibernate.
      */
     @Column(name = "end")
     private ZonedDateTime end;
 
+    /**
+     * The status of the session. See {@link TutorialGroupSessionStatus} for more information.
+     */
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private TutorialGroupSessionStatus status;
 
+    /**
+     * An optional explanation why the session is in the current status.
+     * <p>
+     * Currently, it is used to explain why a session was cancelled. For example the reason could be "The tutor is sick" or "National holiday".
+     */
     @Column(name = "status_explanation")
     @Size(min = 1, max = 256)
     private String statusExplanation;
 
+    /**
+     * Where the session takes place. Could be a link to a video conference or a physical location.
+     */
     @Column(name = "location")
     @Size(max = 2000)
     @Lob
     private String location;
 
+    /**
+     * If the session is a recurring session, this is the  the schedule that generated this session.
+     * <p>
+     * Will be null if the session is not recurring, meaning an instructor / tutor created it individually.
+     */
     @ManyToOne
     @JoinColumn(name = "tutorial_group_schedule_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "tutorialGroupSessions, tutorialGroup", allowSetters = true)
     private TutorialGroupSchedule tutorialGroupSchedule;
 
+    /**
+     * The tutorial group that this session belongs to. Is always set for recurring and non-recurring sessions.
+     */
     @ManyToOne
     @JoinColumn(name = "tutorial_group_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -116,7 +135,7 @@ public class TutorialGroupSession extends DomainObject {
     }
 
     /**
-     * Hides privacy sensitive information.
+     * Hides privacy-sensitive information.
      */
     public void hidePrivacySensitiveInformation() {
         if (this.tutorialGroup != null) {
