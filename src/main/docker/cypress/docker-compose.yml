@@ -1,4 +1,3 @@
-version: '2.4'
 services:
     artemis-mysql:
         extends:
@@ -48,6 +47,22 @@ services:
             artemis-mysql:
                 condition: service_healthy
 
+    artemis-nginx:
+        # TODO: merge ansible settings and KIT settings for the proxy
+        image: nginx:latest
+        #volumes:
+            #- ./pki:/etc/pki/nginx:ro
+            #- ./defaults/templates:/etc/nginx/templates:ro
+            #- ./defaults/nginx.conf:/etc/nginx/nginx.conf:ro
+            #- ./defaults/proxy.conf:/etc/nginx/proxy.conf:ro
+            #- ./defaults/ssl.conf:/etc/nginx/ssl.conf:ro
+            #- ./defaults/dhparams.pem:/etc/nginx/dhparams.pem:rozs
+        ports:
+            - 80:80
+            - 443:443
+        networks:
+            - artemis
+
     artemis-cypress:
         # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
         image: cypress/browsers:node18.6.0-chrome105-ff104
@@ -67,6 +82,7 @@ services:
             - CYPRESS_instructorGroupName
         # Wait up to 5 minutes until Artemis has booted
         command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm exec -- wait-on -i 1000 -t 300000 http://artemis-app:${SERVER_PORT} && npm run cypress:run"
+        # TODO: insert CA cert and so on via volumes and then configure them
         volumes:
             - ../../../../:/app/artemis
         networks:
