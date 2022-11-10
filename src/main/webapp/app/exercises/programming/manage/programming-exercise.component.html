@@ -289,7 +289,7 @@
             </button>
             <jhi-programming-assessment-repo-export
                 *ngIf="course.isAtLeastInstructor"
-                [selectedProgrammingExercises]="selectedProgrammingExercises"
+                [programmingExercises]="selectedProgrammingExercises"
                 class="me-1"
             ></jhi-programming-assessment-repo-export>
             <jhi-exercise-scores-export-button *ngIf="course.isAtLeastInstructor" [exercises]="selectedProgrammingExercises"></jhi-exercise-scores-export-button>

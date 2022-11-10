@@ -81,7 +81,7 @@
     <ng-template #editorToolbar>
         <ng-container *jhiExtensionPoint="overrideExportGoToRepository">
             <jhi-programming-assessment-repo-export
-                [exerciseId]="exercise.id!"
+                [programmingExercises]="[exercise]"
                 [singleParticipantMode]="true"
                 [participationIdList]="participation ? [participation!.id!] : []"
             ></jhi-programming-assessment-repo-export>

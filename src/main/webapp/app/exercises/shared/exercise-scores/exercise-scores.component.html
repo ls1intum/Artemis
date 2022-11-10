@@ -76,7 +76,7 @@
                 <jhi-exercise-scores-export-button *ngIf="exercise.isAtLeastInstructor" [exercise]="exercise"></jhi-exercise-scores-export-button>
                 <jhi-programming-assessment-repo-export
                     *ngIf="exercise.type === ExerciseType.PROGRAMMING"
-                    [exerciseId]="exercise.id!"
+                    [programmingExercises]="[exercise]"
                     class="me-1"
                 ></jhi-programming-assessment-repo-export>
                 <jhi-exercise-submission-export

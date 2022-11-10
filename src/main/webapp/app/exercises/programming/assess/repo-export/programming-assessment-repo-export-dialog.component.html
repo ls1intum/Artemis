@@ -1,10 +1,4 @@
-<form
-    *ngIf="!isLoading; else loadingContainer"
-    name="exportForm"
-    role="form"
-    (ngSubmit)="!isRepoExportForMultipleExercises ? exportRepos(exercise.id) : bulkExportRepos()"
-    #exportForm="ngForm"
->
+<form *ngIf="!isLoading; else loadingContainer" name="exportForm" role="form" (ngSubmit)="exportRepos()" #exportForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title" jhiTranslate="entity.exportRepos.title">Confirm export operation</h4>
         <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
@@ -16,7 +10,7 @@
             >
             <table class="table table-striped">
                 <tbody>
-                    <tr *ngFor="let programmingExercise of selectedProgrammingExercises">
+                    <tr *ngFor="let programmingExercise of programmingExercises">
                         <td>{{ programmingExercise.title }}</td>
                     </tr>
                 </tbody>
@@ -24,8 +18,8 @@
         </div>
         <p
             *ngIf="!singleParticipantMode && !isRepoExportForMultipleExercises"
-            [jhiTranslate]="'artemisApp.instructorDashboard.exportRepos.questions.' + (exercise.teamMode ? 'team' : 'individual')"
-            [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }"
+            [jhiTranslate]="'artemisApp.instructorDashboard.exportRepos.questions.' + (programmingExercises[0].teamMode ? 'team' : 'individual')"
+            [translateValues]="{ exerciseTitle: programmingExercises[0].title, courseTitle: programmingExercises[0].course?.title }"
         >
             Confirm export
         </p>
@@ -45,8 +39,8 @@
             <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
                 <label class="control-label">
                     <input class="form-check-input" type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
-                    <strong [jhiTranslate]="'artemisApp.programmingExercise.export.' + (exercise.teamMode ? 'downloadAllTeams' : 'downloadAllStudents')">
-                        Or download the repositories of all {{ exercise.teamMode ? 'teams' : 'students' }}
+                    <strong [jhiTranslate]="'artemisApp.programmingExercise.export.' + (programmingExercises[0].teamMode ? 'downloadAllTeams' : 'downloadAllStudents')">
+                        Or download the repositories of all {{ programmingExercises[0].teamMode ? 'teams' : 'students' }}
                     </strong>
                 </label>
             </div>
@@ -75,9 +69,11 @@
                 <input class="form-check-input" type="checkbox" name="addParticipantName" [(ngModel)]="this.repositoryExportOptions.addParticipantName" />
                 <strong
                     *ngIf="!isRepoExportForMultipleExercises"
-                    [jhiTranslate]="'artemisApp.programmingExercise.export.' + (!isRepoExportForMultipleExercises && exercise.teamMode ? 'addTeamName' : 'addStudentName')"
+                    [jhiTranslate]="
+                        'artemisApp.programmingExercise.export.' + (!isRepoExportForMultipleExercises && programmingExercises[0].teamMode ? 'addTeamName' : 'addStudentName')
+                    "
                 >
-                    Add {{ exercise.teamMode ? 'team' : 'student' }} name to project
+                    Add {{ programmingExercises[0].teamMode ? 'team' : 'student' }} name to project
                 </strong>
                 <strong *ngIf="isRepoExportForMultipleExercises" [jhiTranslate]="'artemisApp.programmingExercise.export.addTeamOrStudentName'">
                     Add team/student name to project

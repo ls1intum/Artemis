@@ -10,7 +10,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
     selector: 'jhi-programming-assessment-repo-export',
     template: `
         <jhi-button
-            [disabled]="!exerciseId && !selectedProgrammingExercises"
+            [disabled]="!programmingExercises"
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
@@ -26,11 +26,10 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
-    @Input() exerciseId: number;
     @Input() participationIdList: number[];
     @Input() participantIdentifierList: string; // comma separated
     @Input() singleParticipantMode = false;
-    @Input() selectedProgrammingExercises: ProgrammingExercise[];
+    @Input() programmingExercises: ProgrammingExercise[];
 
     // Icons
     faDownload = faDownload;
@@ -45,13 +44,9 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
     openRepoExportDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.exerciseId = this.exerciseId;
+        modalRef.componentInstance.programmingExercises = this.programmingExercises;
         modalRef.componentInstance.participationIdList = this.participationIdList;
         modalRef.componentInstance.participantIdentifierList = this.participantIdentifierList;
         modalRef.componentInstance.singleParticipantMode = this.singleParticipantMode;
-
-        if (this.selectedProgrammingExercises) {
-            modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
-        }
     }
 }
