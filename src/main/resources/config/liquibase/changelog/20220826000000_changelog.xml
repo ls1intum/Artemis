@@ -101,6 +101,10 @@
                                  constraintName="fk_tutorial_group_session_tutorial_group_schedule_id" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group_schedule"
                                  validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_free_period_id" baseTableName="tutorial_group_session"
+                                 constraintName="fk_tutorial_group_session_tutorial_group_free_period_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group_free_period"
+                                 validate="true"/>
         <!-- fks for tutorial_groups_configuration table -->
         <addForeignKeyConstraint baseColumnNames="tutorial_groups_configuration_id" baseTableName="course"
                                  constraintName="fk_course_tutorial_groups_configuration_id" deferrable="false"
