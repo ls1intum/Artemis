@@ -5,6 +5,7 @@
             "sessionOverlapsWithSession": "Die Sitzung überschneidet sich mit folgenden Sitzungen: {{ sessions }}"
         },
         "generic": {
+            "more": "Mehr...",
             "offline": "Offline",
             "online": "Online",
             "german": "Deutsch",

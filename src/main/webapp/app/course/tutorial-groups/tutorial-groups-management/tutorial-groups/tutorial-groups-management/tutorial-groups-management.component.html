@@ -20,15 +20,27 @@
                         <fa-icon [icon]="faPlus"></fa-icon>
                         <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate }}</span>
                     </a>
-                    <a
-                        *ngIf="course?.tutorialGroupsConfiguration"
-                        class="btn btn-secondary"
-                        [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'edit']"
-                    >
-                        <fa-icon [icon]="faPencil"></fa-icon>
-                        <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
-                    </a>
-                    <jhi-tutorial-groups-import-button [courseId]="courseId" (importFinished)="loadTutorialGroups()"></jhi-tutorial-groups-import-button>
+                    <div ngbDropdown class="d-inline-block">
+                        <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+                            {{ 'artemisApp.generic.more' | artemisTranslate }}
+                        </button>
+                        <div ngbDropdownMenu>
+                            <a
+                                ngbDropDownItem
+                                class="btn"
+                                *ngIf="course?.tutorialGroupsConfiguration"
+                                [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'edit']"
+                            >
+                                <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
+                            </a>
+                            <jhi-tutorial-groups-import-button
+                                ngbDropDownItem
+                                ngbTooltip="{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}"
+                                [courseId]="courseId"
+                                (importFinished)="loadTutorialGroups()"
+                            ></jhi-tutorial-groups-import-button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <ng-container *ngIf="tutorialGroups?.length; else intro">

@@ -21,7 +21,7 @@ import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({ selector: 'jhi-tutorial-groups-course-information', template: '' })
 class MockTutorialGroupsCourseInformationComponent {
@@ -56,6 +56,7 @@ describe('TutorialGroupsManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [NgbDropdownModule],
             declarations: [
                 TutorialGroupsManagementComponent,
                 MockTutorialGroupsCourseInformationComponent,

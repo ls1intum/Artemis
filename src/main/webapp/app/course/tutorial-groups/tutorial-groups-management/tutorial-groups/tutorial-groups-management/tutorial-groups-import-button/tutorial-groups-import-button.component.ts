@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsRegistrationImportDialog } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 
@@ -11,9 +10,6 @@ export class TutorialGroupsImportButtonComponent {
     @Input() courseId: number;
 
     @Output() importFinished: EventEmitter<void> = new EventEmitter();
-
-    // Icons
-    faPlus = faPlus;
 
     constructor(private modalService: NgbModal) {}
 
