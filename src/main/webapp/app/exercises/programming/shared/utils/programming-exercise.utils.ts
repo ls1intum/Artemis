@@ -69,6 +69,10 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
     if (!programmingExercise) {
         return false;
     }
+    if (latestResult.participation?.type === ParticipationType.PROGRAMMING && (latestResult.participation as ProgrammingExerciseStudentParticipation).testRun) {
+        return false;
+    }
+
     let resultCompletionDate = latestResult.completionDate;
     // We use the result completion date
     if (!resultCompletionDate) {

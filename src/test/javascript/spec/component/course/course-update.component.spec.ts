@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -25,9 +25,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import dayjs from 'dayjs/esm';
-import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
-import { base64StringToBlob } from 'app/utils/blob-util';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
@@ -44,8 +42,6 @@ describe('Course Management Update Component', () => {
     let profileService: ProfileService;
     let organizationService: OrganizationManagementService;
     let course: Course;
-    let fileUploaderService: FileUploaderService;
-    let uploadStub: jest.SpyInstance;
 
     beforeEach(() => {
         course = new Course();
@@ -109,8 +105,6 @@ describe('Course Management Update Component', () => {
                 service = TestBed.inject(CourseManagementService);
                 profileService = TestBed.inject(ProfileService);
                 organizationService = TestBed.inject(OrganizationManagementService);
-                fileUploaderService = TestBed.inject(FileUploaderService);
-                uploadStub = jest.spyOn(fileUploaderService, 'uploadFile');
             });
     });
 
@@ -201,7 +195,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null });
+            expect(updateStub).toHaveBeenCalledWith(entity.id, { ...entity, onlineCourseConfiguration: null }, undefined);
             expect(comp.isSaving).toBeFalse();
         }));
 
@@ -234,7 +228,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
-            expect(createStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null });
+            expect(createStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null }, undefined);
             expect(comp.isSaving).toBeFalse();
         }));
     });
@@ -256,11 +250,9 @@ describe('Course Management Update Component', () => {
                 length: 1,
                 item: () => file,
             } as unknown as FileList;
-            const event = { target: { files: fileList } };
+            const event = { currentTarget: { files: fileList } } as unknown as Event;
             comp.setCourseImage(event);
-            expect(comp.courseImageFile).toEqual(file);
-            expect(comp.courseImageFileName).toBe('testFilename');
-            expect(comp.imageChangedEvent).toBe(event);
+            expect(comp.courseImageUploadFile).toEqual(file);
         });
     });
 
@@ -269,35 +261,6 @@ describe('Course Management Update Component', () => {
             expect(comp.showCropper).toBeFalse();
             comp.imageLoaded();
             expect(comp.showCropper).toBeTrue();
-        });
-    });
-
-    describe('uploadCourseImage', () => {
-        let croppedImage: string;
-        beforeEach(() => {
-            croppedImage = 'testCroppedImage';
-            comp.croppedImage = 'data:image/png;base64,' + comp.croppedImage;
-            comp.courseImageFileName = 'testFilename';
-            comp.showCropper = true;
-            comp.ngOnInit();
-        });
-        it('should upload new image and update form', () => {
-            uploadStub.mockResolvedValue({ path: 'testPath' } as FileUploadResponse);
-            comp.uploadCourseImage();
-            const file = base64StringToBlob(croppedImage, 'image/*');
-            // @ts-ignore
-            file['name'] = comp.courseImageFileName;
-            expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
-            expect(comp.showCropper).toBeFalse();
-        });
-        it('should set image name to course icon if upload fails', () => {
-            uploadStub.mockRejectedValue({} as FileUploadResponse);
-            comp.course = new Course();
-            comp.course.courseIcon = 'testCourseIcon';
-            comp.uploadCourseImage();
-            expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
-            expect(comp.courseImageFileName).toBe(comp.course.courseIcon);
-            expect(comp.showCropper).toBeFalse();
         });
     });
 

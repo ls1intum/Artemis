@@ -3,7 +3,7 @@ import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam.model';
 import { artemis } from '../../support/ArtemisTesting';
-import { CypressAssessmentType, CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
+import { CypressAssessmentType, CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import partiallySuccessful from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import textSubmission from '../../fixtures/text_exercise_submission/text_exercise_submission.json';
@@ -45,7 +45,7 @@ describe('Exam assessment', () => {
     before('Create a course', () => {
         cy.login(admin);
         courseManagementRequests.createCourse(true).then((response) => {
-            course = response.body;
+            course = convertCourseAfterMultiPart(response);
             courseManagementRequests.addStudentToCourse(course, artemis.users.getStudentOne());
             courseManagementRequests.addTutorToCourse(course, artemis.users.getTutor());
         });
@@ -145,7 +145,7 @@ describe('Exam assessment', () => {
                     expect(assessmentResponse.response?.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                editorPage.getResultScore().should('contain.text', '40%, 4 points').should('be.visible');
+                editorPage.getResultScore().should('contain.text', '40%, 4 points').and('be.visible');
             });
         });
 
@@ -175,7 +175,7 @@ describe('Exam assessment', () => {
                     expect(assessmentResponse.response!.statusCode).to.equal(200);
                 });
                 cy.login(student, '/courses/' + course.id + '/exams/' + exam.id);
-                editorPage.getResultScore().should('contain.text', '70%, 7 points').should('be.visible');
+                editorPage.getResultScore().should('contain.text', '70%, 7 points').and('be.visible');
             });
         });
     });

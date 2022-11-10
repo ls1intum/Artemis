@@ -133,24 +133,6 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseWithWrongShortName() throws Exception {
-        courseTestService.testUpdateCourseWithWrongShortName();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseWithoutId() throws Exception {
-        courseTestService.testUpdateCourseWithoutId();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testUpdateCourseWithoutIdAsInstructor() throws Exception {
-        courseTestService.testUpdateCourseWithoutIdAsInstructor();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourseIsEmpty() throws Exception {
         courseTestService.testUpdateCourseIsEmpty();
     }
@@ -177,6 +159,30 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         bitbucketRequestMockProvider.mockRevokeGroupPermissionFromAnyProject("tutor");
         bitbucketRequestMockProvider.mockGrantGroupPermissionToAnyProject("new-ta-group", BitbucketPermission.PROJECT_READ);
         courseTestService.testUpdateCourseGroups();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateAndUpdateCourseWithCourseImage() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithCourseImage();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateAndUpdateCourseWithSetNewImageDespiteRemoval() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithSetNewImageDespiteRemoval();
     }
 
     @Test

@@ -18,7 +18,7 @@ export class TutorialGroupsService {
         return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/campus-values`, { observe: 'response' });
     }
 
-    getAllOfCourse(courseId: number): Observable<EntityArrayResponseType> {
+    getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<TutorialGroup[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, { observe: 'response' });
     }
 
@@ -30,8 +30,15 @@ export class TutorialGroupsService {
         return this.httpClient.post<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, tutorialGroup, { observe: 'response' });
     }
 
-    update(courseId: number, tutorialGroupId: number, tutorialGroup: TutorialGroup): Observable<EntityResponseType> {
-        return this.httpClient.put<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, tutorialGroup, { observe: 'response' });
+    update(courseId: number, tutorialGroupId: number, tutorialGroup: TutorialGroup, notificationText?: string): Observable<EntityResponseType> {
+        return this.httpClient.put<TutorialGroup>(
+            `${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`,
+            {
+                tutorialGroup,
+                notificationText,
+            },
+            { observe: 'response' },
+        );
     }
 
     deregisterStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {

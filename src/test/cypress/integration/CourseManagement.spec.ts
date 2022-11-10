@@ -1,6 +1,6 @@
 import { Interception } from 'cypress/types/net-stubbing';
-import { COURSE_BASE } from '../support/requests/CourseManagementRequests';
-import { GET, BASE_API, POST } from '../support/constants';
+import { COURSE_BASE, convertCourseAfterMultiPart } from '../support/requests/CourseManagementRequests';
+import { BASE_API, GET, POST } from '../support/constants';
 import { artemis } from '../support/ArtemisTesting';
 import { CourseManagementPage } from '../support/pageobjects/course/CourseManagementPage';
 import { NavigationBar } from '../support/pageobjects/NavigationBar';
@@ -40,9 +40,9 @@ describe('Course management', () => {
         let courseId: number;
 
         beforeEach(() => {
-            artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).then((response: Cypress.Response<Course>) => {
-                course = response.body;
-                courseId = response.body!.id!;
+            artemisRequests.courseManagement.createCourse(false, courseName, courseShortName).then((response) => {
+                course = convertCourseAfterMultiPart(response);
+                courseId = course.id!;
             });
         });
 

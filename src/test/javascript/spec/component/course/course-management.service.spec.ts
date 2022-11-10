@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -108,11 +108,11 @@ describe('Course Management Service', () => {
 
     it('should update course', fakeAsync(() => {
         courseManagementService
-            .update({ ...course })
+            .update(1, { ...course })
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
 
-        const req = httpMock.expectOne({ method: 'PUT', url: resourceUrl });
+        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1` });
         req.flush(returnedFromService);
         tick();
     }));

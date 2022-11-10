@@ -12,7 +12,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { cloneDeep } from 'lodash-es';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { FeedbackConflict } from 'app/entities/feedback-conflict';
-import { getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -64,7 +64,7 @@ export class TextAssessmentService {
     public addTextAssessmentEvent(assessmentEvent: TextAssessmentEvent): Observable<EntityResponseEventType> {
         const body = Object.assign({}, assessmentEvent);
         return this.http
-            .post<TextAssessmentEvent>(this.resourceUrl + '/analytics/text-assessment/events', body, { observe: 'response' })
+            .post<TextAssessmentEvent>(this.resourceUrl + '/event-insights/text-assessment/events', body, { observe: 'response' })
             .pipe(map((res: EntityResponseEventType) => Object.assign({}, res)));
     }
 
@@ -74,7 +74,7 @@ export class TextAssessmentService {
      * @param exerciseId the id of the respective assessment event exercise id
      */
     public getNumberOfTutorsInvolvedInAssessment(courseId: number, exerciseId: number): Observable<number> {
-        return this.http.get<number>(`${this.resourceUrl}/analytics/text-assessment/courses/${courseId}/text-exercises/${exerciseId}/tutors-involved`);
+        return this.http.get<number>(`${this.resourceUrl}/event-insights/text-assessment/courses/${courseId}/text-exercises/${exerciseId}/tutors-involved`);
     }
 
     /**

@@ -11,7 +11,7 @@ import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.mod
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { reconnectSubmissions, Submission } from 'app/entities/submission.model';
+import { Submission, reconnectSubmissions } from 'app/entities/submission.model';
 import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
@@ -19,6 +19,7 @@ import { CourseManagementDetailViewDto } from 'app/course/manage/course-manageme
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { convertDateFromClient } from 'app/utils/date.utils';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -37,19 +38,37 @@ export class CourseManagementService {
     /**
      * creates a course using a POST request
      * @param course - the course to be created on the server
+     * @param courseImage - the course icon file
      */
-    create(course: Course): Observable<EntityResponseType> {
+    create(course: Course, courseImage?: Blob): Observable<EntityResponseType> {
         const copy = CourseManagementService.convertCourseDatesFromClient(course);
-        return this.http.post<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+        const formData = new FormData();
+        formData.append('course', objectToJsonBlob(copy));
+        if (courseImage) {
+            // The image was cropped by us and is a blob, so we need to set a placeholder name for the server check
+            formData.append('file', courseImage, 'placeholderName.png');
+        }
+
+        return this.http.post<Course>(this.resourceUrl, formData, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
     /**
      * updates a course using a PUT request
-     * @param course - the course to be updated
+     * @param courseId - the id of the course to be updated
+     * @param courseUpdate - the updates to the course
+     * @param courseImage - the course icon file
      */
-    update(course: Course): Observable<EntityResponseType> {
-        const copy = CourseManagementService.convertCourseDatesFromClient(course);
-        return this.http.put<Course>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+    update(courseId: number, courseUpdate: Course, courseImage?: Blob): Observable<EntityResponseType> {
+        const copy = CourseManagementService.convertCourseDatesFromClient(courseUpdate);
+        const formData = new FormData();
+        formData.append('course', objectToJsonBlob(copy));
+        if (courseImage) {
+            // The image was cropped by us and is a blob, so we need to set a placeholder name for the server check
+            formData.append('file', courseImage, 'placeholderName.png');
+        }
+        return this.http
+            .put<Course>(`${this.resourceUrl}/${courseId}`, formData, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
     /**

@@ -1,11 +1,11 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { of, Subject, Subscription, throwError } from 'rxjs';
+import { Subject, Subscription, of, throwError } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -304,7 +304,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(comp.markdownExtensions).toHaveLength(2);
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledOnce();
-        expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id);
+        // result should have been fetched with the submission as this is required to show details for it
+        expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id, true);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(comp.isInitial).toBeFalse();
         expect(comp.isLoading).toBeFalse();

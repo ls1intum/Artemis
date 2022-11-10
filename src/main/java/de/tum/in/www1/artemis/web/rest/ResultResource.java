@@ -148,7 +148,7 @@ public class ResultResource {
         }
 
         // No 'user' is properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-        // Therefore a mock auth object has to be created.
+        // Therefore, a mock auth object has to be created.
         SecurityUtils.setAuthorizationObject();
 
         // Retrieving the plan key can fail if e.g. the requestBody is malformed. In this case nothing else can be done.
