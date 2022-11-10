@@ -14,6 +14,7 @@ import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Team } from 'app/entities/team.model';
+import { MockProfileToggleService } from '../helpers/mocks/service/mock-profile-toggle.service';
 
 describe('AccountService', () => {
     let accountService: AccountService;
@@ -44,7 +45,14 @@ describe('AccountService', () => {
         httpService = new MockHttpService();
         translateService = TestBed.inject(TranslateService);
         // @ts-ignore
-        accountService = new AccountService(translateService, new MockSyncStorage(), httpService, new MockWebsocketService(), new MockFeatureToggleService());
+        accountService = new AccountService(
+            translateService,
+            new MockSyncStorage(),
+            httpService,
+            new MockWebsocketService(),
+            new MockFeatureToggleService(),
+            new MockProfileToggleService(),
+        );
         getStub = jest.spyOn(httpService, 'get');
     });
 

@@ -67,6 +67,7 @@ describe('Profile Service', () => {
             group: 'de.tum.in.www1.artemis',
         },
         features: ['ProgrammingExercises', 'PlagiarismChecks'],
+        combinedProfiles: [ProfileToggle.LECTURE],
         programmingLanguageFeatures: [
             {
                 programmingLanguage: 'KOTLIN',
