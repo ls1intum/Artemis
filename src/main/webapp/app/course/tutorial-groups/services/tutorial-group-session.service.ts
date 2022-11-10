@@ -5,6 +5,7 @@ import { convertDateFromServer, toISO8601DateString } from 'app/utils/date.utils
 import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 
 type EntityResponseType = HttpResponse<TutorialGroupSession>;
 
@@ -19,7 +20,7 @@ export class TutorialGroupSessionDTO {
 export class TutorialGroupSessionService {
     private resourceURL = SERVER_API_URL + 'api';
 
-    constructor(private httpClient: HttpClient) {}
+    constructor(private httpClient: HttpClient, private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService) {}
     getOneOfTutorialGroup(courseId: number, tutorialGroupId: number, sessionId: number) {
         return this.httpClient
             .get<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, { observe: 'response' })
@@ -63,6 +64,11 @@ export class TutorialGroupSessionService {
     convertTutorialGroupSessionDatesFromServer(tutorialGroupSession: TutorialGroupSession): TutorialGroupSession {
         tutorialGroupSession.start = convertDateFromServer(tutorialGroupSession.start);
         tutorialGroupSession.end = convertDateFromServer(tutorialGroupSession.end);
+        if (tutorialGroupSession.tutorialGroupFreePeriod) {
+            tutorialGroupSession.tutorialGroupFreePeriod = this.tutorialGroupFreePeriodService.convertTutorialGroupFreePeriodDatesFromServer(
+                tutorialGroupSession.tutorialGroupFreePeriod,
+            );
+        }
         return tutorialGroupSession;
     }
 

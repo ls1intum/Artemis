@@ -44,7 +44,8 @@ public class TutorialGroupSession extends DomainObject {
     /**
      * An optional explanation why the session is in the current status.
      * <p>
-     * Currently, it is used to explain why a session was cancelled. For example the reason could be "The tutor is sick" or "National holiday".
+     * Currently, it is used to explain why a session was cancelled if it is NOT because of an overlap with a {@link TutorialGroupFreePeriod}.
+     * For example the reason could be "The tutor is sick";
      */
     @Column(name = "status_explanation")
     @Size(min = 1, max = 256)
@@ -68,6 +69,15 @@ public class TutorialGroupSession extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "tutorialGroupSessions, tutorialGroup", allowSetters = true)
     private TutorialGroupSchedule tutorialGroupSchedule;
+
+    /**
+     * This connection will be set if the session has status {@link TutorialGroupSessionStatus#CANCELLED} because it overlaps with a {@link TutorialGroupFreePeriod}.
+     */
+    @ManyToOne
+    @JoinColumn(name = "tutorial_group_free_period_id")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties(value = "tutorialGroupsConfiguration", allowSetters = true)
+    private TutorialGroupFreePeriod tutorialGroupFreePeriod;
 
     /**
      * The tutorial group that this session belongs to. Is always set for recurring and non-recurring sessions.
@@ -132,6 +142,14 @@ public class TutorialGroupSession extends DomainObject {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public TutorialGroupFreePeriod getTutorialGroupFreePeriod() {
+        return tutorialGroupFreePeriod;
+    }
+
+    public void setTutorialGroupFreePeriod(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
+        this.tutorialGroupFreePeriod = tutorialGroupFreePeriod;
     }
 
     /**

@@ -112,11 +112,11 @@ public class TutorialGroupFreePeriodResource {
         isValidTutorialGroupPeriod(updatedFreePeriod);
 
         // activate previously cancelled sessions
-        tutorialGroupFreePeriodService.activateCancelledOverlappingSessions(configuration.getCourse(), existingFreePeriod);
+        tutorialGroupFreePeriodService.activateOverlappingSessions(existingFreePeriod);
         // update free period
         updatedFreePeriod = tutorialGroupFreePeriodRepository.save(updatedFreePeriod);
         // cancel now overlapping sessions
-        tutorialGroupFreePeriodService.cancelActiveOverlappingSessions(configuration.getCourse(), updatedFreePeriod);
+        tutorialGroupFreePeriodService.cancelOverlappingSessions(configuration.getCourse(), updatedFreePeriod);
 
         return ResponseEntity.ok(updatedFreePeriod);
     }
@@ -155,7 +155,7 @@ public class TutorialGroupFreePeriodResource {
         trimStringFields(newTutorialGroupFreePeriod);
         var persistedTutorialGroupFreePeriod = tutorialGroupFreePeriodRepository.save(newTutorialGroupFreePeriod);
 
-        tutorialGroupFreePeriodService.cancelActiveOverlappingSessions(tutorialGroupsConfiguration.getCourse(), persistedTutorialGroupFreePeriod);
+        tutorialGroupFreePeriodService.cancelOverlappingSessions(tutorialGroupsConfiguration.getCourse(), persistedTutorialGroupFreePeriod);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups-configuration/" + tutorialGroupsConfigurationId + "/tutorial-free-periods/"
                 + persistedTutorialGroupFreePeriod.getId())).body(persistedTutorialGroupFreePeriod);
@@ -178,8 +178,8 @@ public class TutorialGroupFreePeriodResource {
         TutorialGroupFreePeriod tutorialGroupFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
         checkEntityIdMatchesPathIds(tutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
+        tutorialGroupFreePeriodService.activateOverlappingSessions(tutorialGroupFreePeriod);
         tutorialGroupFreePeriodRepository.delete(tutorialGroupFreePeriod);
-        tutorialGroupFreePeriodService.activateCancelledOverlappingSessions(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), tutorialGroupFreePeriod);
         return ResponseEntity.noContent().build();
     }
 
@@ -197,7 +197,6 @@ public class TutorialGroupFreePeriodResource {
         });
     }
 
-    // ToDo: Should Actually Check DTO
     private void isValidTutorialGroupPeriod(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
         if (tutorialGroupFreePeriod.getStart() == null || tutorialGroupFreePeriod.getEnd() == null) {
             throw new BadRequestAlertException("The start or end date of the tutorial group free period is null", ENTITY_NAME, "nullDate");

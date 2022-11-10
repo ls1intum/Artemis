@@ -134,15 +134,17 @@ public class TutorialGroupSessionResource {
             sessionToUpdate.setTutorialGroupSchedule(null);
         }
 
-        var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(),
+        var overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(),
                 sessionToUpdate.getEnd());
-        if (overlappingPeriod.isPresent()) {
+        if (overlappingPeriodOptional.isPresent()) {
             sessionToUpdate.setStatus(TutorialGroupSessionStatus.CANCELLED);
-            sessionToUpdate.setStatusExplanation(overlappingPeriod.get().getReason());
+            sessionToUpdate.setStatusExplanation(null);
+            sessionToUpdate.setTutorialGroupFreePeriod(overlappingPeriodOptional.get());
         }
         else {
             sessionToUpdate.setStatus(TutorialGroupSessionStatus.ACTIVE);
             sessionToUpdate.setStatusExplanation(null);
+            sessionToUpdate.setTutorialGroupFreePeriod(null);
         }
 
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
@@ -201,14 +203,16 @@ public class TutorialGroupSessionResource {
         checkEntityIdMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
         isValidTutorialGroupSession(newSession, ZoneId.of(configuration.getCourse().getTimeZone()));
 
-        var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroup.getCourse(), newSession.getStart(), newSession.getEnd());
-        if (overlappingPeriod.isPresent()) {
+        var overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroup.getCourse(), newSession.getStart(), newSession.getEnd());
+        if (overlappingPeriodOptional.isPresent()) {
             newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
-            newSession.setStatusExplanation(overlappingPeriod.get().getReason());
+            newSession.setStatusExplanation(null);
+            newSession.setTutorialGroupFreePeriod(overlappingPeriodOptional.get());
         }
         else {
             newSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
             newSession.setStatusExplanation(null);
+            newSession.setTutorialGroupFreePeriod(null);
         }
         newSession = tutorialGroupSessionRepository.save(newSession);
 
@@ -232,6 +236,9 @@ public class TutorialGroupSessionResource {
             @RequestBody TutorialGroupStatusDTO tutorialGroupStatusDTO) throws URISyntaxException {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToCancel = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
+        if (sessionToCancel.getTutorialGroupFreePeriod() != null) {
+            throw new BadRequestException("You can not cancel a session that is cancelled by a overlapping with a free period");
+        }
         checkEntityIdMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToCancel.getTutorialGroup(), null);
         sessionToCancel.setStatus(TutorialGroupSessionStatus.CANCELLED);
@@ -256,6 +263,9 @@ public class TutorialGroupSessionResource {
     public ResponseEntity<TutorialGroupSession> activate(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) throws URISyntaxException {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
+        if (sessionToActivate.getTutorialGroupFreePeriod() != null) {
+            throw new BadRequestException("You can not activate a session that is cancelled by a overlapping with a free period");
+        }
         checkEntityIdMatchesPathIds(sessionToActivate, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.ofNullable(sessionId));
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToActivate.getTutorialGroup(), null);
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);

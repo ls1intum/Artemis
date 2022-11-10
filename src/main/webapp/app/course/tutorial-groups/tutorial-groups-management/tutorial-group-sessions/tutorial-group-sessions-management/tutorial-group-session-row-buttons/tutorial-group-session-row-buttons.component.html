@@ -1,6 +1,12 @@
 <div class="btn-group flex-btn-group-container">
     <!-- Cancel/Activate -->
-    <button [id]="'cancel-activate-' + tutorialGroupSession.id" type="button" class="btn btn-secondary" (click)="openCancellationDialog(tutorialGroupSession)">
+    <button
+        *ngIf="!tutorialGroupSession.tutorialGroupFreePeriod"
+        [id]="'cancel-activate-' + tutorialGroupSession.id"
+        type="button"
+        class="btn btn-secondary"
+        (click)="openCancellationDialog(tutorialGroupSession)"
+    >
         {{
             (tutorialGroupSession.status === tutorialGroupSessionStatus.CANCELLED
                 ? 'artemisApp.pages.tutorialGroupSessionManagement.rowButtons.activate'

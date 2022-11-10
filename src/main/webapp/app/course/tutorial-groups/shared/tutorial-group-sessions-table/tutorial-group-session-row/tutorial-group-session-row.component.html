@@ -11,10 +11,11 @@
             type="button"
             class="btn btn-outline-danger ms-2"
             placement="top"
-            [disabled]="!session.statusExplanation"
-            [ngbPopover]="session.statusExplanation ? session.statusExplanation : ''"
+            [disabled]="!cancellationReason"
+            [ngbPopover]="cancellationReason ? cancellationReason : ''"
             [popoverTitle]="'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate"
         >
+            <fa-icon *ngIf="overlapsWithFreePeriod" [icon]="faUmbrellaBeach"></fa-icon>
             {{ 'artemisApp.pages.tutorialGroupSessionManagement.cancelled' | artemisTranslate }}
         </button>
     </td>

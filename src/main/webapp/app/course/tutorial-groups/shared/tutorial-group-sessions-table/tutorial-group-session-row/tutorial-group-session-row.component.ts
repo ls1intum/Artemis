@@ -1,4 +1,5 @@
 import { Component, HostBinding, Input, OnChanges, TemplateRef, ViewEncapsulation } from '@angular/core';
+import { faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
@@ -21,13 +22,27 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
 
     @Input() timeZone?: string = undefined;
 
+    cancellationReason?: string;
     isCancelled = false;
+
+    overlapsWithFreePeriod = false;
+
+    faUmbrellaBeach = faUmbrellaBeach;
+
     hasSchedule = false;
 
     ngOnChanges() {
         if (this.session) {
             this.isCancelled = this.session.status === TutorialGroupSessionStatus.CANCELLED;
             this.hasSchedule = !!this.session.tutorialGroupSchedule;
+            this.overlapsWithFreePeriod = !!this.session.tutorialGroupFreePeriod;
+            if (this.isCancelled) {
+                if (this.overlapsWithFreePeriod) {
+                    this.cancellationReason = !!this.session.tutorialGroupFreePeriod?.reason ? this.session.tutorialGroupFreePeriod.reason : undefined;
+                } else {
+                    this.cancellationReason = !!this.session.statusExplanation ? this.session.statusExplanation : undefined;
+                }
+            }
         }
     }
 }

@@ -127,10 +127,13 @@ public class TutorialGroupScheduleService {
         var overlappingPeriod = tutorialGroupFreePeriodService.findOverlappingPeriod(course, session);
         if (overlappingPeriod.isPresent()) {
             session.setStatus(TutorialGroupSessionStatus.CANCELLED);
-            session.setStatusExplanation(overlappingPeriod.get().getReason());
+            session.setStatusExplanation(null);
+            session.setTutorialGroupFreePeriod(overlappingPeriod.get());
         }
         else {
             session.setStatus(TutorialGroupSessionStatus.ACTIVE);
+            session.setStatusExplanation(null);
+            session.setTutorialGroupFreePeriod(null);
         }
         session.setLocation(tutorialGroupSchedule.getLocation());
         return session;

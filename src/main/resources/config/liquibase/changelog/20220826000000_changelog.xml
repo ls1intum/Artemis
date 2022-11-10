@@ -58,6 +58,9 @@
             <column name="tutorial_group_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
+            <column name="tutorial_group_free_period_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
         </createTable>
         <createTable tableName="tutorial_groups_configuration">
             <column autoIncrement="true" name="id" type="BIGINT">

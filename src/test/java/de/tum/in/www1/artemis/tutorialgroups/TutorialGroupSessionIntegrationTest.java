@@ -79,8 +79,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var sessionId = request.postWithResponseBody(getSessionsPathOfDefaultTutorialGroup(), dto, TutorialGroupSession.class, HttpStatus.CREATED).getId();
         // then
         var persistedSession = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
+        assertThat(persistedSession.getTutorialGroupFreePeriod()).isNotNull();
         assertSessionCreatedCorrectlyFromDTO(persistedSession, dto);
-        assertIndividualSessionIsCancelledOnDate(persistedSession, firstAugustMonday, exampleOneTutorialGroupId, "Holiday");
+        assertIndividualSessionIsCancelledOnDate(persistedSession, firstAugustMonday, exampleOneTutorialGroupId, null);
     }
 
     @Test
@@ -202,9 +203,10 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
 
         // then
         var updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(updatedSessionId);
+        assertThat(updatedSession.getTutorialGroupFreePeriod()).isNotNull();
         assertThat(updatedSession.getTutorialGroupSchedule()).isNull();
         assertSessionCreatedCorrectlyFromDTO(updatedSession, dto);
-        assertIndividualSessionIsCancelledOnDate(updatedSession, thirdAugustMonday, exampleOneTutorialGroupId, "Holiday");
+        assertIndividualSessionIsCancelledOnDate(updatedSession, thirdAugustMonday, exampleOneTutorialGroupId, null);
     }
 
     @Test
