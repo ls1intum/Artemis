@@ -18,6 +18,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 
+/**
+ * A {@link TutorialGroupSchedule} is a schedule for a {@link TutorialGroup}. It represents a recurrence pattern for {@link TutorialGroupSession}s.
+ * Think of it like a recurring calendar event in your calendar app. E.g. a tutorial group might meet every Monday at 10:00 to 12:00 from 2021-01-01 to 2021-06-30.
+ * <p>
+ * The individual {@link TutorialGroupSession}s are generated from this schedule and stored in the {@link TutorialGroupSession} table.
+ */
 @Entity
 @Table(name = "tutorial_group_schedule")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -28,16 +34,27 @@ public class TutorialGroupSchedule extends DomainObject {
     @JoinColumn(name = "tutorial_group_id")
     private TutorialGroup tutorialGroup;
 
+    /**
+     * The day of the week on which the tutorial group meets. 1 = Monday, 2 = Tuesday, ..., 7 = Sunday
+     */
     @Column(name = "day_of_week")
     private Integer dayOfWeek;
 
     /**
+     * The time of day at which the tutorial group meets on the {@link #dayOfWeek}.
+     * <p>
+     * The time is in ISO 8601 format.
+     * <p>
      * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "start_time")
     private String startTime;
 
     /**
+     * The time of day at which the tutorial group meeting ends on the {@link #dayOfWeek}.
+     * <p>
+     * The time is in ISO 8601 format.
+     * <p>
      * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "end_time")
@@ -45,27 +62,49 @@ public class TutorialGroupSchedule extends DomainObject {
 
     /**
      * Currently represents weekly recurrence, so 1 means every week, 2 means every other week, etc.
+     * <p>
+     * E.g. if the tutorial group meets every Monday then the {@link #repetitionFrequency} is 1.
      */
     @Column(name = "repetition_frequency")
     private Integer repetitionFrequency;
 
     /**
+     * The date from which this recurrence pattern starts.
+     * <p>
+     * For example, if the tutorial group meets every Monday from 2021-01-01 to 2021-06-30, then the {@link #validFromInclusive} is 2021-01-01.
+     * The first session will be on 2021-01-04 (Monday) and the last session will be on 2021-06-28 (Monday).
+     * <p>
+     * The date is in ISO 8601 format.
+     * <p>
      * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "valid_from_inclusive")
     private String validFromInclusive;
 
     /**
+     * The date until which this recurrence pattern is valid.
+     * <p>
+     * For example, if the tutorial group meets every Monday from 2021-01-01 to 2021-06-30, then the {@link #validToInclusive} is 2021-06-30.
+     * The first session will be on 2021-01-04 (Monday) and the last session will be on 2021-06-28 (Monday).
+     * <p>
+     * The date is in ISO 8601 format.
+     * <p>
      * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "valid_to_inclusive")
     private String validToInclusive;
 
+    /**
+     * The location where the tutorial group meets. Can either be a physical location or a link to a video conference.
+     */
     @Column(name = "location")
     @Size(max = 2000)
     @Lob
     private String location;
 
+    /**
+     * The sessions that were generated from this schedule, i.e. the sessions that follow this recurrence pattern.
+     */
     @OneToMany(mappedBy = "tutorialGroupSchedule", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "tutorialGroupSchedule", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
