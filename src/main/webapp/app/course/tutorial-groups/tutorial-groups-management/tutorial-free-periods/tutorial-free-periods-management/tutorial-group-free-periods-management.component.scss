@@ -3,12 +3,13 @@
 }
 
 .free-period-row {
+    .extra-buttons {
+        visibility: hidden;
+    }
+
     &:hover {
         .extra-buttons {
             visibility: visible;
         }
-    }
-    .extra-buttons {
-        visibility: hidden;
     }
 }

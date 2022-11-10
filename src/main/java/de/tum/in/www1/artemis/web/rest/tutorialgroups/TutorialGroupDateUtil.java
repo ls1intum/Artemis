@@ -79,12 +79,14 @@ public class TutorialGroupDateUtil {
      */
     public static LocalDate getFirstDateOfWeekDay(LocalDate start, Integer weekDay) {
         if (weekDay < 1 || weekDay > 7) {
-            throw new IllegalArgumentException("Week day must be in range 1-7");
+            throw new IllegalArgumentException("Week day must be in range 1-7, Monday-Sunday");
         }
-        while (start.getDayOfWeek().getValue() != weekDay) {
-            start = start.plusDays(1);
+        var searchStart = start;
+        while (searchStart.getDayOfWeek().getValue() != weekDay) {
+            searchStart = searchStart.plusDays(1);
         }
-        return start;
+        // searchStart is now the first occurrence of the week day
+        return searchStart;
     }
 
 }
