@@ -123,6 +123,7 @@
             </div>
         </div>
         <div class="ms-3">
+            <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-secondary"> </span>
             <button type="button" id="next" [disabled]="isSaving || getInvalidReasons().length > 0" class="btn btn-primary" (click)="nextStep()">
                 <fa-icon [icon]="getNextIcon()"></fa-icon>&nbsp;<span [jhiTranslate]="getNextText()">Next</span>
             </button>

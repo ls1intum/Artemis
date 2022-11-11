@@ -44,10 +44,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     toggleModeFunction = () => this.toggleWizardMode();
     getInvalidReasonsFunction = () => this.getInvalidReasons(this.currentWizardModeStep);
-    currentWizardModeStep = 1;
-
     programmingLanguageChangedFunction = (language: ProgrammingLanguage) => this.onProgrammingLanguageChange(language);
     projectTypeChangedFunction = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
+    currentWizardModeStep = 1;
 
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
@@ -164,6 +163,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     nextWizardStep() {
         this.currentWizardModeStep++;
+
+        if (this.currentWizardModeStep > 5) {
+            this.save();
+        }
     }
 
     /**
