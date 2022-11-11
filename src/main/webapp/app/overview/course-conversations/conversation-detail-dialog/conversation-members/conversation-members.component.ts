@@ -42,7 +42,6 @@ export class ConversationMembers implements OnInit {
     searchTerm = '';
 
     // icons
-    faUser = faUser;
     faMagnifyingGlass = faMagnifyingGlass;
     faUserPlus = faUserPlus;
     constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal) {}
@@ -57,12 +56,16 @@ export class ConversationMembers implements OnInit {
         const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.metisConversationService = this.metisConversationService;
         from(modalRef.result).subscribe(() => {
-            this.search$.next({
-                searchTerm: this.searchTerm,
-                force: true,
-            });
-            this.changesPerformed.emit();
+            this.onChangePerformed();
         });
+    }
+
+    onChangePerformed() {
+        this.search$.next({
+            searchTerm: this.searchTerm,
+            force: true,
+        });
+        this.changesPerformed.emit();
     }
 
     trackIdentity(index: number, item: User) {
@@ -114,20 +117,6 @@ export class ConversationMembers implements OnInit {
             searchTerm: this.searchTerm,
             force: true,
         });
-    }
-
-    getUserLabel({ firstName, lastName, login }: User) {
-        let label = '';
-        if (firstName) {
-            label += `${firstName} `;
-        }
-        if (lastName) {
-            label += `${lastName} `;
-        }
-        if (login) {
-            label += `(${login})`;
-        }
-        return label.trim();
     }
 
     onSearchQueryInput($event: Event) {

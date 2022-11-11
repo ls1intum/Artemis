@@ -1,0 +1,14 @@
+<div class="d-flex justify-content-between align-items-center conversation-member-row" (mouseleave)="$event.stopPropagation(); userDropdown.close()">
+    <span class="d-inline-block">
+        <fa-icon [icon]="faUser"></fa-icon>
+        {{ userLabel }}
+    </span>
+    <div ngbDropdown class="d-inline-block" #userDropdown="ngbDropdown">
+        <button class="btn btn-outline-secondary dropdown-toggle interaction" type="button" ngbDropdownToggle *ngIf="canDeleteUser">
+            <fa-icon [icon]="faEllipsis" size="xs"></fa-icon>
+        </button>
+        <div ngbDropdownMenu>
+            <button ngbDropdownItem class="text-danger" (click)="openRemoveUserDialog($event)">{{ 'artemisApp.actions.removeUser' | artemisTranslate }}</button>
+        </div>
+    </div>
+</div>

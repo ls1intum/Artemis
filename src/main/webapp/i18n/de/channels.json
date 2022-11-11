@@ -17,7 +17,8 @@
         "actions": {
             "view": "Anzeigen",
             "join": "Beitreten",
-            "leave": "Verlassen"
+            "leave": "Verlassen",
+            "removeUser": "Benutzer entfernen"
         },
         "pages": {
             "createChannel": {

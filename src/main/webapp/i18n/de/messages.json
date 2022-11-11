@@ -2,24 +2,51 @@
     "artemisApp": {
         "messages": {
             "label": "Nachrichten",
-            "conversation": {
-                "header": "Konversation",
-                "created": "Gespräch erstellt",
-                "show": "Gespräch anzeigen",
-                "hide": "Gespräch ausblenden",
+            "Unterhaltung": {
+                "header": "Konversationen",
+                "erstellt": "Konversation erstellt",
+                "show": "Konversation anzeigen",
+                "ausblenden": "Konversation ausblenden",
                 "notFound": "Keine Konversation gefunden",
-                "instructionForNewConversation": "Sie können über die Suchleiste oben nach anderen Benutzern suchen und eine neue Konversation beginnen",
-                "searchForUsers": "Benutzer des Kurses suchen",
-                "minQueryLengthHint": "Mind. {{ length }} Buchstaben",
+                "instructionForNewConversation": "Du kannns über die Suchleiste oben nach anderen Benutzern suchen und eine neue Unterhaltung beginnen",
+                "searchForUsers": "Benutzer im Kurs suchen",
+                "minQueryLengthHint": "Tippe min. {{ Länge }} Buchstaben",
                 "others": "{{ count }} andere"
             },
-            "searchBarPlaceholder": "Suchen Sie in der aktuellen Konversation nach einer Nachricht",
+            "searchBarPlaceholder": "Suche nach einer Nachricht innerhalb der aktuellen Konversation",
             "submit": "Senden",
             "thread": {
                 "label": "Thread",
                 "show": "Thread anzeigen",
                 "close": "Thread schließen",
-                "reply": "Antwort im Thread"
+                "antworten": "Antworten im Thread"
+            },
+            "addUsers": {
+                "addUsersToConversation": "Benutzer zur Konversation hinzufügen",
+                "addUsersToChannel": "Benutzer hinzufügen zu: "
+            },
+            "removeUserPrivateChannel": {
+                "question": "{{ user }} aus privatem Kanal {{ channel }} entfernen ?",
+                "warning": "Dieses Mitglied wird nicht mehr auf diesen Kanel zugreifen können, es sei denn, er/sie wird erneut eingeladen.",
+                "remove": "Benutzer entfernen",
+                "abbrechen": "Abbrechen"
+            },
+            "addUserForm": {
+                "addUsersButton": "Hinzufügen",
+                "requiredError": "Du musst mindestens einen Benutzer auswählen",
+                "maxError": "Du kannst nur {{ max }} Benutzer hinzufügen",
+                "addUserLabel": "Suche nach Benutzern im Kurs",
+                "maxUsersNote": "Hinweis: Du kannst nur {{ max }} Benutzer zu dieser Konversation hinzufügen"
+            },
+            "conversationDetail": {
+                "tabs": {
+                    "Mitglieder": "Mitglieder"
+                },
+                "memberTab": {
+                    "findMembers": "Mitglieder finden",
+                    "Suchen": "Suchen...",
+                    "addUsers": "Benutzer hinzufügen"
+                }
             }
         }
     }

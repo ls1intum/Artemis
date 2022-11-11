@@ -1,9 +1,8 @@
 import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { getAsChannel, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
 
 @Component({

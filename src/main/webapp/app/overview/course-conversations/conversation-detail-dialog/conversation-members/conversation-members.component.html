@@ -27,12 +27,15 @@
     <div class="row mt-2" *ngIf="members && members.length > 0">
         <div class="col-12">
             <ul class="list-group">
-                <li *ngFor="let user of members; let i = index; trackBy: trackIdentity" class="list-group-item d-flex justify-content-between align-items-center">
-                    <span class="d-inline-block">
-                        <fa-icon [icon]="faUser"></fa-icon>
-                        {{ getUserLabel(user) }}</span
-                    >
-                </li>
+                <li
+                    *ngFor="let user of members; let i = index; trackBy: trackIdentity"
+                    class="list-group-item"
+                    jhi-conversation-member-row
+                    [user]="user"
+                    [activeConversation]="activeConversation"
+                    [metisConversationService]="metisConversationService"
+                    (userRemoved)="onChangePerformed()"
+                ></li>
             </ul>
         </div>
         <div class="col-12">

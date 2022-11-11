@@ -25,6 +25,12 @@
                 "addUsersToConversation": "Add users to conversation",
                 "addUsersToChannel": "Add users to: "
             },
+            "removeUserPrivateChannel": {
+                "question": "Remove {{ user }} from private channel {{ channel }} ?",
+                "warning": "This member will not be able to access this channel anymore unless he/she is invited again.",
+                "remove": "Remove user",
+                "cancel": "Cancel"
+            },
             "addUserForm": {
                 "addUsersButton": "Add",
                 "requiredError": "You must select at least one user",

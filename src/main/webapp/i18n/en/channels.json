@@ -15,9 +15,10 @@
             }
         },
         "actions": {
-            "view": "Anzeigen",
-            "join": "Beitreten",
-            "leave": "Verlassen"
+            "view": "View",
+            "join": "Join",
+            "leave": "Leave",
+            "removeUser": "Remove User"
         },
         "pages": {
             "createChannel": {

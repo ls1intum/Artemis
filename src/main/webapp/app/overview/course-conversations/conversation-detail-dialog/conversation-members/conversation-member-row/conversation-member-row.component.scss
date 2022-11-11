@@ -1,0 +1,17 @@
+.conversation-member-row {
+    min-height: 3rem;
+
+    .interaction {
+        visibility: hidden;
+    }
+
+    &:hover {
+        .interaction {
+            visibility: visible;
+        }
+    }
+
+    .dropdown-toggle::after {
+        content: none;
+    }
+}

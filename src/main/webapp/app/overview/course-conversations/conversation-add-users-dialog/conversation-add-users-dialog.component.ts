@@ -5,7 +5,6 @@ import { AddUsersFormData } from 'app/overview/course-conversations/conversation
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { ConversationDto, MAX_MEMBERS_IN_DIRECT_CONVERSATION } from 'app/entities/metis/conversation/conversation.model';
-import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';

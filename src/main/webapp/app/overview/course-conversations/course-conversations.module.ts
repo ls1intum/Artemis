@@ -21,6 +21,9 @@ import { AddUsersFormComponent } from './conversation-add-users-dialog/add-users
 import { CourseUsersSelectorModule } from 'app/shared/course-users-selector/course-users-selector.module';
 import { ConversationMembers } from './conversation-detail-dialog/conversation-members/conversation-members.component';
 import { ConversationDetailDialogComponent } from './conversation-detail-dialog/conversation-detail-dialog.component';
+import { ConversationInfoComponent } from './conversation-detail-dialog/conversation-info/conversation-info.component';
+import { ConversationMemberRowComponent } from './conversation-detail-dialog/conversation-members/conversation-member-row/conversation-member-row.component';
+import { PrivateChannelRemoveUserDialog } from 'app/overview/course-conversations/channels/private-channel-remove-user-dialog/private-channel-remove-user-dialog.component';
 
 const routes: Routes = [
     {
@@ -59,6 +62,8 @@ const routes: Routes = [
         AddUsersFormComponent,
         ConversationMembers,
         ConversationDetailDialogComponent,
+        ConversationMemberRowComponent,
+        PrivateChannelRemoveUserDialog,
     ],
 })
 export class CourseConversationsModule {}
