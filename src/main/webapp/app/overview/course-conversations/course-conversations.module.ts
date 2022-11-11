@@ -62,6 +62,7 @@ const routes: Routes = [
         AddUsersFormComponent,
         ConversationMembers,
         ConversationDetailDialogComponent,
+        ConversationInfoComponent,
         ConversationMemberRowComponent,
         PrivateChannelRemoveUserDialog,
     ],
