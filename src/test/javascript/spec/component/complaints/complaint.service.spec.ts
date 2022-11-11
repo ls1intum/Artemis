@@ -45,7 +45,6 @@ describe('ComplaintService', () => {
 
     let exercise: Exercise;
     let emptyResult: Result;
-    let studentParticipation: StudentParticipation;
     const course: Course = {
         maxComplaintTimeDays: 7,
     };
@@ -68,7 +67,6 @@ describe('ComplaintService', () => {
             studentAssignedTeamIdComputed: false,
         };
         emptyResult = new Result();
-        studentParticipation = new StudentParticipation();
     });
 
     afterEach(() => {

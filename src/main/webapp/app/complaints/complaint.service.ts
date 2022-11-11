@@ -9,6 +9,7 @@ import { map } from 'rxjs/operators';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { Result } from 'app/entities/result.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
@@ -230,9 +231,15 @@ export class ComplaintService implements IComplaintService {
      * @param exercise for which the student can complain
      * @param complaintTimeFrame number of days the student has to file the complaint
      * @param result of the student in the exercise that might receive complain
+     * @param studentParticipation the participation which might contain an individual due date
      * @return the date until which the student can complain
      */
-    static getIndividualComplaintDueDate(exercise: Exercise, complaintTimeFrame: number, result: Result | undefined): dayjs.Dayjs | undefined {
+    static getIndividualComplaintDueDate(
+        exercise: Exercise,
+        complaintTimeFrame: number,
+        result: Result | undefined,
+        studentParticipation?: StudentParticipation,
+    ): dayjs.Dayjs | undefined {
         // No complaints if there is no result or the exercise does not support complaints
         if (!result?.completionDate || (exercise.assessmentType === AssessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments)) {
             return undefined;
@@ -241,10 +248,11 @@ export class ComplaintService implements IComplaintService {
         if (exercise.allowComplaintsForAutomaticAssessments || result.rated) {
             let complaintStartDate;
 
+            const relevantDueDate = studentParticipation?.individualDueDate ? studentParticipation.individualDueDate : exercise.dueDate;
             if (exercise.assessmentDueDate && dayjs().isAfter(exercise.assessmentDueDate)) {
                 complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(exercise.assessmentDueDate));
-            } else if (exercise.dueDate && dayjs().isAfter(exercise.dueDate) && !exercise.assessmentDueDate) {
-                complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(exercise.dueDate));
+            } else if (relevantDueDate && dayjs().isAfter(relevantDueDate) && !exercise.assessmentDueDate) {
+                complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(relevantDueDate));
             } else if (!exercise.assessmentDueDate && !exercise.dueDate) {
                 complaintStartDate = dayjs(result.completionDate);
             } else {

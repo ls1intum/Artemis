@@ -93,7 +93,7 @@ public class ComplaintService {
                 throw new BadRequestAlertException("You cannot request more feedback in this course because this feature has been disabled by the instructors.", ENTITY_NAME,
                         "moreFeedbackRequestsDisabled");
             }
-            validateTimeOfComplaintOrRequestMoreFeedback(originalResult, studentParticipation.getExercise(), course, complaint.getComplaintType());
+            validateTimeOfComplaintOrRequestMoreFeedback(originalResult, studentParticipation.getExercise(), studentParticipation, course, complaint.getComplaintType());
         }
 
         if (!studentParticipation.isOwnedBy(principal.getName())) {
@@ -257,10 +257,12 @@ public class ComplaintService {
      *
      * @param result the result for which a complaint should be filed
      * @param exercise the exercise where the student wants to complain
+     * @param studentParticipation StudentParticipation the participation which might contain an individual due date
      * @param course the course specifying the number of available days for the complaint
      * @param type specifies if this is an actual complaint or a more feedback request
      */
-    private static void validateTimeOfComplaintOrRequestMoreFeedback(Result result, Exercise exercise, Course course, ComplaintType type) {
+    private static void validateTimeOfComplaintOrRequestMoreFeedback(Result result, Exercise exercise, StudentParticipation studentParticipation, Course course,
+            ComplaintType type) {
         int maxDays = switch (type) {
             case COMPLAINT -> course.getMaxComplaintTimeDays();
             case MORE_FEEDBACK -> course.getMaxRequestMoreFeedbackTimeDays();
@@ -268,11 +270,14 @@ public class ComplaintService {
 
         ZonedDateTime startOfComplaintTime;
         if (exercise.getAllowComplaintsForAutomaticAssessments() || result.isRated()) {
+            ZonedDateTime relevantDueDate = studentParticipation != null && studentParticipation.getIndividualDueDate() != null ? studentParticipation.getIndividualDueDate()
+                    : exercise.getDueDate();
+
             if (exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate())) {
                 startOfComplaintTime = result.getCompletionDate().isAfter(exercise.getAssessmentDueDate()) ? result.getCompletionDate() : exercise.getAssessmentDueDate();
             }
-            else if (exercise.getDueDate() != null && ZonedDateTime.now().isAfter(exercise.getDueDate()) && exercise.getAssessmentDueDate() == null) {
-                startOfComplaintTime = result.getCompletionDate().isAfter(exercise.getDueDate()) ? result.getCompletionDate() : exercise.getDueDate();
+            else if (relevantDueDate != null && ZonedDateTime.now().isAfter(relevantDueDate) && exercise.getAssessmentDueDate() == null) {
+                startOfComplaintTime = result.getCompletionDate().isAfter(relevantDueDate) ? result.getCompletionDate() : relevantDueDate;
             }
             else if (exercise.getAssessmentDueDate() == null && exercise.getDueDate() == null) {
                 startOfComplaintTime = result.getCompletionDate();

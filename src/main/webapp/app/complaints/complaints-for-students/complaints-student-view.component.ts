@@ -118,7 +118,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     private isTimeOfComplaintValid(): boolean {
         if (!this.isExamMode) {
             if (this.course?.maxComplaintTimeDays) {
-                const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise, this.course.maxComplaintTimeDays, this.result);
+                const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise, this.course.maxComplaintTimeDays, this.result, this.participation);
                 return !!dueDate && dayjs().isBefore(dueDate);
             }
             return false;
@@ -131,7 +131,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
      */
     private isTimeOfFeedbackRequestValid(): boolean {
         if (!this.isExamMode && this.course?.maxRequestMoreFeedbackTimeDays) {
-            const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise, this.course.maxRequestMoreFeedbackTimeDays, this.result);
+            const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise, this.course.maxRequestMoreFeedbackTimeDays, this.result, this.participation);
             return !!dueDate && dayjs().isBefore(dueDate);
         }
         return false;

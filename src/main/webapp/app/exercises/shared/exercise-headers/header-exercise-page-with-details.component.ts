@@ -68,6 +68,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
                     this.exercise,
                     this.course.maxComplaintTimeDays,
                     this.studentParticipation?.results?.last(),
+                    this.studentParticipation,
                 );
             }
             // The student can either still submit or there is a submission where the student did not have the chance to complain yet
