@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between align-items-start channel-item" *ngIf="channel" (mouseover)="isHover = true" (mouseout)="isHover = false">
+<div class="d-flex justify-content-between align-items-start channel-item" *ngIf="channel">
     <div class="ms-2 me-auto">
         <div class="fw-bold">
             <span>
@@ -6,20 +6,20 @@
             </span>
             <span>{{ channel.name }}</span>
         </div>
-        <span *ngIf="channel.isMember" class="badge bg-success rounded-pill">Joined</span>
-        <span> {{ channel.numberOfMembers }} Members</span>
+        <span *ngIf="channel.isMember" class="badge bg-success rounded-pill">{{ 'artemisApp.entities.channel.status.joined' | artemisTranslate }}</span>
+        <span> {{ channel.numberOfMembers }} {{ 'artemisApp.entities.channel.members' | artemisTranslate }}</span>
         <div *ngIf="channel.description && channel.description.length > 0">
             <span class="d-inline-block text-truncate long-text fst-italic"> {{ channel.description }}</span>
         </div>
     </div>
-    <div [hidden]="!isHover">
+    <div class="interaction">
         <ng-container *ngIf="!channel.isMember">
-            <button type="button" class="btn btn-primary" (click)="emitChannelAction($event, 'register')">Join</button>
-            <!--ToDo:  Introduce method to view channel even if no participant maybe hacky around with visitor status or something? -->
+            <button type="button" class="btn btn-primary" (click)="emitChannelAction($event, 'register')">{{ 'artemisApp.actions.join' | artemisTranslate }}</button>
+            <!--ToDo:  Introduce method to view public channel even if no participant maybe hacky around with visitor status or something? -->
         </ng-container>
         <ng-container *ngIf="channel.isMember">
-            <button type="button" class="btn btn-secondary" (click)="emitChannelAction($event, 'view')">View</button>
-            <button type="button" class="btn btn-danger" (click)="emitChannelAction($event, 'deregister')">Leave</button>
+            <button type="button" class="btn btn-secondary" (click)="emitChannelAction($event, 'view')">{{ 'artemisApp.actions.view' | artemisTranslate }}</button>
+            <button type="button" class="btn btn-danger" (click)="emitChannelAction($event, 'deregister')">{{ 'artemisApp.actions.leave' | artemisTranslate }}</button>
         </ng-container>
     </div>
 </div>

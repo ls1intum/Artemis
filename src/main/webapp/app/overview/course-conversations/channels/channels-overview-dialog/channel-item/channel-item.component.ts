@@ -13,8 +13,6 @@ export class ChannelItemComponent {
     @Input()
     channel: ChannelDTO;
 
-    isHover = false;
-
     constructor() {}
 
     emitChannelAction($event: MouseEvent, action: ChannelActionType) {

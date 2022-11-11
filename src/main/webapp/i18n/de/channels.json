@@ -7,8 +7,17 @@
             "channel": {
                 "name": "Name",
                 "description": "Beschreibung",
-                "isPublic": "Ist öffentlich"
+                "isPublic": "Ist öffentlich",
+                "members": "Mitglieder",
+                "status": {
+                    "joined": "Beigetreten"
+                }
             }
+        },
+        "actions": {
+            "view": "Anzeigen",
+            "join": "Beitreten",
+            "leave": "Verlassen"
         },
         "pages": {
             "createChannel": {

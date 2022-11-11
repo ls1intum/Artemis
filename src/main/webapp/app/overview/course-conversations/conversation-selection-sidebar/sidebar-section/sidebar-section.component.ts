@@ -25,9 +25,6 @@ export class SidebarSectionComponent {
 
     @Input()
     isCollapsed = false;
-
-    isHover = false;
-
     @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
 
     getAsChannel = getAsChannelDto;

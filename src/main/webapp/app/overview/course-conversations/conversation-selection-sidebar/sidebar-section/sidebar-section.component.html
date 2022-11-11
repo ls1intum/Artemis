@@ -1,11 +1,11 @@
 <div class="sidebar-section">
     <!-- Todo: Do not hide when popover is open-->
-    <div class="section-header" (mouseover)="isHover = true" (mouseout)="isHover = false" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed">
+    <div class="section-header" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed">
         <div>
             <fa-icon [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
             <span>{{ label }}</span>
         </div>
-        <div *ngIf="sectionButtons" [hidden]="!isHover" (click)="$event.stopPropagation()">
+        <div *ngIf="sectionButtons" class="interaction" (click)="$event.stopPropagation()">
             <ng-template [ngTemplateOutlet]="sectionButtons" [ngTemplateOutletContext]="{}"></ng-template>
         </div>
     </div>
