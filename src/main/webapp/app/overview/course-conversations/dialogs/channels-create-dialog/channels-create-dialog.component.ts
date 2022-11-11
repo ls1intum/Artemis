@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/channels/channel-form/channel-form.component';
+import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { Channel } from 'app/entities/metis/conversation/channel.model';

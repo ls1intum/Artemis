@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AddUsersFormData } from 'app/overview/course-conversations/conversation-add-users-dialog/add-users-form/add-users-form.component';
+import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/add-users-form.component';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { ConversationDto, MAX_MEMBERS_IN_DIRECT_CONVERSATION } from 'app/entities/metis/conversation/conversation.model';

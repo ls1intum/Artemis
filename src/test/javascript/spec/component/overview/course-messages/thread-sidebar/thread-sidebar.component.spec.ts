@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/conversation-thread-sidebar/conversation-thread-sidebar.component';
+import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { directMessageUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { PostComponent } from 'app/shared/metis/post/post.component';

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { ChannelAction, ChannelActionType } from 'app/overview/course-conversations/channels/channels-overview-dialog/channels-overview-dialog.component';
+import { ChannelAction, ChannelActionType } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 
 @Component({
     selector: 'jhi-channel-item',

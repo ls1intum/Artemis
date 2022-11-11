@@ -6,7 +6,7 @@ import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { from } from 'rxjs';
-import { PrivateChannelRemoveUserDialog } from 'app/overview/course-conversations/channels/private-channel-remove-user-dialog/private-channel-remove-user-dialog.component';
+import { PrivateChannelRemoveUserDialog } from 'app/overview/course-conversations/dialogs/private-channel-remove-user-dialog/private-channel-remove-user-dialog.component';
 import { Course } from 'app/entities/course.model';
 
 @Component({

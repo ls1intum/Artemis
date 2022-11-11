@@ -4,7 +4,6 @@ import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 export enum ConversationDetailTabs {
     MEMBERS = 'members',

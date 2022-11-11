@@ -2,10 +2,10 @@ import { CourseConversationsComponent } from 'app/overview/course-conversations/
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { getElement } from '../../../helpers/utils/general.utils';
 
-import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/conversation-selection-sidebar/conversation-selection-sidebar.component';
+import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
 import { conversationBetweenUser1User2, directMessageUser1 } from '../../../helpers/sample/metis-sample-data';
-import { ConversationMessagesComponent } from 'app/overview/course-conversations/conversation-messages/conversation-messages.component';
-import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/conversation-thread-sidebar/conversation-thread-sidebar.component';
+import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
+import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { MockComponent } from 'ng-mocks';
 
 describe('CourseMessagesComponent', () => {

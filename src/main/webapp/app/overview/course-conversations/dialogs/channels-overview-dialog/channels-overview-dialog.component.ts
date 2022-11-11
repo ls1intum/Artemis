@@ -9,7 +9,7 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { Course } from 'app/entities/course.model';
-import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/channels/channels-create-dialog/channels-create-dialog.component';
+import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view';
 export type ChannelAction = {

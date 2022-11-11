@@ -28,7 +28,7 @@ import { MockPostService } from '../../../../helpers/mocks/service/mock-post.ser
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
-import { ConversationMessagesComponent } from 'app/overview/course-conversations/conversation-messages/conversation-messages.component';
+import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
 
