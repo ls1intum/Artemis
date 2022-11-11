@@ -60,7 +60,7 @@
             <div class="flex-grow-1">
                 <h4 id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">Generate new Programming Exercise</h4>
             </div>
-            <div class="flex-grow-1 ms-3">
+            <div class="flex-grow-1 ms-3" *ngIf="!isEdit && !isExamMode">
                 <div class="guided-mode-button">
                     <button type="button" id="guided.mode" class="btn btn-primary" (click)="toggleWizardMode()">
                         <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.programmingExercise.home.switchToGuidedModeLabel"
