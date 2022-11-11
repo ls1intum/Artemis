@@ -376,8 +376,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var studentPropertiesNullExpected = new TutorialGroupRegistrationImportDTO(freshTitleOne, new StudentDTO(null, null, null, null));
         assertThat(importResult.stream()).containsExactlyInAnyOrder(regNullStudent, regBlankExpected, regExistingTutorialGroup, studentPropertiesNullExpected);
 
-        assertImportedTutorialGroupWithTitleInDB(freshTitleOne, new HashSet<>());
-        assertImportedTutorialGroupWithTitleInDB(freshTitleTwo, new HashSet<>());
+        var instructor1 = userRepository.findOneByLogin("instructor1").get();
+        assertImportedTutorialGroupWithTitleInDB(freshTitleOne, new HashSet<>(), instructor1);
+        assertImportedTutorialGroupWithTitleInDB(freshTitleTwo, new HashSet<>(), instructor1);
         assertTutorialGroupWithTitleExistsInDb(existingTitle);
     }
 
@@ -435,7 +436,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         assertUserIsRegisteredInTutorialWithTitle(existingGroup2.getTitle(), student1);
         assertUserIsRegisteredInTutorialWithTitle(existingGroup1.getTitle(), student8);
-        assertImportedTutorialGroupWithTitleInDB(freshTitle, Set.of(student9, student6));
+
+        var instructor1 = userRepository.findOneByLogin("instructor1").get();
+        assertImportedTutorialGroupWithTitleInDB(freshTitle, Set.of(student9, student6), instructor1);
     }
 
     @Test
@@ -476,7 +479,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // when
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
-        assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>());
+        var instructor1 = userRepository.findOneByLogin("instructor1").get();
+        assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
         assertThat(importResult.size()).isEqualTo(1);
         var importResultDTO = importResult.get(0);
         assertThat(importResultDTO.importSuccessful()).isFalse();
@@ -510,7 +514,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // when
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
-        assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>());
+        var instructor1 = userRepository.findOneByLogin("instructor1").get();
+        assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
         assertThat(importResult.size()).isEqualTo(4);
         assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::importSuccessful)).allMatch(status -> status.equals(false));
         assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::error)).allMatch(TutorialGroupResource.TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS::equals);
@@ -541,8 +546,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(tutorialGroupRegistrationRepository.countByStudentAndTutorialGroupCourseIdAndType(expectedStudent, exampleCourseId, INSTRUCTOR_REGISTRATION)).isEqualTo(0);
     }
 
-    private void assertImportedTutorialGroupWithTitleInDB(String expectedTitle, Set<User> expectedRegisteredStudents) {
-        assertTutorialGroupWithTitleInDB(expectedTitle, expectedRegisteredStudents, INSTRUCTOR_REGISTRATION, false, null, null, null, null, null);
+    private void assertImportedTutorialGroupWithTitleInDB(String expectedTitle, Set<User> expectedRegisteredStudents, User requestingUser) {
+        assertTutorialGroupWithTitleInDB(expectedTitle, expectedRegisteredStudents, INSTRUCTOR_REGISTRATION, false, null, 1, "Campus", Language.GERMAN, requestingUser);
     }
 
     private void assertTutorialGroupWithTitleInDB(String expectedTitle, Set<User> expectedRegisteredStudents, TutorialGroupRegistrationType expectedRegistrationType,
