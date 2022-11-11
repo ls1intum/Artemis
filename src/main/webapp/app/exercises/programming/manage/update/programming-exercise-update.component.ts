@@ -46,6 +46,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     getInvalidReasonsForWizard = () => this.getInvalidReasons(this.currentWizardModeStep);
     programmingLanguageChanged = (language: ProgrammingLanguage) => this.onProgrammingLanguageChange(language);
     projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
+    staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
     currentWizardModeStep = 1;
 
     auxiliaryRepositoryDuplicateNames: boolean;
@@ -940,6 +941,55 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             exerciseCategories: this.exerciseCategories,
             existingCategories: this.existingCategories,
             updateCategories: this.updateCategories,
+        };
+    }
+
+    getLanguageStepInputs() {
+        return {
+            appNamePatternForSwift: this.appNamePatternForSwift,
+            modePickerOptions: this.modePickerOptions,
+            withDependencies: this.withDependencies,
+            packageNameRequired: this.packageNameRequired,
+            packageNamePattern: this.packageNamePattern,
+            supportsJava: this.supportsJava,
+            supportsPython: this.supportsPython,
+            supportsC: this.supportsC,
+            supportsHaskell: this.supportsHaskell,
+            supportsKotlin: this.supportsKotlin,
+            supportsVHDL: this.supportsVHDL,
+            supportsAssembler: this.supportsAssembler,
+            supportsSwift: this.supportsSwift,
+            supportsOCaml: this.supportsOCaml,
+            supportsEmpty: this.supportsEmpty,
+            selectedProgrammingLanguage: this.selectedProgrammingLanguage,
+            onProgrammingLanguageChange: this.programmingLanguageChanged,
+            projectTypes: this.projectTypes,
+            selectedProjectType: this.selectedProjectType,
+            onProjectTypeChange: this.projectTypeChanged,
+        };
+    }
+
+    getGradingStepInputs() {
+        return {
+            staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
+            onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
+            maxPenaltyPattern: this.maxPenaltyPattern,
+        };
+    }
+
+    getProblemStepInputs() {
+        return {
+            problemStatementLoaded: this.problemStatementLoaded,
+            templateParticipationResultLoaded: this.templateParticipationResultLoaded,
+            hasUnsavedChanges: this.hasUnsavedChanges,
+            rerenderSubject: this.rerenderSubject.asObservable(),
+            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
+            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
+            validIdeSelection: this.validIdeSelection,
+            inProductionEnvironment: this.inProductionEnvironment,
+            recreateBuildPlans: this.recreateBuildPlans,
+            onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
+            updateTemplate: this.updateTemplate,
         };
     }
 }
