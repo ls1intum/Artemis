@@ -91,6 +91,7 @@
                 "ltiKey": "LTI Key",
                 "ltiSecret": "LTI Secret",
                 "userPrefix": "User Prefix",
+                "requireExistingUser": "Require existing user",
                 "registrationId": "Registration ID",
                 "clientId": "Client ID",
                 "authorizationUri": "Authorization URI",

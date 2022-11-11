@@ -34,6 +34,9 @@ public class OnlineCourseConfiguration extends DomainObject {
     @Column(name = "user_prefix", nullable = false)
     private String userPrefix;
 
+    @Column(name = "require_existing_user", nullable = false)
+    private boolean requireExistingUser = false;
+
     @Column(name = "original_url")
     private String originalUrl;
 
@@ -82,6 +85,14 @@ public class OnlineCourseConfiguration extends DomainObject {
 
     public void setUserPrefix(String userPrefix) {
         this.userPrefix = userPrefix;
+    }
+
+    public boolean requireExistingUser() {
+        return requireExistingUser;
+    }
+
+    public void setRequireExistingUser(boolean requireExistingUser) {
+        this.requireExistingUser = requireExistingUser;
     }
 
     public String getOriginalUrl() {

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.Objects;
 
 import org.junit.jupiter.api.AfterEach;
@@ -15,6 +16,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,13 +28,19 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 
 class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -44,6 +52,12 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Autowired
     private CourseRepository courseRepository;
 
+    @Value("${artemis.user-management.external.user}")
+    private String JIRA_USER;
+
+    @Value("${artemis.user-management.external.password}")
+    private String JIRA_PASSWORD;
+
     private static final String EDX_REQUEST_BODY = """
             custom_component_display_name=Exercise\
             &lti_version=LTI-1p0\
@@ -52,8 +66,6 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
             &context_id=course-v1%3ATUMx%2BSEECx%2B1T2018\
             &oauth_signature_method=HMAC-SHA1\
             &oauth_timestamp=1572204884\
-            &custom_require_existing_user=false\
-            &custom_lookup_user_by_email=true\
             &lis_person_contact_email_primary=anh.montag%40tum.de\
             &oauth_signature=GYXApaIv0x7k%2FOPT9%2FoU38IBQRc%3D\
             &context_title=Software+Engineering+Essentials\
@@ -103,7 +115,6 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
             &tool_consumer_instance_guid=localhost\
             &tool_consumer_instance_name=New+Site\
             &tool_consumer_instance_description=New+Site\
-            &custom_lookup_user_by_email=true\
             &launch_presentation_document_target=window\
             &launch_presentation_return_url=http%3A%2F%2Flocalhost%3A81%2Fmod%2Flti%2Freturn.php%3Fcourse%3D3%26launch_container%3D4%26instanceid%3D5%26sesskey%3DBG6zIkjI4p\
             &oauth_signature_method=HMAC-SHA1\
@@ -130,23 +141,28 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         database.resetDatabase();
     }
 
-    private void addJiraMocks(String requestBody, boolean existingUser) throws Exception {
-        String email = "";
-        if (Objects.equals(requestBody, EDX_REQUEST_BODY)) {
-            email = "anh.montag@tum.de";
-        }
-        if (Objects.equals(requestBody, MOODLE_REQUEST_BODY)) {
-            email = "carlosmoodle@email.com";
-        }
+    private void addJiraMocks(String requestBody, String existingUser) throws Exception {
+        String email = getEmailFromBody(requestBody);
 
-        if (existingUser) {
-            jiraRequestMockProvider.mockGetUsernameForEmail(email, email, "existingUser");
+        if (existingUser != null) {
+            jiraRequestMockProvider.mockGetUsernameForEmail(email, email, existingUser);
+            jiraRequestMockProvider.mockGetOrCreateUserLti(JIRA_USER, JIRA_PASSWORD, existingUser, email, "", new HashSet<>());
         }
         else {
             jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(email);
         }
 
         jiraRequestMockProvider.mockAddUserToGroup("tumuser", false);
+    }
+
+    private String getEmailFromBody(String requestBody) {
+        if (Objects.equals(requestBody, EDX_REQUEST_BODY)) {
+            return "anh.montag@tum.de";
+        }
+        if (Objects.equals(requestBody, MOODLE_REQUEST_BODY)) {
+            return "carlosmoodle@email.com";
+        }
+        return "";
     }
 
     @ParameterizedTest
@@ -164,7 +180,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_WithoutExistingEmail(String requestBody) throws Exception {
-        addJiraMocks(requestBody, false);
+        addJiraMocks(requestBody, null);
 
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
@@ -179,7 +195,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_WithExistingEmail(String requestBody) throws Exception {
-        addJiraMocks(requestBody, false);
+        addJiraMocks(requestBody, "student1");
 
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
@@ -188,6 +204,20 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         var uriComponents = UriComponentsBuilder.fromUri(header).build();
         assertParametersNewStudent(UriComponentsBuilder.fromUri(header).build().getQueryParams());
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
+    @WithAnonymousUser
+    void launchAsAnonymousUser_RequireExistingUser(String requestBody) throws Exception {
+        OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
+        onlineCourseConfiguration.setRequireExistingUser(true);
+        courseRepository.save(course);
+
+        jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(getEmailFromBody(requestBody));
+
+        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.BAD_REQUEST, new HttpHeaders(),
+                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
     }
 
     @ParameterizedTest
@@ -214,6 +244,10 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithMockUser(username = "student1", roles = "USER")
     void launchAsRecentlyCreatedStudent(String requestBody) throws Exception {
+        User user = userRepository.getUser();
+        user.setEmail(getEmailFromBody(requestBody));
+        userRepository.save(user);
+
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
@@ -227,6 +261,9 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithMockUser(username = "student1", roles = "USER")
     void launchAsExistingStudent(String requestBody) throws Exception {
+        User user = userRepository.getUser();
+        user.setEmail(getEmailFromBody(requestBody));
+        userRepository.save(user);
 
         var nowIn20Minutes = ZonedDateTime.now().plus(20, ChronoUnit.MINUTES);
 
