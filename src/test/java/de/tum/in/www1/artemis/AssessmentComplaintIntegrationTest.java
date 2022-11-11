@@ -88,6 +88,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1")
     void submitComplaintAboutModelingAssessmentResultBeforeDueDate() throws Exception {
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
         modelingAssessment.setCompletionDate(modelingExercise.getDueDate().minusDays(1));
         resultRepo.save(modelingAssessment);
 
@@ -97,6 +99,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1")
     void submitComplaintAboutModelingAssessmentResultBeforeAssessmentDueDate() throws Exception {
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(3));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
         modelingAssessment.setCompletionDate(modelingExercise.getAssessmentDueDate().minusDays(1));
         resultRepo.save(modelingAssessment);
 
@@ -106,6 +110,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1")
     void submitComplaintAboutModelingAssessmentResultAfterAssessmentDueDate() throws Exception {
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(3));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         modelingAssessment.setCompletionDate(modelingExercise.getAssessmentDueDate().plusDays(1));
         resultRepo.save(modelingAssessment);
 
@@ -143,6 +149,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1")
     void submitComplaintAboutModellingAssessment_complaintLimitNotReached() throws Exception {
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
+
         // 2 complaints are allowed, the course is created with 3 max complaints
         database.addComplaints("student1", modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
 
@@ -168,6 +177,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1")
     void requestMoreFeedbackAboutModelingAssessment_noLimit() throws Exception {
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
+
         database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.MORE_FEEDBACK);
 
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
@@ -922,6 +934,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void submitComplaintForExerciseComplaintNotExceededTextLimit() throws Exception {
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
         course = database.updateCourseComplaintTextLimit(course, 27);
         // 26 characters
         complaint.setComplaintText("abcdefghijklmnopqrstuvwxyz");

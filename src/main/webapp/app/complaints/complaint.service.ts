@@ -234,26 +234,27 @@ export class ComplaintService implements IComplaintService {
      */
     static getIndividualComplaintDueDate(exercise: Exercise, complaintTimeFrame: number, result: Result | undefined): dayjs.Dayjs | undefined {
         // No complaints if there is no result or the exercise does not support complaints
-        if (!result?.completionDate || !exercise.dueDate || (exercise.assessmentType === AssessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments)) {
+        if (!result?.completionDate || (exercise.assessmentType === AssessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments)) {
             return undefined;
         }
 
-        let complaintStartDate;
-        if (exercise.allowComplaintsForAutomaticAssessments) {
-            // Only automatically graded
-            complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(exercise.dueDate));
-        } else if (result.rated) {
-            // Graded manual result present
-            if (exercise.assessmentDueDate) {
+        if (exercise.allowComplaintsForAutomaticAssessments || result.rated) {
+            let complaintStartDate;
+
+            if (exercise.assessmentDueDate && dayjs().isAfter(exercise.assessmentDueDate)) {
                 complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(exercise.assessmentDueDate));
-            } else {
+            } else if (exercise.dueDate && dayjs().isAfter(exercise.dueDate) && !exercise.assessmentDueDate) {
                 complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(exercise.dueDate));
+            } else if (!exercise.assessmentDueDate && !exercise.dueDate) {
+                complaintStartDate = dayjs(result.completionDate);
+            } else {
+                return undefined;
             }
+
+            return complaintStartDate.add(complaintTimeFrame, 'days');
         } else {
             return undefined;
         }
-
-        return complaintStartDate.add(complaintTimeFrame, 'days');
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {

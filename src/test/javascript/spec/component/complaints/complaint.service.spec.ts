@@ -262,12 +262,12 @@ describe('ComplaintService', () => {
             expect(individualComplaintDueDate).toBeUndefined();
         });
 
-        it('should return undefined for no exercise deadline', () => {
+        it('should calculate the correct complaint due date for no exercise deadline', () => {
             emptyResult.rated = true;
             emptyResult.completionDate = dayjsTime3;
             exercise.dueDate = undefined;
             const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
-            expect(individualComplaintDueDate).toBeUndefined();
+            expect(individualComplaintDueDate).toEqual(dayjsTime3.add(7, 'days'));
         });
 
         it('should return undefined for automatic assessment without complaints', () => {
@@ -288,13 +288,13 @@ describe('ComplaintService', () => {
             expect(individualComplaintDueDate).toEqual(dayjsTime3.add(7, 'days'));
         });
 
-        it('should return undefined for complaint due date for automatic assessment with complaints before dueDate', () => {
-            emptyResult.completionDate = dayjsTime3.subtract(1, 'day');
+        it('should calculate the correct complaint due date for automatic assessment with complaints before dueDate', () => {
+            emptyResult.completionDate = dayjsTime3.subtract(2, 'day');
             exercise.allowComplaintsForAutomaticAssessments = true;
             exercise.assessmentType = AssessmentType.AUTOMATIC;
-            exercise.dueDate = dayjsTime3.add(1, 'days');
+            exercise.dueDate = dayjsTime3.subtract(1, 'day');
             const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
-            expect(individualComplaintDueDate).toEqual(dayjsTime3.add(8, 'days'));
+            expect(individualComplaintDueDate).toEqual(dayjsTime3.add(6, 'days'));
         });
 
         it('should calculate the correct complaint due date after assessmentDueDate', () => {

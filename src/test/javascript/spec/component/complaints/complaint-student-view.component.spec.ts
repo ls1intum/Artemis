@@ -241,7 +241,7 @@ describe('ComplaintsStudentViewComponent', () => {
         }));
 
         it('should be available if result was before deadline', fakeAsync(() => {
-            const exercise: Exercise = { id: 1, teamMode: false, course, dueDate: dayjs(), assessmentType: AssessmentType.MANUAL } as Exercise;
+            const exercise: Exercise = { id: 1, teamMode: false, course, dueDate: dayjs().subtract(1, 'minute'), assessmentType: AssessmentType.MANUAL } as Exercise;
             const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days') } as Result;
             component.exercise = exercise;
             component.result = resultDateOutOfLimits;
@@ -259,7 +259,7 @@ describe('ComplaintsStudentViewComponent', () => {
                 teamMode: false,
                 course,
                 dueDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days'),
-                assessmentDueDate: dayjs(),
+                assessmentDueDate: dayjs().subtract(1, 'minute'),
                 assessmentType: AssessmentType.MANUAL,
             } as Exercise;
             const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'days') } as Result;
