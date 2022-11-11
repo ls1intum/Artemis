@@ -271,7 +271,7 @@ public class ComplaintService {
             if (exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate())) {
                 startOfComplaintTime = result.getCompletionDate().isAfter(exercise.getAssessmentDueDate()) ? result.getCompletionDate() : exercise.getAssessmentDueDate();
             }
-            else if (exercise.getDueDate() != null && ZonedDateTime.now().isAfter(exercise.getDueDate()) && exercise.getAssessmentDueDate() != null) {
+            else if (exercise.getDueDate() != null && ZonedDateTime.now().isAfter(exercise.getDueDate()) && exercise.getAssessmentDueDate() == null) {
                 startOfComplaintTime = result.getCompletionDate().isAfter(exercise.getDueDate()) ? result.getCompletionDate() : exercise.getDueDate();
             }
             else if (exercise.getAssessmentDueDate() == null && exercise.getDueDate() == null) {
