@@ -241,28 +241,28 @@ export class ComplaintService implements IComplaintService {
         studentParticipation?: StudentParticipation,
     ): dayjs.Dayjs | undefined {
         // No complaints if there is no result or the exercise does not support complaints
-        if (!result?.completionDate || (exercise.assessmentType === AssessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments)) {
+        if (
+            !result?.completionDate ||
+            (exercise.assessmentType === AssessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments) ||
+            (!exercise.allowComplaintsForAutomaticAssessments && !result.rated)
+        ) {
             return undefined;
         }
 
-        if (exercise.allowComplaintsForAutomaticAssessments || result.rated) {
-            let complaintStartDate;
+        let complaintStartDate;
 
-            const relevantDueDate = studentParticipation?.individualDueDate ? studentParticipation.individualDueDate : exercise.dueDate;
-            if (exercise.assessmentDueDate && dayjs().isAfter(exercise.assessmentDueDate)) {
-                complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(exercise.assessmentDueDate));
-            } else if (relevantDueDate && dayjs().isAfter(relevantDueDate) && !exercise.assessmentDueDate) {
-                complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(relevantDueDate));
-            } else if (!exercise.assessmentDueDate && !exercise.dueDate) {
-                complaintStartDate = dayjs(result.completionDate);
-            } else {
-                return undefined;
-            }
-
-            return complaintStartDate.add(complaintTimeFrame, 'days');
+        const relevantDueDate = studentParticipation?.individualDueDate ? studentParticipation.individualDueDate : exercise.dueDate;
+        if (exercise.assessmentDueDate && dayjs().isAfter(exercise.assessmentDueDate)) {
+            complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(exercise.assessmentDueDate));
+        } else if (relevantDueDate && dayjs().isAfter(relevantDueDate) && !exercise.assessmentDueDate) {
+            complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(relevantDueDate));
+        } else if (!exercise.assessmentDueDate && !exercise.dueDate) {
+            complaintStartDate = dayjs(result.completionDate);
         } else {
             return undefined;
         }
+
+        return complaintStartDate.add(complaintTimeFrame, 'days');
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
