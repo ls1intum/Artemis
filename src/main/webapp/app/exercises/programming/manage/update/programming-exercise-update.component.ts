@@ -46,6 +46,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     getInvalidReasonsFunction = () => this.getInvalidReasons(this.currentWizardModeStep);
     currentWizardModeStep = 1;
 
+    programmingLanguageChangedFunction = (language: ProgrammingLanguage) => this.onProgrammingLanguageChange(language);
+    projectTypeChangedFunction = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
+
     auxiliaryRepositoryDuplicateNames: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryNamedCorrectly: boolean;
