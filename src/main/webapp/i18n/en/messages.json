@@ -40,12 +40,22 @@
             },
             "conversationDetail": {
                 "tabs": {
-                    "members": "Members"
+                    "members": "Members",
+                    "info": "Info"
                 },
                 "memberTab": {
                     "findMembers": "Find members",
                     "searching": "Searching...",
                     "addUsers": "Add users"
+                },
+                "infoTab": {
+                    "noTopic": "No topic set...",
+                    "editTopic": "Edit topic",
+                    "noDescription": "No description set...",
+                    "editDescription": "Edit description",
+                    "moreInfo": "More info",
+                    "createdBy": "Created by",
+                    "createdOn": "Created on"
                 }
             }
         }

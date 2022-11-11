@@ -4,9 +4,9 @@
             "label": "Nachrichten",
             "Unterhaltung": {
                 "header": "Konversationen",
-                "erstellt": "Konversation erstellt",
+                "created": "Konversation erstellt",
                 "show": "Konversation anzeigen",
-                "ausblenden": "Konversation ausblenden",
+                "hide": "Konversation ausblenden",
                 "notFound": "Keine Konversation gefunden",
                 "instructionForNewConversation": "Du kannns über die Suchleiste oben nach anderen Benutzern suchen und eine neue Unterhaltung beginnen",
                 "searchForUsers": "Benutzer im Kurs suchen",
@@ -19,7 +19,7 @@
                 "label": "Thread",
                 "show": "Thread anzeigen",
                 "close": "Thread schließen",
-                "antworten": "Antworten im Thread"
+                "reply": "Antworten im Thread"
             },
             "addUsers": {
                 "addUsersToConversation": "Benutzer zur Konversation hinzufügen",
@@ -29,7 +29,7 @@
                 "question": "{{ user }} aus privatem Kanal {{ channel }} entfernen ?",
                 "warning": "Dieses Mitglied wird nicht mehr auf diesen Kanel zugreifen können, es sei denn, er/sie wird erneut eingeladen.",
                 "remove": "Benutzer entfernen",
-                "abbrechen": "Abbrechen"
+                "cancel": "Abbrechen"
             },
             "addUserForm": {
                 "addUsersButton": "Hinzufügen",
@@ -40,12 +40,22 @@
             },
             "conversationDetail": {
                 "tabs": {
-                    "Mitglieder": "Mitglieder"
+                    "members": "Mitglieder",
+                    "info": "Info"
                 },
                 "memberTab": {
                     "findMembers": "Mitglieder finden",
-                    "Suchen": "Suchen...",
+                    "searching": "Suchen...",
                     "addUsers": "Benutzer hinzufügen"
+                },
+                "infoTab": {
+                    "noTopic": "Kein Thema gesetzt...",
+                    "editTopic": "Thema bearbeiten",
+                    "noDescription": "Keine Beschreibung gesetzt...",
+                    "editDescription": "Beschreibung bearbeiten",
+                    "moreInfo": "Mehr Infos",
+                    "createdBy": "Erstellt von",
+                    "createdOn": "Erstellt am"
                 }
             }
         }

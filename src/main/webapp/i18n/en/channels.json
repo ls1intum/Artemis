@@ -7,6 +7,7 @@
             "channel": {
                 "name": "Name",
                 "description": "Description",
+                "topic": "Topic",
                 "isPublic": "Is Public",
                 "members": "Members",
                 "status": {

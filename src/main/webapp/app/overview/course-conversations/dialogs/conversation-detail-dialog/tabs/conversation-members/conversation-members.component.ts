@@ -8,10 +8,9 @@ import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { from, map, Subject } from 'rxjs';
-import { faMagnifyingGlass, faUser, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 interface SearchQuery {
     searchTerm: string;

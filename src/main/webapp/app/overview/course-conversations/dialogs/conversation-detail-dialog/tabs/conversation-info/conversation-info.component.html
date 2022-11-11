@@ -1,1 +1,55 @@
-<p>conversation-info works!</p>
+<div *ngIf="activeConversation" class="container-fluid conversation-info">
+    <div class="row info-container">
+        <!-- Topic (Only for Channels)-->
+        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel">
+            <div class="form-floating">
+                <textarea
+                    class="form-control"
+                    readonly
+                    placeholder="dummyPlaceholder"
+                    id="topic"
+                    value="{{ channel.topic ?? ('artemisApp.messages.conversationDetail.infoTab.noTopic' | artemisTranslate) }}"
+                >
+                </textarea>
+                <label for="topic">{{ 'artemisApp.entities.channel.topic' | artemisTranslate }}</label>
+                <button class="action-button btn btn-outline-primary btn-sm">{{ 'artemisApp.messages.conversationDetail.infoTab.editTopic' | artemisTranslate }}</button>
+            </div>
+        </div>
+        <!-- Description (Only for Channels)-->
+        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel">
+            <div class="form-floating">
+                <textarea
+                    class="form-control"
+                    readonly
+                    placeholder="dummyPlaceholder"
+                    id="description"
+                    value="{{ channel.description ?? ('artemisApp.messages.conversationDetail.infoTab.noDescription' | artemisTranslate) }}"
+                >
+                </textarea>
+                <label for="topic">{{ 'artemisApp.entities.channel.description' | artemisTranslate }}</label>
+                <button class="action-button btn btn-outline-primary btn-sm">{{ 'artemisApp.messages.conversationDetail.infoTab.editDescription' | artemisTranslate }}</button>
+            </div>
+        </div>
+        <!-- More Info -->
+        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel">
+            <div>
+                <h6>{{ 'artemisApp.messages.conversationDetail.infoTab.moreInfo' | artemisTranslate }}</h6>
+            </div>
+            <ul>
+                <li>
+                    {{ 'artemisApp.messages.conversationDetail.infoTab.createdBy' | artemisTranslate }}:
+                    {{ activeConversation.creator ? getUserLabel(activeConversation.creator) : '' }}
+                </li>
+                <li>
+                    {{ 'artemisApp.messages.conversationDetail.infoTab.createdOn' | artemisTranslate }}:
+                    {{ activeConversation.creationDate ? (activeConversation.creationDate | artemisDate) : '' }}
+                </li>
+                <li>Id: {{ activeConversation.id ?? '' }}</li>
+            </ul>
+        </div>
+        <!-- Actions -->
+        <div class="col-12 info-section text-center">
+            <button type="button" class="btn btn-danger" (click)="leaveChannel($event)">{{ 'artemisApp.actions.leave' | artemisTranslate }}</button>
+        </div>
+    </div>
+</div>

@@ -1,6 +1,6 @@
-<div *ngIf="isInitialized">
+<div *ngIf="isInitialized" class="conversation-detail-dialog">
     <div class="modal-header">
-        <h4 class="modal-title">
+        <h4 class="modal-title clickable-title">
             <span>
                 <jhi-channel-icon *ngIf="getAsChannel(activeConversation) as channel" [isPublic]="channel.isPublic!"></jhi-channel-icon>
                 {{ getConversationName(activeConversation) }}
@@ -11,7 +11,12 @@
     <div>
         <ul class="nav nav-tabs">
             <li class="nav-item">
-                <a class="nav-link active" role="button" (click)="selectedTab = Tabs.MEMBERS">
+                <a class="nav-link" [class.active]="selectedTab === Tabs.INFO" role="button" (click)="selectedTab = Tabs.INFO">
+                    {{ 'artemisApp.messages.conversationDetail.tabs.info' | artemisTranslate }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" [class.active]="selectedTab === Tabs.MEMBERS" role="button" (click)="selectedTab = Tabs.MEMBERS">
                     {{ 'artemisApp.messages.conversationDetail.tabs.members' | artemisTranslate }}
                 </a>
             </li>
@@ -25,6 +30,7 @@
                 *ngSwitchCase="Tabs.MEMBERS"
                 (changesPerformed)="changesWerePerformed = true"
             ></jhi-conversation-members>
+            <jhi-conversation-info [activeConversation]="activeConversation" [course]="course" *ngSwitchCase="Tabs.INFO" (channelLeave)="onChannelLeave()"></jhi-conversation-info>
         </ng-container>
     </div>
 </div>
