@@ -17,6 +17,7 @@ export enum DocumentationType {
     PlagiarismChecks = 'plagiarism-check/',
     Grading = 'grading/',
     Units = 'lectures/#lecture-units',
+    Assessment = 'exercises/assessment/',
 }
 
 @Component({
