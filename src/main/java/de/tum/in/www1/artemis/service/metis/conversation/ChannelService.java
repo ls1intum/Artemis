@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.metis.conversation;
 import static javax.validation.Validation.buildDefaultValidatorFactory;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.validation.ConstraintViolationException;
 
@@ -43,6 +44,11 @@ public class ChannelService {
                 .orElseThrow(() -> new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound"));
     }
 
+    public Channel getChannelWithParticipantsOrThrow(Long channelId) {
+        return channelRepository.findChannelByIdWithEagerParticipants(channelId)
+                .orElseThrow(() -> new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound"));
+    }
+
     public List<Channel> getChannels(Long courseId) {
         return channelRepository.findChannelsByCourseId(courseId);
     }
@@ -68,6 +74,11 @@ public class ChannelService {
         return savedChannel;
     }
 
+    public Channel updateChannel(Channel channel) {
+        this.channelIsValidOrThrow(channel.getCourse().getId(), channel);
+        return channelRepository.save(channel);
+    }
+
     public void channelIsValidOrThrow(Long courseId, Channel channel) {
         var validator = buildDefaultValidatorFactory().getValidator();
         var violations = validator.validate(channel);
@@ -80,7 +91,14 @@ public class ChannelService {
         if (!channel.getName().matches(CHANNEL_NAME_REGEX)) {
             throw new BadRequestAlertException("Channel names can only contain lowercase letters, numbers, and dashes.", CHANNEL_ENTITY_NAME, "namePatternInvalid");
         }
-        channelRepository.findChannelByCourseIdAndName(courseId, channel.getName()).ifPresent(existingChannel -> {
+        Optional<Channel> channelWithSameName;
+        if (channel.getId() != null) {
+            channelWithSameName = channelRepository.findChannelByCourseIdAndNameAndIdNot(courseId, channel.getName(), channel.getId());
+        }
+        else {
+            channelWithSameName = channelRepository.findChannelByCourseIdAndName(courseId, channel.getName());
+        }
+        channelWithSameName.ifPresent(existingChannel -> {
             throw new ChannelNameDuplicateException(existingChannel.getName());
         });
     }

@@ -73,13 +73,49 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ChannelDTO> createChannel(@PathVariable Long courseId, @RequestBody ChannelDTO channelDTO) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
-        channelAuthorizationService.isAllowedToCreateChannelElseThrow(course, null);
+        channelAuthorizationService.isAllowedToCreateChannel(course, null);
         var channelToCreate = channelDTO.toChannel();
         var createdChannel = channelService.createChannel(course, channelToCreate);
         var dto = new ChannelDTO(createdChannel);
         dto.setIsMember(true);
         dto.setNumberOfMembers(1);
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(dto);
+    }
+
+    @PutMapping("/{courseId}/channel/{channelId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ChannelDTO> updateChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody ChannelDTO channelDTO) {
+        var originalChannel = channelService.getChannelOrThrow(channelId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        if (!originalChannel.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
+        }
+        channelAuthorizationService.isAllowedToUpdateChannel(originalChannel, requestingUser);
+        // now that we know the user is authorized we perform the expensive operation of loading all participants
+        originalChannel = channelService.getChannelWithParticipantsOrThrow(channelId);
+
+        var isChanged = false;
+        if (channelDTO.getName() != null && !channelDTO.getName().equals(originalChannel.getName())) {
+            originalChannel.setName(channelDTO.getName());
+            isChanged = true;
+        }
+        if (channelDTO.getDescription() != null && !channelDTO.getDescription().equals(originalChannel.getDescription())) {
+            originalChannel.setDescription(channelDTO.getDescription());
+            isChanged = true;
+        }
+        if (channelDTO.getTopic() != null && !channelDTO.getTopic().equals(originalChannel.getTopic())) {
+            originalChannel.setTopic(channelDTO.getTopic());
+            isChanged = true;
+        }
+        if (!isChanged) {
+            return ResponseEntity.ok(new ChannelDTO(originalChannel));
+        }
+
+        var updatedChannel = channelService.updateChannel(originalChannel);
+        var dto = new ChannelDTO(updatedChannel);
+        channelDTO.setIsMember(conversationService.isMember(updatedChannel.getId(), requestingUser.getId()));
+        channelDTO.setNumberOfMembers(conversationService.getMemberCount(updatedChannel.getId()));
+        return ResponseEntity.ok().body(dto);
     }
 
     @PostMapping("/{courseId}/channels/{channelId}/register")

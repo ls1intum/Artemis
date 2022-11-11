@@ -34,10 +34,19 @@ public class ChannelAuthorizationService {
 
     }
 
-    public void isAllowedToCreateChannelElseThrow(@NotNull Course course, @Nullable User user) {
+    public void isAllowedToCreateChannel(@NotNull Course course, @Nullable User user) {
         user = getUserIfNecessary(user);
         // ToDo: Discuss who else should be allowed to create channels
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+    }
+
+    public void isAllowedToUpdateChannel(@NotNull Channel channel, @Nullable User user) {
+        user = getUserIfNecessary(user);
+        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user);
+        var isCreator = channel.getCreator().equals(user);
+        if (!isAtLeastInstructor && !isCreator) {
+            throw new AccessForbiddenException("You are not allowed to update this channel");
+        }
     }
 
     public boolean isMember(Long channelId, Long userId) {

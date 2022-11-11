@@ -14,6 +14,14 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 public interface ChannelRepository extends JpaRepository<Channel, Long> {
 
     @Query("""
+            SELECT DISTINCT channel
+            FROM Channel channel
+            LEFT JOIN FETCH channel.conversationParticipants
+            WHERE channel.id = :#{#channelId}
+            """)
+    Optional<Channel> findChannelByIdWithEagerParticipants(@Param("channelId") Long channelId);
+
+    @Query("""
              SELECT DISTINCT channel
              FROM Channel channel
              WHERE channel.course.id = :#{#courseId}
@@ -39,5 +47,15 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
              ORDER BY channel.name
             """)
     Optional<Channel> findChannelByCourseIdAndName(@Param("courseId") Long courseId, @Param("name") String name);
+
+    @Query("""
+             SELECT DISTINCT channel
+             FROM Channel channel
+             WHERE channel.course.id = :#{#courseId}
+             AND channel.name = :#{#name}
+             AND channel.id <> :#{#channelId}
+             ORDER BY channel.name
+            """)
+    Optional<Channel> findChannelByCourseIdAndNameAndIdNot(@Param("courseId") Long courseId, @Param("name") String name, @Param("channelId") Long channelId);
 
 }
