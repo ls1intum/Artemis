@@ -54,7 +54,8 @@ export class ConversationMembers implements OnInit {
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
-        modalRef.componentInstance.metisConversationService = this.metisConversationService;
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.activeConversation = this.activeConversation;
         from(modalRef.result).subscribe(() => {
             this.onChangePerformed();
         });

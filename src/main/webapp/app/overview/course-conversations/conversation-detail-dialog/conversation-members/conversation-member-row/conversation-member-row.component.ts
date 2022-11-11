@@ -4,10 +4,10 @@ import { User } from 'app/core/user/user.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { from } from 'rxjs';
 import { PrivateChannelRemoveUserDialog } from 'app/overview/course-conversations/channels/private-channel-remove-user-dialog/private-channel-remove-user-dialog.component';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: '[jhi-conversation-member-row]',
@@ -16,9 +16,10 @@ import { PrivateChannelRemoveUserDialog } from 'app/overview/course-conversation
 })
 export class ConversationMemberRowComponent implements OnInit {
     @Input()
-    metisConversationService: MetisConversationService;
-    @Input()
     activeConversation: ConversationDto;
+
+    @Input()
+    course: Course;
 
     @Output()
     userRemoved: EventEmitter<void> = new EventEmitter<void>();
@@ -68,8 +69,9 @@ export class ConversationMemberRowComponent implements OnInit {
     openRemoveUserDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(PrivateChannelRemoveUserDialog, { size: 'lg', scrollable: false, backdrop: 'static' });
-        modalRef.componentInstance.metisConversationService = this.metisConversationService;
+        modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.userToRemove = this.user;
+        modalRef.componentInstance.activeConversation = this.activeConversation;
         from(modalRef.result).subscribe(() => {
             this.userRemoved.emit();
         });

@@ -1,9 +1,8 @@
 import { Component, Input } from '@angular/core';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { Course } from 'app/entities/course.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { User } from 'app/core/user/user.model';
-import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, isChannelDto, isPrivateChannel } from 'app/entities/metis/conversation/channel.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
@@ -23,23 +22,18 @@ export class PrivateChannelRemoveUserDialog {
         }
     }
     @Input()
-    set metisConversationService(metisConversationService: MetisConversationService) {
-        this._metisConversationService = metisConversationService;
-        this.course = this._metisConversationService.course!;
-        this._metisConversationService.activeConversation$.subscribe((conversation: ConversationDto) => {
-            this.privateChannelDTO = conversation;
-            if (isChannelDto(this.privateChannelDTO) && !this.privateChannelDTO.isPublic) {
-                this.privateChannelDTO = conversation;
-                this.channelName = this.privateChannelDTO.name ?? '';
-            }
-        });
+    course: Course;
+    @Input()
+    set activeConversation(activeConversation: ConversationDto) {
+        if (activeConversation && isChannelDto(activeConversation) && isPrivateChannel(activeConversation)) {
+            this.privateChannelDTO = activeConversation;
+            this.channelName = this.privateChannelDTO.name ?? '';
+        }
     }
 
     _userToRemove: User;
-    _metisConversationService: MetisConversationService;
-    course: Course;
-
     privateChannelDTO: ChannelDTO;
+
     userLabel = '';
     channelName = '';
 
@@ -50,11 +44,7 @@ export class PrivateChannelRemoveUserDialog {
         if (this.privateChannelDTO && loginsToRemove.length > 0) {
             this.channelService.deregisterUsersFromChannel(this.course.id!, this.privateChannelDTO.id!, loginsToRemove).subscribe({
                 next: () => {
-                    this._metisConversationService.forceRefresh().subscribe({
-                        complete: () => {
-                            this.activeModal.close();
-                        },
-                    });
+                    this.activeModal.close();
                 },
                 error: (errorResponse: HttpErrorResponse) => {
                     onError(this.alertService, errorResponse);

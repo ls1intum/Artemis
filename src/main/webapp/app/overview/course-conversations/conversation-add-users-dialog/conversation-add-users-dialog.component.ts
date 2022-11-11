@@ -11,7 +11,6 @@ import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { getAsGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
 import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Component({
     selector: 'jhi-conversation-add-users-dialog',
@@ -21,16 +20,9 @@ export class ConversationAddUsersDialogComponent implements OnInit {
     readonly MAX_MEMBERS_IN_DIRECT_CONVERSATION = MAX_MEMBERS_IN_DIRECT_CONVERSATION;
 
     @Input()
-    set metisConversationService(metisConversationService: MetisConversationService) {
-        this._metisConversationService = metisConversationService;
-        this.course = this._metisConversationService.course!;
-        this._metisConversationService.activeConversation$.subscribe((conversation: ConversationDto) => {
-            this.activeConversation = conversation;
-        });
-    }
-    _metisConversationService: MetisConversationService;
     course: Course;
 
+    @Input()
     activeConversation: ConversationDto;
 
     constructor(private alertService: AlertService, private activeModal: NgbActiveModal, public channelService: ChannelService) {}
@@ -56,11 +48,7 @@ export class ConversationAddUsersDialogComponent implements OnInit {
         if (isChannelDto(this.activeConversation)) {
             this.channelService.registerUsersToChannel(this.course.id!, this.activeConversation.id!, userLogins).subscribe({
                 next: () => {
-                    this._metisConversationService.forceRefresh().subscribe({
-                        complete: () => {
-                            this.activeModal.close();
-                        },
-                    });
+                    this.activeModal.close();
                 },
                 error: (errorResponse: HttpErrorResponse) => {
                     onError(this.alertService, errorResponse);

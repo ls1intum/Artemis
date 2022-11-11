@@ -34,6 +34,13 @@ export class ChannelDTO extends ConversationDto {
     }
 }
 
+export function isPrivateChannel(channel: ChannelDTO): boolean {
+    return !channel.isPublic;
+}
+
+export function isPublicChannel(channel: ChannelDTO): boolean {
+    return !!channel.isPublic;
+}
 export function isChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
     return conversation.type === ConversationType.CHANNEL;
 }
