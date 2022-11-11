@@ -926,7 +926,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    getFirstStepInputs() {
+    getInfoStepInputs() {
         return {
             titleNamePattern: this.titleNamePattern,
             shortNamePattern: this.shortNamePattern,

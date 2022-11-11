@@ -7,7 +7,7 @@ import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.c
 import { Observable } from 'rxjs';
 import { ValidationReason } from 'app/entities/exercise.model';
 
-type firstStepInputs = {
+type InfoStepInputs = {
     titleNamePattern: string;
     shortNamePattern: RegExp;
 
@@ -55,7 +55,7 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() isImport: boolean;
 
     // Information Step
-    @Input() inputs: firstStepInputs;
+    @Input() infoStepInputs: InfoStepInputs;
 
     @Input() titleNamePattern: string;
     @Input() shortNamePattern: RegExp;
