@@ -122,10 +122,7 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
         return this.currentStep > step;
     }
 
-    /**
-     * Checks if the given step is the current one
-     */
-    isCurrent(step: number) {
+    isCurrentStep(step: number) {
         return this.currentStep === step;
     }
 
