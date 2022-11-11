@@ -241,19 +241,19 @@ export class ComplaintService implements IComplaintService {
         let complaintStartDate;
         if (exercise.allowComplaintsForAutomaticAssessments) {
             // Only automatically graded
-            complaintStartDate = dayjs.max(result.completionDate, exercise.dueDate);
+            complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(exercise.dueDate));
         } else if (result.rated) {
             // Graded manual result present
             if (exercise.assessmentDueDate) {
-                complaintStartDate = dayjs.max(result.completionDate, exercise.assessmentDueDate);
+                complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(exercise.assessmentDueDate));
             } else {
-                complaintStartDate = dayjs.max(result.completionDate, exercise.dueDate);
+                complaintStartDate = dayjs.max(dayjs(result.completionDate), dayjs(exercise.dueDate));
             }
         } else {
             return undefined;
         }
 
-        return dayjs(complaintStartDate).add(complaintTimeFrame, 'days');
+        return complaintStartDate.add(complaintTimeFrame, 'days');
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {

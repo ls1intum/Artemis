@@ -281,7 +281,8 @@ public class ComplaintService {
             }
         }
         else {
-            startOfComplaintTime = null;
+            throw new BadRequestAlertException("Cannot determine the start of the " + (type == ComplaintType.COMPLAINT ? "submit" : "more feedback request ") + " timeframe",
+                    ENTITY_NAME, "complaintOrRequestMoreFeedbackTimeInvalid");
         }
         boolean isTimeValid = startOfComplaintTime != null && ZonedDateTime.now().isBefore(startOfComplaintTime.plusDays(maxDays));
 

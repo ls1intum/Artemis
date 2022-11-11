@@ -13,7 +13,6 @@ import { Submission } from 'app/entities/submission.model';
 import { filter } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
-import { AssessmentType } from 'app/entities/assessment-type.model';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
