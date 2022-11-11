@@ -8,6 +8,7 @@ import { ConversationDetailDialogComponent, ConversationDetailTabs } from 'app/o
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { from } from 'rxjs';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -46,13 +47,20 @@ export class ConversationHeaderComponent implements OnInit {
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
-        modalRef.componentInstance.metisConversationService = this.metisConversationService;
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.activeConversation = this.activeConversation;
+        from(modalRef.result).subscribe(() => {
+            this.metisConversationService.forceRefresh().subscribe();
+        });
     }
 
     openConversationDetailDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
-        modalRef.componentInstance.selectedTab = ConversationDetailTabs.MEMBERS;
-        modalRef.componentInstance.metisConversationService = this.metisConversationService;
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.activeConversation = this.activeConversation;
+        from(modalRef.result).subscribe(() => {
+            this.metisConversationService.forceRefresh().subscribe();
+        });
     }
 }

@@ -15,18 +15,10 @@ export enum ConversationDetailTabs {
     templateUrl: './conversation-detail-dialog.component.html',
 })
 export class ConversationDetailDialogComponent implements OnInit {
+    @Input()
     public activeConversation: ConversationDto;
     @Input()
-    set metisConversationService(metisConversationService: MetisConversationService) {
-        this._metisConversationService = metisConversationService;
-        this.course = this._metisConversationService.course!;
-        this._metisConversationService.activeConversation$.subscribe((conversation: ConversationDto) => {
-            this.activeConversation = conversation;
-        });
-    }
-    _metisConversationService: MetisConversationService;
     course: Course;
-
     @Input()
     selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
@@ -41,11 +33,7 @@ export class ConversationDetailDialogComponent implements OnInit {
     ngOnInit(): void {}
     clear() {
         if (this.changesWerePerformed) {
-            this._metisConversationService.forceRefresh().subscribe({
-                complete: () => {
-                    this.activeModal.close();
-                },
-            });
+            this.activeModal.close();
         } else {
             this.activeModal.dismiss();
         }

@@ -1,4 +1,4 @@
-<div *ngIf="_metisConversationService && course && activeConversation">
+<div *ngIf="course && activeConversation">
     <div class="modal-header">
         <h4 class="modal-title">
             <span>
@@ -22,7 +22,6 @@
             <jhi-conversation-members
                 [course]="course"
                 [activeConversation]="activeConversation"
-                [metisConversationService]="_metisConversationService"
                 *ngSwitchCase="Tabs.MEMBERS"
                 (changesPerformed)="changesWerePerformed = true"
             ></jhi-conversation-members>

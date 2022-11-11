@@ -27,9 +27,6 @@ export class ConversationMembers implements OnInit {
     course: Course;
     @Input()
     public activeConversation: ConversationDto;
-    @Input()
-    metisConversationService: MetisConversationService;
-
     @Output()
     changesPerformed = new EventEmitter<void>();
 
