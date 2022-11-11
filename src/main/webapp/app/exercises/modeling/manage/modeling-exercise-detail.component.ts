@@ -16,12 +16,15 @@ import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
     templateUrl: './modeling-exercise-detail.component.html',
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
+    documentationType = DocumentationType.Model;
+
     readonly dayjs = dayjs;
     modelingExercise: ModelingExercise;
     course: Course | undefined;
