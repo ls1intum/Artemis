@@ -53,6 +53,21 @@
                     "gradingStepMessage": "Lege fest, wie Studenten bei dieser Übung benotet werden sollen.",
                     "problemStepTitle": "Aufgabenstellung",
                     "problemStepMessage": "Lege die Aufgabenstellung für die neue Übung fest."
+                },
+                "gradingLabels": {
+                    "points": "Es gibt insgesamt maximal {maxPoints} Punkte bei dieser {exerciseType} zu erreichen.",
+                    "noBonus": "Es gibt keine Bonuspunkte für diese Aufgabe.",
+                    "bonus": "Es können {bonusPoints} Bonuspunkte erreicht werden.",
+                    "assessment": "Diese Aufgabe wird {assessmentType} bewertet.",
+                    "lockedSubmission": "Die Repositories werden automatisch nach {submissionLimit} Abgaben gesperrt.",
+                    "penaltySubmission": "Es gibt einen Abzug von {exceedingPenalty} Punkten für jede Abgabe nach {submissionLimit} Abgaben.",
+                    "unrestrictedSubmission": "Es gibt keine Begrenzung für die Anzahl an Abgaben.",
+                    "staticAnalysisEnabled": "Statische Code-Analyse ist aktiviert für diese Aufgabe und es können maximal {maxPenalty} Punkte durch Probleme bei der Code-Analyse abgezogen werden.",
+                    "staticAnalysisDisabled": "Statische Code-Analyse ist deaktiviert für diese Aufgabe.",
+                    "normalExercise": "Aufgabe",
+                    "bonusExercise": "Bonusaufgabe",
+                    "assessmentAutomatic": "automatisch",
+                    "assessmentSemiautomatic": "halb-automatisch"
                 }
             },
             "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein.",
