@@ -1,8 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard-problem',
@@ -14,13 +14,14 @@ export class ProgrammingExerciseUpdateWizardProblemComponent {
     readonly ProjectType = ProjectType;
     readonly AssessmentType = AssessmentType;
 
+    programmingExercise: ProgrammingExercise;
+
     @Input() isImport: boolean;
-    @Input() programmingExercise: ProgrammingExercise;
 
     @Input() problemStatementLoaded: boolean;
     @Input() templateParticipationResultLoaded: boolean;
     @Input() hasUnsavedChanges: boolean;
-    @Input() rerenderSubject: Subject<void>;
+    @Input() rerenderSubject: Observable<void>;
     @Input() sequentialTestRunsAllowed: boolean;
     @Input() checkoutSolutionRepositoryAllowed: boolean;
     @Input() validIdeSelection: () => boolean | undefined;
@@ -29,6 +30,19 @@ export class ProgrammingExerciseUpdateWizardProblemComponent {
     @Input() recreateBuildPlans: boolean;
     @Input() onRecreateBuildPlanOrUpdateTemplateChange: () => void;
     @Input() updateTemplate: boolean;
+
+    @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
+
+    @Input()
+    get exercise() {
+        return this.programmingExercise;
+    }
+
+    set exercise(exercise: ProgrammingExercise) {
+        console.log('Set EXERCISE');
+        this.programmingExercise = exercise;
+        this.exerciseChange.emit(this.programmingExercise);
+    }
 
     faQuestionCircle = faQuestionCircle;
 }

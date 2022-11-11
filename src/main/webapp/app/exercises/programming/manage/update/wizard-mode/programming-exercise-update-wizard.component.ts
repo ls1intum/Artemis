@@ -6,7 +6,7 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ValidationReason } from 'app/entities/exercise.model';
 
 @Component({
@@ -15,6 +15,21 @@ import { ValidationReason } from 'app/entities/exercise.model';
     styleUrls: ['./programming-exercise-update-wizard.component.scss'],
 })
 export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
+    programmingExercise: ProgrammingExercise;
+
+    @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
+
+    @Input()
+    get exercise() {
+        return this.programmingExercise;
+    }
+
+    set exercise(exercise: ProgrammingExercise) {
+        console.log('Set EXERCISE');
+        this.programmingExercise = exercise;
+        this.exerciseChange.emit(this.programmingExercise);
+    }
+
     @Input() toggleModeFunction: () => void;
     @Input() isSaving: boolean;
 
@@ -27,7 +42,6 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
 
     // Information Step
     @Input() titleNamePattern: string;
-    @Input() programmingExercise: ProgrammingExercise;
     @Input() shortNamePattern: RegExp;
 
     @Input() invalidRepositoryNamePattern: RegExp;
@@ -75,7 +89,7 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() problemStatementLoaded: boolean;
     @Input() templateParticipationResultLoaded: boolean;
     @Input() hasUnsavedChanges: boolean;
-    @Input() rerenderSubject: Subject<void>;
+    @Input() rerenderSubject: Observable<void>;
     @Input() sequentialTestRunsAllowed: boolean;
     @Input() checkoutSolutionRepositoryAllowed: boolean;
     @Input() validIdeSelection: () => boolean | undefined;

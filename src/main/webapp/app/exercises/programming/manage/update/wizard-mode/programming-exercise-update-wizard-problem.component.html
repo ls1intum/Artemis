@@ -14,11 +14,11 @@
         <jhi-programming-exercise-editable-instructions
             *ngIf="problemStatementLoaded && templateParticipationResultLoaded && !isImport"
             [participation]="programmingExercise.templateParticipation!"
-            [(exercise)]="programmingExercise"
+            [(exercise)]="exercise"
             [showStatus]="!!programmingExercise?.id"
             [editMode]="!!programmingExercise?.id"
             (hasUnsavedChanges)="hasUnsavedChanges = $event"
-            [forceRender]="rerenderSubject.asObservable()"
+            [forceRender]="rerenderSubject"
             class="form__editable-instructions"
         ></jhi-programming-exercise-editable-instructions>
     </div>
