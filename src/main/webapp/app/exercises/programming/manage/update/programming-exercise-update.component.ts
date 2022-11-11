@@ -42,10 +42,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
-    toggleModeFunction = () => this.toggleWizardMode();
-    getInvalidReasonsFunction = () => this.getInvalidReasons(this.currentWizardModeStep);
-    programmingLanguageChangedFunction = (language: ProgrammingLanguage) => this.onProgrammingLanguageChange(language);
-    projectTypeChangedFunction = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
+    toggleMode = () => this.toggleWizardMode();
+    getInvalidReasonsForWizard = () => this.getInvalidReasons(this.currentWizardModeStep);
+    programmingLanguageChanged = (language: ProgrammingLanguage) => this.onProgrammingLanguageChange(language);
+    projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
     currentWizardModeStep = 1;
 
     auxiliaryRepositoryDuplicateNames: boolean;

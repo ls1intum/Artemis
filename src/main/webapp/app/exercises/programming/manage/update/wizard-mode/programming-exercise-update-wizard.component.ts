@@ -29,7 +29,7 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
         this.exerciseChange.emit(this.programmingExercise);
     }
 
-    @Input() toggleModeFunction: () => void;
+    @Input() toggleMode: () => void;
     @Input() isSaving: boolean;
 
     @Input() currentStep: number;
