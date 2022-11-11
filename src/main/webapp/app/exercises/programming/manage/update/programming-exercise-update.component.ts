@@ -722,6 +722,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     /**
      * Get a list of all reasons that describe why the current input to update is invalid
+     *
+     * @param forStep Limit the respected invalid reasons to the current wizard mode step. By default, e.g. when not using the wizard, all reasons are respected.
      */
     getInvalidReasons(forStep = Number.MAX_VALUE): ValidationReason[] {
         const validationErrorReasons: ValidationReason[] = [];
