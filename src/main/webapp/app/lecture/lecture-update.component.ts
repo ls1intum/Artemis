@@ -12,6 +12,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -19,6 +20,7 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./lecture-update.component.scss'],
 })
 export class LectureUpdateComponent implements OnInit {
+    documentationType = DocumentationType.Lecture;
     EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
