@@ -6,7 +6,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 
@@ -22,7 +22,7 @@ export type ChannelAction = {
 })
 export class ChannelsOverviewDialogComponent implements OnInit {
     @Input()
-    createChannelFn: (channel: Channel) => Observable<never>;
+    createChannelFn: (channel: ChannelDTO) => Observable<never>;
 
     @Input()
     course: Course;
@@ -93,6 +93,14 @@ export class ChannelsOverviewDialogComponent implements OnInit {
             case 'view':
                 this.activeModal.close(channelAction);
                 break;
+            case 'create':
+                this.createChannelFn(channelAction.channel).subscribe({
+                    complete: () => {
+                        this.loadChannelsOfCourse();
+                        this.channelModificationPerformed = true;
+                    },
+                });
+                break;
         }
     }
     loadChannelsOfCourse() {
@@ -119,14 +127,8 @@ export class ChannelsOverviewDialogComponent implements OnInit {
         const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
-
-        from(modalRef.result).subscribe((channel: Channel) => {
-            this.createChannelFn(channel).subscribe({
-                complete: () => {
-                    this.loadChannelsOfCourse();
-                    this.channelModificationPerformed = true;
-                },
-            });
+        from(modalRef.result).subscribe((channel: ChannelDTO) => {
+            this.channelActions$.next({ action: 'create', channel });
         });
     }
 }

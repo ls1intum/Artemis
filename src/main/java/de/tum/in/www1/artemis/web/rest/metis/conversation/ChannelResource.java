@@ -6,8 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
-import javax.validation.Valid;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -73,10 +71,11 @@ public class ChannelResource {
 
     @PostMapping("/{courseId}/channels")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ChannelDTO> createChannel(@PathVariable Long courseId, @Valid @RequestBody Channel channel) throws URISyntaxException {
+    public ResponseEntity<ChannelDTO> createChannel(@PathVariable Long courseId, @RequestBody ChannelDTO channelDTO) throws URISyntaxException {
         var course = courseRepository.findByIdElseThrow(courseId);
         channelAuthorizationService.isAllowedToCreateChannelElseThrow(course, null);
-        var createdChannel = channelService.createChannel(course, channel);
+        var channelToCreate = channelDTO.toChannel();
+        var createdChannel = channelService.createChannel(course, channelToCreate);
         var dto = new ChannelDTO(createdChannel);
         dto.setIsMember(true);
         dto.setNumberOfMembers(1);

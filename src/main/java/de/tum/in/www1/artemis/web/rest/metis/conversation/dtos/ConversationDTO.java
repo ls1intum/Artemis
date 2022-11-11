@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
 import java.time.ZonedDateTime;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 
 public abstract class ConversationDTO {
@@ -9,7 +10,7 @@ public abstract class ConversationDTO {
     /**
      * Determines the type of the conversation, either "channel" or "groupChat" depending on the subclass
      */
-    private final String type;
+    private String type;
 
     private Long id;
 
@@ -23,12 +24,26 @@ public abstract class ConversationDTO {
     // property not taken from entity
     private Integer numberOfMembers;
 
+    private User creator;
+
     // ToDo: Maybe add property hasUnreadMessages and unreadMessagesCount?? How does slack do it?
 
     public ConversationDTO(Conversation conversation, String type) {
         this.id = conversation.getId();
         this.creationDate = conversation.getCreationDate();
         this.lastMessageDate = conversation.getLastMessageDate();
+        this.creator = conversation.getCreator();
+        this.type = type;
+    }
+
+    public ConversationDTO() {
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
         this.type = type;
     }
 
@@ -72,7 +87,11 @@ public abstract class ConversationDTO {
         this.numberOfMembers = numberOfMembers;
     }
 
-    public String getType() {
-        return type;
+    public User getCreator() {
+        return creator;
+    }
+
+    public void setCreator(User creator) {
+        this.creator = creator;
     }
 }

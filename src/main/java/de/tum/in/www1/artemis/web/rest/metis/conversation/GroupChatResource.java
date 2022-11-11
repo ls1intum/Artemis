@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 
 import javax.validation.Valid;
@@ -11,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -42,17 +40,19 @@ public class GroupChatResource {
 
     @PostMapping("/{courseId}/group-chats")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<GroupChatDTO> createGroupChat(@PathVariable Long courseId, @Valid @RequestBody GroupChat groupChat) throws URISyntaxException {
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.isAtLeastStudentInCourse(course, null);
-        var createdGroupChat = groupChatService.createNewGroupChat(course, groupChat);
-        createdGroupChat = groupChatService.findByIdWithConversationParticipantsElseThrow(createdGroupChat.getId());
-        var dto = new GroupChatDTO(createdGroupChat);
-        dto.setIsMember(true);
-        dto.setNumberOfMembers(createdGroupChat.getConversationParticipants().size());
-        dto.setNamesOfOtherMembers(groupChatService.getNamesOfOtherMembers(groupChat, user));
-        return ResponseEntity.created(new URI("/api/group-chats/" + createdGroupChat.getId())).body(dto);
+    public ResponseEntity<GroupChatDTO> createGroupChat(@PathVariable Long courseId, @Valid GroupChatDTO groupChat) throws URISyntaxException {
+        // ToDo: Refactor using DTO
+        // var course = courseRepository.findByIdElseThrow(courseId);
+        // var user = userRepository.getUserWithGroupsAndAuthorities();
+        // authorizationCheckService.isAtLeastStudentInCourse(course, null);
+        // var createdGroupChat = groupChatService.createNewGroupChat(course, groupChat);
+        // createdGroupChat = groupChatService.findByIdWithConversationParticipantsElseThrow(createdGroupChat.getId());
+        // var dto = new GroupChatDTO(createdGroupChat);
+        // dto.setIsMember(true);
+        // dto.setNumberOfMembers(createdGroupChat.getConversationParticipants().size());
+        // dto.setNamesOfOtherMembers(groupChatService.getNamesOfOtherMembers(groupChat, user));
+        // return ResponseEntity.created(new URI("/api/group-chats/" + createdGroupChat.getId())).body(dto);
+        return ResponseEntity.notFound().build();
     }
 
 }

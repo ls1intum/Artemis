@@ -17,9 +17,8 @@ export class ChannelService {
             observe: 'response',
         });
     }
-    create(courseId: number, channel: Channel): Observable<HttpResponse<ChannelDTO>> {
-        const copy = this.conversationService.convertDateFromClient(channel);
-        return this.http.post<ChannelDTO>(`${this.resourceUrl}${courseId}/channels`, copy, { observe: 'response' }).pipe(map(this.conversationService.convertDateFromServer));
+    create(courseId: number, channelDTO: ChannelDTO): Observable<HttpResponse<ChannelDTO>> {
+        return this.http.post<ChannelDTO>(`${this.resourceUrl}${courseId}/channels`, channelDTO, { observe: 'response' }).pipe(map(this.conversationService.convertDateFromServer));
     }
 
     deregisterUsersFromChannel(courseId: number, channelId: number, logins?: string[]): Observable<HttpResponse<void>> {

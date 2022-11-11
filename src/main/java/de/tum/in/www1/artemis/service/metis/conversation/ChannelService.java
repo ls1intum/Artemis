@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import static javax.validation.Validation.buildDefaultValidatorFactory;
+
 import java.util.List;
+
+import javax.validation.ConstraintViolationException;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -65,6 +69,11 @@ public class ChannelService {
     }
 
     public void channelIsValidOrThrow(Long courseId, Channel channel) {
+        var validator = buildDefaultValidatorFactory().getValidator();
+        var violations = validator.validate(channel);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
         if (!StringUtils.hasText(channel.getName())) {
             throw new BadRequestAlertException("A channel needs to have a name", CHANNEL_ENTITY_NAME, "nameMissing");
         }

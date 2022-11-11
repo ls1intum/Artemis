@@ -156,7 +156,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe((channelToCreate: Channel) => {
+        from(modalRef.result).subscribe((channelToCreate: ChannelDTO) => {
             this.metisConversationService.createNewConversation(channelToCreate).subscribe({
                 complete: () => {
                     this.metisConversationService.forceRefresh().subscribe(() => {});

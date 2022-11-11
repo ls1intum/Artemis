@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-channels-create-dialog',
@@ -22,7 +22,7 @@ export class ChannelsCreateDialogComponent {
         }
     }
 
-    channelToCreate: Channel = new Channel();
+    channelToCreate: ChannelDTO = new ChannelDTO();
     isPublicChannel = true;
     constructor(private activeModal: NgbActiveModal) {}
 
@@ -44,7 +44,6 @@ export class ChannelsCreateDialogComponent {
         this.channelToCreate.name = name ? name.trim() : undefined;
         this.channelToCreate.description = description ? description.trim() : undefined;
         this.channelToCreate.isPublic = isPublic;
-        this.channelToCreate.course = this.course;
 
         this.activeModal.close(this.channelToCreate);
     }

@@ -14,8 +14,8 @@ import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { isGroupChat } from 'app/entities/metis/conversation/groupChat.model';
-import { isChannel } from 'app/entities/metis/conversation/channel.model';
+import { isGroupChat, isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
+import { isChannel, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -120,12 +120,12 @@ export class MetisConversationService implements OnDestroy {
         );
     };
 
-    public createNewConversation = (newConversation: Conversation): Observable<never> => {
+    public createNewConversation = (newConversation: ConversationDto): Observable<never> => {
         this.setIsLoading(true);
         let createConversationObservable: Observable<HttpResponse<ConversationDto>>;
-        if (isGroupChat(newConversation)) {
+        if (isGroupChatDto(newConversation)) {
             createConversationObservable = this.groupChatService.create(this._courseId, newConversation);
-        } else if (isChannel(newConversation)) {
+        } else if (isChannelDto(newConversation)) {
             createConversationObservable = this.channelService.create(this._courseId, newConversation);
         } else {
             throw new Error('Conversation type not supported');
