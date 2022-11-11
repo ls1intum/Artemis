@@ -143,22 +143,14 @@
         </div>
         <!-- list of posts -->
         <div class="col-12">
-            <div
-                virtualScroller
-                class="col-12 virtual-scroller"
-                [items]="posts"
-                [bufferAmount]="20"
-                [enableUnequalChildrenSizes]="true"
-                [executeRefreshOutsideAngularZone]="true"
-                (vsUpdate)="viewPortItems = $event"
-            >
-                <!--                    <div *ngFor="let post of viewPortItems; trackBy: postsTrackByFn">{{post.id}}</div>-->
-                <jhi-posting-thread *ngFor="let post of viewPortItems; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"> </jhi-posting-thread>
-            </div>
-        </div>
-        <!-- spinner while loading posts -->
-        <div class="text-center">
-            <div *ngIf="isLoading" class="spinner-border mt-3" role="status"></div>
+            <ag-virtual-scroll #vs [items]="posts" height="500px" [min-row-height]="125" (onItemsRender)="onItemsRender($event)" class="box-border">
+                <!--                <div *ngFor="let post of vs.items">{{post.id}}</div>-->
+                <jhi-posting-thread *ngFor="let post of vs.items; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"></jhi-posting-thread>
+                <!-- spinner while loading posts -->
+                <div class="text-center">
+                    <div *ngIf="isLoading" class="spinner-border mt-3" role="status"></div>
+                </div>
+            </ag-virtual-scroll>
         </div>
     </div>
 </div>

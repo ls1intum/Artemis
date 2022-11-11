@@ -12,6 +12,7 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
+import { AgVsRenderEvent } from 'ag-virtual-scroll';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -35,8 +36,6 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     readonly pageType = PageType.OVERVIEW;
 
     private totalItemsSubscription: Subscription;
-
-    public viewPortItems: any;
 
     constructor(
         protected metisService: MetisService,
@@ -244,6 +243,12 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             this.isLoading = true;
             this.page += 1;
             this.onSelectPage();
+        }
+    }
+
+    onItemsRender(event: AgVsRenderEvent<any>) {
+        if (!this.isLoading && event.endIndex + 1 < this.totalItems && event.endIndex > this.posts.length - 3) {
+            this.fetchNextPage();
         }
     }
 }

@@ -4,8 +4,7 @@ import { CourseDiscussionComponent } from 'app/overview/course-discussion/course
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { InfiniteScrollModule } from 'ngx-infinite-scroll';
-import { VirtualScrollerModule } from '@iharbeck/ngx-virtual-scroller';
+import { AgVirtualScrollModule } from 'ag-virtual-scroll';
 
 const routes: Routes = [
     {
@@ -19,7 +18,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forChild(routes), MetisModule, ArtemisSharedModule, ArtemisSharedComponentModule, InfiniteScrollModule, VirtualScrollerModule],
+    imports: [RouterModule.forChild(routes), MetisModule, ArtemisSharedModule, ArtemisSharedComponentModule, AgVirtualScrollModule],
     declarations: [CourseDiscussionComponent],
     exports: [CourseDiscussionComponent],
 })
