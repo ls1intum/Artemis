@@ -5,18 +5,8 @@
             <column name="discriminator" type="CHAR(1)" defaultValue="G">
                 <constraints nullable="false"/>
             </column>
-
-
-
-
-
-
-
-
-
-
-
-
+            <column name="creator_id" type="BIGINT">
+            </column>
             <!-- Properties for type Channel -->
             <column name="name" type="VARCHAR(20)">
                 <constraints nullable="true" />
@@ -25,6 +15,15 @@
                 <constraints nullable="true" />
             </column>
             <column name="is_public" type="BIT(1)">
+                <constraints nullable="true" />
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="stefanwaldhauser" id="20221030000000-2">
+        <addForeignKeyConstraint baseColumnNames="creator_id" baseTableName="conversation" constraintName="fk_conversation_creator" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <!-- Just for type channel -->
+        <addColumn tableName="conversation">
+            <column name="topic" type="VARCHAR(250)">
                 <constraints nullable="true" />
             </column>
         </addColumn>

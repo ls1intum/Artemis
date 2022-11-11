@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 
 @Entity
@@ -31,6 +32,10 @@ import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = GroupChat.class, name = "groupChat"), @JsonSubTypes.Type(value = Channel.class, name = "channel") })
 public abstract class Conversation extends DomainObject {
+
+    @ManyToOne
+    @JoinColumn(name = "creator_id")
+    private User creator;
 
     @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ConversationParticipant> conversationParticipants = new HashSet<>();
@@ -79,6 +84,14 @@ public abstract class Conversation extends DomainObject {
 
     public void setLastMessageDate(ZonedDateTime lastMessageDate) {
         this.lastMessageDate = lastMessageDate;
+    }
+
+    public User getCreator() {
+        return creator;
+    }
+
+    public void setCreator(User creator) {
+        this.creator = creator;
     }
 
 }

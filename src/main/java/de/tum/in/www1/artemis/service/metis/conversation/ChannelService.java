@@ -52,6 +52,7 @@ public class ChannelService {
         }
         this.channelIsValidOrThrow(course.getId(), channel);
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        channel.setCreator(user);
         channel.setCourse(course);
         var savedChannel = channelRepository.save(channel);
         var conversationParticipantOfRequestingUser = new ConversationParticipant();

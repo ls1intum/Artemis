@@ -5,7 +5,8 @@ import { Conversation, ConversationDto, ConversationType } from 'app/entities/me
  */
 export class Channel extends Conversation {
     public name?: string; // max 20 characters
-    public description?: string; // max 200 characters
+    public description?: string; // max 250 characters
+    public topic?: string; // max 250 characters;
     public isPublic?: boolean;
 
     constructor() {
@@ -27,6 +28,7 @@ export function getAsChannel(conversation: Conversation): Channel | undefined {
 export class ChannelDTO extends ConversationDto {
     public name?: string;
     public description?: string;
+    public topic?: string;
     public isPublic?: boolean;
 
     constructor() {

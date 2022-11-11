@@ -24,6 +24,11 @@ public class Channel extends Conversation {
     @Nullable
     private String description;
 
+    @Column(name = "topic")
+    @Size(min = 1, max = 250)
+    @Nullable
+    private String topic;
+
     @Column(name = "is_public")
     @NotNull
     private Boolean isPublic;
@@ -51,7 +56,16 @@ public class Channel extends Conversation {
         return isPublic;
     }
 
-    public void setIsPublic(@Nullable Boolean aPublic) {
-        isPublic = aPublic;
+    public void setIsPublic(@Nullable Boolean isPublic) {
+        this.isPublic = isPublic;
+    }
+
+    @Nullable
+    public String getTopic() {
+        return topic;
+    }
+
+    public void setTopic(@Nullable String topic) {
+        this.topic = topic;
     }
 }

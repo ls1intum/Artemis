@@ -82,6 +82,7 @@ public class GroupChatService {
 
             var savedParticipants = new HashSet<>(conversationParticipantRepository.saveAll(allConversationParticipants));
             savedGroupChat.setConversationParticipants(savedParticipants);
+            savedGroupChat.setCreator(requestingUser);
             return groupChatRepository.save(savedGroupChat);
         }
         else {
