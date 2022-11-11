@@ -53,6 +53,7 @@ export class ConversationMembers implements OnInit {
         const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.activeConversation = this.activeConversation;
+        modalRef.componentInstance.initialize();
         from(modalRef.result).subscribe(() => {
             this.onChangePerformed();
         });

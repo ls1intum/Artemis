@@ -25,6 +25,16 @@ export class ConversationAddUsersDialogComponent implements OnInit {
     @Input()
     activeConversation: ConversationDto;
 
+    isInitialized = false;
+
+    initialize() {
+        if (!this.course || !this.activeConversation) {
+            console.error('Error: Dialog not fully configured');
+        } else {
+            this.isInitialized = true;
+        }
+    }
+
     constructor(private alertService: AlertService, private activeModal: NgbActiveModal, public channelService: ChannelService) {}
 
     ngOnInit(): void {}

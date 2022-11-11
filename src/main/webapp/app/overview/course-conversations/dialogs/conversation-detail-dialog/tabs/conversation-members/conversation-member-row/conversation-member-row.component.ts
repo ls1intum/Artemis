@@ -72,6 +72,7 @@ export class ConversationMemberRowComponent implements OnInit {
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.userToRemove = this.user;
         modalRef.componentInstance.activeConversation = this.activeConversation;
+        modalRef.componentInstance.initialize();
         from(modalRef.result).subscribe(() => {
             this.userRemoved.emit();
         });

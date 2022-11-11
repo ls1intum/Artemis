@@ -1,4 +1,4 @@
-<div class="channels-overview" *ngIf="_metisConversationService && course">
+<div class="channels-overview" *ngIf="isInitialized">
     <div class="modal-header">
         <h4 class="modal-title">
             <span>{{ (isPublicChannel ? 'artemisApp.pages.createChannel.titlePublicChannel' : 'artemisApp.pages.createChannel.titlePrivateChannel') | artemisTranslate }}</span>

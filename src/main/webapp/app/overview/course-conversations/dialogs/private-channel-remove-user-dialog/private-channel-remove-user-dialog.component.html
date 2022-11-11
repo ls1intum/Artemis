@@ -1,4 +1,4 @@
-<div *ngIf="course && privateChannelDTO && _userToRemove">
+<div *ngIf="isInitialized">
     <div class="modal-header">
         <h4 class="modal-title">{{ 'artemisApp.messages.removeUserPrivateChannel.question' | artemisTranslate: { user: userLabel, channel: channelName } }}</h4>
         <button type="button" class="btn-close" aria-describedby="modal-title" (click)="clear()"></button>

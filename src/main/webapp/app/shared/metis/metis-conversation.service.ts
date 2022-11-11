@@ -73,16 +73,16 @@ export class MetisConversationService implements OnDestroy {
         return this._isLoading$.asObservable();
     }
 
-    public setActiveConversation(conversation: ConversationDto | undefined) {
+    public setActiveConversation = (conversation: ConversationDto | undefined) => {
         const cachedConversation = this._conversationsOfUser.find((conversationInCache) => conversationInCache.id === conversation?.id);
         if (!cachedConversation) {
             throw new Error('The conversation is not part of the cache. Therefore, it cannot be set as active conversation.');
         }
         this._activeConversation = cachedConversation;
         this._activeConversation$.next(this._activeConversation);
-    }
+    };
 
-    public forceRefresh(): Observable<never> {
+    public forceRefresh = (): Observable<never> => {
         if (!this._course) {
             throw new Error('Course is not set. The service does not seem to be initialized.');
         }
@@ -118,9 +118,9 @@ export class MetisConversationService implements OnDestroy {
                 this.setIsLoading(false);
             }),
         );
-    }
+    };
 
-    public createNewConversation(newConversation: Conversation): Observable<never> {
+    public createNewConversation = (newConversation: Conversation): Observable<never> => {
         this.setIsLoading(true);
         let createConversationObservable: Observable<HttpResponse<ConversationDto>>;
         if (isGroupChat(newConversation)) {
@@ -148,9 +148,9 @@ export class MetisConversationService implements OnDestroy {
                 return this.forceRefresh();
             }),
         );
-    }
+    };
 
-    public setUpConversationService(courseId: number): Observable<never> {
+    public setUpConversationService = (courseId: number): Observable<never> => {
         if (!courseId) {
             throw new Error('CourseId is not set. The service cannot be initialized.');
         }
@@ -186,7 +186,7 @@ export class MetisConversationService implements OnDestroy {
                 this.setIsLoading(false);
             }),
         );
-    }
+    };
 
     private setIsLoading(value: boolean) {
         this._isLoading = value;

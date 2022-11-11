@@ -1,17 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { debounceTime, distinctUntilChanged, finalize, from, map, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, finalize, from, map, Observable, Subject } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 
-export type ChannelActionType = 'register' | 'deregister' | 'view';
+export type ChannelActionType = 'register' | 'deregister' | 'view' | 'create';
 export type ChannelAction = {
     action: ChannelActionType;
     channel: ChannelDTO;
@@ -23,21 +22,30 @@ export type ChannelAction = {
 })
 export class ChannelsOverviewDialogComponent implements OnInit {
     @Input()
-    set metisConversationService(metisConversationService: MetisConversationService) {
-        this._metisConversationService = metisConversationService;
-        this.course = this._metisConversationService.course!;
-        this.loadChannelsOfCourse();
-    }
-    _metisConversationService: MetisConversationService;
+    createChannelFn: (channel: Channel) => Observable<never>;
+
+    @Input()
+    course: Course;
 
     channelActions$ = new Subject<ChannelAction>();
 
-    course?: Course;
     noOfChannels = 0;
 
     channelModificationPerformed = false;
     isLoading = false;
     channels: ChannelDTO[] = [];
+
+    isInitialized = false;
+
+    initialize() {
+        if (!this.course || !this.createChannelFn) {
+            console.error('Error: Dialog not fully configured');
+        } else {
+            this.isInitialized = true;
+            this.loadChannelsOfCourse();
+        }
+    }
+
     constructor(
         private channelService: ChannelService,
         private conversationService: ConversationService,
@@ -54,11 +62,7 @@ export class ChannelsOverviewDialogComponent implements OnInit {
 
     clear() {
         if (this.channelModificationPerformed) {
-            this._metisConversationService.forceRefresh().subscribe({
-                complete: () => {
-                    this.activeModal.close();
-                },
-            });
+            this.activeModal.close();
         } else {
             this.activeModal.dismiss();
         }
@@ -87,8 +91,7 @@ export class ChannelsOverviewDialogComponent implements OnInit {
                 });
                 break;
             case 'view':
-                this._metisConversationService.setActiveConversation(channelAction.channel);
-                this.clear();
+                this.activeModal.close(channelAction);
                 break;
         }
     }
@@ -114,9 +117,16 @@ export class ChannelsOverviewDialogComponent implements OnInit {
     openCreateChannelDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
-        modalRef.componentInstance.metisConversationService = this._metisConversationService;
-        from(modalRef.result).subscribe(() => {
-            this.loadChannelsOfCourse();
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.initialize();
+
+        from(modalRef.result).subscribe((channel: Channel) => {
+            this.createChannelFn(channel).subscribe({
+                complete: () => {
+                    this.loadChannelsOfCourse();
+                    this.channelModificationPerformed = true;
+                },
+            });
         });
     }
 }

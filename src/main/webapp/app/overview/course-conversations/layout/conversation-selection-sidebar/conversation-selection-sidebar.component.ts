@@ -154,13 +154,30 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     openCreateChannelDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
-        modalRef.componentInstance.metisConversationService = this.metisConversationService;
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.initialize();
+        from(modalRef.result).subscribe((channelToCreate: Channel) => {
+            this.metisConversationService.createNewConversation(channelToCreate).subscribe({
+                complete: () => {
+                    this.metisConversationService.forceRefresh().subscribe(() => {});
+                },
+            });
+        });
     }
 
     openChannelOverviewDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
-        modalRef.componentInstance.metisConversationService = this.metisConversationService;
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.createChannelFn = this.metisConversationService.createNewConversation;
+        modalRef.componentInstance.initialize();
+        from(modalRef.result).subscribe((newActiveConversation: ConversationDto) => {
+            this.metisConversationService.forceRefresh().subscribe(() => {
+                if (newActiveConversation) {
+                    this.metisConversationService.setActiveConversation(newActiveConversation);
+                }
+            });
+        });
     }
 
     /**t

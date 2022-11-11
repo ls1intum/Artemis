@@ -3,7 +3,6 @@ import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Component({
     selector: 'jhi-channels-create-dialog',
@@ -11,13 +10,18 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 })
 export class ChannelsCreateDialogComponent {
     @Input()
-    set metisConversationService(metisConversationService: MetisConversationService) {
-        this._metisConversationService = metisConversationService;
-        this.course = this._metisConversationService.course!;
-    }
-    _metisConversationService: MetisConversationService;
-
     course: Course;
+
+    isInitialized = false;
+
+    initialize() {
+        if (!this.course) {
+            console.error('Error: Dialog not fully configured');
+        } else {
+            this.isInitialized = true;
+        }
+    }
+
     channelToCreate: Channel = new Channel();
     isPublicChannel = true;
     constructor(private activeModal: NgbActiveModal) {}
@@ -42,10 +46,6 @@ export class ChannelsCreateDialogComponent {
         this.channelToCreate.isPublic = isPublic;
         this.channelToCreate.course = this.course;
 
-        this._metisConversationService.createNewConversation(this.channelToCreate).subscribe({
-            complete: () => {
-                this.activeModal.close();
-            },
-        });
+        this.activeModal.close(this.channelToCreate);
     }
 }
