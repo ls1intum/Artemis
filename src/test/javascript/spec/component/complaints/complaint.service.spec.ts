@@ -10,7 +10,6 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 

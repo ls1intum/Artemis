@@ -250,7 +250,7 @@ export class ComplaintService implements IComplaintService {
         }
 
         const relevantDueDate = studentParticipation?.individualDueDate ?? exercise.dueDate;
-        let possibleComplaintStartDates = [dayjs(result.completionDate)];
+        const possibleComplaintStartDates = [dayjs(result.completionDate)];
         if (relevantDueDate) {
             possibleComplaintStartDates.push(dayjs(relevantDueDate));
         }
