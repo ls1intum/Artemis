@@ -10,6 +10,7 @@
         />
         <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()"></jhi-button>
         <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
+        <jhi-documentation-button [type]="documentationType" class="information-button"></jhi-documentation-button>
         <div *ngIf="createdPost">
             <button class="btn btn-md btn-primary ms-1" (click)="createEditModal.open()">
                 <fa-icon [icon]="faPlus"></fa-icon>
@@ -26,7 +27,6 @@
             <div class="col-12 col-sm-7 col-md-auto order-lg-1">
                 <div class="row justify-content-center">
                     <div class="col-auto p-0 selection-prefix">
-                        <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
                         <span>{{ 'artemisApp.metis.overview.postContextFilter' | artemisTranslate }}</span>
                     </div>
                     <div class="col-auto p-0">
