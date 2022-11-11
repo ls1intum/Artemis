@@ -36,6 +36,8 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
 
     private totalItemsSubscription: Subscription;
 
+    public viewPortItems: any;
+
     constructor(
         protected metisService: MetisService,
         private activatedRoute: ActivatedRoute,
@@ -188,7 +190,6 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
         );
     }
-
     /**
      * defines a function that returns the post id as unique identifier,
      * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes

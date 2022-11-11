@@ -142,8 +142,19 @@
             {{ totalItems === 0 ? ('artemisApp.metis.noPosts' | artemisTranslate) : ('artemisApp.metis.postNumberInformation' | artemisTranslate: { number: totalItems }) }}
         </div>
         <!-- list of posts -->
-        <div id="scrollableDiv" class="col-12" infinite-scroll (scrolled)="fetchNextPage()">
-            <jhi-posting-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"></jhi-posting-thread>
+        <div class="col-12">
+            <div
+                virtualScroller
+                class="col-12 virtual-scroller"
+                [items]="posts"
+                [bufferAmount]="20"
+                [enableUnequalChildrenSizes]="true"
+                [executeRefreshOutsideAngularZone]="true"
+                (vsUpdate)="viewPortItems = $event"
+            >
+                <!--                    <div *ngFor="let post of viewPortItems; trackBy: postsTrackByFn">{{post.id}}</div>-->
+                <jhi-posting-thread *ngFor="let post of viewPortItems; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"> </jhi-posting-thread>
+            </div>
         </div>
         <!-- spinner while loading posts -->
         <div class="text-center">
