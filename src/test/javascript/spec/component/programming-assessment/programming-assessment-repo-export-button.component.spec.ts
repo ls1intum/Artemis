@@ -65,7 +65,7 @@ describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openRepoExportDialog(new MouseEvent(''));
-        expect(modalService.open).toHaveBeenCalledWith(ProgrammingAssessmentRepoExportDialogComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(ProgrammingAssessmentRepoExportDialogComponent, { size: 'lg', keyboard: true });
         expect(modalService.open).toHaveBeenCalledOnce();
     });
 });
