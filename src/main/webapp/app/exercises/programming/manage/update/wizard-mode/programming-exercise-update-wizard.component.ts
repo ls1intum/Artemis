@@ -7,6 +7,23 @@ import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.c
 import { Observable } from 'rxjs';
 import { ValidationReason } from 'app/entities/exercise.model';
 
+type firstStepInputs = {
+    titleNamePattern: string;
+    shortNamePattern: RegExp;
+
+    invalidRepositoryNamePattern: RegExp;
+    invalidDirectoryNamePattern: RegExp;
+    updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
+    updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
+    refreshAuxiliaryRepositoryChecks: () => void;
+    auxiliaryRepositoryDuplicateNames: boolean;
+    auxiliaryRepositoryDuplicateDirectories: boolean;
+
+    exerciseCategories: ExerciseCategory[];
+    existingCategories: ExerciseCategory[];
+    updateCategories: (categories: ExerciseCategory[]) => void;
+};
+
 @Component({
     selector: 'jhi-programming-exercise-update-wizard',
     templateUrl: './programming-exercise-update-wizard.component.html',
@@ -38,6 +55,8 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() isImport: boolean;
 
     // Information Step
+    @Input() inputs: firstStepInputs;
+
     @Input() titleNamePattern: string;
     @Input() shortNamePattern: RegExp;
 

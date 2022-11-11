@@ -925,4 +925,21 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
         }
     }
+
+    getFirstStepInputs() {
+        return {
+            titleNamePattern: this.titleNamePattern,
+            shortNamePattern: this.shortNamePattern,
+            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
+            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
+            updateRepositoryName: this.updateRepositoryName,
+            updateCheckoutDirectory: this.updateCheckoutDirectory,
+            refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
+            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
+            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
+            exerciseCategories: this.exerciseCategories,
+            existingCategories: this.existingCategories,
+            updateCategories: this.updateCategories,
+        };
+    }
 }
