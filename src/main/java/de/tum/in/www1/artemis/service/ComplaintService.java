@@ -268,30 +268,28 @@ public class ComplaintService {
             case MORE_FEEDBACK -> course.getMaxRequestMoreFeedbackTimeDays();
         };
 
-        ZonedDateTime startOfComplaintTime;
-        if (exercise.getAllowComplaintsForAutomaticAssessments() || result.isRated()) {
-            ZonedDateTime relevantDueDate = studentParticipation != null && studentParticipation.getIndividualDueDate() != null ? studentParticipation.getIndividualDueDate()
-                    : exercise.getDueDate();
+        if (result.getCompletionDate() == null) {
+            throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ") + " for an uncompleted result.",
+                    ENTITY_NAME, "complaintOrRequestMoreFeedbackNotCompleted");
+        }
+        if (!Boolean.TRUE.equals(result.isRated()) && !exercise.getAllowComplaintsForAutomaticAssessments()) {
+            throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ")
+                    + " for an unrated result with no complaints on automatic assessment.", ENTITY_NAME, "complaintOrRequestMoreFeedbackNotGraded");
+        }
 
-            if (exercise.getAssessmentDueDate() != null && ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate())) {
-                startOfComplaintTime = result.getCompletionDate().isAfter(exercise.getAssessmentDueDate()) ? result.getCompletionDate() : exercise.getAssessmentDueDate();
-            }
-            else if (relevantDueDate != null && ZonedDateTime.now().isAfter(relevantDueDate) && exercise.getAssessmentDueDate() == null) {
-                startOfComplaintTime = result.getCompletionDate().isAfter(relevantDueDate) ? result.getCompletionDate() : relevantDueDate;
-            }
-            else if (exercise.getAssessmentDueDate() == null && exercise.getDueDate() == null) {
-                startOfComplaintTime = result.getCompletionDate();
-            }
-            else {
-                throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "submit" : "more feedback request ") + " before deadline", ENTITY_NAME,
-                        "complaintOrRequestMoreFeedbackTimeInvalid");
-            }
+        ZonedDateTime relevantDueDate = studentParticipation != null && studentParticipation.getIndividualDueDate() != null ? studentParticipation.getIndividualDueDate()
+                : exercise.getDueDate();
+        List<ZonedDateTime> possibleComplaintStartDates = new ArrayList<>();
+        possibleComplaintStartDates.add(result.getCompletionDate());
+        if (relevantDueDate != null) {
+            possibleComplaintStartDates.add(relevantDueDate);
         }
-        else {
-            throw new BadRequestAlertException("Cannot determine the start of the " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ") + " timeframe",
-                    ENTITY_NAME, "complaintOrRequestMoreFeedbackTimeInvalid");
+        if (exercise.getAssessmentDueDate() != null) {
+            possibleComplaintStartDates.add(exercise.getAssessmentDueDate());
         }
-        boolean isTimeValid = startOfComplaintTime != null && ZonedDateTime.now().isBefore(startOfComplaintTime.plusDays(maxDays));
+        // At least result.getCompletionDate is present, since it was checked earlier
+        ZonedDateTime complaintStartDate = possibleComplaintStartDates.stream().max(Comparator.naturalOrder()).get();
+        boolean isTimeValid = ZonedDateTime.now().isBefore(complaintStartDate.plusDays(maxDays));
 
         if (!isTimeValid) {
             String timeForComplaint = switch (maxDays) {
