@@ -1,7 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faArrowRight, faCheck, faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
+import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -97,40 +95,13 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() onRecreateBuildPlanOrUpdateTemplateChange: () => void;
     @Input() updateTemplate: boolean;
 
-    // Icons
-    faCheck = faCheck;
-    faHandShakeAngle = faHandshakeAngle;
-    faArrowRight = faArrowRight;
+    constructor(protected activatedRoute: ActivatedRoute) {}
 
-    constructor(protected activatedRoute: ActivatedRoute, private navigationUtilService: ArtemisNavigationUtilService, private router: Router) {}
-
-    /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
-     */
     ngOnInit() {
         this.isSaving = false;
     }
 
     nextStep() {
         this.onNextStep.emit();
-    }
-
-    /**
-     * Checks if the given step has already been completed
-     */
-    isCompleted(step: number) {
-        return this.currentStep > step;
-    }
-
-    isCurrentStep(step: number) {
-        return this.currentStep === step;
-    }
-
-    getNextIcon() {
-        return this.currentStep < 5 ? faArrowRight : faCheck;
-    }
-
-    getNextText() {
-        return this.currentStep < 5 ? 'artemisApp.programmingExercise.home.nextStepLabel' : 'entity.action.finish';
     }
 }
