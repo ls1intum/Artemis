@@ -35,9 +35,16 @@ describe('ComplaintsStudentViewComponent', () => {
     };
     const courseWithoutFeedback: Course = { id: 1, complaintsEnabled: true, maxComplaintTimeDays: 7, requestMoreFeedbackEnabled: false };
     const examExercise: Exercise = { id: 1, teamMode: false, course } as Exercise;
-    const courseExercise: Exercise = { id: 1, teamMode: false, course, assessmentDueDate: dayjs().subtract(1, 'day'), assessmentType: AssessmentType.MANUAL } as Exercise;
+    const courseExercise: Exercise = {
+        id: 1,
+        teamMode: false,
+        course,
+        dueDate: dayjs().subtract(2, 'days'),
+        assessmentDueDate: dayjs().subtract(1, 'day'),
+        assessmentType: AssessmentType.MANUAL,
+    } as Exercise;
     const submission: Submission = {} as Submission;
-    const result: Result = { id: 1, completionDate: dayjs().subtract(complaintTimeLimitDays - 1, 'day'), assessmentType: AssessmentType.MANUAL } as Result;
+    const result: Result = { id: 1, completionDate: dayjs().subtract(complaintTimeLimitDays - 1, 'day'), assessmentType: AssessmentType.MANUAL, rated: true } as Result;
     const resultWithoutCompletionDate: Result = { id: 1 } as Result;
     const user: User = { id: 1337 } as User;
     const participation: Participation = { id: 2, results: [result], submissions: [submission], student: user } as Participation;
@@ -234,7 +241,7 @@ describe('ComplaintsStudentViewComponent', () => {
         }));
 
         it('should be available if result was before deadline', fakeAsync(() => {
-            const exercise: Exercise = { id: 1, teamMode: false, course, dueDate: dayjs() } as Exercise;
+            const exercise: Exercise = { id: 1, teamMode: false, course, dueDate: dayjs(), assessmentType: AssessmentType.MANUAL } as Exercise;
             const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days') } as Result;
             component.exercise = exercise;
             component.result = resultDateOutOfLimits;
@@ -247,7 +254,14 @@ describe('ComplaintsStudentViewComponent', () => {
         }));
 
         it('should be available if result was before assessment due date', fakeAsync(() => {
-            const exercise: Exercise = { id: 1, teamMode: false, course, dueDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days'), assessmentDueDate: dayjs() } as Exercise;
+            const exercise: Exercise = {
+                id: 1,
+                teamMode: false,
+                course,
+                dueDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days'),
+                assessmentDueDate: dayjs(),
+                assessmentType: AssessmentType.MANUAL,
+            } as Exercise;
             const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'days') } as Result;
             component.exercise = exercise;
             component.result = resultDateOutOfLimits;
@@ -300,7 +314,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('no action should be allowed if the result is automatic for a non automatic exercise', fakeAsync(() => {
             component.exercise = courseExercise;
-            component.result = { ...result, assessmentType: AssessmentType.AUTOMATIC };
+            component.result = { ...result, assessmentType: AssessmentType.AUTOMATIC, rated: false };
 
             fixture.detectChanges();
             tick(100);

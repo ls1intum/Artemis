@@ -6,10 +6,9 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { map } from 'rxjs/operators';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { Result } from 'app/entities/result.model';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
@@ -229,30 +228,32 @@ export class ComplaintService implements IComplaintService {
     /**
      * Calculates the date until which a complaint can be filed at least
      * @param exercise for which the student can complain
-     * @param studentParticipation of the student in the exercise that can complain
-     * @param course in which the exercise is
+     * @param complaintTimeFrame number of days the student has to file the complaint
+     * @param result of the student in the exercise that might receive complain
      * @return the date until which the student can complain
      */
-    getIndividualComplaintDueDate(exercise: Exercise, course: Course, studentParticipation?: StudentParticipation): dayjs.Dayjs | undefined {
-        const lastResult = studentParticipation?.results?.last();
+    static getIndividualComplaintDueDate(exercise: Exercise, complaintTimeFrame: number, result: Result | undefined): dayjs.Dayjs | undefined {
         // No complaints if there is no result or the exercise does not support complaints
-        if (!lastResult || !exercise.dueDate || (exercise.assessmentType === AssessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments)) {
+        if (!result?.completionDate || !exercise.dueDate || (exercise.assessmentType === AssessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments)) {
             return undefined;
         }
 
-        const now = dayjs();
         let complaintStartDate;
         if (exercise.allowComplaintsForAutomaticAssessments) {
-            complaintStartDate = exercise.dueDate;
-        } else if (lastResult.rated && !exercise.assessmentDueDate) {
-            complaintStartDate = lastResult.completionDate;
-        } else if (lastResult.rated && now.isAfter(exercise.assessmentDueDate)) {
-            complaintStartDate = exercise.assessmentDueDate!.isAfter(lastResult.completionDate) ? exercise.assessmentDueDate : lastResult.completionDate;
+            // Only automatically graded
+            complaintStartDate = dayjs.max(result.completionDate, exercise.dueDate);
+        } else if (result.rated) {
+            // Graded manual result present
+            if (exercise.assessmentDueDate) {
+                complaintStartDate = dayjs.max(result.completionDate, exercise.assessmentDueDate);
+            } else {
+                complaintStartDate = dayjs.max(result.completionDate, exercise.dueDate);
+            }
         } else {
             return undefined;
         }
 
-        return dayjs(complaintStartDate).add(course.maxComplaintTimeDays!, 'days');
+        return dayjs(complaintStartDate).add(complaintTimeFrame, 'days');
     }
 
     private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {

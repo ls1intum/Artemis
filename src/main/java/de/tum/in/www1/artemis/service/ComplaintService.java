@@ -266,11 +266,23 @@ public class ComplaintService {
             case MORE_FEEDBACK -> course.getMaxRequestMoreFeedbackTimeDays();
         };
 
-        ZonedDateTime startOfComplaintTime = result.getCompletionDate();
-        startOfComplaintTime = startOfComplaintTime == null || (exercise.getDueDate() != null && exercise.getDueDate().isAfter(startOfComplaintTime)) ? exercise.getDueDate()
-                : startOfComplaintTime;
-        startOfComplaintTime = exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(startOfComplaintTime) ? exercise.getAssessmentDueDate()
-                : startOfComplaintTime;
+        ZonedDateTime startOfComplaintTime;
+        if (exercise.getAllowComplaintsForAutomaticAssessments()) {
+            // Only automatically graded
+            startOfComplaintTime = result.getCompletionDate().isAfter(exercise.getDueDate()) ? result.getCompletionDate() : exercise.getDueDate();
+        }
+        else if (result.isRated()) {
+            // Graded manual result present
+            if (exercise.getAssessmentDueDate() != null) {
+                startOfComplaintTime = result.getCompletionDate().isAfter(exercise.getAssessmentDueDate()) ? result.getCompletionDate() : exercise.getAssessmentDueDate();
+            }
+            else {
+                startOfComplaintTime = result.getCompletionDate().isAfter(exercise.getDueDate()) ? result.getCompletionDate() : exercise.getDueDate();
+            }
+        }
+        else {
+            startOfComplaintTime = null;
+        }
         boolean isTimeValid = startOfComplaintTime != null && ZonedDateTime.now().isBefore(startOfComplaintTime.plusDays(maxDays));
 
         if (!isTimeValid) {

@@ -258,84 +258,77 @@ describe('ComplaintService', () => {
 
     describe('getIndividualComplaintDueDate', () => {
         it('should return undefined for no results', () => {
-            studentParticipation.results = [];
-            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, undefined);
             expect(individualComplaintDueDate).toBeUndefined();
         });
 
         it('should return undefined for no exercise deadline', () => {
             emptyResult.rated = true;
             emptyResult.completionDate = dayjsTime3;
-            studentParticipation.results = [emptyResult];
             exercise.dueDate = undefined;
-            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toBeUndefined();
         });
 
         it('should return undefined for automatic assessment without complaints', () => {
             emptyResult.rated = true;
-            studentParticipation.results = [emptyResult];
             exercise.dueDate = dayjsTime3;
             exercise.assessmentType = AssessmentType.AUTOMATIC;
-            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toBeUndefined();
         });
 
         it('should calculate the correct complaint due date for automatic assessment with complaints', () => {
-            studentParticipation.results = [emptyResult];
+            emptyResult.completionDate = dayjsTime3.subtract(1, 'day');
             exercise.allowComplaintsForAutomaticAssessments = true;
             exercise.assessmentType = AssessmentType.AUTOMATIC;
             exercise.dueDate = dayjsTime3;
 
-            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toEqual(dayjsTime3.add(7, 'days'));
         });
 
         it('should return undefined for complaint due date for automatic assessment with complaints before dueDate', () => {
-            studentParticipation.results = [emptyResult];
+            emptyResult.completionDate = dayjsTime3.subtract(1, 'day');
             exercise.allowComplaintsForAutomaticAssessments = true;
             exercise.assessmentType = AssessmentType.AUTOMATIC;
             exercise.dueDate = dayjsTime3.add(1, 'days');
-            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toEqual(dayjsTime3.add(8, 'days'));
         });
 
         it('should calculate the correct complaint due date after assessmentDueDate', () => {
             emptyResult.rated = true;
             emptyResult.completionDate = dayjsTime3.subtract(3, 'days');
-            studentParticipation.results = [emptyResult];
             exercise.assessmentType = AssessmentType.MANUAL;
             exercise.dueDate = dayjsTime3.subtract(2, 'days');
             exercise.assessmentDueDate = dayjsTime3.subtract(1, 'days');
-            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toEqual(dayjsTime3.add(6, 'days'));
         });
 
         it('should calculate the correct complaint due date after assessmentDueDate for late feedback', () => {
             emptyResult.rated = true;
             emptyResult.completionDate = dayjsTime3;
-            studentParticipation.results = [emptyResult];
             exercise.assessmentType = AssessmentType.MANUAL;
             exercise.dueDate = dayjsTime3.subtract(2, 'days');
             exercise.assessmentDueDate = dayjsTime3.subtract(1, 'days');
-            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toEqual(dayjsTime3.add(7, 'days'));
         });
 
         it('should return undefined for complaint due date before assessment dueDate', () => {
-            studentParticipation.results = [emptyResult];
             exercise.assessmentType = AssessmentType.MANUAL;
             exercise.assessmentDueDate = dayjsTime3.add(1, 'days');
-            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toBeUndefined();
         });
 
         it('should return undefined for complaint due date for unrated result after assessment dueDate', () => {
             emptyResult.rated = false;
-            studentParticipation.results = [emptyResult];
             exercise.assessmentType = AssessmentType.MANUAL;
             exercise.assessmentDueDate = dayjsTime3.subtract(1, 'days');
-            const individualComplaintDueDate = complaintService.getIndividualComplaintDueDate(exercise, course, studentParticipation);
+            const individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(exercise, course.maxComplaintTimeDays!, emptyResult);
             expect(individualComplaintDueDate).toBeUndefined();
         });
     });
