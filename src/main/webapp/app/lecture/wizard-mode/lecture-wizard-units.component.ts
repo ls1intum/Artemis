@@ -249,14 +249,19 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
         lectureUnit.lecture.id = this.lecture.id;
         lectureUnit.lecture.course = this.lecture.course;
 
+        this.currentlyProcessedTextUnit = lectureUnit as TextUnit;
+        this.currentlyProcessedVideoUnit = lectureUnit as VideoUnit;
+        this.currentlyProcessedOnlineUnit = lectureUnit as OnlineUnit;
+        this.currentlyProcessedAttachmentUnit = lectureUnit as AttachmentUnit;
+
+        this.isTextUnitFormOpen = lectureUnit.type === LectureUnitType.TEXT;
+        this.isVideoUnitFormOpen = lectureUnit.type === LectureUnitType.VIDEO;
+        this.isExerciseUnitFormOpen = lectureUnit.type === LectureUnitType.EXERCISE;
+        this.isOnlineUnitFormOpen = lectureUnit.type === LectureUnitType.ONLINE;
+        this.isAttachmentUnitFormOpen = lectureUnit.type === LectureUnitType.ATTACHMENT;
+
         switch (lectureUnit.type) {
             case LectureUnitType.TEXT:
-                this.currentlyProcessedTextUnit = lectureUnit;
-                this.isTextUnitFormOpen = true;
-                this.isVideoUnitFormOpen = false;
-                this.isExerciseUnitFormOpen = false;
-                this.isOnlineUnitFormOpen = false;
-                this.isAttachmentUnitFormOpen = false;
                 this.textUnitFormData = {
                     name: this.currentlyProcessedTextUnit.name,
                     releaseDate: this.currentlyProcessedTextUnit.releaseDate,
@@ -264,12 +269,6 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
                 };
                 break;
             case LectureUnitType.VIDEO:
-                this.currentlyProcessedVideoUnit = lectureUnit;
-                this.isVideoUnitFormOpen = true;
-                this.isExerciseUnitFormOpen = false;
-                this.isOnlineUnitFormOpen = false;
-                this.isAttachmentUnitFormOpen = false;
-                this.isTextUnitFormOpen = false;
                 this.videoUnitFormData = {
                     name: this.currentlyProcessedVideoUnit.name,
                     description: this.currentlyProcessedVideoUnit.description,
@@ -278,12 +277,6 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
                 };
                 break;
             case LectureUnitType.ONLINE:
-                this.currentlyProcessedOnlineUnit = lectureUnit;
-                this.isOnlineUnitFormOpen = true;
-                this.isAttachmentUnitFormOpen = false;
-                this.isTextUnitFormOpen = false;
-                this.isVideoUnitFormOpen = false;
-                this.isExerciseUnitFormOpen = false;
                 this.onlineUnitFormData = {
                     name: this.currentlyProcessedOnlineUnit.name,
                     description: this.currentlyProcessedOnlineUnit.description,
@@ -292,12 +285,6 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
                 };
                 break;
             case LectureUnitType.ATTACHMENT:
-                this.currentlyProcessedAttachmentUnit = lectureUnit;
-                this.isAttachmentUnitFormOpen = true;
-                this.isTextUnitFormOpen = false;
-                this.isVideoUnitFormOpen = false;
-                this.isExerciseUnitFormOpen = false;
-                this.isOnlineUnitFormOpen = false;
                 this.attachmentUnitFormData = {
                     formProperties: {
                         name: this.currentlyProcessedAttachmentUnit.attachment!.name,
