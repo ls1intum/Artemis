@@ -7,6 +7,7 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { Subject } from 'rxjs';
+import { ValidationReason } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard',
@@ -19,6 +20,8 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
 
     @Input() currentStep: number;
     @Output() onNextStep: EventEmitter<any> = new EventEmitter();
+
+    @Input() getInvalidReasons: () => ValidationReason[];
 
     @Input() isImport: boolean;
 

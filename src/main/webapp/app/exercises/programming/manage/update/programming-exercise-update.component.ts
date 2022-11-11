@@ -43,6 +43,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private translationBasePath = 'artemisApp.programmingExercise.';
 
     toggleModeFunction = () => this.toggleWizardMode();
+    getInvalidReasonsFunction = () => this.getInvalidReasons(this.currentWizardModeStep);
     currentWizardModeStep = 1;
 
     auxiliaryRepositoryDuplicateNames: boolean;
@@ -716,18 +717,29 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     /**
      * Get a list of all reasons that describe why the current input to update is invalid
      */
-    getInvalidReasons(): ValidationReason[] {
+    getInvalidReasons(forStep = Number.MAX_VALUE): ValidationReason[] {
         const validationErrorReasons: ValidationReason[] = [];
 
-        this.validateExerciseTitle(validationErrorReasons);
-        this.validateExerciseShortName(validationErrorReasons);
-        this.validateExercisePoints(validationErrorReasons);
-        this.validateExerciseBonusPoints(validationErrorReasons);
-        this.validateExerciseSCAMaxPenalty(validationErrorReasons);
-        this.validateExercisePackageName(validationErrorReasons);
-        this.validateExerciseSubmissionLimit(validationErrorReasons);
-        this.validateExerciseAuxiliryRepositories(validationErrorReasons);
-        this.validateExerciseIdeSelection(validationErrorReasons);
+        if (forStep >= 1) {
+            this.validateExerciseTitle(validationErrorReasons);
+            this.validateExerciseShortName(validationErrorReasons);
+            this.validateExerciseAuxiliryRepositories(validationErrorReasons);
+        }
+
+        if (forStep >= 3) {
+            this.validateExercisePackageName(validationErrorReasons);
+        }
+
+        if (forStep >= 4) {
+            this.validateExercisePoints(validationErrorReasons);
+            this.validateExerciseBonusPoints(validationErrorReasons);
+            this.validateExerciseSCAMaxPenalty(validationErrorReasons);
+            this.validateExerciseSubmissionLimit(validationErrorReasons);
+        }
+
+        if (forStep >= 5) {
+            this.validateExerciseIdeSelection(validationErrorReasons);
+        }
 
         return validationErrorReasons;
     }
