@@ -147,6 +147,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "team1student1")
     void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
         // 3 weeks is already past the deadline
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));
         database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(3));
 
