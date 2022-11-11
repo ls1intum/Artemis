@@ -249,7 +249,7 @@ export class ComplaintService implements IComplaintService {
             return undefined;
         }
 
-        const relevantDueDate = studentParticipation?.individualDueDate ? studentParticipation.individualDueDate : exercise.dueDate;
+        const relevantDueDate = studentParticipation?.individualDueDate ?? exercise.dueDate;
         let possibleComplaintStartDates = [dayjs(result.completionDate)];
         if (relevantDueDate) {
             possibleComplaintStartDates.push(dayjs(relevantDueDate));
