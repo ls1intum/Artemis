@@ -63,7 +63,11 @@
                     "penaltySubmission": "There will be a penalty of {exceedingPenalty} points for every submission after {submissionLimit} submissions.",
                     "unrestrictedSubmission": "There is no limit for the amount of allowed submissions.",
                     "staticAnalysisEnabled": "Static code analysis is enabled for this exercise and there is a maximum penalty of {maxPenalty} points from static code analysis.",
-                    "staticAnalysisDisabled": "Static code analysis is disabled for this exercise."
+                    "staticAnalysisDisabled": "Static code analysis is disabled for this exercise.",
+                    "normalExercise": "exercise",
+                    "bonusExercise": "bonus exercise",
+                    "assessmentAutomatic": "automatically",
+                    "assessmentSemiautomatic": "semi-automatically"
                 }
             },
             "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students.",

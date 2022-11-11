@@ -34,11 +34,13 @@ export class ProgrammingExerciseUpdateWizardGradingComponent {
             return '';
         }
 
+        const exerciseType = this.programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 'bonusExercise' : 'normalExercise';
+        const assessmentType = this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC ? 'assessmentAutomatic' : 'assessmentSemiautomatic';
         const replacements = {
-            exerciseType: this.programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 'bonus exercise' : 'exercise',
+            exerciseType: this.translateService.instant(this.translationBasePath + exerciseType),
             maxPoints: this.programmingExercise.maxPoints.toString(),
             bonusPoints: (this.programmingExercise.bonusPoints ?? 0).toString(),
-            assessmentType: this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC ? 'automatically' : 'semi-automatically',
+            assessmentType: this.translateService.instant(this.translationBasePath + assessmentType),
             submissionLimit: this.programmingExercise.submissionPolicy?.submissionLimit,
             exceedingPenalty: this.programmingExercise.submissionPolicy?.exceedingPenalty,
             maxPenalty: ((this.programmingExercise.maxPoints * (this.programmingExercise.maxStaticCodeAnalysisPenalty ?? 100)) / 100).toString(),
