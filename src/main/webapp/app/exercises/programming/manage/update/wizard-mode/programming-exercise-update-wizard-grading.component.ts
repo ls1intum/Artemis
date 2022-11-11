@@ -4,6 +4,7 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard-grading',
@@ -12,6 +13,8 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 })
 export class ProgrammingExerciseUpdateWizardGradingComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;
+
+    private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 
     @Input() isImport: boolean;
     @Input() programmingExercise: ProgrammingExercise;
@@ -22,6 +25,8 @@ export class ProgrammingExerciseUpdateWizardGradingComponent {
 
     faQuestionCircle = faQuestionCircle;
 
+    constructor(private translateService: TranslateService) {}
+
     getGradingSummary() {
         const summary = [];
 
@@ -29,41 +34,52 @@ export class ProgrammingExerciseUpdateWizardGradingComponent {
             return '';
         }
 
-        const exerciseType = this.programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 'bonus' : '';
-        summary.push(`There is a total of ${this.programmingExercise.maxPoints} points to achieve in this ${exerciseType} exercise.`);
+        const replacements = {
+            exerciseType: this.programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 'bonus exercise' : 'exercise',
+            maxPoints: this.programmingExercise.maxPoints.toString(),
+            bonusPoints: (this.programmingExercise.bonusPoints ?? 0).toString(),
+            assessmentType: this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC ? 'automatically' : 'semi-automatically',
+            submissionLimit: this.programmingExercise.submissionPolicy?.submissionLimit,
+            exceedingPenalty: this.programmingExercise.submissionPolicy?.exceedingPenalty,
+            maxPenalty: ((this.programmingExercise.maxPoints * (this.programmingExercise.maxStaticCodeAnalysisPenalty ?? 100)) / 100).toString(),
+        };
+
+        summary.push(this.translateService.instant(this.translationBasePath + 'points'));
 
         if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
-            summary.push('There is no bonus to achieve.');
+            summary.push(this.translateService.instant(this.translationBasePath + 'noBonus'));
         } else if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            summary.push(`${this.programmingExercise.bonusPoints ?? 0} bonus points can be achieved.`);
+            summary.push(this.translateService.instant(this.translationBasePath + 'bonus'));
         }
 
         if (this.programmingExercise.assessmentType) {
-            const assessmentType = this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC ? 'automatically' : 'semi-automatically';
-            summary.push(`This exercise will be assessed ${assessmentType}.`);
+            summary.push(this.translateService.instant(this.translationBasePath + 'assessment'));
         }
 
         if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.LOCK_REPOSITORY) {
             if (this.programmingExercise.submissionPolicy.submissionLimit) {
-                summary.push(`This repositories will be locked after ${this.programmingExercise.submissionPolicy.submissionLimit} submissions.`);
+                summary.push(this.translateService.instant(this.translationBasePath + 'lockedSubmission'));
             }
         } else if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
             if (this.programmingExercise.submissionPolicy.submissionLimit && this.programmingExercise.submissionPolicy.exceedingPenalty) {
-                summary.push(
-                    `There will be a penalty of ${this.programmingExercise.submissionPolicy.exceedingPenalty} points for every submission after ${this.programmingExercise.submissionPolicy.submissionLimit} submissions.`,
-                );
+                summary.push(this.translateService.instant(this.translationBasePath + 'penaltySubmission'));
             }
         } else {
-            summary.push(`There is no limit for the amount of allowed submissions.`);
+            summary.push(this.translateService.instant(this.translationBasePath + 'unrestrictedSubmission'));
         }
 
         if (this.programmingExercise.staticCodeAnalysisEnabled) {
-            const maxPenalty = (this.programmingExercise.maxPoints * (this.programmingExercise.maxStaticCodeAnalysisPenalty ?? 100)) / 100;
-            summary.push(`Static code analysis is enabled for this exercise and there is a maximum penalty of ${maxPenalty} points from static code analysis.`);
+            summary.push(this.translateService.instant(this.translationBasePath + 'staticAnalysisEnabled'));
         } else {
-            summary.push(`Static code analysis is disabled for this exercise.`);
+            summary.push(this.translateService.instant(this.translationBasePath + 'staticAnalysisDisabled'));
         }
 
-        return summary.join(' ');
+        return summary.map((s) => this.replacePlaceholders(s, replacements)).join(' ');
+    }
+
+    replacePlaceholders(stringWithPlaceholders: string, replacements: any) {
+        return stringWithPlaceholders.replace(/{(\w+)}/g, (placeholderWithDelimiters, placeholderWithoutDelimiters) =>
+            replacements.hasOwnProperty(placeholderWithoutDelimiters) ? replacements[placeholderWithoutDelimiters] : placeholderWithDelimiters,
+        );
     }
 }

@@ -53,6 +53,17 @@
                     "gradingStepMessage": "Specify how students should be graded when completing this exercise.",
                     "problemStepTitle": "Problem Statement",
                     "problemStepMessage": "Specify the problem statement for the new exercise."
+                },
+                "gradingLabels": {
+                    "points": "There is a total of {maxPoints} points to achieve in this {exerciseType}.",
+                    "noBonus": "There is no bonus to achieve.",
+                    "bonus": "{bonusPoints} bonus points can be achieved.",
+                    "assessment": "This exercise will be assessed {assessmentType}.",
+                    "lockedSubmission": "This repositories will be locked after {submissionLimit} submissions.",
+                    "penaltySubmission": "There will be a penalty of {exceedingPenalty} points for every submission after {submissionLimit} submissions.",
+                    "unrestrictedSubmission": "There is no limit for the amount of allowed submissions.",
+                    "staticAnalysisEnabled": "Static code analysis is enabled for this exercise and there is a maximum penalty of {maxPenalty} points from static code analysis.",
+                    "staticAnalysisDisabled": "Static code analysis is disabled for this exercise."
                 }
             },
             "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students.",
