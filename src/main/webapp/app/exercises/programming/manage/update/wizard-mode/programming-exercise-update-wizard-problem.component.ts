@@ -39,7 +39,6 @@ export class ProgrammingExerciseUpdateWizardProblemComponent {
     }
 
     set exercise(exercise: ProgrammingExercise) {
-        console.log('Set EXERCISE');
         this.programmingExercise = exercise;
         this.exerciseChange.emit(this.programmingExercise);
     }

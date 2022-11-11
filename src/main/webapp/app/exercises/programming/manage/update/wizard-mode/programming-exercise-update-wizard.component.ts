@@ -25,7 +25,6 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     }
 
     set exercise(exercise: ProgrammingExercise) {
-        console.log('Set EXERCISE');
         this.programmingExercise = exercise;
         this.exerciseChange.emit(this.programmingExercise);
     }
