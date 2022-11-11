@@ -101,7 +101,7 @@ export class ScheduleFormComponent implements OnInit {
                 endTime: ['14:00:00', [Validators.required]],
                 repetitionFrequency: [1, [Validators.required, Validators.min(1), Validators.max(7)]],
                 period: [this.defaultPeriod, [Validators.required]],
-                location: [undefined, [Validators.required]],
+                location: ['Zoom', [Validators.required]],
             },
             { validators: validTimeRange },
         );
