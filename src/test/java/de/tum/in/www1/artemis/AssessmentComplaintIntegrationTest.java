@@ -87,20 +87,11 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student1")
-    void submitComplaintAboutModelingAssessmentResultBeforDueDate() throws Exception {
+    void submitComplaintAboutModelingAssessmentResultBeforeDueDate() throws Exception {
         modelingAssessment.setCompletionDate(modelingExercise.getDueDate().minusDays(1));
         resultRepo.save(modelingAssessment);
-        request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
-        Optional<Complaint> storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId());
-        assertThat(storedComplaint).as("complaint is saved").isPresent();
-        assertThat(storedComplaint.get().getComplaintText()).as("complaint text got correctly saved").isEqualTo(complaint.getComplaintText());
-        assertThat(storedComplaint.get().isAccepted()).as("accepted flag of complaint is not set").isNull();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
-        assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
-        Result result = storedComplaint.get().getResult();
-        // set date to UTC for comparison as the date saved in resultBeforeComplaint string is in UTC
-        storedResult.setCompletionDate(ZonedDateTime.ofInstant(storedResult.getCompletionDate().toInstant(), ZoneId.of("UTC")));
+        verifySuccessfulComplaint();
     }
 
     @Test
@@ -108,17 +99,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     void submitComplaintAboutModelingAssessmentResultBeforeAssessmentDueDate() throws Exception {
         modelingAssessment.setCompletionDate(modelingExercise.getAssessmentDueDate().minusDays(1));
         resultRepo.save(modelingAssessment);
-        request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
-        Optional<Complaint> storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId());
-        assertThat(storedComplaint).as("complaint is saved").isPresent();
-        assertThat(storedComplaint.get().getComplaintText()).as("complaint text got correctly saved").isEqualTo(complaint.getComplaintText());
-        assertThat(storedComplaint.get().isAccepted()).as("accepted flag of complaint is not set").isNull();
-        Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).get();
-        assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
-        Result result = storedComplaint.get().getResult();
-        // set date to UTC for comparison as the date saved in resultBeforeComplaint string is in UTC
-        storedResult.setCompletionDate(ZonedDateTime.ofInstant(storedResult.getCompletionDate().toInstant(), ZoneId.of("UTC")));
+        verifySuccessfulComplaint();
     }
 
     @Test
@@ -126,6 +108,11 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     void submitComplaintAboutModelingAssessmentResultAfterAssessmentDueDate() throws Exception {
         modelingAssessment.setCompletionDate(modelingExercise.getAssessmentDueDate().plusDays(1));
         resultRepo.save(modelingAssessment);
+
+        verifySuccessfulComplaint();
+    }
+
+    private void verifySuccessfulComplaint() throws Exception {
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
         Optional<Complaint> storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId());
