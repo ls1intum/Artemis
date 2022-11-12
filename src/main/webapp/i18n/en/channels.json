@@ -41,6 +41,11 @@
                     "maxLengthValidationError": "Name can be max {{ max }} characters long!",
                     "regexValidationError": "Channel names can only contain lowercase letters, numbers, and dashes."
                 },
+                "topicInput": {
+                    "label": "Topic (optional)",
+                    "topicHelp": "What is the channel currently dealing with? (Displayed in header)",
+                    "maxLengthValidationError": "The topic can be a maximum of {{ max }} characters long!"
+                },
                 "descriptionInput": {
                     "label": "Description (optional)",
                     "descriptionHelp": "What's this channel about?",

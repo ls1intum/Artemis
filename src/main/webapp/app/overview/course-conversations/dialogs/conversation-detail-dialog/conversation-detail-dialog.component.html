@@ -1,6 +1,6 @@
 <div *ngIf="isInitialized" class="conversation-detail-dialog">
     <div class="modal-header">
-        <h4 class="modal-title clickable-title">
+        <h4 class="modal-title">
             <span>
                 <jhi-channel-icon *ngIf="getAsChannel(activeConversation) as channel" [isPublic]="channel.isPublic!"></jhi-channel-icon>
                 {{ getConversationName(activeConversation) }}
@@ -30,7 +30,13 @@
                 *ngSwitchCase="Tabs.MEMBERS"
                 (changesPerformed)="changesWerePerformed = true"
             ></jhi-conversation-members>
-            <jhi-conversation-info [activeConversation]="activeConversation" [course]="course" *ngSwitchCase="Tabs.INFO" (channelLeave)="onChannelLeave()"></jhi-conversation-info>
+            <jhi-conversation-info
+                [activeConversation]="activeConversation"
+                [course]="course"
+                *ngSwitchCase="Tabs.INFO"
+                (channelLeave)="onChannelLeave()"
+                (changesPerformed)="changesWerePerformed = true"
+            ></jhi-conversation-info>
         </ng-container>
     </div>
 </div>

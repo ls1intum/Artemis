@@ -36,14 +36,19 @@
             "channelForm": {
                 "nameInput": {
                     "label": "Name",
-                    "Platzhalter": "z.B. tech-hilfe",
+                    "placeholder": "z.B. tech-hilfe",
                     "requiredValidationError": "Name ist erforderlich!",
                     "maxLengthValidationError": "Name darf maximal {{ max }} Zeichen lang sein!",
                     "regexValidationError": "Kanalnamen dürfen nur Kleinbuchstaben, Zahlen und Bindestriche enthalten."
                 },
+                "topicInput": {
+                    "label": "Thema (optional)",
+                    "topicHelp": "Womit beschäftigt sich der Kanal momentan? (Wird im Header angezeigt)",
+                    "maxLengthValidationError": "Das Thema darf maximal {{ max }} Zeichen lang sein!"
+                },
                 "descriptionInput": {
                     "label": "Beschreibung (optional)",
-                    "descriptionHelp": "Worum geht es in diesem Kanal?",
+                    "descriptionHelp": "Worum geht es in diesem Kanal? (Wird nicht im Header angezeigt)",
                     "maxLengthValidationError": "Die Beschreibung darf maximal {{ max }} Zeichen lang sein!"
                 },
                 "isPublicInput": {

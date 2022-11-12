@@ -1,5 +1,15 @@
 <div *ngIf="activeConversation" class="container-fluid conversation-info">
     <div class="row info-container">
+        <!-- Name (Only for Channels)-->
+        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel">
+            <div class="form-floating">
+                <textarea class="form-control" readonly placeholder="dummyPlaceholder" id="name" value="{{ channel.name ?? '' }}"> </textarea>
+                <label for="name">{{ 'artemisApp.entities.channel.name' | artemisTranslate }}</label>
+                <button class="action-button right btn btn-outline-primary btn-sm" (click)="openEditNameModal($event)">
+                    {{ 'artemisApp.messages.conversationDetail.infoTab.editName' | artemisTranslate }}
+                </button>
+            </div>
+        </div>
         <!-- Topic (Only for Channels)-->
         <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel">
             <div class="form-floating">
@@ -12,7 +22,9 @@
                 >
                 </textarea>
                 <label for="topic">{{ 'artemisApp.entities.channel.topic' | artemisTranslate }}</label>
-                <button class="action-button btn btn-outline-primary btn-sm">{{ 'artemisApp.messages.conversationDetail.infoTab.editTopic' | artemisTranslate }}</button>
+                <button class="action-button right btn btn-outline-primary btn-sm" (click)="openEditTopicModal($event)">
+                    {{ 'artemisApp.messages.conversationDetail.infoTab.editTopic' | artemisTranslate }}
+                </button>
             </div>
         </div>
         <!-- Description (Only for Channels)-->
@@ -27,7 +39,9 @@
                 >
                 </textarea>
                 <label for="topic">{{ 'artemisApp.entities.channel.description' | artemisTranslate }}</label>
-                <button class="action-button btn btn-outline-primary btn-sm">{{ 'artemisApp.messages.conversationDetail.infoTab.editDescription' | artemisTranslate }}</button>
+                <button class="action-button right btn btn-outline-primary btn-sm" (click)="openDescriptionTopicModal($event)">
+                    {{ 'artemisApp.messages.conversationDetail.infoTab.editDescription' | artemisTranslate }}
+                </button>
             </div>
         </div>
         <!-- More Info -->

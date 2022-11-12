@@ -1,0 +1,39 @@
+<div class="channels-overview" *ngIf="isInitialized">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            {{ translationKeys.labelKey | artemisTranslate }}
+        </h4>
+        <button type="button" class="btn-close" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <form class="row">
+            <div class="col-12">
+                <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+                    <div class="form-group">
+                        <label [for]="propertyName">{{ translationKeys.labelKey | artemisTranslate }}</label>
+                        <input type="text" class="form-control" [id]="propertyName" [formControlName]="propertyName" />
+                        <small [id]="propertyName + '-help'" class="form-text text-muted">{{ translationKeys.helpKey | artemisTranslate }}</small>
+                        <div *ngIf="control?.invalid && (control?.dirty || control?.touched)" class="alert alert-danger">
+                            <div *ngIf="control?.errors?.required">
+                                {{ translationKeys.requiredErrorKey | artemisTranslate }}
+                            </div>
+                            <div *ngIf="control?.errors?.maxlength">
+                                {{ translationKeys.maxLengthErrorKey | artemisTranslate: { max: this.maxPropertyLength } }}
+                            </div>
+                            <div *ngIf="!control?.errors?.required && !control?.errors?.maxlength && control?.errors?.pattern">
+                                {{ translationKeys.regexErrorKey | artemisTranslate }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 text-end">
+                            <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
+                                <span>{{ 'entity.action.save' | artemisTranslate }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </form>
+    </div>
+</div>

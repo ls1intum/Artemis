@@ -82,7 +82,7 @@ public class ChannelResource {
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(dto);
     }
 
-    @PutMapping("/{courseId}/channel/{channelId}")
+    @PutMapping("/{courseId}/channels/{channelId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ChannelDTO> updateChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody ChannelDTO channelDTO) {
         var originalChannel = channelService.getChannelOrThrow(channelId);
@@ -96,15 +96,15 @@ public class ChannelResource {
 
         var isChanged = false;
         if (channelDTO.getName() != null && !channelDTO.getName().equals(originalChannel.getName())) {
-            originalChannel.setName(channelDTO.getName());
+            originalChannel.setName(channelDTO.getName().trim().isBlank() ? null : channelDTO.getName().trim());
             isChanged = true;
         }
         if (channelDTO.getDescription() != null && !channelDTO.getDescription().equals(originalChannel.getDescription())) {
-            originalChannel.setDescription(channelDTO.getDescription());
+            originalChannel.setDescription(channelDTO.getDescription().trim().isBlank() ? null : channelDTO.getDescription().trim());
             isChanged = true;
         }
         if (channelDTO.getTopic() != null && !channelDTO.getTopic().equals(originalChannel.getTopic())) {
-            originalChannel.setTopic(channelDTO.getTopic());
+            originalChannel.setTopic(channelDTO.getTopic().trim().isBlank() ? null : channelDTO.getTopic().trim());
             isChanged = true;
         }
         if (!isChanged) {

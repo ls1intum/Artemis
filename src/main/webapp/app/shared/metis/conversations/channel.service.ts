@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
@@ -21,6 +21,11 @@ export class ChannelService {
         return this.http.post<ChannelDTO>(`${this.resourceUrl}${courseId}/channels`, channelDTO, { observe: 'response' }).pipe(map(this.conversationService.convertDateFromServer));
     }
 
+    update(courseId: number, channelId: number, channelDTO: ChannelDTO): Observable<HttpResponse<ChannelDTO>> {
+        return this.http
+            .put<ChannelDTO>(`${this.resourceUrl}${courseId}/channels/${channelId}`, channelDTO, { observe: 'response' })
+            .pipe(map(this.conversationService.convertDateFromServer));
+    }
     deregisterUsersFromChannel(courseId: number, channelId: number, logins?: string[]): Observable<HttpResponse<void>> {
         // if no explicit login is give we assume self deregistration
         const userLogins = logins ? logins : [this.accountService.userIdentity?.login];

@@ -24,6 +24,7 @@ import { ConversationDetailDialogComponent } from './dialogs/conversation-detail
 import { ConversationInfoComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { ConversationMemberRowComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
 import { PrivateChannelRemoveUserDialog } from 'app/overview/course-conversations/dialogs/private-channel-remove-user-dialog/private-channel-remove-user-dialog.component';
+import { ChannelUpdatePropertyDialogComponent } from './dialogs/channel-update-property-dialog/channel-update-property-dialog.component';
 
 const routes: Routes = [
     {
@@ -65,6 +66,7 @@ const routes: Routes = [
         ConversationInfoComponent,
         ConversationMemberRowComponent,
         PrivateChannelRemoveUserDialog,
+        ChannelUpdatePropertyDialogComponent,
     ],
 })
 export class CourseConversationsModule {}
