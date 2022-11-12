@@ -8,7 +8,6 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 export enum ConversationDetailTabs {
     MEMBERS = 'members',
     INFO = 'info',
-
     SETTINGS = 'settings',
 }
 
@@ -53,11 +52,18 @@ export class ConversationDetailDialogComponent implements OnInit {
     }
 
     onChannelLeave() {
-        this.changesWerePerformed = true;
-        this.clear();
+        this.markAsChangedAndClose();
     }
 
     onArchivalChange() {
+        this.markAsChangedAndClose();
+    }
+
+    onChannelDeleted() {
+        this.markAsChangedAndClose();
+    }
+
+    private markAsChangedAndClose() {
         this.changesWerePerformed = true;
         this.clear();
     }

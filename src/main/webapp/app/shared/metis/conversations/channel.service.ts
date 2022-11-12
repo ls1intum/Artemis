@@ -18,6 +18,10 @@ export class ChannelService {
         });
     }
 
+    delete(courseId: number, channelId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}${courseId}/channels/${channelId}`, { observe: 'response' });
+    }
+
     archive(courseId: number, channelId: number): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/archive`, null, { observe: 'response' });
     }

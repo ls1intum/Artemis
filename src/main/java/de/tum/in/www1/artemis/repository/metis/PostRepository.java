@@ -4,12 +4,15 @@ import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
 
 import java.util.List;
 
+import javax.transaction.Transactional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -53,6 +56,11 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
         }
     }
 
+    @Transactional
+    @Modifying
+    // ok because of delete
+    void deleteAllByConversationId(Long conversationId);
+
     @Query("""
             SELECT DISTINCT tag FROM Post post
             LEFT JOIN post.tags tag LEFT JOIN post.lecture lecture LEFT JOIN post.exercise exercise
@@ -76,4 +84,5 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     default Post findPostOrMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));
     }
+
 }

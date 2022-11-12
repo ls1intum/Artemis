@@ -8,6 +8,7 @@ import java.util.Optional;
 import javax.validation.ConstraintViolationException;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -34,10 +36,14 @@ public class ChannelService {
 
     private final UserRepository userRepository;
 
-    public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, UserRepository userRepository) {
+    private final PostRepository postRepository;
+
+    public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, UserRepository userRepository,
+            PostRepository postRepository) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.userRepository = userRepository;
+        this.postRepository = postRepository;
     }
 
     public Channel getChannelOrThrow(Long channelId) {
@@ -131,5 +137,11 @@ public class ChannelService {
         }
         channel.setIsArchived(false);
         channelRepository.save(channel);
+    }
+
+    @Transactional // ok because of delete
+    public void deleteChannel(Long id) {
+        this.postRepository.deleteAllByConversationId(id);
+        this.channelRepository.deleteById(id);
     }
 }

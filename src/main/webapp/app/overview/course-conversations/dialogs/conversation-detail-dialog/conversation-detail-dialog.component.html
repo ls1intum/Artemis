@@ -47,6 +47,7 @@
                 [course]="course"
                 *ngSwitchCase="Tabs.SETTINGS"
                 (channelArchivalChange)="onArchivalChange()"
+                (channelDeleted)="onChannelDeleted()"
             ></jhi-conversation-settings>
         </ng-container>
     </div>

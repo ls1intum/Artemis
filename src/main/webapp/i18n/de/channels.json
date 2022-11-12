@@ -38,11 +38,15 @@
                 "description": "Das Archivieren eines Kanals verhindert, dass neue Benutzer ihm beitreten können. Niemand wird in der Lage sein, Nachrichten an den Kanal zu senden. Alle bestehenden Mitglieder können weiterhin auf den Kanal zugreifen. Du kannst die Archivierung des Channels jederzeit aufheben.",
                 "confirmButton": "Kanal archivieren"
             },
-            "unarchiveChannel": {
+            "unArchiveChannel": {
                 "title": "Unarchive Channel {{ channelName }} ?",
                 "question": "Do you really want to unarchive the channel {{ channelName }} ?",
                 "description": "Unarchiving a channel will allow new users to join and post. You can archive the channel at any time.",
                 "confirmButton": "Unarchive Channel"
+            },
+            "deleteChannel": {
+                "question": "Are you sure to delete the channel with name '{{ title }}'? This is a permanent action and cannot be undone.",
+                "confirm": "Please enter the title of the channel to confirm."
             }
         },
         "forms": {

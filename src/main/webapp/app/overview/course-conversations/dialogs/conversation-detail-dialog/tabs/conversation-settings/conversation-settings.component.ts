@@ -6,9 +6,10 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { GenericConfirmationDialog } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { onError } from 'app/shared/util/global.utils';
-import { from } from 'rxjs';
+import { from, Subject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-conversation-settings',
@@ -26,6 +27,14 @@ export class ConversationSettingsComponent {
 
     @Output()
     channelArchivalChange: EventEmitter<void> = new EventEmitter<void>();
+
+    @Output()
+    channelDeleted: EventEmitter<void> = new EventEmitter<void>();
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
+    faTimes = faTimes;
 
     constructor(private modalService: NgbModal, private channelService: ChannelService, private alertService: AlertService) {}
 
@@ -102,6 +111,20 @@ export class ConversationSettingsComponent {
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
+        });
+    }
+
+    deleteChannel() {
+        const channel = getAsChannelDto(this.activeConversation);
+        if (!channel) {
+            return;
+        }
+        this.channelService.delete(this.course?.id!, channel.id!).subscribe({
+            next: () => {
+                this.dialogErrorSource.next('');
+                this.channelDeleted.emit();
+            },
+            error: (errorResponse: HttpErrorResponse) => this.dialogErrorSource.next(errorResponse.message),
         });
     }
 }

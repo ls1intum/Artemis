@@ -115,6 +115,19 @@ public class ChannelResource {
         return ResponseEntity.ok().body(dto);
     }
 
+    @DeleteMapping("/{courseId}/channels/{channelId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> deleteChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
+        log.debug("REST request to delete channel {}", channelId);
+        var channel = channelService.getChannelOrThrow(channelId);
+        if (!channel.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
+        }
+        channelAuthorizationService.isAllowedToDeleteChannel(channel, null);
+        channelService.deleteChannel(channel.getId());
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/{courseId}/channels/{channelId}/archive")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> archiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {

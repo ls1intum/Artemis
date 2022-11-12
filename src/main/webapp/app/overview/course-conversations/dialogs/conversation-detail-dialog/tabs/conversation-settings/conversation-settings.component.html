@@ -10,6 +10,21 @@
                     {{ 'artemisApp.pages.unArchiveChannel.confirmButton' | artemisTranslate }}
                 </button>
             </div>
+            <div class="col-12 settings-section text-center">
+                <button
+                    class="btn btn-danger"
+                    [id]="'delete-' + channel.id"
+                    jhiDeleteButton
+                    [renderButtonStyle]="false"
+                    [entityTitle]="channel.name || ''"
+                    deleteQuestion="artemisApp.pages.deleteChannel.question"
+                    deleteConfirmationText="artemisApp.pages.deleteChannel.confirm"
+                    (delete)="deleteChannel()"
+                    [dialogError]="dialogError$"
+                >
+                    <fa-icon [icon]="faTimes"></fa-icon>
+                </button>
+            </div>
         </ng-container>
     </div>
 </div>

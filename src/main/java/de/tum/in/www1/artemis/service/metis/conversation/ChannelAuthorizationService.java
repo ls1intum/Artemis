@@ -49,6 +49,15 @@ public class ChannelAuthorizationService {
         }
     }
 
+    public void isAllowedToDeleteChannel(@NotNull Channel channel, @Nullable User user) {
+        user = getUserIfNecessary(user);
+        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user);
+        var isCreator = channel.getCreator().equals(user);
+        if (!isAtLeastInstructor && !isCreator) {
+            throw new AccessForbiddenException("You are not allowed to delete this channel");
+        }
+    }
+
     public boolean isMember(Long channelId, Long userId) {
         return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, userId).isPresent();
     }
