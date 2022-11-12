@@ -58,20 +58,32 @@ public class ChannelResource {
         log.debug("REST request to all channels of course: {}", courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), user);
+
+        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseRepository.findByIdElseThrow(courseId), user);
+
         var result = channelService.getChannels(courseId).stream().map(channel -> {
             var channelDTO = new ChannelDTO(channel);
             channelDTO.setIsMember(conversationService.isMember(channel.getId(), user.getId()));
             channelDTO.setNumberOfMembers(conversationService.getMemberCount(channel.getId()));
             return channelDTO;
-        })
-                // we only want to show public channels and in addition private channels that the user is a member of
-                .filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember()).sorted(Comparator.comparing(ChannelDTO::getName)).toList();
-        return ResponseEntity.ok(result);
+        });
+
+        var filteredStream = result;
+        // only instructors / admins can see all channels
+        if (!isAtLeastInstructor) {
+            filteredStream = result // we only want to show archived channels where the user is a member
+                    .filter(channelDTO -> !channelDTO.getIsArchived() || channelDTO.getIsMember())
+                    // we only want to show public channels and in addition private channels that the user is a member of
+                    .filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
+        }
+
+        return ResponseEntity.ok(filteredStream.sorted(Comparator.comparing(ChannelDTO::getName)).toList());
     }
 
     @PostMapping("/{courseId}/channels")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ChannelDTO> createChannel(@PathVariable Long courseId, @RequestBody ChannelDTO channelDTO) throws URISyntaxException {
+        log.debug("REST request to create channel in course {} with properties : {}", courseId, channelDTO);
         var course = courseRepository.findByIdElseThrow(courseId);
         channelAuthorizationService.isAllowedToCreateChannel(course, null);
         var channelToCreate = channelDTO.toChannel();
@@ -85,37 +97,44 @@ public class ChannelResource {
     @PutMapping("/{courseId}/channels/{channelId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ChannelDTO> updateChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody ChannelDTO channelDTO) {
+        log.debug("REST request to update channel {} with properties : {}", channelId, channelDTO);
+
         var originalChannel = channelService.getChannelOrThrow(channelId);
+        if (originalChannel.getIsArchived()) {
+            throw new BadRequestAlertException("Archived channels cannot be edited", CHANNEL_ENTITY_NAME, "channelIsArchived");
+        }
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         if (!originalChannel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
         channelAuthorizationService.isAllowedToUpdateChannel(originalChannel, requestingUser);
-        // now that we know the user is authorized we perform the expensive operation of loading all participants
-        originalChannel = channelService.getChannelWithParticipantsOrThrow(channelId);
-
-        var isChanged = false;
-        if (channelDTO.getName() != null && !channelDTO.getName().equals(originalChannel.getName())) {
-            originalChannel.setName(channelDTO.getName().trim().isBlank() ? null : channelDTO.getName().trim());
-            isChanged = true;
-        }
-        if (channelDTO.getDescription() != null && !channelDTO.getDescription().equals(originalChannel.getDescription())) {
-            originalChannel.setDescription(channelDTO.getDescription().trim().isBlank() ? null : channelDTO.getDescription().trim());
-            isChanged = true;
-        }
-        if (channelDTO.getTopic() != null && !channelDTO.getTopic().equals(originalChannel.getTopic())) {
-            originalChannel.setTopic(channelDTO.getTopic().trim().isBlank() ? null : channelDTO.getTopic().trim());
-            isChanged = true;
-        }
-        if (!isChanged) {
-            return ResponseEntity.ok(new ChannelDTO(originalChannel));
-        }
-
-        var updatedChannel = channelService.updateChannel(originalChannel);
+        var updatedChannel = channelService.updateChannel(originalChannel.getId(), courseId, channelDTO);
         var dto = new ChannelDTO(updatedChannel);
         channelDTO.setIsMember(conversationService.isMember(updatedChannel.getId(), requestingUser.getId()));
         channelDTO.setNumberOfMembers(conversationService.getMemberCount(updatedChannel.getId()));
         return ResponseEntity.ok().body(dto);
+    }
+
+    @PostMapping("/{courseId}/channels/{channelId}/archive")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> archiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
+        log.debug("REST request to archive channel : {}", channelId);
+        var channelFromDatabase = this.channelService.getChannelOrThrow(channelId);
+        checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
+        channelAuthorizationService.isAllowedToArchiveChannel(channelFromDatabase, userRepository.getUserWithGroupsAndAuthorities());
+        channelService.archiveChannel(channelId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{courseId}/channels/{channelId}/unarchive")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> unArchiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
+        log.debug("REST request to unarchive channel : {}", channelId);
+        var channelFromDatabase = this.channelService.getChannelOrThrow(channelId);
+        checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
+        channelAuthorizationService.isAllowedToUnArchiveChannel(channelFromDatabase, userRepository.getUserWithGroupsAndAuthorities());
+        channelService.unarchiveChannel(channelId);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{courseId}/channels/{channelId}/register")
@@ -131,6 +150,9 @@ public class ChannelResource {
 
         var channelFromDatabase = this.channelService.getChannelOrThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
+        if (channelFromDatabase.getIsArchived()) {
+            throw new BadRequestAlertException("Users can not be registered to an archived channel.", CHANNEL_ENTITY_NAME, "channelIsArchived");
+        }
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
 

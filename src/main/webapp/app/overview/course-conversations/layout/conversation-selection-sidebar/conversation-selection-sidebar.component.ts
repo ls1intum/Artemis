@@ -7,7 +7,7 @@ import { User } from 'app/core/user/user.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
@@ -191,7 +191,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         const foundConversation = undefined;
         // if a conversation does not already exist with selected user
         if (foundConversation === undefined) {
-            const newConversation = this.createNewGroupChatWithUser(user);
+            // const newConversation = this.createNewGroupChatWithUser(user);
             // this.createConversation(newConversation);
         } else {
             // conversation with the found user already exists, so we select it --> Logik funktioniert aber nicht mehr sobald mehr als 2 user in einem gruppengespräch sind

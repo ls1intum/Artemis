@@ -7,6 +7,7 @@ import { Post } from 'app/entities/metis/post.model';
     styleUrls: ['../metis.component.scss'],
 })
 export class PostingThreadComponent {
+    @Input() readOnlyMode = false;
     @Input() post: Post;
     @Input() showAnswers: boolean;
     @Input() isCourseMessagesPage: boolean;

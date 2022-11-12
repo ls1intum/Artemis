@@ -3,7 +3,7 @@ import { FormGroup, Validators } from '@angular/forms';
 import { FormBuilder } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
-export interface PropertyTranslationKeys {
+export interface GenericUpdateTextPropertyTranslationKeys {
     labelKey: string;
     titleKey: string;
 
@@ -17,11 +17,10 @@ export interface PropertyTranslationKeys {
 }
 
 @Component({
-    selector: 'jhi-channel-update-property-dialog',
-    templateUrl: './channel-update-property-dialog.component.html',
-    styleUrls: ['./channel-update-property-dialog.component.scss'],
+    selector: 'jhi-generic-update-text-property-dialog',
+    templateUrl: './generic-update-text-property-dialog.component.html',
 })
-export class ChannelUpdatePropertyDialogComponent {
+export class GenericUpdateTextPropertyDialog {
     @Input()
     propertyName: string;
 
@@ -38,7 +37,7 @@ export class ChannelUpdatePropertyDialogComponent {
     initialValue: string | undefined;
 
     @Input()
-    translationKeys: PropertyTranslationKeys;
+    translationKeys: GenericUpdateTextPropertyTranslationKeys;
     form: FormGroup;
 
     isInitialized = false;

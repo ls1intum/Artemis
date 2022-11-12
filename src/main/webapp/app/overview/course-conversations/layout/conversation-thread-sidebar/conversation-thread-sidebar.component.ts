@@ -10,6 +10,8 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
 })
 export class ConversationThreadSidebarComponent implements AfterViewInit {
+    @Input()
+    readOnlyMode = false;
     @Output() closePostThread = new EventEmitter<void>();
 
     post?: Post;

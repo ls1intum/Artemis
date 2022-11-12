@@ -19,7 +19,7 @@
             >
                 <span class="conversation-list-item-user">
                     <ng-container *ngIf="getAsChannel(conversation) as channel">
-                        <jhi-channel-icon [isPublic]="channel.isPublic!"></jhi-channel-icon>
+                        <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!"></jhi-channel-icon>
                     </ng-container>
                     {{ getConversationName(conversation) }}
                 </span>

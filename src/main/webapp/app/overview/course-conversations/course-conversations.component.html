@@ -10,8 +10,14 @@
                     <jhi-conversation-messages (openThread)="setPostInThread($event)"> </jhi-conversation-messages>
                 </ng-container>
             </div>
-            <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
-                <jhi-conversation-thread-sidebar *ngIf="showPostThread" [activePost]="postInThread" (closePostThread)="showPostThread = false"> </jhi-conversation-thread-sidebar>
+            <div *ngIf="activeConversation" class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+                <jhi-conversation-thread-sidebar
+                    *ngIf="showPostThread"
+                    [readOnlyMode]="!!getAsChannel(activeConversation)?.isArchived"
+                    [activePost]="postInThread"
+                    (closePostThread)="showPostThread = false"
+                >
+                </jhi-conversation-thread-sidebar>
             </div>
         </ng-container>
     </div>

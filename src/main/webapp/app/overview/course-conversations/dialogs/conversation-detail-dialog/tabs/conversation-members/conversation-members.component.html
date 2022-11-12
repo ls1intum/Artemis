@@ -1,7 +1,7 @@
 <div *ngIf="course && activeConversation" class="container-fluid">
     <div class="row">
         <div class="col-auto">
-            <button type="button" class="btn btn-outline-secondary" (click)="openAddUsersDialog($event)">
+            <button type="button" class="btn btn-outline-secondary" (click)="openAddUsersDialog($event)" *ngIf="!getAsChannel(activeConversation)?.isArchived">
                 <fa-icon [icon]="faUserPlus"></fa-icon>
                 {{ 'artemisApp.messages.conversationDetail.memberTab.addUsers' | artemisTranslate }}
             </button>

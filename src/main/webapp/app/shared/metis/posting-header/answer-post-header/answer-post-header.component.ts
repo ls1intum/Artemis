@@ -11,6 +11,8 @@ import { faCheck, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['../../metis.component.scss'],
 })
 export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost> implements OnInit {
+    @Input()
+    isReadOnlyMode = false;
     @Input() isCourseMessagesPage: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
 

@@ -10,6 +10,7 @@
                 "topic": "Thema",
                 "isPublic": "Ist öffentlich",
                 "members": "Mitglieder",
+                "archived": "Archiviert",
                 "status": {
                     "joined": "Beigetreten"
                 }
@@ -30,6 +31,12 @@
             },
             "channelOverview": {
                 "title": "Alle Kanäle"
+            },
+            "archiveChannel": {
+                "title": "Kanal {{ channelName }} archivieren?",
+                "question": "Möchtest du wirklich den Kanal {{ channelName }} archivieren? ?",
+                "description": "Das Archivieren eines Kanals verhindert, dass neue Benutzer ihm beitreten können. Niemand wird in der Lage sein, Nachrichten an den Kanal zu senden. Alle bestehenden Mitglieder können weiterhin auf den Kanal zugreifen. Du kannst die Archivierung des Channels jederzeit aufheben.",
+                "confirmButton": "Kanal archivieren"
             }
         },
         "forms": {

@@ -94,4 +94,10 @@ public abstract class ConversationDTO {
     public void setCreator(User creator) {
         this.creator = creator;
     }
+
+    @Override
+    public String toString() {
+        return "ConversationDTO{" + "type='" + type + '\'' + ", id=" + id + ", creationDate=" + creationDate + ", lastMessageDate=" + lastMessageDate + ", isMember=" + isMember
+                + ", numberOfMembers=" + numberOfMembers + ", creator=" + (creator != null ? creator.getName() : "") + '}';
+    }
 }

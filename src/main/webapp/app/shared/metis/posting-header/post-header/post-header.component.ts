@@ -12,6 +12,8 @@ import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['../../metis.component.scss'],
 })
 export class PostHeaderComponent extends PostingHeaderDirective<Post> implements OnInit, OnDestroy {
+    @Input()
+    readOnlyMode = false;
     @Input() previewMode: boolean;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     isAtLeastInstructorInCourse: boolean;

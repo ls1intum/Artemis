@@ -65,11 +65,19 @@ public class ConversationMessagingService extends PostingService {
         if (messagePost.getConversation() == null || messagePost.getConversation().getId() == null) {
             throw new BadRequestAlertException("A new message post must have a conversation", METIS_POST_ENTITY_NAME, "conversationnotset");
         }
+
         var author = this.userRepository.getUserWithGroupsAndAuthorities();
         var course = preCheckUserAndCourse(author, courseId);
         messagePost.setAuthor(author);
         messagePost.setDisplayPriority(DisplayPriority.NONE);
         var conversation = conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), author);
+
+        if (conversation instanceof Channel channel) {
+            if (channel.getIsArchived()) {
+                throw new BadRequestAlertException("A message cannot be created in an archived channel", METIS_POST_ENTITY_NAME, "channelarchived");
+            }
+        }
+
         // update last message date and conversation read time of user at the same time
         conversation.setLastMessageDate(conversationService.auditConversationReadTimeOfUser(conversation, author));
         var savedMessage = conversationMessageRepository.save(messagePost);
@@ -200,7 +208,13 @@ public class ConversationMessagingService extends PostingService {
             throw new AccessForbiddenException("Post", existingMessagePost.getId());
         }
         else {
-            return conversationService.getConversationById(existingMessagePost.getConversation().getId());
+            var conversation = conversationService.getConversationById(existingMessagePost.getConversation().getId());
+            if (conversation instanceof Channel channel) {
+                if (channel.getIsArchived()) {
+                    throw new BadRequestAlertException("A message cannot be created in an archived channel", METIS_POST_ENTITY_NAME, "channelarchived");
+                }
+            }
+            return conversation;
         }
     }
 

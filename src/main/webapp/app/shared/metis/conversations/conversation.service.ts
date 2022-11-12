@@ -7,6 +7,8 @@ import { Conversation, ConversationDto } from 'app/entities/metis/conversation/c
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
+import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
 
 type EntityArrayResponseType = HttpResponse<ConversationDto[]>;
 
@@ -23,6 +25,34 @@ export class ConversationService {
 
     constructor(protected http: HttpClient, protected translationService: TranslateService, protected accountService: AccountService) {}
 
+    getConversationName = (conversation: ConversationDto): string => {
+        if (!conversation) {
+            return '';
+        }
+        if (isChannelDto(conversation)) {
+            let channelName = conversation.name ?? '';
+            if (conversation.isArchived) {
+                channelName += ' (' + this.translationService.instant('artemisApp.entities.channel.archived') + ')';
+            }
+            return channelName;
+        } else if (isGroupChatDto(conversation)) {
+            const namesOfOtherMembers = conversation.namesOfOtherMembers ?? [];
+            if (namesOfOtherMembers.length === 0) {
+                return '';
+            } else if (namesOfOtherMembers.length === 1) {
+                return namesOfOtherMembers[0];
+            } else if (namesOfOtherMembers.length === 2) {
+                return `${namesOfOtherMembers[0]}, ${namesOfOtherMembers[1]}`;
+            } else {
+                return (
+                    `${namesOfOtherMembers[0]}, ${namesOfOtherMembers[1]}, ` +
+                    this.translationService.instant('artemisApp.messages.conversation.others', { count: namesOfOtherMembers.length - 2 })
+                );
+            }
+        } else {
+            return '';
+        }
+    };
     searchMembersOfConversation(courseId: number, conversationId: number, loginOrName: string, page: number, size: number): Observable<HttpResponse<User[]>> {
         const sortingParameters: UserSortingParameter[] = [
             { sortProperty: 'firstName', sortDirection: 'asc' },

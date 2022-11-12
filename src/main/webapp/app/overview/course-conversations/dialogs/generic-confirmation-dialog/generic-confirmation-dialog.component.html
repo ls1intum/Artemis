@@ -1,0 +1,23 @@
+<div *ngIf="isInitialized">
+    <div class="modal-header">
+        <h4 class="modal-title">{{ translationKeys.titleKey | artemisTranslate: translationParameters }}</h4>
+        <button type="button" class="btn-close" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <p>
+            <strong>{{ translationKeys.questionKey | artemisTranslate: translationParameters }}</strong>
+        </p>
+        <p>
+            {{ translationKeys.descriptionKey | artemisTranslate: translationParameters }}
+        </p>
+        <p *ngIf="!canBeUndone">
+            <span class="text-danger">{{ 'entity.action.notUndoable' | artemisTranslate: translationParameters }}</span>
+        </p>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="clear()">{{ 'entity.action.cancel' | artemisTranslate }}</button>
+        <button type="button" class="btn" [class.btn-danger]="!canBeUndone" [class.btn-primary]="canBeUndone" (click)="confirm()">
+            {{ translationKeys.confirmButtonKey | artemisTranslate }}
+        </button>
+    </div>
+</div>

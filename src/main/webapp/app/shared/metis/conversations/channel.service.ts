@@ -17,6 +17,15 @@ export class ChannelService {
             observe: 'response',
         });
     }
+
+    archive(courseId: number, channelId: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/archive`, null, { observe: 'response' });
+    }
+
+    unarchive(courseId: number, channelId: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/unarchive`, null, { observe: 'response' });
+    }
+
     create(courseId: number, channelDTO: ChannelDTO): Observable<HttpResponse<ChannelDTO>> {
         return this.http.post<ChannelDTO>(`${this.resourceUrl}${courseId}/channels`, channelDTO, { observe: 'response' }).pipe(map(this.conversationService.convertDateFromServer));
     }

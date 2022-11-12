@@ -3,7 +3,6 @@ import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
 
 @Component({
     selector: 'jhi-sidebar-section',
@@ -27,7 +26,7 @@ export class SidebarSectionComponent {
     @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
 
     getAsChannel = getAsChannelDto;
-    getConversationName = getConversationName;
+    getConversationName = this.conversationService.getConversationName;
 
     // icon imports
     faChevronRight = faChevronRight;

@@ -13,9 +13,11 @@
                 }
             }
 
-            &:hover {
-                .action-button {
-                    visibility: visible;
+            &.interactive {
+                &:hover {
+                    .action-button {
+                        visibility: visible;
+                    }
                 }
             }
 

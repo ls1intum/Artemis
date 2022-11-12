@@ -10,6 +10,7 @@
                 "topic": "Topic",
                 "isPublic": "Is Public",
                 "members": "Members",
+                "archived": "Archived",
                 "status": {
                     "joined": "Beigetreten"
                 }
@@ -30,6 +31,12 @@
             },
             "channelOverview": {
                 "title": "All Channels"
+            },
+            "archiveChannel": {
+                "title": "Archive Channel {{ channelName }} ?",
+                "question": "Do you really want to archive the channel {{ channelName }} ?",
+                "description": "Archiving a channel will prevent new users from joining. No one will be able to send messages to the channel. All existing members will still be able to access the channel. You can unarchive the channel at any time.",
+                "confirmButton": "Archive Channel"
             }
         },
         "forms": {

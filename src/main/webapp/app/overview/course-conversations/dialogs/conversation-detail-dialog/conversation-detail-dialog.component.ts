@@ -3,11 +3,13 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 export enum ConversationDetailTabs {
     MEMBERS = 'members',
     INFO = 'info',
+
+    SETTINGS = 'settings',
 }
 
 @Component({
@@ -34,12 +36,12 @@ export class ConversationDetailDialogComponent implements OnInit {
     }
 
     getAsChannel = getAsChannelDto;
-    getConversationName = getConversationName;
+    getConversationName = this.conversationService.getConversationName;
 
     changesWerePerformed = false;
 
     Tabs = ConversationDetailTabs;
-    constructor(private activeModal: NgbActiveModal) {}
+    constructor(private activeModal: NgbActiveModal, private conversationService: ConversationService) {}
 
     ngOnInit(): void {}
     clear() {
@@ -51,6 +53,11 @@ export class ConversationDetailDialogComponent implements OnInit {
     }
 
     onChannelLeave() {
+        this.changesWerePerformed = true;
+        this.clear();
+    }
+
+    onArchivalChange() {
         this.changesWerePerformed = true;
         this.clear();
     }

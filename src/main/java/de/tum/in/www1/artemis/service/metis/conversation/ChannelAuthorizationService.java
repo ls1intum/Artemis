@@ -88,6 +88,28 @@ public class ChannelAuthorizationService {
         }
     }
 
+    public void isAllowedToArchiveChannel(@NotNull Channel channel, @Nullable User user) {
+        isAllowedToChangeArchivalStatus(channel, user);
+    }
+
+    public void isAllowedToUnArchiveChannel(@NotNull Channel channel, @Nullable User user) {
+        isAllowedToChangeArchivalStatus(channel, user);
+    }
+
+    private void isAllowedToChangeArchivalStatus(Channel channel, @org.jetbrains.annotations.Nullable User user) {
+        user = getUserIfNecessary(user);
+
+        var isChannelMember = isMember(channel.getId(), user.getId());
+        if (!isChannelMember) {
+            throw new AccessForbiddenException("User is not a member of the channel");
+        }
+
+        var isCreator = channel.getCreator().equals(user);
+        if (!isCreator) {
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, channel.getCourse(), user);
+        }
+    }
+
     private User getUserIfNecessary(@org.jetbrains.annotations.Nullable User user) {
         var persistenceUtil = Persistence.getPersistenceUtil();
         if (user == null || !persistenceUtil.isLoaded(user, "authorities") || !persistenceUtil.isLoaded(user, "groups") || user.getGroups() == null

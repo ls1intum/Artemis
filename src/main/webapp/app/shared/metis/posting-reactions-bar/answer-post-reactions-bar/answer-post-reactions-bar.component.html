@@ -1,6 +1,7 @@
 <div class="me-0 p-1 row">
     <div class="col-auto p-0" *ngFor="let reactionMetaData of reactionMetaDataMap | keyvalue">
         <button
+            [disabled]="isReadOnlyMode"
             class="reaction-button clickable"
             [class.reaction-button--reacted]="reactionMetaData.value.hasReacted"
             (click)="updateReaction(reactionMetaData.key)"
@@ -10,7 +11,7 @@
             <span class="emoji-count" [class.reaction-count--reacted]="reactionMetaData.value.hasReacted">{{ reactionMetaData.value.count }}</span>
         </button>
     </div>
-    <div class="col-auto px-0">
+    <div class="col-auto px-0" [hidden]="isReadOnlyMode">
         <fa-icon
             [icon]="farSmile"
             class="reaction-button me-0 text-secondary clickable"
@@ -23,6 +24,7 @@
         </fa-icon>
     </div>
     <ng-template
+        *ngIf="!isReadOnlyMode"
         cdkConnectedOverlay
         [cdkConnectedOverlayHasBackdrop]="true"
         [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
@@ -31,6 +33,7 @@
         (backdropClick)="toggleEmojiSelect()"
     >
         <jhi-emoji-picker
+            *ngIf="!isReadOnlyMode"
             [emojisToShowFilter]="emojisToShowFilter"
             (emojiSelect)="selectReaction($event)"
             [categoriesIcons]="categoriesIcons"

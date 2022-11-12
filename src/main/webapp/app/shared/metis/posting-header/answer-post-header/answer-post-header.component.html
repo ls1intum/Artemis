@@ -13,7 +13,7 @@
             </span>
         </span>
         <fa-icon
-            *ngIf="isAuthorOfPosting || (!isCourseMessagesPage && isAtLeastTutorInCourse)"
+            *ngIf="(isAuthorOfPosting || (!isCourseMessagesPage && isAtLeastTutorInCourse)) && !isReadOnlyMode"
             size="xs"
             class="ms-1 editIcon clickable icon"
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
@@ -22,7 +22,7 @@
             (click)="openPostingCreateEditModal.emit()"
         ></fa-icon>
         <jhi-confirm-icon
-            *ngIf="isAuthorOfPosting || (!isCourseMessagesPage && isAtLeastTutorInCourse)"
+            *ngIf="(isAuthorOfPosting || (!isCourseMessagesPage && isAtLeastTutorInCourse)) && !isReadOnlyMode"
             iconSize="xs"
             (confirmEvent)="deletePosting()"
             [ngClass]="'deleteIcon clickable icon'"

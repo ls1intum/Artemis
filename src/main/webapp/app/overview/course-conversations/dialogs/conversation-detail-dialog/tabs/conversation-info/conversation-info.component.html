@@ -1,7 +1,7 @@
-<div *ngIf="activeConversation" class="container-fluid conversation-info">
+<div *ngIf="activeConversation && course" class="container-fluid conversation-info">
     <div class="row info-container">
         <!-- Name (Only for Channels)-->
-        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel">
+        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel" [class.interactive]="!readOnlyMode">
             <div class="form-floating">
                 <textarea class="form-control" readonly placeholder="dummyPlaceholder" id="name" value="{{ channel.name ?? '' }}"> </textarea>
                 <label for="name">{{ 'artemisApp.entities.channel.name' | artemisTranslate }}</label>
@@ -11,7 +11,7 @@
             </div>
         </div>
         <!-- Topic (Only for Channels)-->
-        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel">
+        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel" [class.interactive]="!readOnlyMode">
             <div class="form-floating">
                 <textarea
                     class="form-control"
@@ -28,7 +28,7 @@
             </div>
         </div>
         <!-- Description (Only for Channels)-->
-        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel">
+        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel" [class.interactive]="!readOnlyMode">
             <div class="form-floating">
                 <textarea
                     class="form-control"

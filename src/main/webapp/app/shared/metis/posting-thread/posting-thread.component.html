@@ -1,6 +1,7 @@
 <div class="row mb-2 col-12">
     <div class="col-12">
-        <jhi-post [posting]="post" [showAnswers]="showAnswers" [isCourseMessagesPage]="isCourseMessagesPage" (openThread)="openThread.emit(post)"> </jhi-post>
+        <jhi-post [readOnlyMode]="readOnlyMode" [posting]="post" [showAnswers]="showAnswers" [isCourseMessagesPage]="isCourseMessagesPage" (openThread)="openThread.emit(post)">
+        </jhi-post>
     </div>
 </div>
 <div *ngIf="!isCourseMessagesPage" class="post-separation-line"></div>

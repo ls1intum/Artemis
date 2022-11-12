@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
 @Service
 public class ChannelService {
@@ -53,6 +54,21 @@ public class ChannelService {
         return channelRepository.findChannelsByCourseId(courseId);
     }
 
+    public Channel updateChannel(Long channelId, Long courseId, ChannelDTO channelDTO) {
+        var channel = getChannelWithParticipantsOrThrow(channelId);
+        if (channelDTO.getName() != null && !channelDTO.getName().equals(channel.getName())) {
+            channel.setName(channelDTO.getName().trim().isBlank() ? null : channelDTO.getName().trim());
+        }
+        if (channelDTO.getDescription() != null && !channelDTO.getDescription().equals(channel.getDescription())) {
+            channel.setDescription(channelDTO.getDescription().trim().isBlank() ? null : channelDTO.getDescription().trim());
+        }
+        if (channelDTO.getTopic() != null && !channelDTO.getTopic().equals(channel.getTopic())) {
+            channel.setTopic(channelDTO.getTopic().trim().isBlank() ? null : channelDTO.getTopic().trim());
+        }
+        this.channelIsValidOrThrow(courseId, channel);
+        return channelRepository.save(channel);
+    }
+
     public Channel createChannel(Course course, Channel channel) {
         if (channel.getId() != null) {
             throw new BadRequestAlertException("A new channel cannot already have an ID", "channel", "idexists");
@@ -60,10 +76,11 @@ public class ChannelService {
         if (StringUtils.hasText(channel.getName())) {
             channel.setName(StringUtils.trimAllWhitespace(channel.getName().toLowerCase()));
         }
-        this.channelIsValidOrThrow(course.getId(), channel);
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         channel.setCreator(user);
         channel.setCourse(course);
+        channel.setIsArchived(false);
+        this.channelIsValidOrThrow(course.getId(), channel);
         var savedChannel = channelRepository.save(channel);
         var conversationParticipantOfRequestingUser = new ConversationParticipant();
         conversationParticipantOfRequestingUser.setUser(user);
@@ -72,11 +89,6 @@ public class ChannelService {
         savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
         savedChannel = channelRepository.save(savedChannel);
         return savedChannel;
-    }
-
-    public Channel updateChannel(Channel channel) {
-        this.channelIsValidOrThrow(channel.getCourse().getId(), channel);
-        return channelRepository.save(channel);
     }
 
     public void channelIsValidOrThrow(Long courseId, Channel channel) {
@@ -103,4 +115,21 @@ public class ChannelService {
         });
     }
 
+    public void archiveChannel(Long channelId) {
+        var channel = getChannelWithParticipantsOrThrow(channelId);
+        if (channel.getIsArchived()) {
+            return;
+        }
+        channel.setIsArchived(true);
+        channelRepository.save(channel);
+    }
+
+    public void unarchiveChannel(Long channelId) {
+        var channel = getChannelWithParticipantsOrThrow(channelId);
+        if (!channel.getIsArchived()) {
+            return;
+        }
+        channel.setIsArchived(false);
+        channelRepository.save(channel);
+    }
 }

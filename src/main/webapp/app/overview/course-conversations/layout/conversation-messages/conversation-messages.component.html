@@ -23,6 +23,7 @@
             </div>
             <!-- list of messages -->
             <div
+                *ngIf="_activeConversation"
                 id="scrollableDiv"
                 #container
                 class="{{ totalNumberOfPosts !== 0 ? 'posting-infinite-scroll-container' : '' }}"
@@ -35,12 +36,17 @@
                     *ngFor="let post of posts; trackBy: postsTrackByFn"
                     [post]="post"
                     [showAnswers]="false"
+                    [readOnlyMode]="!!getAsChannel(_activeConversation)?.isArchived"
                     [isCourseMessagesPage]="true"
                     (openThread)="setPostForThread($event)"
                 >
                 </jhi-posting-thread>
             </div>
-            <jhi-message-inline-input *ngIf="_activeConversation && newPost" [posting]="newPost" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()">
+            <jhi-message-inline-input
+                *ngIf="_activeConversation && newPost && !getAsChannel(_activeConversation)?.isArchived"
+                [posting]="newPost"
+                (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"
+            >
             </jhi-message-inline-input>
         </div>
     </div>

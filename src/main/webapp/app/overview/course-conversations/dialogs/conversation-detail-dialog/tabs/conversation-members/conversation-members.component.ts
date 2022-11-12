@@ -11,6 +11,7 @@ import { from, map, Subject } from 'rxjs';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 interface SearchQuery {
     searchTerm: string;
@@ -28,6 +29,8 @@ export class ConversationMembers implements OnInit {
     public activeConversation: ConversationDto;
     @Output()
     changesPerformed = new EventEmitter<void>();
+
+    getAsChannel = getAsChannelDto;
 
     members: User[] = [];
     // page information

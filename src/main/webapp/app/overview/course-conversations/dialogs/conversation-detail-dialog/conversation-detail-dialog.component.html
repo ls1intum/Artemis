@@ -2,7 +2,7 @@
     <div class="modal-header">
         <h4 class="modal-title">
             <span>
-                <jhi-channel-icon *ngIf="getAsChannel(activeConversation) as channel" [isPublic]="channel.isPublic!"></jhi-channel-icon>
+                <jhi-channel-icon *ngIf="getAsChannel(activeConversation) as channel" [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!"></jhi-channel-icon>
                 {{ getConversationName(activeConversation) }}
             </span>
         </h4>
@@ -18,6 +18,11 @@
             <li class="nav-item">
                 <a class="nav-link" [class.active]="selectedTab === Tabs.MEMBERS" role="button" (click)="selectedTab = Tabs.MEMBERS">
                     {{ 'artemisApp.messages.conversationDetail.tabs.members' | artemisTranslate }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" [class.active]="selectedTab === Tabs.SETTINGS" role="button" (click)="selectedTab = Tabs.SETTINGS">
+                    {{ 'artemisApp.messages.conversationDetail.tabs.settings' | artemisTranslate }}
                 </a>
             </li>
         </ul>
@@ -37,6 +42,12 @@
                 (channelLeave)="onChannelLeave()"
                 (changesPerformed)="changesWerePerformed = true"
             ></jhi-conversation-info>
+            <jhi-conversation-settings
+                [activeConversation]="activeConversation"
+                [course]="course"
+                *ngSwitchCase="Tabs.SETTINGS"
+                (channelArchivalChange)="onArchivalChange()"
+            ></jhi-conversation-settings>
         </ng-container>
     </div>
 </div>

@@ -5,6 +5,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { ActivatedRoute } from '@angular/router';
 import { switchMap, take } from 'rxjs';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-course-conversations',
@@ -21,6 +22,7 @@ export class CourseConversationsComponent implements OnInit {
     conversations: ConversationDto[] = [];
     constructor(private activatedRoute: ActivatedRoute, public metisConversationService: MetisConversationService) {}
 
+    getAsChannel = getAsChannelDto;
     setPostInThread(post?: Post) {
         this.showPostThread = false;
 

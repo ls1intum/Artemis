@@ -250,7 +250,8 @@
             "toggleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",
             "toggleToSubmitted": "Setze Studierenden-Klausur auf abgegeben",
             "endNow": "Jetzt Beenden",
-            "ldap": "von LDAP synchronisieren"
+            "ldap": "von LDAP synchronisieren",
+            "notUndoable": "Diese Aktion kann nicht rückgängig gemacht werden."
         },
         "detail": {
             "field": "Feld",

@@ -25,4 +25,9 @@ public class GroupChatDTO extends ConversationDTO {
     public void setNamesOfOtherMembers(List<String> namesOfOtherMembers) {
         this.namesOfOtherMembers = namesOfOtherMembers;
     }
+
+    @Override
+    public String toString() {
+        return "GroupChatDTO{" + "namesOfOtherMembers=" + (namesOfOtherMembers == null ? "" : namesOfOtherMembers.toString()) + "} " + super.toString();
+    }
 }

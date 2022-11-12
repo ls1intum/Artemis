@@ -10,7 +10,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { getAsGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
-import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 @Component({
     selector: 'jhi-conversation-add-users-dialog',
@@ -35,7 +35,7 @@ export class ConversationAddUsersDialogComponent implements OnInit {
         }
     }
 
-    constructor(private alertService: AlertService, private activeModal: NgbActiveModal, public channelService: ChannelService) {}
+    constructor(private alertService: AlertService, private activeModal: NgbActiveModal, public channelService: ChannelService, public conversationService: ConversationService) {}
 
     ngOnInit(): void {}
 
@@ -50,7 +50,7 @@ export class ConversationAddUsersDialogComponent implements OnInit {
     getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
 
-    getConversationName = getConversationName;
+    getConversationName = this.conversationService.getConversationName;
 
     private addUsers(usersToAdd: User[]) {
         const userLogins = usersToAdd.map((user) => user.login!);

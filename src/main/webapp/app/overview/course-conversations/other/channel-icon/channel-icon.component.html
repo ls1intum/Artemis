@@ -1,4 +1,7 @@
 <ng-container>
-    <fa-icon *ngIf="isPublic === true" [icon]="faHashtag" size="xs"></fa-icon>
-    <fa-icon *ngIf="isPublic === false" [icon]="faLock" size="xs"></fa-icon>
+    <fa-icon *ngIf="isArchived === true" [icon]="faBoxArchive" size="xs"></fa-icon>
+    <ng-container *ngIf="isArchived === false">
+        <fa-icon *ngIf="isPublic === true" [icon]="faHashtag" size="xs"></fa-icon>
+        <fa-icon *ngIf="isPublic === false" [icon]="faLock" size="xs"></fa-icon>
+    </ng-container>
 </ng-container>

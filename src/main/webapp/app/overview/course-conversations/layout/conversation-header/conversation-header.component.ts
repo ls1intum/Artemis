@@ -6,9 +6,9 @@ import { Course } from 'app/entities/course.model';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { ConversationDetailDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { getConversationName } from 'app/shared/metis/conversations/conversation.util';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { from } from 'rxjs';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -27,11 +27,12 @@ export class ConversationHeaderComponent implements OnInit {
         private modalService: NgbModal,
         // instantiated at course-conversation.component.ts
         public metisConversationService: MetisConversationService,
+        public conversationService: ConversationService,
     ) {}
 
     getAsChannel = getAsChannelDto;
 
-    getConversationName = getConversationName;
+    getConversationName = this.conversationService.getConversationName;
 
     ngOnInit(): void {
         this.course = this.metisConversationService.course!;

@@ -41,7 +41,8 @@
             "conversationDetail": {
                 "tabs": {
                     "members": "Members",
-                    "info": "Info"
+                    "info": "Info",
+                    "settings": "Settings"
                 },
                 "memberTab": {
                     "findMembers": "Find members",

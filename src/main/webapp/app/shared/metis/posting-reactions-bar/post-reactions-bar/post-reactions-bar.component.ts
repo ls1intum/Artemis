@@ -20,6 +20,9 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
 
     // Icons
     farSmile = faSmile;
+
+    @Input()
+    readOnlyMode = false;
     @Input() showAnswers: boolean;
     @Input() sortedAnswerPosts: AnswerPost[];
     @Input() isCourseMessagesPage: boolean;

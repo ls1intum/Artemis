@@ -7,9 +7,9 @@ import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { get } from 'lodash-es';
 import {
-    ChannelUpdatePropertyDialogComponent,
-    PropertyTranslationKeys,
-} from 'app/overview/course-conversations/dialogs/channel-update-property-dialog/channel-update-property-dialog.component';
+    GenericUpdateTextPropertyDialog,
+    GenericUpdateTextPropertyTranslationKeys,
+} from 'app/overview/course-conversations/dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { from, map } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -37,9 +37,16 @@ export class ConversationInfoComponent implements OnInit {
     @Output()
     changesPerformed = new EventEmitter<void>();
 
+    readOnlyMode = false;
     constructor(private channelService: ChannelService, private modalService: NgbModal, private alertService: AlertService) {}
 
-    ngOnInit(): void {}
+    ngOnInit(): void {
+        if (this.activeConversation) {
+            if (getAsChannelDto(this.activeConversation)) {
+                this.readOnlyMode = !!getAsChannelDto(this.activeConversation)?.isArchived;
+            }
+        }
+    }
 
     leaveChannel($event: MouseEvent) {
         $event.stopPropagation();
@@ -53,8 +60,8 @@ export class ConversationInfoComponent implements OnInit {
     }
 
     openEditNameModal(event: MouseEvent) {
-        const asChannel = getAsChannelDto(this.activeConversation);
-        if (!asChannel) {
+        const channel = getAsChannelDto(this.activeConversation);
+        if (!channel) {
             return;
         }
 
@@ -68,12 +75,12 @@ export class ConversationInfoComponent implements OnInit {
         };
 
         event.stopPropagation();
-        this.openEditPropertyDialog(asChannel, 'name', 20, true, channelRegex, keys);
+        this.openEditPropertyDialog(channel, 'name', 20, true, channelRegex, keys);
     }
 
     openEditTopicModal(event: MouseEvent) {
-        const asChannel = getAsChannelDto(this.activeConversation);
-        if (!asChannel) {
+        const channel = getAsChannelDto(this.activeConversation);
+        if (!channel) {
             return;
         }
 
@@ -87,12 +94,12 @@ export class ConversationInfoComponent implements OnInit {
         };
 
         event.stopPropagation();
-        this.openEditPropertyDialog(asChannel, 'topic', 250, false, undefined, keys);
+        this.openEditPropertyDialog(channel, 'topic', 250, false, undefined, keys);
     }
 
     openDescriptionTopicModal(event: MouseEvent) {
-        const asChannel = getAsChannelDto(this.activeConversation);
-        if (!asChannel) {
+        const channel = getAsChannelDto(this.activeConversation);
+        if (!channel) {
             return;
         }
 
@@ -106,7 +113,7 @@ export class ConversationInfoComponent implements OnInit {
         };
 
         event.stopPropagation();
-        this.openEditPropertyDialog(asChannel, 'description', 250, false, undefined, keys);
+        this.openEditPropertyDialog(channel, 'description', 250, false, undefined, keys);
     }
 
     private openEditPropertyDialog(
@@ -115,9 +122,9 @@ export class ConversationInfoComponent implements OnInit {
         maxLength: number,
         isRequired: boolean,
         regexPattern: RegExp | undefined,
-        translationKeys: PropertyTranslationKeys,
+        translationKeys: GenericUpdateTextPropertyTranslationKeys,
     ) {
-        const modalRef: NgbModalRef = this.modalService.open(ChannelUpdatePropertyDialogComponent, {
+        const modalRef: NgbModalRef = this.modalService.open(GenericUpdateTextPropertyDialog, {
             size: 'lg',
             scrollable: false,
             backdrop: 'static',

@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -65,6 +66,12 @@ public class AnswerMessageService extends PostingService {
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
+
+        if (conversation instanceof Channel channel) {
+            if (channel.getIsArchived()) {
+                throw new BadRequestAlertException("A message cannot be created in an archived channel", METIS_ANSWER_POST_ENTITY_NAME, "channelarchived");
+            }
+        }
 
         // use post from database rather than user input
         answerMessage.setPost(post);

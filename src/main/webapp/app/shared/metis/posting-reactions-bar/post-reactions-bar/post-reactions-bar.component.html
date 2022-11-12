@@ -1,6 +1,7 @@
 <div class="me-0 row">
     <div class="col-auto p-0" *ngFor="let reactionMetaData of reactionMetaDataMap | keyvalue">
         <button
+            [disabled]="readOnlyMode"
             class="reaction-button clickable"
             [class.reaction-button--reacted]="reactionMetaData.value.hasReacted"
             (click)="updateReaction(reactionMetaData.key)"
@@ -10,7 +11,7 @@
             <span class="emoji-count" [class.reaction-count--reacted]="reactionMetaData.value.hasReacted">{{ reactionMetaData.value.count }}</span>
         </button>
     </div>
-    <div class="col-auto px-0">
+    <div class="col-auto px-0" [hidden]="readOnlyMode">
         <fa-icon
             [icon]="farSmile"
             class="reaction-button text-secondary clickable"
@@ -31,6 +32,7 @@
         (backdropClick)="toggleEmojiSelect()"
     >
         <jhi-emoji-picker
+            *ngIf="!readOnlyMode"
             [emojisToShowFilter]="emojisToShowFilter"
             (emojiSelect)="selectReaction($event)"
             [categoriesIcons]="categoriesIcons"
@@ -43,7 +45,7 @@
                 class="reaction-button pin"
                 [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
                 [class.reaction-button--reacted]="displayPriority === DisplayPriority.PINNED && currentUserIsAtLeastTutor"
-                [disabled]="!currentUserIsAtLeastTutor"
+                [disabled]="!currentUserIsAtLeastTutor || readOnlyMode"
                 (click)="currentUserIsAtLeastTutor && togglePin()"
             >
                 <jhi-emoji [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
@@ -54,7 +56,7 @@
                 class="reaction-button archive"
                 [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
                 [class.reaction-button--reacted]="displayPriority === DisplayPriority.ARCHIVED && currentUserIsAtLeastTutor"
-                [disabled]="!currentUserIsAtLeastTutor"
+                [disabled]="!currentUserIsAtLeastTutor || readOnlyMode"
                 (click)="currentUserIsAtLeastTutor && toggleArchive()"
             >
                 <jhi-emoji [emoji]="archiveEmojiId" [ngbTooltip]="archiveTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
@@ -62,7 +64,7 @@
         </div>
         <!-- start discussion -->
         <div class="col-auto p-0" *ngIf="sortedAnswerPosts.length === 0">
-            <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()">
+            <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()" [disabled]="readOnlyMode">
                 <jhi-emoji [emoji]="speechBalloonId"></jhi-emoji>
                 <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
             </button>

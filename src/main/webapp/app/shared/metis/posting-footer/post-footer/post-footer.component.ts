@@ -12,6 +12,8 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
     styleUrls: ['./post-footer.component.scss'],
 })
 export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
+    @Input()
+    readOnlyMode = false;
     @Input() previewMode: boolean;
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post context
