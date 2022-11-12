@@ -86,7 +86,16 @@
             </ng-template>
         </ng-container>
         <ng-container ngbNavItem [ngbNavItem]="3">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.version13">LTI 1.3</a>
+            <a ngbNavLink>
+                <span>{{ 'artemisApp.lti.version13' | artemisTranslate }}</span>
+                <fa-icon
+                    *ngIf="missingLti13ConfigurationField()"
+                    [icon]="faExclamationTriangle"
+                    class="text-warning"
+                    placement="top"
+                    ngbTooltip="{{ 'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate }}"
+                ></fa-icon>
+            </a>
             <ng-template ngbNavContent>
                 <dt>
                     <span>{{ 'artemisApp.lti.dynamicRegistrationUrl' | artemisTranslate }}</span>

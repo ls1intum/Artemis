@@ -54,13 +54,14 @@
                 "title": "Aufgabe starten",
                 "launching": "Am starten...",
                 "launchFailed": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es später noch einmal oder kontaktieren Sie den Administrator."
-            }
-        },
-        "dynamicRegistration": {
-            "title": "Dynamische Registrierung",
-            "registering": "Am registrieren",
-            "registeredSuccessfully": "Kurs erfolgreich registriert",
-            "registerFailed": "Fehler bei der dynamischen Registrierung"
+            },
+            "dynamicRegistration": {
+                "title": "Dynamische Registrierung",
+                "registering": "Am registrieren",
+                "registeredSuccessfully": "Kurs erfolgreich registriert",
+                "registerFailed": "Fehler bei der dynamischen Registrierung"
+            },
+            "missingConfigurationWarning": "Fehlende Werte in der LTI1.3-Konfiguration. Starts werden wahrscheinlich nicht funktionieren."
         }
     }
 }

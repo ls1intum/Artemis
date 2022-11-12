@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
@@ -25,6 +25,7 @@ export class CourseLtiConfigurationComponent implements OnInit {
 
     // Icons
     faSort = faSort;
+    faExclamationTriangle = faExclamationTriangle;
 
     constructor(private route: ActivatedRoute, private sortService: SortService, private courseManagementService: CourseManagementService) {}
 
@@ -43,6 +44,19 @@ export class CourseLtiConfigurationComponent implements OnInit {
                 });
             }
         });
+    }
+
+    /**
+     * Gets the dynamic registration url
+     */
+    missingLti13ConfigurationField(): boolean {
+        return (
+            !this.onlineCourseConfiguration.registrationId ||
+            !this.onlineCourseConfiguration.clientId ||
+            !this.onlineCourseConfiguration.authorizationUri ||
+            !this.onlineCourseConfiguration.jwkSetUri ||
+            !this.onlineCourseConfiguration.tokenUri
+        );
     }
 
     /**
