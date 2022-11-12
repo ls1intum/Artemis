@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -14,6 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -36,6 +40,9 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Autowired
     private UserRepository userRepo;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setup() {
@@ -135,24 +142,6 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseWithWrongShortName() throws Exception {
-        courseTestService.testUpdateCourseWithWrongShortName();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseWithoutId() throws Exception {
-        courseTestService.testUpdateCourseWithoutId();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testUpdateCourseWithoutIdAsInstructor() throws Exception {
-        courseTestService.testUpdateCourseWithoutIdAsInstructor();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourseIsEmpty() throws Exception {
         courseTestService.testUpdateCourseIsEmpty();
     }
@@ -177,6 +166,30 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateAndUpdateCourseWithCourseImage() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithCourseImage();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateAndUpdateCourseWithSetNewImageDespiteRemoval() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithSetNewImageDespiteRemoval();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateOldMembersInCourse() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
         var oldInstructorGroup = course.getInstructorGroupName();
@@ -188,7 +201,9 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
         gitlabRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName());
         jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
-        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+
+        MvcResult result = request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(course.getInstructorGroupName()).isEqualTo("new-editor-group");
     }
@@ -220,7 +235,8 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
         gitlabRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTaGroup);
         jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
-        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        MvcResult result = request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(course.getInstructorGroupName()).isEqualTo("new-instructor-group");
         assertThat(course.getEditorGroupName()).isEqualTo("new-editor-group");
@@ -239,7 +255,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         userRepo.save(user);
 
         gitlabRequestMockProvider.mockGetUserId(user.getLogin(), true, true);
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
     }
 
     @Test
@@ -254,7 +270,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         userRepo.save(user);
 
         gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
     }
 
     @Test
@@ -273,7 +289,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         assertThat(user).isPresent();
 
         gitlabRequestMockProvider.mockFailToUpdateOldGroupMembers(exercise.get(), user.get());
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError());
     }
 
     /**
@@ -302,7 +318,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         assertThat(user).isPresent();
 
         gitlabRequestMockProvider.mockFailToGetUserWhenUpdatingOldMembers(user.get());
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
     }
 
     @Test
@@ -318,7 +334,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         assertThat(exercise).isPresent();
 
         gitlabRequestMockProvider.mockFailToRemoveOldMember(exercise.get(), user.get());
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.getMvc().perform(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
     }
 
     @Test
@@ -852,5 +868,11 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
         courseTestService.testDeleteCourseDeletesOnlineConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testEditCourseRemoveExistingIcon() throws Exception {
+        courseTestService.testEditCourseRemoveExistingIcon();
     }
 }

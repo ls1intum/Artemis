@@ -2,6 +2,7 @@ import { artemis } from '../support/ArtemisTesting';
 import { authTokenKey } from '../support/constants';
 import { Course } from '../../../main/webapp/app/entities/course.model';
 import { ModelingExercise } from '../../../main/webapp/app/entities/modeling-exercise.model';
+import { convertCourseAfterMultiPart } from '../support/requests/CourseManagementRequests';
 
 const courseRequests = artemis.requests.courseManagement;
 const users = artemis.users;
@@ -18,7 +19,7 @@ describe('Logout tests', () => {
         cy.login(admin);
 
         courseRequests.createCourse(true).then((response) => {
-            course = response.body;
+            course = convertCourseAfterMultiPart(response);
             courseRequests.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
                 modelingExercise = resp.body;
             });
