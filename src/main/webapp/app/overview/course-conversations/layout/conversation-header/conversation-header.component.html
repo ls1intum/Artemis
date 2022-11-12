@@ -1,6 +1,6 @@
 <div *ngIf="activeConversation && course" class="conversation-header d-flex justify-content-between">
     <div>
-        <h3 class="conversation-name d-inline-block rounded p-2">
+        <h3 class="conversation-name d-inline-block rounded p-2" (click)="openConversationDetailDialog($event, INFO)">
             <ng-container *ngIf="getAsChannel(activeConversation) as channel">
                 <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!"></jhi-channel-icon>
             </ng-container>
@@ -11,7 +11,7 @@
     <div>
         <div class="btn-toolbar p-2" role="toolbar" aria-label="Toolbar with button groups">
             <div class="btn-group me-2" role="group" aria-label="First group">
-                <button type="button" class="btn btn-outline-secondary" (click)="openConversationDetailDialog($event)">
+                <button type="button" class="btn btn-outline-secondary" (click)="openConversationDetailDialog($event, MEMBERS)">
                     <fa-icon [icon]="faUserGroup"></fa-icon> {{ activeConversation.numberOfMembers || 0 }}
                 </button>
                 <button type="button" class="btn btn-outline-secondary" (click)="openAddUsersDialog($event)" *ngIf="!getAsChannel(activeConversation)?.isArchived">
