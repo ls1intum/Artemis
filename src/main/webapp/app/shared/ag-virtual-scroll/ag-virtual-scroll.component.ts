@@ -4,43 +4,7 @@ import { AgVsRenderEvent } from 'app/shared/ag-virtual-scroll/ag-vs-render-event
 @Component({
     selector: 'ag-virtual-scroll',
     templateUrl: './ag-virtual-scroll.component.html',
-    styles: [
-        `
-            :host {
-                display: block;
-                position: relative;
-                height: 100%;
-                width: 100%;
-                overflow-y: auto;
-            }
-
-            :host .content-height {
-                width: 1px;
-                opacity: 0;
-            }
-
-            :host .items-container {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-            }
-
-            :host::ng-deep .items-container.sticked-outside > .ag-vs-item:last-child {
-                position: absolute;
-                top: 0;
-                left: -100%;
-            }
-
-            :host::ng-deep > .ag-vs-item {
-                position: absolute;
-                top: 0;
-                left: 0;
-                box-shadow: 0 5px 5px rgba(0, 0, 0, 0.1);
-                background: #fff;
-            }
-        `,
-    ],
+    styleUrls: ['ag-virtual-scroll.style.css'],
 })
 export class AgVirtualSrollComponent implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
