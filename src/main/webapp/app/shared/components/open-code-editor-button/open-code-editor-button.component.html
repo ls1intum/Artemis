@@ -30,8 +30,8 @@
     ></button>
     <ng-template #popContent style="max-width: 660px">
         <div class="form-check form-switch" *ngIf="participations && participations.length > 1">
-            <input mdbCheckbox class="form-check-input" type="checkbox" [checked]="activeParticipation.testRun" (click)="switchPracticeMode()" />
-            <label class="form-check-label">
+            <input id="switchPracticeMode" mdbCheckbox class="form-check-input" type="checkbox" [checked]="activeParticipation.testRun" (click)="switchPracticeMode()" />
+            <label for="switchPracticeMode" class="form-check-label">
                 {{ 'artemisApp.exerciseActions.practiceMode.title' | artemisTranslate }}
             </label>
         </div>

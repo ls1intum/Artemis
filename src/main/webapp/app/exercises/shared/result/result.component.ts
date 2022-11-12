@@ -27,6 +27,7 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 /**
  * Enumeration object representing the possible options that
@@ -268,8 +269,8 @@ export class ResultComponent implements OnInit, OnChanges {
             // Based on its submission we test if the participation is in due time of the given exercise.
 
             const inDueTime = isParticipationInDueTime(this.participation, this.exercise);
-            const dueDate = ResultComponent.dateAsDayjs(getExerciseDueDate(this.exercise, this.participation));
-            const assessmentDueDate = ResultComponent.dateAsDayjs(this.exercise.assessmentDueDate);
+            const dueDate = convertDateFromServer(getExerciseDueDate(this.exercise, this.participation));
+            const assessmentDueDate = convertDateFromServer(this.exercise.assessmentDueDate);
 
             if (inDueTime && initializedResultWithScore(this.result)) {
                 // Submission is in due time of exercise and has a result with score
@@ -315,13 +316,6 @@ export class ResultComponent implements OnInit, OnChanges {
         }
 
         return ResultTemplateStatus.NO_RESULT;
-    }
-
-    private static dateAsDayjs(date: any) {
-        if (date == undefined) {
-            return undefined;
-        }
-        return dayjs.isDayjs(date) ? date : dayjs(date);
     }
 
     /**
