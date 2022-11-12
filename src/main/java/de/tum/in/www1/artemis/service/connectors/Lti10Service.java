@@ -107,7 +107,7 @@ public class Lti10Service {
         String firstName = getUserFirstNameFromLaunchRequest(launchRequest);
         String lastName = getUserLastNameFromLaunchRequest(launchRequest);
         ltiService.authenticateLtiUser(launchRequest.getLis_person_contact_email_primary(), launchRequest.getUser_id(), username, firstName, lastName,
-                onlineCourseConfiguration.requireExistingUser());
+                onlineCourseConfiguration.isRequireExistingUser());
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ltiService.onSuccessfulLtiAuthentication(user, launchRequest.getUser_id(), exercise);
         saveLtiOutcomeUrl(user, exercise, launchRequest.getLis_outcome_service_url(), launchRequest.getLis_result_sourcedid());

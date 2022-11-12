@@ -6,8 +6,8 @@ import static org.mockito.Mockito.*;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -146,7 +146,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
         if (existingUser != null) {
             jiraRequestMockProvider.mockGetUsernameForEmail(email, email, existingUser);
-            jiraRequestMockProvider.mockGetOrCreateUserLti(JIRA_USER, JIRA_PASSWORD, existingUser, email, "", new HashSet<>());
+            jiraRequestMockProvider.mockGetOrCreateUserLti(JIRA_USER, JIRA_PASSWORD, existingUser, email, "", Set.of("students"));
         }
         else {
             jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(email);
@@ -202,7 +202,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         var uriComponents = UriComponentsBuilder.fromUri(header).build();
-        assertParametersNewStudent(UriComponentsBuilder.fromUri(header).build().getQueryParams());
+        assertParametersExistingStudent(UriComponentsBuilder.fromUri(header).build().getQueryParams());
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
     }
 

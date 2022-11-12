@@ -137,7 +137,7 @@ class LtiServiceTest {
         user.setEmail("useremail@tum.de");
         when(userRepository.getUser()).thenReturn(user);
 
-        ltiService.authenticateLtiUser("useremail@tum.de", "userid", "username", "firstname", "lastname", onlineCourseConfiguration.requireExistingUser());
+        ltiService.authenticateLtiUser("useremail@tum.de", "userid", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         assertEquals(auth, SecurityContextHolder.getContext().getAuthentication());
     }
@@ -154,7 +154,7 @@ class LtiServiceTest {
         ltiUserId.setUser(ltiUser);
         when(ltiUserIdRepository.findByLtiUserId(ltiUserId.getLtiUserId())).thenReturn(Optional.of(ltiUserId));
 
-        ltiService.authenticateLtiUser("email", ltiUserId.getLtiUserId(), "username", "firstname", "lastname", onlineCourseConfiguration.requireExistingUser());
+        ltiService.authenticateLtiUser("email", ltiUserId.getLtiUserId(), "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         auth = SecurityContextHolder.getContext().getAuthentication();
         assertEquals(auth.getPrincipal(), ltiUser.getLogin());
@@ -165,7 +165,7 @@ class LtiServiceTest {
         SecurityContextHolder.getContext().setAuthentication(null);
 
         assertThrows(InternalAuthenticationServiceException.class,
-                () -> ltiService.authenticateLtiUser("", "userid", "username", "firstname", "lastname", onlineCourseConfiguration.requireExistingUser()));
+                () -> ltiService.authenticateLtiUser("", "userid", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser()));
     }
 
     @Test
@@ -174,7 +174,7 @@ class LtiServiceTest {
 
         when(ltiUserIdRepository.findByLtiUserId(ltiUserId.getLtiUserId())).thenReturn(Optional.of(ltiUserId));
 
-        ltiService.authenticateLtiUser("email", ltiUserId.getLtiUserId(), "username", "firstname", "lastname", onlineCourseConfiguration.requireExistingUser());
+        ltiService.authenticateLtiUser("email", ltiUserId.getLtiUserId(), "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         assertEquals(user.getLogin(), auth.getPrincipal());
@@ -187,7 +187,7 @@ class LtiServiceTest {
         when(userRepository.findOneByLogin("username")).thenReturn(Optional.empty());
         when(userCreationService.createUser(any(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(user);
 
-        ltiService.authenticateLtiUser("email", "ltiUserId", "username", "firstname", "lastname", onlineCourseConfiguration.requireExistingUser());
+        ltiService.authenticateLtiUser("email", "ltiUserId", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         assertEquals(user.getLogin(), auth.getPrincipal());
@@ -200,7 +200,7 @@ class LtiServiceTest {
         when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.of("username"));
         when(artemisAuthenticationProvider.getOrCreateUser(any(), any(), any(), any(), anyBoolean())).thenReturn(user);
 
-        ltiService.authenticateLtiUser("email", "ltiUserId", "username", "firstname", "lastname", onlineCourseConfiguration.requireExistingUser());
+        ltiService.authenticateLtiUser("email", "ltiUserId", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         assertEquals(user.getLogin(), auth.getPrincipal());
@@ -213,6 +213,6 @@ class LtiServiceTest {
         onlineCourseConfiguration.setRequireExistingUser(true);
 
         assertThrows(InternalAuthenticationServiceException.class,
-                () -> ltiService.authenticateLtiUser("email", "ltiUserId", "username", "firstname", "lastname", onlineCourseConfiguration.requireExistingUser()));
+                () -> ltiService.authenticateLtiUser("email", "ltiUserId", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser()));
     }
 }
