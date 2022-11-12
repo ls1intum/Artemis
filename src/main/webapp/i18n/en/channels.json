@@ -37,6 +37,12 @@
                 "question": "Do you really want to archive the channel {{ channelName }} ?",
                 "description": "Archiving a channel will prevent new users from joining. No one will be able to send messages to the channel. All existing members will still be able to access the channel. You can unarchive the channel at any time.",
                 "confirmButton": "Archive Channel"
+            },
+            "unArchiveChannel": {
+                "title": "Unarchive Channel {{ channelName }} ?",
+                "question": "Do you really want to unarchive the channel {{ channelName }} ?",
+                "description": "Unarchiving a channel will allow new users to join and post. You can archive the channel at any time.",
+                "confirmButton": "Unarchive Channel"
             }
         },
         "forms": {

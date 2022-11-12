@@ -5,6 +5,11 @@
             <div class="col-12 settings-section text-center" *ngIf="!channel.isArchived">
                 <button type="button" class="btn btn-danger" (click)="openArchivalModal($event)">{{ 'artemisApp.pages.archiveChannel.confirmButton' | artemisTranslate }}</button>
             </div>
+            <div class="col-12 settings-section text-center" *ngIf="channel.isArchived">
+                <button type="button" class="btn btn-danger" (click)="openUnArchivalModal($event)">
+                    {{ 'artemisApp.pages.unArchiveChannel.confirmButton' | artemisTranslate }}
+                </button>
+            </div>
         </ng-container>
     </div>
 </div>

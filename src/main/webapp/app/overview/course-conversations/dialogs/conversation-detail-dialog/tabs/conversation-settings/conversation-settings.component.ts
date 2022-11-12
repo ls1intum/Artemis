@@ -66,4 +66,42 @@ export class ConversationSettingsComponent {
             });
         });
     }
+
+    openUnArchivalModal(event: MouseEvent) {
+        const channel = getAsChannelDto(this.activeConversation);
+        if (!channel) {
+            return;
+        }
+
+        const keys = {
+            titleKey: 'artemisApp.pages.unArchiveChannel.title',
+            questionKey: 'artemisApp.pages.unArchiveChannel.question',
+            descriptionKey: 'artemisApp.pages.unArchiveChannel.description',
+            confirmButtonKey: 'artemisApp.pages.unArchiveChannel.confirmButton',
+        };
+
+        const translationParams = {
+            channelName: channel.name,
+        };
+
+        event.stopPropagation();
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialog, {
+            size: 'lg',
+            scrollable: false,
+            backdrop: 'static',
+        });
+        modalRef.componentInstance.translationParameters = translationParams;
+        modalRef.componentInstance.translationKeys = keys;
+        modalRef.componentInstance.canBeUndone = true;
+        modalRef.componentInstance.initialize();
+
+        from(modalRef.result).subscribe(() => {
+            this.channelService.unarchive(this.course?.id!, channel.id!).subscribe({
+                next: () => {
+                    this.channelArchivalChange.emit();
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+        });
+    }
 }
