@@ -1,21 +1,5 @@
-import { AgVsRenderEvent } from './classes/ag-vs-render-event.class';
-import { AgVsItemComponent } from './ag-vs-item/ag-vs-item.component';
-import {
-    AfterContentChecked,
-    Component,
-    ContentChildren,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnDestroy,
-    OnInit,
-    Output,
-    QueryList,
-    Renderer2,
-    SimpleChanges,
-    ViewChild,
-} from '@angular/core';
+import { AfterContentChecked, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { AgVsRenderEvent } from 'app/shared/ag-virtual-scroll/ag-vs-render-event.class';
 
 @Component({
     selector: 'ag-virtual-scroll',
