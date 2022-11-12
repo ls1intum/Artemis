@@ -28,6 +28,7 @@ import { CropperPosition } from 'app/shared/image-cropper/interfaces/cropper-pos
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 
 // Note: this component and all files in the image-cropper folder were taken from https://github.com/Mawi137/ngx-image-cropper because the framework was not maintained anymore
+// Note: Partially adapted to fit Artemis needs
 
 @Component({
     // tslint:disable-next-line:component-selector
@@ -37,10 +38,10 @@ import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cro
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImageCropperComponent implements OnChanges, OnInit {
-    private settings = new CropperSettings();
-    private setImageMaxSizeRetries = 0;
-    private moveStart: MoveStart;
-    private loadedImage?: LoadedImage;
+    settings = new CropperSettings();
+    setImageMaxSizeRetries = 0;
+    moveStart: MoveStart;
+    loadedImage?: LoadedImage;
 
     safeImgDataUrl: SafeUrl | string;
     safeTransformStyle: SafeStyle | string;
@@ -52,10 +53,10 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
     @ViewChild('sourceImage', { static: false }) sourceImage: ElementRef<HTMLDivElement>;
 
-    @Input() imageChangedEvent: any;
-    @Input() imageURL: string;
-    @Input() imageBase64: string;
-    @Input() imageFile: File;
+    @Input() imageChangedEvent?: Event;
+    @Input() imageURL?: string;
+    @Input() imageBase64?: string;
+    @Input() imageFile?: File;
 
     @Input() format: OutputFormat = this.settings.format;
     @Input() transform: ImageTransform = {};
@@ -107,6 +108,10 @@ export class ImageCropperComponent implements OnChanges, OnInit {
         this.reset();
     }
 
+    ngOnInit(): void {
+        this.settings.stepSize = this.initialStepSize;
+    }
+
     ngOnChanges(changes: SimpleChanges): void {
         this.onChangesUpdateSettings(changes);
         this.onChangesInputImage(changes);
@@ -156,7 +161,10 @@ export class ImageCropperComponent implements OnChanges, OnInit {
             this.reset();
         }
         if (changes.imageChangedEvent && this.isValidImageChangedEvent()) {
-            this.loadImageFile(this.imageChangedEvent.target.files[0]);
+            const element = this.imageChangedEvent?.currentTarget as HTMLInputElement;
+            if (element.files) {
+                this.loadImageFile(element.files[0]);
+            }
         }
         if (changes.imageURL && this.imageURL) {
             this.loadImageFromURL(this.imageURL);
@@ -170,7 +178,12 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     }
 
     private isValidImageChangedEvent(): boolean {
-        return this.imageChangedEvent?.target?.files?.length > 0;
+        if (!this.imageChangedEvent?.currentTarget) {
+            return false;
+        }
+        const element = this.imageChangedEvent.currentTarget as HTMLInputElement;
+
+        return !!element.files?.length;
     }
 
     private setCssTransform() {
@@ -185,10 +198,6 @@ export class ImageCropperComponent implements OnChanges, OnInit {
                 (this.transform.rotate || 0) +
                 'deg)',
         );
-    }
-
-    ngOnInit(): void {
-        this.settings.stepSize = this.initialStepSize;
     }
 
     private reset(): void {
