@@ -18,7 +18,25 @@
                 }
             },
             "detail": {
-                "title": "Bewertung"
+                "title": "Bewertung",
+                "feedback": "Feedback",
+                "feedbackForTask": "Feedback für Teilaufgabe: {{ taskName }}",
+                "codeIssue": {
+                    "name": "Codeissue",
+                    "title": "{{ scaCategory }} Issue in Datei {{ location }}",
+                    "line": "in Zeile {{ line }}",
+                    "lines": "in Zeilen {{ from }}-{{ to }}",
+                    "column": "Spalte {{ column }}",
+                    "columns": "Spalten {{ from }}-{{ to }}"
+                },
+                "test": {
+                    "name": "Testfall",
+                    "noInfo": "Kein Ergebnis für {{ name }}",
+                    "passed": "Test {{ name }} bestanden",
+                    "failed": "Test {{ name }} fehlgeschlagen",
+                    "passedTest": "1 bestandener Test",
+                    "passedTests": "{{ number }} bestandene Tests"
+                }
             },
             "noResult": "Kein Ergebnis",
             "noGradedResult": "Kein gewertetes Ergebnis",

@@ -9,8 +9,8 @@
             </svg>
         </i>
         <div class="form-check">
-            <input type="checkbox" class="form-check-input" [(ngModel)]="item.checked" [disabled]="item.disabled" [indeterminate]="item.indeterminate" />
-            <label class="form-check-label">
+            <input id="input" type="checkbox" class="form-check-input" [(ngModel)]="item.checked" [disabled]="item.disabled" [indeterminate]="item.indeterminate" />
+            <label for="input" class="form-check-label">
                 {{ item.text }}
             </label>
         </div>

@@ -37,6 +37,7 @@ declare global {
             loginWithGUI(credentials: CypressCredentials): any;
             getSettled(selector: string, options?: {}): Chainable<unknown>;
             reloadUntilFound(selector: string, interval?: number, timeout?: number): Chainable<undefined>;
+            formRequest(url: string, method: string, formData: FormData): Chainable<any>;
         }
     }
 }
@@ -138,4 +139,25 @@ Cypress.Commands.add('reloadUntilFound', (selector: string, interval = 2000, tim
             errorMsg: `Timed out finding an element matching the "${selector}" selector`,
         },
     );
+});
+
+Cypress.Commands.add('formRequest', (url: string, method: string, formData: FormData) => {
+    return cy
+        .intercept(method, url)
+        .as('formRequest')
+        .window()
+        .then((win) => {
+            const xhr = new win.XMLHttpRequest();
+            xhr.open(method, url);
+            const token = localStorage.getItem(authTokenKey)?.replace(/"/g, '');
+            if (!!token) {
+                const authHeader = 'Bearer ' + token;
+                xhr.setRequestHeader('Authorization', authHeader);
+            }
+            xhr.send(formData);
+        })
+        .wait('@formRequest')
+        .then((xhr: any) => {
+            return cy.wrap({ status: xhr.status, body: xhr.response.body });
+        });
 });

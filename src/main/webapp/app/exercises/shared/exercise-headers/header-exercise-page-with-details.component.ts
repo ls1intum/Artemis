@@ -53,8 +53,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     // Icons
     faQuestionCircle = faQuestionCircle;
 
-    constructor(private complaintService: ComplaintService) {}
-
     ngOnInit() {
         this.exerciseCategories = this.exercise.categories || [];
 
@@ -67,8 +65,13 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         } else {
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
             this.isBeforeStartDate = this.exercise.startDate ? this.exercise.startDate.isAfter(dayjs()) : !!this.exercise.releaseDate?.isAfter(dayjs());
-            if (this.course) {
-                this.individualComplaintDeadline = this.complaintService.getIndividualComplaintDueDate(this.exercise, this.course, this.studentParticipation);
+            if (this.course?.maxComplaintTimeDays) {
+                this.individualComplaintDeadline = ComplaintService.getIndividualComplaintDueDate(
+                    this.exercise,
+                    this.course.maxComplaintTimeDays,
+                    this.studentParticipation?.results?.last(),
+                    this.studentParticipation,
+                );
             }
             // The student can either still submit or there is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
