@@ -1,0 +1,11 @@
+<div class="conversation-list-entry" *ngIf="conversation" [class.active]="isActive">
+    <span class="conversation-name">
+        <ng-container *ngIf="getAsChannel(conversation) as channel">
+            <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!"></jhi-channel-icon>
+        </ng-container>
+        {{ getConversationName(conversation) }}
+    </span>
+    <span *ngIf="isConversationUnread">
+        <fa-icon [icon]="faMessage"></fa-icon>
+    </span>
+</div>

@@ -1,0 +1,23 @@
+.conversation-list-entry {
+    &.active {
+        background-color: var(--metis-light-blue);
+    }
+
+    &:hover {
+        color: var(--metis-course-discussion-select-bg);
+        background-color: var(--metis-blue);
+    }
+
+    cursor: pointer;
+    display: flex;
+    padding: 0.2rem;
+    color: var(--metis-light-gray);
+    justify-content: space-between;
+
+    &.conversation-name {
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}

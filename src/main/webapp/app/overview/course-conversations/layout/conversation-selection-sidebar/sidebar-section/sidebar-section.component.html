@@ -13,20 +13,11 @@
         <ul class="conversation-list" *ngIf="conversations && conversations.length">
             <li
                 *ngFor="let conversation of conversations; trackBy: conversationsTrackByFn"
-                class="conversation-list-item"
-                [class.selected]="activeConversation && activeConversation.id === conversation.id"
+                [conversation]="conversation"
+                jhi-conversation-entry
+                [isActive]="activeConversation && conversation && activeConversation.id! === conversation.id!"
                 (click)="conversationSelected.emit(conversation)"
-            >
-                <span class="conversation-list-item-user">
-                    <ng-container *ngIf="getAsChannel(conversation) as channel">
-                        <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!"></jhi-channel-icon>
-                    </ng-container>
-                    {{ getConversationName(conversation) }}
-                </span>
-                <span *ngIf="isConversationUnread(conversation)">
-                    <fa-icon [icon]="faMessage"></fa-icon>
-                </span>
-            </li>
+            ></li>
         </ul>
     </div>
 </div>

@@ -27,6 +27,7 @@ import { PrivateChannelRemoveUserDialog } from 'app/overview/course-conversation
 import { GenericUpdateTextPropertyDialog } from './dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { GenericConfirmationDialog } from './dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ConversationSettingsComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
+import { ConversationEntryComponent } from './layout/conversation-selection-sidebar/sidebar-section/conversation-entry/conversation-entry.component';
 
 const routes: Routes = [
     {
@@ -71,6 +72,7 @@ const routes: Routes = [
         GenericUpdateTextPropertyDialog,
         GenericConfirmationDialog,
         ConversationSettingsComponent,
+        ConversationEntryComponent,
     ],
 })
 export class CourseConversationsModule {}

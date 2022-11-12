@@ -30,7 +30,6 @@ export class SidebarSectionComponent {
 
     // icon imports
     faChevronRight = faChevronRight;
-    faMessage = faMessage;
 
     constructor(public conversationService: ConversationService) {}
 
