@@ -1,13 +1,4 @@
 <div class="content-height" [style.height.px]="contentHeight"></div>
-<div #itemsContainer class="items-container" [style.transform]="'translateY(' + paddingTop + 'px)'" [ngClass]="{ 'sticked-outside': currentStickyItem?.outside }">
+<div #itemsContainer class="items-container" [style.transform]="'translateY(' + paddingTop + 'px)'">
     <ng-content></ng-content>
 </div>
-<ag-vs-item
-    *ngIf="currentStickyItem?.comp && currentStickyItem.comp.isSticked"
-    [class]="currentStickyItem.comp.el.classList.value | stickedClasses"
-    [style.top.px]="currentScroll - (currentStickyItem.diffTop ? currentStickyItem.diffTop : 0)"
-    [style.height.px]="currentStickyItem.height"
-    [style.minHeight.px]="currentStickyItem.height"
->
-    <ng-container [ngTemplateOutlet]="currentStickyItem.comp.temp"></ng-container>
-</ag-vs-item>
