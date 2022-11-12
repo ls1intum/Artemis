@@ -12,7 +12,7 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
-import { AgVsRenderEvent } from 'ag-virtual-scroll';
+import { AgVsRenderEvent } from 'app/shared/ag-virtual-scroll/public_api';
 
 @Component({
     selector: 'jhi-course-discussion',
