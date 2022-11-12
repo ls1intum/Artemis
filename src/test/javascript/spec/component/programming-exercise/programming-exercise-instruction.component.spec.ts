@@ -370,7 +370,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(openModalStub).toHaveBeenCalledOnce();
         expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual({
-            componentInstance: { exercise, exerciseType: ExerciseType.PROGRAMMING, feedbackFilter: ['testBubbleSort'], result, showTestDetails: true },
+            componentInstance: {
+                exercise,
+                exerciseType: ExerciseType.PROGRAMMING,
+                feedbackFilter: ['testBubbleSort'],
+                result,
+                showTestDetails: true,
+                taskName: 'Implement Bubble Sort',
+            },
         });
     }));
 
@@ -432,7 +439,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(openModalStub).toHaveBeenCalledOnce();
         expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual({
-            componentInstance: { exercise, exerciseType: ExerciseType.PROGRAMMING, feedbackFilter: ['testBubbleSort'], result, showTestDetails: false },
+            componentInstance: {
+                exercise,
+                exerciseType: ExerciseType.PROGRAMMING,
+                feedbackFilter: ['testBubbleSort'],
+                result,
+                showTestDetails: false,
+                taskName: 'Implement Bubble Sort',
+            },
         });
     }));
 });

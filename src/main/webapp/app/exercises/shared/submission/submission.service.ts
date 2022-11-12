@@ -119,7 +119,7 @@ export class SubmissionService {
         const convertedResults: Result[] = [];
         if (results != undefined && results.length > 0) {
             results.forEach((result: Result) => {
-                result.completionDate = result.completionDate ? dayjs(result.completionDate) : undefined;
+                result.completionDate = convertDateFromServer(result.completionDate);
                 convertedResults.push(result);
             });
         }
@@ -131,7 +131,7 @@ export class SubmissionService {
         if (submissions != undefined && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
                 if (submission !== null) {
-                    submission.submissionDate = submission.submissionDate ? dayjs(submission.submissionDate) : undefined;
+                    submission.submissionDate = convertDateFromServer(submission.submissionDate);
                     SubmissionService.reconnectSubmissionAndResult(submission);
                     convertedSubmissions.push(submission);
                 }

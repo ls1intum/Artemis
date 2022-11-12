@@ -1,7 +1,7 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { CypressAssessmentType } from '../../../support/requests/CourseManagementRequests';
+import { CypressAssessmentType, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { artemis } from 'src/test/cypress/support/ArtemisTesting';
 import dayjs from 'dayjs/esm';
 
@@ -96,7 +96,7 @@ describe('Programming exercise assessment', () => {
     function createCourseWithProgrammingExercise() {
         cy.login(admin);
         return courseManagement.createCourse(true).then((response) => {
-            course = response.body;
+            course = convertCourseAfterMultiPart(response);
             courseManagement.addStudentToCourse(course, student);
             courseManagement.addTutorToCourse(course, tutor);
             courseManagement.addInstructorToCourse(course, instructor);
