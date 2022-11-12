@@ -6,10 +6,8 @@ import { AgVsRenderEvent } from 'app/shared/ag-virtual-scroll/ag-vs-render-event
     templateUrl: './ag-virtual-scroll.component.html',
     styleUrls: ['ag-virtual-scroll.style.css'],
 })
-export class AgVirtualSrollComponent implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
+export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
-
-    @ContentChildren(AgVsItemComponent) private queryVsItems: QueryList<AgVsItemComponent>;
 
     @Input('min-row-height') public minRowHeight = 40;
     @Input('height') public height = 'auto';
@@ -26,8 +24,6 @@ export class AgVirtualSrollComponent implements OnInit, OnChanges, OnDestroy, Af
 
     public startIndex = 0;
     public endIndex = 0;
-
-    private isTable = false;
 
     private scrollIsUp = false;
     private lastScrollIsUp = false;
@@ -80,8 +76,6 @@ export class AgVirtualSrollComponent implements OnInit, OnChanges, OnDestroy, Af
                     } else {
                         this.currentScroll = 0;
                         this.prepareDataItems();
-                        this.checkIsTable();
-                        this.queryVsItems.notifyOnChanges();
                     }
                 } else {
                     if (this.originalItems.length > this.prevOriginalItems.length) {
@@ -89,8 +83,6 @@ export class AgVirtualSrollComponent implements OnInit, OnChanges, OnDestroy, Af
                     }
 
                     this.prepareDataItems();
-                    this.checkIsTable();
-                    this.queryVsItems.notifyOnChanges();
                 }
 
                 this.prevOriginalItems = this.originalItems;
@@ -128,7 +120,6 @@ export class AgVirtualSrollComponent implements OnInit, OnChanges, OnDestroy, Af
         this.currentScroll = this.el.scrollTop;
 
         this.prepareDataItems();
-        this.isTable = this.checkIsTable();
         this.lastScrollIsUp = this.scrollIsUp;
         this.scrollIsUp = up;
         //         this.queryVsItems.notifyOnChanges();
@@ -140,7 +131,7 @@ export class AgVirtualSrollComponent implements OnInit, OnChanges, OnDestroy, Af
     }
 
     private registerCurrentItemsHeight() {
-        const children = this.getInsideChildrens();
+        const children = this.itemsContainerEl.children;
         for (let i = 0; i < children.length; i++) {
             const child = children[i];
             const realIndex = this.startIndex + i;
@@ -210,7 +201,7 @@ export class AgVirtualSrollComponent implements OnInit, OnChanges, OnDestroy, Af
     }
 
     private manipuleRenderedItems() {
-        const children = this.getInsideChildrens();
+        const children = this.itemsContainerEl.children;
         for (let i = 0; i < children.length; i++) {
             const child = children[i] as HTMLElement;
             if (child.style.display !== 'none') {
@@ -225,41 +216,6 @@ export class AgVirtualSrollComponent implements OnInit, OnChanges, OnDestroy, Af
                 child.classList.remove(`ag-virtual-scroll-${unclassName}`);
             }
         }
-    }
-
-    private getInsideChildrens(): HTMLCollection {
-        let childrens = this.itemsContainerEl.children;
-        if (childrens.length > 0) {
-            if (childrens[0].tagName.toUpperCase() === 'TABLE') {
-                childrens = childrens[0].children;
-                if (childrens.length > 0) {
-                    if (childrens[0].tagName.toUpperCase() === 'TBODY') {
-                        childrens = childrens[0].children;
-                    } else {
-                        childrens = childrens[1].children;
-                    }
-                }
-            }
-        }
-
-        return childrens;
-    }
-
-    private checkIsTable() {
-        let childrens = this.itemsContainerEl.children;
-        if (childrens.length > 0) {
-            if (childrens[0].tagName.toUpperCase() === 'TABLE') {
-                childrens = childrens[0].children;
-                if (childrens.length > 0) {
-                    if (childrens[0].tagName.toUpperCase() === 'THEAD') {
-                        const thead = childrens[0] as HTMLElement;
-                        thead.style.transform = `translateY(${Math.abs(this.paddingTop - this.currentScroll)}px)`;
-                    }
-                }
-                return true;
-            }
-        }
-        return false;
     }
 
     ngOnDestroy() {}
