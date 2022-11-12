@@ -13,13 +13,13 @@
         <div class="form-group">
             <div class="d-flex align-items-end">
                 <div>
-                    <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.csvFile.label">Select .csv file</label>
+                    <label for="importCSV" class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.csvFile.label">Select .csv file</label>
                     <jhi-help-icon placement="top" text="artemisApp.importUsers.csvFile.tooltip" class="me-1"></jhi-help-icon>
                 </div>
                 <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" *ngIf="isParsing"></fa-icon>
             </div>
             <div class="mt-2">
-                <input type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
+                <input id="importCSV" type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
                 <div *ngIf="validationError" class="mt-4 mb-2 text-danger">
                     <div [jhiTranslate]="'artemisApp.importUsers.usersForImport.importFailed'"></div>
                     <ul class="mt-1">
