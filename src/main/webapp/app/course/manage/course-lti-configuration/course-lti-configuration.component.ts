@@ -27,6 +27,27 @@ export class CourseLtiConfigurationComponent implements OnInit {
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
 
+    /*
+        onlineCourseConfigurationForm: FormGroup;
+
+            this.onlineCourseConfigurationForm = new FormGroup({
+            id: new FormControl(this.course.onlineCourseConfiguration?.id),
+            course: new FormControl(this.course),
+            ltiKey: new FormControl(ltiKey),
+            ltiSecret: new FormControl(ltiSecret),
+            userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
+            registrationId: new FormControl(ltiRegistrationId),
+            clientId: new FormControl(this.course.onlineCourseConfiguration?.clientId),
+            authorizationUri: new FormControl(this.course.onlineCourseConfiguration?.authorizationUri),
+            tokenUri: new FormControl(this.course.onlineCourseConfiguration?.tokenUri),
+            jwkSetUri: new FormControl(this.course.onlineCourseConfiguration?.jwkSetUri),
+        });
+
+            get userPrefix() {
+        return this.onlineCourseConfigurationForm.get('userPrefix')!;
+    }
+     */
+
     constructor(private route: ActivatedRoute, private sortService: SortService, private courseManagementService: CourseManagementService) {}
 
     /**

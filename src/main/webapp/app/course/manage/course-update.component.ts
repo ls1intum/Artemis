@@ -14,7 +14,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { LOGIN_PATTERN, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -36,7 +36,6 @@ export class CourseUpdateComponent implements OnInit {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     courseForm: FormGroup;
-    onlineCourseConfigurationForm: FormGroup;
     course: Course;
     isSaving: boolean;
     courseImageFile?: File;
@@ -121,23 +120,6 @@ export class CourseUpdateComponent implements OnInit {
                     }
                 }
             }
-        });
-
-        const ltiKey = this.course.onlineCourseConfiguration?.ltiKey ?? Math.random().toString(36).slice(2, 12);
-        const ltiSecret = this.course.onlineCourseConfiguration?.ltiSecret ?? Math.random().toString(36).slice(2, 12);
-        const ltiRegistrationId = this.course.onlineCourseConfiguration?.registrationId ?? Math.random().toString(36).slice(2, 12);
-
-        this.onlineCourseConfigurationForm = new FormGroup({
-            id: new FormControl(this.course.onlineCourseConfiguration?.id),
-            course: new FormControl(this.course),
-            ltiKey: new FormControl(ltiKey),
-            ltiSecret: new FormControl(ltiSecret),
-            userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
-            registrationId: new FormControl(ltiRegistrationId),
-            clientId: new FormControl(this.course.onlineCourseConfiguration?.clientId),
-            authorizationUri: new FormControl(this.course.onlineCourseConfiguration?.authorizationUri),
-            tokenUri: new FormControl(this.course.onlineCourseConfiguration?.tokenUri),
-            jwkSetUri: new FormControl(this.course.onlineCourseConfiguration?.jwkSetUri),
         });
 
         this.courseForm = new FormGroup(
@@ -227,9 +209,7 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         const course = this.courseForm.getRawValue();
-        course.onlineCourseConfiguration = this.isOnlineCourse() ? this.onlineCourseConfigurationForm.getRawValue() : null;
-
-        if (this.course.id !== undefined) {
+        if (course.id !== undefined) {
             this.subscribeToSaveResponse(this.courseService.update(course));
         } else {
             this.subscribeToSaveResponse(this.courseService.create(course));
@@ -334,10 +314,6 @@ export class CourseUpdateComponent implements OnInit {
 
     get shortName() {
         return this.courseForm.get('shortName')!;
-    }
-
-    get userPrefix() {
-        return this.onlineCourseConfigurationForm.get('userPrefix')!;
     }
 
     /**

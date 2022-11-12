@@ -86,27 +86,6 @@
                 "title": "Online Course",
                 "description": "Activate this checkbox for external online courses (e.g. on edX) so that students can use this Artemis course (via the LTI interface). This also allows automatic account creation if enabled by the Artemis system administrator."
             },
-            "onlineCourseConfiguration": {
-                "title": "Online Course Configuration",
-                "ltiKey": "LTI Key",
-                "ltiSecret": "LTI Secret",
-                "userPrefix": "User Prefix",
-                "registrationId": "Registration ID",
-                "clientId": "Client ID",
-                "authorizationUri": "Authorization URI",
-                "tokenUri": "Token URI",
-                "jwkSetUri": "JWKSet URI",
-                "ltiKeyTooltip": "Key used for LTI 1.0. You can freely change this value, but it is recommended to use the auto-generated value.",
-                "ltiSecretTooltip": "Secret used for LTI 1.0. You can freely change this value, but it is recommended to use the auto-generated value.",
-                "userPrefixTooltip": "Prefix used for the new users created for this course. It is recommended to use a value that clearly identifies users as part of this course.",
-                "registrationIdTooltip": "ID used to identify the registration of the learning platform. This must be unique across all courses. You can freely change this value, but it is recommended to use the auto-generated value.",
-                "clientIdTooltip": "It is possible to configure this field and the URI fields below manually, but it is highly recommended to use the Dynamic Registration Service to configure them automatically.",
-                "form": {
-                    "userPrefix": {
-                        "forbidden": "User prefix cannot contain special characters."
-                    }
-                }
-            },
             "registrationEnabled": {
                 "title": "Student Course Registration Enabled",
                 "description": "Activate this checkbox to allow students to register independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during registration."

@@ -86,27 +86,6 @@
                 "title": "Onlinekurs",
                 "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Kontoerstellung, sofern dies vom Artemis Systemadministrator eingestellt ist."
             },
-            "onlineCourseConfiguration": {
-                "title": "Onlinekurs-Konfiguration",
-                "ltiKey": "LTI-Key",
-                "ltiSecret": "LTI-Geheimnis",
-                "userPrefix": "Nutzer-Präfix",
-                "registrationId": "Registrierung ID",
-                "clientId": "Client ID",
-                "authorizationUri": "Authorization URI",
-                "tokenUri": "Token URI",
-                "jwkSetUri": "JWKSet URI",
-                "ltiKeyTooltip": "Für LTI 1.0 verwendeter Schlüssel. Sie können diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
-                "ltiSecretTooltip": "Für LTI 1.0 verwendetes Geheimnis. Sie können diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
-                "userPrefixTooltip": "Präfix für die neuen Benutzer, die für diesen Kurs erstellt werden. Es wird empfohlen, einen Wert zu verwenden, der die Benutzer eindeutig als Teil dieses Kurses identifiziert.",
-                "registrationIdTooltip": "ID, die zur Identifizierung der Registrierung der Lernplattform verwendet wird. Diese muss für alle Kurse eindeutig sein. Sie können diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
-                "clientIdTooltip": "Es ist möglich, dieses Feld und die folgenden URI-Felder manuell zu konfigurieren, aber es wird dringend empfohlen, den Dynamic Registration Service zur automatischen Konfiguration zu verwenden.",
-                "form": {
-                    "userPrefix": {
-                        "forbidden": "Nutzer Präfix darf keine Sonderzeichen beinhalten."
-                    }
-                }
-            },
             "registrationEnabled": {
                 "title": "Kursregistrierung für Studierende aktiviert",
                 "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs registrieren können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Registrierung bestätigen müssen."

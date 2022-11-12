@@ -49,6 +49,27 @@
             "requireExistingUserTooltip": "Wenn ausgewählt, erfordert das Starten der Übung einen bestehenden Benutzer in Artemis. Wenn abgewählt, kann ein Benutzer beim ersten Start erstellt werden, wenn er noch nicht existiert",
             "lookupUserByEmailTooltip": "Wenn ausgewählt, versucht Artemis einen vorhandenen Benutzer mit der angegebenen E-Mail Adresse zu finden"
         },
+        "onlineCourseConfiguration": {
+            "title": "Onlinekurs-Konfiguration",
+            "ltiKey": "LTI-Key",
+            "ltiSecret": "LTI-Geheimnis",
+            "userPrefix": "Nutzer-Präfix",
+            "registrationId": "Registrierung ID",
+            "clientId": "Client ID",
+            "authorizationUri": "Authorization URI",
+            "tokenUri": "Token URI",
+            "jwkSetUri": "JWKSet URI",
+            "ltiKeyTooltip": "Für LTI 1.0 verwendeter Schlüssel. Sie können diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
+            "ltiSecretTooltip": "Für LTI 1.0 verwendetes Geheimnis. Sie können diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
+            "userPrefixTooltip": "Präfix für die neuen Benutzer, die für diesen Kurs erstellt werden. Es wird empfohlen, einen Wert zu verwenden, der die Benutzer eindeutig als Teil dieses Kurses identifiziert.",
+            "registrationIdTooltip": "ID, die zur Identifizierung der Registrierung der Lernplattform verwendet wird. Diese muss für alle Kurse eindeutig sein. Sie können diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
+            "clientIdTooltip": "Es ist möglich, dieses Feld und die folgenden URI-Felder manuell zu konfigurieren, aber es wird dringend empfohlen, den Dynamic Registration Service zur automatischen Konfiguration zu verwenden.",
+            "form": {
+                "userPrefix": {
+                    "forbidden": "Nutzer Präfix darf keine Sonderzeichen beinhalten."
+                }
+            }
+        },
         "lti13": {
             "launch": {
                 "title": "Aufgabe starten",

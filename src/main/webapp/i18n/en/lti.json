@@ -49,6 +49,27 @@
             "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",
             "lookupUserByEmailTooltip": "If selected, Artemis will try to find an existing user with the provided email"
         },
+        "onlineCourseConfiguration": {
+            "title": "Online Course Configuration",
+            "ltiKey": "LTI Key",
+            "ltiSecret": "LTI Secret",
+            "userPrefix": "User Prefix",
+            "registrationId": "Registration ID",
+            "clientId": "Client ID",
+            "authorizationUri": "Authorization URI",
+            "tokenUri": "Token URI",
+            "jwkSetUri": "JWKSet URI",
+            "ltiKeyTooltip": "Key used for LTI 1.0. You can freely change this value, but it is recommended to use the auto-generated value.",
+            "ltiSecretTooltip": "Secret used for LTI 1.0. You can freely change this value, but it is recommended to use the auto-generated value.",
+            "userPrefixTooltip": "Prefix used for the new users created for this course. It is recommended to use a value that clearly identifies users as part of this course.",
+            "registrationIdTooltip": "ID used to identify the registration of the learning platform. This must be unique across all courses. You can freely change this value, but it is recommended to use the auto-generated value.",
+            "clientIdTooltip": "It is possible to configure this field and the URI fields below manually, but it is highly recommended to use the Dynamic Registration Service to configure them automatically.",
+            "form": {
+                "userPrefix": {
+                    "forbidden": "User prefix cannot contain special characters."
+                }
+            }
+        },
         "lti13": {
             "launch": {
                 "title": "Launch exercise",
