@@ -1,3 +1,9 @@
+/**
+ * Component based on Open Source Project ag-virtual-scroll
+ * https://github.com/ericferreira1992/ag-virtual-scroll
+ *
+ */
+
 import { AfterContentChecked, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { AgVsRenderEvent } from 'app/shared/ag-virtual-scroll/ag-vs-render-event.class';
 
@@ -12,6 +18,9 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
     @Input('min-row-height') public minRowHeight = 40;
     @Input('height') public height = 'auto';
     @Input('items') public originalItems: any[] = [];
+
+    @Input() forceReload: boolean;
+    @Output() forceReloadChange = new EventEmitter<boolean>();
 
     @Output() private onItemsRender = new EventEmitter<AgVsRenderEvent<any>>();
 
@@ -28,9 +37,11 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
     private scrollIsUp = false;
     private lastScrollIsUp = false;
 
-    private previousItemsHeight: number[] = [];
+    private previousItemsHeight: any[] = [];
 
     public containerWidth = 0;
+
+    scrollListener: any;
 
     public get el() {
         return this.elRef && this.elRef.nativeElement;
@@ -43,32 +54,19 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
     constructor(private elRef: ElementRef<HTMLElement>, private renderer: Renderer2) {}
 
     ngOnInit() {
-        this.renderer.listen(this.el, 'scroll', this.onScroll.bind(this));
+        this.scrollListener = this.renderer.listen(this.el, 'scroll', this.onScroll.bind(this));
+        this.el.style.height = this.height;
+        this.minRowHeight = Number(this.minRowHeight);
     }
 
     ngOnChanges(changes: SimpleChanges) {
         setTimeout(() => {
-            if ('height' in changes) {
-                this.el.style.height = this.height;
-            }
-
-            if ('minRowHeight' in changes) {
-                if (typeof this.minRowHeight === 'string') {
-                    if (Number(this.minRowHeight)) {
-                        this.minRowHeight = Number(this.minRowHeight);
-                    } else {
-                        console.warn('The [min-row-height] @Input is invalid, the value must be of type "number".');
-                        this.minRowHeight = 40;
-                    }
-                }
-            }
-
             if ('originalItems' in changes) {
                 if (!this.originalItems) {
                     this.originalItems = [];
                 }
 
-                if (this.currentAndPrevItemsAreDiff()) {
+                if (this.forceReload) {
                     this.previousItemsHeight = new Array(this.originalItems.length).fill(null);
 
                     if (this.el.scrollTop !== 0) {
@@ -80,12 +78,26 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
                 } else {
                     if (this.originalItems.length > this.prevOriginalItems.length) {
                         this.previousItemsHeight = this.previousItemsHeight.concat(new Array(this.originalItems.length - this.prevOriginalItems.length).fill(null));
+                        this.prepareDataItems();
+                    } else {
+                        const begin = 0;
+                        const end = this.prevOriginalItems.length - 1;
+
+                        for (let i = begin; i <= end; i++) {
+                            if (this.originalItems[i] !== this.prevOriginalItems[i]) {
+                                this.previousItemsHeight[i] = null;
+
+                                const displayIndex = i - this.startIndex;
+                                if (displayIndex >= 0 && displayIndex <= this.endIndex) {
+                                    // if item is displayed to the user then it is updated
+                                    this.items[displayIndex] = this.originalItems[i];
+                                }
+                            }
+                        }
                     }
-
-                    this.prepareDataItems();
                 }
-
                 this.prevOriginalItems = this.originalItems;
+                this.forceReloadChange.emit((this.forceReload = false));
             }
         });
     }
@@ -99,22 +111,6 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
         this.manipuleRenderedItems();
     }
 
-    private currentAndPrevItemsAreDiff() {
-        if (this.originalItems.length >= this.prevOriginalItems.length) {
-            const begin = 0;
-            const end = this.prevOriginalItems.length - 1;
-            for (let i = begin; i <= end; i++) {
-                if (this.originalItems[i] !== this.prevOriginalItems[i]) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        return true;
-    }
-
     private onScroll() {
         const up = this.el.scrollTop < this.currentScroll;
         this.currentScroll = this.el.scrollTop;
@@ -122,7 +118,6 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
         this.prepareDataItems();
         this.lastScrollIsUp = this.scrollIsUp;
         this.scrollIsUp = up;
-        //         this.queryVsItems.notifyOnChanges();
     }
 
     private prepareDataItems() {
@@ -205,18 +200,14 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
         for (let i = 0; i < children.length; i++) {
             const child = children[i] as HTMLElement;
             if (child.style.display !== 'none') {
-                const realIndex = this.startIndex + i;
                 child.style.minHeight = `${this.minRowHeight}px`;
                 child.style.height = `${this.minRowHeight}px`;
-
-                const className = (realIndex + 1) % 2 === 0 ? 'even' : 'odd';
-                const unclassName = className === 'even' ? 'odd' : 'even';
-
-                child.classList.add(`ag-virtual-scroll-${className}`);
-                child.classList.remove(`ag-virtual-scroll-${unclassName}`);
             }
         }
     }
 
-    ngOnDestroy() {}
+    ngOnDestroy() {
+        // stop listening to scroll events
+        this.scrollListener();
+    }
 }

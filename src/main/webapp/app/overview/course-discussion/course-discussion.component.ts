@@ -31,6 +31,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     pagingEnabled = true;
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
+    forceReload = true;
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly pageType = PageType.OVERVIEW;
@@ -125,6 +126,8 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      */
     onSelectContext(): void {
         this.page = 1;
+        // will scroll to the top of the posts
+        this.forceReload = true;
         super.onSelectContext();
     }
 
