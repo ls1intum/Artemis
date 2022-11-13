@@ -3,7 +3,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { catchError, map, Observable, of, OperatorFunction } from 'rxjs';
 import { CourseManagementService, RoleGroup } from 'app/course/manage/course-management.service';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
-import { User } from 'app/core/user/user.model';
+import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { faX } from '@fortawesome/free-solid-svg-icons';
 
@@ -50,19 +50,19 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor {
     // icons
     faX = faX;
 
-    selectedUsers: User[] = [];
+    selectedUsers: UserPublicInfoDTO[] = [];
     isSearching = false;
     searchFailed = false;
 
     constructor(private courseManagementService: CourseManagementService) {}
 
-    usersFormatter = (user: User) => this.getUserLabel(user);
+    usersFormatter = (user: UserPublicInfoDTO) => this.getUserLabel(user);
 
     trackIdentity(index: number, item: User) {
         return item.id;
     }
 
-    getUserLabel(user: User) {
+    getUserLabel(user: UserPublicInfoDTO) {
         let label = '';
         if (user.firstName) {
             label += user.firstName + ' ';
@@ -87,7 +87,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor {
         this.onChange(this.selectedUsers);
     }
 
-    search: OperatorFunction<string, readonly User[]> = (text$: Observable<string>) =>
+    search: OperatorFunction<string, readonly UserPublicInfoDTO[]> = (text$: Observable<string>) =>
         text$.pipe(
             debounceTime(300),
             distinctUntilChanged(),
@@ -110,11 +110,11 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor {
 
     // === START CONTROL VALUE ACCESSOR ===
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onChange = (selectedUsers: User[]) => {};
+    onChange = (selectedUsers: UserPublicInfoDTO[]) => {};
 
     onTouched = () => {};
 
-    registerOnChange(fn: (selectedUsers: User[]) => void): void {
+    registerOnChange(fn: (selectedUsers: UserPublicInfoDTO[]) => void): void {
         this.onChange = fn;
     }
 
@@ -126,7 +126,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor {
         this.disabled = isDisabled;
     }
 
-    writeValue(selectedUsers: User[]): void {
+    writeValue(selectedUsers: UserPublicInfoDTO[]): void {
         if (this.multiSelect) {
             this.selectedUsers = selectedUsers ?? [];
         } else {
@@ -135,7 +135,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor {
     }
     // === END CONTROL VALUE ACCESSOR ===
 
-    private onUserSelected(selectedUser: User) {
+    private onUserSelected(selectedUser: UserPublicInfoDTO) {
         if (selectedUser) {
             if (!this.selectedUsers.find((user) => user.id === selectedUser.id)) {
                 if (this.multiSelect) {

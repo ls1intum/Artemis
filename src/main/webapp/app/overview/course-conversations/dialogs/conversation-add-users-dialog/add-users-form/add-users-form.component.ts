@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { User } from 'app/core/user/user.model';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 export interface AddUsersFormData {
-    selectedUsers?: User[];
+    selectedUsers?: UserPublicInfoDTO[];
 }
 
 @Component({

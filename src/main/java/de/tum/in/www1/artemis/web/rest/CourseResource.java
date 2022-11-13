@@ -24,6 +24,7 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -45,6 +46,7 @@ import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.*;
@@ -764,7 +766,8 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/users/search")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<User>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName, @RequestParam("roles") List<String> roles) {
+    public ResponseEntity<List<UserPublicInfoDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName,
+            @RequestParam("roles") List<String> roles) {
         // ToDo: Discuss what information should be hidden as this is a public endpoint
         log.debug("REST request to search users in course : {} with login or name : {}", courseId, loginOrName);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -788,10 +791,17 @@ public class CourseResource {
             groups.add(course.getEditorGroupName());
         }
         User searchingUser = userRepository.getUser();
-        var result = userRepository.searchAllByLoginOrNameInGroups(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
+        var originalPage = userRepository.searchAllByLoginOrNameInGroups(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
 
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), result);
-        return new ResponseEntity<>(result.getContent(), headers, HttpStatus.OK);
+        var resultDTO = new ArrayList<UserPublicInfoDTO>();
+        for (var user : originalPage) {
+            var dto = new UserPublicInfoDTO(user);
+            dto = UserPublicInfoDTO.assignRoleProperties(course, user, dto);
+            resultDTO.add(dto);
+        }
+        var dtoPage = new PageImpl<>(resultDTO, originalPage.getPageable(), originalPage.getTotalElements());
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), dtoPage);
+        return new ResponseEntity<>(dtoPage.getContent(), headers, HttpStatus.OK);
     }
 
     /**
