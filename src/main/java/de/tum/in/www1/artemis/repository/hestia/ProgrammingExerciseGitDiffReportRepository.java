@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.repository.hestia;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 
@@ -21,5 +23,7 @@ public interface ProgrammingExerciseGitDiffReportRepository extends JpaRepositor
      */
     List<ProgrammingExerciseGitDiffReport> findByProgrammingExerciseId(Long exerciseId);
 
+    @Transactional // ok because of delete
+    @Modifying
     void deleteByProgrammingExerciseId(Long exerciseId);
 }

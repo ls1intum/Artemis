@@ -6,7 +6,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -69,7 +68,6 @@ public class ExampleSubmissionService {
      * Deletes a ExampleSubmission with the given ID, cleans up the tutor participations, removes the result and the submission
      * @param exampleSubmissionId the ID of the ExampleSubmission which should be deleted
      */
-    @Transactional // ok because of delete
     public void deleteById(long exampleSubmissionId) {
         Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(exampleSubmissionId);
 
@@ -81,10 +79,10 @@ public class ExampleSubmissionService {
             }
 
             Long exerciseId = exampleSubmission.getExercise().getId();
-            Optional<Exercise> exerciseWithExampleSubmission = exerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId);
+            Optional<Exercise> optionalExercise = exerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId);
 
             // Remove the reference to the exercise when the example submission is deleted
-            exerciseWithExampleSubmission.ifPresent(exercise -> exercise.removeExampleSubmission(exampleSubmission));
+            optionalExercise.ifPresent(exercise -> exercise.removeExampleSubmission(exampleSubmission));
 
             // due to Cascade.Remove this will also remove the submission and the result(s) in case they exist
             exampleSubmissionRepository.delete(exampleSubmission);
