@@ -159,7 +159,7 @@ public class ParticipationResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
         // if the user is a student and the exercise has a release date, they cannot start the exercise before the release date
-        ZonedDateTime releaseOrStartDate = exercise.getRepositoryUnlockDate();
+        ZonedDateTime releaseOrStartDate = exercise.getIndividualReleaseDate();
         if (releaseOrStartDate != null && releaseOrStartDate.isAfter(now())) {
             if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
                 throw new AccessForbiddenException("Students cannot start an exercise before the release date");

@@ -794,7 +794,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date or start date.
      */
     @JsonIgnore
-    public ZonedDateTime getRepositoryUnlockDate() {
+    public ZonedDateTime getIndividualReleaseDate() {
         if (isExamExercise()) {
             return getExerciseGroup().getExam().getStartDate();
         }
