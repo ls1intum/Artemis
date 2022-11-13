@@ -1,18 +1,18 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
-import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { from, map, Subject } from 'rxjs';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { ConversationUser } from 'app/entities/metis/conversation/conversation-user-dto.model';
 
 interface SearchQuery {
     searchTerm: string;
@@ -32,8 +32,9 @@ export class ConversationMembers implements OnInit {
     changesPerformed = new EventEmitter<void>();
     canAddUsersToConversation = canAddUsersToConversation;
     getAsChannel = getAsChannelDto;
+    isChannel = isChannelDto;
 
-    members: User[] = [];
+    members: ConversationUser[] = [];
     // page information
     page = 1;
     itemsPerPage = 10;
@@ -44,11 +45,20 @@ export class ConversationMembers implements OnInit {
     // icons
     faMagnifyingGlass = faMagnifyingGlass;
     faUserPlus = faUserPlus;
+
+    selectedFilter: ConversationMemberSearchFilter = ConversationMemberSearchFilter.ALL;
+
+    ALL = ConversationMemberSearchFilter.ALL;
+    INSTRUCTOR_FILTER_OPTION = ConversationMemberSearchFilter.INSTRUCTOR;
+    EDITOR_FILTER_OPTION = ConversationMemberSearchFilter.EDITOR;
+    TUTOR_FILTER_OPTION = ConversationMemberSearchFilter.TUTOR;
+    STUDENT_FILTER_OPTION = ConversationMemberSearchFilter.STUDENT;
+    CHANNEL_ADMIN_FILTER_OPTION = ConversationMemberSearchFilter.CHANNEL_ADMIN;
+
     constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal) {}
 
-    private onSuccess(members: User[] | null, headers: HttpHeaders): void {
-        this.totalItems = Number(headers.get('X-Total-Count'));
-        this.members = members || [];
+    trackIdentity(index: number, item: ConversationUser) {
+        return item.id;
     }
 
     openAddUsersDialog(event: MouseEvent) {
@@ -68,10 +78,6 @@ export class ConversationMembers implements OnInit {
             force: true,
         });
         this.changesPerformed.emit();
-    }
-
-    trackIdentity(index: number, item: User) {
-        return item.id;
     }
 
     ngOnInit(): void {
@@ -95,11 +101,18 @@ export class ConversationMembers implements OnInit {
                     this.searchTerm = searchTerm;
                 }),
                 switchMap(() =>
-                    this.conversationService.searchMembersOfConversation(this.course.id!, this.activeConversation.id!, this.searchTerm, this.page - 1, this.itemsPerPage),
+                    this.conversationService.searchMembersOfConversation(
+                        this.course.id!,
+                        this.activeConversation.id!,
+                        this.searchTerm,
+                        this.page - 1,
+                        this.itemsPerPage,
+                        this.selectedFilter,
+                    ),
                 ),
             )
             .subscribe({
-                next: (res: HttpResponse<User[]>) => {
+                next: (res: HttpResponse<ConversationUser[]>) => {
                     this.isSearching = false;
                     this.onSuccess(res.body, res.headers);
                 },
@@ -110,6 +123,14 @@ export class ConversationMembers implements OnInit {
             });
         this.search$.next({
             searchTerm: '',
+            force: true,
+        });
+    }
+
+    onFilterChange(newFilterValue: ConversationMemberSearchFilter) {
+        this.selectedFilter = newFilterValue;
+        this.search$.next({
+            searchTerm: this.searchTerm,
             force: true,
         });
     }
@@ -127,5 +148,10 @@ export class ConversationMembers implements OnInit {
             searchTerm,
             force: false,
         });
+    }
+
+    private onSuccess(members: ConversationUser[] | null, headers: HttpHeaders): void {
+        this.totalItems = Number(headers.get('X-Total-Count'));
+        this.members = members || [];
     }
 }

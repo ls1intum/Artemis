@@ -7,15 +7,15 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
 import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { isGroupChat, isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
-import { isChannel, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
+import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE

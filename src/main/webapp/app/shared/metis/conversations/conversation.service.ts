@@ -9,6 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
+import { ConversationUser } from 'app/entities/metis/conversation/conversation-user-dto.model';
 
 type EntityArrayResponseType = HttpResponse<ConversationDto[]>;
 
@@ -19,6 +20,14 @@ export type UserSortingParameter = {
     sortDirection: UserSortDirection;
 };
 
+export enum ConversationMemberSearchFilter {
+    ALL,
+    INSTRUCTOR,
+    EDITOR,
+    TUTOR,
+    STUDENT,
+    CHANNEL_ADMIN, // this is a special role that is only used for channels
+}
 @Injectable({ providedIn: 'root' })
 export class ConversationService {
     public resourceUrl = SERVER_API_URL + '/api/courses/';
@@ -53,13 +62,21 @@ export class ConversationService {
             return '';
         }
     };
-    searchMembersOfConversation(courseId: number, conversationId: number, loginOrName: string, page: number, size: number): Observable<HttpResponse<User[]>> {
+
+    searchMembersOfConversation(
+        courseId: number,
+        conversationId: number,
+        loginOrName: string,
+        page: number,
+        size: number,
+        filter: ConversationMemberSearchFilter,
+    ): Observable<HttpResponse<ConversationUser[]>> {
         const sortingParameters: UserSortingParameter[] = [
             { sortProperty: 'firstName', sortDirection: 'asc' },
             { sortProperty: 'lastName', sortDirection: 'asc' },
         ];
-        const params = this.creatSearchPagingParams(sortingParameters, page, size, loginOrName);
-        return this.http.get<User[]>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/members/search`, {
+        const params = this.creatSearchPagingParams(sortingParameters, page, size, loginOrName, filter);
+        return this.http.get<ConversationUser[]>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/members/search`, {
             observe: 'response',
             params,
         });
@@ -101,8 +118,11 @@ export class ConversationService {
         return res;
     };
 
-    private creatSearchPagingParams = (sortingParameters: UserSortingParameter[], page: number, size: number, loginOrName: string) => {
+    private creatSearchPagingParams = (sortingParameters: UserSortingParameter[], page: number, size: number, loginOrName: string, filter: ConversationMemberSearchFilter) => {
         let params = new HttpParams();
+        if (`${filter}` !== `${ConversationMemberSearchFilter.ALL}`) {
+            params = params.set('filter', ConversationMemberSearchFilter[filter]);
+        }
         params = params.set('loginOrName', loginOrName);
         for (const sortParameter of sortingParameters) {
             params = params.append('sort', `${sortParameter.sortProperty},${sortParameter.sortDirection}`);

@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 
 /**
- * A DTO representing a user with the minimal information allowed to be seen by other users in a cousrse
+ * A DTO representing a user with the minimal information allowed to be seen by other users in a course
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class UserPublicInfoDTO {
@@ -47,7 +47,7 @@ public class UserPublicInfoDTO {
         this.isStudent = false;
     }
 
-    public static UserPublicInfoDTO assignRoleProperties(Course course, User user, UserPublicInfoDTO userPublicInfoDTO) {
+    public static void assignRoleProperties(Course course, User user, UserPublicInfoDTO userPublicInfoDTO) {
         if (course.getStudentGroupName() != null && user.getGroups().contains(course.getStudentGroupName())) {
             userPublicInfoDTO.setIsStudent(true);
         }
@@ -60,7 +60,6 @@ public class UserPublicInfoDTO {
         if (course.getEditorGroupName() != null && user.getGroups().contains(course.getEditorGroupName())) {
             userPublicInfoDTO.setIsEditor(true);
         }
-        return userPublicInfoDTO;
     }
 
     public Long getId() {

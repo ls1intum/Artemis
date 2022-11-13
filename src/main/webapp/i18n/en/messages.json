@@ -11,7 +11,14 @@
                 "instructionForNewConversation": "You can search for other users via the searchbar above and start a new conversation",
                 "searchForUsers": "Search users within course",
                 "minQueryLengthHint": "Type min. {{ length }} letters",
-                "others": "{{ count }} others"
+                "others": "{{ count }} others",
+                "allFilter": "All Members",
+                "instructorFilter": "Course Instructors",
+                "editorFilter": "Course Editors",
+                "tutorFilter": "Course Tutors",
+                "studentFilter": "Course Students",
+                "channelAdminFilter": "Channel Admins",
+                "channelAdminToolTip": "Channel Admin"
             },
             "searchBarPlaceholder": "Search for a message within the current conversation",
             "submit": "Send",

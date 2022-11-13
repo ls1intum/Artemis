@@ -1,5 +1,5 @@
 import { Component, EventEmitter, HostBinding, Input, OnInit, Output } from '@angular/core';
-import { faEllipsis, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardTeacher, faEllipsis, faUser, faUserCheck, faUserGear } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -9,6 +9,11 @@ import { PrivateChannelRemoveUserDialog } from 'app/overview/course-conversation
 import { Course } from 'app/entities/course.model';
 import { canRemoveUsersFromConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
+import { ConversationUser } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { UserRole } from 'app/shared/metis/metis.util';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: '[jhi-conversation-member-row]',
@@ -26,7 +31,7 @@ export class ConversationMemberRowComponent implements OnInit {
     userRemoved: EventEmitter<void> = new EventEmitter<void>();
 
     @Input()
-    user: User;
+    user: ConversationUser;
 
     userId: number;
 
@@ -37,9 +42,15 @@ export class ConversationMemberRowComponent implements OnInit {
 
     userLabel: string;
     // icons
-    faUser = faUser;
+    userIcon: IconProp = faUser;
+    userTooltip = '';
+
     faEllipsis = faEllipsis;
-    constructor(private accountService: AccountService, private modalService: NgbModal) {}
+    faUserGear = faUserGear;
+
+    isChannel = isChannelDto;
+
+    constructor(private accountService: AccountService, private modalService: NgbModal, private translateService: TranslateService) {}
 
     ngOnInit(): void {
         if (this.user && this.activeConversation) {
@@ -49,6 +60,7 @@ export class ConversationMemberRowComponent implements OnInit {
                     this.isCurrentUser = true;
                 }
                 this.userLabel = getUserLabel(this.user);
+                this.setUserAuthorityIconAndTooltip();
                 this.canDeleteUser = !this.isCurrentUser && canRemoveUsersFromConversation(this.activeConversation);
             });
         }
@@ -63,5 +75,20 @@ export class ConversationMemberRowComponent implements OnInit {
         from(modalRef.result).subscribe(() => {
             this.userRemoved.emit();
         });
+    }
+
+    setUserAuthorityIconAndTooltip(): void {
+        const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
+        // highest authority is displayed
+        if (this.user.isInstructor) {
+            this.userIcon = faChalkboardTeacher;
+            this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'instructor');
+        } else if (this.user.isEditor || this.user.isTeachingAssistant) {
+            this.userIcon = faUserCheck;
+            this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'ta');
+        } else {
+            this.userIcon = faUser;
+            this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'student');
+        }
     }
 }

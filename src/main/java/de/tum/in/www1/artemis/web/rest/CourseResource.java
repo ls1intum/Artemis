@@ -796,7 +796,7 @@ public class CourseResource {
         var resultDTO = new ArrayList<UserPublicInfoDTO>();
         for (var user : originalPage) {
             var dto = new UserPublicInfoDTO(user);
-            dto = UserPublicInfoDTO.assignRoleProperties(course, user, dto);
+            UserPublicInfoDTO.assignRoleProperties(course, user, dto);
             resultDTO.add(dto);
         }
         var dtoPage = new PageImpl<>(resultDTO, originalPage.getPageable(), originalPage.getTotalElements());

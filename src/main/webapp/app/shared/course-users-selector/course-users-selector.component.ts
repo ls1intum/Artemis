@@ -58,7 +58,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor {
 
     usersFormatter = (user: UserPublicInfoDTO) => this.getUserLabel(user);
 
-    trackIdentity(index: number, item: User) {
+    trackIdentity(index: number, item: UserPublicInfoDTO) {
         return item.id;
     }
 

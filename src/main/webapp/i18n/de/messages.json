@@ -2,7 +2,7 @@
     "artemisApp": {
         "messages": {
             "label": "Nachrichten",
-            "Unterhaltung": {
+            "conversation": {
                 "header": "Konversationen",
                 "created": "Konversation erstellt",
                 "show": "Konversation anzeigen",
@@ -11,7 +11,14 @@
                 "instructionForNewConversation": "Du kannns über die Suchleiste oben nach anderen Benutzern suchen und eine neue Unterhaltung beginnen",
                 "searchForUsers": "Benutzer im Kurs suchen",
                 "minQueryLengthHint": "Tippe min. {{ Länge }} Buchstaben",
-                "others": "{{ count }} andere"
+                "others": "{{ count }} andere",
+                "allFilter": "Alle Mitglieder:innen",
+                "instructorFilter": "Lehrende",
+                "editorFilter": "Editor:innen",
+                "tutorFilter": "Tutor:innen",
+                "studentFilter": "Studierende",
+                "channelAdminFilter": "Kanal Administator:innen",
+                "channelAdminToolTip": "Kanal Administator:in"
             },
             "searchBarPlaceholder": "Suche nach einer Nachricht innerhalb der aktuellen Konversation",
             "submit": "Senden",

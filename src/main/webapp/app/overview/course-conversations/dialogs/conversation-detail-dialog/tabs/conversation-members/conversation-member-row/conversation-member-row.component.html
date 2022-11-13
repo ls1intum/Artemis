@@ -1,6 +1,11 @@
 <div class="d-flex justify-content-between align-items-center conversation-member-row" (mouseleave)="$event.stopPropagation(); userDropdown.close()">
     <span class="d-inline-block">
-        <fa-icon [icon]="faUser"></fa-icon>
+        <fa-icon [icon]="userIcon" [ngbTooltip]="userTooltip"></fa-icon>
+        <fa-icon
+            *ngIf="isChannel(activeConversation) && user?.isChannelAdmin"
+            [icon]="faUserGear"
+            [ngbTooltip]="'artemisApp.messages.conversation.channelAdminToolTip' | artemisTranslate"
+        ></fa-icon>
         {{ userLabel }}
     </span>
     <div ngbDropdown class="d-inline-block" #userDropdown="ngbDropdown">

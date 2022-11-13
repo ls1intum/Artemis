@@ -1,13 +1,14 @@
 import { Component, Input } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { User } from 'app/core/user/user.model';
 import { isChannelDto, isPrivateChannel } from 'app/entities/metis/conversation/channel.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConversationUser } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { getUserLabel } from '../../other/conversation.util';
 
 @Component({
     selector: 'jhi-private-channel-remove-user-dialog',
@@ -15,13 +16,15 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 })
 export class PrivateChannelRemoveUserDialog {
     @Input()
-    userToRemove: User;
+    userToRemove: ConversationUser;
     @Input()
     course: Course;
     @Input()
     activeConversation: ConversationDto;
 
     isInitialized = false;
+
+    getUserLabel = getUserLabel;
 
     initialize() {
         if (!this.course || !this.activeConversation || !this.userToRemove || !isChannelDto(this.activeConversation) || !isPrivateChannel(this.activeConversation)) {
@@ -50,20 +53,6 @@ export class PrivateChannelRemoveUserDialog {
                 },
             });
         }
-    }
-
-    getUserLabel({ firstName, lastName, login }: User) {
-        let label = '';
-        if (firstName) {
-            label += `${firstName} `;
-        }
-        if (lastName) {
-            label += `${lastName} `;
-        }
-        if (login) {
-            label += `(${login})`;
-        }
-        return label.trim();
     }
 
     clear() {

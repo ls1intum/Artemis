@@ -8,17 +8,34 @@
         </div>
     </div>
     <div class="row mt-2">
-        <div class="input-group col-12">
-            <span class="input-group-text">
-                <fa-icon [icon]="faMagnifyingGlass" size="xs"></fa-icon>
-            </span>
-            <input
-                type="text"
-                class="form-control"
-                [placeholder]="'artemisApp.messages.conversationDetail.memberTab.findMembers' | artemisTranslate"
-                id="searchQuery"
-                (input)="onSearchQueryInput($event)"
-            />
+        <div class="col-8">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <fa-icon [icon]="faMagnifyingGlass" size="xs"></fa-icon>
+                </span>
+                <input
+                    (input)="onSearchQueryInput($event)"
+                    [placeholder]="'artemisApp.messages.conversationDetail.memberTab.findMembers' | artemisTranslate"
+                    class="form-control"
+                    id="searchQuery"
+                    type="text"
+                />
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="input-group">
+                <label class="input-group-text" for="searchFilter">Filter</label>
+                <select (ngModelChange)="onFilterChange($event)" [ngModel]="selectedFilter" class="form-select form-select" id="searchFilter">
+                    <option [value]="ALL">{{ 'artemisApp.messages.conversation.allFilter' | artemisTranslate }}</option>
+                    <option [value]="INSTRUCTOR_FILTER_OPTION">{{ 'artemisApp.messages.conversation.instructorFilter' | artemisTranslate }}</option>
+                    <option [value]="EDITOR_FILTER_OPTION">{{ 'artemisApp.messages.conversation.editorFilter' | artemisTranslate }}</option>
+                    <option [value]="TUTOR_FILTER_OPTION">{{ 'artemisApp.messages.conversation.tutorFilter' | artemisTranslate }}</option>
+                    <option [value]="STUDENT_FILTER_OPTION">{{ 'artemisApp.messages.conversation.studentFilter' | artemisTranslate }}</option>
+                    <option *ngIf="isChannel(activeConversation)" [value]="CHANNEL_ADMIN_FILTER_OPTION">
+                        {{ 'artemisApp.messages.conversation.channelAdminFilter' | artemisTranslate }}
+                    </option>
+                </select>
+            </div>
         </div>
         <div *ngIf="isSearching" class="col-12">
             <small class="form-text text-muted d-inline-block">{{ 'artemisApp.messages.conversationDetail.memberTab.searching' | artemisTranslate }}</small>

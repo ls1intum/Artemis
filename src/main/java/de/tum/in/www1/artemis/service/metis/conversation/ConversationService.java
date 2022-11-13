@@ -222,7 +222,39 @@ public class ConversationService {
         return readingParticipant.getLastRead();
     }
 
-    public Page<User> searchMembersOfConversation(Pageable pageable, Long conversationId, String searchTerm) {
-        return userRepository.searchAllByLoginOrNameInConversation(pageable, searchTerm, conversationId);
+    public Page<User> searchMembersOfConversation(Course course, Conversation conversation, Pageable pageable, String searchTerm,
+            Optional<ConversationMemberSearchFilters> filter) {
+        if (filter.isEmpty()) {
+            return userRepository.searchAllByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
+        }
+        else {
+            switch (filter.get()) {
+                case INSTRUCTOR -> {
+                    return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getInstructorGroupName());
+                }
+                case EDITOR -> {
+                    return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getEditorGroupName());
+                }
+                case TUTOR -> {
+                    return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getTeachingAssistantGroupName());
+                }
+                case STUDENT -> {
+                    return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getStudentGroupName());
+                }
+                case CHANNEL_ADMIN -> {
+                    assert conversation instanceof Channel : "The filter CHANNEL_ADMIN is only allowed for channels!";
+                    return userRepository.searchChannelAdminsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
+                }
+                default -> throw new IllegalArgumentException("The filter is not supported.");
+            }
+        }
+
+    }
+
+    /**
+     * The user can select one of these roles to filter the conversation members by role
+     */
+    public enum ConversationMemberSearchFilters {
+        INSTRUCTOR, EDITOR, TUTOR, STUDENT, CHANNEL_ADMIN // this is a special role that is only used for channels
     }
 }
