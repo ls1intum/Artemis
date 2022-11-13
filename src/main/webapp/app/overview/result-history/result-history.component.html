@@ -4,8 +4,8 @@
     </div>
     <div class="result-history-element" *ngFor="let result of displayedResults; let i = index">
         <div class="result-score">
-            <div class="result-score-icon" [ngClass]="resultClass(result)">
-                <fa-icon [icon]="resultIcon(result)"></fa-icon>
+            <div class="result-score-icon" [ngClass]="getTextColorClass(result, evaluateTemplateStatus(exercise, result.participation, result, false, MissingResultInfo.NONE))">
+                <fa-icon [icon]="getResultIconClass(result, evaluateTemplateStatus(exercise, result.participation, result, false, MissingResultInfo.NONE))" size="xl"></fa-icon>
             </div>
             <jhi-result
                 class="result-score-info text-center"
