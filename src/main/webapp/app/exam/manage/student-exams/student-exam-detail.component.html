@@ -37,7 +37,7 @@
         <form #form="ngForm" (ngSubmit)="saveWorkingTime()">
             <div class="mb-1 working-time-form" [ngbTooltip]="getWorkingTimeToolTip()">
                 <div class="input-group mb-1 d-flex justify-content-between align-items-center">
-                    <label class="me-4" jhiTranslate="artemisApp.studentExams.setWorkingTime">Absolute:</label>
+                    <label for="hours" class="me-4" jhiTranslate="artemisApp.studentExams.setWorkingTime">Absolute:</label>
                     <input
                         [(ngModel)]="workingTimeFormValues.hours"
                         (ngModelChange)="updateWorkingTimePercent()"
@@ -81,7 +81,7 @@
                     <label for="seconds" class="input-group-text">s</label>
                 </div>
                 <div class="input-group d-flex justify-content-between align-items-center">
-                    <label class="me-4 flex-fill" jhiTranslate="artemisApp.studentExams.setWorkingTimeRelative">Addition relative to regular working time:</label>
+                    <label for="percent" class="me-4 flex-fill" jhiTranslate="artemisApp.studentExams.setWorkingTimeRelative">Addition relative to regular working time:</label>
                     <input
                         [(ngModel)]="workingTimeFormValues.percent"
                         (ngModelChange)="updateWorkingTimeDuration()"
@@ -197,10 +197,10 @@
                             <span jhiTranslate="artemisApp.studentExamDetail.result">Your points</span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.exam.examSummary.points.maxPoints">Points</span>
+                            <span jhiTranslate="artemisApp.exam.examSummary.points.maxPoints">Achievable points</span>
                         </th>
                         <th>
-                            <span jhiTranslate="artemisApp.exam.examSummary.points.bonus">Bonus points</span>
+                            <span jhiTranslate="artemisApp.exam.examSummary.points.maxBonus">Achievable bonus points</span>
                         </th>
                         <th>
                             <span jhiTranslate="artemisApp.studentExamDetail.reviewer">Reviewer</span>

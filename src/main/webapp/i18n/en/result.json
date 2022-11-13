@@ -18,7 +18,25 @@
                 }
             },
             "detail": {
-                "title": "Result"
+                "title": "Bewertung",
+                "feedback": "Feedback",
+                "feedbackForTask": "Feedback for task: {{ taskName }}",
+                "codeIssue": {
+                    "name": "Code Issue",
+                    "title": "{{ scaCategory }} Issue in File {{ location }}",
+                    "line": "at line {{ line }}",
+                    "lines": "at lines {{ from }}-{{ to }}",
+                    "column": "column {{ column }}",
+                    "columns": "columns {{ from }}-{{ to }}"
+                },
+                "test": {
+                    "name": "Test Case",
+                    "noInfo": "No result information for {{ name }}",
+                    "passed": "Test {{ name }} passed",
+                    "failed": "Test {{ name }} failed",
+                    "passedTest": "1 passed test",
+                    "passedTests": "{{ number }} passed tests"
+                }
             },
             "noResult": "No result",
             "noGradedResult": "No graded result",

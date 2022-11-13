@@ -112,6 +112,7 @@ test {
         }
     }
     defaultCharacterEncoding = 'UTF-8'
+    testLogging.showStandardStreams = true
     useJUnitPlatform()
 }
 
@@ -141,6 +142,7 @@ task behaviorTests(type: Test) {
 // %static-code-analysis-start%
 checkstyle {
     configFile = file("$scaConfigDirectory/checkstyle-configuration.xml")
+    configDirectory.set(file(scaConfigDirectory))
     ignoreFailures = true
     // exclude the test files
     checkstyleTest.enabled = false
