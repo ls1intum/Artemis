@@ -15,6 +15,7 @@ import { Result } from 'app/entities/result.model';
 import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged-in user.
@@ -101,7 +102,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 filter((result) => !!result),
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
                 filter((result: Result) => this.showUngradedResults || result.rated === true),
-                map((result) => ({ ...result, completionDate: result.completionDate ? dayjs(result.completionDate) : undefined, participation: this.participation })),
+                map((result) => ({ ...result, completionDate: convertDateFromServer(result.completionDate), participation: this.participation })),
                 tap((result) => {
                     this.result = result;
                     this.onParticipationChange.emit();

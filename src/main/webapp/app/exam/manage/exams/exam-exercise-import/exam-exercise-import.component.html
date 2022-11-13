@@ -20,7 +20,7 @@
                     <tbody>
                         <tr class="w-25">
                             <td class="justify-content-center">
-                                <label class="form-check-label" [for]="'exerciseGroup-' + exerciseGroup.id + '-title'" jhiTranslate="artemisApp.examManagement.exerciseGroup.title"
+                                <label class="form-check-label" for="'exerciseGroup-' + exerciseGroup.id + '-title'" jhiTranslate="artemisApp.examManagement.exerciseGroup.title"
                                     >Title</label
                                 >
                             </td>
@@ -28,8 +28,8 @@
                                 <input
                                     [ngClass]="{ 'form-control': true, 'is-invalid': exerciseGroup?.title?.length! === 0 }"
                                     type="text"
-                                    [id]="'exerciseGroup-' + exerciseGroup.id + '-title'"
-                                    [name]="'exerciseGroup-' + exerciseGroup.id + '-title'"
+                                    id="exerciseGroup-{{ exerciseGroup.id }}-title"
+                                    name="exerciseGroup-{{ exerciseGroup.id }}-title"
                                     [(ngModel)]="exerciseGroup.title"
                                 />
                             </td>
@@ -38,7 +38,7 @@
                             <td class="justify-content-center">
                                 <label
                                     class="form-check-label"
-                                    [for]="'exerciseGroup-' + exerciseGroup.id + '-mandatory'"
+                                    for="exerciseGroup-{{ exerciseGroup.id }}-mandatory'"
                                     jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"
                                 >
                                     Mandatory

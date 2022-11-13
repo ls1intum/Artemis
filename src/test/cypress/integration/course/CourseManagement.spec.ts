@@ -1,12 +1,13 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { COURSE_BASE, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import { BASE_API, GET, POST } from '../../support/constants';
+import { BASE_API, GET, POST, PUT } from '../../support/constants';
 import { artemis } from '../../support/ArtemisTesting';
 import { CourseManagementPage } from '../../support/pageobjects/course/CourseManagementPage';
 import { NavigationBar } from '../../support/pageobjects/NavigationBar';
 import { ArtemisRequests } from '../../support/requests/ArtemisRequests';
 import { generateUUID } from '../../support/utils';
 import { Course } from 'app/entities/course.model';
+import day from 'dayjs/esm';
 
 // Requests
 const artemisRequests: ArtemisRequests = new ArtemisRequests();
@@ -119,6 +120,55 @@ describe('Course management', () => {
             cy.get('#confirm-exercise-name').type(courseName);
             cy.get(modalDeleteButton).should('not.be.disabled').click();
             courseManagementPage.getCourseCard(courseShortName).should('not.exist');
+        });
+    });
+
+    describe('Course icon deletion', () => {
+        let course: Course;
+        let courseId: number;
+
+        it('Deletes an existing course icon', () => {
+            cy.fixture('course/icon.png', 'base64')
+                .then(Cypress.Blob.base64StringToBlob)
+                .then((blob) => {
+                    artemisRequests.courseManagement
+                        .createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours'), 'icon.png', blob)
+                        .then((response) => {
+                            course = convertCourseAfterMultiPart(response);
+                            courseId = course.id!;
+                            cy.intercept(PUT, BASE_API + 'courses/' + courseId).as('updateCourseQuery');
+                        });
+                });
+            navigationBar.openCourseManagement();
+            courseManagementPage.openCourse(courseShortName);
+            cy.get('#edit-course').click();
+            cy.get('#delete-course-icon').click();
+            cy.get('#delete-course-icon').should('not.exist');
+            cy.get('.no-image').should('exist');
+            cy.get('#save-entity').click();
+            cy.wait('@updateCourseQuery').then(() => {
+                cy.get('#edit-course').click();
+                cy.get('#delete-course-icon').should('not.exist');
+                cy.get('.no-image').should('exist');
+            });
+        });
+
+        it('Deletes not existing course icon', () => {
+            artemisRequests.courseManagement.createCourse(false, courseName, courseShortName, day().subtract(2, 'hours'), day().add(2, 'hours')).then((response) => {
+                course = convertCourseAfterMultiPart(response);
+                courseId = course.id!;
+            });
+            navigationBar.openCourseManagement();
+            courseManagementPage.openCourse(courseShortName);
+            cy.get('#edit-course').click();
+            cy.get('#delete-course-icon').should('not.exist');
+            cy.get('.no-image').should('exist');
+        });
+
+        afterEach(() => {
+            if (!!courseId) {
+                artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
+            }
         });
     });
 });
