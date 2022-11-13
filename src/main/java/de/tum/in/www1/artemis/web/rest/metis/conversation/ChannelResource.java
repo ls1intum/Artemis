@@ -58,16 +58,8 @@ public class ChannelResource {
         log.debug("REST request to all channels of course: {}", courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), user);
-
         var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseRepository.findByIdElseThrow(courseId), user);
-
-        var result = channelService.getChannels(courseId).stream().map(channel -> {
-            var channelDTO = new ChannelDTO(channel);
-            channelDTO.setIsMember(conversationService.isMember(channel.getId(), user.getId()));
-            channelDTO.setNumberOfMembers(conversationService.getMemberCount(channel.getId()));
-            return channelDTO;
-        });
-
+        var result = channelService.getChannels(courseId).stream().map(channel -> channelService.convertToDTO(channel, user));
         var filteredStream = result;
         // only instructors / admins can see all channels
         if (!isAtLeastInstructor) {
@@ -76,7 +68,6 @@ public class ChannelResource {
                     // we only want to show public channels and in addition private channels that the user is a member of
                     .filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
         }
-
         return ResponseEntity.ok(filteredStream.sorted(Comparator.comparing(ChannelDTO::getName)).toList());
     }
 
@@ -88,10 +79,7 @@ public class ChannelResource {
         channelAuthorizationService.isAllowedToCreateChannel(course, null);
         var channelToCreate = channelDTO.toChannel();
         var createdChannel = channelService.createChannel(course, channelToCreate);
-        var dto = new ChannelDTO(createdChannel);
-        dto.setIsMember(true);
-        dto.setNumberOfMembers(1);
-        return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(dto);
+        return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(channelService.convertToDTO(createdChannel, null));
     }
 
     @PutMapping("/{courseId}/channels/{channelId}")
@@ -109,10 +97,7 @@ public class ChannelResource {
         }
         channelAuthorizationService.isAllowedToUpdateChannel(originalChannel, requestingUser);
         var updatedChannel = channelService.updateChannel(originalChannel.getId(), courseId, channelDTO);
-        var dto = new ChannelDTO(updatedChannel);
-        channelDTO.setIsMember(conversationService.isMember(updatedChannel.getId(), requestingUser.getId()));
-        channelDTO.setNumberOfMembers(conversationService.getMemberCount(updatedChannel.getId()));
-        return ResponseEntity.ok().body(dto);
+        return ResponseEntity.ok().body(channelService.convertToDTO(updatedChannel, requestingUser));
     }
 
     @DeleteMapping("/{courseId}/channels/{channelId}")

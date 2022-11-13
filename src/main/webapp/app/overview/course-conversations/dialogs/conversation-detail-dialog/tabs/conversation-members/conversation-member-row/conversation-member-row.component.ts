@@ -2,12 +2,13 @@ import { Component, EventEmitter, HostBinding, Input, OnInit, Output } from '@an
 import { faEllipsis, faUser } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { from } from 'rxjs';
 import { PrivateChannelRemoveUserDialog } from 'app/overview/course-conversations/dialogs/private-channel-remove-user-dialog/private-channel-remove-user-dialog.component';
 import { Course } from 'app/entities/course.model';
+import { canRemoveUsersFromConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 
 @Component({
     selector: '[jhi-conversation-member-row]',
@@ -47,25 +48,11 @@ export class ConversationMemberRowComponent implements OnInit {
                 if (this.user.id === this.userId) {
                     this.isCurrentUser = true;
                 }
-                this.userLabel = this.getUserLabel(this.user);
-                this.canDeleteUser = isChannelDto(this.activeConversation) && !this.activeConversation.isPublic && !this.isCurrentUser;
+                this.userLabel = getUserLabel(this.user);
+                this.canDeleteUser = !this.isCurrentUser && canRemoveUsersFromConversation(this.activeConversation);
             });
         }
     }
-    getUserLabel({ firstName, lastName, login }: User) {
-        let label = '';
-        if (firstName) {
-            label += `${firstName} `;
-        }
-        if (lastName) {
-            label += `${lastName} `;
-        }
-        if (login) {
-            label += `(${login})`;
-        }
-        return label.trim();
-    }
-
     openRemoveUserDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(PrivateChannelRemoveUserDialog, { size: 'lg', scrollable: false, backdrop: 'static' });

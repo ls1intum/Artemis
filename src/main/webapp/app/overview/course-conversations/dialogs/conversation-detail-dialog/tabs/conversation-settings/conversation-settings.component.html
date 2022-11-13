@@ -2,15 +2,15 @@
     <div class="row settings-container">
         <!-- Actions -->
         <ng-container *ngIf="getAsChannel(activeConversation) as channel">
-            <div class="col-12 settings-section text-center" *ngIf="!channel.isArchived">
+            <div class="col-12 settings-section text-center" *ngIf="!channel.isArchived && canChangeArchivalState(channel)">
                 <button type="button" class="btn btn-danger" (click)="openArchivalModal($event)">{{ 'artemisApp.pages.archiveChannel.confirmButton' | artemisTranslate }}</button>
             </div>
-            <div class="col-12 settings-section text-center" *ngIf="channel.isArchived">
+            <div class="col-12 settings-section text-center" *ngIf="channel.isArchived && canChangeArchivalState(channel)">
                 <button type="button" class="btn btn-danger" (click)="openUnArchivalModal($event)">
                     {{ 'artemisApp.pages.unArchiveChannel.confirmButton' | artemisTranslate }}
                 </button>
             </div>
-            <div class="col-12 settings-section text-center">
+            <div class="col-12 settings-section text-center" *ngIf="canDeleteChannel(channel)">
                 <button
                     class="btn btn-danger"
                     [id]="'delete-' + channel.id"

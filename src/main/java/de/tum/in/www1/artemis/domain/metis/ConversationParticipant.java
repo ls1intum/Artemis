@@ -30,6 +30,12 @@ public class ConversationParticipant extends DomainObject {
     @NotNull
     private User user;
 
+    /**
+     * Currently only used for {@link de.tum.in.www1.artemis.domain.metis.conversation.Channel}
+     */
+    @Column(name = "is_admin")
+    private Boolean isAdmin;
+
     @Column(name = "last_read")
     private ZonedDateTime lastRead;
 
@@ -59,5 +65,13 @@ public class ConversationParticipant extends DomainObject {
 
     public void filterSensitiveInformation() {
         setLastRead(null);
+    }
+
+    public Boolean getIsAdmin() {
+        return isAdmin;
+    }
+
+    public void setIsAdmin(Boolean isAdmin) {
+        this.isAdmin = isAdmin;
     }
 }

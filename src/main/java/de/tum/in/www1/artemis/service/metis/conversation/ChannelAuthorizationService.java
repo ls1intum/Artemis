@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -24,37 +25,34 @@ public class ChannelAuthorizationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final ChannelRepository channelRepository;
+
     private final UserRepository userRepository;
 
     public ChannelAuthorizationService(ConversationParticipantRepository conversationParticipantRepository, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, ChannelRepository channelRepository) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
-
+        this.channelRepository = channelRepository;
     }
 
     public void isAllowedToCreateChannel(@NotNull Course course, @Nullable User user) {
         user = getUserIfNecessary(user);
-        // ToDo: Discuss who else should be allowed to create channels
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
     }
 
     public void isAllowedToUpdateChannel(@NotNull Channel channel, @Nullable User user) {
         user = getUserIfNecessary(user);
-        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user);
-        var isCreator = channel.getCreator().equals(user);
-        if (!isAtLeastInstructor && !isCreator) {
+        if (!hasChannelAdminRights(channel.getId(), user)) {
             throw new AccessForbiddenException("You are not allowed to update this channel");
         }
     }
 
     public void isAllowedToDeleteChannel(@NotNull Channel channel, @Nullable User user) {
         user = getUserIfNecessary(user);
-        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user);
-        var isCreator = channel.getCreator().equals(user);
-        if (!isAtLeastInstructor && !isCreator) {
-            throw new AccessForbiddenException("You are not allowed to delete this channel");
+        if (!hasChannelAdminRights(channel.getId(), user)) {
+            throw new AccessForbiddenException("You are not allowed to update this channel");
         }
     }
 
@@ -62,38 +60,42 @@ public class ChannelAuthorizationService {
         return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, userId).isPresent();
     }
 
+    public boolean isChannelAdmin(Long channelId, Long userId) {
+        return conversationParticipantRepository.findAdminConversationParticipantByConversationIdAndUserId(channelId, userId).isPresent();
+    }
+
+    public boolean hasChannelAdminRights(Long channelId, @Nullable User user) {
+        user = getUserIfNecessary(user);
+        var channel = channelRepository.findById(channelId);
+        return isChannelAdmin(channelId, user.getId()) || authorizationCheckService.isAtLeastInstructorInCourse(channel.get().getCourse(), user);
+    }
+
     public void isAllowedToRegisterUsersToChannel(@NotNull Course course, @NotNull Channel channel, List<String> userLogins, @Nullable User user) {
         user = getUserIfNecessary(user);
-        var isSelfRegistrationRequest = userLogins.size() == 1 && userLogins.get(0).equals(user.getLogin());
-        // PUBLIC -> Self Registration or Instructor Registration
-        if (Boolean.TRUE.equals(channel.getIsPublic())) {
-            if (!isSelfRegistrationRequest) {
-                var isChannelMember = isMember(channel.getId(), user.getId());
-                if (!isChannelMember) {
-                    throw new AccessForbiddenException("User is not a member of the channel");
-                }
-                authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-            }
+        if (hasChannelAdminRights(channel.getId(), user)) {
+            return;
         }
-        else { // PRIVATE -> Only Instructor Registration
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        var isSelfRegistration = userLogins.size() == 1 && userLogins.get(0).equals(user.getLogin());
+        if (!isSelfRegistration) {
+            throw new AccessForbiddenException("You are not allowed to registers other users to this channel");
+        }
+        if (isSelfRegistration && !channel.getIsPublic()) {
+            throw new AccessForbiddenException("You are not allowed to register yourself to a private channel");
         }
     }
 
     public void isAllowedToDeregisterUsersFromChannel(@NotNull Course course, @NotNull Channel channel, List<String> userLogins, @Nullable User user) {
         user = getUserIfNecessary(user);
-
+        if (hasChannelAdminRights(channel.getId(), user)) {
+            return;
+        }
         var isChannelMember = isMember(channel.getId(), user.getId());
         if (!isChannelMember) {
             throw new AccessForbiddenException("User is not a member of the channel");
         }
-
         var isSelfDeRegistration = userLogins.size() == 1 && userLogins.get(0).equals(user.getLogin());
-        if (isSelfDeRegistration) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        }
-        else {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
+        if (!isSelfDeRegistration) {
+            throw new AccessForbiddenException("You are not allowed to deregister other users from this channel");
         }
     }
 
@@ -105,21 +107,14 @@ public class ChannelAuthorizationService {
         isAllowedToChangeArchivalStatus(channel, user);
     }
 
-    private void isAllowedToChangeArchivalStatus(Channel channel, @org.jetbrains.annotations.Nullable User user) {
+    private void isAllowedToChangeArchivalStatus(Channel channel, @Nullable User user) {
         user = getUserIfNecessary(user);
-
-        var isChannelMember = isMember(channel.getId(), user.getId());
-        if (!isChannelMember) {
-            throw new AccessForbiddenException("User is not a member of the channel");
-        }
-
-        var isCreator = channel.getCreator().equals(user);
-        if (!isCreator) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, channel.getCourse(), user);
+        if (!hasChannelAdminRights(channel.getId(), user)) {
+            throw new AccessForbiddenException("You are not allowed to update this channel");
         }
     }
 
-    private User getUserIfNecessary(@org.jetbrains.annotations.Nullable User user) {
+    private User getUserIfNecessary(@Nullable User user) {
         var persistenceUtil = Persistence.getPersistenceUtil();
         if (user == null || !persistenceUtil.isLoaded(user, "authorities") || !persistenceUtil.isLoaded(user, "groups") || user.getGroups() == null
                 || user.getAuthorities() == null) {

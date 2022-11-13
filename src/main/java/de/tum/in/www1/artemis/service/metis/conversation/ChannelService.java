@@ -5,6 +5,7 @@ import static javax.validation.Validation.buildDefaultValidatorFactory;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 
 import org.springframework.stereotype.Service;
@@ -38,12 +39,36 @@ public class ChannelService {
 
     private final PostRepository postRepository;
 
+    private final ConversationService conversationService;
+
+    private final ChannelAuthorizationService channelAuthorizationService;
+
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, UserRepository userRepository,
-            PostRepository postRepository) {
+            PostRepository postRepository, ConversationService conversationService, ChannelAuthorizationService channelAuthorizationService) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.userRepository = userRepository;
         this.postRepository = postRepository;
+        this.conversationService = conversationService;
+        this.channelAuthorizationService = channelAuthorizationService;
+    }
+
+    public ChannelDTO convertToDTO(Channel channel, @Nullable User requestingUser) {
+        if (requestingUser == null) {
+            requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        }
+        var dto = new ChannelDTO(channel);
+        dto.setIsMember(conversationService.isMember(channel.getId(), requestingUser.getId()));
+        if (channel.getCreator() != null) {
+            dto.setIsCreator(channel.getCreator().getId().equals(channel.getId()));
+        }
+        else {
+            dto.setIsCreator(false);
+        }
+        dto.setNumberOfMembers(conversationService.getMemberCount(channel.getId()));
+        dto.setIsChannelAdmin(channelAuthorizationService.isChannelAdmin(channel.getId(), requestingUser.getId()));
+        dto.setHasChannelAdminRights(channelAuthorizationService.hasChannelAdminRights(channel.getId(), requestingUser));
+        return dto;
     }
 
     public Channel getChannelOrThrow(Long channelId) {
@@ -91,6 +116,7 @@ public class ChannelService {
         var conversationParticipantOfRequestingUser = new ConversationParticipant();
         conversationParticipantOfRequestingUser.setUser(user);
         conversationParticipantOfRequestingUser.setConversation(savedChannel);
+        conversationParticipantOfRequestingUser.setIsAdmin(true); // creator is of course admin. Special case, because creator is the only admin that can not be removed
         conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
         savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
         savedChannel = channelRepository.save(savedChannel);

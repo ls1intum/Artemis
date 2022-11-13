@@ -41,6 +41,7 @@ export abstract class ConversationDto {
     public isMember?: boolean;
     public numberOfMembers?: number;
     public creator?: User;
+    public isCreator?: boolean;
 
     protected constructor(type: ConversationType) {
         this.type = type;

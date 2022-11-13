@@ -18,13 +18,16 @@ public abstract class ConversationDTO {
 
     private ZonedDateTime lastMessageDate;
 
+    private User creator;
+
+    // property not taken from entity
+    private Boolean isCreator;
+
     // property not taken from entity
     private Boolean isMember;
 
     // property not taken from entity
     private Integer numberOfMembers;
-
-    private User creator;
 
     // ToDo: Maybe add property hasUnreadMessages and unreadMessagesCount?? How does slack do it?
 
@@ -95,9 +98,17 @@ public abstract class ConversationDTO {
         this.creator = creator;
     }
 
+    public Boolean getIsCreator() {
+        return isCreator;
+    }
+
+    public void setIsCreator(Boolean creator) {
+        isCreator = creator;
+    }
+
     @Override
     public String toString() {
         return "ConversationDTO{" + "type='" + type + '\'' + ", id=" + id + ", creationDate=" + creationDate + ", lastMessageDate=" + lastMessageDate + ", isMember=" + isMember
-                + ", numberOfMembers=" + numberOfMembers + ", creator=" + (creator != null ? creator.getName() : "") + '}';
+                + ", isCreator=" + isCreator + ", numberOfMembers=" + numberOfMembers + ", creator=" + (creator != null ? creator.getName() : "") + '}';
     }
 }

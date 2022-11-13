@@ -9,6 +9,7 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
+import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view' | 'create';
 export type ChannelAction = {
@@ -21,6 +22,7 @@ export type ChannelAction = {
     styleUrls: ['./channels-overview-dialog.component.scss'],
 })
 export class ChannelsOverviewDialogComponent implements OnInit {
+    canCreateChannel = canCreateChannel;
     @Input()
     createChannelFn: (channel: ChannelDTO) => Observable<never>;
 

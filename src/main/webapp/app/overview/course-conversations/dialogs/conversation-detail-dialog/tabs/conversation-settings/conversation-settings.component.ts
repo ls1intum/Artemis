@@ -10,6 +10,7 @@ import { from, Subject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { canChangeChannelArchivalState, canDeleteChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 
 @Component({
     selector: 'jhi-conversation-settings',
@@ -30,6 +31,9 @@ export class ConversationSettingsComponent {
 
     @Output()
     channelDeleted: EventEmitter<void> = new EventEmitter<void>();
+
+    canChangeArchivalState = canChangeChannelArchivalState;
+    canDeleteChannel = canDeleteChannel;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();

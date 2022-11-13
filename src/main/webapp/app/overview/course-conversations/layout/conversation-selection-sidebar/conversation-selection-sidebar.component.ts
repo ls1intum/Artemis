@@ -15,6 +15,7 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { Channel, ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat, GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 
 @Component({
     selector: 'jhi-conversation-selection-sidebar',
@@ -22,6 +23,8 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
     templateUrl: './conversation-selection-sidebar.component.html',
 })
 export class ConversationSelectionSidebarComponent implements AfterViewInit, OnInit {
+    canCreateChannel = canCreateChannel;
+
     course?: Course;
     activeConversation?: ConversationDto;
     allConversations: ConversationDto[] = [];

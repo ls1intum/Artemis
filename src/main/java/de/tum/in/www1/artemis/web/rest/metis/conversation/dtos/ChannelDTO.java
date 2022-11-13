@@ -14,6 +14,18 @@ public class ChannelDTO extends ConversationDTO {
 
     private Boolean isArchived;
 
+    // property not taken from entity
+    /**
+     * Am course instructor has channel admin rights but is not necessarily a member or admin of the channel
+     */
+    private Boolean hasChannelAdminRights;
+
+    // property not taken from entity
+    /**
+     * Member of the channel that is also an admin of the channel
+     */
+    private Boolean isChannelAdmin;
+
     public ChannelDTO(Channel channel) {
         super(channel, "channel");
         this.name = channel.getName();
@@ -67,6 +79,22 @@ public class ChannelDTO extends ConversationDTO {
         isArchived = archived;
     }
 
+    public Boolean getHasChannelAdminRights() {
+        return hasChannelAdminRights;
+    }
+
+    public void setHasChannelAdminRights(Boolean hasChannelAdminRights) {
+        this.hasChannelAdminRights = hasChannelAdminRights;
+    }
+
+    public Boolean getIsChannelAdmin() {
+        return isChannelAdmin;
+    }
+
+    public void setIsChannelAdmin(Boolean isChannelAdmin) {
+        this.isChannelAdmin = isChannelAdmin;
+    }
+
     public Channel toChannel() {
         Channel channel = new Channel();
         channel.setName(name);
@@ -79,6 +107,6 @@ public class ChannelDTO extends ConversationDTO {
     @Override
     public String toString() {
         return "ChannelDTO{" + "name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic=" + isPublic + ", isArchived="
-                + isArchived + "} " + super.toString();
+                + isArchived + ", isChannelAdmin=" + isChannelAdmin + ", hasChannelAdminRights=" + hasChannelAdminRights + "}" + super.toString();
     }
 }

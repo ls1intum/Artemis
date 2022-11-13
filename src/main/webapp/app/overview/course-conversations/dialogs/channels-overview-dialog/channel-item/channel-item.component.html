@@ -13,11 +13,11 @@
         </div>
     </div>
     <div class="interaction">
-        <ng-container *ngIf="!channel.isMember">
+        <ng-container *ngIf="canJoinChannel(channel)">
             <button type="button" class="btn btn-primary" (click)="emitChannelAction($event, 'register')">{{ 'artemisApp.actions.join' | artemisTranslate }}</button>
             <!--ToDo:  Introduce method to view public channel even if no participant maybe hacky around with visitor status or something? -->
         </ng-container>
-        <ng-container *ngIf="channel.isMember">
+        <ng-container *ngIf="canLeaveConversation(channel)">
             <button type="button" class="btn btn-secondary" (click)="emitChannelAction($event, 'view')">{{ 'artemisApp.actions.view' | artemisTranslate }}</button>
             <button type="button" class="btn btn-danger" (click)="emitChannelAction($event, 'deregister')">{{ 'artemisApp.actions.leave' | artemisTranslate }}</button>
         </ng-container>

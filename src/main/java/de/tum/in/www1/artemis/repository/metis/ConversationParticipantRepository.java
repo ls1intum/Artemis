@@ -28,6 +28,15 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
     @Query("""
             SELECT DISTINCT conversationParticipant
             FROM ConversationParticipant conversationParticipant
+            WHERE conversationParticipant.conversation.id = :#{#conversationId}
+            AND conversationParticipant.user.id = :#{#userId}
+            AND conversationParticipant.isAdmin = true
+            """)
+    Optional<ConversationParticipant> findAdminConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
+
+    @Query("""
+            SELECT DISTINCT conversationParticipant
+            FROM ConversationParticipant conversationParticipant
             JOIN conversationParticipant.user user
             JOIN conversationParticipant.conversation conversation
             WHERE user.id = :#{#userId}

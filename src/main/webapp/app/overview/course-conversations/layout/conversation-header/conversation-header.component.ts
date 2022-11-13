@@ -12,6 +12,7 @@ import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { from } from 'rxjs';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -39,6 +40,8 @@ export class ConversationHeaderComponent implements OnInit {
     getAsChannel = getAsChannelDto;
 
     getConversationName = this.conversationService.getConversationName;
+
+    canAddUsers = canAddUsersToConversation;
 
     ngOnInit(): void {
         this.course = this.metisConversationService.course!;

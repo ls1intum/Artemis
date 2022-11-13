@@ -57,7 +57,9 @@
                                 </button>
                                 <div ngbDropdownMenu>
                                     <button ngbDropdownItem (click)="openChannelOverviewDialog($event)">Browse Channels</button>
-                                    <button ngbDropdownItem [hidden]="!course.isAtLeastInstructor" (click)="openCreateChannelDialog($event)">Create Channel</button>
+                                    <button ngbDropdownItem [hidden]="!course.isAtLeastInstructor" (click)="openCreateChannelDialog($event)" *ngIf="canCreateChannel(course)">
+                                        Create Channel
+                                    </button>
                                 </div>
                             </div>
                         </ng-template>

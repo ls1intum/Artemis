@@ -1,49 +1,55 @@
 <div *ngIf="activeConversation && course" class="container-fluid conversation-info">
     <div class="row info-container">
         <!-- Name (Only for Channels)-->
-        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel" [class.interactive]="!readOnlyMode">
-            <div class="form-floating">
-                <textarea class="form-control" readonly placeholder="dummyPlaceholder" id="name" value="{{ channel.name ?? '' }}"> </textarea>
-                <label for="name">{{ 'artemisApp.entities.channel.name' | artemisTranslate }}</label>
-                <button class="action-button right btn btn-outline-primary btn-sm" (click)="openEditNameModal($event)">
-                    {{ 'artemisApp.messages.conversationDetail.infoTab.editName' | artemisTranslate }}
-                </button>
+        <ng-container *ngIf="getAsChannel(activeConversation) as channel">
+            <div class="col-12 info-section" [class.interactive]="!readOnlyMode">
+                <div class="form-floating">
+                    <textarea class="form-control" readonly placeholder="dummyPlaceholder" id="name" value="{{ channel.name ?? '' }}"> </textarea>
+                    <label for="name">{{ 'artemisApp.entities.channel.name' | artemisTranslate }}</label>
+                    <button class="action-button right btn btn-outline-primary btn-sm" (click)="openEditNameModal($event)" *ngIf="canChangeChannelProperties(channel)">
+                        {{ 'artemisApp.messages.conversationDetail.infoTab.editName' | artemisTranslate }}
+                    </button>
+                </div>
             </div>
-        </div>
+        </ng-container>
         <!-- Topic (Only for Channels)-->
-        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel" [class.interactive]="!readOnlyMode">
-            <div class="form-floating">
-                <textarea
-                    class="form-control"
-                    readonly
-                    placeholder="dummyPlaceholder"
-                    id="topic"
-                    value="{{ channel.topic ?? ('artemisApp.messages.conversationDetail.infoTab.noTopic' | artemisTranslate) }}"
-                >
-                </textarea>
-                <label for="topic">{{ 'artemisApp.entities.channel.topic' | artemisTranslate }}</label>
-                <button class="action-button right btn btn-outline-primary btn-sm" (click)="openEditTopicModal($event)">
-                    {{ 'artemisApp.messages.conversationDetail.infoTab.editTopic' | artemisTranslate }}
-                </button>
+        <ng-container *ngIf="getAsChannel(activeConversation) as channel">
+            <div class="col-12 info-section" [class.interactive]="!readOnlyMode">
+                <div class="form-floating">
+                    <textarea
+                        class="form-control"
+                        readonly
+                        placeholder="dummyPlaceholder"
+                        id="topic"
+                        value="{{ channel.topic ?? ('artemisApp.messages.conversationDetail.infoTab.noTopic' | artemisTranslate) }}"
+                    >
+                    </textarea>
+                    <label for="topic">{{ 'artemisApp.entities.channel.topic' | artemisTranslate }}</label>
+                    <button class="action-button right btn btn-outline-primary btn-sm" (click)="openEditTopicModal($event)" *ngIf="canChangeChannelProperties(channel)">
+                        {{ 'artemisApp.messages.conversationDetail.infoTab.editTopic' | artemisTranslate }}
+                    </button>
+                </div>
             </div>
-        </div>
+        </ng-container>
         <!-- Description (Only for Channels)-->
-        <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel" [class.interactive]="!readOnlyMode">
-            <div class="form-floating">
-                <textarea
-                    class="form-control"
-                    readonly
-                    placeholder="dummyPlaceholder"
-                    id="description"
-                    value="{{ channel.description ?? ('artemisApp.messages.conversationDetail.infoTab.noDescription' | artemisTranslate) }}"
-                >
-                </textarea>
-                <label for="topic">{{ 'artemisApp.entities.channel.description' | artemisTranslate }}</label>
-                <button class="action-button right btn btn-outline-primary btn-sm" (click)="openDescriptionTopicModal($event)">
-                    {{ 'artemisApp.messages.conversationDetail.infoTab.editDescription' | artemisTranslate }}
-                </button>
+        <ng-container *ngIf="getAsChannel(activeConversation) as channel">
+            <div class="col-12 info-section" [class.interactive]="!readOnlyMode">
+                <div class="form-floating">
+                    <textarea
+                        class="form-control"
+                        readonly
+                        placeholder="dummyPlaceholder"
+                        id="description"
+                        value="{{ channel.description ?? ('artemisApp.messages.conversationDetail.infoTab.noDescription' | artemisTranslate) }}"
+                    >
+                    </textarea>
+                    <label for="topic">{{ 'artemisApp.entities.channel.description' | artemisTranslate }}</label>
+                    <button class="action-button right btn btn-outline-primary btn-sm" (click)="openDescriptionTopicModal($event)" *ngIf="canChangeChannelProperties(channel)">
+                        {{ 'artemisApp.messages.conversationDetail.infoTab.editDescription' | artemisTranslate }}
+                    </button>
+                </div>
             </div>
-        </div>
+        </ng-container>
         <!-- More Info -->
         <div class="col-12 info-section" *ngIf="getAsChannel(activeConversation) as channel">
             <div>
@@ -63,7 +69,9 @@
         </div>
         <!-- Actions -->
         <div class="col-12 info-section text-center">
-            <button type="button" class="btn btn-danger wide-button" (click)="leaveChannel($event)">{{ 'artemisApp.actions.leave' | artemisTranslate }}</button>
+            <button *ngIf="canLeaveConversation(activeConversation)" type="button" class="btn btn-danger wide-button" (click)="leaveChannel($event)">
+                {{ 'artemisApp.actions.leave' | artemisTranslate }}
+            </button>
         </div>
     </div>
 </div>

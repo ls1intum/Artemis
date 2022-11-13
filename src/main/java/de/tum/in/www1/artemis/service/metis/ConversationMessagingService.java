@@ -27,15 +27,14 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.GroupChatService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
@@ -46,16 +45,19 @@ public class ConversationMessagingService extends PostingService {
 
     private final ConversationService conversationService;
 
+    private final ChannelService channelService;
+
     private final ConversationMessageRepository conversationMessageRepository;
 
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate,
             UserRepository userRepository, GroupChatService groupChatService, ConversationService conversationService,
-            ConversationParticipantRepository conversationParticipantRepository) {
+            ConversationParticipantRepository conversationParticipantRepository, ChannelService channelService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.groupChatService = groupChatService;
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
+        this.channelService = channelService;
     }
 
     public Post createMessage(Long courseId, Post messagePost) {
@@ -90,8 +92,7 @@ public class ConversationMessagingService extends PostingService {
             if (getNumberOfPosts == 1) { // first message in group chat --> notify all participants that a conversation with them has been created
                 var participants = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream()
                         .map(ConversationParticipant::getUser).filter(Objects::nonNull).collect(Collectors.toSet());
-                conversationService.broadcastOnConversationMembershipChannel(course, new ConversationWebsocketDTO(getConversationDTO(author, conversation), MetisCrudAction.CREATE),
-                        participants);
+                conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, participants);
             }
         }
         return savedMessage;
@@ -99,10 +100,7 @@ public class ConversationMessagingService extends PostingService {
 
     private ConversationDTO getConversationDTO(User user, Conversation conversation) {
         if (conversation instanceof Channel c) {
-            var channelDto = new ChannelDTO(c);
-            channelDto.setIsMember(true);
-            channelDto.setNumberOfMembers(conversationService.getMemberCount(c.getId()));
-            return channelDto;
+            return channelService.convertToDTO(c, user);
         }
         else if (conversation instanceof GroupChat g) {
             var groupChat = groupChatService.findByIdWithConversationParticipantsElseThrow(g.getId());
@@ -139,8 +137,7 @@ public class ConversationMessagingService extends PostingService {
 
             conversationService.auditConversationReadTimeOfUser(conversation, user);
 
-            conversationService.broadcastOnConversationMembershipChannel(conversation.getCourse(),
-                    new ConversationWebsocketDTO(getConversationDTO(user, conversation), MetisCrudAction.READ_CONVERSATION), Set.of(user));
+            conversationService.broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.READ_CONVERSATION, conversation, Set.of(user));
         }
         else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");

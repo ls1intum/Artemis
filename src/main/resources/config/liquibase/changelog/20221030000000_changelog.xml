@@ -36,4 +36,12 @@
             </column>
         </addColumn>
     </changeSet>
+    <changeSet author="stefanwaldhauser" id="20221030000000-4">
+        <!-- Just for type channel -->
+        <addColumn tableName="conversation_participant">
+            <column name="is_admin" type="BIT(1)" defaultValueBoolean="false">
+                <constraints nullable="true" />
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

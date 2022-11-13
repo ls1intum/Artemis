@@ -15,6 +15,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
+import { canChangeChannelProperties, canLeaveConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 
 @Component({
     selector: 'jhi-conversation-info',
@@ -24,6 +25,8 @@ import { channelRegex } from 'app/overview/course-conversations/dialogs/channels
 export class ConversationInfoComponent implements OnInit {
     getAsChannel = getAsChannelDto;
     getUserLabel = getUserLabel;
+    canLeaveConversation = canLeaveConversation;
+    canChangeChannelProperties = canChangeChannelProperties;
 
     @Input()
     activeConversation: ConversationDto;
