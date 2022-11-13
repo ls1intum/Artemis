@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -17,6 +18,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
@@ -49,9 +51,11 @@ public class ConversationService {
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
+    private final PostRepository postRepository;
+
     public ConversationService(UserRepository userRepository, ChannelRepository channelRepository, ConversationParticipantRepository conversationParticipantRepository,
             ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate, GroupChatRepository groupChatRepository,
-            GroupChatService groupChatService, ChannelAuthorizationService channelAuthorizationService) {
+            GroupChatService groupChatService, ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository) {
         this.userRepository = userRepository;
         this.channelRepository = channelRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
@@ -60,6 +64,7 @@ public class ConversationService {
         this.groupChatRepository = groupChatRepository;
         this.groupChatService = groupChatService;
         this.channelAuthorizationService = channelAuthorizationService;
+        this.postRepository = postRepository;
     }
 
     public void registerUsers(Course course, Set<User> usersToRegister, Conversation conversation) {
@@ -86,6 +91,10 @@ public class ConversationService {
         conversationRepository.save(conversationFromDatabase);
 
         broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversationFromDatabase, userThatNeedToBeRegistered);
+        // we also broadcast the change to existing members
+        broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversationFromDatabase,
+                conversationFromDatabase.getConversationParticipants().stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
+
     }
 
     public void deregisterUsers(Course course, Set<User> usersToDeregister, Conversation conversation) {
@@ -110,7 +119,9 @@ public class ConversationService {
         conversationRepository.save(conversationFromDatabase);
         conversationParticipantRepository.deleteAll(participantsToRemove);
         broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversationFromDatabase, usersToDeregister);
-
+        // we also broadcast the change to existing members
+        broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversationFromDatabase,
+                conversationFromDatabase.getConversationParticipants().stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
     }
 
     public ConversationDTO convertToDTOForUser(Conversation conversation, User user) {
@@ -166,7 +177,20 @@ public class ConversationService {
     }
 
     public Conversation updateConversation(Conversation conversation) {
-        return conversationRepository.save(conversation);
+        var updatedConversation = conversationRepository.save(conversation);
+        var updatedConversationWithParticipants = conversationRepository.findByIdWithConversationParticipantsElseThrow(updatedConversation.getId());
+        broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, updatedConversationWithParticipants,
+                updatedConversationWithParticipants.getConversationParticipants().stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
+        return updatedConversation;
+    }
+
+    @Transactional // ok because of delete
+    public void deleteConversation(Long conversationId) {
+        var conversationWithParticipants = conversationRepository.findByIdWithConversationParticipantsElseThrow(conversationId);
+        broadcastOnConversationMembershipChannel(conversationWithParticipants.getCourse(), MetisCrudAction.DELETE, conversationWithParticipants,
+                conversationWithParticipants.getConversationParticipants().stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
+        this.postRepository.deleteAllByConversationId(conversationId);
+        this.channelRepository.deleteById(conversationId);
     }
 
     public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> usersToMessage) {

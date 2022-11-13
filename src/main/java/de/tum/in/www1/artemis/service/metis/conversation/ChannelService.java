@@ -9,7 +9,6 @@ import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -18,7 +17,6 @@ import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -37,18 +35,15 @@ public class ChannelService {
 
     private final UserRepository userRepository;
 
-    private final PostRepository postRepository;
-
     private final ConversationService conversationService;
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, UserRepository userRepository,
-            PostRepository postRepository, ConversationService conversationService, ChannelAuthorizationService channelAuthorizationService) {
+            ConversationService conversationService, ChannelAuthorizationService channelAuthorizationService) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.userRepository = userRepository;
-        this.postRepository = postRepository;
         this.conversationService = conversationService;
         this.channelAuthorizationService = channelAuthorizationService;
     }
@@ -97,7 +92,8 @@ public class ChannelService {
             channel.setTopic(channelDTO.getTopic().trim().isBlank() ? null : channelDTO.getTopic().trim());
         }
         this.channelIsValidOrThrow(courseId, channel);
-        return channelRepository.save(channel);
+
+        return (Channel) conversationService.updateConversation(channel);
     }
 
     public Channel createChannel(Course course, Channel channel) {
@@ -153,7 +149,7 @@ public class ChannelService {
             return;
         }
         channel.setIsArchived(true);
-        channelRepository.save(channel);
+        conversationService.updateConversation(channel);
     }
 
     public void unarchiveChannel(Long channelId) {
@@ -162,12 +158,10 @@ public class ChannelService {
             return;
         }
         channel.setIsArchived(false);
-        channelRepository.save(channel);
+        conversationService.updateConversation(channel);
     }
 
-    @Transactional // ok because of delete
-    public void deleteChannel(Long id) {
-        this.postRepository.deleteAllByConversationId(id);
-        this.channelRepository.deleteById(id);
+    public void deleteChannel(Long channelId) {
+        this.conversationService.deleteConversation(channelId);
     }
 }

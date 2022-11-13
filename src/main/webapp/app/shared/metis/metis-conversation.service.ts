@@ -263,6 +263,11 @@ export class MetisConversationService implements OnDestroy {
             console.error('Conversation with id ' + deletedConversation.id + " doesn't exist in cache, but was sent as 'DELETE' action");
         }
         this._conversationsOfUser = conversationsCopy;
+
+        if (this._activeConversation?.id === deletedConversation.id) {
+            this._activeConversation = undefined;
+            this._activeConversation$.next(this._activeConversation);
+        }
     }
 
     private handleUpdateConversation(updatedConversation: ConversationDto) {
