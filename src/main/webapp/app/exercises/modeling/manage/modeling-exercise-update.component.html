@@ -32,7 +32,7 @@
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
                     class="form-element"
-                    id="pick-modeling-releaseDate"
+                    id="pick-releaseDate"
                     labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
                     [(ngModel)]="modelingExercise.releaseDate"
                     (valueChange)="validateDate()"
@@ -43,7 +43,7 @@
             <div class="form-group flex-grow-1 ms-3">
                 <jhi-date-time-picker
                     class="form-element"
-                    id="pick-modeling-startDate"
+                    id="pick-startDate"
                     name="startDate"
                     [error]="!!modelingExercise.startDateError"
                     labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
@@ -57,7 +57,7 @@
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
                     class="form-element"
-                    id="pick-modeling-dueDate"
+                    id="pick-dueDate"
                     name="dueDate"
                     [error]="!!modelingExercise.dueDateError"
                     labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
@@ -69,7 +69,7 @@
             <div class="form-group flex-grow-1 ms-3">
                 <jhi-date-time-picker
                     class="form-element"
-                    id="pick-modeling-assessmentDueDate"
+                    id="pick-assessmentDueDate"
                     name="assessmentDueDate"
                     [error]="!!modelingExercise.assessmentDueDateError"
                     labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
