@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 
 @Service
@@ -28,9 +28,9 @@ public class TextAssessmentService extends AssessmentService {
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
             SubmissionRepository submissionRepository, TextBlockService textBlockService, Optional<AutomaticTextFeedbackService> automaticTextFeedbackService,
             ExamDateService examDateService, ExerciseDateService exerciseDateService, FeedbackConflictRepository feedbackConflictRepository,
-            GradingCriterionRepository gradingCriterionRepository, SubmissionService submissionService, LtiService ltiService) {
+            GradingCriterionRepository gradingCriterionRepository, SubmissionService submissionService, LtiNewResultService ltiNewResultService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examDateService, exerciseDateService, gradingCriterionRepository, userRepository, ltiService);
+                submissionRepository, examDateService, exerciseDateService, gradingCriterionRepository, userRepository, ltiNewResultService);
         this.textBlockService = textBlockService;
         this.automaticTextFeedbackService = automaticTextFeedbackService;
         this.feedbackConflictRepository = feedbackConflictRepository;

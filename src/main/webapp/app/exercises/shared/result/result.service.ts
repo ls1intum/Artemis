@@ -6,7 +6,6 @@ import { Result } from 'app/entities/result.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Feedback } from 'app/entities/feedback.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { map, tap } from 'rxjs/operators';
@@ -19,6 +18,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { captureException } from '@sentry/browser';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -28,7 +28,6 @@ export interface IResultService {
     find: (resultId: number) => Observable<EntityResponseType>;
     getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
     getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
-    getLatestResultWithFeedbacks: (participationId: number) => Observable<HttpResponse<Result>>;
     getFeedbackDetailsForResult: (participationId: number, resultId: number) => Observable<HttpResponse<Feedback[]>>;
     delete: (participationId: number, resultId: number) => Observable<HttpResponse<void>>;
 }
@@ -195,15 +194,11 @@ export class ResultService implements IResultService {
                 params: options,
                 observe: 'response',
             })
-            .pipe(map((res: ResultsWithPointsArrayResponseType) => this.convertResultWithPointsResponse(res)));
+            .pipe(map((res: ResultsWithPointsArrayResponseType) => this.convertResultsWithPointsResponse(res)));
     }
 
     getFeedbackDetailsForResult(participationId: number, resultId: number): Observable<HttpResponse<Feedback[]>> {
         return this.http.get<Feedback[]>(`${this.participationResourceUrl}/${participationId}/results/${resultId}/details`, { observe: 'response' });
-    }
-
-    getLatestResultWithFeedbacks(participationId: number): Observable<HttpResponse<Result>> {
-        return this.http.get<Result>(`${this.participationResourceUrl}/${participationId}/latest-result`, { observe: 'response' });
     }
 
     delete(participationId: number, resultId: number): Observable<HttpResponse<void>> {
@@ -224,7 +219,7 @@ export class ResultService implements IResultService {
         return res;
     }
 
-    protected convertResultWithPointsResponse(res: ResultsWithPointsArrayResponseType): ResultsWithPointsArrayResponseType {
+    protected convertResultsWithPointsResponse(res: ResultsWithPointsArrayResponseType): ResultsWithPointsArrayResponseType {
         if (res.body) {
             res.body.forEach((resultWithPoints: ResultWithPointsPerGradingCriterion) => {
                 this.convertResultDatesFromServer(resultWithPoints.result);
@@ -240,25 +235,15 @@ export class ResultService implements IResultService {
 
     private convertResultDatesFromServer(result: Result) {
         result.completionDate = convertDateFromServer(result.completionDate);
-        result.participation = this.convertParticipationDatesFromServer(result.participation! as StudentParticipation);
+        ParticipationService.convertParticipationDatesFromServer(result.participation as StudentParticipation);
+        SubmissionService.convertSubmissionDateFromServer(result.submission);
     }
 
     public convertResultResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.completionDate = convertDateFromServer(res.body.completionDate);
-            res.body.participation = this.convertParticipationDatesFromServer(res.body.participation! as StudentParticipation);
+            this.convertResultDatesFromServer(res.body);
         }
         return res;
-    }
-
-    private convertParticipationDatesFromServer(participation: StudentParticipation): StudentParticipation {
-        if (participation) {
-            ParticipationService.convertParticipationDatesFromServer(participation);
-            if (participation.exercise) {
-                participation.exercise = ExerciseService.convertExerciseDatesFromServer(participation.exercise);
-            }
-        }
-        return participation;
     }
 
     /**
@@ -296,10 +281,7 @@ export class ResultService implements IResultService {
     private static processReceivedResult(exercise: Exercise, result: Result): Result {
         result.participation!.results = [result];
         (result.participation! as StudentParticipation).exercise = exercise;
-        result.durationInMinutes = ResultService.durationInMinutes(
-            result.completionDate!,
-            result.participation!.initializationDate ? result.participation!.initializationDate : exercise.releaseDate!,
-        );
+        result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.participation!.initializationDate ?? exercise.releaseDate!);
         // Nest submission into participation so that it is available for the result component
         if (result.submission) {
             result.participation!.submissions = [result.submission];

@@ -201,7 +201,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise = newExercise;
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
-        this.exercise.participationStatus = participationStatus(this.exercise);
+        this.exercise.participationStatus = participationStatus(this.exercise, false);
         const now = dayjs();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || now.isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories || [];
@@ -373,7 +373,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             .subscribe((teamAssignment) => {
                 this.exercise!.studentAssignedTeamId = teamAssignment.teamId;
                 this.exercise!.studentParticipations = teamAssignment.studentParticipations;
-                this.exercise!.participationStatus = participationStatus(this.exercise!);
+                this.exercise!.participationStatus = participationStatus(this.exercise!, false);
             });
     }
 
