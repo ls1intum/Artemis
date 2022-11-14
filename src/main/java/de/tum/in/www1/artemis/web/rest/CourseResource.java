@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
@@ -79,6 +80,8 @@ public class CourseResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final OAuth2JWKSService oAuth2JWKSService;
+
     private final CourseRepository courseRepository;
 
     private final ExerciseService exerciseService;
@@ -100,12 +103,14 @@ public class CourseResource {
     private final FileService fileService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
-            AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService,
-            ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService, FileService fileService) {
+            OAuth2JWKSService oAuth2JWKSService, AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository,
+            SubmissionService submissionService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
+            FileService fileService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
+        this.oAuth2JWKSService = oAuth2JWKSService;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.submissionService = submissionService;
@@ -160,6 +165,9 @@ public class CourseResource {
         }
 
         Course result = courseRepository.save(course);
+        if (course.isOnlineCourse()) {
+            oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
+        }
         return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
 
@@ -238,6 +246,11 @@ public class CourseResource {
         final var oldInstructorGroup = existingCourse.getInstructorGroupName();
         final var oldEditorGroup = existingCourse.getEditorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
+
+        if (courseUpdate.isOnlineCourse()) {
+            oAuth2JWKSService.updateKey(courseUpdate.getOnlineCourseConfiguration().getRegistrationId());
+        }
+
         optionalVcsUserManagementService
                 .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService

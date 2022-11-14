@@ -12,7 +12,8 @@
             "deleted": "Kurs gelöscht mit Titel {{ param }}",
             "delete": {
                 "question": "Soll der Kurs <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
-                "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein."
+                "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein.",
+                "icon": "Kursicon löschen"
             },
             "showActive": "Nur aktive Kurse anzeigen",
             "totalScore": "Gesamtergebnis:",
@@ -91,6 +92,11 @@
                 "ltiKey": "LTI-Key",
                 "ltiSecret": "LTI-Geheimnis",
                 "userPrefix": "Nutzer-Präfix",
+                "registrationId": "Registrierung ID",
+                "clientId": "Client ID",
+                "authorizationUri": "Authorization URI",
+                "tokenUri": "Token URI",
+                "jwkSetUri": "JWKSet URI",
                 "form": {
                     "userPrefix": {
                         "forbidden": "Nutzer Präfix darf keine Sonderzeichen beinhalten."

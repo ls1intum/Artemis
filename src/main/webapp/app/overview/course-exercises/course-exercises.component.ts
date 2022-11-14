@@ -21,6 +21,7 @@ import { faAngleDown, faAngleUp, faFilter, faPlayCircle, faSortNumericDown, faSo
 import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
+import { ExerciseFilter as ExerciseFilterModel } from 'app/entities/exercise-filter.model';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',
@@ -78,6 +79,8 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     exerciseForGuidedTour?: Exercise;
     nextRelevantExercise?: ExerciseWithDueDate;
     sortingAttribute: SortingAttribute;
+    searchExercisesInput: string;
+    exerciseFilter: ExerciseFilterModel;
 
     // Icons
     faPlayCircle = faPlayCircle;
@@ -110,7 +113,9 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
 
     ngOnInit() {
         this.exerciseCountMap = new Map<string, number>();
+        this.exerciseFilter = new ExerciseFilterModel();
         this.numberOfExercises = 0;
+        this.searchExercisesInput = '';
         const filters = this.localStorage.retrieve(SortFilterStorageKey.FILTER);
         const filtersInStorage = filters
             ? filters
@@ -219,6 +224,15 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     }
 
     /**
+     * Method is called when enter key is pressed on search input or search button is clicked
+     */
+    onSearch() {
+        this.searchExercisesInput = this.searchExercisesInput.trim();
+        this.exerciseFilter = new ExerciseFilterModel(this.searchExercisesInput);
+        this.applyFiltersAndOrder();
+    }
+
+    /**
      * Checks if the given exercise still needs work, i.e. wasn't even started yet or is not graded with 100%
      * @param exercise The exercise which should get checked
      */
@@ -231,7 +245,8 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
      * Applies all selected activeFilters and orders and groups the user's exercises
      */
     private applyFiltersAndOrder() {
-        const filtered = this.course?.exercises?.filter(this.fulfillsCurrentFilter.bind(this));
+        let filtered = this.course?.exercises?.filter(this.fulfillsCurrentFilter.bind(this));
+        filtered = filtered?.filter((exercise) => this.exerciseFilter.matchesExercise(exercise));
         this.groupExercises(filtered);
     }
 
