@@ -24,13 +24,12 @@
             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
         </a>
 
-        <div class="d-flex flex-column gap-2 mt-2">
+        <div class="d-flex flex-column gap-2">
             <div class="col-auto">
                 <jhi-submission-result-status
                     class="d-flex justify-content-end"
                     [exercise]="exercise"
                     [studentParticipation]="gradedStudentParticipation"
-                    updatingResultClass="me-2"
                     [showBadge]="true"
                     [triggerLastGraded]="false"
                     [short]="true"
