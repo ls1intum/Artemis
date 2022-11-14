@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -98,6 +98,7 @@ describe('Course Management Update Component', () => {
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(RemoveKeysPipe),
+                MockDirective(NgbTypeahead),
             ],
         })
             .compileComponents()
