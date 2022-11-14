@@ -46,8 +46,9 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     /**
      * Opens the ResultDetailComponent as popup; displays test results
      * @param {string[]} tests - Identifies the testcase
+     * @param taskName - the name of the selected task
      */
-    public showDetailsForTests(tests: string[]) {
+    public showDetailsForTests(tests: string[], taskName: string) {
         if (!this.latestResult || !this.latestResult.feedbacks) {
             return;
         }
@@ -64,5 +65,6 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
         componentInstance.feedbackFilter = tests;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         componentInstance.showTestDetails = this.showTestDetails || false;
+        componentInstance.taskName = taskName;
     }
 }

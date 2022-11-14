@@ -22,15 +22,17 @@
                 <span class="guided-tour result" [ngbTooltip]="resultTooltip | artemisTranslate" container="body">
                     {{ resultString }}
                 </span>
-                <span class="result" [ngbTooltip]="result.submission?.submissionDate | artemisDate"> ({{ result.submission?.submissionDate! | artemisTimeAgo }}) </span>
+                <span class="result" [ngbTooltip]="result.submission?.submissionDate ?? result.completionDate | artemisDate">
+                    ({{ result.submission?.submissionDate ?? result.completionDate! | artemisTimeAgo }})
+                </span>
             </span>
             <ng-template #notPreliminaryAndNoFeedback>
                 <span [ngClass]="textColorClass" class="guided-tour result" id="result-score">
                     <span class="result" [ngbTooltip]="resultTooltip | artemisTranslate" container="body">
                         {{ resultString }}
                     </span>
-                    <span class="result" [ngbTooltip]="result.submission?.submissionDate | artemisDate" container="body">
-                        ({{ result.submission?.submissionDate! | artemisTimeAgo }})
+                    <span class="result" [ngbTooltip]="result.submission?.submissionDate ?? result.completionDate | artemisDate" container="body">
+                        ({{ result.submission?.submissionDate ?? result.completionDate! | artemisTimeAgo }})
                     </span>
                 </span>
             </ng-template>

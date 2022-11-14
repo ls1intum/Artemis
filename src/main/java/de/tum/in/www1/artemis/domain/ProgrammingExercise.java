@@ -591,11 +591,6 @@ public class ProgrammingExercise extends Exercise {
         return super.getAssessmentType();
     }
 
-    public boolean needsLockOperation() {
-        return isExamExercise() || AssessmentType.AUTOMATIC != getAssessmentType() || getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                || getAllowComplaintsForAutomaticAssessments();
-    }
-
     @Nullable
     public ProjectType getProjectType() {
         return projectType;
