@@ -39,11 +39,8 @@ export class CourseUpdateComponent implements OnInit {
     onlineCourseConfigurationForm: FormGroup;
     course: Course;
     isSaving: boolean;
-    courseImageFile?: File;
-    courseImageFileName: string;
-    isUploadingCourseImage: boolean;
-    imageChangedEvent: any = '';
-    croppedImage: any = '';
+    courseImageUploadFile?: File;
+    croppedImage?: string;
     showCropper = false;
     presentationScoreEnabled = false;
     complaintsEnabled = true; // default value
@@ -129,6 +126,11 @@ export class CourseUpdateComponent implements OnInit {
             ltiKey: new FormControl(this.course.onlineCourseConfiguration?.ltiKey),
             ltiSecret: new FormControl(this.course.onlineCourseConfiguration?.ltiSecret),
             userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
+            registrationId: new FormControl(this.course.onlineCourseConfiguration?.registrationId),
+            clientId: new FormControl(this.course.onlineCourseConfiguration?.clientId),
+            authorizationUri: new FormControl(this.course.onlineCourseConfiguration?.authorizationUri),
+            tokenUri: new FormControl(this.course.onlineCourseConfiguration?.tokenUri),
+            jwkSetUri: new FormControl(this.course.onlineCourseConfiguration?.jwkSetUri),
         });
 
         this.courseForm = new FormGroup(
@@ -193,8 +195,7 @@ export class CourseUpdateComponent implements OnInit {
             },
             { validators: CourseValidator },
         );
-        this.courseImageFileName = this.course.courseIcon!;
-        this.croppedImage = this.course.courseIcon ? this.course.courseIcon : '';
+        this.croppedImage = this.course.courseIcon;
         this.presentationScoreEnabled = this.course.presentationScore !== 0;
     }
 
@@ -220,10 +221,15 @@ export class CourseUpdateComponent implements OnInit {
         const course = this.courseForm.getRawValue();
         course.onlineCourseConfiguration = this.isOnlineCourse() ? this.onlineCourseConfigurationForm.getRawValue() : null;
 
+        let file = undefined;
+        if (this.courseImageUploadFile && this.croppedImage) {
+            const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
+            file = base64StringToBlob(base64Data, 'image/*');
+        }
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseService.update(course));
+            this.subscribeToSaveResponse(this.courseService.update(this.course.id, course, file));
         } else {
-            this.subscribeToSaveResponse(this.courseService.create(course));
+            this.subscribeToSaveResponse(this.courseService.create(course, file));
         }
     }
 
@@ -258,12 +264,10 @@ export class CourseUpdateComponent implements OnInit {
      * @function set course icon
      * @param event {object} Event object which contains the uploaded file
      */
-    setCourseImage(event: any): void {
-        this.imageChangedEvent = event;
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
-            this.courseImageFile = fileList[0];
-            this.courseImageFileName = this.courseImageFile.name;
+    setCourseImage(event: Event): void {
+        const element = event.currentTarget as HTMLInputElement;
+        if (element.files?.[0]) {
+            this.courseImageUploadFile = element.files[0];
         }
     }
 
@@ -276,33 +280,6 @@ export class CourseUpdateComponent implements OnInit {
 
     imageLoaded() {
         this.showCropper = true;
-    }
-
-    /**
-     * @function uploadBackground
-     * @desc Upload the selected file (from "Upload Background") and use it for the question's backgroundFilePath
-     */
-    uploadCourseImage(): void {
-        const contentType = 'image/*';
-        const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
-        const file = base64StringToBlob(base64Data, contentType);
-        const fileName = this.courseImageFileName;
-
-        this.isUploadingCourseImage = true;
-        this.fileUploaderService.uploadFile(file, fileName).then(
-            (response) => {
-                this.courseForm.patchValue({ courseIcon: response.path });
-                this.isUploadingCourseImage = false;
-                this.courseImageFile = undefined;
-                this.courseImageFileName = response.path!;
-            },
-            () => {
-                this.isUploadingCourseImage = false;
-                this.courseImageFile = undefined;
-                this.courseImageFileName = this.course.courseIcon!;
-            },
-        );
-        this.showCropper = false;
     }
 
     /**
@@ -505,6 +482,15 @@ export class CourseUpdateComponent implements OnInit {
 
     get isValidConfiguration(): boolean {
         return this.isValidDate;
+    }
+
+    /**
+     * Deletes the course icon
+     */
+    deleteCourseIcon() {
+        this.course.courseIcon = undefined;
+        this.croppedImage = undefined;
+        this.courseForm.controls['courseIcon'].setValue(undefined);
     }
 }
 
