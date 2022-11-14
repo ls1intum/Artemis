@@ -84,7 +84,7 @@ public class ChannelService {
         }
         var channel = channelOptional.get();
         channel.getConversationParticipants().forEach(participant -> {
-            if (usersToGrantChannelAdmin.contains(participant.getUser()) && !participant.getIsAdmin()) {
+            if (usersToGrantChannelAdmin.contains(participant.getUser()) && (participant.getIsAdmin() != null && !participant.getIsAdmin())) {
                 participant.setIsAdmin(true);
             }
         });
@@ -98,7 +98,7 @@ public class ChannelService {
         }
         var channel = channelOptional.get();
         channel.getConversationParticipants().forEach(participant -> {
-            if (usersToRevokeChannelAdmin.contains(participant.getUser()) && participant.getIsAdmin()) {
+            if (usersToRevokeChannelAdmin.contains(participant.getUser()) && (participant.getIsAdmin() != null && participant.getIsAdmin())) {
                 participant.setIsAdmin(false);
             }
         });

@@ -45,37 +45,49 @@
                 "confirmButton": "Unarchive Channel"
             },
             "deleteChannel": {
-                "question": " Bist du sicher, dass du den Kanal mit dem Namen '{{ title }}' löschen willst? Dies ist eine dauerhafte Aktion und kann nicht rückgängig gemacht werden.",
-                "confirm": "Bitte gib den Titel des Kanals zur Bestätigung ein."
+                "question": "Are you sure to delete the channel with name '{{ title }}'? This is a permanent action and cannot be undone.",
+                "confirm": "Please enter the title of the channel to confirm."
+            },
+            "makeChannelAdmin": {
+                "title": "Make {{ userName }} an admin of {{ channelName }} ?",
+                "question": "Do you really want to make {{ userName }} an admin of {{ channelName }} ?",
+                "description": "This will allow {{ userName }} to manage the channel and its members.",
+                "confirmButton": "Grant Admin Rights"
+            },
+            "revokeChannelAdmin": {
+                "title": "Revoke admin rights of {{ userName }} in {{ channelName }} ?",
+                "question": "Do you really want to revoke the admin rights of {{ userName }} in {{ channelName }} ?",
+                "description": "This will revoke the admin rights of {{ userName }} in {{ channelName }}. You can grant the admin rights again at any time.",
+                "confirmButton": "Revoke Admin Rights"
             }
-        },
-        "forms": {
-            "channelForm": {
-                "nameInput": {
-                    "label": "Name",
-                    "placeholder": "e.g. tech-support",
-                    "requiredValidationError": "Name is required!",
-                    "maxLengthValidationError": "Name can be max {{ max }} characters long!",
-                    "regexValidationError": "Channel names can only contain lowercase letters, numbers, and dashes."
-                },
-                "topicInput": {
-                    "label": "Topic (optional)",
-                    "topicHelp": "What is the channel currently dealing with? (Displayed in header)",
-                    "maxLengthValidationError": "The topic can be a maximum of {{ max }} characters long!"
-                },
-                "descriptionInput": {
-                    "label": "Description (optional)",
-                    "descriptionHelp": "What's this channel about?",
-                    "maxLengthValidationError": "Description can be max {{ max }} characters long!"
-                },
-                "isPublicInput": {
-                    "label": "Private Channel / Public Channel",
-                    "explanation": "People will need an invitation to join a private channel. Everybody can join a public channel.",
-                    "public": "Public",
-                    "private": "Private"
-                },
-                "createButton": "Create Channel"
-            }
+        }
+    },
+    "forms": {
+        "channelForm": {
+            "nameInput": {
+                "label": "Name",
+                "placeholder": "e.g. tech-support",
+                "requiredValidationError": "Name is required!",
+                "maxLengthValidationError": "Name can be max {{ max }} characters long!",
+                "regexValidationError": "Channel names can only contain lowercase letters, numbers, and dashes."
+            },
+            "topicInput": {
+                "label": "Topic (optional)",
+                "topicHelp": "What is the channel currently dealing with? (Displayed in header)",
+                "maxLengthValidationError": "The topic can be a maximum of {{ max }} characters long!"
+            },
+            "descriptionInput": {
+                "label": "Description (optional)",
+                "descriptionHelp": "What's this channel about?",
+                "maxLengthValidationError": "Description can be max {{ max }} characters long!"
+            },
+            "isPublicInput": {
+                "label": "Private Channel / Public Channel",
+                "explanation": "People will need an invitation to join a private channel. Everybody can join a public channel.",
+                "public": "Public",
+                "private": "Private"
+            },
+            "createButton": "Create Channel"
         }
     }
 }

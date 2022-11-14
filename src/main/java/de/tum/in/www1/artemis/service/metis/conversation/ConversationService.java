@@ -85,6 +85,11 @@ public class ConversationService {
             ConversationParticipant conversationParticipant = new ConversationParticipant();
             conversationParticipant.setUser(user);
             conversationParticipant.setConversation(conversationFromDatabase);
+
+            if (conversationFromDatabase instanceof Channel) {
+                conversationParticipant.setIsAdmin(false);
+            }
+
             newConversationParticipants.add(conversationParticipant);
         }
         newConversationParticipants = conversationParticipantRepository.saveAll(newConversationParticipants);

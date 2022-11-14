@@ -9,11 +9,24 @@
         {{ userLabel }}
     </span>
     <div ngbDropdown class="d-inline-block" #userDropdown="ngbDropdown">
-        <button class="btn btn-outline-secondary dropdown-toggle interaction" type="button" ngbDropdownToggle *ngIf="canDeleteUser">
+        <button
+            class="btn btn-outline-secondary dropdown-toggle interaction"
+            type="button"
+            ngbDropdownToggle
+            *ngIf="canBeDeleted || canBeGrantedChannelAdminRights || canBeRevokedChannelAdminRights"
+        >
             <fa-icon [icon]="faEllipsis" size="xs"></fa-icon>
         </button>
         <div ngbDropdownMenu>
-            <button ngbDropdownItem class="text-danger" (click)="openRemoveUserDialog($event)">{{ 'artemisApp.actions.removeUser' | artemisTranslate }}</button>
+            <button ngbDropdownItem *ngIf="canBeDeleted" class="text-danger" (click)="openRemoveUserDialog($event)">
+                {{ 'artemisApp.actions.removeUser' | artemisTranslate }}
+            </button>
+            <button ngbDropdownItem *ngIf="canBeGrantedChannelAdminRights" class="text-danger" (click)="openGrantChannelAdminRightsDialog($event)">
+                {{ 'artemisApp.pages.makeChannelAdmin.confirmButton' | artemisTranslate }}
+            </button>
+            <button ngbDropdownItem *ngIf="canBeRevokedChannelAdminRights" class="text-danger" (click)="openRevokeChannelAdminRightsDialog($event)">
+                {{ 'artemisApp.pages.revokeChannelAdmin.confirmButton' | artemisTranslate }}
+            </button>
         </div>
     </div>
 </div>

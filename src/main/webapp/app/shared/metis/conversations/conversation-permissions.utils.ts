@@ -20,6 +20,14 @@ export function canAddUsersToConversation(conversation: ConversationDto): boolea
     return false;
 }
 
+export function canGrantChannelAdminRights(channel: ChannelDTO): boolean {
+    return hasChannelAdminRightsCheck(channel);
+}
+
+export function canRevokeChannelAdminRights(channel: ConversationDto): boolean {
+    return hasChannelAdminRightsCheck(channel);
+}
+
 export function canRemoveUsersFromConversation(conversation: ConversationDto): boolean {
     if (!conversation) {
         return false;

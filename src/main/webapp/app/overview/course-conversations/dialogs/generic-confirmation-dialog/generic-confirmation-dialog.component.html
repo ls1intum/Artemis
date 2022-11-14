@@ -16,7 +16,7 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" (click)="clear()">{{ 'entity.action.cancel' | artemisTranslate }}</button>
-        <button type="button" class="btn" [class.btn-danger]="!canBeUndone" [class.btn-primary]="canBeUndone" (click)="confirm()">
+        <button type="button" class="btn" [class.btn-danger]="isDangerousAction" [class.btn-primary]="!isDangerousAction" (click)="confirm()">
             {{ translationKeys.confirmButtonKey | artemisTranslate }}
         </button>
     </div>

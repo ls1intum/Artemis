@@ -39,14 +39,26 @@
                 "confirmButton": "Kanal archivieren"
             },
             "unArchiveChannel": {
-                "title": "Unarchive Channel {{ channelName }} ?",
-                "question": "Do you really want to unarchive the channel {{ channelName }} ?",
-                "description": "Unarchiving a channel will allow new users to join and post. You can archive the channel at any time.",
-                "confirmButton": "Unarchive Channel"
+                "title": "Kanal {{ channelName }} unarchivieren?",
+                "question": "Möchtest du den Kanal {{ channelName }} wirklich unarchivieren?",
+                "description": "Wenn du die Archivierung eines Channels aufhebst, können neue Benutzer beitreten und Beiträge schreiben. Du kannst den Kanal jederzeit wieder archivieren.",
+                "confirmButton": "Kanal unarchivieren"
             },
             "deleteChannel": {
-                "question": "Are you sure to delete the channel with name '{{ title }}'? This is a permanent action and cannot be undone.",
-                "confirm": "Please enter the title of the channel to confirm."
+                "question": " Bist du sicher, dass du den Kanal mit dem Namen '{{ title }}' löschen willst? Dies ist eine dauerhafte Aktion und kann nicht rückgängig gemacht werden.",
+                "confirm": "Bitte gib den Titel des Kanals zur Bestätigung ein."
+            },
+            "makeChannelAdmin": {
+                "title": "{{ userName }} zu einem Admin von {{ channelName }} machen?",
+                "question": "Willst du wirklich {{ userName }} zum Administrator von {{ channelName }} machen?",
+                "description": "Damit kann {{ userName }} den Kanal und seine Mitglieder verwalten.",
+                "confirmButton": "Admin-Rechte erteilen"
+            },
+            "revokeChannelAdmin": {
+                "title": "Admin-Rechte von {{ userName }} in {{ channelName }} widerrufen ?",
+                "question": "Möchtest Du wirklich die Admin-Rechte von {{ userName }} in {{ channelName }} widerrufen? ?",
+                "description": "Damit werden die Admin-Rechte von {{ userName }} in {{ channelName }} entzogen. Du kannst die Admin-Rechte jederzeit wieder erteilen.",
+                "confirmButton": "Admin-Rechte widerrufen"
             }
         },
         "forms": {

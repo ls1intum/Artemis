@@ -160,7 +160,7 @@ public class ChannelResource {
         var usersToGrantChannelAdmin = conversationService.findUsersInDatabase(userLogins);
         // nobody is allowed to revoke admin rights from the creator of the channel
         usersToGrantChannelAdmin.removeIf(user -> user.getId().equals(channel.getCreator().getId()));
-        channelService.grantChannelAdmin(channelId, usersToGrantChannelAdmin);
+        channelService.revokeChannelAdmin(channelId, usersToGrantChannelAdmin);
         return ResponseEntity.ok().build();
     }
 

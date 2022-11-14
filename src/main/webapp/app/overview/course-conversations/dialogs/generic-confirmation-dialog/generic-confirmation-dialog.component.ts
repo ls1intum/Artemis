@@ -21,6 +21,9 @@ export class GenericConfirmationDialog {
     @Input()
     canBeUndone = true;
 
+    @Input()
+    isDangerousAction = false;
+
     constructor(private activeModal: NgbActiveModal) {}
 
     isInitialized = false;
