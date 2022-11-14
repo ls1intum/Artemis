@@ -1,5 +1,4 @@
 import { artemis } from '../support/ArtemisTesting';
-import { authTokenKey } from '../support/constants';
 import { Course } from '../../../main/webapp/app/entities/course.model';
 import { ModelingExercise } from '../../../main/webapp/app/entities/modeling-exercise.model';
 import { convertCourseAfterMultiPart } from '../support/requests/CourseManagementRequests';
@@ -49,11 +48,7 @@ describe('Logout tests', () => {
             expect(text).to.contains('You have unsaved changes');
             return true;
         });
-        cy.url()
-            .should('equal', Cypress.config().baseUrl + '/')
-            .then(() => {
-                expect(localStorage.getItem(authTokenKey)).to.be.null;
-            });
+        cy.url().should('equal', Cypress.config().baseUrl + '/');
     });
 
     it('Stays logged in by pressing cancel when trying to logout during unsaved changes on exercise mode', () => {
@@ -62,10 +57,6 @@ describe('Logout tests', () => {
             expect(text).to.contains('You have unsaved changes');
             return false;
         });
-        cy.url()
-            .should('not.equal', Cypress.config().baseUrl + '/')
-            .then(() => {
-                expect(localStorage.getItem(authTokenKey)).to.not.be.null;
-            });
+        cy.url().should('not.equal', Cypress.config().baseUrl + '/');
     });
 });
