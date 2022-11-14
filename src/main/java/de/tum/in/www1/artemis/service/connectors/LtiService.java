@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -34,8 +32,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.security.jwt.JWTFilter;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 
 @Service
@@ -53,16 +50,16 @@ public class LtiService {
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private final TokenProvider tokenProvider;
+    private final JWTCookieService jwtCookieService;
 
     private final LtiUserIdRepository ltiUserIdRepository;
 
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            TokenProvider tokenProvider, LtiUserIdRepository ltiUserIdRepository) {
+            JWTCookieService jwtCookieService, LtiUserIdRepository ltiUserIdRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
-        this.tokenProvider = tokenProvider;
+        this.jwtCookieService = jwtCookieService;
         this.ltiUserIdRepository = ltiUserIdRepository;
     }
 
@@ -211,17 +208,15 @@ public class LtiService {
         User user = userRepository.getUser();
 
         if (!user.getActivated()) {
-            String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), true);
-            log.debug("created jwt token: {}", jwt);
-            Duration duration = Duration.of(tokenProvider.getTokenValidity(true), ChronoUnit.MILLIS);
-            ResponseCookie responseCookie = JWTFilter.buildJWTCookie(jwt, duration);
+            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
             uriComponentsBuilder.queryParam("initialize", "");
         }
         else {
-            ResponseCookie responseCookie = JWTFilter.buildJWTCookie("", Duration.ZERO);
+            ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
             uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }
     }

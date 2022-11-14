@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,7 +26,7 @@ import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 
 class LtiServiceTest {
@@ -43,7 +44,7 @@ class LtiServiceTest {
     private LtiUserIdRepository ltiUserIdRepository;
 
     @Mock
-    private TokenProvider tokenProvider;
+    private JWTCookieService jwtCookieService;
 
     private Exercise exercise;
 
@@ -63,7 +64,7 @@ class LtiServiceTest {
     void init() {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, artemisAuthenticationProvider, tokenProvider, ltiUserIdRepository);
+        ltiService = new LtiService(userCreationService, userRepository, artemisAuthenticationProvider, jwtCookieService, ltiUserIdRepository);
         course = new Course();
         course.setId(100L);
         course.setStudentGroupName(courseStudentGroupName);
@@ -86,7 +87,7 @@ class LtiServiceTest {
     void addLtiQueryParamsNewUser() {
         when(userRepository.getUser()).thenReturn(user);
         user.setActivated(false);
-        when(tokenProvider.createToken(any(), anyBoolean())).thenReturn("testJwt");
+        when(jwtCookieService.buildLoginCookie(true)).thenReturn(mock(ResponseCookie.class));
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
         HttpServletResponse response = mock(HttpServletResponse.class);
@@ -95,7 +96,7 @@ class LtiServiceTest {
 
         UriComponents uriComponents = uriComponentsBuilder.build();
 
-        verify(tokenProvider, times(1)).createToken(any(), anyBoolean());
+        verify(jwtCookieService, times(1)).buildLoginCookie(true);
         verify(response, times(1)).addHeader(any(), any());
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
@@ -108,6 +109,7 @@ class LtiServiceTest {
     void addLtiQueryParamsExistingUser() {
         when(userRepository.getUser()).thenReturn(user);
         user.setActivated(true);
+        when(jwtCookieService.buildLogoutCookie()).thenReturn(mock(ResponseCookie.class));
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
         HttpServletResponse response = mock(HttpServletResponse.class);
@@ -116,7 +118,7 @@ class LtiServiceTest {
 
         UriComponents uriComponents = uriComponentsBuilder.build();
 
-        verifyNoInteractions(tokenProvider);
+        verify(jwtCookieService, times(1)).buildLogoutCookie();
         verify(response, times(1)).addHeader(any(), any());
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
@@ -145,9 +147,9 @@ class LtiServiceTest {
         Authentication auth = SecurityUtils.makeAuthorizationObject("student1");
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        ltiService.authenticateLtiUser("email", "userid", "username", "firstname", "lastname", false, false);
+        assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.authenticateLtiUser("", "userid", "username", "firstname", "lastname", false, false));
 
-        assertEquals(auth, SecurityContextHolder.getContext().getAuthentication());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test

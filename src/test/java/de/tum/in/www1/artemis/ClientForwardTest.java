@@ -3,21 +3,17 @@ package de.tum.in.www1.artemis;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-
 import javax.servlet.http.Cookie;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.ResultActions;
 
+import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.web.rest.ClientForwardResource;
 import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 
@@ -29,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 class ClientForwardTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private TokenProvider tokenProvider;
+    private JWTCookieService jwtCookieService;
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -70,17 +66,14 @@ class ClientForwardTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Test
     void getWebsocketEndpointWithInvalidCookie() throws Exception {
-        ResponseCookie responseCookie = JWTFilter.buildJWTCookie("invalidJwt", Duration.of(10, ChronoUnit.MINUTES));
-        Cookie cookie = new Cookie(responseCookie.getName(), responseCookie.getValue());
+        Cookie cookie = new Cookie(JWTFilter.JWT_COOKIE_NAME, "invalidCookie");
         request.getMvc().perform(get("/websocket/tracker/308/sessionId/websocket").cookie(cookie)).andExpect(status().isOk()); // Failed handshake with invalid cookie returns 200
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void getWebsocketEndpointWithCookie() throws Exception {
-        String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), true);
-        Duration duration = Duration.of(tokenProvider.getTokenValidity(true), ChronoUnit.MILLIS);
-        ResponseCookie responseCookie = JWTFilter.buildJWTCookie(jwt, duration);
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
         Cookie cookie = new Cookie(responseCookie.getName(), responseCookie.getValue());
         request.getMvc().perform(get("/websocket/tracker/308/sessionId/websocket").cookie(cookie)).andExpect(status().isBadRequest())
                 .andExpect(content().string("Can \"Upgrade\" only to \"WebSocket\".")); // Handshake is successfull but connection fails to upgrade using MockMvc

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
@@ -23,8 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.UserNotActivatedException;
-import de.tum.in.www1.artemis.security.jwt.JWTFilter;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
@@ -39,14 +36,14 @@ public class UserJWTController {
 
     private static final Logger log = LoggerFactory.getLogger(UserJWTController.class);
 
-    private final TokenProvider tokenProvider;
+    private final JWTCookieService jwtCookieService;
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
     private final Optional<SAML2Service> saml2Service;
 
-    public UserJWTController(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
-        this.tokenProvider = tokenProvider;
+    public UserJWTController(JWTCookieService jwtCookieService, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
+        this.jwtCookieService = jwtCookieService;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.saml2Service = saml2Service;
     }
@@ -73,7 +70,9 @@ public class UserJWTController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
 
-            buildAndSetCookieForLogin(response, authentication, rememberMe);
+            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
             return ResponseEntity.ok().build();
         }
         catch (CaptchaRequiredException ex) {
@@ -103,7 +102,7 @@ public class UserJWTController {
         log.debug("SAML2 authentication: {}", authentication);
 
         try {
-            authentication = saml2Service.get().handleAuthentication(principal);
+            saml2Service.get().handleAuthentication(principal);
         }
         catch (UserNotActivatedException e) {
             // If the exception is not caught a 401 is returned.
@@ -112,7 +111,9 @@ public class UserJWTController {
         }
 
         final boolean rememberMe = Boolean.parseBoolean(body);
-        buildAndSetCookieForLogin(response, authentication, rememberMe);
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
         return ResponseEntity.ok().build();
     }
 
@@ -123,20 +124,7 @@ public class UserJWTController {
     @PostMapping("/logout")
     public void logout(HttpServletResponse response) {
         // Logout needs to build the same cookie (secure, httpOnly and sameSite='Strict') or browsers will ignore the header and not unset the cookie
-        ResponseCookie responseCookie = JWTFilter.buildJWTCookie("", Duration.ZERO);
-        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-    }
-
-    /**
-     * Builds the cookie containing the jwt for a login and sets it in the response
-     * @param response the body of the request. "true" to remember the user.
-     * @param authentication the authentication object for the current user used to create the jwt.
-     * @param rememberMe boolean used to create the jwt.
-     */
-    private void buildAndSetCookieForLogin(HttpServletResponse response, Authentication authentication, boolean rememberMe) {
-        String jwt = tokenProvider.createToken(authentication, rememberMe);
-        Duration duration = Duration.of(tokenProvider.getTokenValidity(rememberMe), ChronoUnit.MILLIS);
-        ResponseCookie responseCookie = JWTFilter.buildJWTCookie(jwt, duration);
+        ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }
 }

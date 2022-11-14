@@ -213,14 +213,14 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithMockUser(username = "student1", roles = "USER")
     void launchAsRecentlyCreatedStudent(String requestBody) throws Exception {
-        addJiraMocks(requestBody, true);
+        addJiraMocks(requestBody, false);
 
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         var uriComponents = UriComponentsBuilder.fromUri(header).build();
-        assertParametersExistingStudent(UriComponentsBuilder.fromUri(header).build().getQueryParams());
+        assertParametersNewStudent(UriComponentsBuilder.fromUri(header).build().getQueryParams());
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
     }
 
@@ -228,7 +228,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithMockUser(username = "student1", roles = "USER")
     void launchAsExistingStudent(String requestBody) throws Exception {
-        addJiraMocks(requestBody, true);
+        addJiraMocks(requestBody, false);
 
         var nowIn20Minutes = ZonedDateTime.now().plus(20, ChronoUnit.MINUTES);
 
@@ -240,7 +240,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         var uriComponents = UriComponentsBuilder.fromUri(header).build();
-        assertParametersExistingStudent(UriComponentsBuilder.fromUri(header).build().getQueryParams());
+        assertParametersNewStudent(UriComponentsBuilder.fromUri(header).build().getQueryParams());
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
 
         Mockito.reset(timeService);
