@@ -185,7 +185,9 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
 
     // The following evaluations are relevant for programming exercises in general and for modeling, text and file upload exercises that don't have participations.
     if (!studentParticipation || programmingExerciseStates.includes(studentParticipation.initializationState!)) {
-        if (exercise.type === ExerciseType.PROGRAMMING && !isStartExerciseAvailable(exercise as ProgrammingExercise) && !testRun) {
+        const relevantDueDate = getExerciseDueDate(exercise, studentParticipation);
+        const isAfterDueDate = relevantDueDate && dayjs().isAfter(relevantDueDate);
+        if (exercise.type === ExerciseType.PROGRAMMING && isAfterDueDate && !testRun) {
             return ParticipationStatus.EXERCISE_MISSED;
         } else {
             return ParticipationStatus.UNINITIALIZED;
