@@ -347,6 +347,24 @@ public class Feedback extends DomainObject {
     }
 
     /**
+     * Checks whether the feedback was created by a submission policy
+     * @return true if it is submission policy feedback else false
+     */
+    @JsonIgnore
+    public boolean isSubmissionPolicyFeedback() {
+        return this.text != null && this.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER) && this.type == FeedbackType.AUTOMATIC;
+    }
+
+    /**
+     * Checks whether the feedback was created by an automatic test
+     * @return true if it is a test feedback else false
+     */
+    @JsonIgnore
+    public boolean isTestFeedback() {
+        return this.type == FeedbackType.AUTOMATIC && !isStaticCodeAnalysisFeedback() && !isSubmissionPolicyFeedback();
+    }
+
+    /**
      * Returns the Artemis static code analysis category to which this feedback belongs. The method returns an empty
      * String, if the feedback is not static code analysis feedback.
      *

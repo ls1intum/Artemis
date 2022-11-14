@@ -13,7 +13,7 @@
         <div class="row">
             <div class="col-12 col-md-10" *ngIf="isActive && !result && exercise && studentSubmission">
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
+                    <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
                     <div class="input-group background-file">
                         <div class="custom-file overflow-ellipsis">
                             <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />

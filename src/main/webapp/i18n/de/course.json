@@ -12,7 +12,8 @@
             "deleted": "Kurs gelöscht mit Titel {{ param }}",
             "delete": {
                 "question": "Soll der Kurs <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
-                "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein."
+                "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein.",
+                "icon": "Kursicon löschen"
             },
             "showActive": "Nur aktive Kurse anzeigen",
             "totalScore": "Gesamtergebnis:",

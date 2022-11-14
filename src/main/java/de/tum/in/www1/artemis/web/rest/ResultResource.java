@@ -334,29 +334,6 @@ public class ResultResource {
     }
 
     /**
-     * GET /participations/:participationId/latest-result : get the latest result with feedbacks for the given participation.
-     * The order of results is determined by completionDate desc.
-     *
-     * @param participationId the id of the participation for which to retrieve the latest result.
-     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
-     */
-    @GetMapping("participations/{participationId}/latest-result")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
-        log.debug("REST request to get latest result for participation : {}", participationId);
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-
-        if (participation instanceof StudentParticipation && !authCheckService.canAccessParticipation((StudentParticipation) participation)
-                || participation instanceof ProgrammingExerciseParticipation
-                        && !programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
-            throw new AccessForbiddenException();
-        }
-
-        Result result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
-        return new ResponseEntity<>(result, HttpStatus.OK);
-    }
-
-    /**
      * GET /participations/:participationId/results/:resultId/details : get the build result details from CI service for the "id" result.
      * This method is only invoked if the result actually includes details (e.g. feedback or build errors)
      *

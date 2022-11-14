@@ -55,7 +55,7 @@
                 <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
             </a>
             <div class="ms-auto">
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">
+                <a *ngIf="course.isAtLeastInstructor" id="edit-course" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">
                     <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
                 </a>
                 <jhi-course-exam-archive-button
@@ -218,6 +218,19 @@
                 <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | artemisTranslate }}</span>
                 <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | artemisTranslate }}</span>
             </dd>
+            <ng-container [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups">
+                <dt>
+                    <span>{{ 'artemisApp.forms.configurationForm.timeZoneInput.label' | artemisTranslate }} </span>
+                    <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
+                </dt>
+                <dd>
+                    <span *ngIf="course.timeZone">{{ course.timeZone }}</span>
+                    <span *ngIf="!course.timeZone">{{ 'global.generic.unset' | artemisTranslate }}</span>
+                    <div class="form-text">
+                        {{ 'artemisApp.forms.configurationForm.timeZoneInput.beta' | artemisTranslate }}
+                    </div>
+                </dd>
+            </ng-container>
             <ng-container *ngIf="course.presentationScore !== 0">
                 <dt><span jhiTranslate="artemisApp.course.presentationScore">Presentation Score</span></dt>
                 <dd>

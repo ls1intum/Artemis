@@ -14,6 +14,7 @@ import javax.annotation.Nullable;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -252,6 +254,22 @@ public class RequestUtilService {
         if (res.getResponse().getStatus() >= 299) {
             return null;
         }
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
+    public <T, R> R putWithMultipartFile(String path, T paramValue, String paramName, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(paramValue);
+        MockMultipartFile json = new MockMultipartFile(paramName, "", MediaType.APPLICATION_JSON_VALUE, jsonBody.getBytes());
+        MockMultipartHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart(new URI(path)).file(json);
+        builder.with(request -> {
+            request.setMethod(HttpMethod.PUT.toString());
+            return request;
+        });
+        if (file != null) {
+            builder = builder.file(file);
+        }
+        MvcResult res = mvc.perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 

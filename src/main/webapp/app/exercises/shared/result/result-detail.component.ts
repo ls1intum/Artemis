@@ -19,12 +19,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import {
-    createCommitUrl,
-    isProgrammingExerciseParticipation,
-    isProgrammingExerciseStudentParticipation,
-    isResultPreliminary,
-} from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { round, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -36,6 +31,7 @@ import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datat
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
+import { resultIsPreliminary } from 'app/exercises/shared/result/result.utils';
 
 export enum FeedbackItemType {
     Issue,
@@ -70,6 +66,8 @@ export class ResultDetailComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly FeedbackItemType = FeedbackItemType;
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    readonly resultIsPreliminary = resultIsPreliminary;
+    readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
@@ -91,6 +89,7 @@ export class ResultDetailComponent implements OnInit {
      */
     @Input() showMissingAutomaticFeedbackInformation = false;
     @Input() latestIndividualDueDate?: dayjs.Dayjs;
+    @Input() taskName?: string;
 
     isLoading = false;
     loadingFailed = false;
@@ -105,6 +104,10 @@ export class ResultDetailComponent implements OnInit {
     commitHashURLTemplate?: string;
     commitHash?: string;
     commitUrl?: string;
+
+    testCaseCount: number;
+    passedTestCaseCount: number;
+    scaFeedbackCount: number;
     manualFeedbackCount: number;
 
     ngxData: NgxChartsMultiSeriesDataEntry[] = [];
@@ -120,7 +123,7 @@ export class ResultDetailComponent implements OnInit {
     showOnlyPositiveFeedback = false;
     showOnlyNegativeFeedback = false;
 
-    readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
+    numberOfAggregatedTestCases = 0;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -130,7 +133,7 @@ export class ResultDetailComponent implements OnInit {
         public activeModal: NgbActiveModal,
         private resultService: ResultService,
         private buildLogService: BuildLogService,
-        translateService: TranslateService,
+        private translateService: TranslateService,
         private profileService: ProfileService,
     ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
@@ -202,7 +205,7 @@ export class ResultDetailComponent implements OnInit {
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
                         this.backupFilteredFeedbackList = this.filteredFeedbackList;
 
-                        this.manualFeedbackCount = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Feedback).length;
+                        this.countFeedbacks();
 
                         if (this.showScoreChart) {
                             this.updateChart(this.feedbackList);
@@ -286,7 +289,7 @@ export class ResultDetailComponent implements OnInit {
         } else {
             return feedbacks.map((feedback) => ({
                 type: FeedbackItemType.Feedback,
-                category: 'Feedback',
+                category: this.translateService.instant('artemisApp.result.detail.feedback'),
                 title: feedback.text,
                 text: feedback.detailText,
                 previewText: ResultDetailComponent.computeFeedbackPreviewText(feedback.detailText),
@@ -328,7 +331,7 @@ export class ResultDetailComponent implements OnInit {
 
         return {
             type: FeedbackItemType.Policy,
-            category: 'Submission Policy',
+            category: this.translateService.instant('artemisApp.programmingExercise.submissionPolicy.title'),
             title: submissionPolicyTitle,
             text: feedback.detailText,
             previewText,
@@ -350,8 +353,8 @@ export class ResultDetailComponent implements OnInit {
 
         return {
             type: FeedbackItemType.Issue,
-            category: 'Code Issue',
-            title: `${scaCategory} Issue in file ${ResultDetailComponent.getIssueLocation(scaIssue)}`.trim(),
+            category: this.translateService.instant('artemisApp.result.detail.codeIssue.name'),
+            title: this.translateService.instant('artemisApp.result.detail.codeIssue.title', { scaCategory, location: this.getIssueLocation(scaIssue) }),
             text,
             previewText,
             positive: false,
@@ -364,13 +367,19 @@ export class ResultDetailComponent implements OnInit {
      * Builds the location string for a static code analysis issue
      * @param issue The sca issue
      */
-    private static getIssueLocation(issue: StaticCodeAnalysisIssue): string {
-        const lineText = !issue.endLine || issue.startLine === issue.endLine ? ` at line ${issue.startLine}` : ` at lines ${issue.startLine}-${issue.endLine}`;
-        let columnText = '';
+    private getIssueLocation(issue: StaticCodeAnalysisIssue): string {
+        const lineText =
+            !issue.endLine || issue.startLine === issue.endLine
+                ? this.translateService.instant('artemisApp.result.detail.codeIssue.line', { line: issue.startLine })
+                : this.translateService.instant('artemisApp.result.detail.codeIssue.lines', { from: issue.startLine, to: issue.endLine });
         if (issue.startColumn) {
-            columnText = !issue.endColumn || issue.startColumn === issue.endColumn ? ` column ${issue.startColumn}` : ` columns ${issue.startColumn}-${issue.endColumn}`;
+            const columnText =
+                !issue.endColumn || issue.startColumn === issue.endColumn
+                    ? this.translateService.instant('artemisApp.result.detail.codeIssue.column', { line: issue.startColumn })
+                    : this.translateService.instant('artemisApp.result.detail.codeIssue.columns', { from: issue.startColumn, to: issue.endColumn });
+            return `${issue.filePath} ${lineText} ${columnText}`;
         }
-        return issue.filePath + lineText + columnText;
+        return `${issue.filePath} ${lineText}`;
     }
 
     /**
@@ -383,15 +392,19 @@ export class ResultDetailComponent implements OnInit {
         let title = undefined;
         if (this.showTestDetails) {
             if (feedback.positive === undefined) {
-                title = `No result information for ${feedback.text}`;
+                title = this.translateService.instant('artemisApp.result.detail.test.noInfo', { name: feedback.text });
             } else {
-                title = `Test ${feedback.text} ${feedback.positive ? 'passed' : 'failed'}`;
+                title = feedback.positive
+                    ? this.translateService.instant('artemisApp.result.detail.test.passed', { name: feedback.text })
+                    : this.translateService.instant('artemisApp.result.detail.test.failed', { name: feedback.text });
             }
         }
 
         return {
             type: FeedbackItemType.Test,
-            category: this.showTestDetails ? 'Test Case' : 'Feedback',
+            category: this.showTestDetails
+                ? this.translateService.instant('artemisApp.result.detail.test.name')
+                : this.translateService.instant('artemisApp.result.detail.feedback'),
             title,
             text: feedback.detailText,
             previewText,
@@ -411,9 +424,9 @@ export class ResultDetailComponent implements OnInit {
 
         return {
             type: feedback.isSubsequent ? FeedbackItemType.Subsequent : FeedbackItemType.Feedback,
-            category: this.showTestDetails ? 'Tutor' : 'Feedback',
+            category: this.showTestDetails ? this.translateService.instant('artemisApp.course.tutor') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
-            text: gradingInstruction.feedback + (feedback.detailText ? '\n' + feedback.detailText : ''),
+            text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
             previewText,
             positive: feedback.positive,
             credits: feedback.credits,
@@ -429,7 +442,7 @@ export class ResultDetailComponent implements OnInit {
     private createProgrammingExerciseTutorFeedbackItem(feedback: Feedback, previewText?: string): FeedbackItem {
         return {
             type: FeedbackItemType.Feedback,
-            category: this.showTestDetails ? 'Tutor' : 'Feedback',
+            category: this.showTestDetails ? this.translateService.instant('artemisApp.course.tutor') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
             text: feedback.detailText,
             previewText,
@@ -475,13 +488,19 @@ export class ResultDetailComponent implements OnInit {
                 return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && !feedbackItem.text;
             });
             if (positiveTestCasesWithoutDetailText.length > 0) {
+                this.numberOfAggregatedTestCases = positiveTestCasesWithoutDetailText.length;
                 return [
                     {
                         type: FeedbackItemType.Test,
-                        category: 'Feedback',
-                        title: positiveTestCasesWithoutDetailText.length + ' passed test' + (positiveTestCasesWithoutDetailText.length > 1 ? 's' : ''),
+                        category: this.showTestDetails
+                            ? this.translateService.instant('artemisApp.result.detail.test.name')
+                            : this.translateService.instant('artemisApp.result.detail.feedback'),
+                        title:
+                            positiveTestCasesWithoutDetailText.length > 1
+                                ? this.translateService.instant('artemisApp.result.detail.test.passedTests', { number: positiveTestCasesWithoutDetailText.length })
+                                : this.translateService.instant('artemisApp.result.detail.test.passedTest'),
                         positive: true,
-                        credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.credits || 0), 0),
+                        credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.credits ?? 0), 0),
                     },
                     ...feedbackList.filter((feedbackItem) => !positiveTestCasesWithoutDetailText.includes(feedbackItem)),
                 ];
@@ -561,17 +580,6 @@ export class ResultDetailComponent implements OnInit {
         this.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
     }
 
-    /**
-     * Checks if the current result is preliminary and has hidden test cases.
-     */
-    resultIsPreliminary() {
-        return (
-            this.result.participation &&
-            isProgrammingExerciseStudentParticipation(this.result.participation) &&
-            isResultPreliminary(this.result, this.exercise as ProgrammingExercise)
-        );
-    }
-
     getCommitHash(): string {
         return (this.result?.submission as ProgrammingSubmission)?.commitHash ?? 'n.a.';
     }
@@ -593,7 +601,7 @@ export class ResultDetailComponent implements OnInit {
     setValues(receivedPositive: number, appliedNegative: number, receivedNegative: number, maxScore: number, maxScoreWithBonus: number): void {
         this.ngxData = [
             {
-                name: 'Score',
+                name: this.translateService.instant('artemisApp.exercise.score'),
                 series: [
                     { name: this.labels[0], value: 0, isPositive: true },
                     { name: this.labels[1], value: 0, isPositive: false },
@@ -667,6 +675,7 @@ export class ResultDetailComponent implements OnInit {
         this.showOnlyNegativeFeedback = false;
         this.showOnlyPositiveFeedback = false;
         this.filteredFeedbackList = this.backupFilteredFeedbackList;
+        this.countFeedbacks();
     }
 
     /**
@@ -691,5 +700,24 @@ export class ResultDetailComponent implements OnInit {
         if (this.showOnlyNegativeFeedback || this.showOnlyPositiveFeedback) {
             this.filteredFeedbackList = this.filteredFeedbackList.filter(filterPredicate);
         }
+
+        this.countFeedbacks();
+    }
+
+    private countFeedbacks() {
+        const testCaseList = this.filteredFeedbackList.filter((feedback) => feedback.type === FeedbackItemType.Test);
+        if (this.numberOfAggregatedTestCases && (this.showOnlyPositiveFeedback || !this.showOnlyNegativeFeedback)) {
+            // The positive test feedbacks were aggregated to one, so we have to add the number but subtract one, since the aggregated test case is in the testCaseList
+            this.testCaseCount = testCaseList.length + this.numberOfAggregatedTestCases - 1;
+            this.passedTestCaseCount = testCaseList.filter((feedback) => feedback.positive).length + this.numberOfAggregatedTestCases - 1;
+        } else {
+            this.testCaseCount = testCaseList.length;
+            this.passedTestCaseCount = testCaseList.filter((feedback) => feedback.positive).length;
+        }
+
+        this.scaFeedbackCount = this.filteredFeedbackList.filter((feedback) => feedback.type === FeedbackItemType.Issue).length;
+        this.manualFeedbackCount = this.filteredFeedbackList.filter(
+            (feedback) => feedback.type === FeedbackItemType.Feedback || feedback.type === FeedbackItemType.Subsequent,
+        ).length;
     }
 }

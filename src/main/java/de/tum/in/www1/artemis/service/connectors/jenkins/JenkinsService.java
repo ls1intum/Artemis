@@ -270,7 +270,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         }
 
         // Relevant feedback is negative, or positive with a message
-        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive() || feedback.getDetailText() != null));
+        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> Boolean.FALSE.equals(feedback.isPositive()) || feedback.getDetailText() != null));
     }
 
     /**

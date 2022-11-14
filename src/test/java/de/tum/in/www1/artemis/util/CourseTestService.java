@@ -50,10 +50,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.CourseExamExportService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -2208,7 +2205,7 @@ public class CourseTestService {
         ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
         MvcResult result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
         Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
-        Course courseWithOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(createdCourse.getId());
+        Course courseWithOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createdCourse.getId());
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
     }
 
@@ -2242,7 +2239,7 @@ public class CourseTestService {
         result = request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
-        Course actualCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(updatedCourse.getId());
+        Course actualCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.getId());
 
         assertThat(actualCourse.getOnlineCourseConfiguration().getLtiKey()).isEqualTo("changedKey");
         assertThat(actualCourse.getOnlineCourseConfiguration().getLtiSecret()).isEqualTo("changedSecret");
@@ -2263,7 +2260,7 @@ public class CourseTestService {
         result = request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
-        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(updatedCourse.getId());
+        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.getId());
         assertThat(courseWithoutOnlineConfiguration.getOnlineCourseConfiguration()).isNull();
     }
 
@@ -2322,5 +2319,32 @@ public class CourseTestService {
         assertThat(createdCourse.getCourseIcon()).as("Course icon got stored").isNotNull();
 
         return createdCourse;
+    }
+
+    /**
+     * Test courseIcon of Course and the file is deleted when updating courseIcon of a Course to null
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
+     */
+    public void testEditCourseRemoveExistingIcon() throws Exception {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        byte[] iconBytes = "icon".getBytes();
+        MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
+        String iconPath = fileService.handleSaveFile(iconFile, false, false);
+        iconPath = fileService.manageFilesForUpdatedFilePath(null, iconPath, FilePathService.getCourseIconFilePath(), course.getId());
+        course.setCourseIcon(iconPath);
+        course = courseRepo.save(course);
+        iconPath = iconPath.replace(Constants.FILEPATH_ID_PLACEHOLDER, course.getId().toString());
+        assertThat(course.getCourseIcon()).as("course icon was set correctly").isEqualTo(iconPath);
+
+        course.setCourseIcon(null);
+        request.putWithMultipartFile("/api/courses/" + course.getId(), course, "course", null, Course.class, HttpStatus.OK);
+
+        course = courseRepo.findByIdElseThrow(course.getId());
+        assertThat(course.getCourseIcon()).as("course icon was deleted correctly").isNull();
+        assertThat(fileService.getFileForPath(fileService.actualPathForPublicPath(iconPath))).as("course icon file was deleted correctly").isNull();
     }
 }

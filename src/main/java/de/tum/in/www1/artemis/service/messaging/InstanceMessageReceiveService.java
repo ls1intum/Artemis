@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.messaging;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -108,6 +109,14 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processLockAllRepositories((message.getMessageObject()));
         });
+        hazelcastInstance.<Long>getTopic("programming-exercise-unlock-repositories-without-earlier-individual-due-date").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(message.getMessageObject());
+        });
+        hazelcastInstance.<Long>getTopic("programming-exercise-lock-repositories-without-later-individual-due-date").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processLockAllRepositoriesWithoutLaterIndividualDueDate(message.getMessageObject());
+        });
         hazelcastInstance.<Long>getTopic("user-management-remove-non-activated-user").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processRemoveNonActivatedUser((message.getMessageObject()));
@@ -199,6 +208,34 @@ public class InstanceMessageReceiveService {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are locked as fast as possible
         programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
+    }
+
+    /**
+     * Unlocks all repositories that do not have an individual due date before now
+     * @param exerciseId the id of the programming exercises where the repos should be unlocked
+     */
+    public void processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
+        log.info("Received unlock all repositories without an individual due date before now for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Run the runnable immediately so that the repositories are locked as fast as possible
+        programmingExerciseScheduleService.unlockStudentRepositories(programmingExercise, participation -> {
+            ZonedDateTime individualDueDate = participation.getIndividualDueDate();
+            return individualDueDate == null || individualDueDate.isAfter(ZonedDateTime.now());
+        }).run();
+    }
+
+    /**
+     * Locks all repositories that do not have an individual due date after now
+     * @param exerciseId the id of the programming exercises where the repos should be locked
+     */
+    public void processLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
+        log.info("Received lock all repositories without an individual due date after now for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Run the runnable immediately so that the repositories are locked as fast as possible
+        programmingExerciseScheduleService.lockStudentRepositories(programmingExercise, participation -> {
+            ZonedDateTime individualDueDate = participation.getIndividualDueDate();
+            return individualDueDate == null || individualDueDate.isBefore(ZonedDateTime.now());
+        }).run();
     }
 
     public void processRemoveNonActivatedUser(Long userId) {
