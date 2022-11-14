@@ -206,7 +206,7 @@ public class DatabaseUtilService {
     private TutorParticipationRepository tutorParticipationRepo;
 
     @Autowired
-    private PostRepository postRepository;
+    public PostRepository postRepository;
 
     @Autowired
     private AnswerPostRepository answerPostRepository;
@@ -834,6 +834,7 @@ public class DatabaseUtilService {
         // add answer for one post in each context (lecture, exercise, course-wide, conversation)
         Post lecturePost = posts.stream().filter(coursePost -> coursePost.getLecture() != null).findFirst().orElseThrow();
         lecturePost.setAnswers(createBasicAnswers(lecturePost));
+        lecturePost.getAnswers().addAll(createBasicAnswers(lecturePost));
         postRepository.save(lecturePost);
 
         Post exercisePost = posts.stream().filter(coursePost -> coursePost.getExercise() != null).findFirst().orElseThrow();
@@ -929,6 +930,7 @@ public class DatabaseUtilService {
         answerPost.setPost(post);
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
+        post.setAnswerCount(post.getAnswerCount() + 1);
         return answerPosts;
     }
 
@@ -941,6 +943,8 @@ public class DatabaseUtilService {
         answerPost.setResolvesPost(true);
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
+        post.setAnswerCount(post.getAnswerCount() + 1);
+        post.setResolved(true);
         return answerPosts;
     }
 
