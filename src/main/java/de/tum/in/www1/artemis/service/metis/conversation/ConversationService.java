@@ -16,18 +16,20 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
+import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
@@ -46,30 +48,27 @@ public class ConversationService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final GroupChatRepository groupChatRepository;
-
-    private final GroupChatService groupChatService;
+    private final OneToOneChatRepository oneToOneChatRepository;
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
     private final PostRepository postRepository;
 
     public ConversationService(UserRepository userRepository, ChannelRepository channelRepository, ConversationParticipantRepository conversationParticipantRepository,
-            ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate, GroupChatRepository groupChatRepository,
-            GroupChatService groupChatService, ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository) {
+            ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate, OneToOneChatRepository oneToOneChatRepository,
+            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository) {
         this.userRepository = userRepository;
         this.channelRepository = channelRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.conversationRepository = conversationRepository;
         this.messagingTemplate = messagingTemplate;
-        this.groupChatRepository = groupChatRepository;
-        this.groupChatService = groupChatService;
+        this.oneToOneChatRepository = oneToOneChatRepository;
         this.channelAuthorizationService = channelAuthorizationService;
         this.postRepository = postRepository;
     }
 
     public void registerUsers(Course course, Set<User> usersToRegister, Conversation conversation) {
-        var conversationFromDatabase = conversationRepository.findByIdWithConversationParticipantsElseThrow(conversation.getId());
+        var conversationFromDatabase = conversationRepository.findByIdWithConversationParticipantsAndGroupsElseThrow(conversation.getId());
         var userThatNeedToBeRegistered = new HashSet<User>();
 
         for (User user : usersToRegister) {
@@ -104,7 +103,7 @@ public class ConversationService {
     }
 
     public void deregisterUsers(Course course, Set<User> usersToDeregister, Conversation conversation) {
-        var conversationFromDatabase = conversationRepository.findByIdWithConversationParticipantsElseThrow(conversation.getId());
+        var conversationFromDatabase = conversationRepository.findByIdWithConversationParticipantsAndGroupsElseThrow(conversation.getId());
 
         if (conversation instanceof Channel channel) {
             var creator = channel.getCreator();
@@ -131,22 +130,31 @@ public class ConversationService {
     }
 
     public ConversationDTO convertToDTOForUser(Conversation conversation, User user) {
+        var convFromDatabase = conversationRepository.findByIdWithConversationParticipantsAndGroupsElseThrow(conversation.getId());
+
         ConversationDTO dto = null;
-        if (conversation instanceof Channel channel) {
+        if (convFromDatabase instanceof Channel channel) {
             dto = new ChannelDTO(channel);
             ((ChannelDTO) dto).setIsChannelAdmin(channelAuthorizationService.isChannelAdmin(channel.getId(), user.getId()));
             ((ChannelDTO) dto).setHasChannelAdminRights(channelAuthorizationService.hasChannelAdminRights(channel.getId(), user));
         }
-        if (conversation instanceof GroupChat groupChat) {
-            dto = new GroupChatDTO(groupChat);
-            ((GroupChatDTO) dto).setNamesOfOtherMembers(groupChatService.getNamesOfOtherMembers(groupChat, user));
+        if (convFromDatabase instanceof OneToOneChat oneToOneChat) {
+            dto = new OneToOneChatDTO(oneToOneChat);
+            var members = new HashSet<UserPublicInfoDTO>();
+            for (var participant : convFromDatabase.getConversationParticipants()) {
+                var memberDTO = new UserPublicInfoDTO(participant.getUser());
+                UserPublicInfoDTO.assignRoleProperties(convFromDatabase.getCourse(), participant.getUser(), memberDTO);
+                members.add(memberDTO);
+            }
+            ((OneToOneChatDTO) dto).setMembers(members);
         }
+
         if (dto == null) {
             throw new IllegalArgumentException("The conversation type is not supported.");
         }
-        dto.setIsMember(isMember(conversation.getId(), user.getId()));
-        dto.setIsCreator(isCreator(conversation.getId(), user.getId()));
-        dto.setNumberOfMembers(getMemberCount(conversation.getId()));
+        dto.setIsMember(isMember(convFromDatabase.getId(), user.getId()));
+        dto.setIsCreator(isCreator(convFromDatabase.getId(), user.getId()));
+        dto.setNumberOfMembers(getMemberCount(convFromDatabase.getId()));
         return dto;
     }
 
@@ -173,18 +181,19 @@ public class ConversationService {
     }
 
     public List<ConversationDTO> getConversationsOfUser(Long courseId, User user) {
-        var activeGroupChatsOfUser = groupChatRepository.findActiveGroupChatsOfUserWithConversationParticipants(courseId, user.getId());
+        var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndGroups(courseId, user.getId());
         var channelsOfUser = channelRepository.findChannelsOfUser(courseId, user.getId());
         var conversations = new ArrayList<Conversation>();
-        conversations.addAll(activeGroupChatsOfUser);
+        conversations.addAll(oneToOneChatsOfUser);
         conversations.addAll(channelsOfUser);
         var conversationDTOs = conversations.stream().map(conversation -> convertToDTOForUser(conversation, user)).collect(Collectors.toList());
+
         return conversationDTOs;
     }
 
     public Conversation updateConversation(Conversation conversation) {
         var updatedConversation = conversationRepository.save(conversation);
-        var updatedConversationWithParticipants = conversationRepository.findByIdWithConversationParticipantsElseThrow(updatedConversation.getId());
+        var updatedConversationWithParticipants = conversationRepository.findByIdWithConversationParticipantsAndGroupsElseThrow(updatedConversation.getId());
         broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, updatedConversationWithParticipants,
                 updatedConversationWithParticipants.getConversationParticipants().stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
         return updatedConversation;
@@ -192,7 +201,7 @@ public class ConversationService {
 
     @Transactional // ok because of delete
     public void deleteConversation(Long conversationId) {
-        var conversationWithParticipants = conversationRepository.findByIdWithConversationParticipantsElseThrow(conversationId);
+        var conversationWithParticipants = conversationRepository.findByIdWithConversationParticipantsAndGroupsElseThrow(conversationId);
         broadcastOnConversationMembershipChannel(conversationWithParticipants.getCourse(), MetisCrudAction.DELETE, conversationWithParticipants,
                 conversationWithParticipants.getConversationParticipants().stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
         this.postRepository.deleteAllByConversationId(conversationId);

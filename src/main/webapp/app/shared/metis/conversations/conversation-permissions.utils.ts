@@ -1,7 +1,8 @@
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
+import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { Course } from 'app/entities/course.model';
+import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 export function canAddUsersToConversation(conversation: ConversationDto): boolean {
     if (!conversation) {
@@ -15,6 +16,9 @@ export function canAddUsersToConversation(conversation: ConversationDto): boolea
     }
     if (isGroupChatDto(conversation)) {
         return groupChatCheck(conversation);
+    }
+    if (isOneToOneChatDto(conversation)) {
+        return false;
     }
     console.error('Error: Conversation type not supported.');
     return false;
@@ -40,6 +44,9 @@ export function canRemoveUsersFromConversation(conversation: ConversationDto): b
     }
     if (isGroupChatDto(conversation)) {
         return groupChatCheck(conversation);
+    }
+    if (isOneToOneChatDto(conversation)) {
+        return false;
     }
     console.error('Error: Conversation type not supported.');
     return false;

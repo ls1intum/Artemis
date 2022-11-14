@@ -4,12 +4,12 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/add-users-form.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
-import { ConversationDto, MAX_MEMBERS_IN_DIRECT_CONVERSATION } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDto, MAX_MEMBERS_IN_GROUP_CHAT } from 'app/entities/metis/conversation/conversation.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { getAsGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
+import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 @Component({
@@ -17,7 +17,7 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
     templateUrl: './conversation-add-users-dialog.component.html',
 })
 export class ConversationAddUsersDialogComponent implements OnInit {
-    readonly MAX_MEMBERS_IN_DIRECT_CONVERSATION = MAX_MEMBERS_IN_DIRECT_CONVERSATION;
+    readonly MAX_MEMBERS_IN_DIRECT_CONVERSATION = MAX_MEMBERS_IN_GROUP_CHAT;
 
     @Input()
     course: Course;

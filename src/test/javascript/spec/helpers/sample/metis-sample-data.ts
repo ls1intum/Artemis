@@ -11,7 +11,7 @@ import { Attachment } from 'app/entities/attachment.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
-import { GroupChat } from 'app/entities/metis/conversation/groupChat.model';
+import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/Metis-Attachment.pdf' } as Attachment;
 

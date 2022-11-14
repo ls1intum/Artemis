@@ -25,4 +25,5 @@ public class ConversationUserDTO extends UserPublicInfoDTO {
     public void setIsChannelAdmin(Boolean channelAdmin) {
         isChannelAdmin = channelAdmin;
     }
+
 }

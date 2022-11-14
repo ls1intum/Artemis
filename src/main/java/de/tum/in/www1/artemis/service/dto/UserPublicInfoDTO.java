@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.dto;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -132,5 +134,19 @@ public class UserPublicInfoDTO {
 
     public void setIsStudent(Boolean student) {
         isStudent = student;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof UserPublicInfoDTO that))
+            return false;
+        return id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

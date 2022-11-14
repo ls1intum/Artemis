@@ -1,9 +1,8 @@
-package de.tum.in.www1.artemis.service.metis.conversation;
+package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
 import java.util.List;
 
 import javax.annotation.Nullable;
-import javax.persistence.Persistence;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
@@ -19,21 +18,16 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Service
-public class ChannelAuthorizationService {
+public class ChannelAuthorizationService extends ConversationAuthorizationService {
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final ChannelRepository channelRepository;
 
-    private final UserRepository userRepository;
-
-    public ChannelAuthorizationService(ConversationParticipantRepository conversationParticipantRepository, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService, ChannelRepository channelRepository) {
+    public ChannelAuthorizationService(UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
+            ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository) {
+        super(userRepository, authorizationCheckService);
         this.conversationParticipantRepository = conversationParticipantRepository;
-        this.authorizationCheckService = authorizationCheckService;
-        this.userRepository = userRepository;
         this.channelRepository = channelRepository;
     }
 
@@ -126,15 +120,6 @@ public class ChannelAuthorizationService {
         if (!hasChannelAdminRights(channel.getId(), user)) {
             throw new AccessForbiddenException("You are not allowed to update this channel");
         }
-    }
-
-    private User getUserIfNecessary(@Nullable User user) {
-        var persistenceUtil = Persistence.getPersistenceUtil();
-        if (user == null || !persistenceUtil.isLoaded(user, "authorities") || !persistenceUtil.isLoaded(user, "groups") || user.getGroups() == null
-                || user.getAuthorities() == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
-        }
-        return user;
     }
 
 }

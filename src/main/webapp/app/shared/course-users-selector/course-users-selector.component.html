@@ -24,7 +24,7 @@
         </ng-container>
         <small class="form-text text-muted">{{ 'artemisApp.userSelector.helpText' | artemisTranslate }}</small>
     </div>
-    <ul class="list-group">
+    <ul class="list-group" *ngIf="showUserList">
         <li *ngFor="let user of selectedUsers; let i = index; trackBy: trackIdentity" class="list-group-item d-flex justify-content-between align-items-center">
             <span class="d-inline-block">{{ getUserLabel(user) }}</span>
             <button *ngIf="!disabled" class="btn btn-outline-secondary d-inline-block" type="button" (click)="onDelete(i)">

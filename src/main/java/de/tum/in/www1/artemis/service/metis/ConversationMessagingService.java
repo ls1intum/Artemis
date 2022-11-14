@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -27,37 +28,26 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
-import de.tum.in.www1.artemis.service.metis.conversation.GroupChatService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
 public class ConversationMessagingService extends PostingService {
 
-    private final GroupChatService groupChatService;
-
     private final ConversationService conversationService;
-
-    private final ChannelService channelService;
 
     private final ConversationMessageRepository conversationMessageRepository;
 
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate,
-            UserRepository userRepository, GroupChatService groupChatService, ConversationService conversationService,
-            ConversationParticipantRepository conversationParticipantRepository, ChannelService channelService) {
+            UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
-        this.groupChatService = groupChatService;
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
-        this.channelService = channelService;
     }
 
     public Post createMessage(Long courseId, Post messagePost) {
@@ -87,30 +77,15 @@ public class ConversationMessagingService extends PostingService {
         conversation = conversationService.updateConversation(conversation);
         broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
 
-        if (conversation instanceof GroupChat) {
+        if (conversation instanceof OneToOneChat || conversation instanceof GroupChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
-            if (getNumberOfPosts == 1) { // first message in group chat --> notify all participants that a conversation with them has been created
+            if (getNumberOfPosts == 1) { // first message in one to one message chat or group chat --> notify all participants that a conversation with them has been created
                 var participants = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream()
                         .map(ConversationParticipant::getUser).filter(Objects::nonNull).collect(Collectors.toSet());
                 conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, participants);
             }
         }
         return savedMessage;
-    }
-
-    private ConversationDTO getConversationDTO(User user, Conversation conversation) {
-        if (conversation instanceof Channel c) {
-            return channelService.convertToDTO(c, user);
-        }
-        else if (conversation instanceof GroupChat g) {
-            var groupChat = groupChatService.findByIdWithConversationParticipantsElseThrow(g.getId());
-            var groupDto = new GroupChatDTO(groupChat);
-            groupDto.setIsMember(true);
-            groupDto.setNumberOfMembers(groupChat.getConversationParticipants().size());
-            groupDto.setNamesOfOtherMembers(groupChatService.getNamesOfOtherMembers(groupChat, user));
-            return groupDto;
-        }
-        return null;
     }
 
     /**

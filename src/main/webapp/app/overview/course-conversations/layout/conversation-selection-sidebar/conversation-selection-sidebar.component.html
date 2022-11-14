@@ -13,27 +13,9 @@
             </div>
             <!-- body -->
             <div class="card-body">
-                <div class="user-searchbar">
-                    <!-- ToDo: Refactor using user selector component-->
-                    <jhi-data-table
-                        [showPageSizeDropdown]="false"
-                        entityType="user"
-                        [searchFields]="['name']"
-                        [isLoading]="isLoading"
-                        [isSearching]="isSearching"
-                        [searchFailed]="searchFailed"
-                        [searchNoResults]="searchNoResults"
-                        [isTransitioning]="isTransitioning"
-                        [onSearchWrapper]="searchUsersWithinCourse"
-                        [searchResultFormatter]="searchResultFormatter"
-                        [onAutocompleteSelectWrapper]="onAutocompleteSelect"
-                        [searchTextFromEntity]="clearUserSearchBar"
-                        searchPlaceholderTranslation="artemisApp.messages.conversation.searchForUsers"
-                        minQueryLengthHintTranslation="artemisApp.messages.conversation.minQueryLengthHint"
-                    ></jhi-data-table>
-                </div>
                 <div>
                     <!-- Starred -->
+                    <!-- ToDo: Translate -->
                     <jhi-sidebar-section
                         [label]="'Starred'"
                         [isCollapsed]="false"
@@ -64,14 +46,21 @@
                             </div>
                         </ng-template>
                     </jhi-sidebar-section>
-                    <!-- Direct Messages -->
+                    <!-- Direct Messages / Group Chats-->
                     <jhi-sidebar-section
                         [label]="'Direct Messages'"
                         [isCollapsed]="true"
-                        [conversations]="groupChats"
+                        [conversations]="oneToOneChats"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
                     >
+                        <ng-template>
+                            <div class="d-inline-block">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateOneToOneChatDialog($event)">
+                                    <fa-icon [icon]="faPlus" size="xs"></fa-icon>
+                                </button>
+                            </div>
+                        </ng-template>
                     </jhi-sidebar-section>
                 </div>
                 <!-- no conversations -->

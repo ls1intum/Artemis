@@ -47,6 +47,9 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor {
     @Input()
     multiSelect = true;
 
+    @Input()
+    showUserList = true;
+
     // icons
     faX = faX;
 

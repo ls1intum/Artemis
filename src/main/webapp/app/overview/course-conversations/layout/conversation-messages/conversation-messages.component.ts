@@ -7,9 +7,10 @@ import { Course } from 'app/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Channel, getAsChannel, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { GroupChat, isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
+import { GroupChat, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { isOneToOneChatDto, OneToOneChat } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 @Component({
     selector: 'jhi-conversation-messages',
@@ -165,6 +166,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             conversation = new Channel();
         } else if (isGroupChatDto(this._activeConversation)) {
             conversation = new GroupChat();
+        } else if (isOneToOneChatDto(this._activeConversation)) {
+            conversation = new OneToOneChat();
         } else {
             throw new Error('Conversation type not supported');
         }

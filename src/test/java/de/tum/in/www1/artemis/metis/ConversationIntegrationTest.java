@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 
@@ -74,7 +74,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateConversation_badRequest() throws Exception {
-        Conversation conversationToSave = new GroupChat();
+        Conversation conversationToSave = new OneToOneChat();
 
         // conversation without required conversationParticipant
         createConversationBadRequest(conversationToSave);
@@ -129,7 +129,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     static Conversation directConversationToCreate(Course course, User conversatingUser) {
-        Conversation conversation = new GroupChat();
+        Conversation conversation = new OneToOneChat();
 
         ConversationParticipant conversationParticipant2 = new ConversationParticipant();
         conversationParticipant2.setUser(conversatingUser);

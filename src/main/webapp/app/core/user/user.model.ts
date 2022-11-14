@@ -65,3 +65,13 @@ export class UserPublicInfoDTO {
     isTeachingAssistant?: boolean;
     isStudent?: boolean;
 }
+
+export function createUserPublicInfoDTOFromUser(user: User): UserPublicInfoDTO {
+    return {
+        id: user.id,
+        login: user.login,
+        name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
+    };
+}

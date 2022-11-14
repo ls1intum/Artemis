@@ -1,0 +1,18 @@
+<div *ngIf="isInitialized">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span> Start a direct conversation </span>
+        </h4>
+        <button type="button" class="btn-close" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <jhi-course-users-selector
+            [ngModel]="selectedUsers"
+            (ngModelChange)="onSelectedUsersChange($event)"
+            [multiSelect]="false"
+            [showUserList]="false"
+            [courseId]="course.id!"
+            [label]="'Select a user to chat with'"
+        ></jhi-course-users-selector>
+    </div>
+</div>

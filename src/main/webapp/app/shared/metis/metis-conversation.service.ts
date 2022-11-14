@@ -9,13 +9,13 @@ import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conver
 import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { AlertService } from 'app/core/util/alert.service';
-import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
 import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -39,7 +39,8 @@ export class MetisConversationService implements OnDestroy {
     private _courseId: number;
     constructor(
         private courseManagementService: CourseManagementService,
-        private groupChatService: GroupChatService,
+        private groupChatService: OneToOneChatService,
+        private oneToOneChatService: OneToOneChatService,
         private channelService: ChannelService,
         protected conversationService: ConversationService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -123,8 +124,8 @@ export class MetisConversationService implements OnDestroy {
     public createNewConversation = (newConversation: ConversationDto): Observable<never> => {
         this.setIsLoading(true);
         let createConversationObservable: Observable<HttpResponse<ConversationDto>>;
-        if (isGroupChatDto(newConversation)) {
-            createConversationObservable = this.groupChatService.create(this._courseId, newConversation);
+        if (isOneToOneChatDto(newConversation)) {
+            createConversationObservable = this.oneToOneChatService.create(this._courseId, newConversation);
         } else if (isChannelDto(newConversation)) {
             createConversationObservable = this.channelService.create(this._courseId, newConversation);
         } else {
@@ -197,7 +198,9 @@ export class MetisConversationService implements OnDestroy {
      * Via this Topic, users are informed about changes to which conversations they are a part of
      *
      * Users will be notified via this topic about the following events:
-     * - GroupChats: When the creator of a group chat starts the conversation by sending the first message (group chat shows up when first message is sent)
+     * - GroupChats and OneToOne Chats: When the creator of a group chat
+     * / one to one chat starts the conversation by sending the first message
+     * (group chats / one to one chats shows up when first message is sent)
      * - Channels: When the user is added to the channel (channel shows up when user is added)
      */
     private getConversationMembershipTopic(courseId: number, userId: number) {

@@ -8,8 +8,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDto } from 'app/entities/metis/conversation/groupChat.model';
+import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationUser } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 type EntityArrayResponseType = HttpResponse<ConversationDto[]>;
 
@@ -44,6 +45,8 @@ export class ConversationService {
                 channelName += ' (' + this.translationService.instant('artemisApp.entities.channel.archived') + ')';
             }
             return channelName;
+        } else if (isOneToOneChatDto(conversation)) {
+            return 'ToDo';
         } else if (isGroupChatDto(conversation)) {
             const namesOfOtherMembers = conversation.namesOfOtherMembers ?? [];
             if (namesOfOtherMembers.length === 0) {

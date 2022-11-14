@@ -30,7 +30,8 @@ import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = GroupChat.class, name = "groupChat"), @JsonSubTypes.Type(value = Channel.class, name = "channel") })
+@JsonSubTypes({ @JsonSubTypes.Type(value = OneToOneChat.class, name = "oneToOneChat"), @JsonSubTypes.Type(value = GroupChat.class, name = "groupChat"),
+        @JsonSubTypes.Type(value = Channel.class, name = "channel"), })
 public abstract class Conversation extends DomainObject {
 
     @ManyToOne

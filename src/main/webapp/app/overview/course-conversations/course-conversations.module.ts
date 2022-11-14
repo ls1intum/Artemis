@@ -28,6 +28,7 @@ import { GenericUpdateTextPropertyDialog } from './dialogs/generic-update-text-p
 import { GenericConfirmationDialog } from './dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ConversationSettingsComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
 import { ConversationEntryComponent } from './layout/conversation-selection-sidebar/sidebar-section/conversation-entry/conversation-entry.component';
+import { OneToOneChatCreateDialogComponent } from './dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 
 const routes: Routes = [
     {
@@ -73,6 +74,7 @@ const routes: Routes = [
         GenericConfirmationDialog,
         ConversationSettingsComponent,
         ConversationEntryComponent,
+        OneToOneChatCreateDialogComponent,
     ],
 })
 export class CourseConversationsModule {}

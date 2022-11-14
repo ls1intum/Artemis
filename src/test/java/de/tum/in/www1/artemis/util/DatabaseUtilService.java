@@ -52,7 +52,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -956,7 +956,7 @@ public class DatabaseUtilService {
     }
 
     public Conversation createDirectConversation(Course course) {
-        Conversation conversation = new GroupChat();
+        Conversation conversation = new OneToOneChat();
         conversation.setCourse(course);
         conversation = conversationRepository.save(conversation);
 
