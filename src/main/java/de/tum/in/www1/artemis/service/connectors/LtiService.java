@@ -97,7 +97,7 @@ public class LtiService {
             return;
         }
 
-        // 3. Case: Lookup user with the LTI email address and sign in as this user if lookup by email is enabled
+        // 3. Case: Lookup user with the LTI email address and sign in as this user
         final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
         if (usernameLookupByEmail.isPresent()) {
             SecurityContextHolder.getContext().setAuthentication(loginUserByEmail(usernameLookupByEmail.get(), email));
