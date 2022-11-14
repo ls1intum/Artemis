@@ -69,6 +69,9 @@ export class ExerciseDetailsStudentActionsComponent {
         return !this.examMode && isStartExerciseAvailable(this.exercise);
     }
 
+    /**
+     * Resuming an exercise is not possible in the exam, otherwise see exercise.utils -> isResumeExerciseAvailable
+     */
     isResumeExerciseAvailable(): boolean {
         return !this.examMode && isResumeExerciseAvailable(this.exercise, this.studentParticipation);
     }
