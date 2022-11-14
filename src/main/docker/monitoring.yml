@@ -1,12 +1,11 @@
 # This configuration is intended for development purpose, it's **your** responsibility to harden it for production
-version: '3.8'
 services:
-  artemis-prometheus:
-    image: prom/prometheus:v2.31.1
-    volumes:
-      - ./prometheus/:/etc/prometheus/
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v2.34.0
+    # If you want to run this in production, you should persist the /etc/prometheus-directory
+    #volumes:
+      # - ./monitoring/prometheus/:/etc/prometheus/
     # If you want to expose these ports outside your dev PC,
     # remove the "127.0.0.1:" prefix
     ports:
@@ -14,10 +13,11 @@ services:
     # On macOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and
     # grafana/provisioning/datasources/datasource.yml
     network_mode: 'host' # to test locally running service
-  artemis-grafana:
-    image: grafana/grafana:8.2.4
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:9.0.2
     volumes:
-      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
