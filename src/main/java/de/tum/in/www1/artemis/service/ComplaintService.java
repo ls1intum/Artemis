@@ -292,6 +292,16 @@ public class ComplaintService {
         }
     }
 
+    /**
+     * Obtains the time when the complaint period starts.
+     * <p>
+     * Assumes the {@link Result#getCompletionDate()} to be present.
+     *
+     * @param exercise The exercise for which complaints can be submitted.
+     * @param studentParticipation The participation for which a complaint should be submitted.
+     * @param result The result which the complaint is about.
+     * @return The time from which submitting a complaint is possible.
+     */
     private static ZonedDateTime getComplaintStartDate(final Exercise exercise, final StudentParticipation studentParticipation, final Result result) {
         final List<ZonedDateTime> possibleComplaintStartDates = new ArrayList<>();
         possibleComplaintStartDates.add(result.getCompletionDate());
@@ -303,8 +313,8 @@ public class ComplaintService {
             possibleComplaintStartDates.add(exercise.getAssessmentDueDate());
         }
 
-        // At least result.getCompletionDate is present, since it was checked earlier
-        return possibleComplaintStartDates.stream().max(Comparator.naturalOrder()).orElseThrow();
+        return possibleComplaintStartDates.stream().max(Comparator.naturalOrder())
+                .orElseThrow(() -> new NoSuchElementException("Expected at least the result completion date to be present."));
     }
 
     /**
