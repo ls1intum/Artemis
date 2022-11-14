@@ -54,7 +54,8 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
     constructor(private elRef: ElementRef<HTMLElement>, private renderer: Renderer2) {}
 
     ngOnInit() {
-        this.scrollListener = this.renderer.listen(this.el, 'scroll', this.onScroll.bind(this));
+        this.scrollListener = this.renderer.listen(this.el, 'scroll', (event) => this.onScroll(event));
+
         this.el.style.height = this.height;
         this.minRowHeight = Number(this.minRowHeight);
     }
@@ -111,7 +112,7 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
         this.manipuleRenderedItems();
     }
 
-    private onScroll() {
+    private onScroll(event: any) {
         const up = this.el.scrollTop < this.currentScroll;
         this.currentScroll = this.el.scrollTop;
 
