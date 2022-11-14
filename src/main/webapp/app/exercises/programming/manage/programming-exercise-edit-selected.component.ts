@@ -43,7 +43,9 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
     saveAll() {
         // If no release date is set, we warn the user.
         if (!this.newProgrammingExercise.releaseDate) {
-            const confirmNoReleaseDate = this.translateService.instant(this.translationBasePath + 'noReleaseDateWarning');
+            const confirmNoReleaseDate = this.translateService.instant(
+                this.translationBasePath + this.newProgrammingExercise.startDate ? 'noReleaseDateWarning' : 'noReleaseAndStartDateWarning',
+            );
             if (!window.confirm(confirmNoReleaseDate)) {
                 return;
             }

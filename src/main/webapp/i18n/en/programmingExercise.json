@@ -31,7 +31,8 @@
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
             },
-            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students.",
+            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students. But they can only participate after the currently defined start date.",
+            "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students cam participate in the exercise.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
             "templateRepositoryUrl": "Template Repository Url",

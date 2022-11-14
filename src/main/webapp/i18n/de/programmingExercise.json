@@ -31,7 +31,8 @@
                 "showTemplateSubmissions": "Zeige Template-Abgaben",
                 "showSolutionSubmissions": "Zeige Lösungsabgaben"
             },
-            "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein.",
+            "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein. Sie können aber erst nach dem Startdatum an der Aufgabe teilnehmen.",
+            "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
             "unsavedChangesProjectTypeChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll der Projekt Typ wirklich geändert werden?",
             "templateRepositoryUrl": "Vorlagen-Repository-Url",
