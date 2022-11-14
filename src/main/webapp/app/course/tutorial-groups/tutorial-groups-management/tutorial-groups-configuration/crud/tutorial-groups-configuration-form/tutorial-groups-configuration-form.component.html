@@ -1,0 +1,49 @@
+<div class="row">
+    <div class="col-12">
+        <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+            <!-- Period -->
+            <div class="col-auto">
+                <label class="form-label" for="period">{{ 'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate }}</label>
+                <div class="input-group">
+                    <input formControlName="period" [owlDateTime]="period" class="d-none" [selectMode]="'range'" />
+                    <input
+                        name="period"
+                        id="period"
+                        required
+                        [class.is-invalid]="isPeriodInvalid"
+                        (focus)="markPeriodAsTouched()"
+                        [value]="periodControl?.value | artemisDateRange: 'long-date':undefined:true"
+                        [owlDateTimeTrigger]="period"
+                        readonly
+                        class="form-control"
+                    />
+                    <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="period">
+                        <fa-icon [icon]="faCalendarAlt"></fa-icon>
+                    </button>
+                    <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period></owl-date-time>
+                </div>
+                <div class="form-text">
+                    {{ 'artemisApp.forms.configurationForm.periodInput.explanation' | artemisTranslate }}
+                </div>
+                <div *ngIf="periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required">
+                        {{ 'artemisApp.forms.configurationForm.periodInput.requiredValidationError' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="periodControl?.errors?.owlDateTimeParse">
+                        {{ 'artemisApp.forms.configurationForm.periodInput.parseError' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="periodControl?.errors?.owlDateTimeRange">
+                        {{ 'artemisApp.forms.configurationForm.periodInput.invalidRangeError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-12">
+                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                        <span>{{ (isEditMode ? 'global.generic.edit' : 'global.generic.create') | artemisTranslate }}</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
