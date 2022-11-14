@@ -44,9 +44,9 @@ describe('AccountService', () => {
         });
         httpService = new MockHttpService();
         translateService = TestBed.inject(TranslateService);
-        // @ts-ignore
         accountService = new AccountService(
             translateService,
+            // @ts-ignore
             new MockSyncStorage(),
             httpService,
             new MockWebsocketService(),
