@@ -42,6 +42,7 @@ public abstract class BaseExercise extends DomainObject {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime releaseDate;
 
+    // TODO: Also use for quiz exercises
     @Column(name = "start_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime startDate;

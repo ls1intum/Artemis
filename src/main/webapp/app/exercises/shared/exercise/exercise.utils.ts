@@ -196,9 +196,15 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
     return ParticipationStatus.INACTIVE;
 };
 
-export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean => {
+/**
+ * Determines if the exercise can be started, this is the case if:
+ * - It is after the start date or the participant is at least a tutor
+ * - In case of a programming exercise it is not before the due date
+ * @param exercise
+ */
+export const isStartExerciseAvailable = (exercise: Exercise): boolean => {
     const beforeStartDateStudent = exercise.isAtLeastTutor === false && exercise.startDate && dayjs().isBefore(exercise.startDate);
-    return !beforeStartDateStudent && (!exercise.dueDate || dayjs().isBefore(exercise.dueDate));
+    return !beforeStartDateStudent && (exercise.type !== ExerciseType.PROGRAMMING || !exercise.dueDate || dayjs().isBefore(exercise.dueDate));
 };
 
 export const isResumeExerciseAvailable = (exercise: Exercise, studentParticipation?: StudentParticipation): boolean => {

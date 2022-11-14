@@ -110,7 +110,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
+                *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
                 (click)="startExercise()"
             ></button>
             <button
@@ -308,7 +308,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
+                *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
                 (click)="startExercise()"
             ></button>
             <button
@@ -384,7 +384,7 @@
                 [buttonIcon]="faPlayCircle"
                 [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
                 [buttonLoading]="!!exercise.loading"
-                *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
+                *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
                 (click)="startExercise()"

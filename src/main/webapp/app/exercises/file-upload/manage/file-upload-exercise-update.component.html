@@ -31,6 +31,7 @@
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
                     class="form-element"
+                    id="pick-modeling-releaseDate"
                     labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
                     [(ngModel)]="fileUploadExercise.releaseDate"
                     (valueChange)="validateDate()"
@@ -41,25 +42,41 @@
             <div class="form-group flex-grow-1 ms-3">
                 <jhi-date-time-picker
                     class="form-element"
-                    labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
-                    [(ngModel)]="fileUploadExercise.dueDate"
-                    name="dueDate"
-                    [error]="fileUploadExercise.dueDateError!"
+                    id="pick-modeling-startDate"
+                    name="startDate"
+                    [error]="!!fileUploadExercise.startDateError"
+                    labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
                     (valueChange)="validateDate()"
+                    [(ngModel)]="fileUploadExercise.startDate"
+                ></jhi-date-time-picker>
+                <span *ngIf="fileUploadExercise.startDateError" class="invalid-feedback">{{ 'artemisApp.exercise.startDateError' | artemisTranslate }}</span>
+            </div>
+        </div>
+        <div class="d-flex" *ngIf="!isExamMode">
+            <div class="form-group flex-grow-1">
+                <jhi-date-time-picker
+                    class="form-element"
+                    id="pick-modeling-dueDate"
+                    name="dueDate"
+                    [error]="!!fileUploadExercise.dueDateError"
+                    labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
+                    (valueChange)="validateDate()"
+                    [(ngModel)]="fileUploadExercise.dueDate"
                 ></jhi-date-time-picker>
                 <span *ngIf="fileUploadExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
             </div>
-        </div>
-        <div class="form-group" *ngIf="!isExamMode">
-            <jhi-date-time-picker
-                class="form-element"
-                name="assessmentDueDate"
-                [error]="fileUploadExercise.assessmentDueDateError!"
-                labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
-                (valueChange)="validateDate()"
-                [(ngModel)]="fileUploadExercise.assessmentDueDate"
-            ></jhi-date-time-picker>
-            <span *ngIf="fileUploadExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
+            <div class="form-group flex-grow-1 ms-3">
+                <jhi-date-time-picker
+                    class="form-element"
+                    id="pick-modeling-assessmentDueDate"
+                    name="assessmentDueDate"
+                    [error]="!!fileUploadExercise.assessmentDueDateError"
+                    labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
+                    (valueChange)="validateDate()"
+                    [(ngModel)]="fileUploadExercise.assessmentDueDate"
+                ></jhi-date-time-picker>
+                <span *ngIf="fileUploadExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
+            </div>
         </div>
         <div class="form-group">
             <label class="form-control-label">{{

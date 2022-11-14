@@ -66,7 +66,7 @@ export class ExerciseDetailsStudentActionsComponent {
      * Starting an exercise is not possible in the exam, otherwise see exercise.utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
-        return !this.examMode && isStartExerciseAvailable(this.exercise as ProgrammingExercise);
+        return !this.examMode && isStartExerciseAvailable(this.exercise);
     }
 
     isResumeExerciseAvailable(): boolean {
