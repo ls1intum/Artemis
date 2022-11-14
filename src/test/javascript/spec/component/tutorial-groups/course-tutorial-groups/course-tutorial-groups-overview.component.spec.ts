@@ -10,6 +10,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { By } from '@angular/platform-browser';
+import { Course } from 'app/entities/course.model';
 
 describe('CourseTutorialGroupsOverviewComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupsOverviewComponent>;
@@ -17,6 +18,7 @@ describe('CourseTutorialGroupsOverviewComponent', () => {
 
     let tutorialGroupTwo: TutorialGroup;
     let tutorialGroupOne: TutorialGroup;
+    const course = { id: 1 } as Course;
 
     const router = new MockRouter();
 
@@ -32,7 +34,7 @@ describe('CourseTutorialGroupsOverviewComponent', () => {
                 tutorialGroupOne = generateExampleTutorialGroup({ id: 1, numberOfRegisteredUsers: 5 });
                 tutorialGroupTwo = generateExampleTutorialGroup({ id: 2, numberOfRegisteredUsers: 10 });
                 component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo];
-                component.courseId = 1;
+                component.course = course;
                 fixture.detectChanges();
             });
     });
@@ -49,7 +51,7 @@ describe('CourseTutorialGroupsOverviewComponent', () => {
         const tableComponentInstance = fixture.debugElement.query(By.directive(TutorialGroupsTableStubComponent)).componentInstance;
         expect(tableComponentInstance).not.toBeNull();
         expect(tableComponentInstance.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
-        expect(tableComponentInstance.courseId).toBe(1);
+        expect(tableComponentInstance.course).toEqual(course);
     });
 
     it('should navigate to tutorial group detail page when tutorial group click callback is called', () => {

@@ -1,4 +1,4 @@
-<div>
+<div class="tutorial-group-detail">
     <h2>{{ tutorialGroup.title }}</h2>
     <hr />
     <ng-container *ngIf="header">
@@ -98,5 +98,52 @@
         <ng-template #additionalInformationNotSet
             ><span>{{ 'artemisApp.pages.tutorialGroupDetail.additionalInformationNotSet' | artemisTranslate }}</span>
         </ng-template>
+        <!-- Schedule -->
+        <dt>
+            <span>{{ 'artemisApp.entities.tutorialGroup.schedule' | artemisTranslate }}</span>
+        </dt>
+        <dd>
+            <ng-container *ngIf="tutorialGroup.tutorialGroupSchedule; else scheduleNotSet">
+                <span>{{
+                    (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) +
+                        ' ' +
+                        tutorialGroup.tutorialGroupSchedule?.startTime +
+                        '-' +
+                        tutorialGroup.tutorialGroupSchedule?.endTime
+                }}</span>
+                <br />
+                <span *ngIf="tutorialGroup.isOnline">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOnline' | artemisTranslate }}</span>
+                <span *ngIf="!tutorialGroup.isOnline">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOffline' | artemisTranslate }}</span>
+                : {{ tutorialGroup.tutorialGroupSchedule?.location }}
+                <br />
+                <span>
+                    {{
+                        (tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! === 1
+                            ? 'artemisApp.entities.tutorialGroupSchedule.repetitionOneWeek'
+                            : 'artemisApp.entities.tutorialGroupSchedule.repetitionNWeeks'
+                        ) | artemisTranslate: { n: tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! }
+                    }}
+                </span>
+            </ng-container>
+            <br />
+            <ng-template #scheduleNotSet>
+                <span>{{ 'artemisApp.pages.tutorialGroupDetail.scheduleNotSet' | artemisTranslate }}</span></ng-template
+            >
+        </dd>
+        <!-- Sessions -->
+        <dt>
+            <span>{{ 'artemisApp.entities.tutorialGroup.sessions' | artemisTranslate }}</span>
+        </dt>
+        <dd>
+            <ng-container *ngIf="sessions && sessions.length > 0; else sessionsNotFound">
+                <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
+                    <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false">
+                    </jhi-tutorial-group-sessions-table>
+                </div>
+            </ng-container>
+            <ng-template #sessionsNotFound>
+                <span>{{ 'artemisApp.pages.tutorialGroupDetail.sessionsNotFound' | artemisTranslate }}</span>
+            </ng-template>
+        </dd>
     </dl>
 </div>
