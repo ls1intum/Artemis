@@ -4,6 +4,7 @@ import static javax.validation.Validation.buildDefaultValidatorFactory;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
@@ -74,6 +75,34 @@ public class ChannelService {
     public Channel getChannelWithParticipantsOrThrow(Long channelId) {
         return channelRepository.findChannelByIdWithEagerParticipants(channelId)
                 .orElseThrow(() -> new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound"));
+    }
+
+    public void grantChannelAdmin(Long channelId, Set<User> usersToGrantChannelAdmin) {
+        var channelOptional = channelRepository.findChannelByIdWithEagerParticipants(channelId);
+        if (channelOptional.isEmpty()) {
+            throw new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound");
+        }
+        var channel = channelOptional.get();
+        channel.getConversationParticipants().forEach(participant -> {
+            if (usersToGrantChannelAdmin.contains(participant.getUser()) && !participant.getIsAdmin()) {
+                participant.setIsAdmin(true);
+            }
+        });
+        channelRepository.save(channel);
+    }
+
+    public void revokeChannelAdmin(Long channelId, Set<User> usersToRevokeChannelAdmin) {
+        var channelOptional = channelRepository.findChannelByIdWithEagerParticipants(channelId);
+        if (channelOptional.isEmpty()) {
+            throw new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound");
+        }
+        var channel = channelOptional.get();
+        channel.getConversationParticipants().forEach(participant -> {
+            if (usersToRevokeChannelAdmin.contains(participant.getUser()) && participant.getIsAdmin()) {
+                participant.setIsAdmin(false);
+            }
+        });
+        channelRepository.save(channel);
     }
 
     public List<Channel> getChannels(Long courseId) {
@@ -164,4 +193,5 @@ public class ChannelService {
     public void deleteChannel(Long channelId) {
         this.conversationService.deleteConversation(channelId);
     }
+
 }

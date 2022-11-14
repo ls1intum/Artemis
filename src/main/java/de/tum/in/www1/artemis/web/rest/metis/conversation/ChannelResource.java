@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -135,6 +134,36 @@ public class ChannelResource {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{courseId}/channels/{channelId}/grant-channel-admin")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> grantChannelAdmin(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
+        log.debug("REST request to grant channel admin rights to users {} in channel {}", userLogins.toString(), channelId);
+        var channel = channelService.getChannelOrThrow(channelId);
+        if (!channel.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
+        }
+        channelAuthorizationService.isAllowedToGrantChannelAdmin(channel, userRepository.getUserWithGroupsAndAuthorities());
+        var usersToGrantChannelAdmin = conversationService.findUsersInDatabase(userLogins);
+        channelService.grantChannelAdmin(channelId, usersToGrantChannelAdmin);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{courseId}/channels/{channelId}/revoke-channel-admin")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> revokeChannelAdmin(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
+        log.debug("REST request to revoke channel admin rights from users {} in channel {}", userLogins.toString(), channelId);
+        var channel = channelService.getChannelOrThrow(channelId);
+        if (!channel.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
+        }
+        channelAuthorizationService.isAllowedToRevokeChannelAdmin(channel, userRepository.getUserWithGroupsAndAuthorities());
+        var usersToGrantChannelAdmin = conversationService.findUsersInDatabase(userLogins);
+        // nobody is allowed to revoke admin rights from the creator of the channel
+        usersToGrantChannelAdmin.removeIf(user -> user.getId().equals(channel.getCreator().getId()));
+        channelService.grantChannelAdmin(channelId, usersToGrantChannelAdmin);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/{courseId}/channels/{channelId}/register")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
@@ -155,7 +184,7 @@ public class ChannelResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
 
         channelAuthorizationService.isAllowedToRegisterUsersToChannel(course, channelFromDatabase, userLogins, requestingUser);
-        var usersToRegister = findUsersInDatabase(userLogins);
+        var usersToRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.registerUsers(course, usersToRegister, channelFromDatabase);
         return ResponseEntity.noContent().build();
     }
@@ -177,7 +206,7 @@ public class ChannelResource {
 
         channelAuthorizationService.isAllowedToDeregisterUsersFromChannel(course, channelFromDatabase, userLogins, requestingUser);
 
-        var usersToDeRegister = findUsersInDatabase(userLogins);
+        var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);
 
         conversationService.deregisterUsers(course, usersToDeRegister, channelFromDatabase);
         return ResponseEntity.noContent().build();
@@ -194,18 +223,6 @@ public class ChannelResource {
                 throw new BadRequestAlertException("The conversationId in the path does not match the channelId in the channel", CHANNEL_ENTITY_NAME, "channelIdMismatch");
             }
         });
-    }
-
-    private Set<User> findUsersInDatabase(@RequestBody List<String> userLogins) {
-        Set<User> users = new HashSet<>();
-        for (String userLogin : userLogins) {
-            if (userLogin == null || userLogin.isEmpty()) {
-                continue;
-            }
-            var userToRegister = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
-            userToRegister.ifPresent(users::add);
-        }
-        return users;
     }
 
 }

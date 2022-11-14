@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -256,5 +257,17 @@ public class ConversationService {
      */
     public enum ConversationMemberSearchFilters {
         INSTRUCTOR, EDITOR, TUTOR, STUDENT, CHANNEL_ADMIN // this is a special role that is only used for channels
+    }
+
+    public Set<User> findUsersInDatabase(@RequestBody List<String> userLogins) {
+        Set<User> users = new HashSet<>();
+        for (String userLogin : userLogins) {
+            if (userLogin == null || userLogin.isEmpty()) {
+                continue;
+            }
+            var userToRegister = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
+            userToRegister.ifPresent(users::add);
+        }
+        return users;
     }
 }

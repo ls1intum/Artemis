@@ -84,6 +84,20 @@ public class ChannelAuthorizationService {
         }
     }
 
+    public void isAllowedToGrantChannelAdmin(@NotNull Channel channel, @Nullable User user) {
+        user = getUserIfNecessary(user);
+        if (!hasChannelAdminRights(channel.getId(), user)) {
+            throw new AccessForbiddenException("You are not allowed to grant channel admin rights");
+        }
+    }
+
+    public void isAllowedToRevokeChannelAdmin(@NotNull Channel channel, @Nullable User user) {
+        user = getUserIfNecessary(user);
+        if (!hasChannelAdminRights(channel.getId(), user)) {
+            throw new AccessForbiddenException("You are not allowed to revoke channel admin rights");
+        }
+    }
+
     public void isAllowedToDeregisterUsersFromChannel(@NotNull Course course, @NotNull Channel channel, List<String> userLogins, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (hasChannelAdminRights(channel.getId(), user)) {
