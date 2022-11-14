@@ -185,7 +185,10 @@ dependencies {
             strictly "${slf4j_version}"
         }
     }
+
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.19.0"
+
+    implementation "uk.ac.ox.ctl:spring-security-lti13:0.0.4"
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
