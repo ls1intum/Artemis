@@ -137,6 +137,11 @@ export class CourseUpdateComponent implements OnInit {
             ltiKey: new FormControl(this.course.onlineCourseConfiguration?.ltiKey),
             ltiSecret: new FormControl(this.course.onlineCourseConfiguration?.ltiSecret),
             userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
+            registrationId: new FormControl(this.course.onlineCourseConfiguration?.registrationId),
+            clientId: new FormControl(this.course.onlineCourseConfiguration?.clientId),
+            authorizationUri: new FormControl(this.course.onlineCourseConfiguration?.authorizationUri),
+            tokenUri: new FormControl(this.course.onlineCourseConfiguration?.tokenUri),
+            jwkSetUri: new FormControl(this.course.onlineCourseConfiguration?.jwkSetUri),
         });
 
         this.courseForm = new FormGroup(

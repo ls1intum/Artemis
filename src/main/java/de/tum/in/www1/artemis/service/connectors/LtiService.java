@@ -1,42 +1,36 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.imsglobal.lti.launch.LtiOauthVerifier;
-import org.imsglobal.lti.launch.LtiVerificationException;
-import org.imsglobal.lti.launch.LtiVerificationResult;
-import org.imsglobal.lti.launch.LtiVerifier;
-import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.LtiUserId;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
-import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 @Service
 public class LtiService {
@@ -51,154 +45,84 @@ public class LtiService {
 
     private final UserRepository userRepository;
 
-    private final CourseRepository courseRepository;
-
-    private final LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
-
-    private final ResultRepository resultRepository;
-
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
+    private final TokenProvider tokenProvider;
 
     private final LtiUserIdRepository ltiUserIdRepository;
 
-    private final HttpClient client;
-
-    public LtiService(UserCreationService userCreationService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, LtiUserIdRepository ltiUserIdRepository) {
+    public LtiService(UserCreationService userCreationService, UserRepository userRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
+            TokenProvider tokenProvider, LtiUserIdRepository ltiUserIdRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
-        this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
-        this.resultRepository = resultRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
-        this.courseRepository = courseRepository;
+        this.tokenProvider = tokenProvider;
         this.ltiUserIdRepository = ltiUserIdRepository;
-        this.client = HttpClientBuilder.create().build();
     }
 
     /**
-     * Handles LTI launch requests.
+     * Signs in the LTI user into the exercise app. If necessary, it will create a user.
      *
-     * @param launchRequest                 The launch request, sent by LTI consumer
-     * @param exercise                      Exercise to launch
-     * @param onlineCourseConfiguration     The configuration for the corresponding online course
+     * @param email the user's email
+     * @param userId the user's id in the external LMS
+     * @param username the user's username if we create a new user
+     * @param firstName the user's firstname if we create a new user
+     * @param lastName the user's lastname if we create a new user
+     * @param requireExistingUser false if it's not allowed to create new users
+     * @param lookupUserByEmail false if it's not allowed to find existing users with the provided email
+     * @throws InternalAuthenticationServiceException if no email is provided, or if no user can be authenticated, this exception will be thrown
      */
-    public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise, OnlineCourseConfiguration onlineCourseConfiguration) {
-
-        // Authenticate the LTI user
-        Optional<Authentication> auth = authenticateLtiUser(launchRequest, onlineCourseConfiguration);
-
-        if (auth.isPresent()) {
-            // Authentication was successful
-            SecurityContextHolder.getContext().setAuthentication(auth.get());
-            onSuccessfulLtiAuthentication(launchRequest, exercise);
-        }
-        else {
-            // We do not currently have a way to allow users to login by themselves later, so we throw an exception for now, later this branch might be useful
-            throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user.");
-        }
-    }
-
-    /**
-     * Handler for successful LTI auth Saves the LTI outcome url and permanently maps the LTI user id to the user
-     *
-     * @param launchRequest The launch request, sent by LTI consumer
-     * @param exercise      Exercise to launch
-     */
-    public void onSuccessfulLtiAuthentication(LtiLaunchRequestDTO launchRequest, Exercise exercise) {
-        // Auth was successful
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // Make sure user is added to group for this exercise
-        addUserToExerciseGroup(user, exercise.getCourseViaExerciseGroupOrCourseMember());
-
-        // Save LTI user ID to automatically sign in the next time
-        saveLtiUserId(user, launchRequest.getUser_id());
-
-        // Save LTI outcome url
-        saveLtiOutcomeUrl(user, exercise, launchRequest.getLis_outcome_service_url(), launchRequest.getLis_result_sourcedid());
-    }
-
-    /**
-     * Signs in the LTI user into the exercise app. Therefore it creates a user, if necessary.
-     *
-     * @param launchRequest The launch request, sent by LTI consumer
-     * @return the authentication based on the user who invoked the launch request
-     * @throws ArtemisAuthenticationException if the user cannot be authenticated, this exception will be thrown
-     * @throws AuthenticationException        internal exception of Spring that might be thrown as well
-     */
-    private Optional<Authentication> authenticateLtiUser(LtiLaunchRequestDTO launchRequest, OnlineCourseConfiguration onlineCourseConfiguration)
-            throws ArtemisAuthenticationException, AuthenticationException {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
+    public void authenticateLtiUser(String email, String userId, String username, String firstName, String lastName, boolean requireExistingUser, boolean lookupUserByEmail)
+            throws InternalAuthenticationServiceException {
         if (SecurityUtils.isAuthenticated()) {
             // 1. Case: User is already signed in. We are done here.
-            return Optional.of(auth);
+            return;
         }
 
-        // If the LTI launch is used from edX studio, edX sends dummy data. (id="student")
-        // Catch this case here.
-        if (launchRequest.getUser_id().equals("student")) {
-            throw new InternalAuthenticationServiceException("Invalid username sent by launch request. Please do not launch the exercise from edX studio. Use 'Preview' instead.");
-        }
-
-        final String email = launchRequest.getLis_person_contact_email_primary();
         if (StringUtils.isEmpty(email)) {
             throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
         }
 
         // 2. Case: Existing mapping for LTI user id
-        // Check if there is an existing mapping for the user ID
-        final var optionalLtiUserId = ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id());
+        final var optionalLtiUserId = ltiUserIdRepository.findByLtiUserId(userId);
         if (optionalLtiUserId.isPresent()) {
             final var user = optionalLtiUserId.get().getUser();
             // Authenticate
-            return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
+            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
+            return;
         }
 
-        // 3. Case: Lookup user with the LTI email address. Sign in as this user.
-        // Check if lookup by email is enabled
-        if (launchRequest.getCustom_lookup_user_by_email()) {
+        // 3. Case: Lookup user with the LTI email address and sign in as this user if lookup by email is enabled
+        if (lookupUserByEmail) {
             // check if a user with this email address exists
             final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
             if (usernameLookupByEmail.isPresent()) {
-                return loginUserByEmail(usernameLookupByEmail.get(), email);
+                SecurityContextHolder.getContext().setAuthentication(loginUserByEmail(usernameLookupByEmail.get(), email));
+                return;
             }
         }
 
-        // 4. Case: Create new user
-        // Check if an existing user is required
-        if (!launchRequest.getCustom_require_existing_user()) {
-            final String username = createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration);
-            final String lastName = getUserLastNameFromLaunchRequest(launchRequest);
-            return createNewUserFromLaunchRequest(launchRequest, email, username, lastName);
+        // 4. Case: Create new user if an existing user is not required
+        if (!requireExistingUser) {
+            SecurityContextHolder.getContext().setAuthentication(createNewUserFromLaunchRequest(email, username, firstName, lastName));
+            return;
         }
 
-        return Optional.empty();
+        throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user."); // If user couldn't be authenticated, throw an error
     }
 
-    /**
-     * Gets the last name for the user considering the requests sent by the different LTI consumers
-     *
-     * @param launchRequest the LTI launch request
-     * @return the last name for the LTI user
-     */
-    private String getUserLastNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
-        if (!StringUtils.isEmpty(launchRequest.getLis_person_name_family())) {
-            return launchRequest.getLis_person_name_family();
-        }
-        else if (!StringUtils.isEmpty(launchRequest.getLis_person_sourcedid())) {
-            return launchRequest.getLis_person_sourcedid();
-        }
-        return "";
+    private Authentication loginUserByEmail(String username, String email) {
+        log.info("Signing in as {}", username);
+        final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), null, null, email, true);
+        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY);
     }
 
     @NotNull
-    private Optional<Authentication> createNewUserFromLaunchRequest(LtiLaunchRequestDTO launchRequest, String email, String username, String lastName) {
+    private Authentication createNewUserFromLaunchRequest(String email, String username, String firstName, String lastName) {
         final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
             final User newUser;
             final var groups = new HashSet<String>();
             groups.add(LTI_GROUP_NAME);
-            String firstName = launchRequest.getLis_person_name_given() != null ? launchRequest.getLis_person_name_given() : "";
             newUser = userCreationService.createUser(username, null, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
             newUser.setActivationKey(null);
             userRepository.save(newUser);
@@ -209,41 +133,22 @@ public class LtiService {
         log.info("createNewUserFromLaunchRequest: {}", user);
 
         log.info("Signing in as {}", username);
-        return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
-    }
-
-    private Optional<Authentication> loginUserByEmail(String username, String email) {
-        log.info("Signing in as {}", username);
-        final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), null, null, email, true);
-        return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
+        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY);
     }
 
     /**
-     * Gets the username for the LTI user prefixed with the configured user prefix
+     * Handler for successful LTI auth. Maps the LTI user id to the user and adds the groups to the user
      *
-     * @param launchRequest             the LTI launch request
-     * @param onlineCourseConfiguration the configuration for the online course
-     * @return the username for the LTI user
+     * @param user The user that is authenticated
+     * @param userId The userId in the external LMS
+     * @param exercise Exercise to launch
      */
-    @NotNull
-    private String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest, OnlineCourseConfiguration onlineCourseConfiguration) {
-        String username;
+    public void onSuccessfulLtiAuthentication(User user, String userId, Exercise exercise) {
+        // Make sure user is added to group for this exercise
+        addUserToExerciseGroup(user, exercise.getCourseViaExerciseGroupOrCourseMember());
 
-        if (!StringUtils.isEmpty(launchRequest.getExt_user_username())) {
-            username = launchRequest.getExt_user_username();
-        }
-        else if (!StringUtils.isEmpty(launchRequest.getLis_person_sourcedid())) {
-            username = launchRequest.getLis_person_sourcedid();
-        }
-        else if (!StringUtils.isEmpty(launchRequest.getUser_id())) {
-            username = launchRequest.getUser_id();
-        }
-        else {
-            String userEmail = launchRequest.getLis_person_contact_email_primary();
-            username = userEmail.substring(0, userEmail.indexOf('@')); // Get the initial part of the user's email
-        }
-
-        return onlineCourseConfiguration.getUserPrefix() + "_" + username;
+        // Save LTI user ID to automatically sign in the next time
+        saveLtiUserId(user, userId);
     }
 
     /**
@@ -271,31 +176,6 @@ public class LtiService {
     }
 
     /**
-     * Save the LTI outcome url
-     *
-     * @param user      the user for which the lti outcome url should be saved
-     * @param exercise  the exercise
-     * @param url       the service url given by the LTI request
-     * @param sourcedId the sourcedId given by the LTI request
-     */
-    private void saveLtiOutcomeUrl(User user, Exercise exercise, String url, String sourcedId) {
-
-        if (url == null || url.isEmpty()) {
-            return;
-        }
-
-        LtiOutcomeUrl ltiOutcomeUrl = ltiOutcomeUrlRepository.findByUserAndExercise(user, exercise).orElseGet(() -> {
-            LtiOutcomeUrl newLtiOutcomeUrl = new LtiOutcomeUrl();
-            newLtiOutcomeUrl.setUser(user);
-            newLtiOutcomeUrl.setExercise(exercise);
-            return newLtiOutcomeUrl;
-        });
-        ltiOutcomeUrl.setUrl(url);
-        ltiOutcomeUrl.setSourcedId(sourcedId);
-        ltiOutcomeUrlRepository.save(ltiOutcomeUrl);
-    }
-
-    /**
      * Save the User <-> LTI User ID mapping
      *
      * @param user            the user that should be saved
@@ -317,121 +197,22 @@ public class LtiService {
     }
 
     /**
-     * Checks if an LTI request is correctly signed via OAuth with the secret
+     * Adds the necessary query params for an LTI launch.
      *
-     * @param request The request to check
-     * @param onlineCourseConfiguration The configuration containing the secret used to verify the request
-     * @return null if the request is valid, otherwise an error message which indicates the reason why the verification failed
+     * @param uriComponentsBuilder the uri builder to add the query params to
      */
-    public String verifyRequest(HttpServletRequest request, OnlineCourseConfiguration onlineCourseConfiguration) {
-        if (onlineCourseConfiguration == null) {
-            String message = "verifyRequest for LTI is not supported for this course";
-            log.warn(message);
-            return message;
-        }
+    public void addLtiQueryParams(UriComponentsBuilder uriComponentsBuilder) {
+        User user = userRepository.getUser();
 
-        LtiVerifier ltiVerifier = new LtiOauthVerifier();
-        try {
-            LtiVerificationResult ltiResult = ltiVerifier.verify(request, onlineCourseConfiguration.getLtiSecret());
-            if (!ltiResult.getSuccess()) {
-                String requestString = httpServletRequestToString(request);
-                final var message = "LTI signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError() + ", launch result: "
-                        + ltiResult.getLtiLaunchResult();
-                log.error(message);
-                log.error("Request: {}", requestString);
-                return message;
-            }
-        }
-        catch (LtiVerificationException e) {
-            log.error("Lti signature verification failed. ", e);
-            return "Lti signature verification failed; " + e.getMessage();
-        }
-        // this is the success case
-        log.info("LTI Oauth Request Verification successful");
-        return null;
-    }
-
-    /**
-     * helper method to print a request with all its elements
-     *
-     * @param request the http request
-     * @return a string with all debug information
-     */
-    private String httpServletRequestToString(HttpServletRequest request) {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("Request Method = [").append(request.getMethod()).append("], ");
-        sb.append("Request URL Path = [").append(request.getRequestURL()).append("], ");
-
-        String headers = Collections.list(request.getHeaderNames()).stream().map(headerName -> headerName + " : " + Collections.list(request.getHeaders(headerName)))
-                .collect(Collectors.joining(", "));
-
-        if (headers.isEmpty()) {
-            sb.append("Request headers: NONE,");
+        if (!user.getActivated()) {
+            uriComponentsBuilder.queryParam("initialize", "");
+            String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), true);
+            log.debug("created jwt token: {}", jwt);
+            uriComponentsBuilder.queryParam("jwt", jwt);
         }
         else {
-            sb.append("Request headers: [").append(headers).append("],");
-        }
-
-        String parameters = Collections.list(request.getParameterNames()).stream().map(p -> p + " : " + Arrays.asList(request.getParameterValues(p)))
-                .collect(Collectors.joining(", "));
-
-        if (parameters.isEmpty()) {
-            sb.append("Request parameters: NONE.");
-        }
-        else {
-            sb.append("Request parameters: [").append(parameters).append("].");
-        }
-
-        return sb.toString();
-    }
-
-    /**
-     * This method is pinged on new exercise results. It sends an message to the LTI consumer with the new score.
-     *
-     * @param participation The exercise participation for which a new build result is available
-     */
-    public void onNewResult(StudentParticipation participation) {
-        if (!participation.getExercise().getCourseViaExerciseGroupOrCourseMember().isOnlineCourse()) {
-            return;
-        }
-
-        Course course = courseRepository
-                .findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
-        OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
-
-        if (onlineCourseConfiguration == null) {
-            throw new IllegalStateException("Online course should have an online course configuration.");
-        }
-
-        // Get the LTI outcome URL
-        var students = participation.getStudents();
-        if (students != null) {
-            students.forEach(student -> ltiOutcomeUrlRepository.findByUserAndExercise(student, participation.getExercise()).ifPresent(ltiOutcomeUrl -> {
-
-                String score = "0.00";
-
-                // Get the latest result
-                Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
-
-                if (latestResult.isPresent() && latestResult.get().getScore() != null) {
-                    // LTI scores needs to be formatted as String between "0.00" and "1.00"
-                    score = String.format(Locale.ROOT, "%.2f", latestResult.get().getScore().floatValue() / 100);
-                }
-
-                try {
-                    log.info("Reporting score {} for participation {} to LTI consumer with outcome URL {} using the source id {}", score, participation, ltiOutcomeUrl.getUrl(),
-                            ltiOutcomeUrl.getSourcedId());
-                    HttpPost request = IMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.getUrl(), onlineCourseConfiguration.getLtiKey(), onlineCourseConfiguration.getLtiSecret(),
-                            ltiOutcomeUrl.getSourcedId(), score, null, false);
-                    HttpResponse response = client.execute(request);
-                    String responseString = new BasicResponseHandler().handleResponse(response);
-                    log.info("Response from LTI consumer: {}", responseString);
-                }
-                catch (Exception ex) {
-                    log.error("Reporting to LTI consumer failed", ex);
-                }
-            }));
+            uriComponentsBuilder.queryParam("jwt", "");
+            uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }
     }
 }

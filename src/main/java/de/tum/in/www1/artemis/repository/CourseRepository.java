@@ -129,6 +129,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })
+    Course findWithEagerOnlineCourseConfigurationById(long courseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "tutorialGroupsConfiguration" })
     Course findWithEagerTutorialGroupConfigurationsById(long courseId);
 
@@ -221,6 +224,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     default Course findByIdWithEagerExercisesElseThrow(long courseId) throws EntityNotFoundException {
         return Optional.ofNullable(findWithEagerExercisesById(courseId)).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    default Course findByIdWithEagerOnlineCourseConfigurationElseThrow(long courseId) throws EntityNotFoundException {
+        return Optional.ofNullable(findWithEagerOnlineCourseConfigurationById(courseId)).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     default Course findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(long courseId) throws EntityNotFoundException {
@@ -353,4 +360,5 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         }
         return isMember;
     }
+
 }

@@ -19,12 +19,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import {
-    createCommitUrl,
-    isProgrammingExerciseParticipation,
-    isProgrammingExerciseStudentParticipation,
-    isResultPreliminary,
-} from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { round, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -36,6 +31,7 @@ import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datat
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
+import { resultIsPreliminary } from 'app/exercises/shared/result/result.utils';
 
 export enum FeedbackItemType {
     Issue,
@@ -70,6 +66,7 @@ export class ResultDetailComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly FeedbackItemType = FeedbackItemType;
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    readonly resultIsPreliminary = resultIsPreliminary;
     readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
 
     @Input() exercise?: Exercise;
@@ -581,17 +578,6 @@ export class ResultDetailComponent implements OnInit {
             this.showScoreChartTooltip = true;
         }
         this.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
-    }
-
-    /**
-     * Checks if the current result is preliminary and has hidden test cases.
-     */
-    resultIsPreliminary() {
-        return (
-            this.result.participation &&
-            isProgrammingExerciseStudentParticipation(this.result.participation) &&
-            isResultPreliminary(this.result, this.exercise as ProgrammingExercise)
-        );
     }
 
     getCommitHash(): string {

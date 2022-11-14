@@ -13,30 +13,24 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.connectors.Lti10Service;
+import de.tum.in.www1.artemis.service.connectors.LtiDynamicRegistrationService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
- * Created by Josias Montag on 22.09.16.
- * <p>
- * REST controller for receiving LTI messages.
+ * REST controller to handle LTI10 launches.
  */
 @RestController
 @RequestMapping("/api")
@@ -44,30 +38,29 @@ public class LtiResource {
 
     private final Logger log = LoggerFactory.getLogger(LtiResource.class);
 
-    private final LtiService ltiService;
+    private final Lti10Service lti10Service;
 
-    private final UserRepository userRepository;
+    private final LtiDynamicRegistrationService ltiDynamicRegistrationService;
 
     private final ExerciseRepository exerciseRepository;
 
     private final CourseRepository courseRepository;
 
-    private final TokenProvider tokenProvider;
-
     private final AuthorizationCheckService authCheckService;
 
-    public LtiResource(LtiService ltiService, UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, TokenProvider tokenProvider,
-            AuthorizationCheckService authCheckService) {
-        this.ltiService = ltiService;
-        this.userRepository = userRepository;
+    public static final String LOGIN_REDIRECT_CLIENT_PATH = "/lti/launch";
+
+    public LtiResource(Lti10Service lti10Service, LtiDynamicRegistrationService ltiDynamicRegistrationService, ExerciseRepository exerciseRepository,
+            CourseRepository courseRepository, AuthorizationCheckService authCheckService) {
+        this.lti10Service = lti10Service;
+        this.ltiDynamicRegistrationService = ltiDynamicRegistrationService;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
-        this.tokenProvider = tokenProvider;
         this.authCheckService = authCheckService;
     }
 
     /**
-     * POST lti/launch/:exerciseId : Launch the exercise app using request by a LTI consumer. Redirects the user to the exercise on success.
+     * POST lti/launch/:exerciseId : Launch the exercise app using request by an LTI consumer. Redirects the user to the exercise on success.
      *
      * @param launchRequest the LTI launch request (ExerciseLtiConfigurationDTO)
      * @param exerciseId    the id of the exercise the user wants to open
@@ -110,7 +103,7 @@ public class LtiResource {
 
         log.debug("Try to verify LTI Oauth Request");
         // Verify request
-        String error = ltiService.verifyRequest(request, onlineCourseConfiguration);
+        String error = lti10Service.verifyRequest(request, onlineCourseConfiguration);
         if (error != null) {
             log.warn("Failed verification for launch request : {}", launchRequest);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, error + ". Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.");
@@ -119,7 +112,7 @@ public class LtiResource {
         log.debug("Oauth Verification succeeded");
 
         try {
-            ltiService.handleLaunchRequest(launchRequest, exercise, onlineCourseConfiguration);
+            lti10Service.performLaunch(launchRequest, exercise, onlineCourseConfiguration);
         }
         catch (InternalAuthenticationServiceException ex) {
             log.error("Error during LTI launch request of exercise {} for launch request: {}", exercise.getTitle(), launchRequest, ex);
@@ -149,31 +142,63 @@ public class LtiResource {
      */
     private void sendRedirect(HttpServletRequest request, HttpServletResponse response, Exercise exercise) throws IOException {
 
-        UriComponentsBuilder redirectUrlComponentsBuilder = UriComponentsBuilder.newInstance().scheme(request.getScheme()).host(request.getServerName());
-        if (request.getServerPort() != 80 && request.getServerPort() != 443) {
-            redirectUrlComponentsBuilder.port(request.getServerPort());
-        }
-        redirectUrlComponentsBuilder.pathSegment("courses").pathSegment(exercise.getCourseViaExerciseGroupOrCourseMember().getId().toString()).pathSegment("exercises")
-                .pathSegment(exercise.getId().toString());
+        UriComponentsBuilder uriBuilder = buildRedirect(request);
+        uriBuilder.pathSegment("courses") //
+                .pathSegment(exercise.getCourseViaExerciseGroupOrCourseMember().getId().toString()) //
+                .pathSegment("exercises") //
+                .pathSegment(exercise.getId().toString()); //
 
-        User user = userRepository.getUser();
+        lti10Service.addLtiQueryParams(uriBuilder);
 
-        if (!user.getActivated()) {
-            redirectUrlComponentsBuilder.queryParam("initialize", "");
-
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String jwt = tokenProvider.createToken(authentication, true);
-            log.debug("created jwt token: {}", jwt);
-            redirectUrlComponentsBuilder.queryParam("jwt", jwt);
-        }
-        else {
-            redirectUrlComponentsBuilder.queryParam("jwt", "");
-            redirectUrlComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
-        }
-
-        String redirectUrl = redirectUrlComponentsBuilder.build().toString();
+        String redirectUrl = uriBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);
         response.sendRedirect(redirectUrl);
+    }
+
+    /**
+     * POST lti13/auth-callback Redirects an LTI 1.3 Authorization Request Response to the client
+     *
+     * @param request       HTTP request
+     * @param response      HTTP response
+     * @throws IOException If an input or output exception occurs
+     */
+    @PostMapping("/lti13/auth-callback")
+    public void lti13LaunchRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String state = request.getParameter("state");
+        if (state == null) {
+            errorOnMissingParameter(response, "state");
+            return;
+        }
+
+        String idToken = request.getParameter("id_token");
+        if (idToken == null) {
+            errorOnMissingParameter(response, "id_token");
+            return;
+        }
+
+        UriComponentsBuilder uriBuilder = buildRedirect(request);
+        uriBuilder.path(LOGIN_REDIRECT_CLIENT_PATH);
+        uriBuilder.queryParam("state", state);
+        uriBuilder.queryParam("id_token", idToken);
+        String redirectUrl = uriBuilder.build().toString();
+        log.info("redirect to url: {}", redirectUrl);
+        response.sendRedirect(redirectUrl);
+    }
+
+    private void errorOnMissingParameter(HttpServletResponse response, String missingParamName) throws IOException {
+        String message = "Missing parameter on oauth2 authorization response: " + missingParamName;
+        log.error(message);
+        response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
+    }
+
+    @PostMapping("/lti13/dynamic-registration/{courseId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public void lti13DynamicRegistration(@PathVariable Long courseId, @RequestParam(name = "openid_configuration") String openIdConfiguration,
+            @RequestParam(name = "registration_token", required = false) String registrationToken) {
+
+        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfiguration, registrationToken);
     }
 
     /**
@@ -196,11 +221,18 @@ public class LtiResource {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
-        String launchUrl = request.getScheme() + // "https"
-                "://" +                                // "://"
-                request.getServerName() +              // "myhost" // ":"
+        String launchUrl = request.getScheme() + "://" + // "https://"
+                request.getServerName() +              // "localhost" // ":"
                 (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/api/lti/launch/" + exercise.getId();
 
         return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ocConfiguration.getLtiKey(), ocConfiguration.getLtiSecret()), HttpStatus.OK);
+    }
+
+    private UriComponentsBuilder buildRedirect(HttpServletRequest request) {
+        UriComponentsBuilder redirectUrlComponentsBuilder = UriComponentsBuilder.newInstance().scheme(request.getScheme()).host(request.getServerName());
+        if (request.getServerPort() != 80 && request.getServerPort() != 443) {
+            redirectUrlComponentsBuilder.port(request.getServerPort());
+        }
+        return redirectUrlComponentsBuilder;
     }
 }
