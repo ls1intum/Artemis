@@ -57,32 +57,5 @@
         <dd>
             <span>True</span>
         </dd>
-
-        <div class="form-group">
-            <h4>{{ 'artemisApp.lti.customParameters' | artemisTranslate }}</h4>
-
-            <dt>
-                <span>{{ 'artemisApp.lti.requireExistingUser' | artemisTranslate }}</span>
-                <fa-icon
-                    [icon]="faQuestionCircle"
-                    class="text-secondary"
-                    placement="top"
-                    ngbTooltip="{{ 'artemisApp.lti.requireExistingUserTooltip' | artemisTranslate }}"
-                ></fa-icon>
-            </dt>
-            <dd>
-                <input type="checkbox" class="form-check-input" (change)="requireExistingUser = !requireExistingUser" [checked]="requireExistingUser" />
-            </dd>
-
-            <dt>
-                <span>{{ 'artemisApp.lti.lookupByEmail' | artemisTranslate }}</span>
-                <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.lookupUserByEmailTooltip' | artemisTranslate }}"></fa-icon>
-            </dt>
-            <dd>
-                <input type="checkbox" class="form-check-input" (change)="lookupUserByEmail = !lookupUserByEmail" [checked]="lookupUserByEmail" />
-            </dd>
-
-            <textarea class="form-control" rows="3" [value]="getFormattedCustomParameters()" readonly></textarea>
-        </div>
     </div>
 </form>
