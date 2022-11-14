@@ -484,6 +484,15 @@ export class CourseUpdateComponent implements OnInit {
     get isValidConfiguration(): boolean {
         return this.isValidDate;
     }
+
+    /**
+     * Deletes the course icon
+     */
+    deleteCourseIcon() {
+        this.course.courseIcon = undefined;
+        this.croppedImage = undefined;
+        this.courseForm.controls['courseIcon'].setValue(undefined);
+    }
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {

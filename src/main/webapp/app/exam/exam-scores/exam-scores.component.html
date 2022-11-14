@@ -39,12 +39,18 @@
         <!-- Filter settings -->
         <div class="d-flex align-items-center align-content-center mb-2">
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
-                <label class="form-check-label">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</label>
+                <input id="toggleFilterForSubmittedExam" class="form-check-input" type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
+                <label for="toggleFilterForSubmittedExam" class="form-check-label">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
-                <span class="form-check-label">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</span>
+                <input
+                    id="toggleFilterForNonEmptySubmission"
+                    class="form-check-input"
+                    type="checkbox"
+                    [checked]="filterForNonEmptySubmissions"
+                    (change)="toggleFilterForNonEmptySubmission()"
+                />
+                <span for="toggleFilterForNonEmptySubmission" class="form-check-label">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</span>
             </div>
         </div>
 
@@ -261,8 +267,8 @@
 
         <div class="d-block">
             <div *ngIf="gradingScaleExists && this.aggregatedExamResults.medianRelativePassed !== null" class="form-check">
-                <input class="form-check-input" type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
-                <label class="form-check-label">
+                <input id="toggleMedianPassed" class="form-check-input" type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
+                <label for="toggleMedianPassed" class="form-check-label">
                     {{
                         'artemisApp.examScores.highlightPassedMedian'
                             | artemisTranslate
@@ -275,8 +281,8 @@
                 </label>
             </div>
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
-                <label class="form-check-label">
+                <input id="toggleMedianOverall" class="form-check-input" type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
+                <label for="toggleMedianOverall" class="form-check-label">
                     {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate: { median: this.overallChartMedian } }}
                 </label>
             </div>
