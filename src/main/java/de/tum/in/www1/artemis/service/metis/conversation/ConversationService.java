@@ -178,7 +178,7 @@ public class ConversationService {
         var conversations = new ArrayList<Conversation>();
         conversations.addAll(activeGroupChatsOfUser);
         conversations.addAll(channelsOfUser);
-        var conversationDTOs = conversations.parallelStream().unordered().map(conversation -> convertToDTOForUser(conversation, user)).collect(Collectors.toList());
+        var conversationDTOs = conversations.stream().map(conversation -> convertToDTOForUser(conversation, user)).collect(Collectors.toList());
         return conversationDTOs;
     }
 
