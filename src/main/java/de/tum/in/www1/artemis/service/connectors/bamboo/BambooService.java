@@ -660,7 +660,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             }
 
             // Relevant feedback is negative
-            result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive()));
+            result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> Boolean.FALSE.equals(feedback.isPositive())));
         }
     }
 

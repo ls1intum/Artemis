@@ -588,27 +588,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void getLatestResultWithFeedbacks() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        result.setCompletionDate(ZonedDateTime.now().minusHours(10));
-        Result latestResult = database.addResultToParticipation(null, null, studentParticipation);
-        latestResult.setCompletionDate(ZonedDateTime.now());
-        database.addSampleFeedbackToResults(result);
-        latestResult = database.addSampleFeedbackToResults(latestResult);
-        Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.OK, Result.class);
-        assertThat(returnedResult).isNotNull().isEqualTo(latestResult);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void getLatestResultWithFeedbacks_asStudent() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        database.addSampleFeedbackToResults(result);
-        request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.FORBIDDEN, Result.class);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
     void deleteResult() throws Exception {
         assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdElseThrow(Long.MAX_VALUE));

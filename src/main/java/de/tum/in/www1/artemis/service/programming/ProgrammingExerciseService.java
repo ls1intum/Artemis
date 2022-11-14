@@ -411,21 +411,22 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * @param programmingExercise the changed programming exercise with its new values
+     * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
+     * @param updatedProgrammingExercise the changed programming exercise with its new values
      * @param notificationText    optional text about the changes for a notification
      * @return the updates programming exercise from the database
      */
-    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable String notificationText) {
-        setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
-        connectAuxiliaryRepositoriesToExercise(programmingExercise);
+    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
+            @Nullable String notificationText) {
+        setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
+        connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
-        final ProgrammingExercise programmingExerciseBeforeUpdate = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
         // TODO: in case of an exam exercise, this is not necessary
-        scheduleOperations(programmingExercise.getId());
+        scheduleOperations(updatedProgrammingExercise.getId());
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
     }
@@ -1072,5 +1073,81 @@ public class ProgrammingExerciseService {
                 .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).collect(Collectors.toSet());
         programmingExerciseTaskRepository.deleteAll(tasks);
         programmingExerciseSolutionEntryRepository.deleteAll(solutionEntries);
+    }
+
+    /**
+     * Locks or unlocks the repository if necessary due to the changes in the programming exercise.
+     * Notice: isAllowOfflineIde() == null means that the offline IDE is allowed
+     * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
+     * @param updatedProgrammingExercise the updated exercise with new values
+     */
+    public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+        if (!programmingExerciseBeforeUpdate.isReleased()) {
+            if (updatedProgrammingExercise.isReleased() && !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+                // There might be some repositories that have to be unlocked
+                unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
+            }
+            return;
+        }
+        if (!updatedProgrammingExercise.isReleased()) {
+            if (!Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde())) {
+                // Hide exercise again and lock repos
+                lockAllRepositories(programmingExerciseBeforeUpdate.getId());
+            }
+            return;
+        }
+
+        boolean lockedUnlockedRepos = handleRepoAccessRightChangesDueDates(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        if (lockedUnlockedRepos) {
+            return;
+        }
+
+        handleRepoAccessRightChangesChangesOfflineIDE(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+    }
+
+    /**
+     * Checks if the repos have to be locked/unlocked based on the new due date. Individual due dates are considered, so not all repositories might get locked/unlocked
+     * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
+     * @param updatedProgrammingExercise the updated exercise with new values
+     * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
+     */
+    private boolean handleRepoAccessRightChangesDueDates(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+        if (!Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+            ZonedDateTime now = ZonedDateTime.now();
+
+            if (programmingExerciseBeforeUpdate.getDueDate() != null && programmingExerciseBeforeUpdate.getDueDate().isBefore(now)
+                    && (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now))) {
+                // New due date allows students to continue working on exercise
+                instanceMessageSendService.sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(programmingExerciseBeforeUpdate.getId());
+                return true;
+            }
+            else if ((programmingExerciseBeforeUpdate.getDueDate() == null || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
+                    && updatedProgrammingExercise.getDueDate() != null && updatedProgrammingExercise.getDueDate().isBefore(now)) {
+                // New due date forbids students to continue working on exercise, if their individual due date does not override the new due date
+                instanceMessageSendService.sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExerciseBeforeUpdate.getId());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the repos have to be locked/unlocked based on the allowance of offline IDEs. The read access in the VCS is only necessary when working with an offline IDE
+     * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
+     * @param updatedProgrammingExercise the updated exercise with new values
+     * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
+     */
+    private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+        if (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
+            if (Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+                unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
+                return true;
+            }
+            else if (!Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+                lockAllRepositories(programmingExerciseBeforeUpdate.getId());
+                return true;
+            }
+        }
+        return false;
     }
 }
