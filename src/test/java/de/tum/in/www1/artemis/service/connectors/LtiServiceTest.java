@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -87,15 +89,17 @@ class LtiServiceTest {
         when(tokenProvider.createToken(any(), anyBoolean())).thenReturn("testJwt");
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
+        HttpServletResponse response = mock(HttpServletResponse.class);
 
-        ltiService.addLtiQueryParams(uriComponentsBuilder);
+        ltiService.buildLtiResponse(uriComponentsBuilder, response);
 
         UriComponents uriComponents = uriComponentsBuilder.build();
 
-        String jwt = uriComponents.getQueryParams().getFirst("jwt");
+        verify(tokenProvider, times(1)).createToken(any(), anyBoolean());
+        verify(response, times(1)).addHeader(any(), any());
+
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         String ltiSuccessLoginRequired = uriComponents.getQueryParams().getFirst("ltiSuccessLoginRequired");
-        assertEquals("testJwt", jwt);
         assertEquals("", initialize);
         assertNull(ltiSuccessLoginRequired);
     }
@@ -106,15 +110,17 @@ class LtiServiceTest {
         user.setActivated(true);
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
+        HttpServletResponse response = mock(HttpServletResponse.class);
 
-        ltiService.addLtiQueryParams(uriComponentsBuilder);
+        ltiService.buildLtiResponse(uriComponentsBuilder, response);
 
         UriComponents uriComponents = uriComponentsBuilder.build();
 
-        String jwt = uriComponents.getQueryParams().getFirst("jwt");
+        verifyNoInteractions(tokenProvider);
+        verify(response, times(1)).addHeader(any(), any());
+
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         String ltiSuccessLoginRequired = uriComponents.getQueryParams().getFirst("ltiSuccessLoginRequired");
-        assertEquals("", jwt);
         assertEquals(user.getLogin(), ltiSuccessLoginRequired);
         assertNull(initialize);
     }

@@ -81,8 +81,7 @@ public class LtiService {
     public void authenticateLtiUser(String email, String userId, String username, String firstName, String lastName, boolean requireExistingUser, boolean lookupUserByEmail)
             throws InternalAuthenticationServiceException {
         if (SecurityUtils.isAuthenticated()) {
-            // 1. Case: User is already signed in. We are done here.
-            return;
+            SecurityContextHolder.getContext().setAuthentication(null); // Do not use authenticated user since the launch might be for a different user.
         }
 
         if (StringUtils.isEmpty(email)) {
