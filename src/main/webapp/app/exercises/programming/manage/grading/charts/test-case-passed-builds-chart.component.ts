@@ -5,7 +5,7 @@ import { round } from 'app/shared/util/utils';
 @Component({
     selector: 'jhi-test-case-passed-builds-chart',
     template: `
-        <div class="chart-body" placement="left" container="body" [ngbTooltip]="tooltip">
+        <div class="chart-body" placement="left" [ngbTooltip]="tooltip">
             <div class="passed-bar" [style]="{ width: passedPercent + '%' }"></div>
             <div class="failed-bar" [style]="{ left: passedPercent + '%', width: failedPercent + '%' }"></div>
         </div>

@@ -49,7 +49,7 @@
             <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedbackWithColon" for="detailText-{{ textBlock.id }}"></label>
             <div class="d-inline" *ngIf="feedback.gradingInstruction!">
                 <span class="fw-bold">{{ feedback.gradingInstruction!.feedback }}</span>
-                <fa-icon [icon]="faQuestionCircle" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" container="body"></fa-icon>
+                <fa-icon [icon]="faQuestionCircle" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate"></fa-icon>
             </div>
         </div>
         <div class="form-group col-md-1 text-end m-0">

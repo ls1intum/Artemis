@@ -77,7 +77,6 @@
                             (click)="navigateToQuestion(i)"
                             [ngbTooltip]="mode !== 'solution' ? (dragAndDropMappings.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''"
                             [ngClass]="!!dragAndDropMappings.get(question.id!)?.length ? 'changed-question' : ''"
-                            container="body"
                         >
                             <b class="fa">DD</b>
                         </span>
@@ -89,7 +88,6 @@
                                 mode !== 'solution' ? (selectedAnswerOptions.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''
                             "
                             [ngClass]="!!selectedAnswerOptions.get(question.id!)?.length ? 'changed-question' : ''"
-                            container="body"
                         >
                             <b class="fa">MC</b>
                         </span>
@@ -101,7 +99,6 @@
                                 mode !== 'solution' ? (shortAnswerSubmittedTexts.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate) : ''
                             "
                             [ngClass]="!!shortAnswerSubmittedTexts.get(question.id!)?.length ? 'changed-question' : ''"
-                            container="body"
                         >
                             <b class="fa">SA</b>
                         </span>
