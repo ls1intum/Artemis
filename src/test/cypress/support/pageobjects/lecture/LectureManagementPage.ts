@@ -44,7 +44,7 @@ export class LectureManagementPage {
     addTextUnit(name: string, text: string, releaseDate = day()) {
         this.openCreateUnit(UnitType.TEXT);
         cy.get('#name').type(name);
-        cy.get('#release-date').find('#date-input-field').type(releaseDate.toString());
+        cy.get('#pick-releaseDate').find('#date-input-field').type(releaseDate.toString());
         cy.get('.ace_content').type(text, { parseSpecialCharSequences: false });
         return this.submitUnit();
     }

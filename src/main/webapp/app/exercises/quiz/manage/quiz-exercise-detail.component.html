@@ -108,7 +108,7 @@
                             <ng-container>
                                 <!-- releaseDate works similar to Exam.visibleDate -->
                                 <jhi-date-time-picker
-                                    id="release-date"
+                                    id="pick-releaseDate"
                                     class="form-element"
                                     labelName="{{ 'artemisApp.quizExercise.releaseDate' | artemisTranslate }}"
                                     labelTooltip="{{ 'artemisApp.quizExercise.releaseDateExplanation.' + quizExercise.quizMode | artemisTranslate }}"
@@ -120,7 +120,7 @@
                             </ng-container>
                             <ng-container *ngIf="quizExercise.quizMode !== QuizMode.SYNCHRONIZED">
                                 <jhi-date-time-picker
-                                    id="due-date"
+                                    id="pick-dueDate"
                                     class="form-element"
                                     name="dueDate"
                                     [error]="!!quizExercise.dueDateError"
