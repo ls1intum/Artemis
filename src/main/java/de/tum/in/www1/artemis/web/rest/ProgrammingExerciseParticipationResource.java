@@ -121,14 +121,16 @@ public class ProgrammingExerciseParticipationResource {
      * @param result        the sensitive information of which should be removed.
      */
     private void filterSensitiveInformationInResult(final Participation participation, final Result result) {
-        // The test cases marked as after_due_date should only be shown after all
-        // students can no longer submit so that no unfair advantage is possible.
-        // This applies only to automatic results. For manual ones the instructors
-        // are responsible to set an appropriate assessment due date.
-        final boolean applyFilter = exerciseDateService.isBeforeDueDate(participation)
-                || (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && exerciseDateService.isBeforeLatestDueDate(participation.getExercise()));
         result.filterSensitiveInformation();
-        result.filterSensitiveFeedbacks(applyFilter);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
+            // The test cases marked as after_due_date should only be shown after all
+            // students can no longer submit so that no unfair advantage is possible.
+            // This applies only to automatic results. For manual ones the instructors
+            // are responsible to set an appropriate assessment due date.
+            final boolean applyFilter = exerciseDateService.isBeforeDueDate(participation)
+                    || (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && exerciseDateService.isBeforeLatestDueDate(participation.getExercise()));
+            result.filterSensitiveFeedbacks(applyFilter);
+        }
     }
 
     /**

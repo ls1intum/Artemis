@@ -30,8 +30,8 @@ import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.i
 import { cloneDeep } from 'lodash-es';
 import { round } from 'app/shared/util/utils';
 import { MAX_SIZE_UNIT } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { filter, debounceTime } from 'rxjs/operators';
-import { SecuredImageComponent, ImageLoadingStatus } from 'app/shared/image/secured-image.component';
+import { debounceTime, filter } from 'rxjs/operators';
+import { ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import {
     faAngleDown,
@@ -81,10 +81,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     backupQuestion: DragAndDropQuestion;
 
     dragItemPicture?: string;
-    backgroundFile?: Blob | File;
+    backgroundFile?: File;
     backgroundFileName: string;
     backgroundFilePath: string;
-    dragItemFile?: Blob | File;
+    dragItemFile?: File;
     dragItemFileName: string;
 
     dropAllowed = false;

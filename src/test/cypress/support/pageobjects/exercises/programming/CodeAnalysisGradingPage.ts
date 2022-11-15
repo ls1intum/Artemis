@@ -16,7 +16,7 @@ export class CodeAnalysisGradingPage {
     }
 
     saveChanges() {
-        cy.intercept(PATCH, BASE_API + 'programming-exercise/*/static-code-analysis-categories').as('scaConfigurationRequest');
+        cy.intercept(PATCH, BASE_API + 'programming-exercises/*/static-code-analysis-categories').as('scaConfigurationRequest');
         cy.get('#save-table-button').click();
         return cy.wait('@scaConfigurationRequest');
     }

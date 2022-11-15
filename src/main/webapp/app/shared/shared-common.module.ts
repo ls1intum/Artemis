@@ -12,11 +12,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { DurationPipe } from 'app/shared/pipes/duration.pipe';
 import { CloseCircleComponent } from 'app/shared/close-circle/close-circle.component';
+import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule],
     declarations: [
         ArtemisDatePipe,
+        ArtemisDateRangePipe,
         FindLanguageFromKeyPipe,
         AlertOverlayComponent,
         TranslateDirective,
@@ -31,6 +33,7 @@ import { CloseCircleComponent } from 'app/shared/close-circle/close-circle.compo
     exports: [
         ArtemisSharedLibsModule,
         ArtemisDatePipe,
+        ArtemisDateRangePipe,
         FindLanguageFromKeyPipe,
         AlertOverlayComponent,
         TranslateDirective,
@@ -42,6 +45,6 @@ import { CloseCircleComponent } from 'app/shared/close-circle/close-circle.compo
         DurationPipe,
         CloseCircleComponent,
     ],
-    providers: [ArtemisDatePipe],
+    providers: [ArtemisDatePipe, ArtemisDateRangePipe],
 })
 export class ArtemisSharedCommonModule {}

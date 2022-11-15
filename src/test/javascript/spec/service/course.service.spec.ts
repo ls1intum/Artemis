@@ -1,5 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { map, take } from 'rxjs/operators';
@@ -109,7 +109,7 @@ describe('Course Service', () => {
             returnedFromService,
         );
         service
-            .update(expected)
+            .update(1, expected)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'PUT' });

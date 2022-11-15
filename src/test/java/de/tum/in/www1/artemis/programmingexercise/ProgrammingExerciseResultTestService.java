@@ -364,7 +364,27 @@ public class ProgrammingExerciseResultTestService {
     public void shouldIgnoreResultIfNotOnDefaultBranch(Object resultNotification) {
         solutionParticipation.setProgrammingExercise(programmingExercise);
 
-        assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("different branch");
+    }
+
+    // Test
+    public void shouldCreateResultOnParticipationDefaultBranch(Object resultNotification) {
+        programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
+        programmingExerciseStudentParticipation.setBranch("branch");
+
+        var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+
+        assertThat(result).isPresent();
+    }
+
+    // Test
+    public void shouldIgnoreResultIfNotOnParticipationBranch(Object resultNotification) {
+        programmingExerciseStudentParticipation.setBranch("default");
+        programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
+
+        assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("different branch");
     }
 
     // Test

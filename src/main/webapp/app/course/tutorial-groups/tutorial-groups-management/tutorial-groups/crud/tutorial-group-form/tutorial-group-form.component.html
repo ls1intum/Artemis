@@ -1,0 +1,169 @@
+<div class="row">
+    <div class="col-12">
+        <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+            <!-- Title -->
+            <div class="form-group">
+                <label class="required" for="title">{{ 'artemisApp.forms.tutorialGroupForm.titleInput.label' | artemisTranslate }}</label>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="title"
+                    formControlName="title"
+                    [placeholder]="'artemisApp.forms.tutorialGroupForm.titleInput.placeholder' | artemisTranslate: { from: '12:00', to: '13:00' }"
+                />
+                <div *ngIf="titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="titleControl?.errors?.required">
+                        {{ 'artemisApp.forms.tutorialGroupForm.titleInput.requiredValidationError' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="titleControl?.errors?.maxlength">
+                        {{ 'artemisApp.forms.tutorialGroupForm.titleInput.maxLengthValidationError' | artemisTranslate: { max: '19' } }}
+                    </div>
+                    <div *ngIf="!titleControl?.errors?.required && !titleControl?.errors?.maxlength && titleControl?.errors?.pattern">
+                        {{ 'artemisApp.forms.tutorialGroupForm.titleInput.regexValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <!--Online / Offline -->
+            <div class="form-group">
+                <label class="d-block">{{ 'artemisApp.forms.tutorialGroupForm.isOnlineInput.label' | artemisTranslate }}</label>
+                <div class="btn-group" role="group">
+                    <input formControlName="isOnline" type="radio" class="btn-check" id="online" autocomplete="off" checked [value]="true" />
+                    <label class="btn btn-secondary" for="online">{{ 'artemisApp.generic.online' | artemisTranslate }}</label>
+
+                    <input formControlName="isOnline" type="radio" class="btn-check" id="offline" autocomplete="off" [value]="false" />
+                    <label class="btn btn-secondary" for="offline">{{ 'artemisApp.generic.offline' | artemisTranslate }}</label>
+                </div>
+            </div>
+            <!-- Teaching Assistant -->
+            <div class="form-group">
+                <label class="required" for="teachingAssistant">{{ 'artemisApp.forms.tutorialGroupForm.teachingAssistantInput.label' | artemisTranslate }}</label>
+                <input
+                    id="teachingAssistant"
+                    type="text"
+                    class="form-control"
+                    formControlName="teachingAssistant"
+                    [placeholder]="'artemisApp.forms.tutorialGroupForm.teachingAssistantInput.placeholder' | artemisTranslate"
+                    [ngbTypeahead]="taSearch"
+                    [inputFormatter]="taFormatter"
+                    [resultFormatter]="taFormatter"
+                    [editable]="false"
+                    #teachingAssistantInput="ngbTypeahead"
+                    (focus)="taFocus$.next($any($event).target.value)"
+                    (click)="taClick$.next($any($event).target.value)"
+                />
+                <small id="taHelp" class="form-text text-muted">{{ 'artemisApp.forms.tutorialGroupForm.teachingAssistantInput.taHelp' | artemisTranslate }}</small>
+                <div *ngIf="teachingAssistantControl?.invalid && (teachingAssistantControl?.dirty || teachingAssistantControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="teachingAssistantControl?.errors?.required">
+                        {{ 'artemisApp.forms.tutorialGroupForm.teachingAssistantInput.requiredValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <!-- Campus -->
+            <div class="form-group">
+                <label for="campus">{{ 'artemisApp.forms.tutorialGroupForm.campusInput.label' | artemisTranslate }}</label>
+                <input
+                    id="campus"
+                    type="text"
+                    class="form-control"
+                    formControlName="campus"
+                    [placeholder]="'artemisApp.forms.tutorialGroupForm.campusInput.placeholder' | artemisTranslate"
+                    [inputFormatter]="campusFormatter"
+                    [resultFormatter]="campusFormatter"
+                    [ngbTypeahead]="campusSearch"
+                    [editable]="true"
+                    #campusInput="ngbTypeahead"
+                    (focus)="campusFocus$.next($any($event).target.value)"
+                    (click)="campusClick$.next($any($event).target.value)"
+                />
+                <small id="campusHelp" class="form-text text-muted">{{ 'artemisApp.forms.tutorialGroupForm.campusInput.campusHelp' | artemisTranslate }}</small>
+                <div *ngIf="campusControl?.invalid && (campusControl?.dirty || campusControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="campusControl?.errors?.max">
+                        {{ 'artemisApp.forms.tutorialGroupForm.campusInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
+                    </div>
+                </div>
+            </div>
+            <!-- Capacity -->
+            <div class="row">
+                <div class="col-auto">
+                    <label for="capacity">{{ 'artemisApp.forms.tutorialGroupForm.capacityInput.label' | artemisTranslate }}</label>
+                    <div class="input-group">
+                        <input id="capacity" type="number" class="form-control" formControlName="capacity" />
+                        <div class="input-group-text">{{ 'artemisApp.forms.tutorialGroupForm.capacityInput.unit' | artemisTranslate }}</div>
+                    </div>
+                </div>
+            </div>
+            <!--Language -->
+            <div class="form-group">
+                <label class="d-block">{{ 'artemisApp.forms.tutorialGroupForm.languageInput.label' | artemisTranslate }}</label>
+                <div class="btn-group" role="group">
+                    <input formControlName="language" type="radio" class="btn-check" id="german" autocomplete="off" checked [value]="GERMAN" />
+                    <label class="btn btn-secondary" for="german">{{ 'artemisApp.generic.german' | artemisTranslate }}</label>
+
+                    <input formControlName="language" type="radio" class="btn-check" id="english" autocomplete="off" [value]="ENGLISH" />
+                    <label class="btn btn-secondary" for="english">{{ 'artemisApp.generic.english' | artemisTranslate }}</label>
+                </div>
+            </div>
+            <!-- Validation Errors for the smaller input from above-->
+            <div class="form-group">
+                <div *ngIf="capacityControl?.invalid && (capacityControl?.dirty || capacityControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="capacityControl?.errors?.min">
+                        {{ 'artemisApp.forms.tutorialGroupForm.capacityInput.minValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <!-- Additional Information -->
+            <div class="form-group">
+                <label class="d-block" for="additionalInfo">{{ 'artemisApp.forms.tutorialGroupForm.additionalInformationInput.label' | artemisTranslate }}</label>
+                <small id="additionalInfoHelp" class="form-text mb-1 text-muted">
+                    <a href="https://guides.github.com/features/mastering-markdown/"> GitHub Markdown Guide</a>
+                </small>
+                <!-- not included in reactive form -->
+                <jhi-markdown-editor
+                    aria-describedby="additionalInfoHelp"
+                    id="additionalInfo"
+                    class="markdown-editor"
+                    [(markdown)]="additionalInformation"
+                    [enableResize]="true"
+                ></jhi-markdown-editor>
+            </div>
+            <hr />
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="configureSchedule" id="configureSchedule" [ngModelOptions]="{ standalone: true }" />
+                <label class="form-check-label" for="configureSchedule">
+                    {{ 'artemisApp.forms.scheduleForm.configureRecurringSchedule' | artemisTranslate }}
+                </label>
+            </div>
+            <div *ngIf="showScheduledChangedWarning" class="alert alert-danger" role="alert">
+                {{ 'artemisApp.forms.scheduleForm.scheduleChangeWarning' | artemisTranslate }}
+            </div>
+            <hr />
+            <jhi-schedule-form *ngIf="configureSchedule" #scheduleForm [parentFormGroup]="form" [course]="course"></jhi-schedule-form>
+            <hr *ngIf="configureSchedule" />
+            <!-- Optional Notification Message -->
+            <div class="form-group border border-info rounded p-3" *ngIf="notificationControl">
+                <label for="notificationText">{{ 'artemisApp.forms.tutorialGroupForm.notificationInput.label' | artemisTranslate }}</label>
+                <textarea
+                    class="form-control"
+                    id="notificationText"
+                    formControlName="notificationText"
+                    [placeholder]="'artemisApp.forms.tutorialGroupForm.notificationInput.placeholder' | artemisTranslate"
+                    rows="3"
+                ></textarea>
+                <small id="notificationHelp" class="form-text text-muted">{{ 'artemisApp.forms.tutorialGroupForm.notificationInput.help' | artemisTranslate }}</small>
+
+                <div *ngIf="notificationControl?.invalid && (notificationControl?.dirty || notificationControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="notificationControl?.errors?.maxlength">
+                        {{ 'artemisApp.forms.tutorialGroupForm.notificationInput.maxLengthValidationError' | artemisTranslate: { max: '1000' } }}
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-12">
+                    <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
+                        <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

@@ -44,7 +44,7 @@ export class FileUploaderService {
      * @private
      */
     private handleFileUpload(endpoint: string, allowedExtensions: string[], file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
-        const fileExtension = fileName ? fileName.split('.').pop()!.toLocaleLowerCase() : file.name.split('.').pop()!.toLocaleLowerCase();
+        const fileExtension = fileName ? fileName.split('.').pop()!.toLocaleLowerCase() : (file as File).name.split('.').pop()!.toLocaleLowerCase();
         if (!allowedExtensions.includes(fileExtension)) {
             return Promise.reject(
                 new Error('Unsupported file type! Only the following file extensions are allowed: ' + allowedExtensions.map((extension) => `.${extension}`).join(', ')),
@@ -55,7 +55,7 @@ export class FileUploaderService {
             return Promise.reject(new Error('File is too big! Maximum allowed file size: ' + MAX_FILE_SIZE / (1024 * 1024) + ' MB.'));
         }
 
-        const keepFileName: boolean = !!options && options.keepFileName;
+        const keepFileName: boolean = !!options?.keepFileName;
         const formData = new FormData();
         formData.append('file', file, fileName);
         return lastValueFrom(this.http.post<FileUploadResponse>(endpoint + `?keepFileName=${keepFileName}`, formData));

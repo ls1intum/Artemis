@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 
 import javax.persistence.*;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -104,6 +106,10 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse = false;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "online_course_configuration_id")
+    private OnlineCourseConfiguration onlineCourseConfiguration;
+
     @Column(name = "max_complaints")
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints;
@@ -162,6 +168,12 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Integer accuracyOfScores;
 
+    /**
+     * Note: Currently just used in the scope of the tutorial groups feature
+     */
+    @Column(name = "time_zone")
+    private String timeZone;
+
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -198,6 +210,11 @@ public class Course extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("consecutiveCourses")
     private Set<LearningGoal> prerequisites = new HashSet<>();
+
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "tutorial_groups_configuration_id")
+    @JsonIgnoreProperties("course")
+    private TutorialGroupsConfiguration tutorialGroupsConfiguration;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -342,6 +359,14 @@ public class Course extends DomainObject {
 
     public void setOnlineCourse(Boolean onlineCourse) {
         this.onlineCourse = onlineCourse;
+    }
+
+    public OnlineCourseConfiguration getOnlineCourseConfiguration() {
+        return Hibernate.isInitialized(onlineCourseConfiguration) ? onlineCourseConfiguration : null;
+    }
+
+    public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
+        this.onlineCourseConfiguration = onlineCourseConfiguration;
     }
 
     public Integer getMaxComplaints() {
@@ -660,10 +685,34 @@ public class Course extends DomainObject {
         this.tutorialGroups = tutorialGroups;
     }
 
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
+    }
+
+    /**
+     * Validates that only one of onlineCourse and registrationEnabled is selected
+     */
     public void validateOnlineCourseAndRegistrationEnabled() {
         if (isOnlineCourse() && isRegistrationEnabled()) {
             throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
                     true);
+        }
+    }
+
+    /**
+     * Validates that there is an OnlineCourseConfiguration if the course is an online course
+     */
+    public void validateOnlineCourseConfiguration() {
+        if (isOnlineCourse()) {
+            OnlineCourseConfiguration ocConfiguration = getOnlineCourseConfiguration();
+            if (ocConfiguration == null) {
+                throw new BadRequestAlertException("Configuration must exist for online courses", ENTITY_NAME, "onlineCourseConfigurationMissing");
+            }
+            ocConfiguration.validate();
         }
     }
 
@@ -770,5 +819,13 @@ public class Course extends DomainObject {
             case "editors" -> getEditorGroupName();
             default -> throw new IllegalArgumentException("The course group does not exist");
         };
+    }
+
+    public TutorialGroupsConfiguration getTutorialGroupsConfiguration() {
+        return tutorialGroupsConfiguration;
+    }
+
+    public void setTutorialGroupsConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
+        this.tutorialGroupsConfiguration = tutorialGroupsConfiguration;
     }
 }

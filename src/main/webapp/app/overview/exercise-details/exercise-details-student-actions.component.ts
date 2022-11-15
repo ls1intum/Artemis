@@ -6,12 +6,12 @@ import { SourceTreeService } from 'app/exercises/programming/shared/service/sour
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
-import { isStartExerciseAvailable, isStartPracticeAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { finalize } from 'rxjs/operators';
-import { faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faExternalLinkAlt, faUsers, faComment } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -41,6 +41,8 @@ export class ExerciseDetailsStudentActionsComponent {
     // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
+    startingPracticeMode = false;
+
     // Icons
     faComment = faComment;
     faFolderOpen = faFolderOpen;
@@ -65,6 +67,10 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     isStartExerciseAvailable(): boolean {
         return !this.examMode && isStartExerciseAvailable(this.exercise as ProgrammingExercise);
+    }
+
+    isResumeExerciseAvailable(): boolean {
+        return !this.examMode && isResumeExerciseAvailable(this.exercise, this.studentParticipation);
     }
 
     /**
@@ -103,7 +109,6 @@ export class ExerciseDetailsStudentActionsComponent {
                 next: (participation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
-                        this.exercise.participationStatus = participationStatus(this.exercise);
                         this.exercise.participationStatus = this.participationStatusWrapper();
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -118,26 +123,6 @@ export class ExerciseDetailsStudentActionsComponent {
                     this.alertService.warning('artemisApp.exercise.startError');
                 },
             });
-    }
-
-    startPractice(): void {
-        this.courseExerciseService.startPractice(this.exercise.id!).subscribe({
-            next: (participation) => {
-                if (participation) {
-                    this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
-                }
-                if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                    if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
-                        this.alertService.success('artemisApp.exercise.personalRepositoryClone');
-                    } else {
-                        this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
-                    }
-                }
-            },
-            error: () => {
-                this.alertService.warning('artemisApp.exercise.startError');
-            },
-        });
     }
 
     /**
@@ -220,11 +205,9 @@ export class ExerciseDetailsStudentActionsComponent {
     public shouldDisplayIDEButtons(): boolean {
         return !!this.exercise.studentParticipations?.some((participation) => {
             const status = participationStatus(this.exercise, participation.testRun);
-            return (
-                status === ParticipationStatus.INITIALIZED ||
-                (status === ParticipationStatus.INACTIVE &&
-                    ((!isStartExerciseAvailable(this.exercise) && !participation.testRun) || (!isStartPracticeAvailable(this.exercise) && participation.testRun)))
-            );
+            const startExerciseNotAvailable = !isStartExerciseAvailable(this.exercise) && !participation.testRun;
+            const startPracticeNotAvailable = !isStartPracticeAvailable(this.exercise) && participation.testRun;
+            return status === ParticipationStatus.INITIALIZED || (status === ParticipationStatus.INACTIVE && (startExerciseNotAvailable || startPracticeNotAvailable));
         });
     }
 

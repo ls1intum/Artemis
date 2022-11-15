@@ -13,9 +13,9 @@
                 }
             },
             "startExercise": "<strong>Herzlich Willkommen bei Artemis!</strong> Klicke auf den Button <i>Aufgabe starten</i>!",
+            "ltiSuccessLoginRequired": "LTI Übung erfolgreich gestartet. Bitte melde dich als Nutzer:in {{user}} an.",
             "lti": "LTI",
             "configurationForExercise": "LTI Konfiguration der Übung {{ title }}",
-            "ltiId": "LTI ID",
             "ltiKey": "LTI Key",
             "ltiSecret": "LTI Geheimnis",
             "ltiLaunchUrl": "LTI Start URL",
@@ -30,6 +30,19 @@
             "requestUserEmailTooltip": "Die E-Mail des Benutzers muss gesendet werden, da sie von Artemis benötigt wird, um den Benutzer zu erstellen oder zu finden",
             "requireExistingUserTooltip": "Wenn ausgewählt, erfordert das Starten der Übung einen bestehenden Benutzer in Artemis. Wenn abgewählt, kann ein Benutzer beim ersten Start erstellt werden, wenn er noch nicht existiert",
             "lookupUserByEmailTooltip": "Wenn ausgewählt, versucht Artemis einen vorhandenen Benutzer mit der angegebenen E-Mail Adresse zu finden"
+        },
+        "lti13": {
+            "launch": {
+                "title": "Aufgabe starten",
+                "launching": "Am starten...",
+                "launchFailed": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es später noch einmal oder kontaktieren Sie den Administrator."
+            }
+        },
+        "dynamicRegistration": {
+            "title": "Dynamische Registrierung",
+            "registering": "Am registrieren",
+            "registeredSuccessfully": "Kurs erfolgreich registriert",
+            "registerFailed": "Fehler bei der dynamischen Registrierung"
         }
     }
 }

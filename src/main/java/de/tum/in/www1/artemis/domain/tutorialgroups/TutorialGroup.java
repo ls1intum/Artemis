@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
@@ -13,10 +12,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 
 @Entity
@@ -30,7 +28,7 @@ public class TutorialGroup extends DomainObject {
     private Course course;
 
     @Column(name = "title")
-    @Size(min = 1, max = 256)
+    @Size(min = 1, max = 19)
     @NotNull
     private String title;
 
@@ -61,9 +59,82 @@ public class TutorialGroup extends DomainObject {
     @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
     private Set<TutorialGroupRegistration> registrations = new HashSet<>();
+    // ==== Transient fields ====
+
+    /**
+     * This transient field is set to true if the user who requested the entity is registered for this tutorial group
+     */
+    @Transient
+    @JsonSerialize
+    private Boolean isUserRegistered;
+
+    /**
+     * This transient field is set to true if the user who requested the entity is the teaching assistant of this tutorial group
+     */
+    @Transient
+    @JsonSerialize
+    private Boolean isUserTutor;
+
+    /**
+     * This transient fields is set to the number of registered students for this tutorial group
+     */
+    @Transient
+    @JsonSerialize
+    private Integer numberOfRegisteredUsers;
+
+    /**
+     * This transient fields is set to the name of the teaching assistant of this tutorial group
+     */
+    @Transient
+    @JsonSerialize
+    private String teachingAssistantName;
+
+    /**
+     * This transient fields is set to the course title to which this tutorial group belongs
+     */
+    @Transient
+    @JsonSerialize
+    private String courseTitle;
+
+    /**
+     * This transient field is set to the next session of this tutorial group
+     */
+    @Transient
+    @JsonSerialize
+    private TutorialGroupSession nextSession;
+
+    @OneToOne(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
+    private TutorialGroupSchedule tutorialGroupSchedule;
+
+    @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties(value = "tutorialGroup, tutorialGroupSchedule", allowSetters = true)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<TutorialGroupSession> tutorialGroupSessions = new HashSet<>();
+
+    public TutorialGroupSchedule getTutorialGroupSchedule() {
+        return tutorialGroupSchedule;
+    }
+
+    public void setTutorialGroupSchedule(TutorialGroupSchedule tutorialGroupSchedule) {
+        this.tutorialGroupSchedule = tutorialGroupSchedule;
+    }
+
+    public Set<TutorialGroupSession> getTutorialGroupSessions() {
+        return tutorialGroupSessions;
+    }
+
+    public void setTutorialGroupSessions(Set<TutorialGroupSession> tutorialGroupSessions) {
+        this.tutorialGroupSessions = tutorialGroupSessions;
+    }
 
     public TutorialGroup() {
         // Empty constructor needed for Jackson.
+    }
+
+    public TutorialGroup(Course course, String title) {
+        this.course = course;
+        this.title = title;
     }
 
     public TutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, Language language, User teachingAssistant,
@@ -150,4 +221,86 @@ public class TutorialGroup extends DomainObject {
     public void setCampus(String campus) {
         this.campus = campus;
     }
+
+    public Boolean getIsUserRegistered() {
+        return isUserRegistered;
+    }
+
+    public void setIsUserRegistered(Boolean userRegistered) {
+        isUserRegistered = userRegistered;
+    }
+
+    public Boolean getIsUserTutor() {
+        return isUserTutor;
+    }
+
+    public void setIsUserTutor(Boolean userTutor) {
+        isUserTutor = userTutor;
+    }
+
+    public Integer getNumberOfRegisteredUsers() {
+        return numberOfRegisteredUsers;
+    }
+
+    public void setNumberOfRegisteredUsers(Integer numberOfRegisteredUsers) {
+        this.numberOfRegisteredUsers = numberOfRegisteredUsers;
+    }
+
+    public String getTeachingAssistantName() {
+        return teachingAssistantName;
+    }
+
+    public void setTeachingAssistantName(String teachingAssistantName) {
+        this.teachingAssistantName = teachingAssistantName;
+    }
+
+    public String getCourseTitle() {
+        return courseTitle;
+    }
+
+    public void setCourseTitle(String courseTitle) {
+        this.courseTitle = courseTitle;
+    }
+
+    public TutorialGroupSession getNextSession() {
+        return nextSession;
+    }
+
+    public void setNextSession(TutorialGroupSession nextSession) {
+        this.nextSession = nextSession;
+    }
+
+    /**
+     * Hides privacy sensitive information.
+     */
+    public void hidePrivacySensitiveInformation() {
+        this.setRegistrations(null);
+        this.setTeachingAssistant(null);
+        this.setCourse(null);
+    }
+
+    /**
+     * Removes circular references for JSON serialization.
+     *
+     * @param tutorialGroup the tutorial group to remove circular references for
+     * @return the tutorial group without circular references
+     */
+    public static TutorialGroup preventCircularJsonConversion(TutorialGroup tutorialGroup) {
+
+        // prevent circular to json conversion
+        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSchedule") && tutorialGroup.getTutorialGroupSchedule() != null) {
+            tutorialGroup.getTutorialGroupSchedule().setTutorialGroup(null);
+        }
+        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
+            tutorialGroup.getTutorialGroupSessions().forEach(tutorialGroupSession -> {
+                tutorialGroupSession.setTutorialGroup(null);
+                if (tutorialGroupSession.getTutorialGroupSchedule() != null) {
+                    tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroup(null);
+                    tutorialGroupSession.getTutorialGroupSchedule().setTutorialGroupSessions(null);
+                }
+            });
+        }
+        return tutorialGroup;
+    }
+
 }

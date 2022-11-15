@@ -320,22 +320,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("SELECT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.exerciseGroup eg LEFT JOIN FETCH eg.exam e WHERE e.endDate > :#{#dateTime}")
     List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
-    /**
-     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here that a submission exists, that was submitted before the deadline.
-     *
-     * @param exerciseId the exercise id we are interested in
-     * @return the number of distinct submissions belonging to the exercise id
-     */
-    @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
-            JOIN p.submissions s
-            WHERE p.exercise.id = :#{#exerciseId}
-                AND s.submitted = TRUE
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
-            """)
-    long countSubmissionsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
-
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
                 p.exercise.id,
@@ -390,25 +374,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             GROUP BY p.exercise.id
             """)
     List<ExerciseMapEntry> countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(@Param("exerciseIds") Set<Long> exerciseIds);
-
-    /**
-     * needs improvement
-     * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
-     * We therefore have to check here that a submission exists, that was submitted before the deadline.
-     *
-     * @param exerciseId the exercise id we are interested in
-     * @return the number of distinct submissions belonging to the exercise id that are assessed
-     */
-    @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
-            LEFT JOIN p.results r
-            WHERE p.exercise.id = :#{#exerciseId}
-                AND r.submission.submitted = TRUE
-                AND (r.submission.type <> 'ILLEGAL' OR r.submission.type IS NULL)
-                AND r.assessor IS NOT NULL
-                AND r.completionDate IS NOT NULL
-            """)
-    long countAssessmentsByExerciseIdSubmitted(@Param("exerciseId") Long exerciseId);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
@@ -599,32 +564,20 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * @param exerciseId     the exercise we are interested in
-     * @param ignoreTestRuns should be set for exam exercises
      * @return the number of programming submissions which should be assessed
      * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
-    default long countLegalSubmissionsByExerciseIdSubmitted(Long exerciseId, boolean ignoreTestRuns) {
-        if (ignoreTestRuns) {
-            return countLegalSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
-        }
-        else {
-            return countSubmissionsByExerciseIdSubmitted(exerciseId);
-        }
+    default long countLegalSubmissionsByExerciseIdSubmitted(Long exerciseId) {
+        return countLegalSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
     }
 
     /**
      * @param exerciseId     the exercise we are interested in
-     * @param ignoreTestRuns should be set for exam exercises
      * @return the number of assessed programming submissions
      * We don't need to check for the submission date, because students cannot participate in programming exercises with manual assessment after their due date
      */
-    default long countAssessmentsByExerciseIdSubmitted(Long exerciseId, boolean ignoreTestRuns) {
-        if (ignoreTestRuns) {
-            return countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
-        }
-        else {
-            return countAssessmentsByExerciseIdSubmitted(exerciseId);
-        }
+    default long countAssessmentsByExerciseIdSubmitted(Long exerciseId) {
+        return countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(exerciseId);
     }
 
     /**

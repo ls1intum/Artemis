@@ -330,12 +330,13 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
                     "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
         }
-
         // Forbid changing the course the exercise belongs to.
         if (!Objects.equals(programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId(),
                 updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
+        // Forbid conversion between normal course exercise and exam exercise
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
 
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
             // make sure the default value is set properly
@@ -349,15 +350,12 @@ public class ProgrammingExerciseResource {
             updatedProgrammingExercise.setBonusPoints(0.0);
         }
 
-        // TODO: if isAllowOfflineIde changes, we might want to change access for all existing student participations
-        // false --> true: add access for students to all existing student participations
-        // true --> false: remove access for students from all existing student participations
-
-        // Forbid conversion between normal course exercise and exam exercise
-        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
-
         // Only save after checking for errors
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(programmingExerciseBeforeUpdate, updatedProgrammingExercise,
+                notificationText);
+
+        programmingExerciseService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, savedProgrammingExercise);
+
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         return ResponseEntity.ok(savedProgrammingExercise);
@@ -589,7 +587,7 @@ public class ProgrammingExerciseResource {
         catch (Exception e) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName,
-                            "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": \n" + e.getMessage(),
+                            "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": " + e,
                             "errorStructureOracleGeneration"))
                     .body(null);
         }
@@ -744,7 +742,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET programming-exercise/:exerciseId/solution-files-content
+     * GET programming-exercises/:exerciseId/solution-files-content
      *
      * Returns the solution repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
@@ -766,7 +764,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET programming-exercise/:exerciseId/template-files-content
+     * GET programming-exercises/:exerciseId/template-files-content
      *
      * Returns the template repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
@@ -788,7 +786,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET programming-exercise/:exerciseId/solution-file-names
+     * GET programming-exercises/:exerciseId/solution-file-names
      *
      * Returns the solution repository file names for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
@@ -810,7 +808,7 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET programming-exercise/:exerciseId/build-log-statistics
+     * GET programming-exercises/:exerciseId/build-log-statistics
      *
      * Returns the averaged build log statistics for a given programming exercise.
      * @param exerciseId the exercise for which the build log statistics should be retrieved

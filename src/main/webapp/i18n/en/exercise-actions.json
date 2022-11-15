@@ -17,10 +17,16 @@
             "openCodeEditor": "Open code editor",
             "openPracticeCodeEditor": "Open practice code editor",
             "openGradedCodeEditor": "Open graded code editor",
-            "practiceMode": "Practice Mode",
             "choseGradedMode": "Graded participation chosen",
             "openModelingEditor": "Open modeling editor",
             "importIntoIntelliJ": "Open in IntelliJ",
+            "practiceMode": {
+                "title": "Practice Mode",
+                "explanation": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will setup a separate repository for you to clone as usual.",
+                "repositoryChoice": "You already have a graded participation from before the deadline. Therefore you can choose if the code in the separate repository should be the template repository of this exercise or your graded participation.",
+                "practiceWithTemplate": "Practice with template repository",
+                "practiceWithGradedParticipation": "Practice with graded participation"
+            },
             "resetRepository": {
                 "label": "Reset",
                 "titleGraded": "Reset graded participation",
