@@ -24,7 +24,8 @@
         id="save-instructions-button"
         [disabled]="savingInstructions || !unsavedChangesValue"
         (click)="saveInstructions($event)"
-        class="btn btn-light editable-instruction-container__save"
+        class="btn editable-instruction-container__save"
+        [ngClass]="savingInstructions || !unsavedChangesValue ? 'btn-light' : 'btn-primary'"
     >
         <fa-icon *ngIf="!savingInstructions" [icon]="faSave" class="me-2"></fa-icon>
         <fa-icon *ngIf="savingInstructions" [icon]="faCircleNotch" [spin]="true" class="me-2"></fa-icon>
