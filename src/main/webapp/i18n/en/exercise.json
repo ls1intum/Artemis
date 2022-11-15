@@ -49,7 +49,7 @@
             "problemStatement": "Problem Statement",
             "instructions": "Instructions",
             "exampleSolution": "Example Solution",
-            "exampleSolutionPublicationDateError": "For graded exercises, Example Solution Publication Date must be after Release and Due Date if set. Please check your selection again",
+            "exampleSolutionPublicationDateError": "For graded exercises, Example Solution Publication Date must be after Release, Start and Due Date if set. Please check your selection again",
             "exampleSolutionPublicationDateWarning": "Example Solution Publication Date is before Due Date!",
             "assessmentCriterion": "Assessment Criterion",
             "assessmentInstructions": "Assessment Instructions",
