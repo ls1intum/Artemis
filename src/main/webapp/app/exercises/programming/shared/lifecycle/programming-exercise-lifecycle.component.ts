@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { faCogs, faHandshake, faHandshakeSlash, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faHandshake, faHandshakeSlash, faUserCheck, faUserSlash, faLink, faLinkSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
