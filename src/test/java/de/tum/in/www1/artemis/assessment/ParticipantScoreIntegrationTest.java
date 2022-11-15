@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -74,6 +75,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Autowired
     private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
     @BeforeEach
     void setupTestScenario() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -119,6 +123,8 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         idOfExam = exam.getId();
         createIndividualTextExerciseForExam();
         database.createParticipationSubmissionAndResult(getIdOfIndividualTextExerciseOfExam, student1, 10.0, 10.0, 50, true);
+
+        await().until(() -> participantScoreRepository.findAll().size() == 3);
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -244,10 +250,10 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAverageScoreOfParticipantInExam_asInstructorOfCourse_shouldReturnAverageParticipantScores() throws Exception {
         List<ParticipantScoreAverageDTO> participantScoreAverageDTOS = request.getList("/api/exams/" + idOfExam + "/participant-scores/average-participant", HttpStatus.OK,
-                ParticipantScoreAverageDTO.class);
+            ParticipantScoreAverageDTO.class);
         assertThat(participantScoreAverageDTOS).hasSize(1);
         ParticipantScoreAverageDTO student1Result = participantScoreAverageDTOS.stream().filter(participantScoreAverageDTO -> participantScoreAverageDTO.name() != null).findFirst()
-                .get();
+            .get();
         assertAverageParticipantScoreDTOStructure(student1Result, "student1", 50.0, 50.0, 5.0, 5.0);
     }
 
@@ -273,7 +279,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     private void assertParticipantScoreDTOStructure(ParticipantScoreDTO participantScoreDTO, Long expectedUserId, Long expectedTeamId, Long expectedExerciseId,
-            Double expectedLastResultScore, Double expectedLastRatedResultScore, Double expectedLastPoints, Double expectedLastRatedPoints) {
+                                                    Double expectedLastResultScore, Double expectedLastRatedResultScore, Double expectedLastPoints, Double expectedLastRatedPoints) {
         assertThat(participantScoreDTO.userId()).isEqualTo(expectedUserId);
         assertThat(participantScoreDTO.teamId()).isEqualTo(expectedTeamId);
         assertThat(participantScoreDTO.exerciseId()).isEqualTo(expectedExerciseId);
@@ -284,7 +290,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     private void assertAverageParticipantScoreDTOStructure(ParticipantScoreAverageDTO participantScoreAverageDTO, String expectedName, Double expectedAverageScore,
-            Double expectedAverageRatedScore, Double expectedAveragePoints, Double expectedAverageRatedPoints) {
+                                                           Double expectedAverageRatedScore, Double expectedAveragePoints, Double expectedAverageRatedPoints) {
         assertThat(participantScoreAverageDTO.name()).isEqualTo(expectedName);
         assertThat(participantScoreAverageDTO.averageScore()).isEqualTo(expectedAverageScore);
         assertThat(participantScoreAverageDTO.averageRatedScore()).isEqualTo(expectedAverageRatedScore);

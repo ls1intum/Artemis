@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.fileupload;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -146,7 +147,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setFilePattern(creationFilePattern);
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
         FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class,
-                HttpStatus.CREATED);
+            HttpStatus.CREATED);
 
         assertThat(receivedFileUploadExercise).isNotNull();
         assertThat(receivedFileUploadExercise.getId()).isNotNull();
@@ -154,14 +155,14 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("exerciseGroupId was set correctly")
-                .isEqualTo(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+            .isEqualTo(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         assertThat(receivedFileUploadExercise.getGradingCriteria().get(0).getTitle()).isNull();
         assertThat(receivedFileUploadExercise.getGradingCriteria().get(1).getTitle()).isEqualTo("test title");
 
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions()).hasSize(1);
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
-                .isEqualTo("created first instruction with empty criteria for testing");
+            .isEqualTo("created first instruction with empty criteria for testing");
     }
 
     @Test
@@ -185,7 +186,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions()).hasSize(1);
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
-                .isEqualTo("created first instruction with empty criteria for testing");
+            .isEqualTo("created first instruction with empty criteria for testing");
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -344,7 +345,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(11));
 
         FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "?notificationText=notification",
-                fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
+            fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
         assertThat(receivedFileUploadExercise.getDueDate()).isEqualToIgnoringNanos(dueDate);
         assertThat(receivedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
@@ -371,7 +372,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setTitle(newTitle);
 
         FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise,
-                FileUploadExercise.class, HttpStatus.OK);
+            FileUploadExercise.class, HttpStatus.OK);
 
         assertThat(updatedFileUploadExercise.getTitle()).isEqualTo(newTitle);
         assertThat(updatedFileUploadExercise.isCourseExercise()).as("course was not set for exam exercise").isFalse();
@@ -386,7 +387,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
 
         request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), dates.applyTo(fileUploadExercise), FileUploadExercise.class,
-                HttpStatus.BAD_REQUEST);
+            HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -416,9 +417,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExerciseWithExerciseGroup.setExerciseGroup(null);
 
         request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExerciseWithCourse.getId(), fileUploadExerciseWithCourse, FileUploadExercise.class,
-                HttpStatus.BAD_REQUEST);
+            HttpStatus.BAD_REQUEST);
         request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExerciseWithExerciseGroup.getId(), fileUploadExerciseWithExerciseGroup, FileUploadExercise.class,
-                HttpStatus.BAD_REQUEST);
+            HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -435,7 +436,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
             final FileUploadSubmission submission2 = ModelFactory.generateFileUploadSubmission(true);
             database.addFileUploadSubmission(fileUploadExercise, submission2, "student2");
 
-            final var participations = studentParticipationRepository.findByExerciseId(fileUploadExercise.getId());
+            final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(fileUploadExercise.getId()));
             assertThat(participations).hasSize(2);
             participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
             participations.get(1).setIndividualDueDate(individualDueDate);
@@ -500,7 +501,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
         FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody(
-                "/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
+            "/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedFileUploadExercise);
         assertThat(updatedFileUploadExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
@@ -523,7 +524,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setGradingCriteria(gradingCriteria);
 
         FileUploadExercise updatedFileUploadExercise = request.putWithResponseBody(
-                "/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
+            "/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedFileUploadExercise);
         assertThat(updatedFileUploadExercise.getGradingCriteria()).hasSize(1);
         assertThat(updatedResults.get(0).getScore()).isZero();
@@ -540,7 +541,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         courseRepo.save(course);
 
         request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExercise, FileUploadExercise.class,
-                HttpStatus.FORBIDDEN);
+            HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -553,7 +554,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExerciseRepository.save(fileUploadExerciseToBeConflicted);
 
         request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExerciseToBeConflicted, FileUploadExercise.class,
-                HttpStatus.CONFLICT);
+            HttpStatus.CONFLICT);
     }
 
     @Test
@@ -635,7 +636,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // Utility function to avoid duplication
         Function<Course, FileUploadExercise> fileUploadExerciseGetter = c -> (FileUploadExercise) c.getExercises().stream()
-                .filter(e -> e.getId().equals(fileUploadExercise.getId())).findAny().get();
+            .filter(e -> e.getId().equals(fileUploadExercise.getId())).findAny().get();
 
         fileUploadExercise.setExampleSolution("Sample<br>solution");
 

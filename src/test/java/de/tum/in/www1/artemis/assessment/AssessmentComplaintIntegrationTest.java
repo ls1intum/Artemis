@@ -16,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -51,6 +53,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private ExamRepository examRepository;
 
+    @Autowired
+    private ObjectMapper mapper;
+
     private ModelingExercise modelingExercise;
 
     private ModelingSubmission modelingSubmission;
@@ -82,7 +87,38 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student1")
-    void submitComplaintAboutModelingAssessment() throws Exception {
+    void submitComplaintAboutModelingAssessmentResultBeforeDueDate() throws Exception {
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
+        modelingAssessment.setCompletionDate(modelingExercise.getDueDate().minusDays(1));
+        resultRepo.save(modelingAssessment);
+
+        verifySuccessfulComplaint();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void submitComplaintAboutModelingAssessmentResultBeforeAssessmentDueDate() throws Exception {
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(3));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
+        modelingAssessment.setCompletionDate(modelingExercise.getAssessmentDueDate().minusDays(1));
+        resultRepo.save(modelingAssessment);
+
+        verifySuccessfulComplaint();
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void submitComplaintAboutModelingAssessmentResultAfterAssessmentDueDate() throws Exception {
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(3));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        modelingAssessment.setCompletionDate(modelingExercise.getAssessmentDueDate().plusDays(1));
+        resultRepo.save(modelingAssessment);
+
+        verifySuccessfulComplaint();
+    }
+
+    private void verifySuccessfulComplaint() throws Exception {
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
         Optional<Complaint> storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId());
@@ -113,6 +149,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1")
     void submitComplaintAboutModellingAssessment_complaintLimitNotReached() throws Exception {
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
+
         // 2 complaints are allowed, the course is created with 3 max complaints
         database.addComplaints("student1", modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
 
@@ -138,6 +177,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1")
     void requestMoreFeedbackAboutModelingAssessment_noLimit() throws Exception {
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
+
         database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.MORE_FEEDBACK);
 
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
@@ -149,7 +191,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         // Only one complaint is possible for exercise regardless of its type
         request.post("/api/complaints", moreFeedbackRequest, HttpStatus.BAD_REQUEST);
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).get().getComplaintType()).as("more feedback request is not saved")
-                .isNotEqualTo(ComplaintType.MORE_FEEDBACK);
+            .isNotEqualTo(ComplaintType.MORE_FEEDBACK);
     }
 
     @Test
@@ -173,8 +215,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @WithMockUser(username = "student1")
     void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
         // 3 weeks is already past the deadline
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(4));
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));
-        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(3));
+        database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(2));
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
@@ -215,7 +258,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
         Result receivedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
-                Result.class, HttpStatus.OK);
+            Result.class, HttpStatus.OK);
 
         assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).get();
@@ -245,7 +288,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
         request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
-                HttpStatus.BAD_REQUEST);
+            HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -348,7 +391,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         final var complaints = request.getList("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints", HttpStatus.OK, Complaint.class,
-                params);
+            params);
 
         complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
     }
@@ -363,12 +406,12 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         params.add("complaintType", ComplaintType.COMPLAINT.name());
 
         final var tutorComplaints = request.getList("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints", HttpStatus.OK,
-                Complaint.class, params);
+            Complaint.class, params);
         assertThat(tutorComplaints).isEmpty();
 
         params.add("allComplaintsForTutor", "true");
         final var allComplaints = request.getList("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints", HttpStatus.OK,
-                Complaint.class, params);
+            Complaint.class, params);
 
         assertThat(allComplaints).hasSize(1);
         allComplaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
@@ -401,7 +444,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         final var submissionWithComplaintDTOs = request.getList("/api/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK,
-                SubmissionWithComplaintDTO.class, params);
+            SubmissionWithComplaintDTO.class, params);
 
         submissionWithComplaintDTOs.forEach(dto -> {
             final var participation = (StudentParticipation) dto.complaint().getResult().getParticipation();
@@ -615,7 +658,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         modelingSubmission = database.addModelingSubmission(modelingExercise, modelingSubmission, "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json", "tutor1",
-                true);
+            true);
     }
 
     private void checkComplaintContainsNoSensitiveData(Complaint receivedComplaint, boolean shouldStudentBeFilteredOut) {
@@ -670,7 +713,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
         if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
             assertThat(((StudentParticipation) receivedComplaint.getResult().getParticipation()).getStudent()).as("Result in complaint shouldn't contain student participation")
-                    .isEmpty();
+                .isEmpty();
         }
     }
 
@@ -695,7 +738,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         final var complaints = request.getList("/api/exercises/" + complaint.getResult().getParticipation().getExercise().getId() + "/complaints", HttpStatus.OK, Complaint.class,
-                params);
+            params);
 
         complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
     }
@@ -715,7 +758,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
         Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/allowed-complaints", HttpStatus.OK,
-                Long.class);
+            Long.class);
         assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxComplaints());
         // TODO: there should be a second test case where the student already has 2 complaints and the number is reduced
     }
@@ -891,6 +934,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void submitComplaintForExerciseComplaintNotExceededTextLimit() throws Exception {
+        database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
         course = database.updateCourseComplaintTextLimit(course, 27);
         // 26 characters
         complaint.setComplaintText("abcdefghijklmnopqrstuvwxyz");

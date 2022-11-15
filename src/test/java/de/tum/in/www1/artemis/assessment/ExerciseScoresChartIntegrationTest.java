@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -60,6 +61,9 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     TeamRepository teamRepository;
 
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
     @AfterEach
     void resetDatabase() {
         database.resetDatabase();
@@ -102,6 +106,8 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
         // Creating result for team2
         Team team2 = teamRepository.findById(idOfTeam2).get();
         database.createParticipationSubmissionAndResult(idOfTeamTextExercise, team2, 10.0, 10.0, 90, true);
+
+        await().until(() -> participantScoreRepository.findAll().size() == 5);
     }
 
     @Test
@@ -110,10 +116,10 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
         List<ExerciseScoresDTO> exerciseScores = request.getList(getEndpointUrl(idOfCourse), HttpStatus.OK, ExerciseScoresDTO.class);
         assertThat(exerciseScores).hasSize(3);
         ExerciseScoresDTO individualTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExercise)).findFirst()
-                .get();
+            .get();
         ExerciseScoresDTO teamTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfTeamTextExercise)).findFirst().get();
         ExerciseScoresDTO individualTextExerciseWithoutParticipants = exerciseScores.stream()
-                .filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExerciseWithoutParticipants)).findFirst().get();
+            .filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExerciseWithoutParticipants)).findFirst().get();
 
         assertThat(individualTextExercise.scoreOfStudent).isEqualTo(50.0);
         assertThat(individualTextExercise.averageScoreAchieved).isEqualTo(40.0);

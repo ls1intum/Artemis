@@ -1,8 +1,9 @@
-package de.tum.in.www1.artemis.text;
+package de.tum.in.www1.artemis.test;
 
 import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -339,7 +340,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             final TextSubmission submission2 = ModelFactory.generateTextSubmission("Lorem Ipsum Foo Bar", Language.ENGLISH, true);
             databaseUtilService.saveTextSubmission(textExercise, submission2, "student2");
 
-            final var participations = studentParticipationRepository.findByExerciseId(textExercise.getId());
+            final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(textExercise.getId()));
             assertThat(participations).hasSize(2);
             participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
             participations.get(1).setIndividualDueDate(individualDueDate);
@@ -1005,8 +1006,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         database.createSubmissionForTextExercise(textExercise, database.getUserByLogin("student2"), shortText);
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getPlagiarismOptions(50D, 0, 5));
-        assertThat(result.getComparisons()).isEmpty();
+        request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, database.getPlagiarismOptions(50D, 0, 5));
     }
 
     @Test
@@ -1016,8 +1016,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
-        assertThat(result.getComparisons()).isEmpty();
+        request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, database.getDefaultPlagiarismOptions());
     }
 
     @Test
@@ -1084,7 +1083,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setGradingCriteria(gradingCriteria);
 
         TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", textExercise,
-                TextExercise.class, HttpStatus.OK);
+            TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedTextExercise);
         assertThat(updatedTextExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0).getCredits()).isEqualTo(3);
         assertThat(updatedResults.get(0).getScore()).isEqualTo(60);
@@ -1133,7 +1132,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setGradingCriteria(gradingCriteria);
 
         TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", textExercise,
-                TextExercise.class, HttpStatus.OK);
+            TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = database.getResultsForExercise(updatedTextExercise);
         assertThat(updatedTextExercise.getGradingCriteria()).hasSize(1);
         assertThat(updatedResults.get(0).getScore()).isZero();
@@ -1279,7 +1278,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         var importedTextExerciseFromDB = textExerciseRepository.findByIdWithExampleSubmissionsAndResults(importedTextExercise.getId()).get();
         var importedFeedbackGradingInstructionFromDb = importedTextExerciseFromDB.getExampleSubmissions().stream().findFirst().get().getSubmission().getLatestResult()
-                .getFeedbacks().get(0).getGradingInstruction();
+            .getFeedbacks().get(0).getGradingInstruction();
 
         assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
 

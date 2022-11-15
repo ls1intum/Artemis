@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.modeling;
 
-import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -25,6 +24,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -160,15 +160,17 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     void saveAndSubmitModelingSubmission_tooLarge() throws Exception {
         database.createAndSaveParticipationForExercise(classExercise, "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
+        // should be ok
         char[] charsModel = new char[(int) (Constants.MAX_SUBMISSION_MODEL_LENGTH)];
         Arrays.fill(charsModel, 'a');
         submission.setModel(new String(charsModel));
         request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
 
+        // should be too large
         char[] charsModelTooLarge = new char[(int) (Constants.MAX_SUBMISSION_MODEL_LENGTH + 1)];
         Arrays.fill(charsModelTooLarge, 'a');
         submission.setModel(new String(charsModelTooLarge));
-        request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.PAYLOAD_TOO_LARGE);
+        request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -266,7 +268,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student1");
         assertThat(version.get().getContent()).as("submission version has correct content")
-                .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
+            .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
         assertThat(version.get().getCreatedDate()).isNotNull();
         assertThat(version.get().getLastModifiedDate()).isNotNull();
 
@@ -283,7 +285,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(version).as("submission version was created").isNotEmpty();
         assertThat(version.get().getAuthor().getLogin()).as("submission version has correct author").isEqualTo("student2");
         assertThat(version.get().getContent()).as("submission version has correct content")
-                .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
+            .isEqualTo("Model: " + returnedSubmission.getModel() + "; Explanation: " + returnedSubmission.getExplanationText());
 
         returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), returnedSubmission);
         database.changeUser("student2");
@@ -307,7 +309,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
 
         returnedSubmission.setSubmitted(true);
         returnedSubmission = request.putWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", returnedSubmission, ModelingSubmission.class,
-                HttpStatus.OK);
+            HttpStatus.OK);
         StudentParticipation studentParticipation = (StudentParticipation) returnedSubmission.getParticipation();
         assertThat(studentParticipation.getResults()).as("do not send old results to the client").isEmpty();
         assertThat(studentParticipation.getSubmissions()).as("do not send old submissions to the client").isEmpty();
@@ -327,7 +329,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         result.setAssessor(user);
         submission.addResult(result);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class);
+            ModelingSubmission.class);
 
         database.changeUser("student1");
         storedSubmission = modelingSubmissionRepo.findByIdWithEagerResult(storedSubmission.getId()).get();
@@ -355,7 +357,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "tutor1", roles = "TA")
     void getAllSubmissionsOfExercise_assessedByTutor() throws Exception {
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?assessedByTutor=true", HttpStatus.OK,
-                ModelingSubmission.class);
+            ModelingSubmission.class);
         assertThat(submissions).as("does not have a modeling submission assessed by the tutor").isEmpty();
 
         database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submittedSubmission, "student1", "tutor1");
@@ -387,7 +389,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         ModelingSubmission submission3 = database.addModelingSubmission(classExercise, generateSubmittedSubmission(), "student3");
 
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.OK,
-                ModelingSubmission.class);
+            ModelingSubmission.class);
 
         assertThat(submissions).as("contains only submitted submission").containsExactlyInAnyOrder(submission1, submission3);
     }
@@ -526,7 +528,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
-                ModelingSubmission.class);
+            ModelingSubmission.class);
 
         // set dates to UTC and round to milliseconds for comparison
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
@@ -549,7 +551,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         compassService.build(classExercise);
 
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
-                ModelingSubmission.class);
+            ModelingSubmission.class);
 
         assertThat(storedSubmission).as("submission was found").isNotNull();
         assertThat(storedSubmission.getSimilarElements()).as("similarity count is set").isNotNull();
@@ -571,7 +573,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
-                ModelingSubmission.class);
+            ModelingSubmission.class);
 
         // set dates to UTC and round to milliseconds for comparison
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.SECONDS).toInstant(), ZoneId.of("UTC")));
@@ -584,22 +586,24 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void getModelSubmissionWithoutAssessment_noSubmittedSubmission_notFound() throws Exception {
+    void getModelSubmissionWithoutAssessment_noSubmittedSubmission_null() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, false);
         database.addModelingSubmission(classExercise, submission, "student1");
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.NOT_FOUND, ModelingSubmission.class);
+        var response = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK, ModelingSubmission.class);
+        assertThat(response).isNull();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void getModelSubmissionWithoutAssessment_noSubmissionWithoutAssessment_notFound() throws Exception {
+    void getModelSubmissionWithoutAssessment_noSubmissionWithoutAssessment_null() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, "student1", "tutor1");
         database.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.NOT_FOUND, ModelingSubmission.class);
+        var response = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK, ModelingSubmission.class);
+        assertThat(response).isNull();
     }
 
     @Test
@@ -640,7 +644,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         database.updateExerciseDueDate(useCaseExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + useCaseExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
-                ModelingSubmission.class);
+            ModelingSubmission.class);
         assertThat(storedSubmission).as("submission was found").isNotNull();
         request.get("/api/exercises/" + useCaseExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
     }
@@ -658,7 +662,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         database.updateExerciseDueDate(useCaseExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         ModelingSubmission storedSubmission = request.get("/api/exercises/" + useCaseExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
-                ModelingSubmission.class);
+            ModelingSubmission.class);
         assertThat(storedSubmission).as("submission was found").isNotNull();
         request.get("/api/exercises/" + useCaseExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.BAD_REQUEST, ModelingSubmission.class);
     }
@@ -670,7 +674,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         submission = (ModelingSubmission) database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, "student1", "tutor1");
 
         ModelingSubmission receivedSubmission = request.get("/api/participations/" + submission.getParticipation().getId() + "/latest-modeling-submission", HttpStatus.OK,
-                ModelingSubmission.class);
+            ModelingSubmission.class);
 
         // set dates to UTC and round to milliseconds for comparison
         submission.setSubmissionDate(ZonedDateTime.ofInstant(submission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
@@ -705,10 +709,10 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     void getModelingResult_BeforeExamPublishDate_Forbidden() throws Exception {
         // create exam
         Exam exam = database.addExamWithExerciseGroup(course, true);
-        exam.setStartDate(now().minusHours(2));
-        exam.setEndDate(now().minusHours(1));
-        exam.setVisibleDate(now().minusHours(3));
-        exam.setPublishResultsDate(now().plusHours(3));
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
+        exam.setPublishResultsDate(ZonedDateTime.now().plusHours(3));
 
         // creating exercise
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
@@ -731,7 +735,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(classExercise, "student1");
         assertThat(studentParticipation.getSubmissions()).isEmpty();
         ModelingSubmission returnedSubmission = request.get("/api/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.OK,
-                ModelingSubmission.class);
+            ModelingSubmission.class);
         assertThat(returnedSubmission).as("new submission is created").isNotNull();
     }
 
@@ -742,7 +746,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addModelingSubmissionWithEmptyResult(classExercise, "", "student1");
 
         ModelingSubmission returnedSubmission = request.get("/api/participations/" + studentParticipation.getId() + "/latest-modeling-submission", HttpStatus.OK,
-                ModelingSubmission.class);
+            ModelingSubmission.class);
         assertThat(returnedSubmission.getLatestResult()).as("the result is not sent to the client if the assessment is not finished").isNull();
     }
 
@@ -757,7 +761,11 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "student3", roles = "USER")
     void submitExercise_beforeDueDate_allowed() throws Exception {
-        request.postWithoutLocation("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, HttpStatus.OK, null);
+        ModelingSubmission submission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission,
+            ModelingSubmission.class, HttpStatus.OK);
+
+        assertThat(submission.getSubmissionDate()).isEqualToIgnoringNanos(ZonedDateTime.now());
+        assertThat(submission.getParticipation().getInitializationState()).isEqualTo(InitializationState.FINISHED);
     }
 
     @Test
@@ -765,7 +773,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
         submittedSubmission.setModel(validModel);
         submittedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submittedSubmission, ModelingSubmission.class,
-                HttpStatus.OK);
+            HttpStatus.OK);
 
         final var submissionInDb = modelingSubmissionRepo.findById(submittedSubmission.getId());
         assertThat(submissionInDb).isPresent();
@@ -785,7 +793,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "student3", roles = "USER")
     void saveExercise_beforeDueDate() throws Exception {
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", unsubmittedSubmission,
-                ModelingSubmission.class, HttpStatus.OK);
+            ModelingSubmission.class, HttpStatus.OK);
         assertThat(storedSubmission.isSubmitted()).isTrue();
     }
 
@@ -797,7 +805,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         studentParticipationRepository.saveAndFlush(afterDueDateParticipation);
 
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", unsubmittedSubmission,
-                ModelingSubmission.class, HttpStatus.OK);
+            ModelingSubmission.class, HttpStatus.OK);
         assertThat(storedSubmission.isSubmitted()).isFalse();
     }
 

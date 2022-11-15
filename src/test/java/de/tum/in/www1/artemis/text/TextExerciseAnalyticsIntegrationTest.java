@@ -70,7 +70,7 @@ class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "tutor1", roles = "TA")
     void testAddMultipleCompleteAssessmentEvents() {
         List<TextAssessmentEvent> events = ModelFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
-                textSubmission.getId());
+            textSubmission.getId());
         for (TextAssessmentEvent event : events) {
             ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
             assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -166,8 +166,8 @@ class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBamb
         // Add two events with two different tutor ids
         textAssessmentEventRepository.saveAll(List.of(event1, event2));
 
-        int numberOfTutorsInvolved = request.get("/api/analytics/text-assessment/courses/" + course.getId() + "/text-exercises/" + exercise.getId() + "/tutors-involved",
-                HttpStatus.OK, Integer.class);
+        int numberOfTutorsInvolved = request.get("/api/event-insights/text-assessment/courses/" + course.getId() + "/text-exercises/" + exercise.getId() + "/tutors-involved",
+            HttpStatus.OK, Integer.class);
 
         assertThat(numberOfTutorsInvolved).isNotNull().isEqualTo(2);
     }

@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -293,7 +295,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             assertThat(quizSubmission.isSubmitted()).isFalse();
             assertThat(quizSubmission.getSubmissionDate()).isNull();
             QuizSubmission updatedSubmission = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class,
-                    HttpStatus.OK);
+                HttpStatus.OK);
             // check whether submission flag was updated
             assertThat(updatedSubmission.isSubmitted()).isTrue();
             // check whether all answers were submitted properly
@@ -394,20 +396,14 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
 
-        // this database request cause no database queries
-        // TODO: how can this be checked in the tests?
-        // These things that help would need to be configured globally show-sql configuration, hibernate Inspector and StatementInterceptor, H2 logging
-        // the mysql general query log can be enabled on the fly but mysql is not the database backend for the tests
-
-        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK);
-
+        assertThatDb(() -> request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.OK))
+            .hasBeenCalledTimes(quizMode == QuizMode.SYNCHRONIZED ? 0 : 1);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPractice(QuizMode quizMode) throws Exception {
-
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null, quizMode);
@@ -507,7 +503,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizSubmission.setSubmitted(true);
         // quiz not open for practice --> bad request expected
         Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
-                HttpStatus.BAD_REQUEST);
+            HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
         verifyNoInteractions(messagingTemplate);
     }
@@ -524,7 +520,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExerciseServer, 1, true, null);
         // exam quiz not open for practice --> bad request expected
         Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
-                HttpStatus.BAD_REQUEST);
+            HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
         verifyNoInteractions(messagingTemplate);
     }
@@ -827,6 +823,35 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             case PROPORTIONAL_WITHOUT_PENALTY -> 44.4;
         };
         assertThat(result.getScore()).isEqualTo(expectedScore);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "student1", roles = "USER")
+    @ValueSource(booleans = { true, false })
+    void submitExercise_shortAnswer_tooLarge(boolean tooLarge) throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
+        Course course = courses.get(0);
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), QuizMode.SYNCHRONIZED, course);
+        quizExercise.addQuestions(database.createShortAnswerQuestion());
+        quizExercise.setDuration(10);
+        quizExercise = quizExerciseService.save(quizExercise);
+
+        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
+        ShortAnswerSubmittedAnswer submittedAnswer = new ShortAnswerSubmittedAnswer();
+        submittedAnswer.setQuizQuestion(saQuestion);
+        List<ShortAnswerSpot> spots = saQuestion.getSpots();
+
+        ShortAnswerSubmittedText text = new ShortAnswerSubmittedText();
+        text.setSpot(spots.get(0));
+        char[] chars = new char[(int) (Constants.MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH + (tooLarge ? 1 : 0))];
+        Arrays.fill(chars, 'a');
+        text.setText(new String(chars));
+        submittedAnswer.addSubmittedTexts(text);
+
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.addSubmittedAnswers(submittedAnswer);
+        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class,
+            tooLarge ? HttpStatus.BAD_REQUEST : HttpStatus.OK);
     }
 
     private void checkQuizNotStarted(String path) {

@@ -22,6 +22,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -89,7 +90,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     void testRepositoryMethods() {
         assertThrows(EntityNotFoundException.class, () -> fileUploadSubmissionRepository.findByIdElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class,
-                () -> fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(Long.MAX_VALUE));
+            () -> fileUploadSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndParticipationResultsElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(Long.MAX_VALUE));
     }
 
@@ -159,7 +160,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file,
-                FileUploadSubmission.class, HttpStatus.FAILED_DEPENDENCY);
+            FileUploadSubmission.class, HttpStatus.FAILED_DEPENDENCY);
     }
 
     @Test
@@ -168,7 +169,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file,
-                FileUploadSubmission.class, HttpStatus.FAILED_DEPENDENCY);
+            FileUploadSubmission.class, HttpStatus.FAILED_DEPENDENCY);
     }
 
     @Test
@@ -177,7 +178,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.png", "application/json", (byte[]) null);
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file,
-                FileUploadSubmission.class, HttpStatus.BAD_REQUEST);
+            FileUploadSubmission.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -186,7 +187,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.txt", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file,
-                FileUploadSubmission.class, HttpStatus.BAD_REQUEST);
+            FileUploadSubmission.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -196,7 +197,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission submission2 = database.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, "student2");
 
         List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", HttpStatus.OK,
-                FileUploadSubmission.class);
+            FileUploadSubmission.class);
 
         assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(submission1, submission2);
     }
@@ -207,7 +208,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission submission1 = database.saveFileUploadSubmissionWithResultAndAssessor(releasedFileUploadExercise, submittedFileUploadSubmission, "student1", "tutor1");
 
         List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?assessedByTutor=true",
-                HttpStatus.OK, FileUploadSubmission.class);
+            HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(submissions).as("one file upload submission was found").hasSize(1);
         assertThat(submissions.get(0).getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
@@ -221,7 +222,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission submission1 = database.addFileUploadSubmission(releasedFileUploadExercise, submittedFileUploadSubmission, "student1");
 
         List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?submittedOnly=true",
-                HttpStatus.OK, FileUploadSubmission.class);
+            HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(submissions).as("one file upload submission was found").hasSize(1);
         assertThat(submissions.get(0).getId()).as("correct file upload submission was found").isEqualTo(submission1.getId());
@@ -244,7 +245,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         database.addFileUploadSubmission(releasedFileUploadExercise, notSubmittedFileUploadSubmission, "student2");
 
         List<FileUploadSubmission> submissions = request.getList("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions?submittedOnly=true",
-                HttpStatus.OK, FileUploadSubmission.class);
+            HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(submissions).as("contains only submitted submission").containsExactlyInAnyOrder(submission1);
     }
@@ -255,8 +256,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
         assertThat(releasedFileUploadExercise.getNumberOfSubmissions()).as("no submissions").isNull();
 
-        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment",
-                HttpStatus.NOT_FOUND, FileUploadSubmission.class);
+        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
+            FileUploadSubmission.class);
 
         assertThat(storedSubmission).as("no submission eligible for new assessment").isNull();
     }
@@ -273,7 +274,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(lateFileUploadSubmission.getSubmissionDate()).as("second submission is late").isAfter(releasedFileUploadExercise.getDueDate());
 
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
-                FileUploadSubmission.class);
+            FileUploadSubmission.class);
 
         assertThat(storedSubmission).as("in-time submission was found").isEqualToIgnoringGivenFields(submission, "result", "submissionDate", "fileService");
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
@@ -292,7 +293,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(lateFileUploadSubmission.getSubmissionDate()).as("second submission is late").isAfter(releasedFileUploadExercise.getDueDate());
 
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
-                FileUploadSubmission.class);
+            FileUploadSubmission.class);
 
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "result", "submissionDate", "fileService");
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
@@ -312,7 +313,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(lateFileUploadSubmission.getSubmissionDate()).as("second submission is late").isAfter(releasedFileUploadExercise.getDueDate());
 
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment?lock=true",
-                HttpStatus.OK, FileUploadSubmission.class);
+            HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(storedSubmission).as("submission was found").isEqualToIgnoringGivenFields(lateSubmission, "results", "submissionDate", "fileService");
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
@@ -327,7 +328,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(releasedFileUploadExercise.getNumberOfSubmissions()).as("no submissions").isNull();
 
         FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment?lock=true",
-                HttpStatus.NOT_FOUND, FileUploadSubmission.class);
+            HttpStatus.NOT_FOUND, FileUploadSubmission.class);
 
         assertThat(storedSubmission).as("no submission present and therefore none locked").isNull();
     }
@@ -366,7 +367,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
-                FileUploadSubmission.class);
+            FileUploadSubmission.class);
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
@@ -400,7 +401,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
-                FileUploadSubmission.class);
+            FileUploadSubmission.class);
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.getLatestResult().getFeedbacks()).isEmpty();
     }
@@ -414,7 +415,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.FORBIDDEN,
-                FileUploadSubmission.class);
+            FileUploadSubmission.class);
         assertThat(submission).isNull();
     }
 
@@ -425,7 +426,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         ModelingExercise modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         Participation modelingExerciseParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
         FileUploadSubmission submission = request.get("/api/participations/" + modelingExerciseParticipation.getId() + "/file-upload-editor", HttpStatus.BAD_REQUEST,
-                FileUploadSubmission.class);
+            FileUploadSubmission.class);
         assertThat(submission).isNull();
     }
 
@@ -437,7 +438,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessorFeedback(releasedFileUploadExercise, fileUploadSubmission, "student2", "tutor1", feedbacks);
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
         FileUploadSubmission submission = request.get("/api/participations/" + (fileUploadSubmission.getParticipation().getId() + 1) + "/file-upload-editor", HttpStatus.NOT_FOUND,
-                FileUploadSubmission.class);
+            FileUploadSubmission.class);
         assertThat(submission).isNull();
     }
 
@@ -449,7 +450,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessorFeedback(assessedFileUploadExercise, fileUploadSubmission, "student1", "tutor1", feedbacks);
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
-                FileUploadSubmission.class);
+            FileUploadSubmission.class);
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
@@ -462,7 +463,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         participation.setInitializationDate(ZonedDateTime.now().minusDays(2));
         participationRepository.save(participation);
         request.postWithMultipartFile("/api/exercises/" + finishedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
-                FileUploadSubmission.class, HttpStatus.FORBIDDEN);
+            FileUploadSubmission.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -471,7 +472,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission submission = performInitialSubmission(releasedFileUploadExercise.getId(), submittedFileUploadSubmission, validFile.getOriginalFilename());
         submission.getParticipation().setExercise(finishedFileUploadExercise);
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", validFile,
-                FileUploadSubmission.class, HttpStatus.BAD_REQUEST);
+            FileUploadSubmission.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -479,14 +480,17 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     void submitExercise_wrongExerciseId() throws Exception {
         FileUploadSubmission submission = performInitialSubmission(releasedFileUploadExercise.getId(), submittedFileUploadSubmission, validFile.getOriginalFilename());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", validFile,
-                FileUploadSubmission.class, HttpStatus.OK);
+            FileUploadSubmission.class, HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "student3", roles = "USER")
     void submitExercise_beforeDueDate_allowed() throws Exception {
-        request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
-                FileUploadSubmission.class, HttpStatus.OK);
+        FileUploadSubmission submission = request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
+            notSubmittedFileUploadSubmission, "submission", validFile, FileUploadSubmission.class, HttpStatus.OK);
+
+        assertThat(submission.getSubmissionDate()).isEqualToIgnoringNanos(ZonedDateTime.now());
+        assertThat(submission.getParticipation().getInitializationState()).isEqualTo(InitializationState.FINISHED);
     }
 
     @Test
@@ -496,13 +500,13 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         Arrays.fill(charsOK, 'a'); // each letter takes exactly one byte
         final MockMultipartFile okFile = new MockMultipartFile("file", "file.png", "application/json", new String(charsOK).getBytes());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", okFile,
-                FileUploadSubmission.class, HttpStatus.OK);
+            FileUploadSubmission.class, HttpStatus.OK);
 
         char[] charsTooLarge = new char[(int) (Constants.MAX_SUBMISSION_FILE_SIZE + 1)];
         Arrays.fill(charsTooLarge, 'a'); // each letter takes exactly one byte
         final MockMultipartFile tooLargeFile = new MockMultipartFile("file", "file.png", "application/json", new String(charsTooLarge).getBytes());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission",
-                tooLargeFile, FileUploadSubmission.class, HttpStatus.PAYLOAD_TOO_LARGE);
+            tooLargeFile, FileUploadSubmission.class, HttpStatus.PAYLOAD_TOO_LARGE);
     }
 
     @Test
@@ -511,7 +515,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExerciseInTheFuture(releasedFileUploadExercise, "student3");
         submittedFileUploadSubmission.setParticipation(studentParticipation);
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
-                FileUploadSubmission.class, HttpStatus.OK);
+            FileUploadSubmission.class, HttpStatus.OK);
     }
 
     @Test
@@ -520,21 +524,21 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExerciseInTheFuture(noDueDateFileUploadExercise, "student3");
         submittedFileUploadSubmission.setParticipation(studentParticipation);
         request.postWithMultipartFile("/api/exercises/" + noDueDateFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
-                FileUploadSubmission.class, HttpStatus.OK);
+            FileUploadSubmission.class, HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "student3", roles = "USER")
     void submitExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
         request.postWithMultipartFile("/api/exercises/" + finishedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
-                FileUploadSubmission.class, HttpStatus.OK);
+            FileUploadSubmission.class, HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "student3", roles = "USER")
     void saveExercise_beforeDueDate() throws Exception {
         FileUploadSubmission storedSubmission = request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
-                notSubmittedFileUploadSubmission, "submission", validFile, FileUploadSubmission.class, HttpStatus.OK);
+            notSubmittedFileUploadSubmission, "submission", validFile, FileUploadSubmission.class, HttpStatus.OK);
         assertThat(storedSubmission.isSubmitted()).isTrue();
 
     }
@@ -543,7 +547,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "student3", roles = "USER")
     void saveExercise_afterDueDateWithParticipationStartAfterDueDate_allowed() throws Exception {
         FileUploadSubmission storedSubmission = request.postWithMultipartFile("/api/exercises/" + finishedFileUploadExercise.getId() + "/file-upload-submissions",
-                notSubmittedFileUploadSubmission, "submission", validFile, FileUploadSubmission.class, HttpStatus.OK);
+            notSubmittedFileUploadSubmission, "submission", validFile, FileUploadSubmission.class, HttpStatus.OK);
         assertThat(storedSubmission.isSubmitted()).isFalse();
     }
 
@@ -552,7 +556,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
         var file = new MockMultipartFile("file", "ffile.png", "application/json", "some data".getBytes());
         submittedFileUploadSubmission = request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
-                submittedFileUploadSubmission, "submission", file, FileUploadSubmission.class, HttpStatus.OK);
+            submittedFileUploadSubmission, "submission", file, FileUploadSubmission.class, HttpStatus.OK);
 
         final var submissionInDb = fileUploadSubmissionRepository.findById(submittedFileUploadSubmission.getId());
         assertThat(submissionInDb).isPresent();
@@ -562,7 +566,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission, String originalFilename) throws Exception {
         var file = new MockMultipartFile("file", originalFilename, "application/json", "some data".getBytes());
         return request.postWithMultipartFile("/api/exercises/" + exerciseId + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
-                HttpStatus.OK);
+            HttpStatus.OK);
     }
 
     private void checkDetailsHidden(FileUploadSubmission submission, boolean isStudent) {

@@ -33,6 +33,9 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     private ResultRepository resultRepo;
 
     @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
     private GradingCriterionRepository gradingCriterionRepo;
 
     @Autowired
@@ -77,7 +80,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     void createAndUpdateExampleModelingSubmissionTutorial(boolean usedForTutorial) throws Exception {
         exampleSubmission = database.generateExampleSubmission(emptyModel, modelingExercise, false, usedForTutorial);
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
-                ExampleSubmission.class, HttpStatus.OK);
+            ExampleSubmission.class, HttpStatus.OK);
 
         database.checkModelingSubmissionCorrectlyStored(returnedExampleSubmission.getSubmission().getId(), emptyModel);
         Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(returnedExampleSubmission.getSubmission().getId());
@@ -86,7 +89,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         exampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, false);
         returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission, ExampleSubmission.class,
-                HttpStatus.OK);
+            HttpStatus.OK);
 
         database.checkModelingSubmissionCorrectlyStored(returnedExampleSubmission.getSubmission().getId(), validModel);
         storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(returnedExampleSubmission.getSubmission().getId());
@@ -100,9 +103,9 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     void updateExampleModelingSubmission(boolean usedForTutorial) throws Exception {
         exampleSubmission = database.generateExampleSubmission(emptyModel, modelingExercise, false, usedForTutorial);
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
-                ExampleSubmission.class, HttpStatus.OK);
+            ExampleSubmission.class, HttpStatus.OK);
         ExampleSubmission updateExistingExampleSubmission = request.putWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions",
-                returnedExampleSubmission, ExampleSubmission.class, HttpStatus.OK);
+            returnedExampleSubmission, ExampleSubmission.class, HttpStatus.OK);
 
         database.checkModelingSubmissionCorrectlyStored(updateExistingExampleSubmission.getSubmission().getId(), emptyModel);
         Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(updateExistingExampleSubmission.getSubmission().getId());
@@ -111,7 +114,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         ExampleSubmission updatedExampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, false);
         ExampleSubmission returnedUpdatedExampleSubmission = request.putWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions",
-                updatedExampleSubmission, ExampleSubmission.class, HttpStatus.OK);
+            updatedExampleSubmission, ExampleSubmission.class, HttpStatus.OK);
 
         database.checkModelingSubmissionCorrectlyStored(returnedUpdatedExampleSubmission.getSubmission().getId(), validModel);
         storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(returnedUpdatedExampleSubmission.getSubmission().getId());
@@ -125,7 +128,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     void createAndDeleteExampleModelingSubmission(boolean usedForTutorial) throws Exception {
         exampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
-                ExampleSubmission.class, HttpStatus.OK);
+            ExampleSubmission.class, HttpStatus.OK);
         Long submissionId = returnedExampleSubmission.getSubmission().getId();
 
         database.checkModelingSubmissionCorrectlyStored(submissionId, validModel);
@@ -144,7 +147,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         exampleSubmission = database.generateExampleSubmission(validModel, modelingExercise, false, usedForTutorial);
         exampleSubmission.addTutorParticipations(new TutorParticipation());
         ExampleSubmission returnedExampleSubmission = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
-                ExampleSubmission.class, HttpStatus.OK);
+            ExampleSubmission.class, HttpStatus.OK);
         Long submissionId = returnedExampleSubmission.getSubmission().getId();
 
         database.checkModelingSubmissionCorrectlyStored(submissionId, validModel);
@@ -199,6 +202,22 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void getExampleModelingAssessment_whenTutorAndUsedForTutorial_shouldSendCleanedResult() throws Exception {
+        ExampleSubmission exampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, modelingExercise, true, true));
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        request.putWithResponseBody("/api/modeling-submissions/" + exampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
+
+        Result cleanResult = request.get("/api/exercise/" + modelingExercise.getId() + "/modeling-submissions/" + exampleSubmission.getSubmission().getId() + "/example-assessment",
+            HttpStatus.OK, Result.class);
+        for (Feedback feedback : cleanResult.getFeedbacks()) {
+            assertThat(feedback.getCredits()).isNull();
+            assertThat(feedback.getDetailText()).isNull();
+            assertThat(feedback.getReference()).isNotNull();
+        }
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void prepareExampleTextSubmissionForAssessmentShouldCreateBlocks() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("Text. Submission.", textExercise, true));
@@ -208,7 +227,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(unpreparedTextSubmission.getBlocks()).hasSize(0);
 
         request.postWithoutResponseBody("/api/exercises/" + textExercise.getId() + "/example-submissions/" + storedExampleSubmission.getId() + "/prepare-assessment", HttpStatus.OK,
-                new LinkedMultiValueMap<>());
+            new LinkedMultiValueMap<>());
         ExampleSubmission preparedExampleSubmission = request.get("/api/example-submissions/" + storedExampleSubmission.getId(), HttpStatus.OK, ExampleSubmission.class);
         TextSubmission preparedTextSubmission = (TextSubmission) preparedExampleSubmission.getSubmission();
         assertThat(preparedTextSubmission.getBlocks()).hasSize(2);
@@ -220,7 +239,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("Text. Submission.", textExercise, true));
         database.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL);
         final Result exampleResult = request.get("/api/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result",
-                HttpStatus.OK, Result.class);
+            HttpStatus.OK, Result.class);
         final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
         assertThat(blocks).hasSize(2);
         List<Feedback> feedbacks = new ArrayList<>();
@@ -230,7 +249,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         var dto = new TextAssessmentDTO();
         dto.setFeedbacks(feedbacks);
         request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/example-submissions/" + storedExampleSubmission.getId() + "/example-text-assessment", dto,
-                Result.class, HttpStatus.OK);
+            Result.class, HttpStatus.OK);
         Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).get();
         database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
@@ -242,7 +261,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("Text. Submission.", textExercise, true));
         database.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL);
         final Result exampleResult = request.get("/api/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result",
-                HttpStatus.OK, Result.class);
+            HttpStatus.OK, Result.class);
         final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
         assertThat(blocks).hasSize(2);
         List<Feedback> feedbacks = ModelFactory.generateManualFeedback();
@@ -250,7 +269,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         dto.setFeedbacks(feedbacks);
         long randomId = 1233;
         request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/example-submissions/" + randomId + "/example-text-assessment", dto, Result.class,
-                HttpStatus.NOT_FOUND);
+            HttpStatus.NOT_FOUND);
         assertThat(exampleSubmissionRepo.findBySubmissionId(randomId)).isEmpty();
     }
 
@@ -260,7 +279,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("Text. Submission.", textExercise, true));
         database.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL);
         final Result exampleResult = request.get("/api/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result",
-                HttpStatus.OK, Result.class);
+            HttpStatus.OK, Result.class);
         final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
         assertThat(blocks).hasSize(2);
         List<Feedback> feedbacks = ModelFactory.generateManualFeedback();
@@ -268,7 +287,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         dto.setFeedbacks(feedbacks);
         long randomId = 1233;
         request.putWithResponseBody("/api/exercises/" + randomId + "/example-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-text-assessment", dto,
-                Result.class, HttpStatus.BAD_REQUEST);
+            Result.class, HttpStatus.BAD_REQUEST);
         assertThat(exampleSubmissionRepo.findBySubmissionId(randomId)).isEmpty();
     }
 
@@ -346,7 +365,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         ExampleSubmission exampleSubmission = importExampleSubmission(exercise.getId(), originalSubmission.getId(), HttpStatus.OK);
         assertThat(exampleSubmission.getSubmission().getResults().get(0).getFeedbacks().get(0).getGradingInstruction().getId())
-                .isEqualTo(orginalResult.get().getFeedbacks().get(0).getGradingInstruction().getId());
+            .isEqualTo(orginalResult.get().getFeedbacks().get(0).getGradingInstruction().getId());
     }
 
     @Test

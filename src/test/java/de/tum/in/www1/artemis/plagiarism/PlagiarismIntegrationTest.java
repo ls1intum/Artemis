@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
@@ -102,7 +102,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testUpdatePlagiarismComparisonStatus() throws Exception {
         var plagiarismComparisonStatusDTOConfirmed1 = new PlagiarismComparisonStatusDTO(CONFIRMED);
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/status", plagiarismComparisonStatusDTOConfirmed1,
-                HttpStatus.OK);
+            HttpStatus.OK);
         var updatedComparisonConfirmed = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison1.getId());
         assertThat(updatedComparisonConfirmed.getStatus()).as("should update plagiarism comparison status").isEqualTo(CONFIRMED);
         Optional<PlagiarismCase> plagiarismCaseOptionalPresent = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student1",
@@ -110,7 +110,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(plagiarismCaseOptionalPresent).as("should create new plagiarism case").isPresent();
 
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison2.getId() + "/status", new PlagiarismComparisonStatusDTO(CONFIRMED),
-                HttpStatus.OK);
+            HttpStatus.OK);
         var updatedComparisonConfirmed2 = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison2.getId());
         assertThat(updatedComparisonConfirmed2.getStatus()).as("should update plagiarism comparison status").isEqualTo(CONFIRMED);
         Optional<PlagiarismCase> plagiarismCaseOptionalPresent2 = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student1",
@@ -118,7 +118,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(plagiarismCaseOptionalPresent2).as("should add to existing plagiarism case").isPresent();
 
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/status", new PlagiarismComparisonStatusDTO(DENIED),
-                HttpStatus.OK);
+            HttpStatus.OK);
         var updatedComparisonDenied = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison1.getId());
         assertThat(updatedComparisonDenied.getStatus()).as("should update plagiarism comparison status").isEqualTo(DENIED);
 
@@ -136,7 +136,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = "student1", roles = "USER")
     void testGetPlagiarismComparisonsForSplitView_student() throws Exception {
         var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
-                plagiarismComparison1.getClass());
+            plagiarismComparison1.getClass());
         assertThat(comparison.getSubmissionA().getStudentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
         assertThat(comparison.getSubmissionB().getStudentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
     }
@@ -145,7 +145,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = "student3", roles = "USER")
     void testGetPlagiarismComparisonsForSplitView_student_forbidden() throws Exception {
         request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.FORBIDDEN,
-                plagiarismComparison1.getClass());
+            plagiarismComparison1.getClass());
 
     }
 
@@ -153,7 +153,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = "editor1", roles = "EDITOR")
     void testGetPlagiarismComparisonsForSplitView_editor() throws Exception {
         PlagiarismComparison<?> comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view",
-                HttpStatus.OK, plagiarismComparison1.getClass());
+            HttpStatus.OK, plagiarismComparison1.getClass());
         assertThat(comparison).isEqualTo(plagiarismComparison1);
         assertThat(comparison.getPlagiarismResult()).isNull();
         assertThat(comparison.getSubmissionA()).isEqualTo(plagiarismComparison1.getSubmissionA());

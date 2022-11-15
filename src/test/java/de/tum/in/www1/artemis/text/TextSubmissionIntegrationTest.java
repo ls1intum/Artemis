@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -170,7 +171,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(finishedTextExercise, textSubmission, "student1", "tutor1");
 
         List<TextSubmission> textSubmissions = request.getList("/api/exercises/" + finishedTextExercise.getId() + "/text-submissions?assessedByTutor=true", HttpStatus.OK,
-                TextSubmission.class);
+            TextSubmission.class);
 
         assertThat(textSubmissions).as("one text submission was found").hasSize(1);
         assertThat(textSubmissions.get(0).getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
@@ -216,7 +217,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
 
         TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class);
+            TextSubmission.class);
 
         assertThat(textSubmissionWithoutAssessment).as("text submission without assessment was found").isNotNull();
         assertThat(textSubmissionWithoutAssessment.getId()).as("correct text submission was found").isEqualTo(textSubmission.getId());
@@ -230,7 +231,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         textSubmission = database.saveTextSubmission(finishedTextExercise, textSubmission, "student1");
 
         TextSubmission storedSubmission = request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment?lock=true", HttpStatus.OK,
-                TextSubmission.class);
+            TextSubmission.class);
 
         // set dates to UTC and round to milliseconds for comparison
         textSubmission.setSubmissionDate(ZonedDateTime.ofInstant(textSubmission.getSubmissionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
@@ -252,7 +253,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(lateTextSubmission.getSubmissionDate()).as("second submission is late").isAfter(finishedTextExercise.getDueDate());
 
         TextSubmission storedSubmission = request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class);
+            TextSubmission.class);
 
         assertThat(storedSubmission).as("text submission without assessment was found").isNotNull();
         assertThat(storedSubmission.getId()).as("in-time text submission was found").isEqualTo(textSubmission.getId());
@@ -260,11 +261,12 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void getTextSubmissionWithoutAssessment_noSubmittedSubmission_notFound() throws Exception {
+    void getTextSubmissionWithoutAssessment_noSubmittedSubmission_null() throws Exception {
         TextSubmission submission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, false);
         database.saveTextSubmission(finishedTextExercise, submission, "student1");
 
-        request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.NOT_FOUND, TextSubmission.class);
+        var response = request.get("/api/exercises/" + finishedTextExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class);
+        assertThat(response).isNull();
     }
 
     @Test
@@ -338,7 +340,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         releasedTextExercise.setStudentParticipations(Set.of(participation));
 
         TextSubmission submission = request.putWithResponseBody("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class,
-                HttpStatus.OK);
+            HttpStatus.OK);
 
         database.changeUser("student1");
         Optional<SubmissionVersion> version = submissionVersionRepository.findLatestVersion(submission.getId());
@@ -371,16 +373,27 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void submitExercise_beforeDueDate_allowed() throws Exception {
-        request.put("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+        TextSubmission submission = request.putWithResponseBody("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class,
+            HttpStatus.OK);
+
+        assertThat(submission.getSubmissionDate()).isEqualToIgnoringNanos(ZonedDateTime.now());
+        assertThat(submission.getParticipation().getInitializationState()).isEqualTo(InitializationState.FINISHED);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void submitExercise_tooLarge() throws Exception {
-        char[] chars = new char[(int) (Constants.MAX_SUBMISSION_TEXT_LENGTH + 1)];
+    void saveAndSubmitTextSubmission_tooLarge() throws Exception {
+        // should be ok
+        char[] chars = new char[(int) (Constants.MAX_SUBMISSION_TEXT_LENGTH)];
         Arrays.fill(chars, 'a');
         textSubmission.setText(new String(chars));
-        request.put("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.PAYLOAD_TOO_LARGE);
+        request.postWithResponseBody("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class, HttpStatus.OK);
+
+        // should be too large
+        char[] charsTooLarge = new char[(int) (Constants.MAX_SUBMISSION_TEXT_LENGTH + 1)];
+        Arrays.fill(charsTooLarge, 'a');
+        textSubmission.setText(new String(charsTooLarge));
+        request.put("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -410,7 +423,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = "student1", roles = "USER")
     void saveExercise_beforeDueDate() throws Exception {
         TextSubmission storedSubmission = request.putWithResponseBody("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", notSubmittedTextSubmission,
-                TextSubmission.class, HttpStatus.OK);
+            TextSubmission.class, HttpStatus.OK);
         assertThat(storedSubmission.isSubmitted()).isTrue();
     }
 
@@ -422,7 +435,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         participationRepository.save(lateParticipation);
 
         TextSubmission storedSubmission = request.putWithResponseBody("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", notSubmittedTextSubmission,
-                TextSubmission.class, HttpStatus.OK);
+            TextSubmission.class, HttpStatus.OK);
         assertThat(storedSubmission.isSubmitted()).isFalse();
 
     }
