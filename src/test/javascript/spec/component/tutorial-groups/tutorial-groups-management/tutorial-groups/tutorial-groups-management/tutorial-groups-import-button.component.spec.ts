@@ -54,7 +54,7 @@ describe('TutorialGroupsImportButtonComponent', () => {
         // then
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledOnce();
+            expect(modalOpenSpy).toBeCalledTimes(2);
             expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupsRegistrationImportDialog, { backdrop: 'static', scrollable: false, size: 'xl' });
             expect(mockModalRef.componentInstance.courseId).toEqual(exampleCourseId);
             expect(importFinishSpy).toHaveBeenCalledOnce();
