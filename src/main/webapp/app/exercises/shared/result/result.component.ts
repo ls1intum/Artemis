@@ -31,7 +31,6 @@ import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { convertDateFromServer } from 'app/utils/date.utils';
 
 @Component({
     selector: 'jhi-result',
