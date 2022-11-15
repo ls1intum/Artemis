@@ -420,7 +420,7 @@
                         *ngIf="!validIdeSelection()"
                         [icon]="faQuestionCircle"
                         class="text-danger"
-                        [placement]="'top'"
+                        [placement]="'top auto'"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alert' | artemisTranslate }}"
                     ></fa-icon>
                 </label>
@@ -442,7 +442,7 @@
                         *ngIf="!validIdeSelection()"
                         [icon]="faQuestionCircle"
                         class="text-danger"
-                        [placement]="'top'"
+                        [placement]="'top auto'"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alert' | artemisTranslate }}"
                     ></fa-icon>
                 </label>
@@ -570,7 +570,7 @@
                         <p jhiTranslate="{{ reason.translateKey }}"></p>
                     </div>
                 </ng-template>
-                <span *ngIf="getInvalidReasons().length > 0" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
+                <span *ngIf="getInvalidReasons().length > 0" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
                     <fa-icon [icon]="faExclamationCircle"></fa-icon>
                     <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                     <span>({{ getInvalidReasons().length }})</span>

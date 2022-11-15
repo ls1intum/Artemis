@@ -28,7 +28,7 @@
             <div class="form-group">
                 <div>
                     <label class="form-check-label" jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</label>
-                    <jhi-help-icon placement="top" text="artemisApp.examManagement.testExam.examModeTooltip"></jhi-help-icon>
+                    <jhi-help-icon placement="top auto" text="artemisApp.examManagement.testExam.examModeTooltip"></jhi-help-icon>
                 </div>
                 <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined"></jhi-exam-mode-picker>
             </div>
@@ -43,7 +43,7 @@
                         [jhiFeatureToggle]="FeatureToggle.ExamLiveStatistics"
                     />
                     <label for="examMonitoring" class="form-control-label" jhiTranslate="artemisApp.examManagement.monitoring.enable.title">Exam Monitoring Enabled</label>
-                    <jhi-help-icon placement="top" text="artemisApp.examManagement.monitoring.enable.description"></jhi-help-icon>
+                    <jhi-help-icon placement="top auto" text="artemisApp.examManagement.monitoring.enable.description"></jhi-help-icon>
                 </div>
             </div>
             <div class="row mb-3">
