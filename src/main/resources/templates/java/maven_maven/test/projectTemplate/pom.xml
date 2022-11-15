@@ -19,7 +19,7 @@
             <!-- Comes with JUnit 5, AssertJ and Hamcrest. JUnit 4 (JUnit 5 Vintage) or jqwik need to be added explicitly -->
             <groupId>de.tum.in.ase</groupId>
             <artifactId>artemis-java-test-sandbox</artifactId>
-            <version>1.10.1</version>
+            <version>1.11.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

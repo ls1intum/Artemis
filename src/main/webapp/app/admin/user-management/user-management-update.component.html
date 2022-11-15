@@ -4,13 +4,14 @@
             <h2 id="myUserLabel" jhiTranslate="artemisApp.userManagement.home.createOrEditLabel">Create or edit a User</h2>
             <div>
                 <div class="form-group" [hidden]="!user.id">
-                    <label jhiTranslate="global.field.id">ID</label>
-                    <input type="text" class="form-control" name="id" formControlName="idInput" [(ngModel)]="user.id" readonly />
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input id="id" type="text" class="form-control" name="id" formControlName="idInput" [(ngModel)]="user.id" readonly />
                 </div>
 
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.login">Login</label>
+                    <label for="login" class="form-control-label" jhiTranslate="artemisApp.userManagement.login">Login</label>
                     <input
+                        id="login"
                         type="text"
                         class="form-control"
                         name="login"
@@ -50,8 +51,9 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.firstName">First Name</label>
+                    <label for="firstName" class="form-control-label" jhiTranslate="artemisApp.userManagement.firstName">First Name</label>
                     <input
+                        id="firstName"
                         type="text"
                         class="form-control"
                         name="firstName"
@@ -73,8 +75,9 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label jhiTranslate="artemisApp.userManagement.lastName">Last Name</label>
+                    <label for="lastName" jhiTranslate="artemisApp.userManagement.lastName">Last Name</label>
                     <input
+                        id="lastName"
                         type="text"
                         class="form-control"
                         name="lastName"
@@ -175,8 +178,9 @@
                     <button type="button" class="btn btn-outline-primary" (click)="openOrganizationsModal()">Add</button>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.email">Email</label>
+                    <label for="email" class="form-control-label" jhiTranslate="artemisApp.userManagement.email">Email</label>
                     <input
+                        id="email"
                         type="email"
                         class="form-control"
                         name="email"
@@ -218,8 +222,9 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.registrationNumber">Registration Number</label>
+                    <label for="registrationNumber" class="form-control-label" jhiTranslate="artemisApp.userManagement.registrationNumber">Registration Number</label>
                     <input
+                        id="registrationNumber"
                         type="text"
                         class="form-control"
                         name="registrationNumber"
@@ -241,7 +246,7 @@
                     </div>
                 </div>
                 <div class="form-check">
-                    <label class="form-check-label" for="activated">
+                    <label for="activated" class="form-check-label">
                         <input
                             class="form-check-input"
                             [disabled]="user.id === null"
@@ -256,14 +261,14 @@
                 </div>
 
                 <div class="form-group" *ngIf="languages && languages.length > 0">
-                    <label jhiTranslate="artemisApp.userManagement.langKey">Lang Key</label>
+                    <label for="langKey" jhiTranslate="artemisApp.userManagement.langKey">Lang Key</label>
                     <select class="form-select" id="langKey" name="langKey" formControlName="langKeyInput" [(ngModel)]="user.langKey">
                         <option *ngFor="let language of languages" [value]="language">{{ language | findLanguageFromKey }}</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label jhiTranslate="artemisApp.userManagement.profiles">Profiles</label>
-                    <select class="form-select" multiple name="authority" formControlName="authorityInput" [(ngModel)]="user.authorities">
+                    <label for="authority" jhiTranslate="artemisApp.userManagement.profiles">Profiles</label>
+                    <select id="authority" class="form-select" multiple name="authority" formControlName="authorityInput" [(ngModel)]="user.authorities">
                         <option *ngFor="let authority of authorities" [value]="authority">{{ authority }}</option>
                     </select>
                 </div>

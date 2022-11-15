@@ -23,18 +23,22 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.TutorialGroupService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupScheduleService;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -42,7 +46,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("/api")
 public class TutorialGroupResource {
 
-    private static final String ENTITY_NAME = "tutorialGroup";
+    private static final String TITLE_REGEX = "^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$";
+
+    public static final String ENTITY_NAME = "tutorialGroup";
 
     private final Logger log = LoggerFactory.getLogger(TutorialGroupResource.class);
 
@@ -62,9 +68,14 @@ public class TutorialGroupResource {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
+    private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
+
+    private final TutorialGroupScheduleService tutorialGroupScheduleService;
+
     public TutorialGroupResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
             TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupNotificationService tutorialGroupNotificationService,
-            TutorialGroupNotificationRepository tutorialGroupNotificationRepository, SingleUserNotificationService singleUserNotificationService) {
+            TutorialGroupNotificationRepository tutorialGroupNotificationRepository, SingleUserNotificationService singleUserNotificationService,
+            TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository, TutorialGroupScheduleService tutorialGroupScheduleService) {
         this.tutorialGroupService = tutorialGroupService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -73,6 +84,8 @@ public class TutorialGroupResource {
         this.tutorialGroupNotificationService = tutorialGroupNotificationService;
         this.tutorialGroupNotificationRepository = tutorialGroupNotificationRepository;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
+        this.tutorialGroupScheduleService = tutorialGroupScheduleService;
     }
 
     /**
@@ -129,18 +142,15 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with body containing the tutorial groups of the course
      */
     @GetMapping("/courses/{courseId}/tutorial-groups")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<List<TutorialGroup>> getAllOfCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<TutorialGroup>> getAllForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutorial groups of course with id: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
-        var tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(courseId);
-
+        var tutorialGroups = tutorialGroupService.findAllForCourse(course, user);
         return ResponseEntity.ok(new ArrayList<>(tutorialGroups));
     }
 
@@ -152,13 +162,14 @@ public class TutorialGroupResource {
      * @return ResponseEntity with status 200 (OK) and with body the tutorial group
      */
     @GetMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
-        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
-        checkEntityIdMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroup.getCourse(), null);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        var tutorialGroup = tutorialGroupService.getOneOfCourse(course, user, tutorialGroupId);
         return ResponseEntity.ok().body(tutorialGroup);
     }
 
@@ -177,15 +188,33 @@ public class TutorialGroupResource {
         if (tutorialGroup.getId() != null) {
             throw new BadRequestException("A new tutorial group cannot already have an ID");
         }
-
         var course = courseRepository.findByIdElseThrow(courseId);
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, responsibleUser);
-        tutorialGroup.setCourse(course);
 
+        Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
+        if (configurationOptional.isEmpty()) {
+            throw new BadRequestException("The course has no tutorial groups configuration");
+        }
+        var configuration = configurationOptional.get();
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
+
+        tutorialGroup.setCourse(course);
         trimStringFields(tutorialGroup);
-        checkTitleIsUnique(tutorialGroup);
+        checkTitleIsValid(tutorialGroup);
+
+        // persist first without schedule
+        TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
+        tutorialGroup.setTutorialGroupSchedule(null);
         TutorialGroup persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroup);
+
+        // persist the schedule and generate the sessions
+        if (tutorialGroupSchedule != null) {
+            tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(configuration, persistedTutorialGroup, tutorialGroupSchedule);
+            persistedTutorialGroup.setTutorialGroupSchedule(tutorialGroupSchedule);
+        }
 
         if (tutorialGroup.getTeachingAssistant() != null) {
             // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails
@@ -193,7 +222,8 @@ public class TutorialGroupResource {
             taFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(persistedTutorialGroup, user, responsibleUser));
         }
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId())).body(persistedTutorialGroup);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
+                .body(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
     }
 
     /**
@@ -245,13 +275,23 @@ public class TutorialGroupResource {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
         }
         var oldTutorialGroup = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
-        checkEntityIdMatchesPathIds(updatedTutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
+        updatedTutorialGroup.setCourse(oldTutorialGroup.getCourse());
+        checkEntityIdMatchesPathIds(oldTutorialGroup, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
-
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, oldTutorialGroup.getCourse(), responsibleUser);
+
         trimStringFields(updatedTutorialGroup);
         if (!oldTutorialGroup.getTitle().equals(updatedTutorialGroup.getTitle())) {
-            checkTitleIsUnique(updatedTutorialGroup);
+            checkTitleIsValid(updatedTutorialGroup);
+        }
+
+        Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
+        if (configurationOptional.isEmpty()) {
+            throw new BadRequestException("The course has no tutorial groups configuration");
+        }
+        var configuration = configurationOptional.get();
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
         }
 
         // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails
@@ -275,7 +315,14 @@ public class TutorialGroupResource {
         }
 
         overrideValues(updatedTutorialGroup, oldTutorialGroup);
-        return ResponseEntity.ok(tutorialGroupRepository.save(oldTutorialGroup));
+        // persist without schedule at first
+        oldTutorialGroup.setTutorialGroupSchedule(null);
+        var persistedTutorialGroup = tutorialGroupRepository.save(oldTutorialGroup);
+
+        tutorialGroupScheduleService.updateSchedule(configuration, persistedTutorialGroup, Optional.ofNullable(persistedTutorialGroup.getTutorialGroupSchedule()),
+                Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()));
+
+        return ResponseEntity.ok(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
     }
 
     /**
@@ -287,15 +334,14 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin:" + Constants.LOGIN_REGEX + "}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('TA')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> deregisterStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to deregister {} student from tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
+        tutorialGroupService.isAllowedToChangeRegistrationsOfTutorialGroup(tutorialGroupFromDatabase, responsibleUser);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
-
         User studentToDeregister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         tutorialGroupService.deregisterStudent(studentToDeregister, tutorialGroupFromDatabase, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
         return ResponseEntity.noContent().build();
@@ -310,19 +356,19 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin:" + Constants.LOGIN_REGEX + "}")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('TA')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> registerStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to register {} student to tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
+        tutorialGroupService.isAllowedToChangeRegistrationsOfTutorialGroup(tutorialGroupFromDatabase, responsibleUser);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
         User userToRegister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         if (!userToRegister.getGroups().contains(tutorialGroupFromDatabase.getCourse().getStudentGroupName())) {
             throw new BadRequestAlertException("The user is not a student of the course", ENTITY_NAME, "userNotPartOfCourse");
         }
-
+        // ToDo: Discuss if we change the registration type if registration is done by the tutor itself
         tutorialGroupService.registerStudent(userToRegister, tutorialGroupFromDatabase, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
         return ResponseEntity.noContent().build();
     }
@@ -344,7 +390,7 @@ public class TutorialGroupResource {
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
-        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
+        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
         Set<StudentDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudents(tutorialGroupFromDatabase, studentDtos,
                 TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
         return ResponseEntity.ok().body(notFoundStudentDtos);
@@ -382,9 +428,12 @@ public class TutorialGroupResource {
         }
     }
 
-    private void checkTitleIsUnique(TutorialGroup tutorialGroup) {
+    private void checkTitleIsValid(TutorialGroup tutorialGroup) {
         if (tutorialGroupRepository.existsByTitleAndCourse(tutorialGroup.getTitle(), tutorialGroup.getCourse())) {
             throw new BadRequestException("A tutorial group with this title already exists in the course.");
+        }
+        if (!tutorialGroup.getTitle().matches(TITLE_REGEX)) {
+            throw new BadRequestException("Title can only contain letters, numbers, spaces and dashes.");
         }
     }
 
@@ -406,8 +455,7 @@ public class TutorialGroupResource {
         });
         tutorialGroupId.ifPresent(tutorialGroupIdValue -> {
             if (!tutorialGroup.getId().equals(tutorialGroupIdValue)) {
-                throw new BadRequestAlertException("The tutorialGroupId in the path does not match the tutorialGroupId in the tutorial group", ENTITY_NAME,
-                        "tutorialGroupIdMismatch");
+                throw new BadRequestAlertException("The tutorialGroupId in the path does not match the id in the tutorial group", ENTITY_NAME, "tutorialGroupIdMismatch");
             }
         });
     }

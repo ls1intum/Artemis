@@ -110,14 +110,16 @@ export class ModelingSubmissionService {
         const url = `api/modeling-submissions/${submissionId}`;
         let params = new HttpParams();
         params = params.set('withoutResults', 'true');
-        return this.http.get<ModelingSubmission>(url, { params });
+        return this.http.get<ModelingSubmission>(url, { params }).pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }
 
     /**
-     * Get latest submission for a given participation
+     * Get the latest submission for a given participation
      * @param {number} participationId - Id of the participation
      */
     getLatestSubmissionForModelingEditor(participationId: number): Observable<ModelingSubmission> {
-        return this.http.get<ModelingSubmission>(`api/participations/${participationId}/latest-modeling-submission`, { responseType: 'json' });
+        return this.http
+            .get<ModelingSubmission>(`api/participations/${participationId}/latest-modeling-submission`, { responseType: 'json' })
+            .pipe(map((res: ModelingSubmission) => this.submissionService.convertSubmissionFromServer(res)));
     }
 }

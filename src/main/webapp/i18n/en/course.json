@@ -12,7 +12,8 @@
             "deleted": "Deleted Course with title {{ param }}",
             "delete": {
                 "question": "Are you sure you want to permanently delete the course <strong>{{ title }}</strong>? All associated elements will be deleted, including exams, exercises, repositories and build plans. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the course to confirm."
+                "typeNameToConfirm": "Please type in the name of the course to confirm.",
+                "icon": "Remove Icon"
             },
             "showActive": "Show only active courses",
             "totalScore": "Total Score:",
@@ -91,6 +92,11 @@
                 "ltiKey": "LTI Key",
                 "ltiSecret": "LTI Secret",
                 "userPrefix": "User Prefix",
+                "registrationId": "Registration ID",
+                "clientId": "Client ID",
+                "authorizationUri": "Authorization URI",
+                "tokenUri": "Token URI",
+                "jwkSetUri": "JWKSet URI",
                 "form": {
                     "userPrefix": {
                         "forbidden": "User prefix cannot contain special characters."

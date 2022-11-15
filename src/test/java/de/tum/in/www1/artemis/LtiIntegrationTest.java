@@ -18,8 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -110,7 +112,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @BeforeEach
     void init() {
         /* We mock the following method because we don't have the OAuth secret for edx */
-        doReturn(null).when(ltiService).verifyRequest(any(), any());
+        doReturn(null).when(lti10Service).verifyRequest(any(), any());
 
         database.addUsers(1, 1, 0, 1);
 
@@ -138,7 +140,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         }
 
         if (existingUser) {
-            jiraRequestMockProvider.mockGetUsernameForEmail(email, "existingUser");
+            jiraRequestMockProvider.mockGetUsernameForEmail(email, email, "existingUser");
         }
         else {
             jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(email);
@@ -195,11 +197,15 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId() + 1, requestBody.getBytes(), HttpStatus.NOT_FOUND, new HttpHeaders(),
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
 
-        doThrow(ArtemisAuthenticationException.class).when(ltiService).handleLaunchRequest(any(), any(), any());
+        doThrow(ArtemisAuthenticationException.class).when(lti10Service).performLaunch(any(), any(), any());
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.INTERNAL_SERVER_ERROR, new HttpHeaders(),
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
 
-        doReturn("error").when(ltiService).verifyRequest(any(), any());
+        doThrow(InternalAuthenticationServiceException.class).when(lti10Service).performLaunch(any(), any(), any());
+        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.BAD_REQUEST, new HttpHeaders(),
+                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
+
+        doReturn("error").when(lti10Service).verifyRequest(any(), any());
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.UNAUTHORIZED, new HttpHeaders(),
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
     }
@@ -236,6 +242,33 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
 
         Mockito.reset(timeService);
+    }
+
+    @Test
+    @WithMockUser(username = "student", roles = "USER")
+    void dynamicRegistrationFailsAsStudent() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("openid_configuration", "configurationUrl");
+
+        request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.FORBIDDEN, params);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void dynamicRegistrationFailsWithoutOpenIdConfiguration() throws Exception {
+        request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void dynamicRegistrationFailsForNonOnlineCourse() throws Exception {
+        course.setOnlineCourse(false);
+        courseRepository.save(course);
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("openid_configuration", "configurationUrl");
+
+        request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, params);
     }
 
     @Test

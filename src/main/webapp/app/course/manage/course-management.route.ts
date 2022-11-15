@@ -16,12 +16,10 @@ import { GradingSystemComponent } from 'app/grading-system/grading-system.compon
 import { isOrion } from 'app/shared/orion/orion';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
-import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
-import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
-import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
-import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/registered-students/registered-students.component';
-import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/detail/tutorial-group-detail.component';
+import { TutorialGroupManagementResolve } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-management-resolve.service';
+import { TutorialGroupsChecklistComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-checklist/tutorial-groups-checklist.component';
+import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 
 export const courseManagementState: Routes = [
     {
@@ -74,12 +72,37 @@ export const courseManagementState: Routes = [
         loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
     },
     {
+        path: ':courseId/tutorial-groups',
+        resolve: {
+            course: TutorialGroupManagementResolve,
+        },
+        loadChildren: () => import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
+    },
+    {
         path: ':courseId/plagiarism-cases',
         loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
     },
     {
         path: ':courseId/exams/:examId/plagiarism-cases',
         loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
+    },
+    {
+        path: ':courseId/tutorial-groups-checklist',
+        component: TutorialGroupsChecklistComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.pages.checklist.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/create-tutorial-groups-configuration',
+        component: CreateTutorialGroupsConfigurationComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered
@@ -165,60 +188,6 @@ export const courseManagementState: Routes = [
                         data: {
                             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
                             pageTitle: 'artemisApp.learningGoal.editLearningGoal.title',
-                        },
-                        canActivate: [UserRouteAccessService],
-                    },
-                ],
-            },
-            {
-                path: 'tutorial-groups-management',
-                component: TutorialGroupsManagementComponent,
-                data: {
-                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                    pageTitle: 'artemisApp.pages.tutorialGroupsManagement.title',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
-                // Create a new path without a component defined to prevent the TutorialsGroupManagementComponent from being always rendered
-                path: 'tutorial-groups-management',
-                data: {
-                    pageTitle: 'artemisApp.pages.tutorialGroupsManagement.title',
-                },
-                children: [
-                    {
-                        path: 'create',
-                        component: CreateTutorialGroupComponent,
-                        data: {
-                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                            pageTitle: 'artemisApp.pages.createTutorialGroup.title',
-                        },
-                        canActivate: [UserRouteAccessService],
-                    },
-                    {
-                        path: ':tutorialGroupId/edit',
-                        component: EditTutorialGroupComponent,
-                        data: {
-                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                            pageTitle: 'artemisApp.pages.editTutorialGroup.title',
-                        },
-                        canActivate: [UserRouteAccessService],
-                    },
-                    {
-                        path: ':tutorialGroupId/registered-students',
-                        component: RegisteredStudentsComponent,
-                        data: {
-                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                            pageTitle: 'artemisApp.pages.registeredStudents.title',
-                        },
-                        canActivate: [UserRouteAccessService],
-                    },
-                    {
-                        path: ':tutorialGroupId',
-                        component: TutorialGroupDetailComponent,
-                        data: {
-                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                            pageTitle: 'artemisApp.pages.tutorialGroupDetail.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },

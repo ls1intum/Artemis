@@ -5,9 +5,9 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { BASE_API, DELETE, POST, PUT, GET } from '../constants';
+import { BASE_API, DELETE, GET, POST, PUT } from '../constants';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
-import { dayjsToString, generateUUID } from '../utils';
+import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
 import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs/esm';
 import { CypressCredentials } from '../users';
@@ -51,6 +51,8 @@ export class CourseManagementRequests {
      * @param courseShortName the short name (will generate default name if not provided)
      * @param start the start date of the course (default: now() - 2 hours)
      * @param end the end date of the course (default: now() + 2 hours)
+     * @param fileName the course icon file name (default: undefined)
+     * @param file the course icon file blob (default: undefined)
      * @returns <Chainable> request response
      */
     createCourse(
@@ -59,6 +61,8 @@ export class CourseManagementRequests {
         courseShortName = 'cypress' + generateUUID(),
         start = day().subtract(2, 'hours'),
         end = day().add(2, 'hours'),
+        fileName?: string,
+        file?: Blob,
     ): Cypress.Chainable<Cypress.Response<Course>> {
         const course = new Course();
         course.title = courseName;
@@ -74,10 +78,15 @@ export class CourseManagementRequests {
             course.editorGroupName = Cypress.env('editorGroupName');
             course.instructorGroupName = Cypress.env('instructorGroupName');
         }
+        const formData = new FormData();
+        formData.append('course', new File([JSON.stringify(course)], 'course', { type: 'application/json' }));
+        if (file) {
+            formData.append('file', file, fileName);
+        }
         return cy.request({
             url: BASE_API + 'courses',
             method: POST,
-            body: course,
+            body: formData,
         });
     }
 
@@ -629,4 +638,13 @@ export enum CypressExerciseType {
     MODELING,
     TEXT,
     QUIZ,
+}
+
+export function convertCourseAfterMultiPart(response: Cypress.Response<Course>): Course {
+    // Cypress currently has some issues with our multipart request, parsing this not as an object but as an ArrayBuffer
+    // Once this is fixed (and hence the expect statements below fail), we can remove the additional parsing
+    expect(response.body).not.to.be.an('object');
+    expect(response.body).to.be.an('ArrayBuffer');
+
+    return parseArrayBufferAsJsonObject(response.body as ArrayBuffer);
 }

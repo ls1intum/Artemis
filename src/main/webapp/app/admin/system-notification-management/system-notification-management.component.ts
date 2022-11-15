@@ -1,12 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject } from 'rxjs';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
