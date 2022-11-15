@@ -41,6 +41,10 @@ export abstract class ConversationDto {
     public creator?: User;
     public isCreator?: boolean;
 
+    public isFavorite?: boolean;
+
+    public isHidden?: boolean;
+
     protected constructor(type: ConversationType) {
         this.type = type;
     }

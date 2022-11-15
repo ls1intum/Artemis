@@ -207,6 +207,20 @@ public class ConversationService {
 
     }
 
+    public void switchFavoriteStatus(Long conversationId, User requestingUser, Boolean isFavorite) {
+        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Conversation participant not found!"));
+        participation.setIsFavorite(isFavorite);
+        conversationParticipantRepository.save(participation);
+    }
+
+    public void switchHiddenStatus(Long conversationId, User requestingUser, Boolean hiddenStatus) {
+        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Conversation participant not found!"));
+        participation.setIsHidden(hiddenStatus);
+        conversationParticipantRepository.save(participation);
+    }
+
     /**
      * The user can select one of these roles to filter the conversation members by role
      */

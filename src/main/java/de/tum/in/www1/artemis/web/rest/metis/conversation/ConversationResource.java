@@ -64,6 +64,24 @@ public class ConversationResource {
         return ResponseEntity.ok(new ArrayList<>(conversations));
     }
 
+    @PostMapping("/{courseId}/conversations/{conversationId}/favorite")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> changeFavoriteStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isFavorite) {
+        var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        conversationService.switchFavoriteStatus(conversationId, requestingUser, isFavorite);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{courseId}/conversations/{conversationId}/hidden")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> switchHiddenStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isHidden) {
+        var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        conversationService.switchHiddenStatus(conversationId, requestingUser, isHidden);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/{courseId}/conversations/{conversationId}/members/search")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ConversationUserDTO>> searchMembersOfConversation(@PathVariable Long courseId, @PathVariable Long conversationId,

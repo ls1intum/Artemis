@@ -36,6 +36,12 @@ public class ConversationParticipant extends DomainObject {
     @Column(name = "is_admin")
     private Boolean isAdmin;
 
+    @Column(name = "is_favorite")
+    private Boolean isFavorite;
+
+    @Column(name = "is_hidden")
+    private Boolean isHidden;
+
     @Column(name = "last_read")
     private ZonedDateTime lastRead;
 
@@ -73,5 +79,29 @@ public class ConversationParticipant extends DomainObject {
 
     public void setIsAdmin(Boolean isAdmin) {
         this.isAdmin = isAdmin;
+    }
+
+    public Boolean getAdmin() {
+        return isAdmin;
+    }
+
+    public void setAdmin(Boolean admin) {
+        isAdmin = admin;
+    }
+
+    public Boolean getIsFavorite() {
+        return isFavorite;
+    }
+
+    public void setIsFavorite(Boolean favorite) {
+        isFavorite = favorite;
+    }
+
+    public Boolean getIsHidden() {
+        return isHidden;
+    }
+
+    public void setIsHidden(Boolean hidden) {
+        isHidden = hidden;
     }
 }

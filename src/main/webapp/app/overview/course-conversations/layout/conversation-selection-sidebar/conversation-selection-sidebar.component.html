@@ -22,6 +22,8 @@
                         [conversations]="starredConversations"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
+                        [course]="course"
+                        (settingsChanged)="onSettingsChanged()"
                     >
                     </jhi-sidebar-section>
                     <!-- Channels -->
@@ -31,6 +33,8 @@
                         [conversations]="channelConversations"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
+                        (settingsChanged)="onSettingsChanged()"
+                        [course]="course"
                     >
                         <ng-template>
                             <div ngbDropdown class="d-inline-block">
@@ -46,13 +50,15 @@
                             </div>
                         </ng-template>
                     </jhi-sidebar-section>
-                    <!-- Direct Messages -->
+                    <!-- Group Chats -->
                     <jhi-sidebar-section
                         [label]="'GroupChats'"
                         [isCollapsed]="true"
                         [conversations]="groupChats"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
+                        (settingsChanged)="onSettingsChanged()"
+                        [course]="course"
                     >
                         <ng-template>
                             <div class="d-inline-block">
@@ -69,6 +75,8 @@
                         [conversations]="oneToOneChats"
                         [activeConversation]="activeConversation"
                         (conversationSelected)="onConversationSelected($event)"
+                        (settingsChanged)="onSettingsChanged()"
+                        [course]="course"
                     >
                         <ng-template>
                             <div class="d-inline-block">

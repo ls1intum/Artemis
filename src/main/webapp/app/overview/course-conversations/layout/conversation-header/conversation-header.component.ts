@@ -13,6 +13,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { from } from 'rxjs';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -38,6 +39,7 @@ export class ConversationHeaderComponent implements OnInit {
     ) {}
 
     getAsChannel = getAsChannelDto;
+    getAsGroupChat = getAsGroupChatDto;
 
     getConversationName = this.conversationService.getConversationName;
 

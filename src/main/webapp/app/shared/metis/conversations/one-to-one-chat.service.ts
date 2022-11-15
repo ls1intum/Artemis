@@ -13,7 +13,7 @@ export class OneToOneChatService {
 
     create(courseId: number, loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> {
         return this.http
-            .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/one-to-one-chats`, loginOfChatPartner, { observe: 'response' })
+            .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/one-to-one-chats`, [loginOfChatPartner], { observe: 'response' })
             .pipe(map(this.conversationService.convertDateFromServer));
     }
 }

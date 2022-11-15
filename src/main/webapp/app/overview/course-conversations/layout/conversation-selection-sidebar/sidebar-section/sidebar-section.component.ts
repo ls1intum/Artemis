@@ -1,8 +1,9 @@
 import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
-import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-sidebar-section',
@@ -12,8 +13,14 @@ import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 export class SidebarSectionComponent {
     @Output() conversationSelected = new EventEmitter<ConversationDto>();
 
+    @Output()
+    settingsChanged = new EventEmitter<void>();
+
     @Input()
     label: string;
+
+    @Input()
+    course: Course;
 
     @Input()
     activeConversation?: ConversationDto;

@@ -44,4 +44,15 @@
             </column>
         </addColumn>
     </changeSet>
+    <changeSet author="stefanwaldhauser" id="20221030000000-5">
+        <!-- Just for type channel -->
+        <addColumn tableName="conversation_participant">
+            <column name="is_hidden" type="BIT(1)" defaultValueBoolean="false">
+                <constraints nullable="true" />
+            </column>
+            <column name="is_favorite" type="BIT(1)" defaultValueBoolean="false">
+                <constraints nullable="true" />
+            </column>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

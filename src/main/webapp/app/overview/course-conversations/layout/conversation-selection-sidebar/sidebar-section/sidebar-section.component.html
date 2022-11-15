@@ -14,9 +14,11 @@
             <li
                 *ngFor="let conversation of conversations; trackBy: conversationsTrackByFn"
                 [conversation]="conversation"
+                [course]="course"
                 jhi-conversation-entry
                 [isActive]="activeConversation && conversation && activeConversation.id! === conversation.id!"
                 (click)="conversationSelected.emit(conversation)"
+                (settingsChanged)="settingsChanged.emit()"
             ></li>
         </ul>
     </div>

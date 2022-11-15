@@ -51,15 +51,17 @@ export class ConversationService {
             return otherUser ? getUserLabel(otherUser) : '';
         } else if (isGroupChatDto(conversation)) {
             const members = conversation.members ?? [];
-            if (members.length === 0) {
-                return '';
-            } else if (members.length === 1) {
-                return getUserLabel(members[0], true);
-            } else if (members.length === 2) {
-                return `${getUserLabel(members[0], false)}, ${getUserLabel(members[1], false)}`;
+            const containsCurrentUser = members.some((member) => member.isRequestingUser);
+            const membersWithoutUser = members.filter((member) => member.isRequestingUser === false);
+            if (membersWithoutUser.length === 0) {
+                return containsCurrentUser ? 'Only You' : '';
+            } else if (membersWithoutUser.length === 1) {
+                return getUserLabel(membersWithoutUser[0], true);
+            } else if (membersWithoutUser.length === 2) {
+                return `${getUserLabel(membersWithoutUser[0], false)}, ${getUserLabel(members[1], false)}`;
             } else {
                 return (
-                    `${getUserLabel(members[0], false)}, ${getUserLabel(members[1], false)}, ` +
+                    `${(membersWithoutUser[0], false)}, ${getUserLabel(membersWithoutUser[1], false)}, ` +
                     this.translationService.instant('artemisApp.messages.conversation.others', { count: members.length - 2 })
                 );
             }
@@ -93,6 +95,19 @@ export class ConversationService {
                 observe: 'response',
             })
             .pipe(map(this.convertDateArrayFromServer));
+    }
+
+    changeFavoriteStatus(courseId: number, conversationId: number, isFavorite: boolean): Observable<HttpResponse<void>> {
+        let params = new HttpParams();
+        params = params.append('isFavorite', isFavorite.toString());
+
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/favorite`, null, { observe: 'response', params });
+    }
+
+    changeHiddenStatus(courseId: number, conversationId: number, isHidden: boolean): Observable<HttpResponse<void>> {
+        let params = new HttpParams();
+        params = params.append('isHidden', isHidden.toString());
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/hidden`, null, { observe: 'response', params });
     }
 
     public convertDateFromClient = (conversation: Conversation) => ({

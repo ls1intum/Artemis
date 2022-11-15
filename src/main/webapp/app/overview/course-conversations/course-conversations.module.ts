@@ -29,6 +29,7 @@ import { ConversationSettingsComponent } from './dialogs/conversation-detail-dia
 import { ConversationEntryComponent } from './layout/conversation-selection-sidebar/sidebar-section/conversation-entry/conversation-entry.component';
 import { OneToOneChatCreateDialogComponent } from './dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { GroupChatCreateDialogComponent } from './dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
+import { GroupChatIconComponent } from './other/group-chat-icon/group-chat-icon.component';
 
 const routes: Routes = [
     {
@@ -75,6 +76,7 @@ const routes: Routes = [
         ConversationEntryComponent,
         OneToOneChatCreateDialogComponent,
         GroupChatCreateDialogComponent,
+        GroupChatIconComponent,
     ],
 })
 export class CourseConversationsModule {}

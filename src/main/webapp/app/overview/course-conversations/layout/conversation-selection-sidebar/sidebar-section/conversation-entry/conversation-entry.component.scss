@@ -8,6 +8,16 @@
         background-color: var(--metis-blue);
     }
 
+    .interaction {
+        visibility: hidden;
+    }
+
+    &:hover {
+        .interaction {
+            visibility: visible;
+        }
+    }
+
     cursor: pointer;
     display: flex;
     padding: 0.2rem;

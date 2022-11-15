@@ -76,12 +76,21 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
 
     onConversationsUpdate(conversations: ConversationDto[]) {
         this.allConversations = conversations ?? [];
+        this.starredConversations = this.allConversations
+            .filter((conversation) => conversation.isFavorite)
+            .sort((a, b) => {
+                // sort by last message date
+                const aLastMessageDate = a.lastMessageDate ? a.lastMessageDate : a.creationDate;
+                const bLastMessageDate = b.lastMessageDate ? b.lastMessageDate : b.creationDate;
+                // newest messages at the top of the list
+                return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
+            });
         this.channelConversations = this.allConversations
-            .filter((conversation) => isChannelDto(conversation))
+            .filter((conversation) => isChannelDto(conversation) && !conversation.isFavorite)
             .map((channel) => channel as Channel)
             .sort((a, b) => a.name!.localeCompare(b.name!));
         this.oneToOneChats = this.allConversations
-            .filter((conversation) => isOneToOneChatDto(conversation))
+            .filter((conversation) => isOneToOneChatDto(conversation) && !conversation.isFavorite)
             .map((oneToOneChat) => oneToOneChat as OneToOneChatDTO)
             .sort((a, b) => {
                 // sort by last message date
@@ -91,7 +100,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
             });
         this.groupChats = this.allConversations
-            .filter((conversation) => isGroupChatDto(conversation))
+            .filter((conversation) => isGroupChatDto(conversation) && !conversation.isFavorite)
             .map((groupChatDto) => groupChatDto as GroupChatDto)
             .sort((a, b) => {
                 // sort by last message date
@@ -126,6 +135,10 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
+    }
+
+    onSettingsChanged() {
+        this.metisConversationService.forceRefresh().subscribe(() => {});
     }
 
     openCreateChannelDialog(event: MouseEvent) {

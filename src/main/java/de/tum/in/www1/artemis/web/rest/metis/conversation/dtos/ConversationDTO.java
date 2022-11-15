@@ -21,6 +21,12 @@ public abstract class ConversationDTO {
     private User creator;
 
     // property not taken from entity
+    private Boolean isFavorite;
+
+    // property not taken from entity
+    private Boolean isHidden;
+
+    // property not taken from entity
     private Boolean isCreator;
 
     // property not taken from entity
@@ -106,9 +112,26 @@ public abstract class ConversationDTO {
         isCreator = creator;
     }
 
+    public Boolean getIsFavorite() {
+        return isFavorite;
+    }
+
+    public void setIsFavorite(Boolean favorite) {
+        isFavorite = favorite;
+    }
+
+    public Boolean getIsHidden() {
+        return isHidden;
+    }
+
+    public void setIsHidden(Boolean hidden) {
+        isHidden = hidden;
+    }
+
     @Override
     public String toString() {
         return "ConversationDTO{" + "type='" + type + '\'' + ", id=" + id + ", creationDate=" + creationDate + ", lastMessageDate=" + lastMessageDate + ", isMember=" + isMember
-                + ", isCreator=" + isCreator + ", numberOfMembers=" + numberOfMembers + ", creator=" + (creator != null ? creator.getName() : "") + '}';
+                + ", isFavorite=" + isFavorite + ", isHidden=" + isHidden + ", isCreator=" + isCreator + ", numberOfMembers=" + numberOfMembers + ", creator="
+                + (creator != null ? creator.getName() : "") + '}';
     }
 }
