@@ -1,4 +1,4 @@
-<form class="row">
+<div class="row">
     <div class="col-12">
         <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
             <!-- Title -->
@@ -12,11 +12,14 @@
                     [placeholder]="'artemisApp.forms.tutorialGroupForm.titleInput.placeholder' | artemisTranslate: { from: '12:00', to: '13:00' }"
                 />
                 <div *ngIf="titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)" class="alert alert-danger">
-                    <div *ngIf="titleControl?.errors?.required || titleControl?.errors?.pattern">
+                    <div *ngIf="titleControl?.errors?.required">
                         {{ 'artemisApp.forms.tutorialGroupForm.titleInput.requiredValidationError' | artemisTranslate }}
                     </div>
                     <div *ngIf="titleControl?.errors?.maxlength">
-                        {{ 'artemisApp.forms.tutorialGroupForm.titleInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
+                        {{ 'artemisApp.forms.tutorialGroupForm.titleInput.maxLengthValidationError' | artemisTranslate: { max: '19' } }}
+                    </div>
+                    <div *ngIf="!titleControl?.errors?.required && !titleControl?.errors?.maxlength && titleControl?.errors?.pattern">
+                        {{ 'artemisApp.forms.tutorialGroupForm.titleInput.regexValidationError' | artemisTranslate }}
                     </div>
                 </div>
             </div>
@@ -123,6 +126,19 @@
                     [enableResize]="true"
                 ></jhi-markdown-editor>
             </div>
+            <hr />
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="configureSchedule" id="configureSchedule" [ngModelOptions]="{ standalone: true }" />
+                <label class="form-check-label" for="configureSchedule">
+                    {{ 'artemisApp.forms.scheduleForm.configureRecurringSchedule' | artemisTranslate }}
+                </label>
+            </div>
+            <div *ngIf="showScheduledChangedWarning" class="alert alert-danger" role="alert">
+                {{ 'artemisApp.forms.scheduleForm.scheduleChangeWarning' | artemisTranslate }}
+            </div>
+            <hr />
+            <jhi-schedule-form *ngIf="configureSchedule" #scheduleForm [parentFormGroup]="form" [course]="course"></jhi-schedule-form>
+            <hr *ngIf="configureSchedule" />
             <!-- Optional Notification Message -->
             <div class="form-group border border-info rounded p-3" *ngIf="notificationControl">
                 <label for="notificationText">{{ 'artemisApp.forms.tutorialGroupForm.notificationInput.label' | artemisTranslate }}</label>
@@ -141,13 +157,13 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row mt-2">
                 <div class="col-12">
                     <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
-                        <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span>{{ 'entity.action.save' | artemisTranslate }}</span>
+                        <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </div>
             </div>
         </form>
     </div>
-</form>
+</div>

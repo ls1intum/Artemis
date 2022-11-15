@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
-import { MockDirective, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
@@ -13,7 +13,9 @@ import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial
 import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/entities/tutorial-group/tutorial-group-registration.model';
 import { ArtemisTestModule } from '../../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { mockedActivatedRoute } from '../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { LoadingIndicatorContainerStubComponent } from '../../../../helpers/stubs/loading-indicator-container-stub.component';
 
 @Component({ selector: 'jhi-course-group', template: '' })
 class CourseGroupStubComponent {
@@ -57,18 +59,14 @@ describe('Registered Students Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [RegisteredStudentsComponent, CourseGroupStubComponent, MockDirective(TranslateDirective)],
-            providers: [
-                MockProvider(TutorialGroupsService),
-                MockProvider(CourseManagementService),
-                mockedActivatedRoute(
-                    {
-                        tutorialGroupId: 123,
-                    },
-                    {},
-                    { course },
-                ),
+            declarations: [
+                RegisteredStudentsComponent,
+                LoadingIndicatorContainerStubComponent,
+                CourseGroupStubComponent,
+                MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
             ],
+            providers: [MockProvider(TutorialGroupsService), MockProvider(CourseManagementService), MockProvider(NgbActiveModal)],
         })
             .compileComponents()
             .then(() => {
@@ -91,7 +89,13 @@ describe('Registered Students Component', () => {
                 registrationTwo.type = TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
 
                 tutorialGroup.registrations = [registrationOne, registrationTwo];
+
+                comp.course = course;
+                comp.tutorialGroupId = tutorialGroup.id!;
+
                 getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
+
+                comp.initialize();
             });
     });
 
