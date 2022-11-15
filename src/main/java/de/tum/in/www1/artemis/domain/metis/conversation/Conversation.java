@@ -38,7 +38,7 @@ public abstract class Conversation extends DomainObject {
     @JoinColumn(name = "creator_id")
     private User creator;
 
-    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "conversation", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private Set<ConversationParticipant> conversationParticipants = new HashSet<>();
 
     @ManyToOne
