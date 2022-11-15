@@ -85,7 +85,7 @@
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": {
                 "title": "Onlinekurs",
-                "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Kontoerstellung, sofern dies vom Artemis Systemadministrator eingestellt ist."
+                "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX/Moodle), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Kontoerstellung, sofern dies vom Artemis Systemadministrator eingestellt ist. Du kannst dies auf der Seite LTI-Konfiguration weiter konfigurieren."
             },
             "registrationEnabled": {
                 "title": "Kursregistrierung für Studierende aktiviert",
