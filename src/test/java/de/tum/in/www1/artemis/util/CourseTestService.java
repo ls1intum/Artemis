@@ -2185,7 +2185,6 @@ public class CourseTestService {
     public void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
         course = courseRepo.save(course);
         var courseId = course.getId();
 
@@ -2222,7 +2221,6 @@ public class CourseTestService {
     public void testUpdateCourseRemoveOnlineCourseConfiguration() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
 
         MvcResult result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
         Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
@@ -2239,7 +2237,8 @@ public class CourseTestService {
     public void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+        OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
+        onlineCourseConfiguration.setRegistrationId("100000");
         course = courseRepo.save(course);
 
         request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
@@ -2250,105 +2249,111 @@ public class CourseTestService {
     // Test
     public void testUpdateInvalidOnlineCourseConfiguration() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+
+        MvcResult result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
+        Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        String courseId = createdCourse.getId().toString();
 
         // without onlinecourseconfiguration
-        course.setRegistrationEnabled(false);
-        course.setOnlineCourseConfiguration(null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        OnlineCourseConfiguration ocConfiguration = null;
+        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
 
         // with invalid online course configuration - no key and secret
-        ModelFactory.generateOnlineCourseConfiguration(course, null, null, null, null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        ocConfiguration = ModelFactory.generateOnlineCourseConfiguration(createdCourse, null, null, null, null);
+        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
 
         // with invalid user prefix - not matching regex
-        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "with space", null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        ModelFactory.updateOnlineCourseConfiguration(ocConfiguration, "key", "secret", "with space", null);
+        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
 
     public void testInvalidOnlineCourseConfigurationNonUniqueRegistrationId() throws Exception {
         Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
-        OnlineCourseConfiguration oc1 = ModelFactory.generateOnlineCourseConfiguration(course1, "key", "secret", "prefix", null);
-        oc1.setRegistrationId("regId");
         course1.setOnlineCourse(true);
-        course1.setOnlineCourseConfiguration(oc1);
-
-        courseRepo.save(course1);
+        MvcResult result1 = request.getMvc().perform(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
+        Course createdCourse1 = objectMapper.readValue(result1.getResponse().getContentAsString(), Course.class);
 
         Course course2 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
-        OnlineCourseConfiguration oc2 = ModelFactory.generateOnlineCourseConfiguration(course2, "key", "secret", "prefix", null);
-        oc2.setRegistrationId("regId");
         course2.setOnlineCourse(true);
-        course2.setOnlineCourseConfiguration(oc2);
+        MvcResult result2 = request.getMvc().perform(buildCreateCourse(course2)).andExpect(status().isCreated()).andReturn();
+        Course createdCourse2 = objectMapper.readValue(result2.getResponse().getContentAsString(), Course.class);
 
-        request.post("/api/courses", course2, HttpStatus.BAD_REQUEST);
+        Course createdCourse1WithOcConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(createdCourse1.getId());
+        Course createdCourse2WithOcConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(createdCourse2.getId());
+        String courseId = createdCourse2.getId().toString();
+
+        OnlineCourseConfiguration ocConfiguration = createdCourse2WithOcConfiguration.getOnlineCourseConfiguration();
+        ocConfiguration.setRegistrationId(createdCourse1WithOcConfiguration.getOnlineCourseConfiguration().getRegistrationId());
+        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
 
     public void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
+        onlineCourseConfiguration.setRegistrationId("100000");
+        course = courseRepo.save(course);
 
-        // without onlinecourseconfiguration
-        course.setRegistrationEnabled(false);
-        course.setOnlineCourseConfiguration(null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        String courseId = course.getId().toString();
 
-        // with invalid online course configuration - no key and secret
-        ModelFactory.generateOnlineCourseConfiguration(course, null, null, null, null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
-
-        // with invalid user prefix - not matching regex
-        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "with space", null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), course.getOnlineCourseConfiguration(), OnlineCourseConfiguration.class, HttpStatus.FORBIDDEN);
     }
 
-    public void testUpdateValidOnlineCourseConfiguration_idMismatch() throws Exception {
+    public void testUpdateValidOnlineCourseConfigurationNotOnlineCourse() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(false);
 
-        // without onlinecourseconfiguration
-        course.setRegistrationEnabled(false);
-        course.setOnlineCourseConfiguration(null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        MvcResult result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
+        Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        String courseId = createdCourse.getId().toString();
 
-        // with invalid online course configuration - no key and secret
-        ModelFactory.generateOnlineCourseConfiguration(course, null, null, null, null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", null);
+        onlineCourseConfiguration.setRegistrationId("10000");
 
-        // with invalid user prefix - not matching regex
-        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "with space", null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), onlineCourseConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
 
-    public void testUpdateValidOnlineCourseConfiguration_courseIdMismatch() throws Exception {
+    public void testUpdateValidOnlineCourseConfiguration_IdMismatch() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
 
-        // without onlinecourseconfiguration
-        course.setRegistrationEnabled(false);
-        course.setOnlineCourseConfiguration(null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        MvcResult result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
+        Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        String courseId = createdCourse.getId().toString();
 
-        // with invalid online course configuration - no key and secret
-        ModelFactory.generateOnlineCourseConfiguration(course, null, null, null, null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
-
-        // with invalid user prefix - not matching regex
-        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "with space", null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        OnlineCourseConfiguration ocConfiguration = createdCourse.getOnlineCourseConfiguration();
+        ocConfiguration.setId(10000L);
+        request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
 
     public void testUpdateValidOnlineCourseConfiguration() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
+        onlineCourseConfiguration.setRegistrationId("100000");
+        course = courseRepo.save(course);
 
-        // without onlinecourseconfiguration
-        course.setRegistrationEnabled(false);
-        course.setOnlineCourseConfiguration(null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
+        ocConfiguration.setLtiKey("key");
+        ocConfiguration.setLtiSecret("secret");
+        ocConfiguration.setUserPrefix("prefix");
+        ocConfiguration.setRegistrationId("random");
+        ocConfiguration.setAuthorizationUri("authUri");
+        ocConfiguration.setTokenUri("tokenUri");
+        ocConfiguration.setJwkSetUri("jwksUri");
 
-        // with invalid online course configuration - no key and secret
-        ModelFactory.generateOnlineCourseConfiguration(course, null, null, null, null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        String courseId = course.getId().toString();
 
-        // with invalid user prefix - not matching regex
-        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "with space", null);
-        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+        OnlineCourseConfiguration response = request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class,
+                HttpStatus.OK);
+        assertEquals("key", response.getLtiKey());
+        assertEquals("secret", response.getLtiSecret());
+        assertEquals("prefix", response.getUserPrefix());
+        assertEquals("random", response.getRegistrationId());
+        assertEquals("authUri", response.getAuthorizationUri());
+        assertEquals("tokenUri", response.getTokenUri());
+        assertEquals("jwksUri", response.getJwkSetUri());
     }
 
     public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course) throws JsonProcessingException {
@@ -2421,5 +2426,9 @@ public class CourseTestService {
         course = courseRepo.findByIdElseThrow(course.getId());
         assertThat(course.getCourseIcon()).as("course icon was deleted correctly").isNull();
         assertThat(fileService.getFileForPath(fileService.actualPathForPublicPath(iconPath))).as("course icon file was deleted correctly").isNull();
+    }
+
+    private String getUpdateOnlineCourseConfigurationPath(String courseId) {
+        return "/api/courses/" + courseId + "/onlineCourseConfiguration";
     }
 }

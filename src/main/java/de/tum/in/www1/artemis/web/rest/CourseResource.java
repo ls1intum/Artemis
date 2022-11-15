@@ -290,28 +290,28 @@ public class CourseResource {
     }
 
     /**
-     * PUT courses/{courseId}/onlineCourseConfiguration/{onlineCourseConfigurationId} : Updates an existing onlineCourseConfiguration.
+     * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given cours.
      *
      * @param courseId the id of the course to update
-     * @param onlineCourseConfiguration the on
+     * @param onlineCourseConfiguration the online course configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
      */
-    @PutMapping(value = "courses/{courseId}/onlineCourseConfiguration/{onlineCourseConfigurationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "courses/{courseId}/onlineCourseConfiguration")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId, @PathVariable Long onlineCourseConfigurationId,
+    public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
             @RequestBody @Valid OnlineCourseConfiguration onlineCourseConfiguration) {
-        log.debug("REST request to update online course configuration for Course : {}", courseId);
+        log.debug("REST request to update the online course configuration for Course : {}", courseId);
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        if (!onlineCourseConfigurationId.equals(onlineCourseConfiguration.getId())) {
-            throw new BadRequestAlertException("The onlineCourseConfigurationId in the path does not match the id in the onlineCourseConfiguration",
-                    OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
+        if (!course.isOnlineCourse() || course.getOnlineCourseConfiguration() == null) {
+            throw new BadRequestAlertException("Course must be online course", Course.ENTITY_NAME, "courseMustBeOnline");
         }
-        else if (!courseId.equals(onlineCourseConfiguration.getCourse().getId())) {
-            throw new BadRequestAlertException("The courseId in the path does not match the courseId in the onlineCourseConfiguration", OnlineCourseConfiguration.ENTITY_NAME,
-                    "courseIdMismatch");
+
+        if (!course.getOnlineCourseConfiguration().getId().equals(onlineCourseConfiguration.getId())) {
+            throw new BadRequestAlertException("The onlineCourseConfigurationId does not match the id of the course's onlineCourseConfiguration",
+                    OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
         }
 
         onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration);

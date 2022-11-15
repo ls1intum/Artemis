@@ -755,14 +755,14 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateValidOnlineCourseConfiguration_idMismatch() throws Exception {
-        courseTestService.testUpdateValidOnlineCourseConfiguration_idMismatch();
+    void testUpdateValidOnlineCourseConfigurationNotOnlineCourse() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfigurationNotOnlineCourse();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateValidOnlineCourseConfiguration_courseIdMismatch() throws Exception {
-        courseTestService.testUpdateValidOnlineCourseConfiguration_courseIdMismatch();
+    void testUpdateValidOnlineCourseConfiguration_IdMismatch() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfiguration_IdMismatch();
     }
 
     @Test

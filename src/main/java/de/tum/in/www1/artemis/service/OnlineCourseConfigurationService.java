@@ -69,16 +69,6 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
      */
     public void validateOnlineCourseConfiguration(OnlineCourseConfiguration ocConfiguration) {
 
-        if (ocConfiguration == null) {
-            throw new BadRequestAlertException("Configuration must exist for online courses", ENTITY_NAME, "onlineCourseConfigurationMissing");
-        }
-
-        Course course = ocConfiguration.getCourse();
-
-        if (course == null || course.isOnlineCourse()) {
-            throw new BadRequestAlertException("Course must exist and be online course", ENTITY_NAME, "courseMustBeOnline");
-        }
-
         if (StringUtils.isBlank(ocConfiguration.getLtiKey()) || StringUtils.isBlank(ocConfiguration.getLtiSecret())) {
             throw new BadRequestAlertException("Invalid online course configuration", ENTITY_NAME, "invalidOnlineCourseConfiguration");
         }
