@@ -1,8 +1,8 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { Router } from '@angular/router';
-import { of, Subscription } from 'rxjs';
+import { Subscription, of } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
@@ -25,7 +25,8 @@ import { HttpResponse } from '@angular/common/http';
 
 const route = { params: of({ courseId: 3, exerciseId: 22 }) };
 const course = { id: 1 };
-const modelingExercise = {
+const modelingExercise: ModelingExercise = {
+    allowManualFeedbackRequests: false,
     id: 22,
     course,
     type: ExerciseType.MODELING,
@@ -34,7 +35,8 @@ const modelingExercise = {
     numberOfAssessmentsOfCorrectionRounds: [],
     secondCorrectionEnabled: true,
 };
-const modelingExerciseOfExam = {
+const modelingExerciseOfExam: ModelingExercise = {
+    allowManualFeedbackRequests: false,
     id: 23,
     exerciseGroup: { id: 111, exam: { id: 112, course } },
     type: ExerciseType.MODELING,
@@ -111,14 +113,12 @@ describe('ModelingAssessmentDashboardComponent', () => {
         expect(courseFindSpy).toHaveBeenCalledTimes(2);
         expect(exerciseFindSpy).toHaveBeenCalledTimes(2);
         expect(component.course).toEqual(course);
-        expect(component.exercise).toEqual(modelingExercise as ModelingExercise);
+        expect(component.exercise).toEqual(modelingExercise);
     });
 
     it('should get Submissions', () => {
         // test getSubmissions
-        const modelingSubmissionServiceSpy = jest
-            .spyOn(modelingSubmissionService, 'getModelingSubmissionsForExerciseByCorrectionRound')
-            .mockReturnValue(of(new HttpResponse({ body: [modelingSubmission] })));
+        const modelingSubmissionServiceSpy = jest.spyOn(modelingSubmissionService, 'getSubmissions').mockReturnValue(of(new HttpResponse({ body: [modelingSubmission] })));
 
         // call
         component.ngOnInit();

@@ -1,0 +1,78 @@
+{
+    "artemisApp": {
+        "tutorialGroupImportDialog": {
+            "warning": "Warning",
+            "finishedWarning": "Artemis has finished importing the tutorial group. Be aware that the tutorial groups were created without schedule and default settings such as assigning yourself as tutor. You can change these settings and add a schedule by editing the respective groups.",
+            "importButton": "Import Tutorial Groups",
+            "dialogTitle": "Import Tutorial Group Registrations",
+            "explanations": {
+                "description": "This dialog can be used to import tutorial groups and their registrations from a CSV file. Tutorial Groups will be created if they do not exist yet. Students will be deregistered from their current tutorial group and registered in the new one.",
+                "requirements": "Each row must always contain a value for the tutorial group title. If you want to not only create tutorial groups but also register students, the row must contain a value for either matriculation number or login. This is needed to identify the student. Values for last and first name are optional. The top row must specify the header!"
+            },
+            "supportedHeaderNames": {
+                "label": "Supported header names (versions with spaces, underscores, hyphens and uppercase letters are also supported): ",
+                "alwaysRequired": "Always required (to identify tutorial group): ",
+                "requiredIfStudentRegistration": "One of those is required if you want to register students (to identify students) :",
+                "alwaysOptional": "Always optional (just for display purposes): ",
+                "tutorialGroupTitle": "For tutorial group title: {{ headers }}",
+                "registrationNumber": "For matriculation number: {{ headers }}",
+                "login": "For login: {{ headers }}",
+                "firstName": "For first Name: {{ headers }}",
+                "lastName": "For last Name: {{ headers }}"
+            },
+            "errorMessages": {
+                "genericErrorMessage": "Import of tutorial groups failed!",
+                "withoutTitle": "The following rows miss a tutorial group title: ",
+                "invalidTitle": "The following rows have an invalid tutorial group title (Titles may only contain letters, numbers, spaces and hyphens and max 19 characters): ",
+                "noIdentificationInformation": "The following rows specify a user but do not contain a login or matriculation number: ",
+                "duplicatedLogins": "The following logins are assigned to multiple tutorial groups: ",
+                "duplicatedRegistrationNumbers": "The following matriculation numbers are assigned to multiple tutorial groups: "
+            },
+            "serverErrors": {
+                "notitle": "No tutorial group title",
+                "nologinorregistrationnumber": "No login or matriculation number",
+                "nouserfound": "No matching student found in course",
+                "multipleregistrations": "Multiple registrations in csv for student"
+            },
+            "csvFile": {
+                "label": "Select a .csv file",
+                "validationFailed": "Please repair the file, it is not considered valid due to the following error: ",
+                "parseCSVButton": "Parse CSV"
+            },
+            "fixedPlaceForm": {
+                "checkbox": {
+                    "label": "Do you want to specify a header and column to filter the rows?",
+                    "explanation": "Only those rows that have the specified value in the specified column, will be parsed from the CSV file."
+                },
+                "statusHeaderInput": {
+                    "label": "Status Header",
+                    "placeholder": "Enter the header that contains the status of the registration. E.g. 'Place'",
+                    "maxLengthValidationError": "Status Header is limited to {{ max }} characters!"
+                },
+                "fixedPlaceValueInput": {
+                    "label": "Confirmed Value",
+                    "placeholder": "Enter the value that indicates a confirmed fixed place. E.g. 'Confirmed Place'",
+                    "maxLengthValidationError": "Confirmed Value is limited to {{ max }} characters!"
+                }
+            },
+            "table": {
+                "showNotImportedButton": "Not imported registrations",
+                "showImportedButton": "Imported registrations",
+                "showAllButton": "All registrations",
+                "columns": {
+                    "title": "Tutorial Group",
+                    "registrationNumber": "Matriculation Number",
+                    "login": "Login",
+                    "firstName": "First Name",
+                    "lastName": "Last Name",
+                    "error": "Error"
+                },
+                "footer": {
+                    "imported": "Imported: {{ count }} Registrations",
+                    "notImported": "Not imported: {{ count }} Registrations",
+                    "total": "Total: {{ count }} Registrations"
+                }
+            }
+        }
+    }
+}

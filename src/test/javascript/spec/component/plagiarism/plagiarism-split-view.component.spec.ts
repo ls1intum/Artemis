@@ -1,7 +1,7 @@
 import { SimpleChange } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { of, Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { PlagiarismSplitViewComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/plagiarism-split-view.component';
@@ -9,8 +9,8 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
-import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import { PlagiarismMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMatch';
+import { FromToElement, TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { PlagiarismMatch, SimpleMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMatch';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
@@ -203,7 +203,7 @@ describe('Plagiarism Split View Component', () => {
             { start: 0, length: 2 },
             { start: 0, length: 0 },
             { start: 3, length: 3 },
-        ];
+        ] as SimpleMatch[];
         submissionA.elements = [
             { file: '', column: 1, line: 1 },
             { file: '', column: 2, line: 2 },
@@ -218,8 +218,8 @@ describe('Plagiarism Split View Component', () => {
         ] as TextSubmissionElement[];
         const mappedElements = new Map();
         mappedElements.set('none', [
-            { from: { file: '', column: 1, line: 1 }, to: { file: '', column: 2, line: 2 } },
-            { from: { file: '', column: 4, line: 4 }, to: { file: '', column: 6, line: 6 } },
+            new FromToElement({ file: '', column: 1, line: 1 } as TextSubmissionElement, { file: '', column: 2, line: 2 } as TextSubmissionElement),
+            new FromToElement({ file: '', column: 4, line: 4 } as TextSubmissionElement, { file: '', column: 6, line: 6 } as TextSubmissionElement),
         ]);
 
         const result = comp.mapMatchesToElements(matches, submissionA);
@@ -245,12 +245,12 @@ describe('Plagiarism Split View Component', () => {
             { start: 0, length: 0 },
             { start: submissionA.elements.length + 1, length: 3 }, // Faulty data
             { start: 3, length: 3 },
-        ];
+        ] as SimpleMatch[];
         const mappedElements = new Map();
         mappedElements.set('none', [
-            { from: { file: '', column: 1, line: 1 }, to: { file: '', column: 2, line: 2 } },
-            { from: undefined, to: undefined }, // Faulty but better than crashing.
-            { from: { file: '', column: 4, line: 4 }, to: { file: '', column: 6, line: 6 } },
+            new FromToElement({ file: '', column: 1, line: 1 } as TextSubmissionElement, { file: '', column: 2, line: 2 } as TextSubmissionElement),
+            new FromToElement(undefined as unknown as TextSubmissionElement, undefined as unknown as TextSubmissionElement),
+            new FromToElement({ file: '', column: 4, line: 4 } as TextSubmissionElement, { file: '', column: 6, line: 6 } as TextSubmissionElement),
         ]);
 
         const result = comp.mapMatchesToElements(matches, submissionA);
@@ -314,8 +314,8 @@ describe('Plagiarism Split View Component', () => {
 
         expect(plagComp.submissionA).toEqual(originalPlagComp.submissionB);
         expect(plagComp.submissionB).toEqual(originalPlagComp.submissionA);
-        expect(plagComp.matches.map((match) => match.startA)).toEqual(originalPlagComp.matches.map((match) => match.startB));
-        expect(plagComp.matches.map((match) => match.startB)).toEqual(originalPlagComp.matches.map((match) => match.startA));
-        expect(plagComp.matches.map((match) => match.length)).toEqual(originalPlagComp.matches.map((match) => match.length));
+        expect(plagComp.matches?.map((match) => match.startA)).toEqual(originalPlagComp.matches?.map((match) => match.startB));
+        expect(plagComp.matches?.map((match) => match.startB)).toEqual(originalPlagComp.matches?.map((match) => match.startA));
+        expect(plagComp.matches?.map((match) => match.length)).toEqual(originalPlagComp.matches?.map((match) => match.length));
     });
 });

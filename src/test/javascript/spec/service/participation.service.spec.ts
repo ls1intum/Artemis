@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
@@ -50,19 +50,6 @@ describe('Participation Service', () => {
             .find(123)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: participationDefault }));
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        tick();
-    }));
-
-    it('should find an element with latest result', fakeAsync(() => {
-        const returnedFromService = { ...participationDefault, initializationDate: currentDate.toDate() };
-        returnedFromService.results = [{ id: 1 }];
-        service
-            .findWithLatestResult(123)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);

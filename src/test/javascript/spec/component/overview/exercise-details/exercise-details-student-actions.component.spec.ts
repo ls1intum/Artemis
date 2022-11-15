@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { Subject, of } from 'rxjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -26,6 +26,7 @@ import { Router } from '@angular/router';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { HttpClient } from '@angular/common/http';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import dayjs from 'dayjs/esm';
 
@@ -36,19 +37,24 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let courseExerciseService: CourseExerciseService;
     let profileService: ProfileService;
     let startExerciseStub: jest.SpyInstance;
-    let startPracticeStub: jest.SpyInstance;
     let resumeStub: jest.SpyInstance;
     let getProfileInfoSub: jest.SpyInstance;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
-    const teamExerciseWithoutTeamAssigned = {
+    const programmingExercise: ProgrammingExercise = {
         id: 42,
         type: ExerciseType.PROGRAMMING,
+        studentParticipations: [],
+        numberOfAssessmentsOfCorrectionRounds: [],
+        secondCorrectionEnabled: false,
+        studentAssignedTeamIdComputed: false,
+    };
+    const teamExerciseWithoutTeamAssigned: ProgrammingExercise = {
+        ...programmingExercise,
         mode: ExerciseMode.TEAM,
         teamMode: true,
         studentAssignedTeamIdComputed: true,
-        studentParticipations: [],
-    } as unknown as ProgrammingExercise;
+    };
     const teamExerciseWithTeamAssigned = { ...teamExerciseWithoutTeamAssigned, studentAssignedTeamId: team.id, allowOfflineIde: true } as ProgrammingExercise;
 
     beforeEach(() => {
@@ -81,8 +87,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
                 getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
+
                 startExerciseStub = jest.spyOn(courseExerciseService, 'startExercise');
-                startPracticeStub = jest.spyOn(courseExerciseService, 'startPractice');
                 resumeStub = jest.spyOn(courseExerciseService, 'resumeProgrammingExercise');
             });
     });
@@ -182,28 +188,23 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         } as ProgrammingExercise;
         const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED, testRun: true } as StudentParticipation;
         const initPart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
-        const participationSubject = new Subject<StudentParticipation>();
 
         comp.exercise = exercise;
 
         fixture.detectChanges();
         tick();
 
-        let startExerciseButton = fixture.debugElement.query(By.css('.start-practice'));
-        expect(startExerciseButton).not.toBeNull();
+        let startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
+        expect(startPracticeButton).not.toBeNull();
 
-        startPracticeStub.mockReturnValue(participationSubject);
-        comp.startPractice();
-        participationSubject.next(inactivePart);
+        comp.exercise.studentParticipations = [inactivePart];
 
         fixture.detectChanges();
         tick();
 
         expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.UNINITIALIZED);
-        expect(startPracticeStub).toHaveBeenCalledOnce();
 
-        comp.exercise.studentParticipations = [];
-        participationSubject.next(initPart);
+        comp.exercise.studentParticipations = [initPart];
 
         fixture.detectChanges();
         tick();
@@ -211,8 +212,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.INITIALIZED);
 
         // Check that button "Start practice" is no longer shown
-        startExerciseButton = fixture.debugElement.query(By.css('.start-practice'));
-        expect(startExerciseButton).toBeNull();
+        startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
+        expect(startPracticeButton).toBeNull();
 
         // Check that button "Clone repository" is shown
         const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
@@ -240,4 +241,71 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         comp.exercise = teamExerciseWithoutTeamAssigned;
         expect(comp.publishBuildPlanUrl()).toBeUndefined();
     });
+
+    it('should hide the feedback request button', () => {
+        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: false };
+        expect(comp.isManualFeedbackRequestsAllowed()).toBeFalse();
+    });
+
+    it('should show the feedback request button', () => {
+        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
+        expect(comp.isManualFeedbackRequestsAllowed()).toBeTrue();
+    });
+
+    it('should disable the feedback request button', () => {
+        const result: Result = { score: 50, rated: true };
+        const participation: StudentParticipation = {
+            results: [result],
+            individualDueDate: undefined,
+        };
+
+        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
+        comp.studentParticipation = participation;
+
+        expect(comp.isFeedbackRequestButtonDisabled()).toBeTrue();
+    });
+
+    it('should enable the feedback request button', () => {
+        const result: Result = { score: 100, rated: true };
+        const participation: StudentParticipation = {
+            results: [result],
+            individualDueDate: undefined,
+        };
+
+        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
+        comp.studentParticipation = participation;
+
+        expect(comp.isFeedbackRequestButtonDisabled()).toBeFalse();
+    });
+
+    it('should show correct buttons in exam mode', fakeAsync(() => {
+        const exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
+        exercise.allowOfflineIde = false;
+        exercise.allowOnlineEditor = true;
+        exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
+        comp.exercise = exercise;
+        comp.examMode = true;
+
+        fixture.detectChanges();
+        tick();
+
+        let startExerciseButton = debugElement.query(By.css('button.start-exercise'));
+        expect(startExerciseButton).toBeNull();
+        let codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
+        expect(codeEditorButton).toBeNull();
+        let cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepoButton).toBeNull();
+
+        exercise.allowOfflineIde = true;
+
+        fixture.detectChanges();
+        tick();
+
+        startExerciseButton = debugElement.query(By.css('button.start-exercise'));
+        expect(startExerciseButton).toBeNull();
+        codeEditorButton = debugElement.query(By.css('jhi-open-code-editor-button'));
+        expect(codeEditorButton).toBeNull();
+        cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepoButton).not.toBeNull();
+    }));
 });

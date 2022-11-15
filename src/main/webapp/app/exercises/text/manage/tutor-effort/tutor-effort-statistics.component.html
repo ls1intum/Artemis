@@ -33,6 +33,7 @@
                     <jhi-help-icon [text]="'artemisApp.textExercise.tutorEffortStatistics.titleDescription'" [placement]="'right'"></jhi-help-icon>
                 </div>
                 <ngx-charts-bar-vertical
+                    [roundEdges]="false"
                     [view]="[containerRef.offsetWidth, 600]"
                     [scheme]="ngxColor"
                     [results]="ngxData"

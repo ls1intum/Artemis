@@ -591,11 +591,6 @@ public class ProgrammingExercise extends Exercise {
         return super.getAssessmentType();
     }
 
-    public boolean needsLockOperation() {
-        return isExamExercise() || AssessmentType.AUTOMATIC != getAssessmentType() || getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                || getAllowComplaintsForAutomaticAssessments();
-    }
-
     @Nullable
     public ProjectType getProjectType() {
         return projectType;
@@ -642,9 +637,18 @@ public class ProgrammingExercise extends Exercise {
      */
     public boolean areManualResultsAllowed() {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
-        final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
-        return (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments())
-                && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+        if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
+            // The relevantDueDate check below keeps us from assessing feedback requests,
+            // as their relevantDueDate is before the deadline
+            if (getAllowManualFeedbackRequests()) {
+                return true;
+            }
+
+            final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
+            return (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+        }
+
+        return false;
     }
 
     /**
@@ -766,6 +770,27 @@ public class ProgrammingExercise extends Exercise {
         // Static code analysis max penalty must be positive
         if (getMaxStaticCodeAnalysisPenalty() != null && getMaxStaticCodeAnalysisPenalty() < 0) {
             throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
+        }
+    }
+
+    /**
+     * Validates settings for exercises, where allowManualFeedbackRequests is set
+     */
+    public void validateManualFeedbackSettings() {
+        if (!this.getAllowManualFeedbackRequests()) {
+            return;
+        }
+
+        if (this.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            throw new BadRequestAlertException("Assessment type is not manual", "Exercise", "invalidManualFeedbackSettings");
+        }
+
+        if (Objects.isNull(this.getDueDate())) {
+            throw new BadRequestAlertException("Exercise due date is not set", "Exercise", "invalidManualFeedbackSettings");
+        }
+
+        if (Objects.nonNull(this.buildAndTestStudentSubmissionsAfterDueDate)) {
+            throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
         }
     }
 

@@ -16,7 +16,7 @@ import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exerci
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
-import { QuizExercise, QuizBatch } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';

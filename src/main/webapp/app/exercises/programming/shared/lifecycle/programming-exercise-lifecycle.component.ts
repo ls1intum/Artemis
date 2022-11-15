@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faHandshake, faHandshakeSlash, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
@@ -24,6 +24,8 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
     faCogs = faCogs;
     faUserCheck = faUserCheck;
     faUserSlash = faUserSlash;
+    faHandshake = faHandshake;
+    faHandshakeSlash = faHandshakeSlash;
 
     constructor(private translator: TranslateService, private exerciseService: ExerciseService) {}
 
@@ -47,6 +49,14 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
                 this.updateExampleSolutionPublicationDate(newExercise.dueDate);
                 this.updateReleaseDate(newExercise.releaseDate);
             }
+        }
+    }
+
+    toggleManualFeedbackRequests() {
+        this.exercise.allowManualFeedbackRequests = !this.exercise.allowManualFeedbackRequests;
+        if (this.exercise.allowManualFeedbackRequests) {
+            this.exercise.assessmentDueDate = undefined;
+            this.exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         }
     }
 

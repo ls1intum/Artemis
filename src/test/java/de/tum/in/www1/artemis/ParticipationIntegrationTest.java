@@ -5,10 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,10 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -334,6 +328,79 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    void requestFeedbackScoreNotFull() throws Exception {
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
+
+        var result = ModelFactory.generateResult(true, 90).participation(participation);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result);
+
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void requestFeedbackExerciseNotPossibleIfOnlyAutomaticFeedbacks() throws Exception {
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        exerciseRepo.save(programmingExercise);
+
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        participationRepo.save(participation);
+
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void requestFeedbackAlreadySent() throws Exception {
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, database.getUserByLogin("student1"));
+        participation.setIndividualDueDate(ZonedDateTime.now().minusMinutes(20));
+        participationRepo.save(participation);
+
+        request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void requestFeedbackSuccess() throws Exception {
+        var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
+
+        var localRepo = new LocalRepository(defaultBranch);
+        localRepo.configureRepos("testLocalRepo", "testOriginRepo");
+
+        participation.setRepositoryUrl(ModelFactory.getMockFileRepositoryUrl(localRepo).getURI().toString());
+        participationRepo.save(participation);
+
+        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUrl());
+
+        var result = ModelFactory.generateResult(true, 100).participation(participation);
+        result.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(result);
+
+        doNothing().when(programmingExerciseParticipationService).lockStudentRepository(programmingExercise, participation);
+
+        var response = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
+                HttpStatus.OK);
+
+        assertThat(response.getResults()).allMatch(result1 -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC);
+        assertThat(response.getIndividualDueDate()).isNotNull().isBefore(ZonedDateTime.now());
+
+        verify(programmingExerciseParticipationService, times(1)).lockStudentRepository(programmingExercise, participation);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void resumeProgrammingExerciseParticipation() throws Exception {
         var participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise, database.getUserByLogin("student1"));
         var localRepo = new LocalRepository(defaultBranch);
@@ -371,8 +438,11 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void getAllParticipationsForExercise() throws Exception {
         database.createAndSaveParticipationForExercise(textExercise, "student1");
         database.createAndSaveParticipationForExercise(textExercise, "student2");
+        StudentParticipation testParticipation = database.createAndSaveParticipationForExercise(textExercise, "student3");
+        testParticipation.setTestRun(true);
+        participationRepo.save(testParticipation);
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
-        assertThat(participations).as("Exactly 2 participations are returned").hasSize(2).as("Only participation that has student are returned")
+        assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
                 .allMatch(participation -> participation.getStudent().isPresent()).as("No submissions should exist for participations")
                 .allMatch(participation -> participation.getSubmissionCount() == 0);
     }
@@ -385,10 +455,13 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         database.addResultToParticipation(null, null, participation);
         var result = ModelFactory.generateResult(true, 70D).participation(participation);
         resultRepository.save(result);
+        StudentParticipation testParticipation = database.createAndSaveParticipationForExercise(textExercise, "student3");
+        testParticipation.setTestRun(true);
+        participationRepo.save(testParticipation);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("withLatestResult", "true");
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
-        assertThat(participations).as("Exactly 2 participations are returned").hasSize(2).as("Only participation that has student are returned")
+        assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
                 .allMatch(p -> p.getStudent().isPresent()).as("No submissions should exist for participations").allMatch(p -> p.getSubmissionCount() == 0);
         var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin("student2"))).findFirst().get();
         assertThat(participationWithResult.getResults()).hasSize(1).contains(result);

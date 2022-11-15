@@ -52,12 +52,6 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
-    findWithLatestResult(participationId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<StudentParticipation>(`${this.resourceUrl}/${participationId}/withLatestResult`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
-    }
-
     /*
      * Finds one participation for the currently logged-in user for the given exercise in the given course
      */
@@ -141,6 +135,9 @@ export class ParticipationService {
         if (participation) {
             participation.initializationDate = convertDateFromServer(participation.initializationDate);
             participation.individualDueDate = convertDateFromServer(participation.individualDueDate);
+            if (participation.exercise) {
+                participation.exercise = ExerciseService.convertExerciseDatesFromServer(participation.exercise);
+            }
         }
         return participation;
     }
@@ -192,6 +189,7 @@ export class ParticipationService {
         if (participations?.length) {
             combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
+            combinedParticipation.buildPlanUrl = participations[0].buildPlanUrl;
             this.mergeResultsAndSubmissions(combinedParticipation, participations);
         }
         return combinedParticipation;

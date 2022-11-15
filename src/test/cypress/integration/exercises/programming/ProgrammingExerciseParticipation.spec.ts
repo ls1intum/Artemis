@@ -4,6 +4,7 @@ import allSuccessful from '../../../fixtures/programming_exercise_submissions/al
 import partiallySuccessful from '../../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
 import { artemis } from '../../../support/ArtemisTesting';
 import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
 // The user management object
 const users = artemis.users;
@@ -50,7 +51,7 @@ describe('Programming exercise participations', () => {
     function setupCourseAndProgrammingExercise() {
         cy.login(users.getAdmin(), '/');
         courseManagement.createCourse(true).then((response) => {
-            course = response.body;
+            course = convertCourseAfterMultiPart(response);
             courseManagement.addStudentToCourse(course, users.getStudentOne());
             courseManagement.addStudentToCourse(course, users.getStudentTwo());
             courseManagement.addStudentToCourse(course, users.getStudentThree());
@@ -66,7 +67,7 @@ describe('Programming exercise participations', () => {
     function makeFailingSubmission() {
         const submission = { files: [{ name: 'BubbleSort.java', path: 'programming_exercise_submissions/build_error/BubbleSort.txt' }] };
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, submission, () => {
-            editorPage.getResultScore().contains('Build failed').should('be.visible');
+            editorPage.getResultScore().contains('Build failed').and('be.visible');
             editorPage.getResultScore().contains('0%').and('be.visible');
         });
     }
@@ -77,7 +78,6 @@ describe('Programming exercise participations', () => {
     function makePartiallySuccessfulSubmission() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, partiallySuccessful, () => {
             editorPage.getResultScore().contains('46.2%').and('be.visible');
-            editorPage.getResultScore().contains('4.6 points').should('be.visible');
         });
     }
 
@@ -86,8 +86,7 @@ describe('Programming exercise participations', () => {
      */
     function makeSuccessfulSubmission() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, allSuccessful, () => {
-            editorPage.getResultScore().contains('100%').should('be.visible');
-            editorPage.getResultScore().contains('10 points').should('be.visible');
+            editorPage.getResultScore().contains('100%').and('be.visible');
         });
     }
 });

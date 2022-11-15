@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -33,8 +33,8 @@ describe('ProgrammingExerciseGradingService', () => {
         { testName: 'otherTest', active: true },
     ] as ProgrammingExerciseTestCase[];
 
-    const exercise1Topic = `/topic/programming-exercise/${exercise1.id}/test-cases`;
-    const exercise2Topic = `/topic/programming-exercise/${exercise2.id}/test-cases`;
+    const exercise1Topic = `/topic/programming-exercises/${exercise1.id}/test-cases`;
+    const exercise2Topic = `/topic/programming-exercises/${exercise2.id}/test-cases`;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

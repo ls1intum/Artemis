@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
@@ -8,10 +8,11 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 })
 export class SubmissionResultStatusComponent {
     readonly ExerciseType = ExerciseType;
+    readonly ParticipationStatus = ParticipationStatus;
 
     /**
      * @property exercise Exercise to which the submission's participation belongs
-     * @property studentParticipation Participation to which the submission belongs (optional, used for updating-result)
+     * @property studentParticipation Participation to which the submission belongs
      * @property updatingResultClass Class(es) that will be applied to the updating-result component
      * @property showBadge Flag whether a colored badge (saying e.g. "Graded") should be shown
      * @property showUngradedResults Flag whether ungraded results should also be shown
@@ -21,15 +22,8 @@ export class SubmissionResultStatusComponent {
     @Input() studentParticipation?: StudentParticipation;
     @Input() updatingResultClass: string;
     @Input() showBadge = false;
-    @Input() showUngradedResults: boolean;
+    @Input() showUngradedResults = false;
+    @Input() showIcon = true;
     @Input() short = false;
     @Input() triggerLastGraded = true;
-
-    /**
-     * If a student participation is supplied explicitly, use that one.
-     * Otherwise, use the first student participation on the exercise.
-     */
-    get participation() {
-        return this.studentParticipation ?? this.exercise.studentParticipations?.first();
-    }
 }

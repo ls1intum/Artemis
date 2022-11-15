@@ -7,7 +7,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ExerciseType, getCourseFromExercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -32,7 +32,7 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { getLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
+import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
@@ -154,6 +154,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 .pipe(
                     tap({
                         next: (submission: ProgrammingSubmission) => {
+                            if (!submission) {
+                                // there are no unassessed submission, nothing we have to worry about
+                                return;
+                            }
+
                             this.handleReceivedSubmission(submission);
                             if (submissionId === 'new') {
                                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -197,7 +202,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private loadRandomSubmission(exerciseId: number): Observable<ProgrammingSubmission> {
-        return this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound);
+        return this.programmingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound);
     }
 
     private loadSubmission(submissionId: number): Observable<ProgrammingSubmission> {
@@ -238,8 +243,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.participationCouldNotBeFetched = true;
         if (error?.error?.errorKey === 'lockedSubmissionsLimitReached') {
             this.lockLimitReached = true;
-        } else if (error?.error?.status === 404) {
-            // there are no unassessed submission, nothing we have to worry about
         } else if (error?.error) {
             this.onError(error?.error?.detail || 'Not Found');
         }
@@ -340,8 +343,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     nextSubmission() {
         this.loadingParticipation = true;
         this.submission = undefined;
-        this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe({
+        this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe({
             next: (response: ProgrammingSubmission) => {
+                // there are no unassessed submission, nothing we have to worry about
+                if (!response) {
+                    return;
+                }
+
                 this.loadingParticipation = false;
 
                 // if override set, skip navigation
@@ -365,11 +373,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
             },
             error: (error: HttpErrorResponse) => {
-                // there are no unassessed submission, nothing we have to worry about
-                if (error.status === 404) {
-                    return;
-                }
-
                 this.loadingParticipation = false;
                 if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     // the lock limit is reached

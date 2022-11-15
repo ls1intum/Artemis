@@ -96,6 +96,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.student.login = :#{#username}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            """)
+    Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.student.login = :#{#username}
+                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
                 AND p.testRun = :#{#testRun}
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId, @Param("username") String username,
@@ -170,7 +179,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
      *
      * @param exerciseId Exercise id.
-     * @param testRun flag that determines if the found participations should be testRuns or not
      * @return participations for exercise.
      */
     @Query("""
@@ -178,12 +186,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.results r
             LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :#{#exerciseId}
-                AND p.testRun = :#{#testRun}
-                AND (r.id = (
-                    SELECT max(id) FROM p.results)
+                AND (r.id = (SELECT max(id) FROM p.results)
                     OR r IS NULL)
             """)
-    Set<StudentParticipation> findByExerciseIdAndTestRunWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("testRun") boolean testRun);
+    Set<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -384,13 +390,14 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH r.feedbacks
             WHERE p.exercise.id = :#{#exerciseId}
             AND (p.individualDueDate IS NULL OR p.individualDueDate <= :#{#now})
+            AND p.testRun = false
             AND NOT EXISTS
                 (SELECT prs FROM p.results prs
                     WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
                     AND s.submitted = true
                     AND s.id = (SELECT max(id) FROM p.submissions)
             """)
-    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDate(@Param("exerciseId") Long exerciseId,
+    List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
             @Param("now") ZonedDateTime now);
 
     @Query("""
@@ -571,18 +578,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(@Param("studentId") Long studentId,
             @Param("exercises") List<Exercise> exercises);
-
-    @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results r
-            WHERE p.testRun = FALSE
-            AND p.initializationDate = :#{#initializationDate}
-                AND p.student.id = :#{#studentId}
-                AND p.exercise in :#{#exercises}
-            """)
-    List<StudentParticipation> findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
-            @Param("exercises") List<Exercise> exercises, @Param("initializationDate") ZonedDateTime initializationDate);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -810,18 +805,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     }
 
     /**
-     * Gets all participation for the given studentExam for a test exam with their submissions and result.
-     * As multiple participations for a test exam can exist, the link is established with studentExam.startedDate <-> participation.InitializationDate
-     *
-     * @param studentExam studentExam with exercises loaded
-     * @return student's participations with submissions and results.
-     */
-    default List<StudentParticipation> findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(StudentExam studentExam) {
-        return findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises(),
-                studentExam.getStartedDate());
-    }
-
-    /**
      * Get a mapping of participation ids to the number of submission for each participation.
      *
      * @param exerciseId the id of the exercise for which to consider participations
@@ -857,18 +840,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT COUNT(p) FROM StudentParticipation p
                 LEFT JOIN p.exercise exercise WHERE exercise.id = :#{#exerciseId}
-            AND p.testRun = false
+            AND p.testRun = :#{#testRun}
             GROUP BY exercise.id
             """)
-    Long countParticipationsIgnoreTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
-
-    @Query("""
-            SELECT COUNT(p) FROM StudentParticipation p
-                LEFT JOIN p.exercise exercise WHERE exercise.id = :#{#exerciseId}
-            AND p.testRun = true
-            GROUP BY exercise.id
-            """)
-    Long countParticipationsOnlyTestRunsByExerciseId(@Param("exerciseId") Long exerciseId);
+    Long countParticipationsByExerciseIdAndTestRun(@Param("exerciseId") Long exerciseId, @Param("testRun") boolean testRun);
 
     /**
      * Adds the transient property numberOfParticipations for each exercise to
@@ -878,7 +853,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      */
     default void addNumberOfExamExerciseParticipations(ExerciseGroup exerciseGroup) {
         exerciseGroup.getExercises().forEach(exercise -> {
-            Long numberOfParticipations = countParticipationsIgnoreTestRunsByExerciseId(exercise.getId());
+            Long numberOfParticipations = countParticipationsByExerciseIdAndTestRun(exercise.getId(), false);
             // avoid setting to null in case not participations exist
             exercise.setNumberOfParticipations((numberOfParticipations != null) ? numberOfParticipations : 0);
         });
@@ -919,7 +894,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @param exercise - the exercise for which we check if test runs exist
      */
     default void checkTestRunsExist(Exercise exercise) {
-        Long containsTestRunParticipations = countParticipationsOnlyTestRunsByExerciseId(exercise.getId());
+        Long containsTestRunParticipations = countParticipationsByExerciseIdAndTestRun(exercise.getId(), true);
         if (containsTestRunParticipations != null && containsTestRunParticipations > 0) {
             exercise.setTestRunParticipationsExist(Boolean.TRUE);
         }

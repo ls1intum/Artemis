@@ -13,7 +13,7 @@
     </h2>
 </div>
 <jhi-exam-information *ngIf="studentExam?.exam" [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-information>
-<div class="mb-4 container text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart()">
+<div class="mb-4 container text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun">
     <div class="row justify-content-center">
         <div class="alert alert-success col-12 col-lg-6" role="alert">
             {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
@@ -72,8 +72,8 @@
                 >
             </a>
             <!-- prettier-ignore -->
-            <h5>{{ exercise.title }} [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}
-                <span
+            <h5>{{ exercise.title }}
+                [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
                     *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
                 <jhi-included-in-score-badge
                     *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"

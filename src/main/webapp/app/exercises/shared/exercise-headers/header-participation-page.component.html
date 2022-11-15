@@ -22,7 +22,7 @@
                     </td>
                     <td>
                         <span>
-                            <ng-container *ngIf="achievedPoints">
+                            <ng-container *ngIf="achievedPoints !== undefined">
                                 {{ achievedPoints + ('artemisApp.courseOverview.exerciseDetails.of' | artemisTranslate) }}
                             </ng-container>
                             {{ exercise.maxPoints }}

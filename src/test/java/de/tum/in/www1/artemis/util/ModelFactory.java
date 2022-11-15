@@ -6,8 +6,10 @@ import static org.assertj.core.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
@@ -32,6 +34,8 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -565,6 +569,17 @@ public class ModelFactory {
         course.setPresentationScore(2);
         course.setAccuracyOfScores(1);
         return course;
+    }
+
+    public static OnlineCourseConfiguration generateOnlineCourseConfiguration(Course course, String key, String secret, String userPrefix, String originalUrl) {
+        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        onlineCourseConfiguration.setCourse(course);
+        onlineCourseConfiguration.setLtiKey(key);
+        onlineCourseConfiguration.setLtiSecret(secret);
+        onlineCourseConfiguration.setUserPrefix(userPrefix);
+        onlineCourseConfiguration.setOriginalUrl(originalUrl);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        return onlineCourseConfiguration;
     }
 
     /**
@@ -1302,6 +1317,42 @@ public class ModelFactory {
         organization.setLogoUrl(logoUrl);
         organization.setEmailPattern(emailPattern);
         return organization;
+    }
+
+    /**
+     * Generates an example tutorial group
+     *
+     * @param title                 of tutorial group
+     * @param additionalInformation of tutorial group
+     * @param capacity              of tutorial group
+     * @param isOnline              of tutorial group
+     * @param language              of tutorial group
+     * @param campus                of tutorial group
+     * @return example tutorial gorup
+     */
+    public static TutorialGroup generateTutorialGroup(String title, String additionalInformation, Integer capacity, Boolean isOnline, Language language, String campus) {
+        TutorialGroup tutorialGroup = new TutorialGroup();
+        tutorialGroup.setTitle(title);
+        tutorialGroup.setAdditionalInformation(additionalInformation);
+        tutorialGroup.setCapacity(capacity);
+        tutorialGroup.setIsOnline(isOnline);
+        tutorialGroup.setLanguage(language);
+        tutorialGroup.setCampus(campus);
+        return tutorialGroup;
+    }
+
+    /**
+     * Generates an example tutorial group configuration
+     *
+     * @param start of configuration
+     * @param end   of configuration
+     * @return example configuration
+     */
+    public static TutorialGroupsConfiguration generateTutorialGroupsConfiguration(LocalDate start, LocalDate end) {
+        TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
+        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(start.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(end.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        return tutorialGroupsConfiguration;
     }
 
     /**

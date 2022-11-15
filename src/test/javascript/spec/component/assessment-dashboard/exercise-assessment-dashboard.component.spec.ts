@@ -1,7 +1,7 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
@@ -294,17 +294,17 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 comp.exerciseId = modelingExercise.id!;
 
-                modelingSubmissionStubWithoutAssessment = jest.spyOn(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
-                modelingSubmissionStubWithAssessment = jest.spyOn(modelingSubmissionService, 'getModelingSubmissionsForExerciseByCorrectionRound');
+                modelingSubmissionStubWithoutAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment');
+                modelingSubmissionStubWithAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissions');
 
-                textSubmissionStubWithoutAssessment = jest.spyOn(textSubmissionService, 'getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment');
-                textSubmissionStubWithAssessment = jest.spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound');
+                textSubmissionStubWithoutAssessment = jest.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment');
+                textSubmissionStubWithAssessment = jest.spyOn(textSubmissionService, 'getSubmissions');
 
-                fileUploadSubmissionStubWithAssessment = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
-                fileUploadSubmissionStubWithoutAssessment = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment');
+                fileUploadSubmissionStubWithoutAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment');
+                fileUploadSubmissionStubWithAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
 
-                programmingSubmissionStubWithoutAssessment = jest.spyOn(programmingSubmissionService, 'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
-                programmingSubmissionStubWithAssessment = jest.spyOn(programmingSubmissionService, 'getProgrammingSubmissionsForExerciseByCorrectionRound');
+                programmingSubmissionStubWithoutAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment');
+                programmingSubmissionStubWithAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissions');
 
                 textSubmissionStubWithoutAssessment.mockReturnValue(of(textSubmission));
                 textSubmissionStubWithAssessment.mockReturnValue(of(textSubmissionAssessed));
@@ -396,10 +396,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)).toEqual(modelingSubmission);
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toBeUndefined();
+        expect(comp.unassessedSubmissionByRound?.get(0)).toEqual(modelingSubmission);
+        expect(comp.unassessedSubmissionByRound?.get(0)?.latestResult).toBeUndefined();
         expect(comp.submissionLockLimitReached).toBeFalse();
-        expect(comp.submissionsByCorrectionRound?.get(0)).toHaveLength(0);
+        expect(comp.assessedSubmissionsByRound?.get(0)).toHaveLength(0);
     });
 
     it('should not set unassessedSubmission if lock limit is reached', () => {
@@ -412,9 +412,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBeUndefined();
+        expect(comp.unassessedSubmissionByRound?.get(1)).toBeUndefined();
         expect(comp.submissionLockLimitReached).toBeTrue();
-        expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
+        expect(comp.assessedSubmissionsByRound?.get(1)).toHaveLength(0);
     });
 
     it('should handle generic error', () => {
@@ -446,16 +446,16 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).toBe(8);
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).toBe(2);
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).toBe(7);
-        expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
+        expect(comp.assessedSubmissionsByRound?.get(1)).toHaveLength(0);
     });
 
     it('should  set assessed Submission and latest result', () => {
         comp.loadAll();
 
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
-        expect(comp.submissionsByCorrectionRound?.get(1)![0]).toEqual(modelingSubmissionAssessed);
-        expect(comp.submissionsByCorrectionRound?.get(1)![0]?.participation!.submissions![0]).toEqual(comp.submissionsByCorrectionRound?.get(1)![0]);
-        expect(comp.submissionsByCorrectionRound?.get(1)![0]?.latestResult).toEqual(result2);
+        expect(comp.assessedSubmissionsByRound?.get(1)![0]).toEqual(modelingSubmissionAssessed);
+        expect(comp.assessedSubmissionsByRound?.get(1)![0]?.participation!.submissions![0]).toEqual(comp.assessedSubmissionsByRound?.get(1)![0]);
+        expect(comp.assessedSubmissionsByRound?.get(1)![0]?.latestResult).toEqual(result2);
     });
 
     it('should set exam and stats properties', () => {
@@ -587,7 +587,13 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
 
         function initComponent() {
-            comp.exercise = { type: fakeExerciseType, numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false };
+            comp.exercise = {
+                allowManualFeedbackRequests: false,
+                type: fakeExerciseType,
+                numberOfAssessmentsOfCorrectionRounds: [],
+                studentAssignedTeamIdComputed: false,
+                secondCorrectionEnabled: false,
+            };
             comp.courseId = fakeCourseId;
             comp.exerciseId = fakeExerciseId;
             comp.examId = fakeExamId;

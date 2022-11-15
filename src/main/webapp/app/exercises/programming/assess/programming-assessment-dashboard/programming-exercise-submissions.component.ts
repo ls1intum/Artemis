@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { Result } from 'app/entities/result.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { Submission, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -101,7 +101,7 @@ export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentD
 
     private getSubmissions(): void {
         this.programmingSubmissionService
-            .getProgrammingSubmissionsForExerciseByCorrectionRound(this.exercise.id!, { submittedOnly: true })
+            .getSubmissions(this.exercise.id!, { submittedOnly: true })
             .pipe(
                 map((response: HttpResponse<ProgrammingSubmission[]>) =>
                     response.body!.map((submission: ProgrammingSubmission) => {
