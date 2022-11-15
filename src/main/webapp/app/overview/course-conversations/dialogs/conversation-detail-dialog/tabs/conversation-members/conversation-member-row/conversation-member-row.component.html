@@ -18,7 +18,7 @@
             <fa-icon [icon]="faEllipsis" size="xs"></fa-icon>
         </button>
         <div ngbDropdownMenu>
-            <button ngbDropdownItem *ngIf="canBeDeleted" class="text-danger" (click)="openRemoveUserDialog($event)">
+            <button ngbDropdownItem *ngIf="canBeDeleted" class="text-danger" (click)="openRemoveFromConversationDialog($event)">
                 {{ 'artemisApp.actions.removeUser' | artemisTranslate }}
             </button>
             <button ngbDropdownItem *ngIf="canBeGrantedChannelAdminRights" class="text-danger" (click)="openGrantChannelAdminRightsDialog($event)">

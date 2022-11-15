@@ -5,6 +5,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
     {
@@ -12,6 +13,7 @@ const routes: Routes = [
         pathMatch: 'full',
         data: {
             pageTitle: 'artemisApp.metis.communication.label',
+            authorities: [Authority.USER],
         },
         component: CourseDiscussionComponent,
     },

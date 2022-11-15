@@ -14,4 +14,6 @@ public final class ConversationSettings {
     public static final Integer MAX_ONE_TO_ONE_CHAT_PARTICIPANTS = 2;
 
     public static final Integer MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE = 500;
+
+    public static final Integer MAX_REGISTRATIONS_TO_CHANNEL_AT_ONCE = 100;
 }

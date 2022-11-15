@@ -90,6 +90,55 @@ public class ConversationService {
         return conversationRepository.save(conversation);
     }
 
+    public void registerUsersToConversation(Course course, Set<User> usersToRegister, Conversation conversation, Optional<Integer> memberLimit) {
+        var existingParticipants = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(conversation.getId(),
+                usersToRegister.stream().map(User::getId).collect(Collectors.toSet()));
+        var usersToRegisterWithoutExistingParticipants = usersToRegister.stream()
+                .filter(user -> existingParticipants.stream().noneMatch(participant -> participant.getUser().getId().equals(user.getId()))).collect(Collectors.toSet());
+
+        if (memberLimit.isPresent()) {
+            var currentMemberCount = conversationParticipantRepository.countByConversationId(conversation.getId());
+            if (currentMemberCount + usersToRegisterWithoutExistingParticipants.size() > memberLimit.get()) {
+                throw new IllegalArgumentException("The member limit of the conversation would be exceeded");
+            }
+        }
+        Set<ConversationParticipant> newConversationParticipants = new HashSet<>();
+        for (User user : usersToRegisterWithoutExistingParticipants) {
+            ConversationParticipant conversationParticipant = new ConversationParticipant();
+            conversationParticipant.setUser(user);
+            conversationParticipant.setConversation(conversation);
+            if (conversation instanceof Channel) {
+                conversationParticipant.setIsAdmin(false); // special case just for channels
+            }
+            newConversationParticipants.add(conversationParticipant);
+        }
+        conversationParticipantRepository.saveAll(newConversationParticipants);
+
+        broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, usersToRegisterWithoutExistingParticipants);
+        notifyConversationMembersAboutUpdate(conversation);
+    }
+
+    public void notifyConversationMembersAboutUpdate(Conversation conversation) {
+        var usersToContact = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+                .collect(Collectors.toSet());
+        broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, conversation, usersToContact);
+    }
+
+    public void deregisterUsersFromAConversation(Course course, Set<User> usersToDeregister, Conversation conversation) {
+        var participantsToRemove = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(conversation.getId(),
+                usersToDeregister.stream().map(User::getId).collect(Collectors.toSet()));
+        var usersWithExistingParticipants = usersToDeregister.stream()
+                .filter(user -> participantsToRemove.stream().anyMatch(participant -> participant.getUser().getId().equals(user.getId()))).collect(Collectors.toSet());
+
+        // you are not allowed to deregister the creator
+        if (conversation.getCreator() != null && conversation.getCreator().getId().equals(usersWithExistingParticipants.stream().findFirst().get().getId())) {
+            throw new IllegalArgumentException("The creator of the conversation cannot be deregistered");
+        }
+        conversationParticipantRepository.deleteAll(participantsToRemove);
+        broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersWithExistingParticipants);
+        notifyConversationMembersAboutUpdate(conversation);
+    }
+
     @Transactional // ok because of delete
     public void deleteConversation(Conversation conversation) {
         var usersToMessage = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)

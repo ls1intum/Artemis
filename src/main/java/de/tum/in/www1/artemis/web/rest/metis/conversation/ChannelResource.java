@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
+import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_REGISTRATIONS_TO_CHANNEL_AT_ONCE;
 import static de.tum.in.www1.artemis.service.metis.conversation.ChannelService.CHANNEL_ENTITY_NAME;
 
 import java.net.URI;
@@ -175,7 +176,7 @@ public class ChannelResource {
         if (userLogins == null || userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", CHANNEL_ENTITY_NAME, "userLoginsEmpty");
         }
-        if (userLogins.size() > 100) {
+        if (userLogins.size() > MAX_REGISTRATIONS_TO_CHANNEL_AT_ONCE) {
             throw new BadRequestAlertException("Too many user logins provided.", CHANNEL_ENTITY_NAME, "userLoginsTooMany");
         }
         log.debug("REST request to register {} users to channel : {}", userLogins.size(), channelId);
@@ -186,9 +187,9 @@ public class ChannelResource {
             throw new BadRequestAlertException("Users can not be registered to an archived channel.", CHANNEL_ENTITY_NAME, "channelIsArchived");
         }
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        channelAuthorizationService.isAllowedToRegisterUsersToChannel(course, channelFromDatabase, userLogins, requestingUser);
+        channelAuthorizationService.isAllowedToRegisterUsersToChannel(channelFromDatabase, userLogins, requestingUser);
         var usersToRegister = conversationService.findUsersInDatabase(userLogins);
-        channelService.registerUsersToChannel(course, usersToRegister, channelFromDatabase);
+        conversationService.registerUsersToConversation(course, usersToRegister, channelFromDatabase, Optional.empty());
         return ResponseEntity.noContent().build();
     }
 
@@ -207,9 +208,9 @@ public class ChannelResource {
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
 
-        channelAuthorizationService.isAllowedToDeregisterUsersFromChannel(course, channelFromDatabase, userLogins, requestingUser);
+        channelAuthorizationService.isAllowedToDeregisterUsersFromChannel(channelFromDatabase, userLogins, requestingUser);
         var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);
-        channelService.deregisterUsersFromChannel(course, usersToDeRegister, channelFromDatabase);
+        conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, channelFromDatabase);
         return ResponseEntity.noContent().build();
     }
 

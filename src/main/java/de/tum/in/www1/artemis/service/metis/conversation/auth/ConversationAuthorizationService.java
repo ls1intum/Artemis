@@ -7,16 +7,21 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 @Service
 public abstract class ConversationAuthorizationService {
 
+    protected final ConversationParticipantRepository conversationParticipantRepository;
+
     protected final UserRepository userRepository;
 
     protected final AuthorizationCheckService authorizationCheckService;
 
-    protected ConversationAuthorizationService(UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
+    protected ConversationAuthorizationService(ConversationParticipantRepository conversationParticipantRepository, UserRepository userRepository,
+            AuthorizationCheckService authorizationCheckService) {
+        this.conversationParticipantRepository = conversationParticipantRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
     }

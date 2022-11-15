@@ -33,10 +33,16 @@
                 "addUsersToChannel": "Benutzer hinzufügen zu: "
             },
             "removeUserPrivateChannel": {
-                "question": "{{ user }} aus privatem Kanal {{ channel }} entfernen ?",
+                "title": "Benutzer aus dem privaten Kanal entfernen",
+                "question": "{{ userName }} aus privatem Kanal {{ channelName }} entfernen ?",
                 "warning": "Dieses Mitglied wird nicht mehr auf diesen Kanel zugreifen können, es sei denn, er/sie wird erneut eingeladen.",
-                "remove": "Benutzer entfernen",
-                "cancel": "Abbrechen"
+                "remove": "Benutzer entfernen"
+            },
+            "removeUserGroupChat": {
+                "title": "Benutzer aus dem Gruppenchat entfernen",
+                "question": "{{ userName }} aus dem Gruppenchat entfernen ?",
+                "warning": "Dieses Mitglied wird nicht mehr auf diesen Gruppenchat zugreifen können, es sei denn, er/sie wird erneut eingeladen.",
+                "remove": "Benutzer entfernen"
             },
             "addUserForm": {
                 "addUsersButton": "Hinzufügen",

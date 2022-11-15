@@ -20,14 +20,11 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Service
 public class ChannelAuthorizationService extends ConversationAuthorizationService {
 
-    private final ConversationParticipantRepository conversationParticipantRepository;
-
     private final ChannelRepository channelRepository;
 
     public ChannelAuthorizationService(UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
             ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository) {
-        super(userRepository, authorizationCheckService);
-        this.conversationParticipantRepository = conversationParticipantRepository;
+        super(conversationParticipantRepository, userRepository, authorizationCheckService);
         this.channelRepository = channelRepository;
     }
 
@@ -64,7 +61,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         return isChannelAdmin(channelId, user.getId()) || authorizationCheckService.isAtLeastInstructorInCourse(channel.get().getCourse(), user);
     }
 
-    public void isAllowedToRegisterUsersToChannel(@NotNull Course course, @NotNull Channel channel, List<String> userLogins, @Nullable User user) {
+    public void isAllowedToRegisterUsersToChannel(@NotNull Channel channel, List<String> userLogins, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (hasChannelAdminRights(channel.getId(), user)) {
             return;
@@ -92,7 +89,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         }
     }
 
-    public void isAllowedToDeregisterUsersFromChannel(@NotNull Course course, @NotNull Channel channel, List<String> userLogins, @Nullable User user) {
+    public void isAllowedToDeregisterUsersFromChannel(@NotNull Channel channel, List<String> userLogins, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (hasChannelAdminRights(channel.getId(), user)) {
             return;

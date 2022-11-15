@@ -13,15 +13,13 @@ export function canAddUsersToConversation(conversation: ConversationDto): boolea
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
-    }
-    if (isGroupChatDto(conversation)) {
+    } else if (isGroupChatDto(conversation)) {
         return groupChatCheck(conversation);
-    }
-    if (isOneToOneChatDto(conversation)) {
+    } else if (isOneToOneChatDto(conversation)) {
         return false;
+    } else {
+        throw new Error('Conversation type not supported');
     }
-    console.error('Error: Conversation type not supported.');
-    return false;
 }
 
 export function canGrantChannelAdminRights(channel: ChannelDTO): boolean {
@@ -36,20 +34,18 @@ export function canRemoveUsersFromConversation(conversation: ConversationDto): b
     if (!conversation) {
         return false;
     }
-    const groupChatCheck = (groupChat: GroupChatDto): boolean => false;
+    const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
     const channelCheck = (channel: ChannelDTO): boolean => !!channel.hasChannelAdminRights && !channel?.isArchived && !channel?.isPublic;
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
-    }
-    if (isGroupChatDto(conversation)) {
+    } else if (isGroupChatDto(conversation)) {
         return groupChatCheck(conversation);
-    }
-    if (isOneToOneChatDto(conversation)) {
+    } else if (isOneToOneChatDto(conversation)) {
         return false;
+    } else {
+        throw new Error('Conversation type not supported');
     }
-    console.error('Error: Conversation type not supported.');
-    return false;
 }
 
 export function canLeaveConversation(conversation: ConversationDto): boolean {

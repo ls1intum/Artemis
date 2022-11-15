@@ -5,7 +5,6 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { from } from 'rxjs';
-import { PrivateChannelRemoveUserDialog } from 'app/overview/course-conversations/dialogs/private-channel-remove-user-dialog/private-channel-remove-user-dialog.component';
 import { Course } from 'app/entities/course.model';
 import { canGrantChannelAdminRights, canRemoveUsersFromConversation, canRevokeChannelAdminRights } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
@@ -18,6 +17,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { getAsGroupChat, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 
 @Component({
     selector: '[jhi-conversation-member-row]',
@@ -37,10 +38,12 @@ export class ConversationMemberRowComponent implements OnInit {
     @Input()
     user: ConversationUserDTO;
 
-    userId: number;
+    idOfLoggedInUser: number;
 
     @HostBinding('class.active')
     isCurrentUser = false;
+
+    isCreator = false;
 
     canBeDeleted = false;
 
@@ -63,19 +66,24 @@ export class ConversationMemberRowComponent implements OnInit {
         private modalService: NgbModal,
         private translateService: TranslateService,
         private channelService: ChannelService,
+        private groupChatService: GroupChatService,
         private alertService: AlertService,
     ) {}
 
     ngOnInit(): void {
         if (this.user && this.activeConversation) {
-            this.accountService.identity().then((user: User) => {
-                this.userId = user.id!;
-                if (this.user.id === this.userId) {
+            this.accountService.identity().then((loggedInUser: User) => {
+                this.idOfLoggedInUser = loggedInUser.id!;
+                if (this.user.id === this.idOfLoggedInUser) {
                     this.isCurrentUser = true;
                 }
+                if (this.user.id === this.activeConversation.creator?.id) {
+                    this.isCreator = true;
+                }
+
                 this.userLabel = getUserLabel(this.user);
                 this.setUserAuthorityIconAndTooltip();
-                this.canBeDeleted = !this.isCurrentUser && canRemoveUsersFromConversation(this.activeConversation);
+                this.canBeDeleted = !this.isCurrentUser && !this.isCreator && canRemoveUsersFromConversation(this.activeConversation);
 
                 if (isChannelDto(this.activeConversation)) {
                     this.canBeGrantedChannelAdminRights = canGrantChannelAdminRights(this.activeConversation) && !this.user.isChannelAdmin;
@@ -166,15 +174,90 @@ export class ConversationMemberRowComponent implements OnInit {
         });
     }
 
-    openRemoveUserDialog(event: MouseEvent) {
+    openRemoveFromConversationDialog(event: MouseEvent) {
+        if (isChannelDto(this.activeConversation)) {
+            this.openRemoveFromPrivateChannelDialog(event);
+        } else if (isGroupChatDto(this.activeConversation)) {
+            this.openRemoveFromGroupChatDialog(event);
+        } else {
+            throw new Error('Unsupported conversation type');
+        }
+    }
+
+    openRemoveFromPrivateChannelDialog(event: MouseEvent) {
+        const channel = getAsChannelDto(this.activeConversation);
+        if (!channel) {
+            return;
+        }
+        const keys = {
+            titleKey: 'artemisApp.messages.removeUserPrivateChannel.title',
+            questionKey: 'artemisApp.messages.removeUserPrivateChannel.question',
+            descriptionKey: 'artemisApp.messages.removeUserPrivateChannel.warning',
+            confirmButtonKey: 'artemisApp.messages.removeUserPrivateChannel.remove',
+        };
+
+        const translationParams = {
+            userName: this.userLabel,
+            channelName: channel.name,
+        };
+
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(PrivateChannelRemoveUserDialog, { size: 'lg', scrollable: false, backdrop: 'static' });
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.userToRemove = this.user;
-        modalRef.componentInstance.activeConversation = this.activeConversation;
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialog, {
+            size: 'lg',
+            scrollable: false,
+            backdrop: 'static',
+        });
+        modalRef.componentInstance.translationParameters = translationParams;
+        modalRef.componentInstance.translationKeys = keys;
+        modalRef.componentInstance.canBeUndone = true;
+        modalRef.componentInstance.isDangerousAction = true;
         modalRef.componentInstance.initialize();
+
         from(modalRef.result).subscribe(() => {
-            this.changePerformed.emit();
+            this.channelService.deregisterUsersFromChannel(this.course.id!, this.activeConversation.id!, [this.user.login!]).subscribe({
+                next: () => {
+                    this.changePerformed.emit();
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+        });
+    }
+
+    openRemoveFromGroupChatDialog(event: MouseEvent) {
+        const groupChat = getAsGroupChat(this.activeConversation);
+        if (!groupChat) {
+            return;
+        }
+        const keys = {
+            titleKey: 'artemisApp.messages.removeUserGroupChat.title',
+            questionKey: 'artemisApp.messages.removeUserGroupChat.question',
+            descriptionKey: 'artemisApp.messages.removeUserGroupChat.warning',
+            confirmButtonKey: 'artemisApp.messages.removeUserGroupChat.remove',
+        };
+
+        const translationParams = {
+            userName: this.userLabel,
+        };
+
+        event.stopPropagation();
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialog, {
+            size: 'lg',
+            scrollable: false,
+            backdrop: 'static',
+        });
+        modalRef.componentInstance.translationParameters = translationParams;
+        modalRef.componentInstance.translationKeys = keys;
+        modalRef.componentInstance.canBeUndone = true;
+        modalRef.componentInstance.isDangerousAction = true;
+        modalRef.componentInstance.initialize();
+
+        from(modalRef.result).subscribe(() => {
+            this.groupChatService.removeUsersFromGroupChat(this.course.id!, this.activeConversation.id!, [this.user.login!]).subscribe({
+                next: () => {
+                    this.changePerformed.emit();
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
         });
     }
 

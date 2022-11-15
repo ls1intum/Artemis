@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -20,8 +21,9 @@ public class OneToOneChatAuthorizationService extends ConversationAuthorizationS
 
     private final OneToOneChatRepository oneToOneChatRepository;
 
-    protected OneToOneChatAuthorizationService(UserRepository userRepository, AuthorizationCheckService authorizationCheckService, OneToOneChatRepository oneToOneChatRepository) {
-        super(userRepository, authorizationCheckService);
+    public OneToOneChatAuthorizationService(ConversationParticipantRepository conversationParticipantRepository, UserRepository userRepository,
+            AuthorizationCheckService authorizationCheckService, OneToOneChatRepository oneToOneChatRepository) {
+        super(conversationParticipantRepository, userRepository, authorizationCheckService);
         this.oneToOneChatRepository = oneToOneChatRepository;
     }
 

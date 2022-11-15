@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 @Service
 public class ChannelService {
@@ -45,36 +44,6 @@ public class ChannelService {
         this.conversationService = conversationService;
     }
 
-    public void registerUsersToChannel(Course course, Set<User> usersToRegister, Channel channel) {
-        var existingParticipants = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(channel.getId(),
-                usersToRegister.stream().map(User::getId).collect(Collectors.toSet()));
-        var usersToRegisterWithoutExistingParticipants = usersToRegister.stream()
-                .filter(user -> existingParticipants.stream().noneMatch(participant -> participant.getUser().getId().equals(user.getId()))).collect(Collectors.toSet());
-        Set<ConversationParticipant> newConversationParticipants = new HashSet<>();
-        for (User user : usersToRegisterWithoutExistingParticipants) {
-            ConversationParticipant conversationParticipant = new ConversationParticipant();
-            conversationParticipant.setUser(user);
-            conversationParticipant.setConversation(channel);
-            conversationParticipant.setIsAdmin(false);
-            newConversationParticipants.add(conversationParticipant);
-        }
-        conversationParticipantRepository.saveAll(newConversationParticipants);
-
-        conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, channel, usersToRegisterWithoutExistingParticipants);
-        notifyChannelMembersAboutUpdate(channel);
-    }
-
-    public void deregisterUsersFromChannel(Course course, Set<User> usersToDeregister, Channel channel) {
-        var participantsToRemove = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(channel.getId(),
-                usersToDeregister.stream().map(User::getId).collect(Collectors.toSet()));
-        var usersWithExistingParticipants = usersToDeregister.stream()
-                .filter(user -> participantsToRemove.stream().anyMatch(participant -> participant.getUser().getId().equals(user.getId()))).collect(Collectors.toSet());
-        conversationParticipantRepository.deleteAll(participantsToRemove);
-
-        conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, channel, usersWithExistingParticipants);
-        notifyChannelMembersAboutUpdate(channel);
-    }
-
     public Channel getChannelOrThrow(Long channelId) {
         return channelRepository.findById(channelId)
                 .orElseThrow(() -> new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound"));
@@ -87,7 +56,7 @@ public class ChannelService {
             conversationParticipant.setIsAdmin(true);
         }
         conversationParticipantRepository.saveAll(matchingParticipants);
-        notifyChannelMembersAboutUpdate(channel);
+        conversationService.notifyConversationMembersAboutUpdate(channel);
     }
 
     public void revokeChannelAdmin(Channel channel, Set<User> usersToRevokeChannelAdmin) {
@@ -97,7 +66,7 @@ public class ChannelService {
             conversationParticipant.setIsAdmin(false);
         }
         conversationParticipantRepository.saveAll(matchingParticipants);
-        notifyChannelMembersAboutUpdate(channel);
+        conversationService.notifyConversationMembersAboutUpdate(channel);
     }
 
     public List<Channel> getChannels(Long courseId) {
@@ -118,7 +87,7 @@ public class ChannelService {
         this.channelIsValidOrThrow(courseId, channel);
 
         var updatedChannel = channelRepository.save(channel);
-        notifyChannelMembersAboutUpdate(channel);
+        conversationService.notifyConversationMembersAboutUpdate(updatedChannel);
         return updatedChannel;
     }
 
@@ -176,7 +145,7 @@ public class ChannelService {
         }
         channel.setIsArchived(true);
         var updatedChannel = channelRepository.save(channel);
-        notifyChannelMembersAboutUpdate(updatedChannel);
+        conversationService.notifyConversationMembersAboutUpdate(updatedChannel);
     }
 
     public void unarchiveChannel(Long channelId) {
@@ -186,13 +155,7 @@ public class ChannelService {
         }
         channel.setIsArchived(false);
         var updatedChannel = channelRepository.save(channel);
-        notifyChannelMembersAboutUpdate(updatedChannel);
-    }
-
-    private void notifyChannelMembersAboutUpdate(Channel channel) {
-        var usersToContact = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
-                .collect(Collectors.toSet());
-        conversationService.broadcastOnConversationMembershipChannel(channel.getCourse(), MetisCrudAction.UPDATE, channel, usersToContact);
+        conversationService.notifyConversationMembersAboutUpdate(updatedChannel);
     }
 
     public void deleteChannel(Channel channel) {

@@ -11,10 +11,6 @@ export enum ConversationType {
     CHANNEL = 'channel',
     ONE_TO_ONE = 'oneToOneChat',
 }
-
-export const MAX_MEMBERS_IN_GROUP_CHAT = 10;
-export const MAX_MEMBERS_IN_ONE_TO_ONE_CHAT = 2;
-
 /**
  * Entity
  */

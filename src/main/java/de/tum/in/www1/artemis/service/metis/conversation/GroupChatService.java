@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class GroupChatService {
@@ -28,6 +29,11 @@ public class GroupChatService {
         this.userRepository = userRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.groupChatRepository = groupChatRepository;
+    }
+
+    public GroupChat getGroupChatOrThrow(Long groupChatId) {
+        return groupChatRepository.findById(groupChatId)
+                .orElseThrow(() -> new BadRequestAlertException("GroupChat with id " + groupChatId + " does not exist", GROUP_CHAT_ENTITY_NAME, "idnotfound"));
     }
 
     public GroupChat startGroupChat(Course course, Set<User> startingMembers) {

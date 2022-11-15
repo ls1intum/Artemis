@@ -23,7 +23,6 @@ import { ConversationMembers } from './dialogs/conversation-detail-dialog/tabs/c
 import { ConversationDetailDialogComponent } from './dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { ConversationInfoComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { ConversationMemberRowComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
-import { PrivateChannelRemoveUserDialog } from 'app/overview/course-conversations/dialogs/private-channel-remove-user-dialog/private-channel-remove-user-dialog.component';
 import { GenericUpdateTextPropertyDialog } from './dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { GenericConfirmationDialog } from './dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ConversationSettingsComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
@@ -70,7 +69,6 @@ const routes: Routes = [
         ConversationDetailDialogComponent,
         ConversationInfoComponent,
         ConversationMemberRowComponent,
-        PrivateChannelRemoveUserDialog,
         GenericUpdateTextPropertyDialog,
         GenericConfirmationDialog,
         ConversationSettingsComponent,
