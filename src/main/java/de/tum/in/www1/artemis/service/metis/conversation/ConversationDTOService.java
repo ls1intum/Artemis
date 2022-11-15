@@ -13,15 +13,13 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationUserDTO;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
 
 @Service
 public class ConversationDTOService {
@@ -45,6 +43,9 @@ public class ConversationDTOService {
         }
         if (conversation instanceof OneToOneChat oneToOneChat) {
             return convertOneToOneChatToDto(requestingUser, oneToOneChat);
+        }
+        if (conversation instanceof GroupChat groupChat) {
+            return convertGroupChatToDto(requestingUser, groupChat);
         }
         throw new IllegalArgumentException("Conversation type not supported");
     }
@@ -72,6 +73,19 @@ public class ConversationDTOService {
         oneToOneChatDTO.setIsCreator(oneToOneChat.getCreator().getId().equals(requestingUser.getId()));
         oneToOneChatDTO.setNumberOfMembers(conversationParticipants.size());
         return oneToOneChatDTO;
+    }
+
+    @NotNull
+    public GroupChatDTO convertGroupChatToDto(User requestingUser, GroupChat groupChat) {
+        var course = groupChat.getCourse();
+        Set<ConversationParticipant> conversationParticipants = getConversationParticipants(groupChat);
+        Set<ConversationUserDTO> chatParticipants = getChatParticipantDTOs(requestingUser, course, conversationParticipants);
+        var groupChatDTO = new GroupChatDTO(groupChat);
+        groupChatDTO.setIsMember(conversationParticipants.stream().anyMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(requestingUser.getId())));
+        groupChatDTO.setMembers(chatParticipants);
+        groupChatDTO.setIsCreator(groupChat.getCreator().getId().equals(requestingUser.getId()));
+        groupChatDTO.setNumberOfMembers(conversationParticipants.size());
+        return groupChatDTO;
     }
 
     @NotNull

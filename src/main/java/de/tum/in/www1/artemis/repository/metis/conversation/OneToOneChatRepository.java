@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
-import static de.tum.in.www1.artemis.service.metis.conversation.OneToOneChatService.ONE_TO_ONE_CHAT_ENTITY_NAME;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
@@ -53,8 +52,6 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
             """)
     Optional<OneToOneChat> findByIdWithConversationParticipantsAndUserGroups(@Param("oneToOneChatId") Long oneToOneChatId) throws EntityNotFoundException;
 
-    default OneToOneChat findByIdWithConversationParticipantsAndGroupsElseThrow(long oneToOneChatId) {
-        return this.findByIdWithConversationParticipantsAndUserGroups(oneToOneChatId).orElseThrow(() -> new EntityNotFoundException(ONE_TO_ONE_CHAT_ENTITY_NAME, oneToOneChatId));
-    }
+    Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
 
 }

@@ -75,7 +75,6 @@ public class OneToOneChatResource {
         var userB = chatMembers.get(1);
 
         var oneToOneChat = oneToOneChatService.startOneToOneChat(course, userA, userB);
-        return ResponseEntity.created(new URI("/api/channels/" + oneToOneChat.getId())).body((OneToOneChatDTO) conversationDTOService.convertToDTO(oneToOneChat, requestingUser));
+        return ResponseEntity.created(new URI("/api/one-to-one-chats/" + oneToOneChat.getId())).body(conversationDTOService.convertOneToOneChatToDto(requestingUser, oneToOneChat));
     }
-
 }

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
-import java.util.List;
+import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 
@@ -10,20 +10,18 @@ public class GroupChatDTO extends ConversationDTO {
         super(groupChat, "groupChat");
     }
 
-    // does not include the requesting user
-    public List<String> namesOfOtherMembers;
+    public Set<ConversationUserDTO> members;
 
-    public List<String> getNamesOfOtherMembers() {
-        return namesOfOtherMembers;
+    public Set<ConversationUserDTO> getMembers() {
+        return members;
     }
 
-    public void setNamesOfOtherMembers(List<String> namesOfOtherMembers) {
-        this.namesOfOtherMembers = namesOfOtherMembers;
+    public void setMembers(Set<ConversationUserDTO> members) {
+        this.members = members;
     }
 
     @Override
     public String toString() {
-        return "GroupChatDTO{" + "namesOfOtherMembers=" + (namesOfOtherMembers == null ? "" : namesOfOtherMembers.toString()) + "} " + super.toString();
+        return "GroupChatDTO{" + "members=" + members + "} " + super.toString();
     }
-
 }

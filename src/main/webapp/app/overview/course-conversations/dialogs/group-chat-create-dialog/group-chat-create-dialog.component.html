@@ -1,0 +1,32 @@
+<div *ngIf="isInitialized">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span> Start a group chat between you and a maximum of 9 other users </span>
+        </h4>
+        <button type="button" class="btn-close" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <form (ngSubmit)="onSubmit()" [formGroup]="form">
+            <jhi-course-users-selector
+                formControlName="selectedUsers"
+                [courseId]="course.id!"
+                [label]="'artemisApp.messages.addUserForm.addUserLabel' | artemisTranslate"
+            ></jhi-course-users-selector>
+            <div *ngIf="selectedUsersControl?.invalid && (selectedUsersControl?.dirty || selectedUsersControl?.touched)" class="alert alert-danger">
+                <div *ngIf="selectedUsersControl?.errors?.required">
+                    {{ 'artemisApp.messages.addUserForm.requiredError' | artemisTranslate }}
+                </div>
+                <div *ngIf="selectedUsersControl?.errors?.maxlength">
+                    {{ 'artemisApp.messages.addUserForm.maxError' | artemisTranslate: { max: 10 } }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 text-end">
+                    <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
+                        <span>{{ 'artemisApp.messages.addUserForm.addUsersButton' | artemisTranslate }}</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

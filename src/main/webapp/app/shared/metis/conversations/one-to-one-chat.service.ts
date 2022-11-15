@@ -11,9 +11,9 @@ export class OneToOneChatService {
 
     constructor(private http: HttpClient, private conversationService: ConversationService) {}
 
-    create(courseId: number, otherChatParticipantsLogins: [string, string]): Observable<HttpResponse<OneToOneChatDTO>> {
+    create(courseId: number, loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> {
         return this.http
-            .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/one-to-one-chats`, otherChatParticipantsLogins, { observe: 'response' })
+            .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/one-to-one-chats`, loginOfChatPartner, { observe: 'response' })
             .pipe(map(this.conversationService.convertDateFromServer));
     }
 }

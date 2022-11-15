@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
 import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_GROUP_CHATS_PER_USER_PER_COURSE;
-import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -11,24 +10,24 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 @Service
-public class OneToOneChatAuthorizationService extends ConversationAuthorizationService {
+public class GroupChatAuthorizationService extends ConversationAuthorizationService {
 
-    private final OneToOneChatRepository oneToOneChatRepository;
+    private final GroupChatRepository groupChatRepository;
 
-    protected OneToOneChatAuthorizationService(UserRepository userRepository, AuthorizationCheckService authorizationCheckService, OneToOneChatRepository oneToOneChatRepository) {
+    protected GroupChatAuthorizationService(UserRepository userRepository, AuthorizationCheckService authorizationCheckService, GroupChatRepository groupChatRepository) {
         super(userRepository, authorizationCheckService);
-        this.oneToOneChatRepository = oneToOneChatRepository;
+        this.groupChatRepository = groupChatRepository;
     }
 
-    public void isAllowedToCreateOneToOneChat(@NotNull Course course, @Nullable User user) {
+    public void isAllowedToCreateGroupChat(@NotNull Course course, @Nullable User user) {
         user = getUserIfNecessary(user);
-        var createdOneToOneChats = oneToOneChatRepository.countByCreatorIdAndCourseId(user.getId(), course.getId());
-        if (createdOneToOneChats >= MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE) {
+        var createdGroupChats = groupChatRepository.countByCreatorIdAndCourseId(user.getId(), course.getId());
+        if (createdGroupChats >= MAX_GROUP_CHATS_PER_USER_PER_COURSE) {
             throw new IllegalArgumentException("You can only create " + MAX_GROUP_CHATS_PER_USER_PER_COURSE + "group chats per course");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);

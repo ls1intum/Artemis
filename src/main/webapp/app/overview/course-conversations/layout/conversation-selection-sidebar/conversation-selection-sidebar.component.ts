@@ -16,6 +16,7 @@ import { canCreateChannel } from 'app/shared/metis/conversations/conversation-pe
 import { AccountService } from 'app/core/auth/account.service';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { isOneToOneChatDto, OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 
 @Component({
     selector: 'jhi-conversation-selection-sidebar',
@@ -31,6 +32,8 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     starredConversations: ConversationDto[] = [];
     channelConversations: ChannelDTO[] = [];
     oneToOneChats: OneToOneChatDTO[] = [];
+
+    groupChats: GroupChatDto[] = [];
 
     collapsed: boolean;
     isLoading = false;
@@ -87,6 +90,16 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 // newest messages at the top of the list
                 return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
             });
+        this.groupChats = this.allConversations
+            .filter((conversation) => isGroupChatDto(conversation))
+            .map((groupChatDto) => groupChatDto as GroupChatDto)
+            .sort((a, b) => {
+                // sort by last message date
+                const aLastMessageDate = a.lastMessageDate ? a.lastMessageDate : a.creationDate;
+                const bLastMessageDate = b.lastMessageDate ? b.lastMessageDate : b.creationDate;
+                // newest messages at the top of the list
+                return bLastMessageDate!.isAfter(aLastMessageDate!) ? 1 : -1;
+            });
     }
 
     ngAfterViewInit(): void {
@@ -128,22 +141,30 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             });
         });
     }
-
+    openCreateGroupChatDialog(event: MouseEvent) {
+        event.stopPropagation();
+        const modalRef: NgbModalRef = this.modalService.open(GroupChatCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.initialize();
+        from(modalRef.result).subscribe((chatPartners: UserPublicInfoDTO[]) => {
+            this.metisConversationService.createGroupChat(chatPartners?.map((partner) => partner.login!)).subscribe({
+                complete: () => {
+                    this.metisConversationService.forceRefresh().subscribe(() => {});
+                },
+            });
+        });
+    }
     openCreateOneToOneChatDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(OneToOneChatCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe((userToChatWith: UserPublicInfoDTO | undefined) => {
-            if (userToChatWith) {
-                this.accountService.identity().then((user: User) => {
-                    const loginOfCurrentUser = user!.login!;
-                    const loginOfOtherUser = userToChatWith.login!;
-                    this.metisConversationService.createOneToOneChat([loginOfCurrentUser, loginOfOtherUser]).subscribe({
-                        complete: () => {
-                            this.metisConversationService.forceRefresh().subscribe(() => {});
-                        },
-                    });
+        from(modalRef.result).subscribe((chatPartner: UserPublicInfoDTO) => {
+            if (chatPartner?.login) {
+                this.metisConversationService.createOneToOneChat(chatPartner.login).subscribe({
+                    complete: () => {
+                        this.metisConversationService.forceRefresh().subscribe(() => {});
+                    },
                 });
             }
         });

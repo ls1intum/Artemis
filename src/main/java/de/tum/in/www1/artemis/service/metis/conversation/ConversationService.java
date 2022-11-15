@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -49,9 +50,11 @@ public class ConversationService {
 
     private final PostRepository postRepository;
 
+    private final GroupChatRepository groupChatRepository;
+
     public ConversationService(ConversationDTOService conversationDTOService, UserRepository userRepository, ChannelRepository channelRepository,
             ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate,
-            OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository) {
+            OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository, GroupChatRepository groupChatRepository) {
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.channelRepository = channelRepository;
@@ -60,6 +63,7 @@ public class ConversationService {
         this.messagingTemplate = messagingTemplate;
         this.oneToOneChatRepository = oneToOneChatRepository;
         this.postRepository = postRepository;
+        this.groupChatRepository = groupChatRepository;
     }
 
     public Conversation getConversationById(Long conversationId) {
@@ -73,9 +77,12 @@ public class ConversationService {
     public List<ConversationDTO> getConversationsOfUser(Long courseId, User requestingUser) {
         var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
         var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
+        var groupChatsOfUser = groupChatRepository.findActiveGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
+
         var conversations = new ArrayList<Conversation>();
         conversations.addAll(oneToOneChatsOfUser);
         conversations.addAll(channelsOfUser);
+        conversations.addAll(groupChatsOfUser);
         return conversations.stream().map(conversation -> conversationDTOService.convertToDTO(conversation, requestingUser)).collect(Collectors.toList());
     }
 

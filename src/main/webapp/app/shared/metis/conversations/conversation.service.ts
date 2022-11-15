@@ -50,17 +50,17 @@ export class ConversationService {
             const otherUser = conversation.members?.find((user) => user.isRequestingUser === false);
             return otherUser ? getUserLabel(otherUser) : '';
         } else if (isGroupChatDto(conversation)) {
-            const namesOfOtherMembers = conversation.namesOfOtherMembers ?? [];
-            if (namesOfOtherMembers.length === 0) {
+            const members = conversation.members ?? [];
+            if (members.length === 0) {
                 return '';
-            } else if (namesOfOtherMembers.length === 1) {
-                return namesOfOtherMembers[0];
-            } else if (namesOfOtherMembers.length === 2) {
-                return `${namesOfOtherMembers[0]}, ${namesOfOtherMembers[1]}`;
+            } else if (members.length === 1) {
+                return getUserLabel(members[0], true);
+            } else if (members.length === 2) {
+                return `${getUserLabel(members[0], false)}, ${getUserLabel(members[1], false)}`;
             } else {
                 return (
-                    `${namesOfOtherMembers[0]}, ${namesOfOtherMembers[1]}, ` +
-                    this.translationService.instant('artemisApp.messages.conversation.others', { count: namesOfOtherMembers.length - 2 })
+                    `${getUserLabel(members[0], false)}, ${getUserLabel(members[1], false)}, ` +
+                    this.translationService.instant('artemisApp.messages.conversation.others', { count: members.length - 2 })
                 );
             }
         } else {

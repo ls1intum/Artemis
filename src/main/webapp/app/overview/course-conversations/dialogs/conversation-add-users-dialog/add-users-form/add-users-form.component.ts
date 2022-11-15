@@ -15,10 +15,6 @@ export class AddUsersFormComponent implements OnInit, OnChanges {
     @Input() courseId: number;
     @Input() maxSelectable?: number = undefined;
 
-    formData: AddUsersFormData = {
-        selectedUsers: [],
-    };
-
     form: FormGroup;
 
     constructor(private fb: FormBuilder) {}

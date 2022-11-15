@@ -48,8 +48,7 @@ public class OneToOneChatService {
 
         ConversationParticipant participationOfUserA = createChatParticipant(userA, oneToOneChat);
         ConversationParticipant participationOfUserB = createChatParticipant(userB, oneToOneChat);
-        var participants = conversationParticipantRepository.saveAll(List.of(participationOfUserA, participationOfUserB));
-        savedChat.getConversationParticipants().addAll(participants);
+        conversationParticipantRepository.saveAll(List.of(participationOfUserA, participationOfUserB));
         return oneToOneChatRepository.save(savedChat);
     }
 

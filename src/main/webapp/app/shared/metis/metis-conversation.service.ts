@@ -16,6 +16,8 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { isOneToOneChatDto, OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -39,7 +41,7 @@ export class MetisConversationService implements OnDestroy {
     private _courseId: number;
     constructor(
         private courseManagementService: CourseManagementService,
-        private groupChatService: OneToOneChatService,
+        private groupChatService: GroupChatService,
         private oneToOneChatService: OneToOneChatService,
         private channelService: ChannelService,
         protected conversationService: ConversationService,
@@ -121,11 +123,10 @@ export class MetisConversationService implements OnDestroy {
         );
     };
 
-    public createOneToOneChat = (logins: [string, string]): Observable<HttpResponse<OneToOneChatDTO>> =>
-        this.onConversationCreation(this.oneToOneChatService.create(this._courseId, logins));
-
+    public createOneToOneChat = (loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> =>
+        this.onConversationCreation(this.oneToOneChatService.create(this._courseId, loginOfChatPartner));
     public createChannel = (channel: ChannelDTO) => this.onConversationCreation(this.channelService.create(this._courseId, channel));
-
+    public createGroupChat = (loginsOfChatPartners: string[]) => this.onConversationCreation(this.groupChatService.create(this._courseId, loginsOfChatPartners));
     private onConversationCreation = (creation$: Observable<HttpResponse<ConversationDto>>): Observable<never> => {
         return creation$.pipe(
             tap((conversation: HttpResponse<ConversationDto>) => {

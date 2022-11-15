@@ -46,7 +46,23 @@
                             </div>
                         </ng-template>
                     </jhi-sidebar-section>
-                    <!-- Direct Messages / Group Chats-->
+                    <!-- Direct Messages -->
+                    <jhi-sidebar-section
+                        [label]="'GroupChats'"
+                        [isCollapsed]="true"
+                        [conversations]="groupChats"
+                        [activeConversation]="activeConversation"
+                        (conversationSelected)="onConversationSelected($event)"
+                    >
+                        <ng-template>
+                            <div class="d-inline-block">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateGroupChatDialog($event)">
+                                    <fa-icon [icon]="faPlus" size="xs"></fa-icon>
+                                </button>
+                            </div>
+                        </ng-template>
+                    </jhi-sidebar-section>
+                    <!-- Direct Messages -->
                     <jhi-sidebar-section
                         [label]="'Direct Messages'"
                         [isCollapsed]="true"

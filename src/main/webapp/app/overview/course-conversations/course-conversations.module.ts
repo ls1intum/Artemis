@@ -29,6 +29,7 @@ import { GenericConfirmationDialog } from './dialogs/generic-confirmation-dialog
 import { ConversationSettingsComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
 import { ConversationEntryComponent } from './layout/conversation-selection-sidebar/sidebar-section/conversation-entry/conversation-entry.component';
 import { OneToOneChatCreateDialogComponent } from './dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
+import { GroupChatCreateDialogComponent } from './dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 
 const routes: Routes = [
     {
@@ -75,6 +76,7 @@ const routes: Routes = [
         ConversationSettingsComponent,
         ConversationEntryComponent,
         OneToOneChatCreateDialogComponent,
+        GroupChatCreateDialogComponent,
     ],
 })
 export class CourseConversationsModule {}

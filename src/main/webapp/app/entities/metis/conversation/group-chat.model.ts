@@ -1,4 +1,5 @@
 import { Conversation, ConversationDto, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 
 export class GroupChat extends Conversation {
     constructor() {
@@ -15,8 +16,7 @@ export function getAsGroupChat(conversation: Conversation): GroupChat | undefine
 }
 
 export class GroupChatDto extends ConversationDto {
-    // does not include the name of the requesting user
-    public namesOfOtherMembers?: string[];
+    public members?: ConversationUserDTO[];
     constructor() {
         super(ConversationType.GROUP_CHAT);
     }
