@@ -152,7 +152,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         if (!this.connectedPromise) {
             this.connection = this.createConnection();
         }
-        let url = `//${window.location.host}/websocket/tracker`;
+        let url = `//${window.location.host}/websocket`;
         const authToken = this.authServerProvider.getToken();
         if (authToken) {
             url += '?access_token=' + authToken;
@@ -346,7 +346,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     // https://stackoverflow.com/a/35651029/3802758
     private getSessionId(): string {
         if (this.socket && this.socket._transport && this.socket._transport.url) {
-            return this.socket._transport.url.match('.*\\/websocket\\/tracker\\/\\d*\\/(.*)\\/websocket.*')[1];
+            return this.socket._transport.url.match('.*\\/websocket\\/\\d*\\/(.*)\\/websocket.*')[1];
         } else {
             return 'unsubscribed';
         }

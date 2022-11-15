@@ -155,7 +155,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         // NOTE: by setting a WebSocketTransportHandler we disable http poll, http stream and other exotic workarounds and only support real websocket connections.
         // nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
         WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
-        registry.addEndpoint("/websocket/tracker").setAllowedOriginPatterns("*").withSockJS().setTransportHandlers(webSocketTransportHandler)
+        registry.addEndpoint("/websocket").setAllowedOriginPatterns("*").withSockJS().setTransportHandlers(webSocketTransportHandler)
                 .setInterceptors(httpSessionHandshakeInterceptor());
     }
 

@@ -125,7 +125,7 @@ export function Artemis(authToken) {
         return request('delete', endpoint, authToken, null, params);
     };
     this.websocket = function (doOnSocket) {
-        const websocketEndpoint = websocketProtocol + '://' + host + '/websocket/tracker/websocket';
+        const websocketEndpoint = websocketProtocol + '://' + host + '/websocket/websocket';
         const websocketUrl = websocketEndpoint + '?access_token=' + authToken;
 
         ws.connect(websocketUrl, { tags: { name: websocketEndpoint } }, function (socket) {

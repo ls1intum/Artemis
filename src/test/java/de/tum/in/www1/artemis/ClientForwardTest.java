@@ -52,11 +52,11 @@ class ClientForwardTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Test
     void getWebsocketEndpoint() throws Exception {
-        request.getMvc().perform(get("/websocket/tracker/308/sessionId/websocket")).andExpect(status().isBadRequest());
+        request.getMvc().perform(get("/websocket/308/sessionId/websocket")).andExpect(status().isBadRequest());
     }
 
     @Test
     void getWebsocketFallbackEndpoint() throws Exception {
-        request.getMvc().perform(get("/websocket/tracker/308/sessionId/xhr_streaming")).andExpect(status().isNotFound());
+        request.getMvc().perform(get("/websocket/308/sessionId/xhr_streaming")).andExpect(status().isNotFound());
     }
 }

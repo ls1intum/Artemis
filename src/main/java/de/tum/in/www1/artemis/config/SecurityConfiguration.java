@@ -172,7 +172,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/files/file-upload-exercises/**").permitAll()
             .antMatchers("/api/files/markdown/**").permitAll()
             .antMatchers("/api/**").authenticated()
-            .antMatchers("/websocket/tracker").hasAuthority(Role.ADMIN.getAuthority())
+            .antMatchers("/websocket").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/websocket/**").permitAll()
             .antMatchers("/management/health").permitAll()
             .antMatchers("/management/info").permitAll()
