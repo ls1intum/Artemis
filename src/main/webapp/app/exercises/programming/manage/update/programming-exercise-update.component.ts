@@ -495,7 +495,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // If no release date is set, we warn the user.
         if (!this.programmingExercise.releaseDate && !this.isExamMode) {
             const confirmNoReleaseDate = this.translateService.instant(
-                this.translationBasePath + this.programmingExercise.startDate ? 'noReleaseDateWarning' : 'noReleaseAndStartDateWarning',
+                this.translationBasePath + (this.programmingExercise.startDate ? 'noReleaseDateWarning' : 'noReleaseAndStartDateWarning'),
             );
             if (!window.confirm(confirmNoReleaseDate)) {
                 return;

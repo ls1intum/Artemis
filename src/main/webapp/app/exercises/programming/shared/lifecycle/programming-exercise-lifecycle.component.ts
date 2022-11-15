@@ -149,9 +149,10 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
      */
     updateExampleSolutionPublicationDate(newReleaseOrDueDate?: dayjs.Dayjs) {
         if (!this.readOnly && this.exerciseService.hasExampleSolutionPublicationDateError(this.exercise)) {
-            const message = newReleaseOrDueDate?.isSame(this.exercise.dueDate)
-                ? 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate'
-                : 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate';
+            const message =
+                newReleaseOrDueDate && dayjs(newReleaseOrDueDate).isSame(this.exercise.dueDate)
+                    ? 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate'
+                    : 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate';
             alert(this.translator.instant(message));
             this.exercise.exampleSolutionPublicationDate = newReleaseOrDueDate;
         }
