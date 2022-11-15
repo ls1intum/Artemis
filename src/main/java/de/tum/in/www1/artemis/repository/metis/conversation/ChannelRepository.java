@@ -14,14 +14,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 public interface ChannelRepository extends JpaRepository<Channel, Long> {
 
     @Query("""
-            SELECT DISTINCT channel
-            FROM Channel channel
-            LEFT JOIN FETCH channel.conversationParticipants
-            WHERE channel.id = :#{#channelId}
-            """)
-    Optional<Channel> findChannelByIdWithEagerParticipants(@Param("channelId") Long channelId);
-
-    @Query("""
              SELECT DISTINCT channel
              FROM Channel channel
              WHERE channel.course.id = :#{#courseId}

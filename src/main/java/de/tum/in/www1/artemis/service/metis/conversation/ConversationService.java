@@ -33,7 +33,7 @@ public class ConversationService {
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
-    private final ConversationDTOConversationService conversationDTOConversationService;
+    private final ConversationDTOService conversationDTOService;
 
     private final UserRepository userRepository;
 
@@ -49,10 +49,10 @@ public class ConversationService {
 
     private final PostRepository postRepository;
 
-    public ConversationService(ConversationDTOConversationService conversationDTOConversationService, UserRepository userRepository, ChannelRepository channelRepository,
+    public ConversationService(ConversationDTOService conversationDTOService, UserRepository userRepository, ChannelRepository channelRepository,
             ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate,
             OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository) {
-        this.conversationDTOConversationService = conversationDTOConversationService;
+        this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.channelRepository = channelRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
@@ -60,68 +60,6 @@ public class ConversationService {
         this.messagingTemplate = messagingTemplate;
         this.oneToOneChatRepository = oneToOneChatRepository;
         this.postRepository = postRepository;
-    }
-
-    public void registerUsers(Course course, Set<User> usersToRegister, Conversation conversation) {
-        var conversationFromDatabase = conversationRepository.findByIdWithConversationParticipantsAndGroupsElseThrow(conversation.getId());
-        var userThatNeedToBeRegistered = new HashSet<User>();
-
-        for (User user : usersToRegister) {
-            var isRegistered = conversationFromDatabase.getConversationParticipants().stream()
-                    .anyMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()));
-            if (!isRegistered) {
-                userThatNeedToBeRegistered.add(user);
-            }
-        }
-
-        List<ConversationParticipant> newConversationParticipants = new ArrayList<>();
-        for (User user : userThatNeedToBeRegistered) {
-            ConversationParticipant conversationParticipant = new ConversationParticipant();
-            conversationParticipant.setUser(user);
-            conversationParticipant.setConversation(conversationFromDatabase);
-
-            if (conversationFromDatabase instanceof Channel) {
-                conversationParticipant.setIsAdmin(false);
-            }
-
-            newConversationParticipants.add(conversationParticipant);
-        }
-        newConversationParticipants = conversationParticipantRepository.saveAll(newConversationParticipants);
-        conversationFromDatabase.getConversationParticipants().addAll(newConversationParticipants);
-        conversationRepository.save(conversationFromDatabase);
-
-        broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversationFromDatabase, userThatNeedToBeRegistered);
-        // we also broadcast the change to existing members
-        broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversationFromDatabase,
-                conversationFromDatabase.getConversationParticipants().stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
-
-    }
-
-    public void deregisterUsers(Course course, Set<User> usersToDeregister, Conversation conversation) {
-        var conversationFromDatabase = conversationRepository.findByIdWithConversationParticipantsAndGroupsElseThrow(conversation.getId());
-
-        if (conversation instanceof Channel channel) {
-            var creator = channel.getCreator();
-            if (usersToDeregister.contains(creator)) {
-                throw new AccessForbiddenException("The creator of a channel cannot be deregistered. Even self deregistration is not possible.");
-            }
-        }
-
-        var participantsToRemove = new HashSet<ConversationParticipant>();
-
-        for (User user : usersToDeregister) {
-            var participant = conversationFromDatabase.getConversationParticipants().stream()
-                    .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId())).findFirst();
-            participant.ifPresent(participantsToRemove::add);
-        }
-
-        conversationFromDatabase.getConversationParticipants().removeAll(participantsToRemove);
-        conversationRepository.save(conversationFromDatabase);
-        conversationParticipantRepository.deleteAll(participantsToRemove);
-        broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversationFromDatabase, usersToDeregister);
-        // we also broadcast the change to existing members
-        broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversationFromDatabase,
-                conversationFromDatabase.getConversationParticipants().stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
     }
 
     public Conversation getConversationById(Long conversationId) {
@@ -132,34 +70,27 @@ public class ConversationService {
         return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, userId).isPresent();
     }
 
-    public Integer getMemberCount(Long channelId) {
-        return conversationParticipantRepository.countByConversationId(channelId);
-    }
-
     public List<ConversationDTO> getConversationsOfUser(Long courseId, User requestingUser) {
         var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
         var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
         var conversations = new ArrayList<Conversation>();
         conversations.addAll(oneToOneChatsOfUser);
         conversations.addAll(channelsOfUser);
-        return conversations.stream().map(conversation -> conversationDTOConversationService.convertToDto(conversation, requestingUser)).collect(Collectors.toList());
+        return conversations.stream().map(conversation -> conversationDTOService.convertToDTO(conversation, requestingUser)).collect(Collectors.toList());
     }
 
     public Conversation updateConversation(Conversation conversation) {
-        var updatedConversation = conversationRepository.save(conversation);
-        var updatedConversationWithParticipants = conversationRepository.findByIdWithConversationParticipantsAndGroupsElseThrow(updatedConversation.getId());
-        broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, updatedConversationWithParticipants,
-                updatedConversationWithParticipants.getConversationParticipants().stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
-        return updatedConversation;
+        return conversationRepository.save(conversation);
     }
 
     @Transactional // ok because of delete
-    public void deleteConversation(Long conversationId) {
-        var conversationWithParticipants = conversationRepository.findByIdWithConversationParticipantsAndGroupsElseThrow(conversationId);
-        broadcastOnConversationMembershipChannel(conversationWithParticipants.getCourse(), MetisCrudAction.DELETE, conversationWithParticipants,
-                conversationWithParticipants.getConversationParticipants().stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
-        this.postRepository.deleteAllByConversationId(conversationId);
-        this.channelRepository.deleteById(conversationId);
+    public void deleteConversation(Conversation conversation) {
+        var usersToMessage = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+                .collect(Collectors.toSet());
+        broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.DELETE, conversation, usersToMessage);
+        this.postRepository.deleteAllByConversationId(conversation.getId());
+        this.conversationParticipantRepository.deleteAllByConversationId(conversation.getId());
+        this.conversationRepository.deleteById(conversation.getId());
     }
 
     public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> usersToMessage) {
@@ -169,7 +100,7 @@ public class ConversationService {
     }
 
     private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName) {
-        var dto = conversationDTOConversationService.convertToDto(conversation, user);
+        var dto = conversationDTOService.convertToDTO(conversation, user);
         var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
         messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
     }
@@ -238,4 +169,5 @@ public class ConversationService {
         }
         return users;
     }
+
 }

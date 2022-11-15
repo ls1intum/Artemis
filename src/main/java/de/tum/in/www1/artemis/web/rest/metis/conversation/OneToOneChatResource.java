@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOConversationService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.OneToOneChatService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.OneToOneChatAuthorizationService;
@@ -29,7 +29,7 @@ public class OneToOneChatResource {
 
     private final OneToOneChatAuthorizationService oneToOneChatAuthorizationService;
 
-    private final ConversationDTOConversationService conversationDTOConversationService;
+    private final ConversationDTOService conversationDTOService;
 
     private final UserRepository userRepository;
 
@@ -39,10 +39,10 @@ public class OneToOneChatResource {
 
     private final ConversationService conversationService;
 
-    public OneToOneChatResource(OneToOneChatAuthorizationService oneToOneChatAuthorizationService, ConversationDTOConversationService conversationDTOConversationService,
-            UserRepository userRepository, CourseRepository courseRepository, OneToOneChatService oneToOneChatService, ConversationService conversationService) {
+    public OneToOneChatResource(OneToOneChatAuthorizationService oneToOneChatAuthorizationService, ConversationDTOService conversationDTOService, UserRepository userRepository,
+            CourseRepository courseRepository, OneToOneChatService oneToOneChatService, ConversationService conversationService) {
         this.oneToOneChatAuthorizationService = oneToOneChatAuthorizationService;
-        this.conversationDTOConversationService = conversationDTOConversationService;
+        this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.oneToOneChatService = oneToOneChatService;
@@ -75,8 +75,7 @@ public class OneToOneChatResource {
         var userB = chatMembers.get(1);
 
         var oneToOneChat = oneToOneChatService.startOneToOneChat(course, userA, userB);
-        return ResponseEntity.created(new URI("/api/channels/" + oneToOneChat.getId()))
-                .body((OneToOneChatDTO) conversationDTOConversationService.convertToDto(oneToOneChat, requestingUser));
+        return ResponseEntity.created(new URI("/api/channels/" + oneToOneChat.getId())).body((OneToOneChatDTO) conversationDTOService.convertToDTO(oneToOneChat, requestingUser));
     }
 
 }

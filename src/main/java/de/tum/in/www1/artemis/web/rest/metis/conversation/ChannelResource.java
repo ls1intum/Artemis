@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -35,6 +36,8 @@ public class ChannelResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final ConversationDTOService conversationDTOService;
+
     private final CourseRepository courseRepository;
 
     private final UserRepository userRepository;
@@ -42,10 +45,11 @@ public class ChannelResource {
     private final ConversationService conversationService;
 
     public ChannelResource(ChannelService channelService, ChannelAuthorizationService channelAuthorizationService, AuthorizationCheckService authorizationCheckService,
-            CourseRepository courseRepository, UserRepository userRepository, ConversationService conversationService) {
+            ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository, ConversationService conversationService) {
         this.channelService = channelService;
         this.channelAuthorizationService = channelAuthorizationService;
         this.authorizationCheckService = authorizationCheckService;
+        this.conversationDTOService = conversationDTOService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.conversationService = conversationService;
@@ -55,16 +59,16 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverview(@PathVariable Long courseId) {
         log.debug("REST request to all channels of course: {}", courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), user);
-        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseRepository.findByIdElseThrow(courseId), user);
-        var result = channelService.getChannels(courseId).stream().map(channel -> channelService.convertToDTO(channel, user));
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseRepository.findByIdElseThrow(courseId), requestingUser);
+        var result = channelService.getChannels(courseId).stream().map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));
         var filteredStream = result;
         // only instructors / admins can see all channels
         if (!isAtLeastInstructor) {
-            filteredStream = result // we only want to show archived channels where the user is a member
+            filteredStream = result // we only want to show archived channels where the requestingUser is a member
                     .filter(channelDTO -> !channelDTO.getIsArchived() || channelDTO.getIsMember())
-                    // we only want to show public channels and in addition private channels that the user is a member of
+                    // we only want to show public channels and in addition private channels that the requestingUser is a member of
                     .filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
         }
         return ResponseEntity.ok(filteredStream.sorted(Comparator.comparing(ChannelDTO::getName)).toList());
@@ -74,11 +78,12 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ChannelDTO> createChannel(@PathVariable Long courseId, @RequestBody ChannelDTO channelDTO) throws URISyntaxException {
         log.debug("REST request to create channel in course {} with properties : {}", courseId, channelDTO);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         channelAuthorizationService.isAllowedToCreateChannel(course, null);
         var channelToCreate = channelDTO.toChannel();
         var createdChannel = channelService.createChannel(course, channelToCreate);
-        return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(channelService.convertToDTO(createdChannel, null));
+        return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDto(requestingUser, createdChannel));
     }
 
     @PutMapping("/{courseId}/channels/{channelId}")
@@ -96,7 +101,7 @@ public class ChannelResource {
         }
         channelAuthorizationService.isAllowedToUpdateChannel(originalChannel, requestingUser);
         var updatedChannel = channelService.updateChannel(originalChannel.getId(), courseId, channelDTO);
-        return ResponseEntity.ok().body(channelService.convertToDTO(updatedChannel, requestingUser));
+        return ResponseEntity.ok().body(conversationDTOService.convertChannelToDto(requestingUser, updatedChannel));
     }
 
     @DeleteMapping("/{courseId}/channels/{channelId}")
@@ -108,7 +113,7 @@ public class ChannelResource {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
         channelAuthorizationService.isAllowedToDeleteChannel(channel, null);
-        channelService.deleteChannel(channel.getId());
+        channelService.deleteChannel(channel);
         return ResponseEntity.ok().build();
     }
 
@@ -144,7 +149,7 @@ public class ChannelResource {
         }
         channelAuthorizationService.isAllowedToGrantChannelAdmin(channel, userRepository.getUserWithGroupsAndAuthorities());
         var usersToGrantChannelAdmin = conversationService.findUsersInDatabase(userLogins);
-        channelService.grantChannelAdmin(channelId, usersToGrantChannelAdmin);
+        channelService.grantChannelAdmin(channel, usersToGrantChannelAdmin);
         return ResponseEntity.ok().build();
     }
 
@@ -160,7 +165,7 @@ public class ChannelResource {
         var usersToGrantChannelAdmin = conversationService.findUsersInDatabase(userLogins);
         // nobody is allowed to revoke admin rights from the creator of the channel
         usersToGrantChannelAdmin.removeIf(user -> user.getId().equals(channel.getCreator().getId()));
-        channelService.revokeChannelAdmin(channelId, usersToGrantChannelAdmin);
+        channelService.revokeChannelAdmin(channel, usersToGrantChannelAdmin);
         return ResponseEntity.ok().build();
     }
 
@@ -170,22 +175,20 @@ public class ChannelResource {
         if (userLogins == null || userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", CHANNEL_ENTITY_NAME, "userLoginsEmpty");
         }
-        // ToDo: maybe limit how many users can be registered at once?
-
+        if (userLogins.size() > 100) {
+            throw new BadRequestAlertException("Too many user logins provided.", CHANNEL_ENTITY_NAME, "userLoginsTooMany");
+        }
         log.debug("REST request to register {} users to channel : {}", userLogins.size(), channelId);
         var course = courseRepository.findByIdElseThrow(courseId);
-
         var channelFromDatabase = this.channelService.getChannelOrThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
         if (channelFromDatabase.getIsArchived()) {
             throw new BadRequestAlertException("Users can not be registered to an archived channel.", CHANNEL_ENTITY_NAME, "channelIsArchived");
         }
-
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-
         channelAuthorizationService.isAllowedToRegisterUsersToChannel(course, channelFromDatabase, userLogins, requestingUser);
         var usersToRegister = conversationService.findUsersInDatabase(userLogins);
-        conversationService.registerUsers(course, usersToRegister, channelFromDatabase);
+        channelService.registerUsersToChannel(course, usersToRegister, channelFromDatabase);
         return ResponseEntity.noContent().build();
     }
 
@@ -205,10 +208,8 @@ public class ChannelResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
 
         channelAuthorizationService.isAllowedToDeregisterUsersFromChannel(course, channelFromDatabase, userLogins, requestingUser);
-
         var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);
-
-        conversationService.deregisterUsers(course, usersToDeRegister, channelFromDatabase);
+        channelService.deregisterUsersFromChannel(course, usersToDeRegister, channelFromDatabase);
         return ResponseEntity.noContent().build();
     }
 

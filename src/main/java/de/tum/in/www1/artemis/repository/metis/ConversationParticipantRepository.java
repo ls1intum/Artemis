@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.repository.metis;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.transaction.Transactional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,7 +21,16 @@ import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 public interface ConversationParticipantRepository extends JpaRepository<ConversationParticipant, Long> {
 
     @Query("""
-            SELECT DISTINCT conversationParticipant FROM ConversationParticipant conversationParticipant
+            SELECT DISTINCT conversationParticipant
+            FROM ConversationParticipant conversationParticipant
+            WHERE conversationParticipant.conversation.id = :#{#conversationId}
+            AND conversationParticipant.user.id in :#{#userIds}
+            """)
+    Set<ConversationParticipant> findConversationParticipantsByConversationIdAndUserIds(Long conversationId, Set<Long> userIds);
+
+    @Query("""
+            SELECT DISTINCT conversationParticipant
+            FROM ConversationParticipant conversationParticipant
             WHERE conversationParticipant.conversation.id = :#{#conversationId}
             """)
     Set<ConversationParticipant> findConversationParticipantByConversationId(@Param("conversationId") Long conversationId);
@@ -35,15 +46,11 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             """)
     Optional<ConversationParticipant> findAdminConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 
-    @Query("""
-            SELECT DISTINCT conversationParticipant
-            FROM ConversationParticipant conversationParticipant
-            JOIN conversationParticipant.user user
-            JOIN conversationParticipant.conversation conversation
-            WHERE user.id = :#{#userId}
-            """)
-    List<ConversationParticipant> findConversationParticipantByUserId(Long userId);
-
     Integer countByConversationId(Long conversationId);
+
+    @Transactional
+    @Modifying
+    // ok because of delete
+    void deleteAllByConversationId(Long conversationId);
 
 }

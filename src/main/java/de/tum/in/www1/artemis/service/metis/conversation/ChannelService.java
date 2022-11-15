@@ -2,11 +2,9 @@ package de.tum.in.www1.artemis.service.metis.conversation;
 
 import static javax.validation.Validation.buildDefaultValidatorFactory;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 
 import org.springframework.stereotype.Service;
@@ -19,10 +17,10 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 @Service
 public class ChannelService {
@@ -39,33 +37,42 @@ public class ChannelService {
 
     private final ConversationService conversationService;
 
-    private final ChannelAuthorizationService channelAuthorizationService;
-
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, UserRepository userRepository,
-            ConversationService conversationService, ChannelAuthorizationService channelAuthorizationService) {
+            ConversationService conversationService) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.userRepository = userRepository;
         this.conversationService = conversationService;
-        this.channelAuthorizationService = channelAuthorizationService;
     }
 
-    public ChannelDTO convertToDTO(Channel channel, @Nullable User requestingUser) {
-        if (requestingUser == null) {
-            requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+    public void registerUsersToChannel(Course course, Set<User> usersToRegister, Channel channel) {
+        var existingParticipants = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(channel.getId(),
+                usersToRegister.stream().map(User::getId).collect(Collectors.toSet()));
+        var usersToRegisterWithoutExistingParticipants = usersToRegister.stream()
+                .filter(user -> existingParticipants.stream().noneMatch(participant -> participant.getUser().getId().equals(user.getId()))).collect(Collectors.toSet());
+        Set<ConversationParticipant> newConversationParticipants = new HashSet<>();
+        for (User user : usersToRegisterWithoutExistingParticipants) {
+            ConversationParticipant conversationParticipant = new ConversationParticipant();
+            conversationParticipant.setUser(user);
+            conversationParticipant.setConversation(channel);
+            conversationParticipant.setIsAdmin(false);
+            newConversationParticipants.add(conversationParticipant);
         }
-        var dto = new ChannelDTO(channel);
-        dto.setIsMember(conversationService.isMember(channel.getId(), requestingUser.getId()));
-        if (channel.getCreator() != null) {
-            dto.setIsCreator(channel.getCreator().getId().equals(channel.getId()));
-        }
-        else {
-            dto.setIsCreator(false);
-        }
-        dto.setNumberOfMembers(conversationService.getMemberCount(channel.getId()));
-        dto.setIsChannelAdmin(channelAuthorizationService.isChannelAdmin(channel.getId(), requestingUser.getId()));
-        dto.setHasChannelAdminRights(channelAuthorizationService.hasChannelAdminRights(channel.getId(), requestingUser));
-        return dto;
+        conversationParticipantRepository.saveAll(newConversationParticipants);
+
+        conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, channel, usersToRegisterWithoutExistingParticipants);
+        notifyChannelMembersAboutUpdate(channel);
+    }
+
+    public void deregisterUsersFromChannel(Course course, Set<User> usersToDeregister, Channel channel) {
+        var participantsToRemove = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(channel.getId(),
+                usersToDeregister.stream().map(User::getId).collect(Collectors.toSet()));
+        var usersWithExistingParticipants = usersToDeregister.stream()
+                .filter(user -> participantsToRemove.stream().anyMatch(participant -> participant.getUser().getId().equals(user.getId()))).collect(Collectors.toSet());
+        conversationParticipantRepository.deleteAll(participantsToRemove);
+
+        conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, channel, usersWithExistingParticipants);
+        notifyChannelMembersAboutUpdate(channel);
     }
 
     public Channel getChannelOrThrow(Long channelId) {
@@ -73,37 +80,24 @@ public class ChannelService {
                 .orElseThrow(() -> new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound"));
     }
 
-    public Channel getChannelWithParticipantsOrThrow(Long channelId) {
-        return channelRepository.findChannelByIdWithEagerParticipants(channelId)
-                .orElseThrow(() -> new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound"));
+    public void grantChannelAdmin(Channel channel, Set<User> usersToGrantChannelAdmin) {
+        var matchingParticipants = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(channel.getId(),
+                usersToGrantChannelAdmin.stream().map(User::getId).collect(Collectors.toSet()));
+        for (ConversationParticipant conversationParticipant : matchingParticipants) {
+            conversationParticipant.setIsAdmin(true);
+        }
+        conversationParticipantRepository.saveAll(matchingParticipants);
+        notifyChannelMembersAboutUpdate(channel);
     }
 
-    public void grantChannelAdmin(Long channelId, Set<User> usersToGrantChannelAdmin) {
-        var channelOptional = channelRepository.findChannelByIdWithEagerParticipants(channelId);
-        if (channelOptional.isEmpty()) {
-            throw new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound");
+    public void revokeChannelAdmin(Channel channel, Set<User> usersToRevokeChannelAdmin) {
+        var matchingParticipants = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(channel.getId(),
+                usersToRevokeChannelAdmin.stream().map(User::getId).collect(Collectors.toSet()));
+        for (ConversationParticipant conversationParticipant : matchingParticipants) {
+            conversationParticipant.setIsAdmin(false);
         }
-        var channel = channelOptional.get();
-        channel.getConversationParticipants().forEach(participant -> {
-            if (usersToGrantChannelAdmin.contains(participant.getUser()) && (participant.getIsAdmin() != null && !participant.getIsAdmin())) {
-                participant.setIsAdmin(true);
-            }
-        });
-        channelRepository.save(channel);
-    }
-
-    public void revokeChannelAdmin(Long channelId, Set<User> usersToRevokeChannelAdmin) {
-        var channelOptional = channelRepository.findChannelByIdWithEagerParticipants(channelId);
-        if (channelOptional.isEmpty()) {
-            throw new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound");
-        }
-        var channel = channelOptional.get();
-        channel.getConversationParticipants().forEach(participant -> {
-            if (usersToRevokeChannelAdmin.contains(participant.getUser()) && (participant.getIsAdmin() != null && participant.getIsAdmin())) {
-                participant.setIsAdmin(false);
-            }
-        });
-        channelRepository.save(channel);
+        conversationParticipantRepository.saveAll(matchingParticipants);
+        notifyChannelMembersAboutUpdate(channel);
     }
 
     public List<Channel> getChannels(Long courseId) {
@@ -111,7 +105,7 @@ public class ChannelService {
     }
 
     public Channel updateChannel(Long channelId, Long courseId, ChannelDTO channelDTO) {
-        var channel = getChannelWithParticipantsOrThrow(channelId);
+        var channel = getChannelOrThrow(channelId);
         if (channelDTO.getName() != null && !channelDTO.getName().equals(channel.getName())) {
             channel.setName(channelDTO.getName().trim().isBlank() ? null : channelDTO.getName().trim());
         }
@@ -123,7 +117,9 @@ public class ChannelService {
         }
         this.channelIsValidOrThrow(courseId, channel);
 
-        return (Channel) conversationService.updateConversation(channel);
+        var updatedChannel = channelRepository.save(channel);
+        notifyChannelMembersAboutUpdate(channel);
+        return updatedChannel;
     }
 
     public Channel createChannel(Course course, Channel channel) {
@@ -174,25 +170,33 @@ public class ChannelService {
     }
 
     public void archiveChannel(Long channelId) {
-        var channel = getChannelWithParticipantsOrThrow(channelId);
+        var channel = getChannelOrThrow(channelId);
         if (channel.getIsArchived()) {
             return;
         }
         channel.setIsArchived(true);
-        conversationService.updateConversation(channel);
+        var updatedChannel = channelRepository.save(channel);
+        notifyChannelMembersAboutUpdate(updatedChannel);
     }
 
     public void unarchiveChannel(Long channelId) {
-        var channel = getChannelWithParticipantsOrThrow(channelId);
+        var channel = getChannelOrThrow(channelId);
         if (!channel.getIsArchived()) {
             return;
         }
         channel.setIsArchived(false);
-        conversationService.updateConversation(channel);
+        var updatedChannel = channelRepository.save(channel);
+        notifyChannelMembersAboutUpdate(updatedChannel);
     }
 
-    public void deleteChannel(Long channelId) {
-        this.conversationService.deleteConversation(channelId);
+    private void notifyChannelMembersAboutUpdate(Channel channel) {
+        var usersToContact = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
+                .collect(Collectors.toSet());
+        conversationService.broadcastOnConversationMembershipChannel(channel.getCourse(), MetisCrudAction.UPDATE, channel, usersToContact);
+    }
+
+    public void deleteChannel(Channel channel) {
+        this.conversationService.deleteConversation(channel);
     }
 
 }

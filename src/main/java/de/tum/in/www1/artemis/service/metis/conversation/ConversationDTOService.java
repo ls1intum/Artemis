@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationUserD
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 @Service
-public class ConversationDTOConversationService {
+public class ConversationDTOService {
 
     private final UserRepository userRepository;
 
@@ -32,14 +32,14 @@ public class ConversationDTOConversationService {
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
-    public ConversationDTOConversationService(UserRepository userRepository, ConversationParticipantRepository conversationParticipantRepository,
+    public ConversationDTOService(UserRepository userRepository, ConversationParticipantRepository conversationParticipantRepository,
             ChannelAuthorizationService channelAuthorizationService) {
         this.userRepository = userRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelAuthorizationService = channelAuthorizationService;
     }
 
-    public ConversationDTO convertToDto(Conversation conversation, User requestingUser) {
+    public ConversationDTO convertToDTO(Conversation conversation, User requestingUser) {
         if (conversation instanceof Channel channel) {
             return convertChannelToDto(requestingUser, channel);
         }
@@ -50,7 +50,7 @@ public class ConversationDTOConversationService {
     }
 
     @NotNull
-    private ConversationDTO convertChannelToDto(User requestingUser, Channel channel) {
+    public ChannelDTO convertChannelToDto(User requestingUser, Channel channel) {
         var channelDTO = new ChannelDTO(channel);
         channelDTO.setIsChannelAdmin(channelAuthorizationService.isChannelAdmin(channel.getId(), requestingUser.getId()));
         channelDTO.setHasChannelAdminRights(channelAuthorizationService.hasChannelAdminRights(channel.getId(), requestingUser));
@@ -61,7 +61,7 @@ public class ConversationDTOConversationService {
     }
 
     @NotNull
-    private OneToOneChatDTO convertOneToOneChatToDto(User requestingUser, OneToOneChat oneToOneChat) {
+    public OneToOneChatDTO convertOneToOneChatToDto(User requestingUser, OneToOneChat oneToOneChat) {
         var course = oneToOneChat.getCourse();
         Set<ConversationParticipant> conversationParticipants = getConversationParticipants(oneToOneChat);
         Set<ConversationUserDTO> chatParticipants = getChatParticipantDTOs(requestingUser, course, conversationParticipants);
