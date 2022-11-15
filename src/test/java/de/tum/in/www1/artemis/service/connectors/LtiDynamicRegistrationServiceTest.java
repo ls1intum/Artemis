@@ -20,12 +20,16 @@ import de.tum.in.www1.artemis.domain.lti.Lti13ClientRegistration;
 import de.tum.in.www1.artemis.domain.lti.Lti13PlatformConfiguration;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
+import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 class LtiDynamicRegistrationServiceTest {
 
     @Mock
     private OAuth2JWKSService oAuth2JWKSService;
+
+    @Mock
+    private OnlineCourseConfigurationService onlineCourseConfigurationService;
 
     @Mock
     private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
@@ -49,7 +53,7 @@ class LtiDynamicRegistrationServiceTest {
     void init() {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiDynamicRegistrationService = new LtiDynamicRegistrationService(onlineCourseConfigurationRepository, oAuth2JWKSService, restTemplate);
+        ltiDynamicRegistrationService = new LtiDynamicRegistrationService(onlineCourseConfigurationService, onlineCourseConfigurationRepository, oAuth2JWKSService, restTemplate);
         ReflectionTestUtils.setField(ltiDynamicRegistrationService, "artemisServerUrl", "http://artemis.com");
 
         course = new Course();
