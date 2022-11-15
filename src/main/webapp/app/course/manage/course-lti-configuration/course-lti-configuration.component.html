@@ -10,6 +10,14 @@
             <a ngbNavLink jhiTranslate="artemisApp.lti.generalConfiguration">General Configuration</a>
             <ng-template ngbNavContent>
                 <dt>
+                    <span>{{ 'artemisApp.lti.userPrefix' | artemisTranslate }}</span>
+                    <jhi-help-icon placement="top" text="artemisApp.lti.userPrefixTooltip"></jhi-help-icon>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.userPrefix }}</span>
+                </dd>
+
+                <dt>
                     <span>{{ 'artemisApp.lti.ltiLaunchTarget' | artemisTranslate }}</span>
                     <jhi-help-icon placement="top" text="artemisApp.lti.launchTargetTooltip"></jhi-help-icon>
                 </dt>
