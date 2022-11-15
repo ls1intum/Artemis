@@ -3,12 +3,18 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { faEllipsis, faMessage, faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
-import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, from, Subject } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import {
+    ConversationDetailDialogComponent,
+    ConversationDetailTabs,
+} from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 
 @Component({
     selector: '[jhi-conversation-entry]',
@@ -36,7 +42,7 @@ export class ConversationEntryComponent implements OnInit {
 
     faEllipsis = faEllipsis;
     faMessage = faMessage;
-    constructor(public conversationService: ConversationService, private alertService: AlertService) {}
+    constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal) {}
 
     getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
@@ -52,6 +58,17 @@ export class ConversationEntryComponent implements OnInit {
         this.favorite$.next(!this.conversation.isFavorite);
     }
 
+    openConversationDetailDialog(event: MouseEvent) {
+        event.stopPropagation();
+        const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.activeConversation = this.conversation;
+        modalRef.componentInstance.selectedTab = ConversationDetailTabs.SETTINGS;
+        modalRef.componentInstance.initialize();
+        from(modalRef.result).subscribe(() => {
+            this.settingsChanged.emit();
+        });
+    }
     ngOnInit(): void {
         this.hide$.pipe(debounceTime(500), distinctUntilChanged()).subscribe((shouldHide) => {
             this.conversationService.changeHiddenStatus(this.course.id!, this.conversation.id!, shouldHide).subscribe({
