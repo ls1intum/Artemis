@@ -68,15 +68,14 @@ export class CourseLtiConfigurationComponent implements OnInit {
     }
 
     /**
-     * Gets the dynamic registration url
+     * Returns true if any required LTI 1.3 fields are missing
      */
     missingLti13ConfigurationField(): boolean {
         return (
             !this.onlineCourseConfiguration.registrationId ||
             !this.onlineCourseConfiguration.clientId ||
             !this.onlineCourseConfiguration.authorizationUri ||
-            !this.onlineCourseConfiguration.jwkSetUri ||
-            !this.onlineCourseConfiguration.tokenUri
+            !this.onlineCourseConfiguration.jwkSetUri
         );
     }
 

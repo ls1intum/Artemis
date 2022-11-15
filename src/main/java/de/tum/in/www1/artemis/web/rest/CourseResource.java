@@ -177,10 +177,6 @@ public class CourseResource {
 
         Course result = courseRepository.save(course);
 
-        if (course.isOnlineCourse()) {
-            oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
-        }
-
         return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
 
@@ -274,10 +270,6 @@ public class CourseResource {
         final var oldInstructorGroup = existingCourse.getInstructorGroupName();
         final var oldEditorGroup = existingCourse.getEditorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
-
-        if (courseUpdate.isOnlineCourse()) {
-            oAuth2JWKSService.updateKey(courseUpdate.getOnlineCourseConfiguration().getRegistrationId());
-        }
 
         optionalVcsUserManagementService
                 .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));

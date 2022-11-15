@@ -75,7 +75,7 @@
                 "registeredSuccessfully": "Kurs erfolgreich registriert",
                 "registerFailed": "Fehler bei der dynamischen Registrierung"
             },
-            "missingConfigurationWarning": "Fehlende Werte in der LTI1.3-Konfiguration. Starts werden wahrscheinlich nicht funktionieren."
+            "missingConfigurationWarning": "Fehlende Werte in der LTI1.3-Konfiguration. Starts werden nicht funktionieren."
         }
     }
 }
