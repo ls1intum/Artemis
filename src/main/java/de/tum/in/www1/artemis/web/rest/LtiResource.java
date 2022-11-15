@@ -178,7 +178,7 @@ public class LtiResource {
         uriBuilder.queryParam("id_token", idToken);
         String redirectUrl = uriBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);
-        response.sendRedirect(redirectUrl);
+        response.sendRedirect(redirectUrl); // Redirect using user-provided values is safe because user-provided values are used in the query parameters, not the url itself
     }
 
     private void errorOnMissingParameter(HttpServletResponse response, String missingParamName) throws IOException {
