@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -163,7 +164,9 @@ public class CourseResource {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
         }
 
-        onlineCourseConfigurationService.validateOnlineCourseConfiguration(course);
+        if (course.isOnlineCourse()) {
+            onlineCourseConfigurationService.createOnlineCourseConfiguration(course);
+        }
 
         courseService.createOrValidateGroups(course);
 
@@ -253,7 +256,14 @@ public class CourseResource {
             courseUpdate.setCourseIcon(pathString);
         }
 
-        onlineCourseConfigurationService.validateOnlineCourseConfiguration(courseUpdate);
+        if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
+            if (courseUpdate.isOnlineCourse()) {
+                onlineCourseConfigurationService.createOnlineCourseConfiguration(courseUpdate);
+            }
+            else {
+                courseUpdate.setOnlineCourseConfiguration(null);
+            }
+        }
 
         courseUpdate.setId(courseId); // Don't persist a wrong ID
         Course result = courseRepository.save(courseUpdate);
@@ -277,6 +287,41 @@ public class CourseResource {
             tutorialGroupsConfigurationService.onTimeZoneUpdate(result);
         }
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * PUT courses/{courseId}/onlineCourseConfiguration/{onlineCourseConfigurationId} : Updates an existing onlineCourseConfiguration.
+     *
+     * @param courseId the id of the course to update
+     * @param onlineCourseConfiguration the on
+     * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
+     */
+    @PutMapping(value = "courses/{courseId}/onlineCourseConfiguration/{onlineCourseConfigurationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId, @PathVariable Long onlineCourseConfigurationId,
+            @RequestBody @Valid OnlineCourseConfiguration onlineCourseConfiguration) {
+        log.debug("REST request to update online course configuration for Course : {}", courseId);
+
+        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        if (!onlineCourseConfigurationId.equals(onlineCourseConfiguration.getId())) {
+            throw new BadRequestAlertException("The onlineCourseConfigurationId in the path does not match the id in the onlineCourseConfiguration",
+                    OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
+        }
+        else if (!courseId.equals(onlineCourseConfiguration.getCourse().getId())) {
+            throw new BadRequestAlertException("The courseId in the path does not match the courseId in the onlineCourseConfiguration", OnlineCourseConfiguration.ENTITY_NAME,
+                    "courseIdMismatch");
+        }
+
+        onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+
+        courseRepository.save(course);
+
+        oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
+
+        return ResponseEntity.ok(onlineCourseConfiguration);
     }
 
     /**

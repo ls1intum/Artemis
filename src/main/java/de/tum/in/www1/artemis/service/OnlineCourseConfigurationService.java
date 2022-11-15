@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,18 +51,32 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         return onlineCourseConfiguration.map(this::getClientRegistration).orElse(null);
     }
 
+    public OnlineCourseConfiguration createOnlineCourseConfiguration(Course course) {
+        OnlineCourseConfiguration ocConfiguration = new OnlineCourseConfiguration();
+        ocConfiguration.setCourse(course);
+        ocConfiguration.setLtiKey(RandomStringUtils.random(12, true, true));
+        ocConfiguration.setLtiSecret(RandomStringUtils.random(12, true, true));
+        ocConfiguration.setUserPrefix(course.getShortName());
+        ocConfiguration.setRegistrationId(RandomStringUtils.random(24, true, true));
+        course.setOnlineCourseConfiguration(ocConfiguration);
+        return ocConfiguration;
+    }
+
     /**
-     * Validates the online course configuration if the course is an online course
-     * @param course the course for which the online course configuration should be validated
+     * Validates the online course configuration
+     * @param ocConfiguration the online course configuration being validated
      * @throws BadRequestAlertException 400 (Bad Request) if the online course configuration is invalid
      */
-    public void validateOnlineCourseConfiguration(Course course) {
-        if (!course.isOnlineCourse()) {
-            return;
-        }
-        OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
+    public void validateOnlineCourseConfiguration(OnlineCourseConfiguration ocConfiguration) {
+
         if (ocConfiguration == null) {
             throw new BadRequestAlertException("Configuration must exist for online courses", ENTITY_NAME, "onlineCourseConfigurationMissing");
+        }
+
+        Course course = ocConfiguration.getCourse();
+
+        if (course == null || course.isOnlineCourse()) {
+            throw new BadRequestAlertException("Course must exist and be online course", ENTITY_NAME, "courseMustBeOnline");
         }
 
         if (StringUtils.isBlank(ocConfiguration.getLtiKey()) || StringUtils.isBlank(ocConfiguration.getLtiSecret())) {

@@ -701,20 +701,8 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testCreateCourseWithValidStartAndEndDate() throws Exception {
-        courseTestService.testCreateCourseWithValidStartAndEndDate();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateInvalidOnlineCourse() throws Exception {
         courseTestService.testCreateInvalidOnlineCourse();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testInvalidOnlineCourseNonUniqueRegistrationId() throws Exception {
-        courseTestService.testInvalidOnlineCourseNonUniqueRegistrationId();
     }
 
     @Test
@@ -745,6 +733,42 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
         courseTestService.testDeleteCourseDeletesOnlineConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateInvalidOnlineCourseConfiguration() throws Exception {
+        courseTestService.testUpdateInvalidOnlineCourseConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testInvalidOnlineCourseConfigurationNonUniqueRegistrationId() throws Exception {
+        courseTestService.testInvalidOnlineCourseConfigurationNonUniqueRegistrationId();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfigurationAsStudent_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateValidOnlineCourseConfiguration_idMismatch() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfiguration_idMismatch();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateValidOnlineCourseConfiguration_courseIdMismatch() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfiguration_courseIdMismatch();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateValidOnlineCourseConfiguration() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfiguration();
     }
 
     @Test

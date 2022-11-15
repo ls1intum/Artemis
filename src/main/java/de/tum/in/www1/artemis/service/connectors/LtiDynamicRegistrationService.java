@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.util.UUID;
 
-import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +19,7 @@ import de.tum.in.www1.artemis.domain.lti.Lti13ClientRegistration;
 import de.tum.in.www1.artemis.domain.lti.Lti13PlatformConfiguration;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
+import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
@@ -30,14 +30,17 @@ public class LtiDynamicRegistrationService {
 
     private final Logger log = LoggerFactory.getLogger(LtiDynamicRegistrationService.class);
 
+    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
+
     private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
 
     private final OAuth2JWKSService oAuth2JWKSService;
 
     private final RestTemplate restTemplate;
 
-    public LtiDynamicRegistrationService(OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, OAuth2JWKSService oAuth2JWKSService, RestTemplate restTemplate) {
-
+    public LtiDynamicRegistrationService(OnlineCourseConfigurationService onlineCourseConfigurationService, OnlineCourseConfigurationRepository onlineCourseConfigurationRepository,
+            OAuth2JWKSService oAuth2JWKSService, RestTemplate restTemplate) {
+        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
         this.oAuth2JWKSService = oAuth2JWKSService;
         this.restTemplate = restTemplate;
@@ -122,11 +125,7 @@ public class LtiDynamicRegistrationService {
             Lti13ClientRegistration clientRegistrationResponse) {
         OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
         if (ocConfiguration == null) {
-            ocConfiguration = new OnlineCourseConfiguration();
-            ocConfiguration.setCourse(course);
-            ocConfiguration.setLtiKey(RandomStringUtils.random(12, true, true));
-            ocConfiguration.setLtiSecret(RandomStringUtils.random(12, true, true));
-            ocConfiguration.setUserPrefix(course.getShortName() + "_");
+            ocConfiguration = onlineCourseConfigurationService.createOnlineCourseConfiguration(course);
         }
 
         ocConfiguration.setRegistrationId(registrationId);
