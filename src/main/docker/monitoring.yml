@@ -3,11 +3,10 @@
 services:
   prometheus:
     container_name: artemis-prometheus
-    image: prom/prometheus:v2.31.1
-    volumes:
-      - ./prometheus/:/etc/prometheus/
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
+    image: prom/prometheus:v2.34.0
+    # If you want to run this in production, you should persist the /etc/prometheus-directory
+    #volumes:
+      # - ./monitoring/prometheus/:/etc/prometheus/
     # If you want to expose these ports outside your dev PC,
     # remove the "127.0.0.1:" prefix
     ports:
@@ -17,10 +16,10 @@ services:
     network_mode: 'host' # to test locally running service
   grafana:
     container_name: artemis-grafana
-    image: grafana/grafana:8.2.4
+    image: grafana/grafana:9.0.2
     # TODO: docker named volume maybe instead of this? otherwise .gitignore the used bind src mount
     volumes:
-      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
