@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, Observer, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscriber, Subscription } from 'rxjs';
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 import SockJS from 'sockjs-client';
 import Stomp, { Client, ConnectionHeaders, Subscription as StompSubscription } from 'webstomp-client';
@@ -17,13 +17,13 @@ export interface IWebsocketService {
     connect(): void;
 
     /**
-     * Close the connection to the websocket and unsubscribe als listeners.
+     * Close the connection to the websocket and unsubscribe als observables.
      */
     disconnect(): void;
 
     /**
-     * Add a new listener.
-     * @param channel The channel the listener listens on
+     * Creates a new observable (with subscriber) to receive websocket messages from the server
+     * @param channel The channel the observable listens on
      */
     receive(channel: string): Observable<any>;
 
@@ -38,7 +38,7 @@ export interface IWebsocketService {
      * Subscribe to a channel.
      * @param channel
      */
-    subscribe(channel: string): void;
+    subscribe(channel: string): IWebsocketService;
 
     /**
      * Unsubscribe a channel.
@@ -76,14 +76,17 @@ export class ConnectionState {
 
 @Injectable({ providedIn: 'root' })
 export class JhiWebsocketService implements IWebsocketService, OnDestroy {
-    stompClient: Client | null;
+    stompClient?: Client;
     connection: Promise<void>;
     connectedPromise: Function;
-    subscribers = new Map<string, StompSubscription>();
-    myListeners = new Map<string, Observable<any>>();
-    listenerObservers = new Map<string, Observer<any>>();
+    // we store the STOMP subscriptions per channel so that we can unsubscribe in case we are not interested any more
+    stompSubscriptions = new Map<string, StompSubscription>();
+    // we store the observables per channel to make sure we can resubscribe them in case of connection issues
+    observables = new Map<string, Observable<any>>();
+    // we store the subscribers (represent the components who want to receive messages) per channel so that we can notify them in case a message was received from the server
+    subscribers = new Map<string, Subscriber<any>>();
     alreadyConnectedOnce = false;
-    private subscription: Subscription | null;
+    private subscription?: Subscription;
     shouldReconnect = false;
     private readonly connectionStateInternal: BehaviorSubject<ConnectionState>;
     consecutiveFailedAttempts = 0;
@@ -181,23 +184,8 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                 this.consecutiveFailedAttempts = 0;
                 if (this.alreadyConnectedOnce) {
                     // (re)connect to all existing channels
-                    if (this.myListeners.size !== 0) {
-                        this.myListeners.forEach((listener, channel) => {
-                            this.subscribers.set(
-                                channel,
-                                this.stompClient!.subscribe(
-                                    channel,
-                                    (data) => {
-                                        if (this.listenerObservers.has(channel)) {
-                                            this.listenerObservers.get(channel)!.next(JSON.parse(data.body));
-                                        }
-                                    },
-                                    {
-                                        id: this.getSessionId() + '-' + this.subscriptionCounter++,
-                                    },
-                                ),
-                            );
-                        });
+                    if (this.observables.size !== 0) {
+                        this.observables.forEach((observable, channel) => this.addSubscription(channel));
                     }
                 } else {
                     this.alreadyConnectedOnce = true;
@@ -207,39 +195,62 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         );
     }
 
+    /**
+     * Adds a STOMP subscription to the subscribers to receive messages for specific channels
+     * @param channel the path (e.g. '/courses/5/exercises/10') that should be subscribed
+     * @private
+     */
+    private addSubscription(channel: string) {
+        const subscription = this.stompClient!.subscribe(
+            channel,
+            (message) => {
+                // this code is invoked if a new websocket message was received from the server
+                // we pass the message to the subscriber (e.g. a component who will be notified and can handle the message)
+                if (this.subscribers.has(channel)) {
+                    this.subscribers.get(channel)!.next(JhiWebsocketService.parseJSON(message.body));
+                }
+            },
+            {
+                id: this.getSessionId() + '-' + this.subscriptionCounter++,
+            },
+        );
+        this.stompSubscriptions.set(channel, subscription);
+    }
+
     private isConnected(): boolean {
         return !!this.stompClient?.connected;
     }
 
     /**
-     * Close the connection to the websocket, unsubscribe all listeners and distribute "intended disconnect" state.
+     * Close the connection to the websocket, unsubscribe all observables and distribute "intended disconnect" state.
      */
     disconnect() {
         this.connection = this.createConnection();
-        Object.keys(this.myListeners).forEach((listener) => this.unsubscribe(listener), this);
+        this.observables.forEach((observable, channel) => this.unsubscribe(channel));
         if (this.stompClient) {
             this.stompClient.disconnect();
-            this.stompClient = null;
+            this.stompClient = undefined;
             if (this.connectionStateInternal.getValue().connected || !this.connectionStateInternal.getValue().intendedDisconnect) {
                 this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, true));
             }
         }
         if (this.subscription) {
             this.subscription.unsubscribe();
-            this.subscription = null;
+            this.subscription = undefined;
         }
         this.alreadyConnectedOnce = false;
     }
 
     /**
-     * Add a new listener.
-     * @param channel The channel the listener listens on
+     * Creates a new observable  in case there is no observable for the passed channel yet.
+     * Returns the Observable which is invoked when a new message is received
+     * @param channel The channel the observable listens on
      */
     receive(channel: string): Observable<any> {
-        if (channel != undefined && (this.myListeners.size === 0 || !this.myListeners.has(channel))) {
-            this.myListeners.set(channel, this.createListener(channel));
+        if (channel != undefined && (this.observables.size === 0 || !this.observables.has(channel))) {
+            this.observables.set(channel, this.createObservable(channel));
         }
-        return this.myListeners.get(channel)!;
+        return this.observables.get(channel)!;
     }
 
     /**
@@ -254,31 +265,19 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Subscribe to a channel.
+     * Subscribe to a channel: add the channel to the observables and create a STOMP subscription for the channel if this has not been done before
      * @param channel
      */
-    subscribe(channel: string) {
+    subscribe(channel: string): IWebsocketService {
         this.connection.then(() => {
-            if (channel != undefined && (this.myListeners.size === 0 || !this.myListeners.has(channel))) {
-                this.myListeners.set(channel, this.createListener(channel));
+            if (channel != undefined && (this.observables.size === 0 || !this.observables.has(channel))) {
+                this.observables.set(channel, this.createObservable(channel));
             }
-            if (!this.subscribers.has(channel)) {
-                this.subscribers.set(
-                    channel,
-                    this.stompClient!.subscribe(
-                        channel,
-                        (data) => {
-                            if (this.listenerObservers.has(channel)) {
-                                this.listenerObservers.get(channel)!.next(JhiWebsocketService.parseJSON(data.body));
-                            }
-                        },
-                        {
-                            id: this.getSessionId() + '-' + this.subscriptionCounter++,
-                        },
-                    ),
-                );
+            if (!this.stompSubscriptions.has(channel)) {
+                this.addSubscription(channel);
             }
         });
+        return this;
     }
 
     /**
@@ -286,21 +285,21 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * @param channel
      */
     unsubscribe(channel: string) {
-        if (this && this.subscribers && this.subscribers.has(channel)) {
-            this.subscribers.get(channel)!.unsubscribe();
+        if (this && this.stompSubscriptions && this.stompSubscriptions.has(channel)) {
+            this.stompSubscriptions.get(channel)!.unsubscribe();
+            this.stompSubscriptions.delete(channel);
+            this.observables.delete(channel);
             this.subscribers.delete(channel);
-            this.myListeners.delete(channel);
-            this.listenerObservers.delete(channel);
         }
     }
 
     /**
-     * Create a new listener.
+     * Create a new observable and store the corresponding subscriber so that we can invoke it when a new message was received
      * @param channel The channel to listen on.
      */
-    private createListener<T>(channel: string): Observable<T> {
-        return new Observable((observer: Observer<T>) => {
-            this.listenerObservers.set(channel, observer);
+    private createObservable<T>(channel: string): Observable<T> {
+        return new Observable((subscriber: Subscriber<T>) => {
+            this.subscribers.set(channel, subscriber);
         });
     }
 
@@ -335,7 +334,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         this.disconnect();
     }
 
-    private static parseJSON(response: any): any {
+    private static parseJSON(response: string): any {
         try {
             return JSON.parse(response);
         } catch {

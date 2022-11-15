@@ -189,8 +189,10 @@ export class ExamActionService implements IExamActionService {
         const topic = EXAM_MONITORING_STATUS_TOPIC(exam.id!);
         this.openExamMonitoringStatusWebsocketSubscriptions.set(exam.id!, topic);
 
-        this.jhiWebsocketService.subscribe(topic);
-        this.jhiWebsocketService.receive(topic).subscribe((status: boolean) => this.notifyExamMonitoringUpdateSubscribers(exam, status));
+        this.jhiWebsocketService
+            .subscribe(topic)
+            .receive(topic)
+            .subscribe((status: boolean) => this.notifyExamMonitoringUpdateSubscribers(exam, status));
     }
 
     /**
