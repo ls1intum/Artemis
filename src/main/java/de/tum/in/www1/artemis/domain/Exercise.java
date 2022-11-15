@@ -679,13 +679,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      */
     public boolean isReleased() {
         // Exam
-        ZonedDateTime releaseDate;
-        if (this.isExamExercise()) {
-            releaseDate = getExerciseGroup().getExam().getStartDate();
-        }
-        else {
-            releaseDate = getReleaseDate();
-        }
+        ZonedDateTime releaseDate = getIndividualReleaseDate();
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
 

@@ -84,9 +84,8 @@ export class ExerciseService {
     }
 
     hasDueDateError(exercise: Exercise) {
-        const releaseDateError = exercise.releaseDate && exercise.dueDate && dayjs(exercise.dueDate).isBefore(exercise.releaseDate);
-        const startDateError = exercise.startDate && exercise.dueDate && dayjs(exercise.dueDate).isBefore(exercise.startDate);
-        return !!releaseDateError || !!startDateError;
+        const relevantDateBefore = exercise.startDate ?? exercise.releaseDate;
+        return relevantDateBefore && exercise.dueDate && dayjs(exercise.dueDate).isBefore(relevantDateBefore);
     }
 
     private hasAssessmentDueDateError(exercise: Exercise) {
@@ -111,7 +110,7 @@ export class ExerciseService {
     hasExampleSolutionPublicationDateError(exercise: Exercise) {
         if (exercise.exampleSolutionPublicationDate) {
             return (
-                dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.releaseDate) ||
+                dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.startDate ?? exercise.releaseDate) ||
                 (dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
             );
         }
