@@ -14,8 +14,8 @@ import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { isOneToOneChatDto, OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -121,17 +121,13 @@ export class MetisConversationService implements OnDestroy {
         );
     };
 
-    public createNewConversation = (newConversation: ConversationDto): Observable<never> => {
-        this.setIsLoading(true);
-        let createConversationObservable: Observable<HttpResponse<ConversationDto>>;
-        if (isOneToOneChatDto(newConversation)) {
-            createConversationObservable = this.oneToOneChatService.create(this._courseId, newConversation);
-        } else if (isChannelDto(newConversation)) {
-            createConversationObservable = this.channelService.create(this._courseId, newConversation);
-        } else {
-            throw new Error('Conversation type not supported');
-        }
-        return createConversationObservable.pipe(
+    public createOneToOneChat = (logins: [string, string]): Observable<HttpResponse<OneToOneChatDTO>> =>
+        this.onConversationCreation(this.oneToOneChatService.create(this._courseId, logins));
+
+    public createChannel = (channel: ChannelDTO) => this.onConversationCreation(this.channelService.create(this._courseId, channel));
+
+    private onConversationCreation = (creation$: Observable<HttpResponse<ConversationDto>>): Observable<never> => {
+        return creation$.pipe(
             tap((conversation: HttpResponse<ConversationDto>) => {
                 this._activeConversation = conversation.body!;
             }),

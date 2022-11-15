@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 @Service
 public class OneToOneChatService {
@@ -33,7 +32,7 @@ public class OneToOneChatService {
     }
 
     public Optional<OneToOneChat> findOneToOneChatWithSameMembers(Long courseId, Long userAId, Long userBId) {
-        return oneToOneChatRepository.findWithSameMembers(courseId, userAId, userBId);
+        return oneToOneChatRepository.findBetweenUsersWithParticipantsAndUserGroups(courseId, userAId, userBId);
     }
 
     public OneToOneChat startOneToOneChat(Course course, User userA, User userB) {
@@ -52,14 +51,6 @@ public class OneToOneChatService {
         var participants = conversationParticipantRepository.saveAll(List.of(participationOfUserA, participationOfUserB));
         savedChat.getConversationParticipants().addAll(participants);
         return oneToOneChatRepository.save(savedChat);
-    }
-
-    public OneToOneChatDTO convertToDTO(OneToOneChat oneToOneChat, User requestingUser) {
-        var oneToOneChatFromDB = oneToOneChatRepository.findByIdWithConversationParticipantsAndGroupsElseThrow(oneToOneChat.getId());
-        var oneToOneChatDTO = new OneToOneChatDTO(oneToOneChatFromDB);
-        oneToOneChatDTO.setIsMember(oneToOneChatFromDB.getConversationParticipants().stream().anyMatch(participant -> participant.getUser().equals(requestingUser)));
-        oneToOneChatDTO.setNumberOfMembers(oneToOneChatFromDB.getConversationParticipants().size());
-        return oneToOneChatDTO;
     }
 
     @NotNull

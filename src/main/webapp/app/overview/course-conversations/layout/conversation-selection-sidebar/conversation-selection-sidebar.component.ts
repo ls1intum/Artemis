@@ -121,7 +121,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
         from(modalRef.result).subscribe((channelToCreate: ChannelDTO) => {
-            this.metisConversationService.createNewConversation(channelToCreate).subscribe({
+            this.metisConversationService.createChannel(channelToCreate).subscribe({
                 complete: () => {
                     this.metisConversationService.forceRefresh().subscribe(() => {});
                 },
@@ -137,10 +137,9 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         from(modalRef.result).subscribe((userToChatWith: UserPublicInfoDTO | undefined) => {
             if (userToChatWith) {
                 this.accountService.identity().then((user: User) => {
-                    const currentUser = createUserPublicInfoDTOFromUser(user!);
-                    const creationDTO = new OneToOneChatDTO();
-                    creationDTO.members = [currentUser, userToChatWith];
-                    this.metisConversationService.createNewConversation(creationDTO).subscribe({
+                    const loginOfCurrentUser = user!.login!;
+                    const loginOfOtherUser = userToChatWith.login!;
+                    this.metisConversationService.createOneToOneChat([loginOfCurrentUser, loginOfOtherUser]).subscribe({
                         complete: () => {
                             this.metisConversationService.forceRefresh().subscribe(() => {});
                         },
@@ -154,7 +153,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.createChannelFn = this.metisConversationService.createNewConversation;
+        modalRef.componentInstance.createChannelFn = this.metisConversationService.createChannel;
         modalRef.componentInstance.initialize();
         from(modalRef.result).subscribe((newActiveConversation: ConversationDto) => {
             this.metisConversationService.forceRefresh().subscribe(() => {

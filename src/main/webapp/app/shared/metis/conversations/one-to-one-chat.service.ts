@@ -11,13 +11,9 @@ export class OneToOneChatService {
 
     constructor(private http: HttpClient, private conversationService: ConversationService) {}
 
-    create(courseId: number, oneToOneChat: OneToOneChatDTO): Observable<HttpResponse<OneToOneChatDTO>> {
-        if (oneToOneChat?.members?.length !== 2) {
-            throw new Error('One to one chat must have exactly two members');
-        }
-        const logins = oneToOneChat.members.map((member) => member.login);
+    create(courseId: number, otherChatParticipantsLogins: [string, string]): Observable<HttpResponse<OneToOneChatDTO>> {
         return this.http
-            .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/one-to-one-chats`, logins, { observe: 'response' })
+            .post<OneToOneChatDTO>(`${this.resourceUrl}${courseId}/one-to-one-chats`, otherChatParticipantsLogins, { observe: 'response' })
             .pipe(map(this.conversationService.convertDateFromServer));
     }
 }

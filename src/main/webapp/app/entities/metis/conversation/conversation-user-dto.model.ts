@@ -1,5 +1,6 @@
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
-export class ConversationUser extends UserPublicInfoDTO {
+export class ConversationUserDTO extends UserPublicInfoDTO {
     public isChannelAdmin?: boolean;
+    public isRequestingUser?: boolean;
 }

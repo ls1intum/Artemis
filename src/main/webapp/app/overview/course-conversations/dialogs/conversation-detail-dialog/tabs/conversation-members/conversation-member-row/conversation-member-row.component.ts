@@ -9,7 +9,7 @@ import { PrivateChannelRemoveUserDialog } from 'app/overview/course-conversation
 import { Course } from 'app/entities/course.model';
 import { canGrantChannelAdminRights, canRemoveUsersFromConversation, canRevokeChannelAdminRights } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
-import { ConversationUser } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,7 +35,7 @@ export class ConversationMemberRowComponent implements OnInit {
     changePerformed: EventEmitter<void> = new EventEmitter<void>();
 
     @Input()
-    user: ConversationUser;
+    user: ConversationUserDTO;
 
     userId: number;
 

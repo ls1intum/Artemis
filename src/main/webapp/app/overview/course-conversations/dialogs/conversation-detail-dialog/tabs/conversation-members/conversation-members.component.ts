@@ -12,7 +12,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
-import { ConversationUser } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 
 interface SearchQuery {
     searchTerm: string;
@@ -34,7 +34,7 @@ export class ConversationMembers implements OnInit {
     getAsChannel = getAsChannelDto;
     isChannel = isChannelDto;
 
-    members: ConversationUser[] = [];
+    members: ConversationUserDTO[] = [];
     // page information
     page = 1;
     itemsPerPage = 10;
@@ -57,7 +57,7 @@ export class ConversationMembers implements OnInit {
 
     constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal) {}
 
-    trackIdentity(index: number, item: ConversationUser) {
+    trackIdentity(index: number, item: ConversationUserDTO) {
         return item.id;
     }
 
@@ -112,7 +112,7 @@ export class ConversationMembers implements OnInit {
                 ),
             )
             .subscribe({
-                next: (res: HttpResponse<ConversationUser[]>) => {
+                next: (res: HttpResponse<ConversationUserDTO[]>) => {
                     this.isSearching = false;
                     this.onSuccess(res.body, res.headers);
                 },
@@ -150,7 +150,7 @@ export class ConversationMembers implements OnInit {
         });
     }
 
-    private onSuccess(members: ConversationUser[] | null, headers: HttpHeaders): void {
+    private onSuccess(members: ConversationUserDTO[] | null, headers: HttpHeaders): void {
         this.totalItems = Number(headers.get('X-Total-Count'));
         this.members = members || [];
     }

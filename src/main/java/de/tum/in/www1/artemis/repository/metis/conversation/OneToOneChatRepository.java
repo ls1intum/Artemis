@@ -29,7 +29,7 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
                  AND conversationParticipant.user.id = :#{#userId}
                  ORDER BY oneToOneChat.lastMessageDate DESC
             """)
-    List<OneToOneChat> findActiveOneToOneChatsOfUserWithParticipantsAndGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    List<OneToOneChat> findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
@@ -42,7 +42,7 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
             AND
             EXISTS (SELECT p FROM ConversationParticipant p WHERE p.user.id = :#{#userIdB} AND p.conversation = o)
             """)
-    Optional<OneToOneChat> findWithSameMembers(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
+    Optional<OneToOneChat> findBetweenUsersWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
 
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
@@ -51,10 +51,10 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
              LEFT JOIN FETCH oneToOneChat.conversationParticipants p
              WHERE oneToOneChat.id = :#{#oneToOneChatId}
             """)
-    Optional<OneToOneChat> findByIdWithConversationParticipantsAndGroups(@Param("oneToOneChatId") Long oneToOneChatId) throws EntityNotFoundException;
+    Optional<OneToOneChat> findByIdWithConversationParticipantsAndUserGroups(@Param("oneToOneChatId") Long oneToOneChatId) throws EntityNotFoundException;
 
     default OneToOneChat findByIdWithConversationParticipantsAndGroupsElseThrow(long oneToOneChatId) {
-        return this.findByIdWithConversationParticipantsAndGroups(oneToOneChatId).orElseThrow(() -> new EntityNotFoundException(ONE_TO_ONE_CHAT_ENTITY_NAME, oneToOneChatId));
+        return this.findByIdWithConversationParticipantsAndUserGroups(oneToOneChatId).orElseThrow(() -> new EntityNotFoundException(ONE_TO_ONE_CHAT_ENTITY_NAME, oneToOneChatId));
     }
 
 }

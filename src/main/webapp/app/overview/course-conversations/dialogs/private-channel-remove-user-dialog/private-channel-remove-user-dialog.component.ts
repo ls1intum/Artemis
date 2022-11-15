@@ -7,7 +7,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConversationUser } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { getUserLabel } from '../../other/conversation.util';
 
 @Component({
@@ -16,7 +16,7 @@ import { getUserLabel } from '../../other/conversation.util';
 })
 export class PrivateChannelRemoveUserDialog {
     @Input()
-    userToRemove: ConversationUser;
+    userToRemove: ConversationUserDTO;
     @Input()
     course: Course;
     @Input()

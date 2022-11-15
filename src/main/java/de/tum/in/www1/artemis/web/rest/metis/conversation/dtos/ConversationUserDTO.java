@@ -10,6 +10,8 @@ public class ConversationUserDTO extends UserPublicInfoDTO {
 
     private Boolean isChannelAdmin;
 
+    private Boolean isRequestingUser;
+
     public ConversationUserDTO(User user) {
         super(user);
     }
@@ -26,4 +28,11 @@ public class ConversationUserDTO extends UserPublicInfoDTO {
         isChannelAdmin = channelAdmin;
     }
 
+    public Boolean getIsRequestingUser() {
+        return isRequestingUser;
+    }
+
+    public void setIsRequestingUser(Boolean requestingUser) {
+        isRequestingUser = requestingUser;
+    }
 }

@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 
 public class OneToOneChatDTO extends ConversationDTO {
 
@@ -12,18 +10,18 @@ public class OneToOneChatDTO extends ConversationDTO {
         super(conversation, "oneToOneChat");
     }
 
-    public Set<UserPublicInfoDTO> members = new HashSet<>();
+    public Set<ConversationUserDTO> members;
 
-    public Set<UserPublicInfoDTO> getMembers() {
+    public Set<ConversationUserDTO> getMembers() {
         return members;
     }
 
-    public void setMembers(Set<UserPublicInfoDTO> members) {
+    public void setMembers(Set<ConversationUserDTO> members) {
         this.members = members;
     }
 
     @Override
     public String toString() {
-        return "OneToOneChatDTO{} " + super.toString();
+        return "OneToOneChatDTO{" + "members=" + members + "} " + super.toString();
     }
 }

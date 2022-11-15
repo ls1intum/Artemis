@@ -16,20 +16,15 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
-import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
-import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
@@ -37,6 +32,8 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 public class ConversationService {
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
+
+    private final ConversationDTOConversationService conversationDTOConversationService;
 
     private final UserRepository userRepository;
 
@@ -50,20 +47,18 @@ public class ConversationService {
 
     private final OneToOneChatRepository oneToOneChatRepository;
 
-    private final ChannelAuthorizationService channelAuthorizationService;
-
     private final PostRepository postRepository;
 
-    public ConversationService(UserRepository userRepository, ChannelRepository channelRepository, ConversationParticipantRepository conversationParticipantRepository,
-            ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate, OneToOneChatRepository oneToOneChatRepository,
-            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository) {
+    public ConversationService(ConversationDTOConversationService conversationDTOConversationService, UserRepository userRepository, ChannelRepository channelRepository,
+            ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate,
+            OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository) {
+        this.conversationDTOConversationService = conversationDTOConversationService;
         this.userRepository = userRepository;
         this.channelRepository = channelRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.conversationRepository = conversationRepository;
         this.messagingTemplate = messagingTemplate;
         this.oneToOneChatRepository = oneToOneChatRepository;
-        this.channelAuthorizationService = channelAuthorizationService;
         this.postRepository = postRepository;
     }
 
@@ -129,35 +124,6 @@ public class ConversationService {
                 conversationFromDatabase.getConversationParticipants().stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
     }
 
-    public ConversationDTO convertToDTOForUser(Conversation conversation, User user) {
-        var convFromDatabase = conversationRepository.findByIdWithConversationParticipantsAndGroupsElseThrow(conversation.getId());
-
-        ConversationDTO dto = null;
-        if (convFromDatabase instanceof Channel channel) {
-            dto = new ChannelDTO(channel);
-            ((ChannelDTO) dto).setIsChannelAdmin(channelAuthorizationService.isChannelAdmin(channel.getId(), user.getId()));
-            ((ChannelDTO) dto).setHasChannelAdminRights(channelAuthorizationService.hasChannelAdminRights(channel.getId(), user));
-        }
-        if (convFromDatabase instanceof OneToOneChat oneToOneChat) {
-            dto = new OneToOneChatDTO(oneToOneChat);
-            var members = new HashSet<UserPublicInfoDTO>();
-            for (var participant : convFromDatabase.getConversationParticipants()) {
-                var memberDTO = new UserPublicInfoDTO(participant.getUser());
-                UserPublicInfoDTO.assignRoleProperties(convFromDatabase.getCourse(), participant.getUser(), memberDTO);
-                members.add(memberDTO);
-            }
-            ((OneToOneChatDTO) dto).setMembers(members);
-        }
-
-        if (dto == null) {
-            throw new IllegalArgumentException("The conversation type is not supported.");
-        }
-        dto.setIsMember(isMember(convFromDatabase.getId(), user.getId()));
-        dto.setIsCreator(isCreator(convFromDatabase.getId(), user.getId()));
-        dto.setNumberOfMembers(getMemberCount(convFromDatabase.getId()));
-        return dto;
-    }
-
     public Conversation getConversationById(Long conversationId) {
         return conversationRepository.findByIdElseThrow(conversationId);
     }
@@ -166,29 +132,17 @@ public class ConversationService {
         return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, userId).isPresent();
     }
 
-    public boolean isCreator(Long conversationId, Long userId) {
-        var conversation = conversationRepository.findByIdElseThrow(conversationId);
-        if (conversation.getCreator() != null) {
-            return conversation.getCreator().getId().equals(userId);
-        }
-        else {
-            return false;
-        }
-    }
-
     public Integer getMemberCount(Long channelId) {
         return conversationParticipantRepository.countByConversationId(channelId);
     }
 
-    public List<ConversationDTO> getConversationsOfUser(Long courseId, User user) {
-        var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndGroups(courseId, user.getId());
-        var channelsOfUser = channelRepository.findChannelsOfUser(courseId, user.getId());
+    public List<ConversationDTO> getConversationsOfUser(Long courseId, User requestingUser) {
+        var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
+        var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
         var conversations = new ArrayList<Conversation>();
         conversations.addAll(oneToOneChatsOfUser);
         conversations.addAll(channelsOfUser);
-        var conversationDTOs = conversations.stream().map(conversation -> convertToDTOForUser(conversation, user)).collect(Collectors.toList());
-
-        return conversationDTOs;
+        return conversations.stream().map(conversation -> conversationDTOConversationService.convertToDto(conversation, requestingUser)).collect(Collectors.toList());
     }
 
     public Conversation updateConversation(Conversation conversation) {
@@ -215,7 +169,7 @@ public class ConversationService {
     }
 
     private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName) {
-        var dto = convertToDTOForUser(conversation, user);
+        var dto = conversationDTOConversationService.convertToDto(conversation, user);
         var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
         messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
     }

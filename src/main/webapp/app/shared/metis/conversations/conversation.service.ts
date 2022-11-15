@@ -9,8 +9,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
-import { ConversationUser } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 
 type EntityArrayResponseType = HttpResponse<ConversationDto[]>;
 
@@ -46,7 +47,8 @@ export class ConversationService {
             }
             return channelName;
         } else if (isOneToOneChatDto(conversation)) {
-            return 'ToDo';
+            const otherUser = conversation.members?.find((user) => user.isRequestingUser === false);
+            return otherUser ? getUserLabel(otherUser) : '';
         } else if (isGroupChatDto(conversation)) {
             const namesOfOtherMembers = conversation.namesOfOtherMembers ?? [];
             if (namesOfOtherMembers.length === 0) {
@@ -73,13 +75,13 @@ export class ConversationService {
         page: number,
         size: number,
         filter: ConversationMemberSearchFilter,
-    ): Observable<HttpResponse<ConversationUser[]>> {
+    ): Observable<HttpResponse<ConversationUserDTO[]>> {
         const sortingParameters: UserSortingParameter[] = [
             { sortProperty: 'firstName', sortDirection: 'asc' },
             { sortProperty: 'lastName', sortDirection: 'asc' },
         ];
         const params = this.creatSearchPagingParams(sortingParameters, page, size, loginOrName, filter);
-        return this.http.get<ConversationUser[]>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/members/search`, {
+        return this.http.get<ConversationUserDTO[]>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/members/search`, {
             observe: 'response',
             params,
         });

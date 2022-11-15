@@ -43,10 +43,10 @@ public class UserPublicInfoDTO {
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
 
-        this.isInstructor = false;
-        this.isEditor = false;
-        this.isTeachingAssistant = false;
-        this.isStudent = false;
+        this.isInstructor = null;
+        this.isEditor = null;
+        this.isTeachingAssistant = null;
+        this.isStudent = null;
     }
 
     public static void assignRoleProperties(Course course, User user, UserPublicInfoDTO userPublicInfoDTO) {
@@ -148,5 +148,11 @@ public class UserPublicInfoDTO {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "UserPublicInfoDTO{" + "id=" + id + ", login='" + login + '\'' + ", name='" + name + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\''
+                + ", isInstructor=" + isInstructor + ", isEditor=" + isEditor + ", isTeachingAssistant=" + isTeachingAssistant + ", isStudent=" + isStudent + '}';
     }
 }
