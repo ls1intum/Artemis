@@ -38,23 +38,24 @@
         <span class="text-muted" *ngSwitchCase="ParticipationStatus.QUIZ_SUBMITTED">{{ 'artemisApp.courseOverview.exerciseList.userSubmittedShort' | artemisTranslate }}</span>
     </div>
     <!-- Updating result -->
-    <span *ngIf="['initialized', 'inactive', 'quiz-finished', 'exercise-submitted'].includes(exercise.participationStatus!) && participation">
+    <span *ngIf="['initialized', 'inactive', 'quiz-finished', 'exercise-submitted'].includes(exercise.participationStatus!) && studentParticipation">
         <jhi-updating-result
             id="submission-result-graded"
             [exercise]="exercise"
-            [participation]="participation!"
+            [participation]="studentParticipation"
             [class]="updatingResultClass"
             [showUngradedResults]="showUngradedResults"
             [showBadge]="showBadge"
+            [showIcon]="showIcon"
             [short]="short"
             [personalParticipation]="true"
         ></jhi-updating-result>
     </span>
     <!-- For programming exercises -->
-    <ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING && participation">
+    <ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING && studentParticipation">
         <jhi-programming-exercise-student-trigger-build-button
             [exercise]="exercise"
-            [participation]="participation"
+            [participation]="studentParticipation"
             [triggerLastGraded]="triggerLastGraded"
         ></jhi-programming-exercise-student-trigger-build-button>
     </ng-container>

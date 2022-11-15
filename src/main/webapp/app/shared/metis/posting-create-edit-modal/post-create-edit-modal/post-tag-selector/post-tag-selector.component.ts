@@ -1,5 +1,5 @@
 import { AfterContentChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { map, Observable, startWith, Subscription } from 'rxjs';
+import { Observable, Subscription, map, startWith } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormControl } from '@angular/forms';

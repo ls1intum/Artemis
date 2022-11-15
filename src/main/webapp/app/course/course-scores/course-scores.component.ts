@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { forkJoin, of, Subscription } from 'rxjs';
+import { Subscription, forkJoin, of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExportToCsv } from 'export-to-csv';
-import { Exercise, ExerciseType, exerciseTypes, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
@@ -28,15 +28,15 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import * as XLSX from 'xlsx';
 import { VERSION } from 'app/app.constants';
 import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
-import { ExportRowBuilder, ExportRow } from 'app/shared/export/export-row-builder';
+import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builder';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import {
     BONUS_KEY,
+    COURSE_OVERALL_POINTS_KEY,
+    COURSE_OVERALL_SCORE_KEY,
     EMAIL_KEY,
     GRADE_KEY,
     NAME_KEY,
-    COURSE_OVERALL_POINTS_KEY,
-    COURSE_OVERALL_SCORE_KEY,
     POINTS_KEY,
     PRESENTATION_SCORE_KEY,
     REGISTRATION_NUMBER_KEY,

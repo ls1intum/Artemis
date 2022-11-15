@@ -1,0 +1,80 @@
+<div class="table-responsive tutorial-groups-table">
+    <div class="col-12 mb-2">
+        <div class="alert alert-info">
+            {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate: { timeZone: timeZoneUsedForDisplay } }}
+        </div>
+    </div>
+    <table class="table table-sm table-hover">
+        <thead>
+            <tr jhiSort [(predicate)]="sortingPredicate" [(ascending)]="ascending" (sortChange)="sortRows()">
+                <th jhiSortBy="id" *ngIf="showIdColumn">
+                    <a class="th-link">{{ 'global.field.id' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="title">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.title' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="teachingAssistantName">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.teachingAssistant' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="capacity">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.capacity' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="tutorialGroupSchedule.dayOfWeek">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.dayOfWeek' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="tutorialGroupSchedule.repetitionFrequency">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.repetitionFrequency' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="tutorialGroupSchedule.location">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSession.location' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="tutorialGroupSchedule.startTime">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.time' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="numberOfRegisteredUsers">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.registrations' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="isOnline">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.isOnline' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="language">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="campus">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.campus' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="nextSession">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.nextSession' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th *ngIf="extraColumn"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr
+                jhi-tutorial-group-row
+                *ngFor="let tutorialGroup of tutorialGroups; trackBy: trackId"
+                id="tutorial-group-row-{{ tutorialGroup.id }}"
+                [ngClass]="{ 'table-success': tutorialGroup.isUserRegistered, 'table-info': tutorialGroup.isUserTutor }"
+                [tutorialGroup]="tutorialGroup"
+                [course]="course"
+                [extraColumn]="extraColumn"
+                [showIdColumn]="showIdColumn"
+                [tutorialGroupClickHandler]="tutorialGroupClickHandler"
+                [timeZone]="timeZone"
+            ></tr>
+        </tbody>
+    </table>
+</div>

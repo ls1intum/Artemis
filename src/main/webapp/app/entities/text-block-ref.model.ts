@@ -4,6 +4,10 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 export class TextBlockRef {
     public block?: TextBlock;
     public feedback?: Feedback;
+    // properties that just exist on the client side
+    public selectable = true;
+    public highlighted = false;
+    public deletable = true;
 
     constructor(block: TextBlock, feedback?: Feedback) {
         this.block = block;

@@ -12,7 +12,7 @@
                     [class.stepwizard-step--failed]="step.done === TestCaseState.FAIL"
                     [class.stepwizard-step--not-executed]="step.done === TestCaseState.NOT_EXECUTED"
                     [class.stepwizard-step--no-result]="step.done === TestCaseState.NO_RESULT"
-                    (click)="showDetailsForTests(step.tests)"
+                    (click)="showDetailsForTests(step.tests, step.title)"
                 >
                     <fa-icon [icon]="faCheck" size="lg" class="text-success" *ngIf="step.done === TestCaseState.SUCCESS"></fa-icon>
                     <fa-icon [icon]="faTimes" size="lg" class="text-danger" *ngIf="step.done === TestCaseState.FAIL"></fa-icon>

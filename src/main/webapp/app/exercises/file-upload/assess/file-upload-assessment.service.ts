@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import dayjs from 'dayjs/esm';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { map } from 'rxjs/operators';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -32,7 +32,7 @@ export class FileUploadAssessmentService {
             feedbacks,
             complaintResponse,
         };
-        return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResponse(res)));
+        return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 
     // TODO refactor all asssessment.service getAssessment calls to make similar REST calls
@@ -54,17 +54,14 @@ export class FileUploadAssessmentService {
         return this.http.delete<void>(`${this.resourceUrl}/participations/${participationId}/file-upload-submissions/${submissionId}/results/${resultId}`);
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
+    private convertResultEntityResponseTypeFromServer(res: EntityResponseType): EntityResponseType {
         const result = this.convertItemFromServer(res.body!);
-
-        if (result.completionDate) {
-            result.completionDate = dayjs(result.completionDate);
+        result.completionDate = convertDateFromServer(result.completionDate);
+        if (result.submission) {
+            result.submission.submissionDate = convertDateFromServer(result.submission.submissionDate);
         }
-        if (result.submission && result.submission.submissionDate) {
-            result.submission.submissionDate = dayjs(result.submission.submissionDate);
-        }
-        if (result.participation && result.participation.initializationDate) {
-            result.participation.initializationDate = dayjs(result.participation.initializationDate);
+        if (result.participation) {
+            result.participation.initializationDate = convertDateFromServer(result.participation.initializationDate);
         }
 
         return res.clone({ body: result });

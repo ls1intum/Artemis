@@ -32,7 +32,6 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -67,6 +66,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly evaluateBadge = ResultService.evaluateBadge;
+    readonly dayjs = dayjs;
 
     private currentUser: User;
     private exerciseId: number;
@@ -201,7 +201,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise = newExercise;
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
-        this.exercise.participationStatus = participationStatus(this.exercise);
+        this.exercise.participationStatus = participationStatus(this.exercise, false);
         const now = dayjs();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || now.isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories || [];
@@ -215,11 +215,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
-            if (this.exercise?.studentParticipations && programmingExercise.projectKey) {
-                this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                    setBuildPlanUrlForProgrammingParticipations(profileInfo, this.exercise?.studentParticipations!, (this.exercise as ProgrammingExercise).projectKey);
-                });
-            }
             this.hasSubmissionPolicy = false;
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
                 this.submissionPolicy = submissionPolicy;
@@ -378,7 +373,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             .subscribe((teamAssignment) => {
                 this.exercise!.studentAssignedTeamId = teamAssignment.teamId;
                 this.exercise!.studentParticipations = teamAssignment.studentParticipations;
-                this.exercise!.participationStatus = participationStatus(this.exercise!);
+                this.exercise!.participationStatus = participationStatus(this.exercise!, false);
             });
     }
 

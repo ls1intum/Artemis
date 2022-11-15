@@ -21,7 +21,7 @@ export interface FormProperties {
 
 // file input is a special case and is not included in the reactive form structure
 export interface FileProperties {
-    file?: File | Blob;
+    file?: File;
     fileName?: string;
 }
 
@@ -49,7 +49,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     // have to handle the file input as a special case at is not part of the reactive form
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
-    file: File | Blob;
+    file: File;
     fileName?: string;
     fileInputTouched = false;
 

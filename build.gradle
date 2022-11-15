@@ -19,25 +19,23 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id "com.google.cloud.tools.jib" version "3.3.0"
-    id "com.github.node-gradle.node" version "3.4.0"
+    id "com.github.node-gradle.node" version "3.5.0"
     id "com.diffplug.spotless" version "6.11.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
-    id "com.github.ben-manes.versions" version "0.42.0"
+    id "com.github.ben-manes.versions" version "0.43.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
     id "info.solidsoft.pitest" version "1.9.0"
-    id "org.owasp.dependencycheck" version "7.2.1"
+    id "org.owasp.dependencycheck" version "7.3.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.12.0"
+version = "6.0.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
 targetCompatibility=17
 
-apply from: "gradle/docker.gradle"
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
 apply from: "gradle/liquibase.gradle"
 
@@ -64,7 +62,7 @@ spotless {
     java {
         target project.fileTree(project.rootDir) {
             include "**/*.java"
-            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/main/java/de/tum/in/www1/artemis/config/SecurityConfiguration.java", "**/src/main/java/de/tum/in/www1/artemis/config/SAML2Configuration.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
+            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
         }
         importOrderFile "artemis-spotless.importorder"
         eclipse("4.19.0").configFile "artemis-spotless-style.xml"
@@ -179,7 +177,7 @@ dependencies {
     implementation "de.jplag:python-3:${jplag_version}"
     implementation "de.jplag:text:${jplag_version}"
 
-
+    // we have to override those values to avoid issues with Spring (JPlag wants to use a newer version which would conflict otherwise)
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
     implementation "org.slf4j:jul-to-slf4j:${slf4j_version}"
     implementation ("org.slf4j:slf4j-api") {
@@ -187,36 +185,34 @@ dependencies {
             strictly "${slf4j_version}"
         }
     }
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.17.2"
-//    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.19.0"
-//    implementation "ch.qos.logback:logback-classic:1.4.1"
 
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.19.0"
 
-
+    implementation "uk.ac.ox.ctl:spring-security-lti13:0.0.4"
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
     // https://search.maven.org/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2022.7"
+    implementation "net.sourceforge.plantuml:plantuml:1.2022.12"
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation "com.atlassian.bamboo:bamboo-specs:8.2.5"
-    implementation "com.thoughtworks.qdox:qdox:2.0.2"
-    implementation "io.sentry:sentry-logback:6.4.2"
-    implementation "io.sentry:sentry-spring-boot-starter:6.4.2"
+    implementation "com.thoughtworks.qdox:qdox:2.0.3"
+    implementation "io.sentry:sentry-logback:6.7.0"
+    implementation "io.sentry:sentry-spring-boot-starter:6.7.0"
     implementation "org.jsoup:jsoup:1.15.3"
     implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.6.11"
+    implementation "org.springdoc:springdoc-openapi-ui:1.6.12"
 
     // import JHipster dependencies BOM
     implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.9.4"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.9.5"
     implementation "net.logstash.logback:logstash-logback-encoder:7.2"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
@@ -225,7 +221,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
-    implementation "com.hazelcast:hazelcast-hibernate53:2.2.1"
+    implementation "com.hazelcast:hazelcast-hibernate53:2.3.0"
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate:hibernate-core:${hibernate_version}"
     implementation "com.zaxxer:HikariCP:5.0.1"
@@ -250,14 +246,14 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.4.1"
-    implementation "org.springframework.data:spring-data-ldap:2.7.3"
+    implementation "org.springframework.data:spring-data-ldap:2.7.5"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:3.1.4"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.4"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:3.1.5"
     implementation "org.springframework.boot:spring-boot-starter-cloud-connectors:2.2.13.RELEASE"
 
-    implementation "io.netty:netty-all:4.1.82.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.0.23"
+    implementation "io.netty:netty-all:4.1.84.Final"
+    implementation "io.projectreactor.netty:reactor-netty:1.0.24"
     implementation "org.springframework:spring-messaging:5.3.23"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
@@ -275,15 +271,15 @@ dependencies {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
-    implementation "mysql:mysql-connector-java:8.0.30"
+    implementation "mysql:mysql-connector-java:8.0.31"
 
     implementation "org.zalando:problem-spring-web:0.27.0"
-    implementation "com.ibm.icu:icu4j:71.1"
+    implementation "com.ibm.icu:icu4j:72.1"
     implementation "com.github.seancfoley:ipaddress:5.3.4"
     implementation "org.apache.maven:maven-model:3.8.6"
     implementation "org.apache.pdfbox:pdfbox:2.0.27"
-    implementation "com.google.protobuf:protobuf-java:3.21.7"
-    implementation "org.commonmark:commonmark:0.19.0"
+    implementation "com.google.protobuf:protobuf-java:3.21.9"
+    implementation "org.commonmark:commonmark:0.20.0"
     implementation "de.tum.in.ase.athene:client:0.0.2"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
@@ -310,7 +306,7 @@ dependencies {
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
     testImplementation "org.gradle:gradle-tooling-api:7.3"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M7"
-    testImplementation "com.opencsv:opencsv:5.7.0"
+    testImplementation "com.opencsv:opencsv:5.7.1"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20220924"

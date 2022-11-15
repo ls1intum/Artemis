@@ -1,0 +1,15 @@
+<button id="importDialogButton" (click)="openTutorialGroupImportDialog($event)" type="button" class="btn">
+    <span class="d-none d-md-inline">{{ 'artemisApp.tutorialGroupImportDialog.importButton' | artemisTranslate }}</span>
+</button>
+
+<ng-template #warning let-warning>
+    <div class="modal-header">
+        <h4 class="modal-title">{{ 'artemisApp.tutorialGroupImportDialog.warning' | artemisTranslate }}</h4>
+    </div>
+    <div class="modal-body">
+        <p>{{ 'artemisApp.tutorialGroupImportDialog.finishedWarning' | artemisTranslate }}</p>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-light" (click)="warning.close()">Ok</button>
+    </div>
+</ng-template>

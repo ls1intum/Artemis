@@ -1,7 +1,9 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { isOrion } from 'app/shared/orion/orion';
 
 @Component({

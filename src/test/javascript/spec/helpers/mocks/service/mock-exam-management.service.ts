@@ -1,4 +1,4 @@
-import { of, Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
 

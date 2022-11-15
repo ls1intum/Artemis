@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
+import static de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper.LTI_USER_EMAIL;
+import static de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper.LTI_USER_EMAIL_UPPER_CASE;
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,6 +14,8 @@ import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -87,7 +91,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addOnlineCourseConfigurationToCourse(course);
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
-        doReturn(null).when(ltiService).verifyRequest(any(), any());
+        doReturn(null).when(lti10Service).verifyRequest(any(), any());
 
         final var userAuthority = new Authority(Role.STUDENT.getAuthority());
         final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
@@ -108,14 +112,16 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
                 .isThrownBy(() -> applicationContext.getBean(ArtemisInternalAuthenticationProvider.class));
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = { LTI_USER_EMAIL, LTI_USER_EMAIL_UPPER_CASE })
     @WithAnonymousUser
-    void launchLtiRequest_authViaEmail_success() throws Exception {
+    void launchLtiRequest_authViaEmail_success(String launchEmail) throws Exception {
         final var username = "mrrobot";
-        final var email = ltiLaunchRequest.getLis_person_contact_email_primary();
         final var firstName = "Elliot";
         final var groups = Set.of("allsec", "security", ADMIN_GROUP_NAME, course.getInstructorGroupName(), course.getTeachingAssistantGroupName());
-        jiraRequestMockProvider.mockGetUsernameForEmail(email, username);
+        final var email = LTI_USER_EMAIL;
+        ltiLaunchRequest.setLis_person_contact_email_primary(launchEmail);
+        jiraRequestMockProvider.mockGetUsernameForEmail(launchEmail, email, username);
         jiraRequestMockProvider.mockGetOrCreateUserLti(JIRA_USER, JIRA_PASSWORD, username, email, firstName, groups);
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
         jiraRequestMockProvider.mockGetOrCreateUserLti(username, "", username, email, firstName, groups);
