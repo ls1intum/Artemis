@@ -1,0 +1,15 @@
+.long-text {
+    max-width: 300px;
+}
+
+.free-period-row {
+    .extra-buttons {
+        visibility: hidden;
+    }
+
+    &:hover {
+        .extra-buttons {
+            visibility: visible;
+        }
+    }
+}

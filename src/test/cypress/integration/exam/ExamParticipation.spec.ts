@@ -1,7 +1,7 @@
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exam } from 'app/entities/exam.model';
-import { GET, BASE_API } from '../../support/constants';
-import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
+import { BASE_API, GET } from '../../support/constants';
+import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
 import dayjs from 'dayjs/esm';
 import submission from '../../fixtures/programming_exercise_submissions/all_successful/submission.json';
@@ -37,7 +37,7 @@ describe('Exam participation', () => {
     before(() => {
         cy.login(users.getAdmin());
         courseRequests.createCourse(true).then((response) => {
-            course = response.body;
+            course = convertCourseAfterMultiPart(response);
             const examContent = new CypressExamBuilder(course)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
@@ -121,7 +121,7 @@ describe('Exam participation', () => {
         onlineEditor.deleteFile('MergeSort.java');
         onlineEditor.typeSubmission(submission, 'de.test');
         onlineEditor.submit();
-        onlineEditor.getResultScore().contains('100%').should('be.visible');
+        onlineEditor.getResultScore().contains('100%').and('be.visible');
     }
 
     function makeModelingExerciseSubmission() {

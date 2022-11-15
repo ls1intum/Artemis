@@ -235,35 +235,38 @@
                         <div class="row">
                             <div class="form-check col-3 d-flex justify-content-center">
                                 <input
+                                    id="authorityFilter"
                                     class="form-check-input"
                                     type="radio"
                                     (click)="selectAllRoles()"
                                     [checked]="this.filters.authorityFilter.size === this.authorityFilters.length && !this.filters.noAuthority"
                                 />
-                                <label class="form-check-label ps-1">
+                                <label for="authorityFilter" class="form-check-label ps-1">
                                     {{ 'artemisApp.userManagement.filter.all' | artemisTranslate }}
                                 </label>
                             </div>
                             <div class="form-check col-6 d-flex justify-content-center">
                                 <input
+                                    id="emptyRoles"
                                     class="form-check-input"
                                     type="radio"
                                     (click)="selectEmptyRoles()"
                                     [checked]="this.filters.authorityFilter.size === 0 && this.filters.noAuthority"
                                 />
-                                <label class="form-check-label ps-1">
+                                <label for="emptyRoles" class="form-check-label ps-1">
                                     {{ 'artemisApp.userManagement.filter.authority.without' | artemisTranslate }}
                                 </label>
                                 <jhi-help-icon class="ps-1" placement="top" text="artemisApp.userManagement.filter.authority.withoutTooltip"></jhi-help-icon>
                             </div>
                             <div class="form-check col-3 d-flex justify-content-center">
                                 <input
+                                    id="deselectAll"
                                     class="form-check-input"
                                     type="radio"
                                     (click)="deselectAllRoles()"
                                     [checked]="this.filters.authorityFilter.size === 0 && !this.filters.noAuthority"
                                 />
-                                <label class="form-check-label ps-1">
+                                <label for="deselectAll" class="form-check-label ps-1">
                                     {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
                                 </label>
                             </div>
@@ -336,12 +339,13 @@
                         </li>
                         <li class="col-3">
                             <input
+                                id="toggleRegistrationNumberFilter"
                                 class="form-check-input"
                                 type="radio"
                                 (click)="this.toggleRegistrationNumberFilter()"
                                 [checked]="this.filters.registrationNumberFilter.size === 0"
                             />
-                            <label class="form-check-label ps-1">
+                            <label for="toggleRegistrationNumberFilter" class="form-check-label ps-1">
                                 {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
                             </label>
                         </li>
@@ -384,35 +388,38 @@
                         <div class="row">
                             <div class="form-check col-3 d-flex justify-content-center">
                                 <input
+                                    id="selectAllCourses"
                                     class="form-check-input"
                                     type="radio"
                                     (click)="selectAllCourses()"
                                     [checked]="this.filters.courseFilter.size === this.courses.length && !this.filters.noCourse"
                                 />
-                                <label class="form-check-label ps-1">
+                                <label for="selectAllCourses" class="form-check-label ps-1">
                                     {{ 'artemisApp.userManagement.filter.all' | artemisTranslate }}
                                 </label>
                             </div>
                             <div class="form-check col-6 d-flex justify-content-center">
                                 <input
+                                    id="selectEmptyCourses"
                                     class="form-check-input"
                                     type="radio"
                                     (click)="selectEmptyCourses()"
                                     [checked]="this.filters.courseFilter.size === 0 && this.filters.noCourse"
                                 />
-                                <label class="form-check-label ps-1">
+                                <label for="selectEmptyCourses" class="form-check-label ps-1">
                                     {{ 'artemisApp.userManagement.filter.course.without' | artemisTranslate }}
                                 </label>
                                 <jhi-help-icon class="ps-1" placement="top" text="artemisApp.userManagement.filter.course.withoutTooltip"></jhi-help-icon>
                             </div>
                             <div class="form-check col-3 d-flex justify-content-center">
                                 <input
+                                    id="deselectAllCourses"
                                     class="form-check-input"
                                     type="radio"
                                     (click)="deselectAllCourses()"
                                     [checked]="this.filters.courseFilter.size === 0 && !this.filters.noCourse"
                                 />
-                                <label class="form-check-label ps-1">
+                                <label for="deselectAllCourses" class="form-check-label ps-1">
                                     {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
                                 </label>
                             </div>

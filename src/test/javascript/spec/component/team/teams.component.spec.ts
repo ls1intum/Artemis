@@ -1,5 +1,5 @@
 import * as ace from 'brace';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
@@ -7,9 +7,9 @@ import { NgModel } from '@angular/forms';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { mockTeams, MockTeamService } from '../../helpers/mocks/service/mock-team.service';
+import { MockTeamService, mockTeams } from '../../helpers/mocks/service/mock-team.service';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';

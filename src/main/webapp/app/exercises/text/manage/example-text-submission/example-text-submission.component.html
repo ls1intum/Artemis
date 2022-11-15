@@ -6,6 +6,11 @@
                 >{{ 'artemisApp.exampleSubmission.pageHeader' | artemisTranslate }}
                 {{ exercise?.title }}
             </h2>
+            <div *ngIf="state.ui === UIStates.ASSESSMENT && toComplete && referencedBlocksInExampleSubmission && referencedBlocksInExampleSubmission.length > 0" class="col">
+                <div class="my-2 text-center hint">
+                    <span>{{ 'artemisApp.exampleSubmission.textHint' | artemisTranslate }}</span>
+                </div>
+            </div>
         </div>
 
         <div class="col-4 text-end d-flex align-items-center gap-2 justify-content-end" *ngIf="(exercise?.isAtLeastEditor || false) && !readOnly && !toComplete && exercise">
@@ -22,7 +27,7 @@
                         name="mode"
                         id="read-and-confirm-button"
                         autocomplete="off"
-                        [value]="'readConfirm'"
+                        [value]="ExampleSubmissionMode.READ_AND_CONFIRM"
                         [ngModel]="selectedMode"
                         (ngModelChange)="onModeChange($event)"
                     />
@@ -35,7 +40,7 @@
                         name="mode"
                         id="only-not-imported"
                         autocomplete="off"
-                        [value]="'assessCorrectly'"
+                        [value]="ExampleSubmissionMode.ASSESS_CORRECTLY"
                         [ngModel]="selectedMode"
                         (ngModelChange)="onModeChange($event)"
                     />
@@ -125,6 +130,7 @@
         left-body
         class="guided-tour-assessment-editor guided-tour-complete-assessment-editor"
         *ngIf="state.ui === UIStates.ASSESSMENT"
+        [allowManualBlockSelection]="!this.toComplete"
         [submission]="submission!"
         [(textBlockRefs)]="textBlockRefs"
         [readOnly]="readOnly || (!!exercise && !exercise.isAtLeastEditor && !toComplete)"
@@ -156,6 +162,7 @@
         *ngIf="exercise"
         [exercise]="exercise"
         [isAssessmentTraining]="toComplete"
+        [showAssessmentInstructions]="state.ui === UIStates.ASSESSMENT"
         class="markdown-preview"
     ></jhi-assessment-instructions>
     <!--endregion-->

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Component, EventEmitter, Input, Output } from '@angular/core';

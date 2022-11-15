@@ -628,7 +628,12 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result result = request.getNullable("/api/exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/example-result", expectedStatus, Result.class);
 
         if (expectedStatus == HttpStatus.OK && result != null) {
-            assertThat(result.getSubmission().getId()).as("result for correct submission").isEqualTo(textSubmission.getId());
+            assertThat(result.getId() == null).isTrue();
+            for (Feedback feedback : result.getFeedbacks()) {
+                assertThat(feedback.getCredits()).isNull();
+                assertThat(feedback.getDetailText()).isNull();
+                assertThat(feedback.getReference()).isNotNull();
+            }
         }
 
         return result;
@@ -664,8 +669,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void getExampleResultForNonExampleSubmissionAsTutor() throws Exception {
-        final var result = getExampleResultForTutor(HttpStatus.OK, false);
-        assertThat(result).isNull();
+        getExampleResultForTutor(HttpStatus.OK, false);
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {

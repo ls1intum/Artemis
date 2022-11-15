@@ -12,9 +12,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
-import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -22,7 +20,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
@@ -35,8 +32,6 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -53,6 +48,7 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -70,10 +66,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly evaluateBadge = ResultService.evaluateBadge;
+    readonly dayjs = dayjs;
 
     private currentUser: User;
     private exerciseId: number;
     public courseId: number;
+    public course: Course;
     public exercise?: Exercise;
     public resultWithComplaint?: Result;
     public latestRatedResult?: Result;
@@ -126,14 +124,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     constructor(
         private exerciseService: ExerciseService,
-        private courseService: CourseManagementService,
-        private jhiWebsocketService: JhiWebsocketService,
         private accountService: AccountService,
-        private courseCalculationService: CourseScoreCalculationService,
         private participationWebsocketService: ParticipationWebsocketService,
         private participationService: ParticipationService,
-        private sourceTreeService: SourceTreeService,
-        private courseServer: CourseManagementService,
         private route: ActivatedRoute,
         private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
@@ -143,10 +136,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private quizExerciseService: QuizExerciseService,
         private submissionService: ProgrammingSubmissionService,
         private complaintService: ComplaintService,
-        private navigationUtilService: ArtemisNavigationUtilService,
         private artemisMarkdown: ArtemisMarkdownService,
         private plagiarismCaseService: PlagiarismCasesService,
         private exerciseHintService: ExerciseHintService,
+        private courseService: CourseManagementService,
     ) {}
 
     ngOnInit() {
@@ -155,6 +148,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             const didCourseChange = this.courseId !== parseInt(params['courseId'], 10);
             this.exerciseId = parseInt(params['exerciseId'], 10);
             this.courseId = parseInt(params['courseId'], 10);
+            this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
             this.accountService.identity().then((user: User) => {
                 this.currentUser = user;
             });
@@ -207,7 +201,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise = newExercise;
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
-        this.exercise.participationStatus = participationStatus(this.exercise);
+        this.exercise.participationStatus = participationStatus(this.exercise, false);
         const now = dayjs();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || now.isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories || [];
@@ -221,11 +215,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
-            if (this.exercise?.studentParticipations && programmingExercise.projectKey) {
-                this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                    setBuildPlanUrlForProgrammingParticipations(profileInfo, this.exercise?.studentParticipations!, (this.exercise as ProgrammingExercise).projectKey);
-                });
-            }
             this.hasSubmissionPolicy = false;
             this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exerciseId).subscribe((submissionPolicy) => {
                 this.submissionPolicy = submissionPolicy;
@@ -384,7 +373,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             .subscribe((teamAssignment) => {
                 this.exercise!.studentAssignedTeamId = teamAssignment.teamId;
                 this.exercise!.studentParticipations = teamAssignment.studentParticipations;
-                this.exercise!.participationStatus = participationStatus(this.exercise!);
+                this.exercise!.participationStatus = participationStatus(this.exercise!, false);
             });
     }
 

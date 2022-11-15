@@ -31,7 +31,7 @@ spec:
         envFrom:
         - configMapRef:
             name: artemis-mysql
-        image: mysql:8.0.30
+        image: mysql:8.0.31
         imagePullPolicy: IfNotPresent
         name: artemis-mysql
         ports:

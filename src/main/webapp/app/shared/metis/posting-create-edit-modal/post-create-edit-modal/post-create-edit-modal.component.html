@@ -59,11 +59,11 @@
             <!-- title -->
             <div class="position-relative mb-3" *ngIf="!isCourseMessagesPage">
                 <div>
-                    <label class="mb-1" jhiTranslate="artemisApp.metis.post.title">Title</label>
+                    <label for="title" class="mb-1" jhiTranslate="artemisApp.metis.post.title">Title</label>
                     <jhi-help-icon placement="top auto" text="artemisApp.metis.post.titleTooltip"></jhi-help-icon>
                 </div>
                 <div>
-                    <input formControlName="title" type="text" class="form-control" name="title" />
+                    <input id="title" formControlName="title" type="text" class="form-control" name="title" />
                 </div>
             </div>
             <!-- tags -->

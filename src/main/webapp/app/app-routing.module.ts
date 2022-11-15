@@ -32,6 +32,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'courses/:courseId/exercises/:exerciseId',
                     loadChildren: () => import('./overview/exercise-details/course-exercise-details.module').then((m) => m.CourseExerciseDetailsModule),
                 },
+                {
+                    path: 'courses/:courseId/tutorial-groups/:tutorialGroupId',
+                    loadChildren: () => import('./overview/tutorial-group-details/course-tutorial-group-details.module').then((m) => m.CourseTutorialGroupDetailsModule),
+                },
                 // ===== TEAM ====
                 {
                     path: 'course-management/:courseId/exercises/:exerciseId/teams',
@@ -99,6 +103,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'features',
                     loadChildren: () => import('./feature-overview/feature-overview.module').then((m) => m.FeatureOverviewModule),
+                },
+                {
+                    path: 'lti',
+                    loadChildren: () => import('./lti/lti.module').then((m) => m.ArtemisLtiModule),
                 },
             ],
             { enableTracing: false, onSameUrlNavigation: 'reload' },

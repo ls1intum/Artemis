@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 
-import de.tum.in.www1.artemis.service.user.PasswordService;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -18,24 +17,31 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
+import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 @Import(SecurityProblemSupport.class)
-public class SecurityConfiguration {
+// ToDo: currently this cannot be replaced as recommended by
+// https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter
+// as that would break the SAML2 login functionality. For more information, see
+// https://github.com/ls1intum/Artemis/pull/5721.
+public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
@@ -54,8 +60,8 @@ public class SecurityConfiguration {
     @Value("${spring.prometheus.monitoringIp:#{null}}")
     private Optional<String> monitoringIpAddress;
 
-    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider, CorsFilter corsFilter, SecurityProblemSupport problemSupport,
-        PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
+    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
+            CorsFilter corsFilter, SecurityProblemSupport problemSupport, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
@@ -102,8 +108,33 @@ public class SecurityConfiguration {
         return roleHierarchy;
     }
 
-    @Bean
-    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Override
+    public void configure(WebSecurity web) {
+        // @formatter:off
+        web.ignoring()
+            .antMatchers(HttpMethod.OPTIONS, "/**")
+            .antMatchers("/app/**/*.{js,html}")
+            .antMatchers("/i18n/**")
+            .antMatchers("/content/**")
+            .antMatchers("/api-docs/**")
+            .antMatchers("/api.html")
+            .antMatchers("/test/**")
+            .antMatchers(CustomLti13Configurer.JWKS_PATH);
+        web.ignoring()
+            .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
+        web.ignoring()
+            .antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
+        web.ignoring()
+            .antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
+        web.ignoring()
+            .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH);
+        web.ignoring()
+            .antMatchers(HttpMethod.POST, ATHENE_RESULT_API_PATH + "*");
+        // @formatter:on
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
         // @formatter:off
         http
             .csrf()
@@ -132,54 +163,32 @@ public class SecurityConfiguration {
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
             .authorizeRequests()
-            .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-        .and()
-            // api
-            .authorizeRequests()
             .antMatchers("/api/register").permitAll()
             .antMatchers("/api/activate").permitAll()
             .antMatchers("/api/authenticate").permitAll()
             .antMatchers("/api/account/reset-password/init").permitAll()
             .antMatchers("/api/account/reset-password/finish").permitAll()
             .antMatchers("/api/lti/launch/*").permitAll()
+            .antMatchers("/api/lti13/auth-callback").permitAll()
             .antMatchers("/api/files/attachments/lecture/**").permitAll()
             .antMatchers("/api/files/attachments/attachment-unit/**").permitAll()
             .antMatchers("/api/files/file-upload-exercises/**").permitAll()
             .antMatchers("/api/files/markdown/**").permitAll()
-            .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH).permitAll()
-            .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH).permitAll()
-            .antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*").permitAll()
-            .antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*").permitAll()
-            .antMatchers(HttpMethod.POST, ATHENE_RESULT_API_PATH + "*").permitAll()
             .antMatchers("/api/**").authenticated()
-        .and()
-            // websocket
-            .authorizeRequests()
             .antMatchers("/websocket/tracker").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/websocket/**").permitAll()
-        .and()
-            // management
-            .authorizeRequests()
             .antMatchers("/management/health").permitAll()
             .antMatchers("/management/info").permitAll()
             // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
             .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
             .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
-        .and()
-            // others
-            .authorizeRequests()
             .antMatchers("/time").permitAll()
-            .antMatchers("/app/**/*.{js,html}").permitAll()
-            .antMatchers("/i18n/**").permitAll()
-            .antMatchers("/content/**").permitAll()
-            .antMatchers("/test/**").permitAll()
-            .antMatchers("/api.html").permitAll()
-            .antMatchers("/api-docs/**").permitAll()
         .and()
             .apply(securityConfigurerAdapter());
-        // @formatter:on
 
-        return http.build();
+        http.apply(new CustomLti13Configurer());
+
+        // @formatter:on
     }
 
     private JWTConfigurer securityConfigurerAdapter() {

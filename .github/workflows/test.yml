@@ -46,7 +46,7 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
-        distribution: 'zulu'
+        distribution: 'temurin'
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
@@ -64,6 +64,12 @@ jobs:
         access-token: ${{ secrets.GITHUB_TOKEN }}
         path: build/test-results/test/*.xml
         numFailures: 99
+    - name: Upload Code Coverage
+      uses: codecov/codecov-action@v3
+      with:
+        files: build/reports/jacoco/test/jacocoTestReport.xml
+        name: artemis-server
+        flags: server
 
   server-style:
     runs-on: ubuntu-latest
@@ -73,7 +79,7 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
-        distribution: 'zulu'
+        distribution: 'temurin'
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Code Style
@@ -109,6 +115,12 @@ jobs:
               access-token: ${{ secrets.GITHUB_TOKEN }}
               path: junit.xml
               numFailures: 99
+        - name: Upload Code Coverage
+          uses: codecov/codecov-action@v3
+          with:
+            files: build/test-results/clover.xml
+            name: artemis-client
+            flags: client
 
   client-tests-selected:
       runs-on: ubuntu-latest

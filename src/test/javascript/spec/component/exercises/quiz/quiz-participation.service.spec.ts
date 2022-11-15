@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Result } from 'app/entities/result.model';

@@ -14,9 +14,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -411,7 +413,7 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * GET exercise/:exerciseId/submission/:submissionId/example-result : Retrieve the result of an example assessment, only if the user is an instructor or if the submission is used for tutorial purposes.
+     * GET exercise/:exerciseId/submission/:submissionId/example-result : Retrieve the result of an example assessment
      *
      * @param exerciseId   the id of the exercise
      * @param submissionId the id of the submission which must be connected to an example submission
@@ -443,14 +445,28 @@ public class TextAssessmentResource extends AssessmentResource {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
 
-        Result result = null;
-        if (!Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) || authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
-            result = textSubmission.getLatestResult();
-            if (result != null) {
-                final List<Feedback> assessments = feedbackRepository.findByResult(result);
-                result.setFeedbacks(assessments);
+        var result = textSubmission.getLatestResult();
+        if (result != null) {
+            final List<Feedback> assessments = feedbackRepository.findByResult(result);
+            result.setFeedbacks(assessments);
+
+
+            if (Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
+                Result freshResult = new Result();
+                // set the id to null to make sure that the client does know it is a restricted result and treat it accordingly
+                result.setId(null);
+                if (result.getFeedbacks() != null) {
+                    result.getFeedbacks().stream().filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
+                        .forEach(feedback -> {
+                            Feedback freshFeedback = new Feedback();
+                            freshFeedback.setId(feedback.getId());
+                            freshResult.addFeedback(freshFeedback.reference(feedback.getReference()).type(feedback.getType()));
+                        });
+                }
+                result = freshResult;
             }
         }
+
 
         return ResponseEntity.ok().body(result);
     }
