@@ -82,7 +82,7 @@
             "assessmentDueDateError": "Einreichungsfrist der Bewertung muss nach dem Veröffentlichungsdatum, Startdatum und nach der Einreichungsfrist für Aufgaben sein. Bitte überprüfe deine Auswahl nochmal.",
             "dateNotSet": "Kein Datum gesetzt",
             "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
-            "exampleSolutionPublicationDateError": "Bei benoteten Übungen muss das Veröffentlichungsdatum der Beispiellösung nach dem Veröffentlichungsdatum, Startdatum und nach der Einreichungsfrist für Aufgaben sein, falls dieses festgelegt wurden. Bitte überprüfe deine Auswahl nochmal",
+            "exampleSolutionPublicationDateError": "Bei benoteten Übungen muss das Veröffentlichungsdatum der Beispiellösung nach dem Veröffentlichungsdatum, dem Startdatum und nach der Einreichungsfrist für Aufgaben sein, falls dieses festgelegt wurden. Bitte überprüfe deine Auswahl nochmal.",
             "exampleSolutionPublicationDateWarning": "Veröffentlichungsdatum der Beispiellösung liegt vor Einreichungsfrist!",
             "points": "Punktzahl",
             "pointsError": "Muss eine Zahl zwischen 1 und 9999 sein.",
