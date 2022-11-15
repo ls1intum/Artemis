@@ -64,13 +64,13 @@ describe('TextAssessmentAnalytics Service', () => {
     it('should send assessment event if artemis analytics is enabled', fakeAsync(() => {
         service.analyticsEnabled = true;
         service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
-        httpMock.expectOne({ url: `${SERVER_API_URL}api/analytics/text-assessment/events`, method: 'POST' });
+        httpMock.expectOne({ url: `${SERVER_API_URL}api/event-insights/text-assessment/events`, method: 'POST' });
     }));
 
     it('should not send assessment event if artemis analytics is enabled', fakeAsync(() => {
         service.analyticsEnabled = false;
         service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
-        httpMock.expectNone({ url: `${SERVER_API_URL}api/analytics/text-assessment/events`, method: 'POST' });
+        httpMock.expectNone({ url: `${SERVER_API_URL}api/event-insights/text-assessment/events`, method: 'POST' });
     }));
 
     it('should not send assessment event if on example submission path', fakeAsync(() => {
@@ -78,7 +78,7 @@ describe('TextAssessmentAnalytics Service', () => {
         location = TestBed.inject(Location);
         const pathSpy = jest.spyOn(location, 'path').mockReturnValue('/course/1/exercise/1/participation/1/example-submissions/1');
         service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
-        httpMock.expectNone({ url: `${SERVER_API_URL}api/analytics/text-assessment/events`, method: 'POST' });
+        httpMock.expectNone({ url: `${SERVER_API_URL}api/event-insights/text-assessment/events`, method: 'POST' });
         expect(pathSpy).toHaveBeenCalledOnce();
     }));
 

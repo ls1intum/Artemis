@@ -19,6 +19,9 @@
                     "header": "Kursinformationen",
                     "numberOfGroups": "Anzahl an Übungsgruppen: ",
                     "numberOfRegistrations": "Anzahl an Registrierungen: "
+                },
+                "freeDaySidePanel": {
+                    "header": "Tage ohne Übungsgruppen"
                 }
             }
         },

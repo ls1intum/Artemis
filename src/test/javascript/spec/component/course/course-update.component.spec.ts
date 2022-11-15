@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -25,9 +25,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import dayjs from 'dayjs/esm';
-import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
-import { base64StringToBlob } from 'app/utils/blob-util';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
@@ -44,8 +42,7 @@ describe('Course Management Update Component', () => {
     let profileService: ProfileService;
     let organizationService: OrganizationManagementService;
     let course: Course;
-    let fileUploaderService: FileUploaderService;
-    let uploadStub: jest.SpyInstance;
+    const validTimeZone = 'Europe/Berlin';
 
     beforeEach(() => {
         course = new Course();
@@ -73,6 +70,7 @@ describe('Course Management Update Component', () => {
         course.presentationScore = 16;
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
+        course.timeZone = 'Europe/London';
 
         const parentRoute = {
             data: of({ course }),
@@ -100,22 +98,23 @@ describe('Course Management Update Component', () => {
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(RemoveKeysPipe),
+                MockDirective(NgbTypeahead),
             ],
         })
             .compileComponents()
             .then(() => {
+                (Intl as any).supportedValuesOf = () => [validTimeZone];
                 fixture = TestBed.createComponent(CourseUpdateComponent);
                 comp = fixture.componentInstance;
                 service = TestBed.inject(CourseManagementService);
                 profileService = TestBed.inject(ProfileService);
                 organizationService = TestBed.inject(OrganizationManagementService);
-                fileUploaderService = TestBed.inject(FileUploaderService);
-                uploadStub = jest.spyOn(fileUploaderService, 'uploadFile');
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+        (Intl as any).supportedValuesOf = undefined;
     });
 
     describe('ngOnInit', () => {
@@ -201,7 +200,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null });
+            expect(updateStub).toHaveBeenCalledWith(entity.id, { ...entity, onlineCourseConfiguration: null }, undefined);
             expect(comp.isSaving).toBeFalse();
         }));
 
@@ -234,7 +233,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
-            expect(createStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null });
+            expect(createStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null }, undefined);
             expect(comp.isSaving).toBeFalse();
         }));
     });
@@ -256,11 +255,9 @@ describe('Course Management Update Component', () => {
                 length: 1,
                 item: () => file,
             } as unknown as FileList;
-            const event = { target: { files: fileList } };
+            const event = { currentTarget: { files: fileList } } as unknown as Event;
             comp.setCourseImage(event);
-            expect(comp.courseImageFile).toEqual(file);
-            expect(comp.courseImageFileName).toBe('testFilename');
-            expect(comp.imageChangedEvent).toBe(event);
+            expect(comp.courseImageUploadFile).toEqual(file);
         });
     });
 
@@ -269,35 +266,6 @@ describe('Course Management Update Component', () => {
             expect(comp.showCropper).toBeFalse();
             comp.imageLoaded();
             expect(comp.showCropper).toBeTrue();
-        });
-    });
-
-    describe('uploadCourseImage', () => {
-        let croppedImage: string;
-        beforeEach(() => {
-            croppedImage = 'testCroppedImage';
-            comp.croppedImage = 'data:image/png;base64,' + comp.croppedImage;
-            comp.courseImageFileName = 'testFilename';
-            comp.showCropper = true;
-            comp.ngOnInit();
-        });
-        it('should upload new image and update form', () => {
-            uploadStub.mockResolvedValue({ path: 'testPath' } as FileUploadResponse);
-            comp.uploadCourseImage();
-            const file = base64StringToBlob(croppedImage, 'image/*');
-            // @ts-ignore
-            file['name'] = comp.courseImageFileName;
-            expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
-            expect(comp.showCropper).toBeFalse();
-        });
-        it('should set image name to course icon if upload fails', () => {
-            uploadStub.mockRejectedValue({} as FileUploadResponse);
-            comp.course = new Course();
-            comp.course.courseIcon = 'testCourseIcon';
-            comp.uploadCourseImage();
-            expect(uploadStub.mock.calls[0][1]).toBe(comp.courseImageFileName);
-            expect(comp.courseImageFileName).toBe(comp.course.courseIcon);
-            expect(comp.showCropper).toBeFalse();
         });
     });
 
@@ -476,5 +444,38 @@ describe('Course Management Update Component', () => {
             comp.removeOrganizationFromCourse(organization);
             expect(comp.courseOrganizations).toEqual([secondOrganization]);
         });
+    });
+
+    describe('deleteIcon', () => {
+        it('should remove icon image and delete icon button from component', () => {
+            setIcon();
+            let deleteIconButton = getDeleteIconButton();
+            deleteIconButton.dispatchEvent(new Event('click'));
+            fixture.detectChanges();
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            deleteIconButton = getDeleteIconButton();
+            expect(iconImage).toBeNull();
+            expect(deleteIconButton).toBeNull();
+        });
+
+        it('should not be able to delete icon if icon does not exist', () => {
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            const deleteIconButton = getDeleteIconButton();
+            expect(iconImage).toBeNull();
+            expect(deleteIconButton).toBeNull();
+        });
+
+        function setIcon(): void {
+            const croppedImage = 'testCroppedImage';
+            comp.croppedImage = 'data:image/png;base64,' + croppedImage;
+            comp.courseImageUploadFile = new File([''], 'testFilename');
+            comp.showCropper = true;
+            comp.ngOnInit();
+            fixture.detectChanges();
+        }
+
+        function getDeleteIconButton() {
+            return fixture.debugElement.nativeElement.querySelector('#delete-course-icon');
+        }
     });
 });

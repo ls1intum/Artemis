@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Router } from '@angular/router';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-tutorial-groups-overview',
@@ -8,13 +9,13 @@ import { Router } from '@angular/router';
 })
 export class CourseTutorialGroupsOverviewComponent {
     @Input()
-    courseId: number;
+    course: Course;
     @Input()
     tutorialGroups: TutorialGroup[] = [];
 
     constructor(private router: Router) {}
 
     onTutorialGroupSelected = (tutorialGroup: TutorialGroup) => {
-        this.router.navigate(['/courses', this.courseId, 'tutorial-groups', tutorialGroup.id]);
+        this.router.navigate(['/courses', this.course.id!, 'tutorial-groups', tutorialGroup.id]);
     };
 }
