@@ -131,7 +131,7 @@
                     <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
                 </div>
                 <div *ngIf="mode === 'live' && !waitingForQuizStart">
-                    <span *ngIf="!isMobile" ngbTooltip="{{ submission.submissionDate | artemisDate: 'long':true }}" placement="right">
+                    <span *ngIf="!isMobile" ngbTooltip="{{ submission.submissionDate | artemisDate: 'long':true }}" placement="right auto">
                         <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
                         <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted" class="colon-suffix"></span>
                         <span *ngIf="justSaved" jhiTranslate="justNow"></span>
@@ -139,7 +139,7 @@
                         <span *ngIf="!justSaved && lastSavedTimeText === ''" jhiTranslate="artemisApp.quizExercise.lastSavedTimeNever"></span>
                     </span>
                     <!-- Only display save and submission hint without time stamps for mobile -->
-                    <span *ngIf="isMobile" ngbTooltip="{{ submission.submissionDate | artemisDate: 'long':true }}" placement="right">
+                    <span *ngIf="isMobile" ngbTooltip="{{ submission.submissionDate | artemisDate: 'long':true }}" placement="right auto">
                         <span *ngIf="!submission.submitted" jhiTranslate="artemisApp.quizExercise.lastSaved"></span>
                         <span *ngIf="submission.submitted" jhiTranslate="artemisApp.quizExercise.submitted"></span>
                     </span>

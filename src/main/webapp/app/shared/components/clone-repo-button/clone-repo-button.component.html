@@ -10,7 +10,7 @@
         [hideLabelMobile]="false"
         [ngbPopover]="popContent"
         [autoClose]="'outside'"
-        placement="right"
+        placement="right auto"
     ></button>
     <ng-template #popContent>
         <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>

@@ -36,7 +36,7 @@
                 <div [innerHTML]="renderedQuestion.hint"></div>
             </ng-template>
             <br />
-            <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="auto" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
+            <span class="label label-primary" [ngbPopover]="renderedExplanation" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
                 <fa-icon [icon]="faExclamationCircle"></fa-icon>
                 <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
             </span>
@@ -151,7 +151,6 @@
                                     ></span>
                                     <fa-icon
                                         ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
-                                        placement="top"
                                         style="color: black"
                                         [icon]="faQuestionCircle"
                                         *ngIf="dropLocation.invalid || question.invalid || invalidDragItemForDropLocation(dropLocation)"
@@ -211,7 +210,6 @@
                                     ></span>
                                     <fa-icon
                                         ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
-                                        placement="top"
                                         style="color: black"
                                         [icon]="faQuestionCircle"
                                         *ngIf="dropLocation.invalid || question.invalid"

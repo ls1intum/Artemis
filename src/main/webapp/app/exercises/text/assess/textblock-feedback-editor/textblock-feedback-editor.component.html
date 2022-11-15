@@ -9,7 +9,6 @@
         *ngIf="feedback.type === FeedbackType.AUTOMATIC"
         (click)="openOriginOfFeedbackModal(toggleMore)"
         [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.trace' | artemisTranslate"
-        placement="top"
     >
         <fa-icon [icon]="faSearch"></fa-icon>
     </span>
@@ -105,11 +104,11 @@
                     (ngModelChange)="didChange()"
                 ></textarea>
                 <div class="card-header" *ngIf="!conflictMode && feedback.credits !== 0 && textBlock?.numberOfAffectedSubmissions && feedback.type === FeedbackType.MANUAL">
-                    <fa-icon [icon]="faInfoCircle" size="1x" class="text-info" placement="left"></fa-icon>
+                    <fa-icon [icon]="faInfoCircle" size="1x" class="text-info" placement="left auto"></fa-icon>
                     <span
                         jhiTranslate="artemisApp.textAssessment.feedbackEditor.impactWarning"
                         [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.impactWarningTooltip' | artemisTranslate"
-                        placement="bottom"
+                        placement="bottom auto"
                         class="impactWarningLabel"
                         (mouseenter)="mouseEnteredWarningLabel()"
                         [translateValues]="{ affectedSubmissionsCount: textBlock.numberOfAffectedSubmissions }"

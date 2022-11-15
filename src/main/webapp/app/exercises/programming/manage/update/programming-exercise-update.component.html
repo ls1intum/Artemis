@@ -14,7 +14,7 @@
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
             </div>
             <input required type="text" class="form-control" name="title" id="field_title" [pattern]="titleNamePattern" [(ngModel)]="programmingExercise.title" #title="ngModel" />
             <ng-container *ngFor="let e of title.errors! | keyvalue | removekeys: ['required']">
@@ -26,7 +26,7 @@
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName">Short Name</label>
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.shortNameTooltip"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip"></jhi-help-icon>
             </div>
             <input
                 required
@@ -48,7 +48,7 @@
         </div>
         <div class="form-group mt-2 mb-0">
             <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label" for="preview"></label>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.preview.tooltip"></jhi-help-icon>
+            <jhi-help-icon text="artemisApp.programmingExercise.preview.tooltip"></jhi-help-icon>
         </div>
         <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise"></jhi-programming-exercise-plans-and-repositories-preview>
         <div *ngIf="!isImport" class="form-group">
@@ -121,7 +121,7 @@
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories">Categories</label>
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.categoriesTooltip"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.programmingExercise.categoriesTooltip"></jhi-help-icon>
             </div>
             <jhi-category-selector
                 [categories]="exerciseCategories"
@@ -175,7 +175,7 @@
             <div class="form-check mt-2" *ngIf="!isImport && !programmingExercise.id && programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA">
                 <input class="form-check-input" type="checkbox" name="withDependencies" id="field_with_dependencies" [(ngModel)]="withDependencies" checked />
                 <span jhiTranslate="artemisApp.programmingExercise.withDependencies">With Dependencies</span>
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.withDependenciesTooltip"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.programmingExercise.withDependenciesTooltip"></jhi-help-icon>
             </div>
         </div>
 
@@ -224,7 +224,7 @@
         <div class="form-group mt-2">
             <div>
                 <label jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"> Timeline for the whole programming exercise </label>
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
             </div>
             <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="isExamMode" [readOnly]="false"></jhi-programming-exercise-lifecycle>
         </div>
@@ -312,7 +312,6 @@
                 <fa-icon
                     [icon]="faQuestionCircle"
                     class="text-secondary"
-                    placement="auto"
                     ngbTooltip="{{ 'artemisApp.programmingExercise.enableStaticCodeAnalysis.description' | artemisTranslate }}"
                 ></fa-icon>
             </div>
@@ -323,7 +322,6 @@
                 <fa-icon
                     [icon]="faQuestionCircle"
                     class="text-secondary"
-                    placement="auto"
                     ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate }}"
                 ></fa-icon>
                 <div class="input-group">
@@ -391,7 +389,7 @@
                         checked
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Differentiate Test Case Execution</span>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
                 </label>
             </div>
         </div>
@@ -407,7 +405,7 @@
                         [(ngModel)]="programmingExercise.checkoutSolutionRepository"
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.checkoutSolutionRepository.title">Checkout Solution repository</span>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutSolutionRepository.description"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.checkoutSolutionRepository.description"></jhi-help-icon>
                 </label>
             </div>
         </div>
@@ -463,7 +461,6 @@
                     <fa-icon
                         [icon]="faQuestionCircle"
                         class="text-secondary"
-                        placement="auto"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.showTestNamesToStudentsTooltip' | artemisTranslate }}"
                     ></fa-icon>
                 </label>
@@ -521,7 +518,6 @@
                     <fa-icon
                         [icon]="faQuestionCircle"
                         class="text-secondary"
-                        placement="auto"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.recordTestwiseCoverageTooltip' | artemisTranslate }}"
                     ></fa-icon>
                 </label>
@@ -539,7 +535,7 @@
                         (change)="onRecreateBuildPlanOrUpdateTemplateChange()"
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title">Recreate Build Plans</span>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recreateBuildPlans.description"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.recreateBuildPlans.description"></jhi-help-icon>
                 </label>
             </div>
         </div>
@@ -558,7 +554,7 @@
                         (change)="onRecreateBuildPlanOrUpdateTemplateChange()"
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.updateTemplate.title">Update template</span>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.updateTemplate.description"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.updateTemplate.description"></jhi-help-icon>
                 </label>
             </div>
         </div>
