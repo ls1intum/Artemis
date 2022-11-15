@@ -772,11 +772,11 @@ public class CourseResource {
         log.debug("REST request to search users in course : {} with login or name : {}", courseId, loginOrName);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        // restrict result size by only allowing reasonable searches
-        if (loginOrName.length() < 3) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
-        }
         var requestedRoles = roles.stream().map(Role::fromString).collect(Collectors.toSet());
+        // restrict result size by only allowing reasonable searches if student role is selected
+        if (loginOrName.length() < 3 && requestedRoles.contains(Role.STUDENT)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer if you search for students.");
+        }
         var groups = new HashSet<String>();
         if (requestedRoles.contains(Role.STUDENT)) {
             groups.add(course.getStudentGroupName());

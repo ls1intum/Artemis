@@ -13,6 +13,9 @@
             [inputFormatter]="usersFormatter"
             [resultFormatter]="usersFormatter"
             [editable]="false"
+            [focusFirst]="false"
+            placement="bottom-start"
+            #instance="ngbTypeahead"
         />
         <ng-container *ngIf="isSearching">
             <small class="form-text text-muted">{{ 'artemisApp.userSelector.searchingText' | artemisTranslate }}</small>
@@ -22,7 +25,25 @@
             <small>{{ 'artemisApp.userSelector.searchFailedText' | artemisTranslate }}</small>
             <br />
         </ng-container>
-        <small class="form-text text-muted">{{ 'artemisApp.userSelector.helpText' | artemisTranslate }}</small>
+        <small *ngIf="searchStudents" class="form-text text-muted">{{ 'artemisApp.userSelector.helpText' | artemisTranslate }}</small>
+    </div>
+    <div class="text-end">
+        <div class="form-check form-check-inline" *ngIf="rolesToAllowSearchingIn.includes('students')">
+            <input type="checkbox" class="form-check-input" id="students" [checked]="searchStudents" (change)="searchStudents = !searchStudents; onFilterChange()" />
+            <label class="form-check-label" for="students">{{ 'artemisApp.course.students' | artemisTranslate }}</label>
+        </div>
+        <div class="form-check form-check-inline" *ngIf="rolesToAllowSearchingIn.includes('tutors')">
+            <input type="checkbox" class="form-check-input" id="tutors" [checked]="searchTutors" (change)="searchTutors = !searchTutors; onFilterChange()" />
+            <label class="form-check-label" for="tutors">{{ 'artemisApp.course.tutors' | artemisTranslate }}</label>
+        </div>
+        <div class="form-check form-check-inline" *ngIf="rolesToAllowSearchingIn.includes('editors')">
+            <input type="checkbox" class="form-check-input" id="editors" [checked]="searchEditors" (change)="searchEditors = !searchEditors; onFilterChange()" />
+            <label class="form-check-label" for="editors">{{ 'artemisApp.course.editors' | artemisTranslate }}</label>
+        </div>
+        <div class="form-check form-check-inline" *ngIf="rolesToAllowSearchingIn.includes('instructors')">
+            <input type="checkbox" class="form-check-input" id="instructors" [checked]="searchInstructors" (change)="searchInstructors = !searchInstructors; onFilterChange()" />
+            <label class="form-check-label" for="instructors">{{ 'artemisApp.course.instructors' | artemisTranslate }}</label>
+        </div>
     </div>
     <ul class="list-group" *ngIf="showUserList">
         <li *ngFor="let user of selectedUsers; let i = index; trackBy: trackIdentity" class="list-group-item d-flex justify-content-between align-items-center">

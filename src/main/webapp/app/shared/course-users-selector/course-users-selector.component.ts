@@ -1,10 +1,10 @@
-import { Component, ElementRef, HostBinding, Input, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, HostBinding, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { catchError, map, Observable, of, OperatorFunction } from 'rxjs';
 import { CourseManagementService, RoleGroup } from 'app/course/manage/course-management.service';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
-import { NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { faX } from '@fortawesome/free-solid-svg-icons';
 
 let selectorId = 0;
@@ -32,7 +32,8 @@ let selectorId = 0;
     host: { class: 'course-users-selector' },
     encapsulation: ViewEncapsulation.None,
 })
-export class CourseUsersSelectorComponent implements ControlValueAccessor {
+export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit {
+    @ViewChild('instance', { static: true }) typeAheadInstance: NgbTypeahead;
     @Input() disabled = false;
     @ViewChild('searchInput') searchInput: ElementRef;
     @Input()
@@ -43,12 +44,17 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor {
     @Input()
     label?: string;
     @Input()
-    rolesToSearch: RoleGroup[] = ['tutors', 'students', 'instructors', 'editors'];
+    rolesToAllowSearchingIn: RoleGroup[] = ['tutors', 'students', 'instructors', 'editors'];
     @Input()
     multiSelect = true;
 
     @Input()
     showUserList = true;
+
+    searchStudents = true;
+    searchTutors = true;
+    searchEditors = true;
+    searchInstructors = true;
 
     // icons
     faX = faX;
@@ -58,6 +64,21 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor {
     searchFailed = false;
 
     constructor(private courseManagementService: CourseManagementService) {}
+
+    ngOnInit(): void {
+        if (this.rolesToAllowSearchingIn.includes('students')) {
+            this.searchStudents = true;
+        }
+        if (this.rolesToAllowSearchingIn.includes('tutors')) {
+            this.searchTutors = true;
+        }
+        if (this.rolesToAllowSearchingIn.includes('editors')) {
+            this.searchEditors = true;
+        }
+        if (this.rolesToAllowSearchingIn.includes('instructors')) {
+            this.searchInstructors = true;
+        }
+    }
 
     usersFormatter = (user: UserPublicInfoDTO) => this.getUserLabel(user);
 
@@ -90,25 +111,52 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor {
         this.onChange(this.selectedUsers);
     }
 
+    onFilterChange() {
+        this.typeAheadInstance?.dismissPopup();
+        this.searchInput.nativeElement.dispatchEvent(new Event('input'));
+    }
+
     search: OperatorFunction<string, readonly UserPublicInfoDTO[]> = (text$: Observable<string>) =>
         text$.pipe(
-            debounceTime(300),
+            debounceTime(200),
             distinctUntilChanged(),
-            filter((term) => !!term && term.length >= 3),
-            map((term) => term.trim().toLowerCase()),
-            tap(() => (this.isSearching = true)),
-            switchMap((term) =>
-                this.courseManagementService.searchUsers(this.courseId, term, this.rolesToSearch).pipe(
-                    map((users) => users.body!),
-                    map((users) => users.filter((user) => !this.selectedUsers.find((selectedUser) => selectedUser.id === user.id))),
-                    tap(() => (this.searchFailed = false)),
-                    catchError(() => {
-                        this.searchFailed = true;
-                        return of([]);
-                    }),
-                ),
-            ),
-            tap(() => (this.isSearching = false)),
+            map((term) => (term ? term.trim().toLowerCase() : '')),
+            // the three letter minimum is enforced by the server only for searching for students as they are so many
+            filter((term) => term.length >= 3 || !this.searchStudents),
+            switchMap((term) => {
+                const rolesToSearchIn: RoleGroup[] = [];
+                if (this.searchStudents) {
+                    rolesToSearchIn.push('students');
+                }
+                if (this.searchTutors) {
+                    rolesToSearchIn.push('tutors');
+                }
+                if (this.searchEditors) {
+                    rolesToSearchIn.push('editors');
+                }
+                if (this.searchInstructors) {
+                    rolesToSearchIn.push('instructors');
+                }
+                if (rolesToSearchIn.length === 0) {
+                    this.searchFailed = false;
+                    return of([]);
+                } else {
+                    this.isSearching = true;
+                    return this.courseManagementService.searchUsers(this.courseId, term, rolesToSearchIn).pipe(
+                        map((users) => users.body!),
+                        map((users) => users.filter((user) => !this.selectedUsers.find((selectedUser) => selectedUser.id === user.id))),
+                        tap(() => {
+                            this.isSearching = false;
+                            this.searchFailed = false;
+                        }),
+                        catchError(() => {
+                            this.searchFailed = true;
+                            this.isSearching = false;
+                            return of([]);
+                        }),
+                    );
+                }
+            }),
         );
 
     // === START CONTROL VALUE ACCESSOR ===
