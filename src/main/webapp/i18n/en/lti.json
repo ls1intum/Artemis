@@ -75,7 +75,7 @@
                 "registeredSuccessfully": "Registered course successfully",
                 "registerFailed": "Error during dynamic registration"
             },
-            "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches likely not work."
+            "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches will not work."
         }
     }
 }
