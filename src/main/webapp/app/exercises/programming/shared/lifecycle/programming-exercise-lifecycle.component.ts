@@ -96,6 +96,8 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
         }
         if (this.exerciseService.hasStartDateError(this.exercise)) {
             this.updateStartDate(newReleaseDate);
+            // Will handle due date and example solution
+            return;
         }
         const safeStartOrReleaseDate = this.exercise.startDate ?? newReleaseDate;
         if (this.exerciseService.hasDueDateError(this.exercise) && safeStartOrReleaseDate) {

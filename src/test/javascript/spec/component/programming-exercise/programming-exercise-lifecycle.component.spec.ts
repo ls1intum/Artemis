@@ -217,6 +217,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         const now = dayjs();
         newExercise.dueDate = now.add(10, 'days');
         newExercise.releaseDate = now.add(20, 'days');
+        newExercise.startDate = now.add(21, 'days');
         comp.exercise = newExercise;
 
         comp.ngOnChanges({ exercise: { currentValue: newExercise } as SimpleChange });
