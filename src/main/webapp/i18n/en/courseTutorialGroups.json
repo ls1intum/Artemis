@@ -19,6 +19,9 @@
                     "header": "Course Information",
                     "numberOfGroups": "Number of Tutorial Groups: ",
                     "numberOfRegistrations": "Number of Registrations: "
+                },
+                "freeDaySidePanel": {
+                    "header": "Days without Tutorial Groups"
                 }
             }
         },

@@ -34,8 +34,16 @@
                     <div class="modal-body">
                         <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.question">Are you sure you want to delete the plagiarism comparisons?</p>
                         <div class="form-check flex-grow-0">
-                            <input class="form-check-input" type="checkbox" [checked]="deleteAllPlagiarismComparisons" (change)="toggleDeleteAllPlagiarismComparisons()" />
-                            <label class="form-check-label">{{ 'artemisApp.plagiarism.cleanUp.confirmDialog.deleteAll' | artemisTranslate }}</label>
+                            <input
+                                id="deleteAllPlagiarismComparisons"
+                                class="form-check-input"
+                                type="checkbox"
+                                [checked]="deleteAllPlagiarismComparisons"
+                                (change)="toggleDeleteAllPlagiarismComparisons()"
+                            />
+                            <label for="deleteAllPlagiarismComparisons" class="form-check-label">{{
+                                'artemisApp.plagiarism.cleanUp.confirmDialog.deleteAll' | artemisTranslate
+                            }}</label>
                         </div>
                         <p *ngIf="deleteAllPlagiarismComparisons" jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.warning" class="text-warning"></p>
                     </div>
@@ -91,7 +99,7 @@
             <div class="plagiarism-option" [class.disabled]="!enableMinimumSize" *ngIf="exercise.type !== PROGRAMMING">
                 <div class="plagiarism-checkbox form-check" for="enableMinimumSize">
                     <input type="checkbox" id="enableMinimumSize" class="plagiarism-option-checkbox form-check-input" [(ngModel)]="enableMinimumSize" checked />
-                    <label class="plagiarism-option-label form-check-label" jhiTranslate="artemisApp.plagiarism.minimumSize">Minimum Size</label>
+                    <label for="enableMinimumSize" class="plagiarism-option-label form-check-label" jhiTranslate="artemisApp.plagiarism.minimumSize">Minimum Size</label>
                 </div>
                 <fa-icon [icon]="faQuestionCircle" placement="bottom" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate" container="body"></fa-icon>
                 <input required type="number" [disabled]="!enableMinimumSize" class="form-control" min="0" max="100" id="plagiarism-minimum-size" [(ngModel)]="minimumSize" />
@@ -99,7 +107,7 @@
 
             <div *ngIf="isProgrammingExercise()" class="plagiarism-checkbox form-check" for="generateJPlagReport">
                 <input class="form-check-input" type="checkbox" id="generateJPlagReport" [(ngModel)]="generateJPlagReport" checked />
-                <label class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.generateJplagReport">Generate JPlag Report</label>
+                <label for="generateJPlagReport" class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.generateJplagReport">Generate JPlag Report</label>
             </div>
         </div>
     </div>

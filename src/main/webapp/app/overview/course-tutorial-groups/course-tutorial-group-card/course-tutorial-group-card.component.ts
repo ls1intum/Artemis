@@ -14,8 +14,6 @@ export class CourseTutorialGroupCardComponent {
     courseId: number;
     @Input()
     tutorialGroup: TutorialGroup;
-    // ToDo: Determine upcoming tutorial group sessions
-    upcomingSession: undefined;
 
     // icons
     faPersonChalkboard = faPersonChalkboard;

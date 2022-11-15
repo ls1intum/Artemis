@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ResultComponent, ResultTemplateStatus } from 'app/exercises/shared/result/result.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { Result } from 'app/entities/result.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -20,6 +20,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;

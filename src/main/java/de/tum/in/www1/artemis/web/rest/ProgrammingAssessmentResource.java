@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
@@ -42,7 +42,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private final LtiService ltiService;
+    private final LtiNewResultService ltiNewResultService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -50,14 +50,14 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
-            WebsocketMessagingService messagingService, LtiService ltiService, StudentParticipationRepository studentParticipationRepository,
+            WebsocketMessagingService messagingService, LtiNewResultService ltiNewResultService, StudentParticipationRepository studentParticipationRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
                 submissionRepository, singleUserNotificationService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.ltiService = ltiService;
+        this.ltiNewResultService = ltiNewResultService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
@@ -199,7 +199,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             newManualResult.getParticipation().filterSensitiveInformation();
         }
         // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
-        ltiService.onNewResult((StudentParticipation) newManualResult.getParticipation());
+        ltiNewResultService.onNewResult((StudentParticipation) newManualResult.getParticipation());
         if (submit && ((newManualResult.getParticipation()).getExercise().getAssessmentDueDate() == null
                 || newManualResult.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);

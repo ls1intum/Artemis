@@ -18,20 +18,7 @@ $result-icon-size: 25px;
                 width: $result-icon-size;
                 height: $result-icon-size;
                 border-radius: $result-icon-size;
-                background-color: #0f6ab4;
-                color: white;
-
-                &.success {
-                    background-color: var(--success);
-                }
-
-                &.warning {
-                    background-color: var(--warning);
-                }
-
-                &.danger {
-                    background-color: var(--danger);
-                }
+                background-color: transparent;
             }
 
             .result-score-info {
