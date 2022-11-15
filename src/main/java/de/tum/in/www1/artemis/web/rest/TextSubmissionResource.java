@@ -1,19 +1,16 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.MAX_SUBMISSION_TEXT_LENGTH;
-
 import java.util.List;
 import java.util.Optional;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -94,7 +91,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      */
     @PostMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, @RequestBody TextSubmission textSubmission) {
+    public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, @Valid @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to save text submission : {}", textSubmission);
         if (textSubmission.getId() != null) {
             throw new BadRequestAlertException("A new text submission cannot already have an ID", ENTITY_NAME, "idExists");
@@ -114,7 +111,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      */
     @PutMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable long exerciseId, @RequestBody TextSubmission textSubmission) {
+    public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable long exerciseId, @Valid @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to update text submission: {}", textSubmission);
         if (textSubmission.getId() == null) {
             return createTextSubmission(exerciseId, textSubmission);
@@ -125,7 +122,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     @NotNull
     private ResponseEntity<TextSubmission> handleTextSubmission(long exerciseId, TextSubmission textSubmission) {
         long start = System.currentTimeMillis();
-        checkTextLength(textSubmission);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
@@ -224,19 +220,19 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        final TextSubmission textSubmission;
-        if (lockSubmission) {
-            textSubmission = textSubmissionService.findAndLockTextSubmissionToBeAssessed((TextExercise) exercise, exercise.isExamExercise(), correctionRound);
-            textAssessmentService.prepareSubmissionForAssessment(textSubmission, textSubmission.getResultForCorrectionRound(correctionRound));
+        Optional<TextSubmission> optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise,
+                skipAssessmentOrderOptimization, exercise.isExamExercise(), correctionRound);
+
+        // No more unassessed submissions
+        if (optionalTextSubmission.isEmpty()) {
+            return ResponseEntity.ok(null);
         }
-        else {
-            Optional<TextSubmission> optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise,
-                    skipAssessmentOrderOptimization, exercise.isExamExercise(), correctionRound);
-            if (optionalTextSubmission.isEmpty()) {
-                // TODO: in this case we should simply return an empty response, because this is not an error if all submissions have been corrected
-                throw new EntityNotFoundException("No submission found to be assessed");
-            }
-            textSubmission = optionalTextSubmission.get();
+
+        final TextSubmission textSubmission = optionalTextSubmission.get();
+
+        if (lockSubmission) {
+            textSubmissionService.lockTextSubmissionToBeAssessed(optionalTextSubmission.get(), correctionRound);
+            textAssessmentService.prepareSubmissionForAssessment(textSubmission, textSubmission.getResultForCorrectionRound(correctionRound));
         }
 
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
@@ -257,15 +253,5 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
                     .ifPresent(atheneTrackingTokenProvider -> atheneTrackingTokenProvider.addTokenToResponseEntity(bodyBuilder, textSubmission.getLatestResult()));
         }
         return bodyBuilder.body(textSubmission);
-    }
-
-    /**
-     * Throws IllegalArgumentException if the text length is over 30000 characters.
-     * @param textSubmission the text submission
-     */
-    private void checkTextLength(TextSubmission textSubmission) {
-        if (textSubmission.getText() != null && textSubmission.getText().length() > MAX_SUBMISSION_TEXT_LENGTH) {
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "A text submission cannot contain more than 30000 characters");
-        }
     }
 }

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.messaging;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -34,6 +35,8 @@ public class InstanceMessageReceiveService {
 
     private final NotificationScheduleService notificationScheduleService;
 
+    private final ParticipantScoreSchedulerService participantScoreSchedulerService;
+
     private final Optional<AtheneScheduleService> atheneScheduleService;
 
     private final UserScheduleService userScheduleService;
@@ -52,7 +55,7 @@ public class InstanceMessageReceiveService {
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService,
             ExamMonitoringScheduleService examMonitoringScheduleService, TextExerciseRepository textExerciseRepository, ExerciseRepository exerciseRepository,
             Optional<AtheneScheduleService> atheneScheduleService, HazelcastInstance hazelcastInstance, UserRepository userRepository, UserScheduleService userScheduleService,
-            NotificationScheduleService notificationScheduleService) {
+            NotificationScheduleService notificationScheduleService, ParticipantScoreSchedulerService participantScoreSchedulerService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.examMonitoringScheduleService = examMonitoringScheduleService;
@@ -64,6 +67,7 @@ public class InstanceMessageReceiveService {
         this.userRepository = userRepository;
         this.userScheduleService = userScheduleService;
         this.notificationScheduleService = notificationScheduleService;
+        this.participantScoreSchedulerService = participantScoreSchedulerService;
 
         hazelcastInstance.<Long>getTopic("programming-exercise-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -105,6 +109,14 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processLockAllRepositories((message.getMessageObject()));
         });
+        hazelcastInstance.<Long>getTopic("programming-exercise-unlock-repositories-without-earlier-individual-due-date").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(message.getMessageObject());
+        });
+        hazelcastInstance.<Long>getTopic("programming-exercise-lock-repositories-without-later-individual-due-date").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processLockAllRepositoriesWithoutLaterIndividualDueDate(message.getMessageObject());
+        });
         hazelcastInstance.<Long>getTopic("user-management-remove-non-activated-user").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processRemoveNonActivatedUser((message.getMessageObject()));
@@ -128,6 +140,10 @@ public class InstanceMessageReceiveService {
         hazelcastInstance.<Long>getTopic("exam-monitoring-schedule-cancel").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processScheduleExamMonitoringCancel(message.getMessageObject());
+        });
+        hazelcastInstance.<Long[]>getTopic("participant-score-schedule").addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleParticipantScore(message.getMessageObject()[0], message.getMessageObject()[1], message.getMessageObject()[2]);
         });
     }
 
@@ -194,6 +210,34 @@ public class InstanceMessageReceiveService {
         programmingExerciseScheduleService.lockAllStudentRepositories(programmingExercise).run();
     }
 
+    /**
+     * Unlocks all repositories that do not have an individual due date before now
+     * @param exerciseId the id of the programming exercises where the repos should be unlocked
+     */
+    public void processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
+        log.info("Received unlock all repositories without an individual due date before now for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Run the runnable immediately so that the repositories are locked as fast as possible
+        programmingExerciseScheduleService.unlockStudentRepositories(programmingExercise, participation -> {
+            ZonedDateTime individualDueDate = participation.getIndividualDueDate();
+            return individualDueDate == null || individualDueDate.isAfter(ZonedDateTime.now());
+        }).run();
+    }
+
+    /**
+     * Locks all repositories that do not have an individual due date after now
+     * @param exerciseId the id of the programming exercises where the repos should be locked
+     */
+    public void processLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
+        log.info("Received lock all repositories without an individual due date after now for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Run the runnable immediately so that the repositories are locked as fast as possible
+        programmingExerciseScheduleService.lockStudentRepositories(programmingExercise, participation -> {
+            ZonedDateTime individualDueDate = participation.getIndividualDueDate();
+            return individualDueDate == null || individualDueDate.isBefore(ZonedDateTime.now());
+        }).run();
+    }
+
     public void processRemoveNonActivatedUser(Long userId) {
         log.info("Received remove non-activated user for user {}", userId);
         User user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
@@ -226,5 +270,10 @@ public class InstanceMessageReceiveService {
     public void processScheduleExamMonitoringCancel(Long examId) {
         log.info("Received schedule cancel for exam monitoring {}", examId);
         examMonitoringScheduleService.cancelExamMonitoringTask(examId);
+    }
+
+    public void processScheduleParticipantScore(Long exerciseId, Long participantId, Long resultIdToBeDeleted) {
+        log.info("Received schedule participant score for exercise {} and participant {} (result to be deleted: {})", exerciseId, participantId, resultIdToBeDeleted);
+        participantScoreSchedulerService.scheduleTask(exerciseId, participantId, resultIdToBeDeleted);
     }
 }

@@ -6,19 +6,46 @@
                 >{{ 'artemisApp.exampleSubmission.pageHeader' | artemisTranslate }}
                 {{ exercise?.title }}
             </h2>
+            <div *ngIf="state.ui === UIStates.ASSESSMENT && toComplete && referencedBlocksInExampleSubmission && referencedBlocksInExampleSubmission.length > 0" class="col">
+                <div class="my-2 text-center hint">
+                    <span>{{ 'artemisApp.exampleSubmission.textHint' | artemisTranslate }}</span>
+                </div>
+            </div>
         </div>
 
         <div class="col-4 text-end d-flex align-items-center gap-2 justify-content-end" *ngIf="(exercise?.isAtLeastEditor || false) && !readOnly && !toComplete && exercise">
-            <div class="form-check align-baseline">
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    name="usedForTutorial"
-                    id="field_usedForTutorial"
-                    [(ngModel)]="exampleSubmission.usedForTutorial"
-                    (ngModelChange)="unsavedSubmissionChanges = true"
-                />
-                <label class="form-check-label" for="field_usedForTutorial">{{ 'artemisApp.exampleSubmission.usedForTutorial' | artemisTranslate }}</label>
+            <div>
+                <div class="text-start">
+                    <span>{{ 'artemisApp.exampleSubmission.assessmentTraining' | artemisTranslate }}</span>
+                    <jhi-help-icon placement="auto" [text]="'artemisApp.exampleSubmission.selectModelExplanation'"></jhi-help-icon>
+                </div>
+                <div class="btn-group" role="group">
+                    <input
+                        [disabled]="state.submissionEditButton === 3"
+                        type="radio"
+                        class="btn-check"
+                        name="mode"
+                        id="read-and-confirm-button"
+                        autocomplete="off"
+                        [value]="ExampleSubmissionMode.READ_AND_CONFIRM"
+                        [ngModel]="selectedMode"
+                        (ngModelChange)="onModeChange($event)"
+                    />
+                    <label class="btn btn-outline-secondary" for="read-and-confirm-button">{{ 'artemisApp.exampleSubmission.readAndConfirm' | artemisTranslate }}</label>
+
+                    <input
+                        [disabled]="state.submissionEditButton === 3"
+                        type="radio"
+                        class="btn-check"
+                        name="mode"
+                        id="only-not-imported"
+                        autocomplete="off"
+                        [value]="ExampleSubmissionMode.ASSESS_CORRECTLY"
+                        [ngModel]="selectedMode"
+                        (ngModelChange)="onModeChange($event)"
+                    />
+                    <label class="btn btn-outline-secondary" for="only-not-imported">{{ 'artemisApp.exampleSubmission.assessCorrectly' | artemisTranslate }}</label>
+                </div>
             </div>
             <ng-container [ngSwitch]="state.submissionEditButton">
                 <button id="create-example-submission" *ngSwitchCase="SubmissionButtonStates.NEW" (click)="createNewExampleTextSubmission()" class="btn btn-primary col-auto">
@@ -103,6 +130,7 @@
         left-body
         class="guided-tour-assessment-editor guided-tour-complete-assessment-editor"
         *ngIf="state.ui === UIStates.ASSESSMENT"
+        [allowManualBlockSelection]="!this.toComplete"
         [submission]="submission!"
         [(textBlockRefs)]="textBlockRefs"
         [readOnly]="readOnly || (!!exercise && !exercise.isAtLeastEditor && !toComplete)"
@@ -134,6 +162,7 @@
         *ngIf="exercise"
         [exercise]="exercise"
         [isAssessmentTraining]="toComplete"
+        [showAssessmentInstructions]="state.ui === UIStates.ASSESSMENT"
         class="markdown-preview"
     ></jhi-assessment-instructions>
     <!--endregion-->

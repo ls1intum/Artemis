@@ -22,21 +22,27 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.saml2.core.Saml2X509Credential;
-import org.springframework.security.saml2.provider.service.registration.*;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.saml2.provider.service.registration.InMemoryRelyingPartyRegistrationRepository;
+import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
+import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
+import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrations;
 
 /**
- * This class describes the security configuration for SAML2.
+ * Describes the security configuration for SAML2.
  * <p>
- * Since this {@link SAML2Configuration} is annotated with {@link Order} and {@link SecurityConfiguration}
+ * Since this {@link WebSecurityConfigurerAdapter} is annotated with {@link Order} and {@link SecurityConfiguration}
  * is not, this configuration is evaluated first when the SAML2 Profile is active.
  */
-// @formatter:off
 @Configuration
 @Order(1)
 @Profile("saml2")
-public class SAML2Configuration {
+// ToDo: currently this cannot be replaced as recommended by
+// https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter
+// as that would break the SAML2 login functionality. For more information, see
+// https://github.com/ls1intum/Artemis/pull/5721.
+public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
     private final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);
 
@@ -139,8 +145,8 @@ public class SAML2Configuration {
         }
     }
 
-    @Bean
-    protected SecurityFilterChain saml2FilterChain(final HttpSecurity http) throws Exception {
+    @Override
+    protected void configure(final HttpSecurity http) throws Exception {
         // @formatter:off
         http
             .requestMatchers()
@@ -167,8 +173,5 @@ public class SAML2Configuration {
                 // Redirect back to the root
                 .defaultSuccessUrl("/", true);
         // @formatter:on
-
-        return http.build();
     }
-
 }

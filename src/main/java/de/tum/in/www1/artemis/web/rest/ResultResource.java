@@ -148,7 +148,7 @@ public class ResultResource {
         }
 
         // No 'user' is properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-        // Therefore a mock auth object has to be created.
+        // Therefore, a mock auth object has to be created.
         SecurityUtils.setAuthorizationObject();
 
         // Retrieving the plan key can fail if e.g. the requestBody is malformed. In this case nothing else can be done.
@@ -231,13 +231,7 @@ public class ResultResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
-        final List<StudentParticipation> participations;
-        if (exercise.isExamExercise()) {
-            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(exerciseId);
-        }
-        else {
-            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exerciseId);
-        }
+        final List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exerciseId, false);
 
         List<Result> results = resultsForExercise(exercise, participations, withSubmissions);
         log.info("getResultsForExercise took {}ms for {} results.", System.currentTimeMillis() - start, results.size());
@@ -260,13 +254,7 @@ public class ResultResource {
         final Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
-        final List<StudentParticipation> participations;
-        if (exercise.isExamExercise()) {
-            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacksIgnoreTestRuns(exerciseId);
-        }
-        else {
-            participations = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessorFeedbacks(exerciseId);
-        }
+        final List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacks(exerciseId, false);
 
         final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         final List<Result> results = resultsForExercise(exercise, participations, withSubmissions);
@@ -346,29 +334,6 @@ public class ResultResource {
     }
 
     /**
-     * GET /participations/:participationId/latest-result : get the latest result with feedbacks for the given participation.
-     * The order of results is determined by completionDate desc.
-     *
-     * @param participationId the id of the participation for which to retrieve the latest result.
-     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
-     */
-    @GetMapping("participations/{participationId}/latest-result")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
-        log.debug("REST request to get latest result for participation : {}", participationId);
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-
-        if (participation instanceof StudentParticipation && !authCheckService.canAccessParticipation((StudentParticipation) participation)
-                || participation instanceof ProgrammingExerciseParticipation
-                        && !programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
-            throw new AccessForbiddenException();
-        }
-
-        Result result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
-        return new ResponseEntity<>(result, HttpStatus.OK);
-    }
-
-    /**
      * GET /participations/:participationId/results/:resultId/details : get the build result details from CI service for the "id" result.
      * This method is only invoked if the result actually includes details (e.g. feedback or build errors)
      *
@@ -418,7 +383,7 @@ public class ResultResource {
     public ResponseEntity<Void> deleteResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
         Result result = getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
-        resultRepository.delete(result);
+        resultService.deleteResult(result, true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, resultId.toString())).build();
     }
 

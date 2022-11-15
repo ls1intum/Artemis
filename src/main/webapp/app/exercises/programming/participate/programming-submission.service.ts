@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, from, merge, Observable, of, Subject, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
@@ -8,7 +8,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
+import { SubmissionType, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -560,11 +560,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param req request parameters
      * @param correctionRound for which to get the Submissions
      */
-    getProgrammingSubmissionsForExerciseByCorrectionRound(
-        exerciseId: number,
-        req: { submittedOnly?: boolean; assessedByTutor?: boolean },
-        correctionRound = 0,
-    ): Observable<HttpResponse<ProgrammingSubmission[]>> {
+    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<ProgrammingSubmission[]>> {
         const url = `api/exercises/${exerciseId}/programming-submissions`;
         let params = createRequestOption(req);
         if (correctionRound !== 0) {
@@ -584,8 +580,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param exerciseId the id of the exercise
      * @param lock
      * @param correctionRound for which to get the Submissions
+     * @return submission is empty if none are available
      */
-    getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId: number, lock = false, correctionRound = 0): Observable<ProgrammingSubmission> {
+    getSubmissionWithoutAssessment(exerciseId: number, lock = false, correctionRound = 0): Observable<ProgrammingSubmission> {
         const url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
         let params = new HttpParams();
         if (correctionRound !== 0) {

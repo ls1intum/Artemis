@@ -9,7 +9,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
+import { ActivatedRoute, Params, convertToParamMap } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -326,5 +326,15 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.workingTimeFormValues.percent = -100;
         studentExamDetailComponent.updateWorkingTimeDuration();
         expectDuration(0, 0, 0);
+    });
+
+    it.each([
+        [true, undefined, 'artemisApp.studentExams.bonus'],
+        [false, '2.0', 'artemisApp.studentExams.gradeBeforeBonus'],
+        [false, undefined, 'artemisApp.studentExams.grade'],
+    ])('should get the correct grade explanation label', (isBonus: boolean, gradeAfterBonus: string | undefined, gradeExplanation: string) => {
+        studentExamDetailComponent.isBonus = isBonus;
+        studentExamDetailComponent.gradeAfterBonus = gradeAfterBonus;
+        expect(studentExamDetailComponent.getGradeExplanation()).toBe(gradeExplanation);
     });
 });

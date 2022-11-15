@@ -22,6 +22,15 @@
                 <fa-icon [icon]="faFlag"></fa-icon>
                 <span jhiTranslate="artemisApp.learningGoal.learningGoalButton">Learning Goals</span>
             </a>
+            <a
+                [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
+                *ngIf="course.isAtLeastInstructor"
+                [routerLink]="['/course-management', course.id, 'tutorial-groups']"
+                class="tab-item btn btn-primary btn-md ms-1"
+            >
+                <fa-icon [icon]="faPersonChalkboard"></fa-icon>
+                <span jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
+            </a>
             <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="tab-item btn btn-info btn-md ms-1">
                 <fa-icon [icon]="faUserCheck"></fa-icon>
                 <span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
@@ -46,7 +55,7 @@
                 <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
             </a>
             <div class="ms-auto">
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">
+                <a *ngIf="course.isAtLeastInstructor" id="edit-course" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">
                     <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
                 </a>
                 <jhi-course-exam-archive-button

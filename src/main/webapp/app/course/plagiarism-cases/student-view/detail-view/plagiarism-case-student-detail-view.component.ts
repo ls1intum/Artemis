@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { getCourseFromExercise, getIcon } from 'app/entities/exercise.model';
-import { combineLatest, Subscription } from 'rxjs';
+import { Subscription, combineLatest } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { PageType } from 'app/shared/metis/metis.util';

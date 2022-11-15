@@ -1,6 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -17,8 +17,8 @@ import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { BehaviorSubject, Observable, of, Subject, Subscription, throwError } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, throttleTime, timeout } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
@@ -46,7 +46,6 @@ import {
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { tap } from 'rxjs/operators';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -129,6 +128,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private courseCalculationService: CourseScoreCalculationService,
         private websocketService: JhiWebsocketService,
         private route: ActivatedRoute,
+        private router: Router,
         private examParticipationService: ExamParticipationService,
         private modelingSubmissionService: ModelingSubmissionService,
         private programmingSubmissionService: ProgrammingSubmissionService,
@@ -158,9 +158,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.testRunId = parseInt(params['testRunId'], 10);
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
             if (params['studentExamId']) {
-                // If a new StudentExam should be created, the keyword new is used (and no StudentExam exists)
+                // If a new StudentExam should be created, the keyword start is used (and no StudentExam exists)
                 this.testExam = true;
-                if (params['studentExamId'] !== 'new') {
+                if (params['studentExamId'] !== 'start') {
                     this.studentExamId = parseInt(params['studentExamId'], 10);
                 }
             }
@@ -172,6 +172,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam.exam!.course = new Course();
                         this.studentExam.exam!.course.id = this.courseId;
                         this.exam = studentExam.exam!;
+                        this.testExam = this.exam.testExam!;
                         this.testStartTime = dayjs();
                         this.initIndividualEndDates(this.testStartTime);
                         this.loadingExam = false;
@@ -183,6 +184,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     next: (studentExam) => {
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
+                        this.testExam = this.exam.testExam!;
                         if (this.exam.testExam) {
                             // For TestExams, we either set the StartTime to the current time or the startedDate of the studentExam, if existent
                             this.testStartTime = this.studentExam.startedDate ? this.studentExam.startedDate! : dayjs();
@@ -414,6 +416,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         message: 'artemisApp.studentExam.submitSuccessful',
                         timeout: 20000,
                     });
+                    if (!!this.testRunId) {
+                        // If this is a test run, forward the user directly to the exam summary
+                        this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
+                    }
                 },
                 error: (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible

@@ -3,10 +3,11 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 public enum BonusStrategy implements IBonusStrategy {
 
@@ -27,8 +28,16 @@ public enum BonusStrategy implements IBonusStrategy {
             GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfBonusTo, bonusToGradingScale);
             GradeStep maxGradeStep = bonusToGradingScale.maxGrade();
 
-            double bonusGrade = bonusGradeStep.getNumericValue();
-            double finalGrade = roundScoreSpecifiedByCourseSettings(bonusToRawGradeStep.getNumericValue() + weight * bonusGrade, bonusToGradingScale.getCourseViaExamOrDirectly());
+            Double bonusGrade = bonusGradeStep.getNumericValue();
+            if (bonusGrade == null) {
+                throw new BadRequestAlertException("Bonus source grade names must be numeric", "gradeStep", "invalidGradeName");
+            }
+            Double bonusToGrade = bonusToRawGradeStep.getNumericValue();
+            if (bonusToGrade == null) {
+                throw new BadRequestAlertException("Final exam grade names must be numeric for this bonus strategy", "gradeStep", "invalidGradeName");
+            }
+
+            double finalGrade = roundScoreSpecifiedByCourseSettings(bonusToGrade + weight * bonusGrade, bonusToGradingScale.getCourseViaExamOrDirectly());
 
             double maxGrade = maxGradeStep.getNumericValue();
             boolean exceedsMax = doesBonusExceedMax(finalGrade, maxGrade, weight);
@@ -47,7 +56,11 @@ public enum BonusStrategy implements IBonusStrategy {
                 GradingScale sourceGradingScale, Double achievedPointsOfSource, double weight) {
             GradeStep bonusGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfSource, sourceGradingScale);
 
-            double bonusGrade = bonusGradeStep.getNumericValue();
+            Double bonusGrade = bonusGradeStep.getNumericValue();
+            if (bonusGrade == null) {
+                throw new BadRequestAlertException("Bonus source grade names must be numeric", "gradeStep", "invalidGradeName");
+            }
+
             double finalPoints = roundScoreSpecifiedByCourseSettings(achievedPointsOfBonusTo + weight * bonusGrade, bonusToGradingScale.getCourseViaExamOrDirectly());
 
             boolean exceedsMax = doesBonusExceedMax(finalPoints, bonusToGradingScale.getMaxPoints(), weight);

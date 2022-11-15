@@ -18,22 +18,46 @@
                 }
             },
             "detail": {
-                "title": "Bewertung"
+                "title": "Bewertung",
+                "feedback": "Feedback",
+                "feedbackForTask": "Feedback für Teilaufgabe: {{ taskName }}",
+                "codeIssue": {
+                    "name": "Codeissue",
+                    "title": "{{ scaCategory }} Issue in Datei {{ location }}",
+                    "line": "in Zeile {{ line }}",
+                    "lines": "in Zeilen {{ from }}-{{ to }}",
+                    "column": "Spalte {{ column }}",
+                    "columns": "Spalten {{ from }}-{{ to }}"
+                },
+                "test": {
+                    "name": "Testfall",
+                    "noInfo": "Kein Ergebnis für {{ name }}",
+                    "passed": "Test {{ name }} bestanden",
+                    "failed": "Test {{ name }} fehlgeschlagen",
+                    "passedTest": "1 bestandener Test",
+                    "passedTests": "{{ number }} bestandene Tests"
+                }
             },
-            "noResult": "Kein gewertetes Ergebnis",
-            "resultString": "Ergebnistext",
-            "resultStringBuildFailed": "Build gescheitert",
-            "resultStringBuildSuccessfulNoTests": "Build erfolgreich, keine Tests ausgeführt",
-            "resultStringBuildSuccessfulTests": "{{ numberOfTestsPassed }} von {{ numberOfTestsTotal }} bestanden",
-            "resultStringNonProgramming": "Bewertung {{ relativeScore }}%, {{ points }} von {{ maxPoints }} Punkten",
-            "resultStringProgramming": "Bewertung {{ relativeScore }}%, {{ buildAndTestMessage }}, {{ points }} von {{ maxPoints }} Punkten",
-            "resultStringProgrammingCodeIssues": "Bewertung {{ relativeScore }}%, {{ buildAndTestMessage }}, {{ numberOfIssues }} Issues, {{ points }} von {{ maxPoints }} Punkten",
+            "noResult": "Kein Ergebnis",
+            "noGradedResult": "Kein gewertetes Ergebnis",
+            "resultString": {
+                "resultString": "Ergebnistext",
+                "buildFailed": "Build gescheitert",
+                "buildSuccessfulNoTests": "Build erfolgreich, keine Tests ausgeführt",
+                "buildSuccessfulTests": "{{ numberOfTestsPassed }} von {{ numberOfTestsTotal }} bestanden",
+                "nonProgramming": "{{ relativeScore }}%, {{ points }} Punkte",
+                "programming": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ points }} Punkte",
+                "programmingCodeIssues": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ numberOfIssues }} Issues, {{ points }} Punkte",
+                "programmingShort": "{{ relativeScore }}%, {{ buildAndTestMessage }}",
+                "short": "{{ relativeScore }}%"
+            },
             "completionDate": "Abgabedatum",
             "successful": "Erfolgreich",
             "buildArtifact": "Build-Artefakt",
             "buildError": "Build Fehler:",
-            "score": "Bewertung",
+            "score": "Bewertung {{score}}%",
             "scorePercentage": "Bewertung (in %)",
+            "scoreWithPoints": "Bewertung {{score}}%, {{points}} Punkte",
             "currentScore": "Aktuelle Bewertung",
             "rated": "Bewertet",
             "hasFeedback": "Enthält Feedback",
@@ -57,7 +81,11 @@
             "feedbackTextRequired": "Feedbacktext ist erforderlich.",
             "positive": "Positiv",
             "graded": "Bewertet",
+            "gradedTooltip": "Dieses Ergebnis ist Teil der bewerteten Abgabe",
             "notGraded": "Nicht bewertet",
+            "notGradedTooltip": "Dieses Ergebnis ist kein Teil der Bewertung",
+            "practice": "Übung",
+            "practiceTooltip": "Dieses Ergebnis ist Teil der Übungsabgabe und hat keinen Einfluss auf deine Bewertung",
             "preliminary": "vorläufig",
             "preliminaryTooltip": "Dein Ergebnis ist noch nicht endgültig, weil weitere Tests nach der Einreichungsfrist ausgeführt werden.",
             "preliminaryTooltipSemiAutomatic": "Dein Ergebnis ist noch nicht endgültig, weil weitere Tests nach der Einreichungsfrist ausgeführt werden oder eine manuelle Bewertung aussteht.",
@@ -81,7 +109,10 @@
             "notLatestSubmission": "Hinweis: Dieses Ergebnis und Feedback bezieht sich <strong>nicht</strong> auf die letzte Einreichung.",
             "seeMore": "Mehr anzeigen",
             "noFeedback": "Kein Feedback verfügbar",
-            "afterDueDateFeedbackHidden": "Auch nach der Abgabefrist werden Detailfeedbacks nicht zu allen Testfällen angezeigt. Dies ist etwa der Fall wenn für andere Studierende eine spätere Abgabefrist gesetzt ist (z.B. zum Ausgleich von Krankheitstagen). Alle Feedbacks werden automatisch am {{date}} sichtbar sein."
+            "afterDueDateFeedbackHidden": "Auch nach der Abgabefrist werden Detailfeedbacks nicht zu allen Testfällen angezeigt. Dies ist etwa der Fall wenn für andere Studierende eine spätere Abgabefrist gesetzt ist (z.B. zum Ausgleich von Krankheitstagen). Alle Feedbacks werden automatisch am {{date}} sichtbar sein.",
+            "testCount": "Du hast {{passed}} von {{total}} Tests bestanden.",
+            "scaIssueCount": "Du hast {{issues}} Code-Issues.",
+            "manualFeedbackCount": "Du hast {{feedbacks}} manuelle Feedbacks bekommen."
         }
     }
 }

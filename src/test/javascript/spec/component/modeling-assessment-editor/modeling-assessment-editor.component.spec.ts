@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -382,7 +382,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             const routerSpy = jest.spyOn(router, 'navigate').mockImplementation();
             const modelingSubmission: ModelingSubmission = { id: 1 };
-            const serviceSpy = jest.spyOn(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment').mockReturnValue(of(modelingSubmission));
+            const serviceSpy = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(modelingSubmission));
 
             component.ngOnInit();
 
@@ -410,9 +410,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.modelingExercise.id = 1;
 
             const response = new HttpErrorResponse({ status: 403 });
-            const serviceSpy = jest
-                .spyOn(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment')
-                .mockReturnValue(throwError(() => response));
+            const serviceSpy = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(throwError(() => response));
 
             component.ngOnInit();
             tick(500);

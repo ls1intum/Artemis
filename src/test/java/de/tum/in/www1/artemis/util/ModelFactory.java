@@ -566,6 +566,17 @@ public class ModelFactory {
         return course;
     }
 
+    public static OnlineCourseConfiguration generateOnlineCourseConfiguration(Course course, String key, String secret, String userPrefix, String originalUrl) {
+        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        onlineCourseConfiguration.setCourse(course);
+        onlineCourseConfiguration.setLtiKey(key);
+        onlineCourseConfiguration.setLtiSecret(secret);
+        onlineCourseConfiguration.setUserPrefix(userPrefix);
+        onlineCourseConfiguration.setOriginalUrl(originalUrl);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        return onlineCourseConfiguration;
+    }
+
     /**
      * Generates a TextAssessment event with the given parameters
      *

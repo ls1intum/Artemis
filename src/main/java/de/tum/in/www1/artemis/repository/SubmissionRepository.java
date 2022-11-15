@@ -189,23 +189,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     /**
      * Count number of in-time submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
      *
-     * @param courseId the course id we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
-     *         due date at all
-     */
-    @Query("""
-            SELECT COUNT (DISTINCT s) FROM Submission s join s.participation p join p.exercise e join e.course c
-            WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
-                AND c.id = :#{#courseId}
-                AND s.submitted = TRUE
-                AND (s.submissionDate <= e.dueDate
-                    OR e.dueDate IS NULL)
-            """)
-    long countByCourseIdSubmittedBeforeDueDate(@Param("courseId") long courseId);
-
-    /**
-     * Count number of in-time submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
-     *
      * @param exerciseIds the exercise ids of the course we are interested in
      * @return the number of submissions belonging to the exercise ids, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
@@ -235,22 +218,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 AND submission.participation.testRun = FALSE
             """)
     long countByExamIdSubmittedSubmissionsIgnoreTestRuns(@Param("examId") long examId);
-
-    /**
-     * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
-     *
-     * @param courseId the course id we are interested in
-     * @return the number of submissions belonging to the course id, which have the submitted flag set to true and the submission date after the exercise due date
-     */
-    @Query("""
-            SELECT COUNT (DISTINCT s) FROM Submission s join s.participation p join p.exercise e
-            WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
-                AND e.course.id = :#{#courseId}
-                AND s.submitted = TRUE
-                AND e.dueDate IS NOT NULL
-                AND s.submissionDate > e.dueDate
-            """)
-    long countByCourseIdSubmittedAfterDueDate(@Param("courseId") long courseId);
 
     /**
      * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.
@@ -340,21 +307,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     List<ExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
-     * Calculate the number of submitted submissions for the given exercise after the exercise due date. This query uses the participations to make sure that each student is only counted once
-     * @param exerciseId the exercise id we are interested in
-     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true and the submission date after the exercise due date
-     */
-    @Query("""
-            SELECT COUNT (DISTINCT p)
-            FROM StudentParticipation p JOIN p.submissions s JOIN p.exercise e
-                WHERE e.id = :#{#exerciseId}
-                AND s.submitted = TRUE
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
-                AND s.submissionDate > e.dueDate
-            """)
-    long countByExerciseIdSubmittedAfterDueDate(@Param("exerciseId") long exerciseId);
-
-    /**
      * Calculate the number of submitted submissions for the given exercise. This query uses the participations to make sure that each student is only counted once
      * @param exerciseId the exercise id we are interested in
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true
@@ -414,8 +366,9 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             FROM Submission submission LEFT JOIN FETCH submission.results r LEFT JOIN FETCH r.assessor a
             WHERE submission.participation.exercise.id = :#{#exerciseId}
                 AND :#{#assessor} = a
+                AND submission.participation.testRun = false
             """)
-    <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessor(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
+    <T extends Submission> List<T> findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 
     /**
      * @param submissionId the submission id we are interested in
@@ -471,14 +424,10 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     /**
      * Count number of submissions for exercise.
      * @param exerciseId the exercise id we are interested in
-     * @param examMode should be set to ignore the test run submissions
      * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true, separated into before and after the due date
      */
-    default DueDateStat countSubmissionsForExercise(long exerciseId, boolean examMode) {
-        if (examMode) {
-            return new DueDateStat(countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exerciseId), 0L);
-        }
-        return new DueDateStat(countByExerciseIdSubmittedBeforeDueDate(exerciseId), countByExerciseIdSubmittedAfterDueDate(exerciseId));
+    default DueDateStat countSubmissionsForExercise(long exerciseId) {
+        return new DueDateStat(countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exerciseId), 0L);
     }
 
     /**

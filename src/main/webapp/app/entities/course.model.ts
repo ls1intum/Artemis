@@ -2,14 +2,19 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { TutorGroup } from 'app/entities/tutor-group.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Exam } from 'app/entities/exam.model';
-import { Language } from 'app/entities/tutor-group.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+
+export const enum Language {
+    ENGLISH = 'ENGLISH',
+    GERMAN = 'GERMAN',
+}
 
 export class Course implements BaseEntity {
     public id?: number;
@@ -56,8 +61,9 @@ export class Course implements BaseEntity {
     public learningGoals?: LearningGoal[];
     public prerequisites?: LearningGoal[];
     public exams?: Exam[];
-    public tutorGroups?: TutorGroup[];
     public organizations?: Organization[];
+    public tutorialGroups?: TutorialGroup[];
+    public onlineCourseConfiguration?: OnlineCourseConfiguration;
 
     // helper attributes
     public isAtLeastTutor?: boolean;

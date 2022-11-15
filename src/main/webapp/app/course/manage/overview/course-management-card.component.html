@@ -241,6 +241,17 @@
         </a>
         <a
             *ngIf="course.isAtLeastTutor"
+            [routerLink]="['/course-management', course.id, 'tutorial-groups']"
+            [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
+            class="btn btn-primary me-1 mb-1 hidden-if-mobile"
+            [ngbTooltip]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate"
+            id="course-card-open-tutorial-groups"
+        >
+            <fa-icon [icon]="faPersonChalkboard"></fa-icon>
+            <span [innerHTML]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate" class="d-none d-xl-inline"></span>
+        </a>
+        <a
+            *ngIf="course.isAtLeastTutor"
             [routerLink]="['/course-management', course.id, 'assessment-dashboard']"
             class="btn btn-info me-1 mb-1"
             [class]="isGuidedTour ? 'guided-tour-assessment-dashboard-btn' : ''"

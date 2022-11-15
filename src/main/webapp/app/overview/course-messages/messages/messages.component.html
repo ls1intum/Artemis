@@ -1,0 +1,51 @@
+<div class="row p-3 justify-content-center" *ngIf="course">
+    <div class="justify-content-center">
+        <div class="row justify-content-center">
+            <div class="row ps-0" *ngIf="totalItems !== 0">
+                <!-- search bar -->
+                <div class="input-group col-10 px-0 mb-4">
+                    <input
+                        name="searchText"
+                        [(ngModel)]="searchText"
+                        class="form-control"
+                        (keyup.enter)="onSelectContext()"
+                        placeholder="{{ 'artemisApp.messages.searchBarPlaceholder' | artemisTranslate }}"
+                    />
+                    <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()"></jhi-button>
+                    <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
+                </div>
+                <div class="bold-line row mt-1 mb-2"></div>
+            </div>
+        </div>
+        <div class="row">
+            <!-- loading messages -->
+            <div *ngIf="isLoading" class="envelope">
+                <fa-icon size="3x" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+            </div>
+            <!-- no message exist -->
+            <div *ngIf="!isLoading && totalItems === 0" class="envelope">
+                <fa-icon size="5x" [icon]="faEnvelope"></fa-icon>
+            </div>
+            <!-- list of messages -->
+            <div
+                id="scrollableDiv"
+                #container
+                class="{{ totalItems !== 0 ? 'posting-infinite-scroll-container' : '' }}"
+                infinite-scroll
+                [scrollWindow]="false"
+                (scrolledUp)="fetchNextPage()"
+            >
+                <jhi-posting-thread
+                    #postingThread
+                    *ngFor="let post of posts; trackBy: postsTrackByFn"
+                    [post]="post"
+                    [showAnswers]="false"
+                    [isCourseMessagesPage]="true"
+                    (openThread)="setPostForThread($event)"
+                >
+                </jhi-posting-thread>
+            </div>
+            <jhi-message-inline-input *ngIf="conversation" [posting]="createdPost" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"> </jhi-message-inline-input>
+        </div>
+    </div>
+</div>

@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -7,7 +7,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, convertToParamMap, Router, UrlSegment } from '@angular/router';
+import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { Exam } from 'app/entities/exam.model';

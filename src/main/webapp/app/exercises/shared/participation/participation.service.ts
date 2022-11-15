@@ -52,12 +52,6 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
-    findWithLatestResult(participationId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<StudentParticipation>(`${this.resourceUrl}/${participationId}/withLatestResult`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
-    }
-
     /*
      * Finds one participation for the currently logged-in user for the given exercise in the given course
      */
@@ -141,6 +135,9 @@ export class ParticipationService {
         if (participation) {
             participation.initializationDate = convertDateFromServer(participation.initializationDate);
             participation.individualDueDate = convertDateFromServer(participation.individualDueDate);
+            if (participation.exercise) {
+                participation.exercise = ExerciseService.convertExerciseDatesFromServer(participation.exercise);
+            }
         }
         return participation;
     }
@@ -155,17 +152,36 @@ export class ParticipationService {
         return convertedParticipations;
     }
 
-    public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation | undefined {
+    public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation[] {
+        const mergedParticipations: StudentParticipation[] = [];
+
         if (participations?.length) {
+            const nonTestRunParticipations = participations.filter((participation: StudentParticipation) => !participation.testRun);
+            const testRunParticipations = participations.filter((participation: StudentParticipation) => participation.testRun);
+
             if (participations[0].type === ParticipationType.STUDENT) {
-                const combinedParticipation = new StudentParticipation();
-                this.mergeResultsAndSubmissions(combinedParticipation, participations);
-                return combinedParticipation;
+                if (nonTestRunParticipations.length) {
+                    const combinedParticipation = new StudentParticipation();
+                    this.mergeResultsAndSubmissions(combinedParticipation, nonTestRunParticipations);
+                    mergedParticipations.push(combinedParticipation);
+                }
+                if (testRunParticipations.length) {
+                    const combinedParticipationTestRun = new StudentParticipation();
+                    this.mergeResultsAndSubmissions(combinedParticipationTestRun, testRunParticipations);
+                    mergedParticipations.push(combinedParticipationTestRun);
+                }
             } else if (participations[0].type === ParticipationType.PROGRAMMING) {
-                return this.mergeProgrammingParticipations(participations as ProgrammingExerciseStudentParticipation[]);
+                if (nonTestRunParticipations.length) {
+                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations as ProgrammingExerciseStudentParticipation[]);
+                    mergedParticipations.push(combinedParticipation);
+                }
+                if (testRunParticipations.length) {
+                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations as ProgrammingExerciseStudentParticipation[]);
+                    mergedParticipations.push(combinedParticipationTestRun);
+                }
             }
         }
-        return undefined;
+        return mergedParticipations;
     }
 
     private mergeProgrammingParticipations(participations: ProgrammingExerciseStudentParticipation[]): ProgrammingExerciseStudentParticipation {
@@ -173,6 +189,7 @@ export class ParticipationService {
         if (participations?.length) {
             combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
+            combinedParticipation.buildPlanUrl = participations[0].buildPlanUrl;
             this.mergeResultsAndSubmissions(combinedParticipation, participations);
         }
         return combinedParticipation;
@@ -223,6 +240,10 @@ export class ParticipationService {
                 submission.participation = combinedParticipation;
             });
         }
+    }
+
+    public getSpecificStudentParticipation(studentParticipations: StudentParticipation[], testRun: boolean): StudentParticipation | undefined {
+        return studentParticipations.filter((participation) => !!participation.testRun === testRun).first();
     }
 
     /**

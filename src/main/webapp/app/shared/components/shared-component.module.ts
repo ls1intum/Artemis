@@ -10,9 +10,12 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 import { HelpIconComponentWithoutTranslationComponent } from 'app/shared/components/help-icon-without-translation.component';
+import { OpenCodeEditorButtonComponent } from 'app/shared/components/open-code-editor-button/open-code-editor-button.component';
+import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
+import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, FeatureToggleModule, ClipboardModule],
+    imports: [ArtemisSharedModule, ArtemisCoursesRoutingModule, FeatureToggleModule, ClipboardModule],
     declarations: [
         ButtonComponent,
         HelpIconComponent,
@@ -20,6 +23,8 @@ import { HelpIconComponentWithoutTranslationComponent } from 'app/shared/compone
         ConfirmAutofocusButtonComponent,
         ConfirmAutofocusModalComponent,
         CloneRepoButtonComponent,
+        StartPracticeModeButtonComponent,
+        OpenCodeEditorButtonComponent,
         ExerciseActionButtonComponent,
         CourseExamArchiveButtonComponent,
         NotReleasedTagComponent,
@@ -30,6 +35,8 @@ import { HelpIconComponentWithoutTranslationComponent } from 'app/shared/compone
         HelpIconComponentWithoutTranslationComponent,
         ConfirmAutofocusButtonComponent,
         CloneRepoButtonComponent,
+        StartPracticeModeButtonComponent,
+        OpenCodeEditorButtonComponent,
         ExerciseActionButtonComponent,
         CourseExamArchiveButtonComponent,
         NotReleasedTagComponent,

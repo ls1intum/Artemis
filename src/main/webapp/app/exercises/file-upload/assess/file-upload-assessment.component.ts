@@ -149,8 +149,15 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     private loadOptimalSubmission(exerciseId: number): void {
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
+        this.fileUploadSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
             next: (submission: FileUploadSubmission) => {
+                if (!submission) {
+                    // there is no submission waiting for assessment at the moment
+                    this.navigateBack();
+                    this.alertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
+                    return;
+                }
+
                 this.initializePropertiesFromSubmission(submission);
                 // Update the url with the new id, without reloading the page, to make the history consistent
                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
@@ -158,11 +165,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             },
             error: (error: HttpErrorResponse) => {
                 this.loadingInitialSubmission = false;
-                if (error.status === 404) {
-                    // there is no submission waiting for assessment at the moment
-                    this.navigateBack();
-                    this.alertService.info('artemisApp.exerciseAssessmentDashboard.noSubmissions');
-                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.navigateBack();
                 } else {
                     this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
@@ -261,10 +264,16 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     assessNext() {
         this.isLoading = true;
         this.unreferencedFeedback = [];
-        this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise!.id!, false, this.correctionRound).subscribe({
-            next: (response: FileUploadSubmission) => {
+        this.fileUploadSubmissionService.getSubmissionWithoutAssessment(this.exercise!.id!, false, this.correctionRound).subscribe({
+            next: (submission: FileUploadSubmission) => {
+                if (!submission) {
+                    // there are no unassessed submission, nothing we have to worry about
+                    this.hasNewSubmissions = false;
+                    return;
+                }
+
                 this.isLoading = false;
-                this.unassessedSubmission = response;
+                this.unassessedSubmission = submission;
 
                 // navigate to the new assessment page to trigger re-initialization of the components
                 this.router.onSameUrlNavigation = 'reload';
@@ -281,13 +290,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 this.router.navigate(url);
             },
             error: (error: HttpErrorResponse) => {
-                if (error.status === 404) {
-                    // there are no unassessed submission, nothing we have to worry about
-                    this.hasNewSubmissions = false;
-                } else {
-                    this.isLoading = false;
-                    onError(this.alertService, error);
-                }
+                this.isLoading = false;
+                onError(this.alertService, error);
             },
         });
     }

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.hibernate.Hibernate;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -22,6 +24,7 @@ import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -43,16 +46,20 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiService ltiService, StudentParticipationRepository studentParticipationRepository,
-            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
+            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
                 submissionRepository, singleUserNotificationService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.ltiService = ltiService;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -197,6 +204,17 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
                 || newManualResult.getParticipation().getExercise().getAssessmentDueDate().isBefore(ZonedDateTime.now()))) {
             messagingService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
         }
+
+        var isManualFeedbackRequest = programmingExercise.getAllowManualFeedbackRequests() && Objects.nonNull(participation.getIndividualDueDate())
+                && participation.getIndividualDueDate().isBefore(ZonedDateTime.now());
+        var isBeforeDueDate = Objects.nonNull(programmingExercise.getDueDate()) && programmingExercise.getDueDate().isAfter(ZonedDateTime.now());
+        if (isManualFeedbackRequest && isBeforeDueDate) {
+            participation.setIndividualDueDate(null);
+            studentParticipationRepository.save(participation);
+
+            programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        }
+
         return ResponseEntity.ok(newManualResult);
     }
 

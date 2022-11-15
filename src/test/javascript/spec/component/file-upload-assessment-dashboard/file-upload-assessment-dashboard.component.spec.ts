@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
@@ -108,7 +108,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         // setup
         const exerciseServiceFindMock = jest.spyOn(exerciseService, 'find');
         exerciseServiceFindMock.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise1 })));
-        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
         getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
         // test for init values
         expect(component).toBeTruthy();
@@ -130,7 +130,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         // test getSubmissions
         const exerciseServiceFind = jest.spyOn(exerciseService, 'find');
         exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise1 })));
-        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
         getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [fileUploadSubmission1], headers: new HttpHeaders() })));
         const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
         isAtLeastInstructorInCourseStub.mockReturnValue(true);
@@ -145,7 +145,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
     }));
 
     it('should not get Submissions', () => {
-        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
+        const getFileUploadSubmissionStub = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
         getFileUploadSubmissionStub.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
         const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
         isAtLeastInstructorInCourseStub.mockReturnValue(true);

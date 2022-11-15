@@ -12,7 +12,8 @@
             "deleted": "Deleted Course with title {{ param }}",
             "delete": {
                 "question": "Are you sure you want to permanently delete the course <strong>{{ title }}</strong>? All associated elements will be deleted, including exams, exercises, repositories and build plans. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the course to confirm."
+                "typeNameToConfirm": "Please type in the name of the course to confirm.",
+                "icon": "Remove Icon"
             },
             "showActive": "Show only active courses",
             "totalScore": "Total Score:",
@@ -86,6 +87,17 @@
                 "title": "Online Course",
                 "description": "Activate this checkbox for external online courses (e.g. on edX) so that students can use this Artemis course (via the LTI interface). This also allows automatic account creation if enabled by the Artemis system administrator."
             },
+            "onlineCourseConfiguration": {
+                "title": "Online Course Configuration",
+                "ltiKey": "LTI Key",
+                "ltiSecret": "LTI Secret",
+                "userPrefix": "User Prefix",
+                "form": {
+                    "userPrefix": {
+                        "forbidden": "User prefix cannot contain special characters."
+                    }
+                }
+            },
             "registrationEnabled": {
                 "title": "Student Course Registration Enabled",
                 "description": "Activate this checkbox to allow students to register independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during registration."
@@ -156,7 +168,7 @@
                 "outOf": "out of",
                 "usersPerPage": "{{number}} users per page",
                 "showAllUsers": "Show all users",
-                "searchForUsers": "Add a user to this course group by searching for login or name",
+                "searchForUsers": "Add a user to this group by searching for login or name",
                 "searchNoResults": "No users found",
                 "login": "Login",
                 "registrationNumber": "Registration Number",

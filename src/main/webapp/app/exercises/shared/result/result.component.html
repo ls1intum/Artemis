@@ -10,31 +10,40 @@
         </span>
     </ng-container>
     <ng-container *ngSwitchCase="ResultTemplateStatus.HAS_RESULT">
-        <ng-container *ngIf="result"
-            ><!-- we need to make sure that result is not null, otherwise the compiler complains below -->
-            <span [ngClass]="textColorClass" class="guided-tour" id="result-score">
-                <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-                <ng-container *ngIf="resultIsPreliminary(result) || hasFeedback; else notPreliminaryAndNoFeedback">
-                    <span class="guided-tour result" (click)="showDetails(result)" [ngbTooltip]="resultTooltip" container="body">
-                        {{ resultString }}
-                    </span>
-                </ng-container>
-                <ng-template #notPreliminaryAndNoFeedback>
-                    <span [ngbTooltip]="resultTooltip" container="body">
-                        {{ resultString }}
-                    </span>
-                </ng-template>
-                <span *ngIf="!short"> ({{ result.completionDate! | artemisTimeAgo }}) </span>
-                <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
+        <ng-container *ngIf="result">
+            <fa-icon *ngIf="showIcon" class="result-score-icon" [ngClass]="textColorClass" [icon]="resultIconClass" size="lg"></fa-icon>
+            <span
+                *ngIf="resultIsPreliminary(result) || hasFeedback; else notPreliminaryAndNoFeedback"
+                [ngClass]="textColorClass"
+                class="guided-tour result"
+                id="result-score"
+                (click)="showDetails(result)"
+            >
+                <span class="guided-tour result" [ngbTooltip]="resultTooltip | artemisTranslate" container="body">
+                    {{ resultString }}
+                </span>
+                <span class="result" [ngbTooltip]="result.submission?.submissionDate ?? result.completionDate | artemisDate">
+                    ({{ result.submission?.submissionDate ?? result.completionDate! | artemisTimeAgo }})
+                </span>
             </span>
+            <ng-template #notPreliminaryAndNoFeedback>
+                <span [ngClass]="textColorClass" class="guided-tour result" id="result-score">
+                    <span class="result" [ngbTooltip]="resultTooltip | artemisTranslate" container="body">
+                        {{ resultString }}
+                    </span>
+                    <span class="result" [ngbTooltip]="result.submission?.submissionDate ?? result.completionDate | artemisDate" container="body">
+                        ({{ result.submission?.submissionDate ?? result.completionDate! | artemisTimeAgo }})
+                    </span>
+                </span>
+            </ng-template>
             <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">
                 <a (click)="downloadBuildResult(participation.id)">
                     &nbsp; <fa-icon [icon]="faFile"></fa-icon>
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'bg-info': !result.rated, 'bg-success': result.rated }" id="result-score-graded">
-                {{ (result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | artemisTranslate | uppercase }}
+            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-badge" ngbTooltip="{{ badgeTooltip | artemisTranslate }}" container="body">
+                {{ badgeText | artemisTranslate | uppercase }}
             </span>
         </ng-container>
     </ng-container>
@@ -78,7 +87,7 @@
     <ng-container *ngSwitchDefault>
         <span class="text-muted">
             <fa-icon [icon]="farCircle" size="lg"></fa-icon>&nbsp;
-            <span jhiTranslate="artemisApp.result.noResult">No graded result</span>
+            <span> {{ (showUngradedResults ? 'artemisApp.result.noResult' : 'artemisApp.result.noGradedResult') | artemisTranslate }}</span>
         </span>
     </ng-container>
 </ng-container>

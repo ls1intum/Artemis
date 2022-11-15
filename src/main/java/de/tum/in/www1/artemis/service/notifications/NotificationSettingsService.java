@@ -52,6 +52,16 @@ public class NotificationSettingsService {
 
     public final static String NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST = "notification.lecture-notification.new-reply-for-lecture-post";
 
+    // tutorial group notification settings group
+    public final static String NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION = "notification.tutorial-group-notification.tutorial-group-registration";
+
+    public final static String NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE = "notification.tutorial-group-notification.tutorial-group-delete-update";
+
+    // tutor notification setting group
+    public final static String NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION = "notification.tutor-notification.tutorial-group-registration";
+
+    public final static String NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN = "notification.tutor-notification.tutorial-group-assign-unassign";
+
     // editor notification setting group
     public final static String NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED = "notification.editor-notification.programming-test-cases-changed";
 
@@ -78,10 +88,16 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
             new NotificationSetting(true, false, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
+            // tutorial group notification settings group
+            new NotificationSetting(true, false, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
+            new NotificationSetting(true, false, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE),
+            // tutor notification setting group
+            new NotificationSetting(true, false, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
             // editor notification setting group
             new NotificationSetting(true, false, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED),
             // instructor notification setting group
-            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED)));
+            new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED),
+            new NotificationSetting(true, false, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN)));
 
     /**
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
@@ -101,11 +117,19 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, new NotificationType[] { NEW_REPLY_FOR_COURSE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST, new NotificationType[] { NEW_ANNOUNCEMENT_POST }),
             Map.entry(NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED, new NotificationType[] { PROGRAMMING_TEST_CASES_CHANGED }),
-            Map.entry(NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }));
+            Map.entry(NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }),
+            Map.entry(NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE, new NotificationType[] { TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED }),
+            Map.entry(NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION,
+                    new NotificationType[] { TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR }),
+            Map.entry(NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION,
+                    new NotificationType[] { TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT }),
+            Map.entry(NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN, new NotificationType[] { TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED }));
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_EMAIL_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE, NEW_ANNOUNCEMENT_POST,
-            FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT);
+            FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT,
+            TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_STUDENT,
+            TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED);
 
     public NotificationSettingsService(NotificationSettingRepository notificationSettingRepository) {
         this.notificationSettingRepository = notificationSettingRepository;
@@ -121,22 +145,17 @@ public class NotificationSettingsService {
     public boolean checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(Notification notification, User user, NotificationSettingsCommunicationChannel communicationChannel) {
         NotificationType type = findCorrespondingNotificationType(notification.getTitle());
 
-        Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(user.getId());
+        Set<NotificationSetting> decidedNotificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(user.getId());
+        Set<NotificationSetting> notificationSettings = new HashSet<>(decidedNotificationSettings);
 
-        Set<NotificationType> deactivatedTypes;
-
-        // the urgent emails were already sent at this point
-        // if the user has not yet changed his settings they will be of size 0 -> use default
-        if (notificationSettings.isEmpty()) {
-            deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, DEFAULT_NOTIFICATION_SETTINGS);
+        // for those notification types that are not explicitly set by the user, we use the default settings
+        Set<String> decidedIds = decidedNotificationSettings.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet());
+        for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
+            if (!decidedIds.contains(defaultSetting.getSettingId())) {
+                notificationSettings.add(defaultSetting);
+            }
         }
-        else {
-            deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, notificationSettings);
-        }
-
-        if (deactivatedTypes.isEmpty()) {
-            return true;
-        }
+        Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, notificationSettings);
         return !deactivatedTypes.contains(type);
     }
 

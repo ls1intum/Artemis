@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class TextSubmissionService extends SubmissionService {
@@ -91,6 +90,11 @@ public class TextSubmissionService extends SubmissionService {
         textSubmission.setType(SubmissionType.MANUAL);
         participation.addSubmission(textSubmission);
 
+        if (participation.getInitializationState() != InitializationState.FINISHED) {
+            participation.setInitializationState(InitializationState.FINISHED);
+            studentParticipationRepository.save(participation);
+        }
+
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         textSubmission.setResults(new ArrayList<>());
         textSubmission = textSubmissionRepository.save(textSubmission);
@@ -106,11 +110,6 @@ public class TextSubmissionService extends SubmissionService {
         }
         catch (Exception ex) {
             log.error("Text submission version could not be saved", ex);
-        }
-
-        if (participation.getInitializationState() != InitializationState.FINISHED) {
-            participation.setInitializationState(InitializationState.FINISHED);
-            studentParticipationRepository.save(participation);
         }
 
         return textSubmission;
@@ -144,27 +143,12 @@ public class TextSubmissionService extends SubmissionService {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
-        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(textExercise, examMode, correctionRound);
+        var submissionWithoutResult = super.getRandomAssessableSubmission(textExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             TextSubmission textSubmission = (TextSubmission) submissionWithoutResult.get();
             return Optional.of(textSubmission);
         }
         return Optional.empty();
-    }
-
-    /**
-     * Find a text submission of the given exercise that still needs to be assessed and lock it to prevent other tutors from receiving and assessing it.
-     *
-     * @param textExercise the exercise the submission should belong to
-     * @param correctionRound get submission with results in the correction round
-     * @param ignoreTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @return a locked modeling submission that needs an assessment
-     */
-    public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise, boolean ignoreTestRunParticipations, int correctionRound) {
-        TextSubmission textSubmission = getRandomTextSubmissionEligibleForNewAssessment(textExercise, ignoreTestRunParticipations, correctionRound)
-                .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
-        lockSubmission(textSubmission, correctionRound);
-        return textSubmission;
     }
 
     /**

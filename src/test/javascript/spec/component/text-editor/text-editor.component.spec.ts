@@ -2,7 +2,7 @@ import * as ace from 'brace';
 import { DebugElement } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,7 +25,7 @@ import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.com
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
-import { Language } from 'app/entities/tutor-group.model';
+import { Language } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise } from 'app/entities/exercise.model';

@@ -21,9 +21,9 @@ import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } fro
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { getLatestSubmissionResult, getFirstResultWithComplaint } from 'app/entities/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
-import { checkSubsequentFeedbackInAssessment, Feedback } from 'app/entities/feedback.model';
+import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -119,10 +119,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                     .join(',');
                 this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || dayjs().isAfter(this.fileUploadExercise.assessmentDueDate);
 
-                if (this.submission.submitted) {
+                if (this.submission?.submitted) {
                     this.setSubmittedFile();
                 }
-                if (this.submission.submitted && this.result && this.result.completionDate) {
+                if (this.submission?.submitted && this.result?.completionDate) {
                     this.fileUploadAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
                         this.result = assessmentResult;
                     });
@@ -169,9 +169,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submission!.submitted = false;
                 const serverError = error.headers.get('X-artemisApp-error');
                 if (serverError) {
-                    this.alertService.error(serverError, { fileName: file['name'] });
+                    this.alertService.error(serverError, { fileName: file.name });
                 } else {
-                    this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file['name'] });
+                    this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file.name });
                 }
                 this.fileInput.nativeElement.value = '';
                 this.submissionFile = undefined;
@@ -213,10 +213,14 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     private setSubmittedFile() {
         // clear submitted file so that it is not displayed in the input (this might be confusing)
         this.submissionFile = undefined;
-        const filePath = this.submission!.filePath!.split('/');
-        this.submittedFileName = filePath.last()!;
-        const fileName = this.submittedFileName.split('.');
-        this.submittedFileExtension = fileName.last()!;
+        this.submittedFileName = '';
+        this.submittedFileExtension = '';
+        if (this.submission?.filePath) {
+            const filePath = this.submission!.filePath!.split('/');
+            this.submittedFileName = filePath.last()!;
+            const fileName = this.submittedFileName.split('.');
+            this.submittedFileExtension = fileName.last()!;
+        }
     }
 
     downloadFile(filePath: string) {

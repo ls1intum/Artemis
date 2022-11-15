@@ -1,15 +1,13 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { Subscription } from 'rxjs';
-import { catchError, mergeMap, map, tap } from 'rxjs/operators';
+import { Observable, Subscription, of } from 'rxjs';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ExerciseType, getCourseFromExercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
@@ -93,11 +91,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed or if they require manual assessment.
                         // (this should match ProgrammingExerciseParticipation.isLocked on the server-side)
                         const dueDateHasPassed = hasExerciseDueDatePassed(this.exercise, this.participation);
-                        const isEditingAfterDueAllowed =
-                            !this.exercise.buildAndTestStudentSubmissionsAfterDueDate &&
-                            !this.exercise.allowComplaintsForAutomaticAssessments &&
-                            this.exercise.assessmentType === AssessmentType.AUTOMATIC;
-                        this.repositoryIsLocked = !isEditingAfterDueAllowed && !!this.exercise.dueDate && dueDateHasPassed;
+                        this.repositoryIsLocked = !this.participation.testRun && !!this.exercise.dueDate && dueDateHasPassed;
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
                         this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
                         this.checkForTutorAssessment(dueDateHasPassed);

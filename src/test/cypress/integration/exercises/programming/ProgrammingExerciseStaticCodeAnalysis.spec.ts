@@ -3,6 +3,7 @@ import { Course } from 'app/entities/course.model';
 import scaSubmission from '../../../fixtures/programming_exercise_submissions/static_code_analysis/submission.json';
 import { artemis } from '../../../support/ArtemisTesting';
 import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
+import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
 // The user management object
 const users = artemis.users;
@@ -42,7 +43,7 @@ describe('Static code analysis tests', () => {
     function setupCourseAndProgrammingExercise() {
         cy.login(users.getAdmin());
         courseManagement.createCourse(true).then((response) => {
-            course = response.body;
+            course = convertCourseAfterMultiPart(response);
             courseManagement.addStudentToCourse(course, users.getStudentOne());
             courseManagement.createProgrammingExercise({ course }, 50).then((dto) => {
                 exercise = dto.body;
@@ -55,8 +56,7 @@ describe('Static code analysis tests', () => {
      */
     function makeSuccessfulSubmissionWithScaErrors() {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, scaSubmission, () => {
-            editorPage.getResultScore().contains('50%').and('be.visible');
-            editorPage.getResultScore().contains('13 of 13 passed').click();
+            editorPage.getResultScore().contains('50%').and('be.visible').click();
             scaFeedback.shouldShowPointChart();
             scaFeedback.shouldShowFeedback(13, '10');
             // We have to verify those static texts here. If we don't verify those messages the only difference between the SCA and normal programming exercise

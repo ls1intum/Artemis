@@ -1,9 +1,9 @@
-import { Component, Input } from '@angular/core';
-import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { Result } from 'app/entities/result.model';
-import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ResultService } from 'app/exercises/shared/result/result.service';
+import { Exercise } from 'app/entities/exercise.model';
+import { MissingResultInformation, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
+
+export const MAX_RESULT_HISTORY_LENGTH = 5;
 
 // Modal -> Result details view
 @Component({
@@ -11,37 +11,32 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
     templateUrl: './result-history.component.html',
     styleUrls: ['./result-history.scss'],
 })
-export class ResultHistoryComponent {
+export class ResultHistoryComponent implements OnChanges {
+    readonly getTextColorClass = getTextColorClass;
+    readonly getResultIconClass = getResultIconClass;
+    readonly evaluateTemplateStatus = evaluateTemplateStatus;
+    readonly MissingResultInfo = MissingResultInformation;
+
     @Input() results: Result[];
-    @Input() showPreviousDivider = false;
+    @Input() exercise: Exercise;
 
-    constructor(public resultService: ResultService) {}
+    showPreviousDivider = false;
+    displayedResults: Result[];
+    movedLastRatedResult: boolean;
 
-    /**
-     * get string for icon if score bigger than 80
-     * @param {Result} result
-     * @return {string} icon
-     */
-    resultIcon(result: Result): IconProp {
-        if (result.score && result.score >= MIN_SCORE_GREEN) {
-            return faCheck;
+    ngOnChanges(): void {
+        this.showPreviousDivider = this.results.length > MAX_RESULT_HISTORY_LENGTH;
+
+        if (this.results.length <= MAX_RESULT_HISTORY_LENGTH) {
+            this.displayedResults = this.results;
         } else {
-            return faTimes;
-        }
-    }
+            this.displayedResults = this.results.slice(this.results.length - MAX_RESULT_HISTORY_LENGTH);
 
-    /**
-     * get colour class depending on score
-     * @param {Result} result
-     * @return {string}
-     */
-    resultClass(result: Result): string {
-        if (result.score && result.score >= MIN_SCORE_GREEN) {
-            return 'success';
-        } else if (result.score && result.score >= MIN_SCORE_ORANGE) {
-            return 'warning';
-        } else {
-            return 'danger';
+            const lastRatedResult = this.results.filter((result) => result.rated).last();
+            if (!this.displayedResults.first()?.rated && lastRatedResult) {
+                this.displayedResults[0] = lastRatedResult;
+                this.movedLastRatedResult = true;
+            }
         }
     }
 }

@@ -255,7 +255,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         assertThat(resultResponse.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
         assertThat(resultResponse.getFeedbacks()).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
 
-        assertThat(result).usingRecursiveComparison().ignoringFields("submission", "feedbacks", "participation").isEqualTo(resultResponse);
+        assertThat(result).usingRecursiveComparison().ignoringFields("submission", "feedbacks", "participation", "lastModifiedDate").isEqualTo(resultResponse);
         if (withSubmission) {
             assertThat(submission).isEqualTo(resultResponse.getSubmission());
         }

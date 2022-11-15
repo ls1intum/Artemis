@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -127,6 +128,10 @@ public class CourseService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
+    private final TutorialGroupRepository tutorialGroupRepository;
+
+    private final TutorialGroupService tutorialGroupService;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -135,7 +140,8 @@ public class CourseService {
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository) {
+            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository,
+            TutorialGroupService tutorialGroupService) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -167,6 +173,8 @@ public class CourseService {
         this.resultRepository = resultRepository;
         this.exerciseRepository = exerciseRepository;
         this.participantScoreRepository = participantScoreRepository;
+        this.tutorialGroupRepository = tutorialGroupRepository;
+        this.tutorialGroupService = tutorialGroupService;
     }
 
     /**
@@ -201,13 +209,13 @@ public class CourseService {
     }
 
     /**
-     * Get one course with exercises, lectures and exams (filtered for given user)
+     * Get one course with exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
      *
      * @param courseId the course to fetch
      * @param user     the user entity
-     * @return the course including exercises, lectures and exams for the user
+     * @return the course including exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
      */
-    public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsForUser(Long courseId, User user) {
+    public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException();
@@ -216,6 +224,7 @@ public class CourseService {
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         course.setLearningGoals(learningGoalService.findAllForCourse(course, user));
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
+        course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
@@ -291,7 +300,12 @@ public class CourseService {
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
+        deleteTutorialGroupsOfCourse(course);
         courseRepository.deleteById(course.getId());
+    }
+
+    private void deleteTutorialGroupsOfCourse(Course course) {
+        this.tutorialGroupRepository.deleteAllByCourse(course);
     }
 
     private void deleteGradingScaleOfCourse(Course course) {
@@ -703,7 +717,32 @@ public class CourseService {
             user.setCreatedBy(null);
             user.setCreatedDate(null);
         });
+        removeUserVariables(usersInGroup);
         return ResponseEntity.ok().body(usersInGroup);
+    }
+
+    /**
+     * Search for users of all user groups by login or name in course
+     *
+     * @param course        Course in which to search students
+     * @param nameOfUser    Login or name by which to search students
+     * @return users whose login matched
+     */
+    public List<User> searchOtherUsersNameInCourse(Course course, String nameOfUser) {
+        Set<String> groupNames = new HashSet<>();
+        groupNames.add(course.getStudentGroupName());
+        groupNames.add(course.getTeachingAssistantGroupName());
+        groupNames.add(course.getEditorGroupName());
+        groupNames.add(course.getInstructorGroupName());
+
+        List<User> searchResult = userRepository.searchByNameInGroups(groupNames, nameOfUser);
+        removeUserVariables(searchResult);
+
+        // users should not find themselves
+        User searchingUser = userRepository.getUser();
+        searchResult = searchResult.stream().distinct().filter(user -> !user.getId().equals(searchingUser.getId())).toList();
+
+        return (searchResult);
     }
 
     public void addUserToGroup(User user, String group, Role role) {
@@ -855,5 +894,23 @@ public class CourseService {
         var mondayInWeekOfStart = startDate.with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
         var mondayInWeekOfEnd = endDate.plusWeeks(1).with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
         return mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);
+    }
+
+    /**
+     * Helper method which removes some values from the user entity which are not needed in the client
+     *
+     * @param usersInGroup  user whose variables are removed
+     */
+    private void removeUserVariables(List<User> usersInGroup) {
+        usersInGroup.forEach(user -> {
+            user.setLastNotificationRead(null);
+            user.setActivationKey(null);
+            user.setLangKey(null);
+            user.setLastNotificationRead(null);
+            user.setLastModifiedBy(null);
+            user.setLastModifiedDate(null);
+            user.setCreatedBy(null);
+            user.setCreatedDate(null);
+        });
     }
 }

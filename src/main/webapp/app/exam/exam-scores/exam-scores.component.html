@@ -39,12 +39,18 @@
         <!-- Filter settings -->
         <div class="d-flex align-items-center align-content-center mb-2">
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
-                <label class="form-check-label">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</label>
+                <input id="toggleFilterForSubmittedExam" class="form-check-input" type="checkbox" [checked]="filterForSubmittedExams" (change)="toggleFilterForSubmittedExam()" />
+                <label for="toggleFilterForSubmittedExam" class="form-check-label">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" [checked]="filterForNonEmptySubmissions" (change)="toggleFilterForNonEmptySubmission()" />
-                <span class="form-check-label">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</span>
+                <input
+                    id="toggleFilterForNonEmptySubmission"
+                    class="form-check-input"
+                    type="checkbox"
+                    [checked]="filterForNonEmptySubmissions"
+                    (change)="toggleFilterForNonEmptySubmission()"
+                />
+                <span for="toggleFilterForNonEmptySubmission" class="form-check-label">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</span>
             </div>
         </div>
 
@@ -261,8 +267,8 @@
 
         <div class="d-block">
             <div *ngIf="gradingScaleExists && this.aggregatedExamResults.medianRelativePassed !== null" class="form-check">
-                <input class="form-check-input" type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
-                <label class="form-check-label">
+                <input id="toggleMedianPassed" class="form-check-input" type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
+                <label for="toggleMedianPassed" class="form-check-label">
                     {{
                         'artemisApp.examScores.highlightPassedMedian'
                             | artemisTranslate
@@ -275,15 +281,34 @@
                 </label>
             </div>
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
-                <label class="form-check-label">
+                <input id="toggleMedianOverall" class="form-check-input" type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
+                <label for="toggleMedianOverall" class="form-check-label">
                     {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate: { median: this.overallChartMedian } }}
                 </label>
             </div>
             <!-- Histogram -->
+            <h4 *ngIf="hasBonus" class="text-center mb-0">
+                {{ 'artemisApp.examScores.gradesBeforeBonus' | artemisTranslate }}
+            </h4>
             <div class="row d-flex justify-content-center">
                 <jhi-participant-scores-distribution
                     [scores]="scores"
+                    [scoreToHighlight]="highlightedValue"
+                    [gradingScale]="gradingScale"
+                    [isCourseScore]="false"
+                    [dataLabelFormatting]="dataLabelFormatting"
+                    (onSelect)="onSelect()"
+                    class="col-lg-11"
+                >
+                </jhi-participant-scores-distribution>
+            </div>
+            <!-- Histogram with bonus -->
+            <h4 *ngIf="hasBonus" class="text-center mt-5 mb-0">
+                {{ 'artemisApp.examScores.gradesAfterBonus' | artemisTranslate }}
+            </h4>
+            <div *ngIf="hasBonus" class="row d-flex justify-content-center">
+                <jhi-participant-scores-distribution
+                    [gradeNames]="gradesWithBonus"
                     [scoreToHighlight]="highlightedValue"
                     [gradingScale]="gradingScale"
                     [isCourseScore]="false"
@@ -430,7 +455,29 @@
                             }}</span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
+                        <ng-container *ngIf="hasBonus">
+                            <th *ngIf="presentationScoreThreshold != undefined" jhiSortBy="gradeWithBonus.achievedPresentationScore">
+                                <span>{{ 'artemisApp.examScores.presentationScoreThresholdColumn' | artemisTranslate: { threshold: presentationScoreThreshold } }}</span>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="gradeWithBonus.bonusGrade">
+                                <span>{{ 'artemisApp.examScores.bonusGradeColumn' | artemisTranslate }}</span>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="gradeWithBonus.finalGrade">
+                                <span>{{ 'artemisApp.examScores.finalGradeColumn' | artemisTranslate }}</span>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                        </ng-container>
                         <th *ngIf="gradingScaleExists && !isBonus">{{ 'artemisApp.examScores.passedColumn' | artemisTranslate }}</th>
+                        <th *ngIf="hasPlagiarismVerdicts" jhiSortBy="mostSeverePlagiarismVerdict">
+                            <span>{{ 'artemisApp.examScores.mostSeverePlagiarismVerdictColumn' | artemisTranslate }}</span>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th *ngIf="hasPlagiarismVerdictsInBonusSource" jhiSortBy="gradeWithBonus.mostSeverePlagiarismVerdict">
+                            <span>{{ 'artemisApp.examScores.mostSeverePlagiarismVerdictInBonusColumn' | artemisTranslate }}</span>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -459,11 +506,28 @@
                         <td *ngIf="gradingScaleExists">
                             {{ studentResult.overallGrade !== null ? studentResult.overallGrade : '-' }}
                         </td>
+                        <ng-container *ngIf="hasBonus">
+                            <td *ngIf="presentationScoreThreshold != undefined">
+                                {{ studentResult.gradeWithBonus?.achievedPresentationScore ?? '-' }}
+                            </td>
+                            <td>
+                                {{ studentResult.gradeWithBonus?.bonusGrade ?? '-' }}
+                            </td>
+                            <td>
+                                {{ studentResult.gradeWithBonus?.finalGrade ?? studentResult.overallGrade ?? '-' }}
+                            </td>
+                        </ng-container>
                         <td *ngIf="gradingScaleExists && !isBonus && studentResult.overallGrade && studentResult.hasPassed" style="text-align: center">
                             <fa-icon [icon]="faCheckCircle" style="color: #28a745; font-size: 1.5em"></fa-icon>
                         </td>
                         <td *ngIf="gradingScaleExists && !isBonus && studentResult.overallGrade && !studentResult.hasPassed" style="text-align: center">
                             <fa-icon [icon]="faTimes" style="color: #ca2024; font-size: 1.5em"></fa-icon>
+                        </td>
+                        <td *ngIf="hasPlagiarismVerdicts">
+                            {{ studentResult.mostSeverePlagiarismVerdict ?? '-' }}
+                        </td>
+                        <td *ngIf="hasPlagiarismVerdictsInBonusSource">
+                            {{ studentResult.gradeWithBonus?.mostSeverePlagiarismVerdict ?? '-' }}
                         </td>
                     </tr>
                 </tbody>

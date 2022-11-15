@@ -18,22 +18,46 @@
                 }
             },
             "detail": {
-                "title": "Result"
+                "title": "Bewertung",
+                "feedback": "Feedback",
+                "feedbackForTask": "Feedback for task: {{ taskName }}",
+                "codeIssue": {
+                    "name": "Code Issue",
+                    "title": "{{ scaCategory }} Issue in File {{ location }}",
+                    "line": "at line {{ line }}",
+                    "lines": "at lines {{ from }}-{{ to }}",
+                    "column": "column {{ column }}",
+                    "columns": "columns {{ from }}-{{ to }}"
+                },
+                "test": {
+                    "name": "Test Case",
+                    "noInfo": "No result information for {{ name }}",
+                    "passed": "Test {{ name }} passed",
+                    "failed": "Test {{ name }} failed",
+                    "passedTest": "1 passed test",
+                    "passedTests": "{{ number }} passed tests"
+                }
             },
-            "noResult": "No graded result",
-            "resultString": "Result Text",
-            "resultStringBuildFailed": "Build failed",
-            "resultStringBuildSuccessfulNoTests": "Build successful, no tests executed",
-            "resultStringBuildSuccessfulTests": "{{ numberOfTestsPassed }} of {{ numberOfTestsTotal }} passed",
-            "resultStringNonProgramming": "Score {{ relativeScore }}%, {{ points }} of {{ maxPoints }} points",
-            "resultStringProgramming": "Score {{ relativeScore }}%, {{ buildAndTestMessage }}, {{ points }} of {{ maxPoints }} points",
-            "resultStringProgrammingCodeIssues": "Score {{ relativeScore }}%, {{ buildAndTestMessage }}, {{ numberOfIssues }} issues, {{ points }} of {{ maxPoints }} points",
+            "noResult": "No result",
+            "noGradedResult": "No graded result",
+            "resultString": {
+                "resultString": "Result Text",
+                "buildFailed": "Build failed",
+                "buildSuccessfulNoTests": "Build successful, no tests executed",
+                "buildSuccessfulTests": "{{ numberOfTestsPassed }} of {{ numberOfTestsTotal }} passed",
+                "nonProgramming": "{{ relativeScore }}%, {{ points }} points",
+                "programming": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ points }} points",
+                "programmingCodeIssues": "{{ relativeScore }}%, {{ buildAndTestMessage }}, {{ numberOfIssues }} issues, {{ points }} points",
+                "programmingShort": "{{ relativeScore }}%, {{ buildAndTestMessage }}",
+                "short": "{{ relativeScore }}%"
+            },
             "completionDate": "Completion Date",
             "successful": "Successful",
             "buildArtifact": "Build Artifact",
             "buildError": "Build Error:",
-            "score": "Score",
+            "score": "Score {{score}}%",
             "scorePercentage": "Score (in %)",
+            "scoreWithPoints": "Score {{score}}%, {{points}} points",
             "currentScore": "Current Score",
             "rated": "Rated",
             "hasFeedback": "Has Feedback",
@@ -57,7 +81,11 @@
             "feedbackTextRequired": "Feedback text is required.",
             "positive": "Positive",
             "graded": "Graded",
+            "gradedTooltip": "This result is part of your graded participation.",
             "notGraded": "Not graded",
+            "notGradedTooltip": "This result is not part of your assessment.",
+            "practice": "Practice",
+            "practiceTooltip": "This result is part of your practice participation and will not have an influence on your assessment.",
             "preliminary": "preliminary",
             "preliminaryTooltip": "Your result is not final yet, because more tests will be executed after the due date",
             "preliminaryTooltipSemiAutomatic": "Your result is not final yet, because more tests will be executed after the due date or a manual assessment will be done.",
@@ -81,7 +109,10 @@
             "notLatestSubmission": "Note: This result and feedback is <strong>not</strong> based on the latest submission.",
             "seeMore": "See more",
             "noFeedback": "No feedback available",
-            "afterDueDateFeedbackHidden": "Even after the due date not for all test cases a detailed feedback is shown. This could be the case if other students are still working on the exercise (e.g. to allow for the compensation of sick days). Those feedbacks will automatically become visible after {{date}}."
+            "afterDueDateFeedbackHidden": "Even after the due date not for all test cases a detailed feedback is shown. This could be the case if other students are still working on the exercise (e.g. to allow for the compensation of sick days). Those feedbacks will automatically become visible after {{date}}.",
+            "testCount": "You passed {{passed}} of {{total}} tests.",
+            "scaIssueCount": "You have {{issues}} code issues.",
+            "manualFeedbackCount": "You received {{feedbacks}} manual feedbacks."
         }
     }
 }

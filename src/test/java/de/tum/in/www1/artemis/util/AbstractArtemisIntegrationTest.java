@@ -24,9 +24,11 @@ import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
@@ -57,6 +59,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected GroupNotificationService groupNotificationService;
+
+    @SpyBean
+    protected TutorialGroupNotificationService tutorialGroupNotificationService;
 
     @SpyBean
     protected SingleUserNotificationService singleUserNotificationService;
@@ -92,13 +97,13 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     @SpyBean
-    protected ScoreService scoreService;
-
-    @SpyBean
     protected UrlService urlService;
 
     @SpyBean
     protected ScheduleService scheduleService;
+
+    @SpyBean
+    protected ParticipantScoreSchedulerService participantScoreSchedulerService;
 
     @SpyBean
     protected TextBlockService textBlockService;
@@ -125,11 +130,16 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         quizScheduleService.stopSchedule();
         quizScheduleService.clearAllQuizData();
     }
+    // TOOD: Check how to unify these
+    @AfterEach
+    void stopRunningTasks() {
+        participantScoreSchedulerService.shutdown();
+    }
 
     public void resetSpyBeans() {
-        Mockito.reset(ltiService, gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, messagingTemplate, examAccessService, mailService,
-                instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService, scheduleService, javaMailSender,
-                programmingTriggerService, zipFileService);
+        Mockito.reset(ltiService, gitService, groupNotificationService, tutorialGroupNotificationService, singleUserNotificationService, websocketMessagingService,
+                messagingTemplate, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
+                urlService, scoreService, scheduleService, participantScoreSchedulerService, javaMailSender, programmingTriggerService, zipFileService);
     }
 
     @Override

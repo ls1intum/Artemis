@@ -8,7 +8,7 @@
                 <th scope="col">{{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.yourPoints' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.maxPoints' | artemisTranslate }}</th>
-                <th scope="col" *ngIf="getMaxBonusPointsSum() != 0">{{ 'artemisApp.exam.examSummary.points.bonus' | artemisTranslate }}</th>
+                <th scope="col" *ngIf="getMaxBonusPointsSum() != 0">{{ 'artemisApp.exam.examSummary.points.maxBonus' | artemisTranslate }}</th>
             </tr>
         </thead>
         <tbody>
@@ -37,6 +37,21 @@
                 </td>
             </tr>
         </tbody>
+        <tfoot class="total-footer">
+            <tr>
+                <th scope="row" colspan="2">{{ 'artemisApp.exam.examSummary.points.total' | artemisTranslate }}</th>
+                <td>-</td>
+                <td>
+                    {{ getAchievedPointsSum() }}
+                </td>
+                <td>
+                    {{ getMaxNormalPointsSum() }}
+                </td>
+                <td *ngIf="getMaxBonusPointsSum() != 0">
+                    {{ getMaxBonusPointsSum() }}
+                </td>
+            </tr>
+        </tfoot>
     </table>
     <h5 *ngIf="getMaxBonusPointsSum() != 0">
         {{
@@ -44,8 +59,7 @@
                 | artemisTranslate
                     : {
                           achievedPoints: getAchievedPointsSum(),
-                          normalPoints: getMaxPointsSum(),
-                          bonusPoints: getMaxBonusPointsSum()
+                          normalPoints: getMaxNormalPointsSum()
                       }
         }}
     </h5>
@@ -55,24 +69,68 @@
                 | artemisTranslate
                     : {
                           achievedPoints: getAchievedPointsSum(),
-                          normalPoints: getMaxPointsSum()
+                          normalPoints: getMaxNormalPointsSum()
+                      }
+        }}
+    </h5>
+    <h5 *ngIf="studentExamWithGrade.studentResult.gradeWithBonus != undefined">
+        {{
+            'artemisApp.exam.examSummary.points.youAchievedFromBonus.' + studentExamWithGrade.studentResult.gradeWithBonus.bonusStrategy
+                | artemisTranslate
+                    : {
+                          achievedBonus: studentExamWithGrade.studentResult.gradeWithBonus.bonusGrade,
+                          bonusFromTitle: studentExamWithGrade.studentResult.gradeWithBonus.bonusFromTitle
+                      }
+        }}
+    </h5>
+    <h5 *ngIf="studentExamWithGrade.studentResult.gradeWithBonus?.bonusStrategy === BonusStrategy.POINTS">
+        {{
+            'artemisApp.exam.examSummary.points.youAchievedPointsAfterBonus'
+                | artemisTranslate
+                    : {
+                          finalPoints: studentExamWithGrade.studentResult.gradeWithBonus?.finalPoints
                       }
         }}
     </h5>
     <br />
-    <h5 *ngIf="gradingScaleExists && !isBonus">
-        {{ 'artemisApp.exam.examSummary.grade' | artemisTranslate }}:
-        <span [ngClass]="hasPassed ? 'passing-grade' : 'failing-grade'"> {{ grade }}</span>
-    </h5>
-    <h5 *ngIf="gradingScaleExists && isBonus">{{ 'artemisApp.exam.examSummary.bonus' | artemisTranslate }}: {{ grade }}</h5>
-    <div *ngIf="gradingScaleExists" style="margin-top: 1em" [routerLink]="['overview', 'grading-key']" [queryParams]="{ grade: grade }">
-        <a class="btn btn-primary">
-            <fa-icon [icon]="faClipboard"></fa-icon>
-            <span
-                >&nbsp;{{
-                    isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
-                }}</span
-            >
-        </a>
-    </div>
+    <ng-container *ngIf="gradingScaleExists">
+        <table class="h5 lh-lg">
+            <tr *ngIf="!isBonus">
+                <td>{{ 'artemisApp.exam.examSummary.' + (studentExamWithGrade.studentResult.gradeWithBonus != undefined ? 'gradeBeforeBonus' : 'grade') | artemisTranslate }}:</td>
+                <td>
+                    <span [ngClass]="hasPassed ? 'passing-grade' : 'failing-grade'"> {{ grade }}</span>
+                </td>
+            </tr>
+            <tr *ngIf="isBonus">
+                <td>{{ 'artemisApp.exam.examSummary.bonus' | artemisTranslate }}:</td>
+                <td>{{ grade }}</td>
+            </tr>
+            <tr *ngIf="studentExamWithGrade.studentResult.gradeWithBonus != undefined">
+                <td>{{ 'artemisApp.exam.examSummary.gradeAfterBonus' | artemisTranslate }}:</td>
+                <td>
+                    <span [ngClass]="hasPassed ? 'passing-grade' : 'failing-grade'"> {{ studentExamWithGrade.studentResult.gradeWithBonus.finalGrade }}</span>
+                </td>
+            </tr>
+        </table>
+        <span [routerLink]="['overview', 'grading-key']" [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade ?? grade }">
+            <a class="btn btn-primary">
+                <fa-icon [icon]="faClipboard"></fa-icon>
+                <span
+                    >&nbsp;{{
+                        isBonus ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate) : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
+                    }}</span
+                >
+            </a>
+        </span>
+        <span
+            *ngIf="studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined"
+            [routerLink]="['overview', 'bonus-grading-key']"
+            [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade }"
+        >
+            <a class="btn btn-primary">
+                <fa-icon [icon]="faAward"></fa-icon>
+                <span>&nbsp;{{ 'artemisApp.exam.examSummary.bonusGradeKeyButton' | artemisTranslate }}</span>
+            </a>
+        </span>
+    </ng-container>
 </div>

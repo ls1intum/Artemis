@@ -89,7 +89,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         mockGrantReadAccess(participation);
 
         // Try to access 5 different endpoints with programming feature toggle enabled
-        request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.OK);
+        request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.OK);
         request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.OK);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
         request.delete("/api/exercises/" + programmingExercise1.getId() + "/cleanup", HttpStatus.OK);
@@ -103,7 +103,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).as("Feature was disabled").isFalse();
 
         // Try to access 5 different endpoints with programming feature toggle disabled
-        request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation", null, HttpStatus.FORBIDDEN);
+        request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.FORBIDDEN);
         request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.FORBIDDEN);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
         request.delete("/api/exercises/" + programmingExercise1.getId() + "/cleanup", HttpStatus.FORBIDDEN);

@@ -1,11 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course-management.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Subject } from 'rxjs';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -21,11 +20,13 @@ import {
     faGraduationCap,
     faHeartBroken,
     faListAlt,
+    faPersonChalkboard,
     faTable,
     faTimes,
     faUserCheck,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -44,6 +45,7 @@ export enum DoughnutChartType {
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
     readonly DoughnutChartType = DoughnutChartType;
+    readonly FeatureToggle = FeatureToggle;
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;
@@ -72,6 +74,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
     faHeartBroken = faHeartBroken;
+    faPersonChalkboard = faPersonChalkboard;
 
     constructor(
         private eventManager: EventManager,
@@ -85,16 +88,29 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * On init load the course information and subscribe to listen for changes in courses.
      */
     ngOnInit() {
-        this.fetchData();
-        this.registerChangeInCourses();
+        this.route.data.subscribe(({ course }) => {
+            if (course) {
+                this.course = course;
+            }
+        });
+        // There is no course 0 -> will fetch no course if route does not provide different courseId
+        let courseId = 0;
+        this.paramSub = this.route.params.subscribe((params) => {
+            courseId = params['courseId'];
+        });
+        this.fetchCourseStatistics(courseId);
+        this.registerChangeInCourses(courseId);
     }
 
     /**
      * Subscribe to changes in courses and reload the course after a change.
      */
-    registerChangeInCourses() {
+    registerChangeInCourses(courseId: number) {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
-            this.fetchData();
+            this.courseService.find(courseId).subscribe((courseResponse) => {
+                this.course = courseResponse.body!;
+            });
+            this.fetchCourseStatistics(courseId);
         });
     }
 
@@ -109,19 +125,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * fetch the course and course specific statistics for the page
+     * fetch the course specific statistics separately because it takes quite long for larger courses
      */
-    private fetchData() {
-        // There is no course 0 -> will fetch no course if route does not provide different courseId
-        let courseId = 0;
-        this.paramSub = this.route.params.subscribe((params) => {
-            courseId = params['courseId'];
-        });
-        // Get course first for basic course information
-        this.courseService.find(courseId).subscribe((courseResponse) => {
-            this.course = courseResponse.body!;
-        });
-        // fetch statistics separately because it takes quite long for larger courses
+    private fetchCourseStatistics(courseId: number) {
         this.courseService.getCourseStatisticsForDetailView(courseId).subscribe({
             next: (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
                 this.courseDTO = courseResponse.body!;

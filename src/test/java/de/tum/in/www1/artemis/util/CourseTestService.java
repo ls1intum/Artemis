@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,14 +16,27 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotNull;
+
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -37,11 +51,9 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.CourseExamExportService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
@@ -121,6 +133,15 @@ public class CourseTestService {
     @Autowired
     private ParticipationService participationService;
 
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
+    @Autowired
+    private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private final static int numberOfStudents = 8;
 
     private final static int numberOfTutors = 5;
@@ -159,11 +180,12 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
 
-        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+        var result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
+        course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         courseRepo.findByIdElseThrow(course.getId());
 
-        course = ModelFactory.generateCourse(course.getId(), null, null, new HashSet<>());
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
     }
 
     // Test
@@ -175,13 +197,14 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultInstructorGroupName());
 
-        course1 = request.postWithResponseBody("/api/courses", course1, Course.class, HttpStatus.CREATED);
+        var result = request.getMvc().perform(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
+        course1 = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         assertThat(courseRepo.findByIdElseThrow(course1.getId())).isNotNull();
 
         Course course2 = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course2.setShortName("shortName");
-        request.post("/api/courses", course2, HttpStatus.BAD_REQUEST);
-        assertThat(courseRepo.findAllByShortName(course1.getShortName())).as("Course has not been stored").hasSize(1);
+        request.getMvc().perform(buildCreateCourse(course2)).andExpect(status().isBadRequest());
+        assertThat(courseRepo.findAllByShortName(course2.getShortName())).as("Course has not been stored").hasSize(1);
     }
 
     // Test
@@ -190,7 +213,9 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/courses").file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        request.getMvc().perform(builder).andExpect(status().isBadRequest());
         List<Course> repoContent = courseRepo.findAllByShortName(course.getShortName());
         assertThat(repoContent).as("Course has not been stored").isEmpty();
     }
@@ -242,22 +267,21 @@ public class CourseTestService {
         course.setMaxComplaints(1);
         course.setMaxTeamComplaints(0);
         course.setMaxRequestMoreFeedbackTimeDays(0);
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
         List<Course> repoContent = courseRepo.findAllByShortName(course.getShortName());
         assertThat(repoContent).as("Course has not been stored").isEmpty();
 
         // change configuration
         course.setMaxComplaintTimeDays(1);
         course.setMaxComplaints(0);
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
         repoContent = courseRepo.findAllByShortName(course.getShortName());
         assertThat(repoContent).as("Course has not been stored").isEmpty();
 
         // change configuration again
         course.setMaxComplaintTimeDays(0);
         course.setMaxRequestMoreFeedbackTimeDays(-1);
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
         repoContent = courseRepo.findAllByShortName(course.getShortName());
         assertThat(repoContent).as("Course has not been stored").isEmpty();
     }
@@ -269,8 +293,11 @@ public class CourseTestService {
         course.setTeachingAssistantGroupName("TeachingAssistantGroupName");
         course.setEditorGroupName("EditorGroupName");
         course.setInstructorGroupName("InstructorGroupName");
-        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+        var result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
+        course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         courseRepo.findByIdElseThrow(course.getId());
+        List<Course> repoContent = courseRepo.findAllByShortName(course.getShortName());
+        assertThat(repoContent).as("Course got stored").hasSize(1);
     }
 
     // Test
@@ -282,7 +309,8 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
-        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+        MvcResult result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
+        course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         // Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
         Course getFromRepo = courseRepo.findByIdElseThrow(course.getId());
         assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
@@ -296,7 +324,8 @@ public class CourseTestService {
         course.setMaxComplaintTimeDays(7);
         course.setPostsEnabled(true);
         course.setMaxRequestMoreFeedbackTimeDays(7);
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        result = request.getMvc().perform(buildUpdateCourse(getFromRepo.getId(), course)).andExpect(status().isOk()).andReturn();
+        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         assertThat(updatedCourse.getMaxComplaints()).as("maxComplaints Value updated successfully").isEqualTo(course.getMaxComplaints());
         assertThat(updatedCourse.getMaxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully").isEqualTo(course.getMaxComplaintTimeDays());
         assertThat(updatedCourse.getPostsEnabled()).as("postsEnabled Value updated successfully").isTrue();
@@ -373,7 +402,7 @@ public class CourseTestService {
     // Test
     public void testCreateCourseWithoutPermission() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-        request.post("/api/courses", course, HttpStatus.FORBIDDEN);
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isForbidden());
         assertThat(courseRepo.findAllByShortName(course.getShortName())).as("Course got stored").isEmpty();
     }
 
@@ -381,39 +410,13 @@ public class CourseTestService {
     public void testCreateCourseWithWrongShortName() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course.setShortName("`badName~");
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
-    }
-
-    // Test
-    public void testUpdateCourseWithWrongShortName() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-        course.setShortName("`badName~");
-        courseRepo.save(course);
-        request.put("/api/courses", course, HttpStatus.BAD_REQUEST);
-    }
-
-    // Test
-    public void testUpdateCourseWithoutId() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
-        course = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
-        courseRepo.findByIdElseThrow(course.getId());
-    }
-
-    // Test
-    public void testUpdateCourseWithoutIdAsInstructor() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-        request.put("/api/courses", course, HttpStatus.FORBIDDEN);
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
     }
 
     // Test
     public void testUpdateCourseIsEmpty() throws Exception {
         Course course = ModelFactory.generateCourse(UUID.randomUUID().getLeastSignificantBits(), null, null, new HashSet<>());
-        request.put("/api/courses", course, HttpStatus.NOT_FOUND);
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
     }
 
     // Test
@@ -424,7 +427,8 @@ public class CourseTestService {
         course.setTitle("Test Course");
         course.setStartDate(ZonedDateTime.now().minusDays(5));
         course.setEndDate(ZonedDateTime.now().plusDays(5));
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        MvcResult result = request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         assertThat(updatedCourse.getShortName()).as("short name was changed correctly").isEqualTo(course.getShortName());
         assertThat(updatedCourse.getTitle()).as("title was changed correctly").isEqualTo(course.getTitle());
         assertThat(updatedCourse.getStartDate()).as("start date was changed correctly").isEqualTo(course.getStartDate());
@@ -448,7 +452,7 @@ public class CourseTestService {
         course.setPrerequisites(prerequisites);
         course = courseRepo.save(course);
 
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
 
         Course updatedCourse = courseRepo.findByIdWithOrganizationsAndLearningGoalsElseThrow(course.getId());
         assertThat(updatedCourse.getOrganizations()).containsExactlyElementsOf(organizations);
@@ -473,16 +477,79 @@ public class CourseTestService {
         userRepo.save(user);
 
         // Create teaching assisstant in the course
-        user = database.createAndSaveUser("teaching-assisstant11");
+        user = ModelFactory.generateActivatedUser("teaching-assisstant11");
         user.setGroups(Set.of("new-ta-group"));
         userRepo.save(user);
 
         mockDelegate.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        MvcResult result = request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk()).andReturn();
+        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(updatedCourse.getInstructorGroupName()).isEqualTo("new-instructor-group");
         assertThat(updatedCourse.getEditorGroupName()).isEqualTo("new-editor-group");
         assertThat(updatedCourse.getTeachingAssistantGroupName()).isEqualTo("new-ta-group");
+    }
+
+    // Test
+    public void testCreateAndUpdateCourseWithCourseImage() throws Exception {
+        var createdCourse = createCourseWithCourseImageAndReturn();
+        var courseIcon = createdCourse.getCourseIcon();
+        createdCourse.setDescription("new description"); // do additional update
+
+        // Update course
+        request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse, "newTestIcon")).andExpect(status().isOk());
+
+        List<Course> updatedCourses = courseRepo.findAll();
+        assertThat(updatedCourses).hasSize(1);
+        var updatedCourse = updatedCourses.get(0);
+        assertThat(updatedCourse.getId()).isEqualTo(createdCourse.getId());
+        assertThat(updatedCourse.getCourseIcon()).isNotEqualTo(courseIcon).isNotNull();
+        assertThat(updatedCourse.getDescription()).isEqualTo("new description");
+    }
+
+    // Test
+    public void testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate() throws Exception {
+        Course createdCourse = createCourseWithCourseImageAndReturn();
+
+        // Update course
+        request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk());
+
+        List<Course> updatedCourses = courseRepo.findAll();
+        assertThat(updatedCourses).hasSize(1);
+        var updatedCourse = updatedCourses.get(0);
+        assertThat(updatedCourse.getId()).isEqualTo(createdCourse.getId());
+        assertThat(updatedCourse.getCourseIcon()).isEqualTo(createdCourse.getCourseIcon());
+    }
+
+    // Test
+    public void testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate() throws Exception {
+        Course createdCourse = createCourseWithCourseImageAndReturn();
+        createdCourse.setCourseIcon(null);
+
+        // Update course
+        request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk());
+
+        List<Course> updatedCourses = courseRepo.findAll();
+        assertThat(updatedCourses).hasSize(1);
+        var updatedCourse = updatedCourses.get(0);
+        assertThat(updatedCourse.getId()).isEqualTo(createdCourse.getId());
+        assertThat(updatedCourse.getCourseIcon()).isNull();
+    }
+
+    // Test
+    public void testCreateAndUpdateCourseWithSetNewImageDespiteRemoval() throws Exception {
+        Course createdCourse = createCourseWithCourseImageAndReturn();
+        var courseIcon = createdCourse.getCourseIcon();
+        createdCourse.setCourseIcon(null);
+
+        // Update course
+        request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse, "newTestIcon")).andExpect(status().isOk());
+
+        List<Course> updatedCourses = courseRepo.findAll();
+        assertThat(updatedCourses).hasSize(1);
+        var updatedCourse = updatedCourses.get(0);
+        assertThat(updatedCourse.getId()).isEqualTo(createdCourse.getId());
+        assertThat(updatedCourse.getCourseIcon()).isNotNull().isNotEqualTo(courseIcon);
     }
 
     // Test
@@ -497,9 +564,7 @@ public class CourseTestService {
         course.setTeachingAssistantGroupName("new-ta-group");
 
         mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, false, true);
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
-
-        assertThat(updatedCourse).isNull();
+        request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
     }
 
     // Test
@@ -514,9 +579,7 @@ public class CourseTestService {
         course.setTeachingAssistantGroupName("new-ta-group");
 
         mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, true, false);
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
-
-        assertThat(updatedCourse).isNull();
+        request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError());
     }
 
     // Test
@@ -667,11 +730,11 @@ public class CourseTestService {
     // Test
     public void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
         Course courseActive = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(), "tumuser", "tutor",
-                "editor", "instructor");
+            "editor", "instructor");
         Course courseNotActivePast = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "tumuser", "tutor",
-                "editor", "instructor");
+            "editor", "instructor");
         Course courseNotActiveFuture = ModelFactory.generateCourse(3L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "tumuser", "tutor",
-                "editor", "instructor");
+            "editor", "instructor");
         courseActive = courseRepo.save(courseActive);
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
@@ -720,15 +783,15 @@ public class CourseTestService {
     // Test
     public void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
         Course courseActiveRegistrationEnabled = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
-                "testuser", "tutor", "editor", "instructor");
+            "testuser", "tutor", "editor", "instructor");
         courseActiveRegistrationEnabled.setRegistrationEnabled(true);
         Course courseActiveRegistrationDisabled = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
-                "testuser", "tutor", "editor", "instructor");
+            "testuser", "tutor", "editor", "instructor");
         courseActiveRegistrationDisabled.setRegistrationEnabled(false);
         Course courseNotActivePast = ModelFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "testuser", "tutor",
-                "editor", "instructor");
+            "editor", "instructor");
         Course courseNotActiveFuture = ModelFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "testuser", "tutor",
-                "editor", "instructor");
+            "editor", "instructor");
         courseRepo.save(courseActiveRegistrationEnabled);
         courseRepo.save(courseActiveRegistrationDisabled);
         courseRepo.save(courseNotActivePast);
@@ -1013,7 +1076,7 @@ public class CourseTestService {
 
             // Assert that course properties on courseWithExercises and courseWithExercisesAndRelevantParticipations match those of courseOnly
             String[] ignoringFields = { "exercises", "tutorGroups", "lectures", "exams", "fileService", "numberOfInstructorsTransient", "numberOfStudentsTransient",
-                    "numberOfTeachingAssistantsTransient", "numberOfEditorsTransient" };
+                "numberOfTeachingAssistantsTransient", "numberOfEditorsTransient" };
             assertThat(courseWithExercises).as("courseWithExercises same as courseOnly").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(courseOnly);
 
             // Verify presence of exercises in mock courses
@@ -1094,7 +1157,7 @@ public class CourseTestService {
         var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
-        request.put("/api/courses", course, HttpStatus.FORBIDDEN);
+        request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isForbidden());
     }
 
     // Test
@@ -1113,6 +1176,54 @@ public class CourseTestService {
         // Get all instructors for course
         List<User> instructors = request.getList("/api/courses/" + course.getId() + "/instructors", HttpStatus.OK, User.class);
         assertThat(instructors).as("All instructors in course found").hasSize(numberOfInstructors);
+    }
+
+    /**
+     * Searches for others users of a course in multiple roles
+     *
+     * @throws Exception
+     */
+    public void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("nameOfUser", "student1");
+
+        // users must not be able to find themselves
+        List<User> student1 = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        assertThat(student1).as("User could not find themself").hasSize(0);
+
+        // find another student for course
+        parameters.set("nameOfUser", "student2");
+        List<User> student2 = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        assertThat(student2).as("Another student in course found").hasSize(1);
+
+        // find a tutor for course
+        parameters.set("nameOfUser", "tutor1");
+        List<User> tutor = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        assertThat(tutor).as("A tutors in course found").hasSize(1);
+
+        // find an instructors for course
+        parameters.set("nameOfUser", "instructor");
+        List<User> instructor = request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.OK, User.class, parameters);
+        assertThat(instructor).as("An instructors in course found").hasSize(1);
+    }
+
+    /**
+     * Tries to search for users of another course and expects to be forbidden
+     *
+     * @throws Exception
+     */
+    public void testSearchStudentsAndTutorsAndInstructorsInOtherCourseForbidden() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
+        course = courseRepo.save(course);
+
+        LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add("nameOfUser", "student2");
+
+        // find a user in another course
+        request.getList("/api/courses/" + course.getId() + "/search-other-users", HttpStatus.FORBIDDEN, User.class, parameters);
     }
 
     // Test
@@ -1331,6 +1442,26 @@ public class CourseTestService {
         return updatedCourse;
     }
 
+    /**
+     * Test
+     *
+     * @throws Exception
+     */
+    public void searchStudentsInCourse() throws Exception {
+        var course = database.createCourse();
+
+        MultiValueMap<String, String> params1 = new LinkedMultiValueMap<>();
+        params1.add("loginOrName", "student");
+        List<UserDTO> students = request.getList("/api/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params1);
+        assertThat(students).size().isEqualTo(8);
+
+        MultiValueMap<String, String> params2 = new LinkedMultiValueMap<>();
+        params2.add("loginOrName", "tutor");
+        // should be empty as we only search for students
+        List<UserDTO> tutors = request.getList("/api/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params2);
+        assertThat(tutors).isEmpty();
+    }
+
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
         Course course = database.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions();
@@ -1361,7 +1492,7 @@ public class CourseTestService {
         String zipGroupName = course.getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId();
         String cleanZipGroupName = fileService.removeIllegalCharacters(zipGroupName);
         doThrow(new IOException("IOException")).when(zipFileService).createZipFile(ArgumentMatchers.argThat(argument -> argument.toString().contains(cleanZipGroupName)), anyList(),
-                any(Path.class));
+            any(Path.class));
 
         List<Path> files = archiveCourseAndExtractFiles(course);
         assertThat(files).hasSize(4);
@@ -1707,6 +1838,8 @@ public class CourseTestService {
 
         courseRepo.save(instructorsCourse);
 
+        await().until(() -> participantScoreRepository.findAll().size() == 2);
+
         // We only added one course, so expect one dto
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
 
@@ -1957,7 +2090,7 @@ public class CourseTestService {
         assessmentUpdate.setTextBlocks(new HashSet<>());
 
         request.putWithResponseBody("/api/participations/" + result1.getSubmission().getParticipation().getId() + "/submissions/" + result1.getSubmission().getId()
-                + "/text-assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
+            + "/text-assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
 
         // Feedback request
         Complaint feedbackRequest = new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
@@ -1976,7 +2109,9 @@ public class CourseTestService {
         feedbackUpdate.setTextBlocks(new HashSet<>());
 
         request.putWithResponseBody("/api/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
-                + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
+            + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
+
+        await().until(() -> participantScoreRepository.findAll().size() == 4);
 
         // API call
         var courseDTO = request.get("/api/courses/" + course1.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
@@ -2069,12 +2204,185 @@ public class CourseTestService {
     // Test
     public void testCreateCourseWithValidStartAndEndDate() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
-        request.post("/api/courses", course, HttpStatus.CREATED);
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated());
     }
 
     // Test
     public void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+    }
+
+    // Test
+    public void testCreateInvalidOnlineCourse() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+
+        // with RegistrationEnabled
+        course.setOnlineCourse(true);
+        course.setRegistrationEnabled(true);
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+
+        // without onlinecourseconfiguration
+        course.setRegistrationEnabled(false);
+        course.setOnlineCourseConfiguration(null);
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+
+        // with invalid online course configuration - no key and secret
+        ModelFactory.generateOnlineCourseConfiguration(course, null, null, null, null);
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+
+        // with invalid user prefix - not matching regex
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "with space", null);
+        request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+    }
+
+    // Test
+    public void testCreateValidOnlineCourse() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+        MvcResult result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
+        Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        Course courseWithOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(createdCourse.getId());
+        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
+    }
+
+    public void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+        course = courseRepo.save(course);
+        var courseId = course.getId();
+
+        List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
+
+        Course receivedCourse = courses.stream().filter(c -> courseId.equals(c.getId())).findFirst().get();
+        assertThat(receivedCourse.getOnlineCourseConfiguration()).as("Online course configuration is lazily loaded").isNull();
+    }
+
+    // Test
+    public void testUpdateOnlineCourseConfiguration() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+
+        MvcResult result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
+        Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+
+        OnlineCourseConfiguration onlineCourseConfiguration = createdCourse.getOnlineCourseConfiguration();
+        onlineCourseConfiguration.setLtiKey("changedKey");
+        onlineCourseConfiguration.setLtiSecret("changedSecret");
+        onlineCourseConfiguration.setUserPrefix("changedUserPrefix");
+
+        result = request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
+        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+
+        Course actualCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(updatedCourse.getId());
+
+        assertThat(actualCourse.getOnlineCourseConfiguration().getLtiKey()).isEqualTo("changedKey");
+        assertThat(actualCourse.getOnlineCourseConfiguration().getLtiSecret()).isEqualTo("changedSecret");
+        assertThat(actualCourse.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo("changedUserPrefix");
+    }
+
+    // Test
+    public void testUpdateCourseRemoveOnlineCourseConfiguration() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+
+        MvcResult result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
+        Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+
+        createdCourse.setOnlineCourse(false);
+        createdCourse.setOnlineCourseConfiguration(null);
+        result = request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
+        Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+
+        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(updatedCourse.getId());
+        assertThat(courseWithoutOnlineConfiguration.getOnlineCourseConfiguration()).isNull();
+    }
+
+    // Test
+    public void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
+        Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
+        course.setOnlineCourse(true);
+        ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
+        course = courseRepo.save(course);
+
+        request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
+
+        assertThat(onlineCourseConfigurationRepository.findById(course.getOnlineCourseConfiguration().getId())).isNotPresent();
+    }
+
+    public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course) throws JsonProcessingException {
+        return buildCreateCourse(course, null);
+    }
+
+    public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course, String fileContent) throws JsonProcessingException {
+        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/courses").file(coursePart);
+        if (fileContent != null) {
+            var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
+            builder.file(filePart);
+        }
+        return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+    }
+
+    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NotNull Course course) throws JsonProcessingException {
+        return buildUpdateCourse(id, course, null);
+    }
+
+    public MockHttpServletRequestBuilder buildUpdateCourse(long id, @NotNull Course course, String fileContent) throws JsonProcessingException {
+        var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/courses/" + id).file(coursePart);
+        if (fileContent != null) {
+            var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
+            builder.file(filePart);
+        }
+        return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+    }
+
+    private Course createCourseWithCourseImageAndReturn() throws Exception {
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
+
+        request.getMvc().perform(buildCreateCourse(course, "testIcon")).andExpect(status().isCreated());
+
+        List<Course> courses = courseRepo.findAll();
+        assertThat(courses).as("Course got stored").hasSize(1);
+        var createdCourse = courses.get(0);
+        assertThat(createdCourse.getCourseIcon()).as("Course icon got stored").isNotNull();
+
+        return createdCourse;
+    }
+
+    /**
+     * Test courseIcon of Course and the file is deleted when updating courseIcon of a Course to null
+     *
+     * @throws Exception might be thrown from Network Call to Artemis API
+     */
+    public void testEditCourseRemoveExistingIcon() throws Exception {
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
+
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        byte[] iconBytes = "icon".getBytes();
+        MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
+        String iconPath = fileService.handleSaveFile(iconFile, false, false);
+        iconPath = fileService.manageFilesForUpdatedFilePath(null, iconPath, FilePathService.getCourseIconFilePath(), course.getId());
+        course.setCourseIcon(iconPath);
+        course = courseRepo.save(course);
+        iconPath = iconPath.replace(Constants.FILEPATH_ID_PLACEHOLDER, course.getId().toString());
+        assertThat(course.getCourseIcon()).as("course icon was set correctly").isEqualTo(iconPath);
+
+        course.setCourseIcon(null);
+        request.putWithMultipartFile("/api/courses/" + course.getId(), course, "course", null, Course.class, HttpStatus.OK);
+
+        course = courseRepo.findByIdElseThrow(course.getId());
+        assertThat(course.getCourseIcon()).as("course icon was deleted correctly").isNull();
+        assertThat(fileService.getFileForPath(fileService.actualPathForPublicPath(iconPath))).as("course icon file was deleted correctly").isNull();
     }
 }

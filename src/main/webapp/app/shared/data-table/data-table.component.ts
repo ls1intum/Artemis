@@ -1,12 +1,12 @@
-import { Component, ContentChild, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewEncapsulation, ViewChild, ElementRef } from '@angular/core';
+import { Component, ContentChild, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@flaviosantoro92/ngx-datatable';
-import { get, isNumber, flatten } from 'lodash-es';
+import { flatten, get, isNumber } from 'lodash-es';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
-import { faSort, faSortUp, faSortDown, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Enum for ascending and descending order.
@@ -64,13 +64,15 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property searchFailed Whether to show a badge that indicates that the search has failed
      * @property searchNoResults Whether to show a badge that indicates that the search did not return any results
      * @property isTransitioning Loading overlay on top of the table indicating that the content is changing
-     * @property showPageSizeDropdownAndSearchField Flag whether to show the "entities per page" dropdown and search input field
+     * @property showPageSizeDropdown Flag whether to show the "entities per page" dropdown
+     * @property showSearchField Flag whether to show the search input field
      * @property entityType Entity identifier (e.g. 'result' or 'participation') used as a key to differentiate from other tables
      * @property allEntities List of all entities that should be displayed in the table (one entity per row)
      * @property entitiesPerPageTranslation Translation string that has the variable {{ number }} in it (e.g. 'artemisApp.exercise.resultsPerPage')
      * @property showAllEntitiesTranslation Translation string if all entities should be displayed (e.g. 'artemisApp.exercise.showAll')
      * @property searchNoResultsTranslation Translation string that has the variable {{ length }} in it (default: 'artemisApp.dataTable.search.noResults')
      * @property searchPlaceholderTranslation Translation string that is used for the placeholder in the search input field
+     * @property minQueryLengthHintTranslation Translation string that is used to inform the user about the min. number of characters that must be input to trigger a search
      * @property searchFields Fields of entity whose values will be compared to the user's search string (allows nested attributes, e.g. ['student.login', 'student.name'])
      * @property searchEnabled Flag whether searching is enabled (default: true)
      * @property searchEntityFilterEnabled Flag whether searching should cause a filtering of the entities (default: true)
@@ -86,13 +88,15 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() searchFailed = false;
     @Input() searchNoResults = false;
     @Input() isTransitioning = false;
-    @Input() showPageSizeDropdownAndSearchField = true;
+    @Input() showPageSizeDropdown = true;
+    @Input() showSearchField = true;
     @Input() entityType = 'entity';
     @Input() allEntities: BaseEntity[] = [];
     @Input() entitiesPerPageTranslation: string;
     @Input() showAllEntitiesTranslation: string;
     @Input() searchNoResultsTranslation = 'artemisApp.dataTable.search.noResults';
     @Input() searchPlaceholderTranslation: string;
+    @Input() minQueryLengthHintTranslation = 'artemisApp.dataTable.search.minQueryLengthHint';
     @Input() searchFields: string[] = [];
     @Input() searchEnabled = true;
     @Input() searchEntityFilterEnabled = true;

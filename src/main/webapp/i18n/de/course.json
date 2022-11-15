@@ -12,7 +12,8 @@
             "deleted": "Kurs gelöscht mit Titel {{ param }}",
             "delete": {
                 "question": "Soll der Kurs <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
-                "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein."
+                "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein.",
+                "icon": "Kursicon löschen"
             },
             "showActive": "Nur aktive Kurse anzeigen",
             "totalScore": "Gesamtergebnis:",
@@ -86,6 +87,17 @@
                 "title": "Onlinekurs",
                 "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Kontoerstellung, sofern dies vom Artemis Systemadministrator eingestellt ist."
             },
+            "onlineCourseConfiguration": {
+                "title": "Onlinekurs-Konfiguration",
+                "ltiKey": "LTI-Key",
+                "ltiSecret": "LTI-Geheimnis",
+                "userPrefix": "Nutzer-Präfix",
+                "form": {
+                    "userPrefix": {
+                        "forbidden": "Nutzer Präfix darf keine Sonderzeichen beinhalten."
+                    }
+                }
+            },
             "registrationEnabled": {
                 "title": "Kursregistrierung für Studierende aktiviert",
                 "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs registrieren können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Registrierung bestätigen müssen."
@@ -156,7 +168,7 @@
                 "outOf": "von",
                 "usersPerPage": "{{number}} Nutzer:innen pro Seite",
                 "showAllUsers": "Alle Nutzer:innen anzeigen",
-                "searchForUsers": "Nutzer:in zu dieser Kursgruppe hinzufügen durch Suchen nach Login oder Namen",
+                "searchForUsers": "Nutzer:in zu dieser Gruppe hinzufügen durch Suchen nach Login oder Namen",
                 "searchNoResults": "Kein:e Nutzer:innen gefunden",
                 "login": "Login",
                 "registrationNumber": "Matrikelnummer",

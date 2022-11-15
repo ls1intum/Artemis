@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseWideContext, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
@@ -49,6 +49,7 @@ describe('CourseDiscussionComponent', () => {
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
     let metisServiceGetUserStub: jest.SpyInstance;
+    let fetchNextPageSpy: jest.SpyInstance;
 
     const id = metisCourse.id;
     const parentRoute = {
@@ -94,6 +95,7 @@ describe('CourseDiscussionComponent', () => {
                 metisService = fixture.debugElement.injector.get(MetisService);
                 metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
                 metisServiceGetUserStub = jest.spyOn(metisService, 'getUser');
+                fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
             });
     });
 
@@ -368,6 +370,20 @@ describe('CourseDiscussionComponent', () => {
             },
             false,
         );
+    }));
+
+    it('should call fetchNextPage at course discussions when scrolled to bottom and do nothing when scrolled to top', fakeAsync(() => {
+        component.itemsPerPage = 5;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+
+        const scrollableDiv = getElement(fixture.debugElement, 'div[id=scrollableDiv]');
+        scrollableDiv.dispatchEvent(new Event('scrolledUp'));
+        expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
+
+        scrollableDiv.dispatchEvent(new Event('scrolled'));
+        expect(fetchNextPageSpy).toHaveBeenCalledOnce();
     }));
 
     function expectGetFilteredPostsToBeCalled() {

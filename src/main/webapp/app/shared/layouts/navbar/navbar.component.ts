@@ -219,6 +219,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     breadcrumbTranslation = {
         new: 'global.generic.create',
         create: 'global.generic.create',
+        start: 'global.generic.start',
         edit: 'global.generic.edit',
         audits: 'audits.title',
         configuration: 'configuration.title',
@@ -306,15 +307,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
         interval: 'artemisApp.gradingSystem.intervalTab.title',
         plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
         code_hint_management: 'artemisApp.codeHint.management.title',
+        tutorial_groups_management: 'artemisApp.pages.tutorialGroupsManagement.title',
+        tutorial_groups: 'artemisApp.breadcrumb.title',
+        registered_students: 'artemisApp.pages.registeredStudents.title',
     };
 
     studentPathBreadcrumbTranslations = {
         exams: 'artemisApp.courseOverview.menu.exams',
+        test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
         lectures: 'artemisApp.courseOverview.menu.lectures',
         learning_goals: 'artemisApp.courseOverview.menu.learningGoals',
         statistics: 'artemisApp.courseOverview.menu.statistics',
         discussion: 'artemisApp.metis.communication.label',
+        messages: 'artemisApp.messages.label',
         code_editor: 'artemisApp.editor.breadCrumbTitle',
         participate: 'artemisApp.submission.detail.title',
         live: 'artemisApp.submission.detail.title',
@@ -377,6 +383,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (isStudentPath) {
             switch (this.lastRouteUrlSegment) {
                 case 'code-editor':
+                case 'test-exam':
                 case 'participate':
                     this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
                     return;
@@ -435,6 +442,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case 'organization-management':
                 this.addResolvedTitleAsCrumb(EntityType.ORGANIZATION, [Number(segment)], currentPath, segment);
+                break;
+            case 'tutorial-groups':
+                this.addResolvedTitleAsCrumb(EntityType.TUTORIAL_GROUP, [Number(segment)], currentPath, segment);
                 break;
             case 'import':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
@@ -498,6 +508,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'mc-question-statistic':
             case 'dnd-question-statistic':
             case 'sa-question-statistic':
+            case 'test-exam':
             case 'participate':
                 break;
             case 'example-submissions':
@@ -668,9 +679,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     logout() {
-        this.participationWebsocketService.resetLocalCache();
         this.collapseNavbar();
-        this.loginService.logout(true);
+        this.router.navigate(['/']).then((res) => {
+            if (res) {
+                this.participationWebsocketService.resetLocalCache();
+                this.loginService.logout(true);
+            }
+        });
     }
 
     toggleNavbar() {

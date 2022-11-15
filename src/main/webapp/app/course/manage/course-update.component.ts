@@ -14,7 +14,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { LOGIN_PATTERN, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -36,13 +36,11 @@ export class CourseUpdateComponent implements OnInit {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     courseForm: FormGroup;
+    onlineCourseConfigurationForm: FormGroup;
     course: Course;
     isSaving: boolean;
-    courseImageFile?: Blob | File;
-    courseImageFileName: string;
-    isUploadingCourseImage: boolean;
-    imageChangedEvent: any = '';
-    croppedImage: any = '';
+    courseImageUploadFile?: File;
+    croppedImage?: string;
     showCropper = false;
     presentationScoreEnabled = false;
     complaintsEnabled = true; // default value
@@ -122,6 +120,14 @@ export class CourseUpdateComponent implements OnInit {
             }
         });
 
+        this.onlineCourseConfigurationForm = new FormGroup({
+            id: new FormControl(this.course.onlineCourseConfiguration?.id),
+            course: new FormControl(this.course),
+            ltiKey: new FormControl(this.course.onlineCourseConfiguration?.ltiKey),
+            ltiSecret: new FormControl(this.course.onlineCourseConfiguration?.ltiSecret),
+            userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
+        });
+
         this.courseForm = new FormGroup(
             {
                 id: new FormControl(this.course.id),
@@ -184,8 +190,7 @@ export class CourseUpdateComponent implements OnInit {
             },
             { validators: CourseValidator },
         );
-        this.courseImageFileName = this.course.courseIcon!;
-        this.croppedImage = this.course.courseIcon ? this.course.courseIcon : '';
+        this.croppedImage = this.course.courseIcon;
         this.presentationScoreEnabled = this.course.presentationScore !== 0;
     }
 
@@ -207,10 +212,19 @@ export class CourseUpdateComponent implements OnInit {
         if (this.courseForm.controls['organizations'] !== undefined) {
             this.courseForm.controls['organizations'].setValue(this.courseOrganizations);
         }
+
+        const course = this.courseForm.getRawValue();
+        course.onlineCourseConfiguration = this.isOnlineCourse() ? this.onlineCourseConfigurationForm.getRawValue() : null;
+
+        let file = undefined;
+        if (this.courseImageUploadFile && this.croppedImage) {
+            const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
+            file = base64StringToBlob(base64Data, 'image/*');
+        }
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseService.update(this.courseForm.getRawValue()));
+            this.subscribeToSaveResponse(this.courseService.update(this.course.id, course, file));
         } else {
-            this.subscribeToSaveResponse(this.courseService.create(this.courseForm.getRawValue()));
+            this.subscribeToSaveResponse(this.courseService.create(course, file));
         }
     }
 
@@ -245,12 +259,10 @@ export class CourseUpdateComponent implements OnInit {
      * @function set course icon
      * @param event {object} Event object which contains the uploaded file
      */
-    setCourseImage(event: any): void {
-        this.imageChangedEvent = event;
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
-            this.courseImageFile = fileList[0];
-            this.courseImageFileName = this.courseImageFile['name'];
+    setCourseImage(event: Event): void {
+        const element = event.currentTarget as HTMLInputElement;
+        if (element.files?.[0]) {
+            this.courseImageUploadFile = element.files[0];
         }
     }
 
@@ -263,33 +275,6 @@ export class CourseUpdateComponent implements OnInit {
 
     imageLoaded() {
         this.showCropper = true;
-    }
-
-    /**
-     * @function uploadBackground
-     * @desc Upload the selected file (from "Upload Background") and use it for the question's backgroundFilePath
-     */
-    uploadCourseImage(): void {
-        const contentType = 'image/*';
-        const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
-        const file = base64StringToBlob(base64Data, contentType);
-        file['name'] = this.courseImageFileName;
-
-        this.isUploadingCourseImage = true;
-        this.fileUploaderService.uploadFile(file, file['name']).then(
-            (response) => {
-                this.courseForm.patchValue({ courseIcon: response.path });
-                this.isUploadingCourseImage = false;
-                this.courseImageFile = undefined;
-                this.courseImageFileName = response.path!;
-            },
-            () => {
-                this.isUploadingCourseImage = false;
-                this.courseImageFile = undefined;
-                this.courseImageFileName = this.course.courseIcon!;
-            },
-        );
-        this.showCropper = false;
     }
 
     /**
@@ -312,6 +297,10 @@ export class CourseUpdateComponent implements OnInit {
 
     get shortName() {
         return this.courseForm.get('shortName')!;
+    }
+
+    get userPrefix() {
+        return this.onlineCourseConfigurationForm.get('userPrefix')!;
     }
 
     /**
@@ -459,6 +448,13 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+     * Auxiliary method checking if online course is currently true
+     */
+    isOnlineCourse(): boolean {
+        return this.courseForm.controls['onlineCourse'].value === true;
+    }
+
+    /**
      * Returns whether the dates are valid or not
      * @return true if the dats are valid
      */
@@ -481,6 +477,15 @@ export class CourseUpdateComponent implements OnInit {
 
     get isValidConfiguration(): boolean {
         return this.isValidDate;
+    }
+
+    /**
+     * Deletes the course icon
+     */
+    deleteCourseIcon() {
+        this.course.courseIcon = undefined;
+        this.croppedImage = undefined;
+        this.courseForm.controls['courseIcon'].setValue(undefined);
     }
 }
 
