@@ -5,6 +5,7 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
     <include file="classpath:config/liquibase/changelog/00000000000000_initial_schema.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220000000600_cleanup.xml" relativeToChangelogFile="false"/>
+    <!--
     <include file="classpath:config/liquibase/changelog/20181026110308_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20181107131246_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20181204125049_changelog.xml" relativeToChangelogFile="false"/>
@@ -183,10 +184,13 @@
     <include file="classpath:config/liquibase/changelog/20220706210000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220909231000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220912191700_changelog.xml" relativeToChangelogFile="false"/>
+    -->
     <include file="classpath:config/liquibase/changelog/20220914000000_changelog.xml" relativeToChangelogFile="false"/>
+    <!--
     <include file="classpath:config/liquibase/changelog/20220913152104_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220903100502_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220720113000_changelog.xml" relativeToChangelogFile="false"/>
+    -->
     <include file="classpath:config/liquibase/changelog/20221009000000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220914083000_changelog.xml" relativeToChangelogFile="false"/>
 
