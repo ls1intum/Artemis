@@ -1,4 +1,9 @@
 <div class="table-responsive tutorial-groups-table">
+    <div class="col-12 mb-2">
+        <div class="alert alert-info">
+            {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate: { timeZone: timeZoneUsedForDisplay } }}
+        </div>
+    </div>
     <table class="table table-sm table-hover">
         <thead>
             <tr jhiSort [(predicate)]="sortingPredicate" [(ascending)]="ascending" (sortChange)="sortRows()">
@@ -18,6 +23,22 @@
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.capacity' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
+                <th jhiSortBy="tutorialGroupSchedule.dayOfWeek">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.dayOfWeek' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="tutorialGroupSchedule.repetitionFrequency">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.repetitionFrequency' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="tutorialGroupSchedule.location">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSession.location' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th jhiSortBy="tutorialGroupSchedule.startTime">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.time' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
                 <th jhiSortBy="numberOfRegisteredUsers">
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.registrations' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
@@ -34,49 +55,26 @@
                     <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.campus' | artemisTranslate }}</a>
                     <fa-icon [icon]="faSort"></fa-icon>
                 </th>
+                <th jhiSortBy="nextSession">
+                    <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.nextSession' | artemisTranslate }}</a>
+                    <fa-icon [icon]="faSort"></fa-icon>
+                </th>
                 <th *ngIf="extraColumn"></th>
             </tr>
         </thead>
         <tbody>
             <tr
+                jhi-tutorial-group-row
                 *ngFor="let tutorialGroup of tutorialGroups; trackBy: trackId"
                 id="tutorial-group-row-{{ tutorialGroup.id }}"
                 [ngClass]="{ 'table-success': tutorialGroup.isUserRegistered, 'table-info': tutorialGroup.isUserTutor }"
-            >
-                <td *ngIf="showIdColumn">
-                    <ng-container *ngIf="tutorialGroupClickHandler; else noTutorialGroupClickHandler">
-                        <a [id]="'id-' + tutorialGroup.id" [routerLink]="" class="link-primary" (click)="tutorialGroupClickHandler(tutorialGroup)">{{ tutorialGroup.id }}</a>
-                    </ng-container>
-                    <ng-template #noTutorialGroupClickHandler>
-                        <span>{{ tutorialGroup.id }}</span>
-                    </ng-template>
-                </td>
-                <td>
-                    <ng-container *ngIf="tutorialGroupClickHandler; else noTutorialGroupClickHandler">
-                        <a [routerLink]="" class="link-primary" (click)="tutorialGroupClickHandler(tutorialGroup)"
-                            ><span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span></a
-                        >
-                    </ng-container>
-                    <ng-template #noTutorialGroupClickHandler>
-                        <span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span>
-                    </ng-template>
-                </td>
-                <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
-                <td>{{ tutorialGroup.capacity }}</td>
-                <td>{{ tutorialGroup.numberOfRegisteredUsers }}</td>
-                <td>
-                    {{ (tutorialGroup.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline') | artemisTranslate }}
-                </td>
-                <td>
-                    {{ (tutorialGroup.language === GERMAN ? 'artemisApp.generic.german' : 'artemisApp.generic.english') | artemisTranslate }}
-                </td>
-                <td>
-                    <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.campus }} </span>
-                </td>
-                <td *ngIf="extraColumn">
-                    <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
-                </td>
-            </tr>
+                [tutorialGroup]="tutorialGroup"
+                [course]="course"
+                [extraColumn]="extraColumn"
+                [showIdColumn]="showIdColumn"
+                [tutorialGroupClickHandler]="tutorialGroupClickHandler"
+                [timeZone]="timeZone"
+            ></tr>
         </tbody>
     </table>
 </div>

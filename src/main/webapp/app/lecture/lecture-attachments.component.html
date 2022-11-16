@@ -108,7 +108,9 @@
                             <input type="text" class="form-control" id="attachmentName" name="attachmentName" [(ngModel)]="attachmentToBeCreated.name" />
                         </div>
                         <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.lecture.attachments.file">File</label>
+                            <label for="lectureAttachmentInput{{ attachmentToBeCreated.name }}" class="form-control-label" jhiTranslate="artemisApp.lecture.attachments.file"
+                                >File</label
+                            >
                             <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.lecture.attachments.fileLimitation' | artemisTranslate }} </small>
                             <fa-icon
                                 [icon]="faQuestionCircle"

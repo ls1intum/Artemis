@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -42,6 +42,7 @@ describe('Course Management Update Component', () => {
     let profileService: ProfileService;
     let organizationService: OrganizationManagementService;
     let course: Course;
+    const validTimeZone = 'Europe/Berlin';
 
     beforeEach(() => {
         course = new Course();
@@ -69,6 +70,7 @@ describe('Course Management Update Component', () => {
         course.presentationScore = 16;
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
+        course.timeZone = 'Europe/London';
 
         const parentRoute = {
             data: of({ course }),
@@ -96,10 +98,12 @@ describe('Course Management Update Component', () => {
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(RemoveKeysPipe),
+                MockDirective(NgbTypeahead),
             ],
         })
             .compileComponents()
             .then(() => {
+                (Intl as any).supportedValuesOf = () => [validTimeZone];
                 fixture = TestBed.createComponent(CourseUpdateComponent);
                 comp = fixture.componentInstance;
                 service = TestBed.inject(CourseManagementService);
@@ -110,6 +114,7 @@ describe('Course Management Update Component', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        (Intl as any).supportedValuesOf = undefined;
     });
 
     describe('ngOnInit', () => {
@@ -439,5 +444,38 @@ describe('Course Management Update Component', () => {
             comp.removeOrganizationFromCourse(organization);
             expect(comp.courseOrganizations).toEqual([secondOrganization]);
         });
+    });
+
+    describe('deleteIcon', () => {
+        it('should remove icon image and delete icon button from component', () => {
+            setIcon();
+            let deleteIconButton = getDeleteIconButton();
+            deleteIconButton.dispatchEvent(new Event('click'));
+            fixture.detectChanges();
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            deleteIconButton = getDeleteIconButton();
+            expect(iconImage).toBeNull();
+            expect(deleteIconButton).toBeNull();
+        });
+
+        it('should not be able to delete icon if icon does not exist', () => {
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            const deleteIconButton = getDeleteIconButton();
+            expect(iconImage).toBeNull();
+            expect(deleteIconButton).toBeNull();
+        });
+
+        function setIcon(): void {
+            const croppedImage = 'testCroppedImage';
+            comp.croppedImage = 'data:image/png;base64,' + croppedImage;
+            comp.courseImageUploadFile = new File([''], 'testFilename');
+            comp.showCropper = true;
+            comp.ngOnInit();
+            fixture.detectChanges();
+        }
+
+        function getDeleteIconButton() {
+            return fixture.debugElement.nativeElement.querySelector('#delete-course-icon');
+        }
     });
 });

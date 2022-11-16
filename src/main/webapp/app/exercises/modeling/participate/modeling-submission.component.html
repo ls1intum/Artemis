@@ -19,8 +19,8 @@
 <jhi-resizeable-container *ngIf="modelingExercise" [isExerciseParticipation]="true">
     <!--region Left Panel-->
     <div left-body class="submission-container d-flex flex-column w-100">
-        <div class="d-flex flex-column flex-md-row" *ngIf="modelingExercise">
-            <div *ngIf="modelingExercise?.teamMode && (isActive || isLate)" class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
+        <div class="d-flex flex-column flex-md-row">
+            <div *ngIf="modelingExercise.teamMode && (isActive || isLate)" class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
                 <jhi-team-participate-info-box
                     [exercise]="modelingExercise"
                     [participation]="participation"
@@ -51,7 +51,7 @@
                         (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
                     ></jhi-team-submission-sync>
                 </div>
-                <div *ngIf="(!isActive || result) && modelingExercise && (!isLate || submission.submitted)" class="col-9">
+                <div *ngIf="(!isActive || result) && (!isLate || submission.submitted)" class="col-9">
                     <div class="flex flex-column h-100">
                         <jhi-modeling-assessment
                             [umlModel]="umlModel"
@@ -132,7 +132,7 @@
             <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
         </div>
         <jhi-complaint-student-view
-            *ngIf="modelingExercise && result && !examMode"
+            *ngIf="result && !examMode"
             [exercise]="modelingExercise"
             [participation]="participation"
             [result]="resultWithComplaint ? resultWithComplaint : result"

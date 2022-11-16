@@ -18,6 +18,9 @@ public class ReactionService {
 
     private static final String METIS_REACTION_ENTITY_NAME = "posting reaction";
 
+    // constant must be same as it is in the client (metis.util.ts#28)
+    private static final String VOTE_EMOJI_ID = "heavy_plus_sign";
+
     private final UserRepository userRepository;
 
     private final CourseRepository courseRepository;
@@ -68,8 +71,14 @@ public class ReactionService {
             reaction.setPost(post);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
+
+            if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
+                // increase voteCount of post needed for sorting
+                post.setVoteCount(post.getVoteCount() + 1);
+            }
+
             // save post
-            postService.updateWithReaction(post, reaction, courseId);
+            postService.addReaction(post, reaction, courseId);
         }
         else {
             AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
@@ -104,7 +113,14 @@ public class ReactionService {
         if (reaction.getPost() != null) {
             updatedPost = reaction.getPost();
             updatedPost.setConversation(mayInteractWithConversationIfConversationMessage(user, updatedPost));
-            updatedPost.removeReaction(reaction);
+
+            if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
+                // decrease voteCount of post needed for sorting
+                updatedPost.setVoteCount(updatedPost.getVoteCount() - 1);
+            }
+
+            // remove reaction and persist post
+            postService.removeReaction(updatedPost, reaction, courseId);
         }
         else {
             AnswerPost updatedAnswerPost = reaction.getAnswerPost();
