@@ -144,9 +144,12 @@ public class ExerciseResource {
     }
 
     /**
-     * TODO: Ata
-     * @param exerciseId
-     * @return
+     * GET /exercises/:exerciseId/example-solution : get the exercise with example solution without sensitive fields
+     * if the user is allowed to access the example solution and if the example solution is published.
+     *
+     * @param exerciseId the exerciseId of the exercise with the example solution
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise with its example solution after filtering sensitive data, or with
+     * status 404 (Not Found) is the exercise is not found, or with status 403 (Forbidden) if the current user does not have access to the example solution.
      */
     @GetMapping("/exercises/{exerciseId}/example-solution")
     @PreAuthorize("hasRole('USER')")
@@ -175,7 +178,7 @@ public class ExerciseResource {
     }
 
     /**
-     * GET /exercises/:exerciseId : get the "exerciseId" exercise with data useful for tutors.
+     * GET /exercises/:exerciseId/for-assessment-dashboard : get the "exerciseId" exercise with data useful for tutors.
      *
      * @param exerciseId the exerciseId of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)

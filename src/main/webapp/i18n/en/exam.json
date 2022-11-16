@@ -93,6 +93,7 @@
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "studentReviewEnabled": "Review is open",
+            "exampleSolutionPublicationDate": "Example Solution Publication Date",
             "duration": "Duration",
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
@@ -330,7 +331,8 @@
                 "conduction": "Exam Conduction",
                 "assessment": "Exam Assessment and Student Review",
                 "exercises": "Exam Exercises",
-                "text": "Exam Texts"
+                "text": "Exam Texts",
+                "examSolutions": "Exam Solutions"
             },
             "title": "Exam Management",
             "createExam": "Create a new exam",

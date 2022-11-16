@@ -327,7 +327,8 @@
                 "conduction": "Klausurdurchführung",
                 "assessment": "Klausurbewertung und Klausureinsicht",
                 "exercises": "Klausuraufgaben",
-                "text": "Klausurtexte"
+                "text": "Klausurtexte",
+                "examSolutions": "Klausurlösungen"
             },
             "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
@@ -353,6 +354,7 @@
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
             "studentReviewEnabled": "Klausureinsicht ist möglich",
+            "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
             "maxPoints": {
                 "title": "Erreichbare Punktzahl",
                 "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl."

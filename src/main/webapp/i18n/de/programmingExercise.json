@@ -232,6 +232,7 @@
             },
             "export": {
                 "downloadRepo": "Repo Herunterladen",
+                "downloadExampleSolutionRepo": "Lösungs-Repo Herunterladen",
                 "downloadExercise": "Programmierübung herunterladen",
                 "downloadAllStudents": "Oder lade die Repositories aller Studierenden herunter",
                 "downloadAllTeams": "Oder lade die Repositories aller Teams herunter",

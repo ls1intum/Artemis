@@ -232,6 +232,7 @@
             },
             "export": {
                 "downloadRepo": "Download Repo",
+                "downloadExampleSolutionRepo": "Download Solution Repo",
                 "downloadExercise": "Download Exercise",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",

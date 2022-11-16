@@ -4,7 +4,16 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercise
 
 @Component({
     selector: 'jhi-programming-exercise-example-solution-repo-download',
-    templateUrl: './programming-exercise-instructor-repo-download.component.html',
+    template: `<jhi-button
+        [disabled]="!exerciseId"
+        [btnType]="ButtonType.INFO"
+        [btnSize]="ButtonSize.MEDIUM"
+        [shouldSubmit]="false"
+        [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
+        [icon]="faDownload"
+        [title]="'artemisApp.programmingExercise.export.downloadExampleSolutionRepo'"
+        (onClick)="exportRepository()"
+    ></jhi-button>`,
 })
 export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends ProgrammingExerciseInstructorRepoDownloadComponent {
     exportRepository() {

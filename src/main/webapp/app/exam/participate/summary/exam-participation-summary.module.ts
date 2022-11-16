@@ -23,6 +23,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';
+import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 
 @NgModule({
     imports: [
@@ -36,6 +37,7 @@ import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/
         ArtemisCoursesModule,
         ArtemisComplaintsModule,
         ArtemisProgrammingExerciseInstructionsRenderModule,
+        ArtemisProgrammingExerciseManagementModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisMarkdownModule,
         SubmissionResultStatusModule,

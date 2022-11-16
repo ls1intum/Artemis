@@ -174,6 +174,7 @@ describe('Exam Update Component', () => {
             expect(component.isValidConfiguration).toBeTrue();
 
             examWithoutExercises.publishResultsDate = dayjs().add(4, 'hours');
+            examWithoutExercises.exampleSolutionPublicationDate = dayjs().add(5, 'hours');
             examWithoutExercises.examStudentReviewStart = dayjs().add(5, 'hours');
             examWithoutExercises.examStudentReviewEnd = dayjs().add(6, 'hours');
             fixture.detectChanges();
@@ -199,6 +200,26 @@ describe('Exam Update Component', () => {
 
             examWithoutExercises.examStudentReviewStart = undefined;
             fixture.detectChanges();
+            expect(component.isValidConfiguration).toBeFalse();
+        });
+
+        it('should validate the example solution publication date correctly', () => {
+            const newExamWithoutExercises = new Exam();
+            newExamWithoutExercises.id = 2;
+            component.exam = newExamWithoutExercises;
+
+            const now = dayjs();
+            newExamWithoutExercises.visibleDate = now.add(2, 'hours');
+            newExamWithoutExercises.startDate = now.add(3, 'hours');
+            newExamWithoutExercises.endDate = now.add(4, 'hours');
+            newExamWithoutExercises.workingTime = 3600;
+            newExamWithoutExercises.exampleSolutionPublicationDate = undefined;
+            expect(component.isValidConfiguration).toBeTrue();
+
+            newExamWithoutExercises.exampleSolutionPublicationDate = now.add(4, 'hours');
+            expect(component.isValidConfiguration).toBeTrue();
+
+            newExamWithoutExercises.exampleSolutionPublicationDate = now.add(2, 'hours');
             expect(component.isValidConfiguration).toBeFalse();
         });
 
@@ -537,6 +558,7 @@ describe('Exam Update Component', () => {
             expect(component.exam.publishResultsDate).toBeUndefined();
             expect(component.exam.examStudentReviewStart).toBeUndefined();
             expect(component.exam.examStudentReviewEnd).toBeUndefined();
+            expect(component.exam.exampleSolutionPublicationDate).toBeUndefined();
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(2);
             expect(component.exam.startText).toBe('Hello World');
             expect(component.exam.endText).toBe('Goodbye World');
