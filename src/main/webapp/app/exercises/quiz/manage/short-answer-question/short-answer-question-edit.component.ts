@@ -488,7 +488,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const markdown = markdownForHtml(htmlContent);
         if (type === SpotType.NUMBER) {
             // If htmlContent is a number (e.g. 1.234567), markdownForHtml will escape the dot (e.g. 1\\.234567).
-            return markdown.replace('\\', ''); // Unescape the dot
+            return markdown.replace(/\\/g, ''); // Unescape the dot
         }
         return markdown;
     }
