@@ -193,7 +193,7 @@ public class CourseResource {
         log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(courseUpdate.getId());
+        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsAndOnlineConfigurationElseThrow(courseUpdate.getId());
 
         if (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
@@ -237,6 +237,8 @@ public class CourseResource {
         // Make sure to preserve associations in updated entity
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
+        courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
+
         courseUpdate.validateRegistrationConfirmationMessage();
         courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();
         courseUpdate.validateOnlineCourseAndRegistrationEnabled();

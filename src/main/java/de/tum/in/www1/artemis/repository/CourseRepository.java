@@ -114,8 +114,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits" })
     Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "organizations", "learningGoals", "prerequisites", "tutorialGroupsConfiguration" })
-    Optional<Course> findWithEagerOrganizationsAndLearningGoalsById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "learningGoals", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
+    Optional<Course> findWithEagerOrganizationsAndLearningGoalsAndOnlineConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
@@ -330,8 +330,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     @NotNull
-    default Course findByIdWithOrganizationsAndLearningGoalsElseThrow(long courseId) {
-        return findWithEagerOrganizationsAndLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findByIdWithOrganizationsAndLearningGoalsAndOnlineConfigurationElseThrow(long courseId) {
+        return findWithEagerOrganizationsAndLearningGoalsAndOnlineConfigurationById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     @NotNull
