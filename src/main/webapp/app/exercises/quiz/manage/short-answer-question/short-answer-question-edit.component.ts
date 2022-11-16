@@ -444,11 +444,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         container.appendChild(preCaretRange.cloneContents());
         const htmlContent = container.innerHTML;
 
-        const startOfRange = markdownForHtml(htmlContent).length - selection.toString().length;
+        const startOfRange = this.markdownSpotForHtml(htmlContent, type).length - selection.toString().length;
         const endOfRange = startOfRange + selection.toString().length;
 
         const markedTextHTML = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
-        const markedText = markdownForHtml(markedTextHTML).substring(startOfRange, endOfRange);
+        const markedText = this.markdownSpotForHtml(markedTextHTML, type).substring(startOfRange, endOfRange);
 
         // If spot type is number, only create spot if marked text is a valid solution
         if (type === SpotType.NUMBER && !this.shortAnswerQuestionUtil.isValidNumberSpotSolution(markedText)) {
@@ -482,6 +482,15 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.firstPressed++;
 
         this.questionUpdated.emit();
+    }
+
+    private markdownSpotForHtml(htmlContent: string, type: SpotType): string {
+        const markdown = markdownForHtml(htmlContent);
+        if (type === SpotType.NUMBER) {
+            // If htmlContent is a number (e.g. 1.234567), markdownForHtml will escape the dot (e.g. 1\\.234567).
+            return markdown.replace('\\', ''); // Unescape the dot
+        }
+        return markdown;
     }
 
     /**
