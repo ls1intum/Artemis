@@ -22,7 +22,7 @@ export type InfoStepInputs = {
     updateCategories: (categories: ExerciseCategory[]) => void;
 };
 
-type LanguageStepInputs = {
+export type LanguageStepInputs = {
     appNamePatternForSwift: string;
     modePickerOptions: ModePickerOption<ProjectType>[];
     withDependencies: boolean;
