@@ -848,6 +848,12 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateToOnlineCourse() throws Exception {
+        courseTestService.testUpdateToOnlineCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
         courseTestService.testOnlineCourseConfigurationIsLazyLoaded();
     }

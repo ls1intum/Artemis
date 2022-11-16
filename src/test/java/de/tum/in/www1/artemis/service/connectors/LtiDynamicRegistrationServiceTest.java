@@ -73,6 +73,22 @@ class LtiDynamicRegistrationServiceTest {
     }
 
     @Test
+    void badRequestWhenNotOnlineCourse() {
+
+        course.setOnlineCourse(false);
+
+        assertThrows(BadRequestAlertException.class, () -> ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, registrationToken));
+    }
+
+    @Test
+    void badRequestWhenNoOnlineCourseConfiguration() {
+
+        course.setOnlineCourseConfiguration(null);
+
+        assertThrows(BadRequestAlertException.class, () -> ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfigurationUrl, registrationToken));
+    }
+
+    @Test
     void badRequestWhenGetPlatformConfigurationFails() {
 
         doThrow(HttpClientErrorException.class).when(restTemplate).getForEntity(openIdConfigurationUrl, Lti13PlatformConfiguration.class);

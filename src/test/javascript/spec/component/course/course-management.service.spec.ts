@@ -20,6 +20,7 @@ import { take } from 'rxjs/operators';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -34,6 +35,7 @@ describe('Course Management Service', () => {
     let syncGroupsSpy: jest.SpyInstance;
     const resourceUrl = SERVER_API_URL + 'api/courses';
     let course: Course;
+    let onlineCourseConfiguration: OnlineCourseConfiguration;
     let exercises: Exercise[];
     let returnedFromService: any;
     let participations: StudentParticipation[];
@@ -68,6 +70,10 @@ describe('Course Management Service', () => {
         course.endDate = undefined;
         course.learningGoals = [];
         course.prerequisites = [];
+        onlineCourseConfiguration = new OnlineCourseConfiguration();
+        onlineCourseConfiguration.id = 234;
+        onlineCourseConfiguration.ltiKey = 'key';
+        onlineCourseConfiguration.ltiSecret = 'secret';
         returnedFromService = { ...course } as Course;
         participations = [new StudentParticipation()];
         convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
@@ -113,6 +119,17 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual(course));
 
         const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1` });
+        req.flush(returnedFromService);
+        tick();
+    }));
+
+    it('should update online course configuration', fakeAsync(() => {
+        courseManagementService
+            .updateOnlineCourseConfiguration(1, onlineCourseConfiguration)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(course));
+
+        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/onlineCourseConfiguration` });
         req.flush(returnedFromService);
         tick();
     }));

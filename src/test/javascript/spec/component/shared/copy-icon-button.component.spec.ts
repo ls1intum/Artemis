@@ -44,16 +44,17 @@ describe('JhiCopyIconButtonComponent', () => {
     });
 
     it('should show it was copied on click', () => {
+        jest.useFakeTimers();
+
         component.copyText = 'text';
         fixture.detectChanges();
 
         const copyButton = fixture.debugElement.nativeElement.querySelector('#copyButton');
         copyButton.click();
-        fixture.whenStable().then(() => {
-            expect(component.wasCopied).toBeTrue();
 
-            jest.advanceTimersByTime(3000);
-            expect(component.wasCopied).toBeFalse();
-        });
+        expect(component.wasCopied).toBeTrue();
+
+        jest.advanceTimersByTime(3000);
+        expect(component.wasCopied).toBeFalse();
     });
 });

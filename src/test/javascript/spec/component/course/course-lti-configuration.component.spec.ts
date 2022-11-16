@@ -1,7 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
@@ -10,7 +9,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -27,6 +25,7 @@ describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
     let fixture: ComponentFixture<CourseLtiConfigurationComponent>;
     let courseService: CourseManagementService;
+    let sortService: SortService;
 
     let findWithExercisesStub: jest.SpyInstance;
 
@@ -42,18 +41,15 @@ describe('Course LTI Configuration Component', () => {
         id: 123,
         title: 'Course Title',
         isAtLeastInstructor: true,
-        endDate: dayjs().subtract(5, 'minutes'),
-        courseArchivePath: 'some-path',
         onlineCourseConfiguration,
     } as Course;
 
-    const textExercise = new TextExercise(course, undefined);
     const programmingExercise = new ProgrammingExercise(course, undefined);
     const quizExercise = new QuizExercise(course, undefined);
     const fileUploadExercise = new FileUploadExercise(course, undefined);
     const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
     const courseWithExercises = new Course();
-    courseWithExercises.exercises = [textExercise, programmingExercise, quizExercise, fileUploadExercise, modelingExercise];
+    courseWithExercises.exercises = [programmingExercise, quizExercise, fileUploadExercise, modelingExercise];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -84,6 +80,7 @@ describe('Course LTI Configuration Component', () => {
                 fixture = TestBed.createComponent(CourseLtiConfigurationComponent);
                 comp = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
+                sortService = TestBed.inject(SortService);
                 findWithExercisesStub = jest.spyOn(courseService, 'findWithExercises');
             });
     });
@@ -113,6 +110,10 @@ describe('Course LTI Configuration Component', () => {
             expect(comp.onlineCourseConfiguration).toEqual(course.onlineCourseConfiguration);
             expect(comp.exercises).toEqual(courseWithExercises.exercises);
             expect(findWithExercisesStub).toHaveBeenCalledOnce();
+
+            expect(comp.getKeysetUrl()).toBe(`${SERVER_API_URL}/.well-known/jwks.json`);
+            expect(comp.getDeepLinkingUrl()).toBe(`${SERVER_API_URL}/api/lti13/deep-linking/${course.id}`);
+            expect(comp.getDynamicRegistrationUrl()).toBe(`${SERVER_API_URL}/lti/dynamic-registration/${course.id}`);
         });
     });
 
@@ -131,6 +132,14 @@ describe('Course LTI Configuration Component', () => {
         fixture.detectChanges();
 
         const tableRows = fixture.debugElement.queryAll(By.css('tbody > tr'));
-        expect(tableRows).toHaveLength(5);
+        expect(tableRows).toHaveLength(4);
+    });
+
+    it('should call sortService when sortRows is called', () => {
+        jest.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
+
+        comp.sortRows();
+
+        expect(sortService.sortByProperty).toHaveBeenCalledOnce();
     });
 });

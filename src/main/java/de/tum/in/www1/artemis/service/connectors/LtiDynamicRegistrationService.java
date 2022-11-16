@@ -54,7 +54,7 @@ public class LtiDynamicRegistrationService {
      * @param registrationToken the token to be used to authenticate the POST request
      */
     public void performDynamicRegistration(Course course, String openIdConfigurationUrl, String registrationToken) {
-        if (!course.isOnlineCourse()) {
+        if (!course.isOnlineCourse() || course.getOnlineCourseConfiguration() == null) {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
@@ -71,7 +71,7 @@ public class LtiDynamicRegistrationService {
         Lti13ClientRegistration clientRegistrationResponse = postClientRegistrationToPlatform(platformConfiguration.getRegistrationEndpoint(), course, clientRegistrationId,
                 registrationToken);
 
-        OnlineCourseConfiguration onlineCourseConfiguration = createOrUpdateOnlineCourseConfiguration(course, clientRegistrationId, platformConfiguration,
+        OnlineCourseConfiguration onlineCourseConfiguration = updateOnlineCourseConfiguration(course.getOnlineCourseConfiguration(), clientRegistrationId, platformConfiguration,
                 clientRegistrationResponse);
         onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
 
@@ -121,13 +121,8 @@ public class LtiDynamicRegistrationService {
         return registrationResponse;
     }
 
-    private OnlineCourseConfiguration createOrUpdateOnlineCourseConfiguration(Course course, String registrationId, Lti13PlatformConfiguration platformConfiguration,
-            Lti13ClientRegistration clientRegistrationResponse) {
-        OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
-        if (ocConfiguration == null) {
-            ocConfiguration = onlineCourseConfigurationService.createOnlineCourseConfiguration(course);
-        }
-
+    private OnlineCourseConfiguration updateOnlineCourseConfiguration(OnlineCourseConfiguration ocConfiguration, String registrationId,
+            Lti13PlatformConfiguration platformConfiguration, Lti13ClientRegistration clientRegistrationResponse) {
         ocConfiguration.setRegistrationId(registrationId);
         ocConfiguration.setClientId(clientRegistrationResponse.getClientId());
         ocConfiguration.setAuthorizationUri(platformConfiguration.getAuthorizationEndpoint());
