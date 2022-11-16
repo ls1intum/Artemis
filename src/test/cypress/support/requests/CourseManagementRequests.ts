@@ -51,6 +51,8 @@ export class CourseManagementRequests {
      * @param courseShortName the short name (will generate default name if not provided)
      * @param start the start date of the course (default: now() - 2 hours)
      * @param end the end date of the course (default: now() + 2 hours)
+     * @param fileName the course icon file name (default: undefined)
+     * @param file the course icon file blob (default: undefined)
      * @returns <Chainable> request response
      */
     createCourse(
@@ -59,6 +61,8 @@ export class CourseManagementRequests {
         courseShortName = 'cypress' + generateUUID(),
         start = day().subtract(2, 'hours'),
         end = day().add(2, 'hours'),
+        fileName?: string,
+        file?: Blob,
     ): Cypress.Chainable<Cypress.Response<Course>> {
         const course = new Course();
         course.title = courseName;
@@ -76,6 +80,9 @@ export class CourseManagementRequests {
         }
         const formData = new FormData();
         formData.append('course', new File([JSON.stringify(course)], 'course', { type: 'application/json' }));
+        if (file) {
+            formData.append('file', file, fileName);
+        }
         return cy.request({
             url: BASE_API + 'courses',
             method: POST,

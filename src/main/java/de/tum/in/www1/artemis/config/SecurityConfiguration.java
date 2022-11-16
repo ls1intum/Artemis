@@ -28,6 +28,7 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
+import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -117,7 +118,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/content/**")
             .antMatchers("/api-docs/**")
             .antMatchers("/api.html")
-            .antMatchers("/test/**");
+            .antMatchers("/test/**")
+            .antMatchers(CustomLti13Configurer.JWKS_PATH);
         web.ignoring()
             .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
         web.ignoring()
@@ -167,6 +169,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/account/reset-password/init").permitAll()
             .antMatchers("/api/account/reset-password/finish").permitAll()
             .antMatchers("/api/lti/launch/*").permitAll()
+            .antMatchers("/api/lti13/auth-callback").permitAll()
             .antMatchers("/api/files/attachments/lecture/**").permitAll()
             .antMatchers("/api/files/attachments/attachment-unit/**").permitAll()
             .antMatchers("/api/files/file-upload-exercises/**").permitAll()
@@ -182,6 +185,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/time").permitAll()
         .and()
             .apply(securityConfigurerAdapter());
+
+        http.apply(new CustomLti13Configurer());
+
         // @formatter:on
     }
 

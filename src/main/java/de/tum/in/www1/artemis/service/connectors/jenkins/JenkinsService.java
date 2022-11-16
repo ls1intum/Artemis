@@ -230,6 +230,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
+
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
         String projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
