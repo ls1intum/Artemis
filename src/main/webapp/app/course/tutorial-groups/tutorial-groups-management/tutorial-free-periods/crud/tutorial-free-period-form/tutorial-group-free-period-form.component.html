@@ -1,0 +1,60 @@
+<div class="row">
+    <div class="col-12 mb-2">
+        <div class="alert alert-info">
+            {{ 'artemisApp.generic.timeZone' | artemisTranslate: { timeZone } }}
+        </div>
+    </div>
+    <div class="col-12">
+        <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+            <!-- Date -->
+            <div>
+                <label class="form-label" for="date">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate }}</label>
+                <div class="input-group">
+                    <input formControlName="date" required [owlDateTime]="date" class="d-none" />
+                    <input
+                        name="date"
+                        id="date"
+                        required
+                        [class.is-invalid]="isDateInvalid"
+                        (focus)="markDateAsTouched()"
+                        [value]="dateControl?.value | artemisDate: 'long-date':false:undefined:true"
+                        [owlDateTimeTrigger]="date"
+                        readonly
+                        class="form-control"
+                    />
+                    <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="date"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
+                    <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #date [pickerMode]="'dialog'"></owl-date-time>
+                </div>
+                <div *ngIf="dateControl?.invalid && (dateControl?.dirty || dateControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="dateControl?.errors?.required">
+                        {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reason -->
+            <div class="form-group">
+                <label for="reason">{{ 'artemisApp.forms.tutorialFreePeriodForm.reasonInput.label' | artemisTranslate }}</label>
+                <textarea
+                    class="form-control"
+                    id="reason"
+                    rows="6"
+                    formControlName="reason"
+                    [placeholder]="'artemisApp.forms.tutorialFreePeriodForm.reasonInput.placeholder' | artemisTranslate"
+                ></textarea>
+                <div *ngIf="reasonControl?.invalid && (reasonControl?.dirty || reasonControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="reasonControl?.errors?.maxlength">
+                        {{ 'artemisApp.forms.tutorialFreePeriodForm.reasonInput.maxLengthValidationError' | artemisTranslate: { max: '256' } }}
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-12">
+                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                        <span>{{ (isEditMode ? 'global.generic.edit' : 'global.generic.create') | artemisTranslate }}</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
