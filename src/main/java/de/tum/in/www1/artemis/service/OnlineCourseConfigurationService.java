@@ -51,6 +51,11 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         return onlineCourseConfiguration.map(this::getClientRegistration).orElse(null);
     }
 
+    /**
+     * Creates an initial configuration for online courses with default and random values
+     * @param course the online course we create a configuration for
+     * @return the created online course configuration
+     */
     public OnlineCourseConfiguration createOnlineCourseConfiguration(Course course) {
         OnlineCourseConfiguration ocConfiguration = new OnlineCourseConfiguration();
         ocConfiguration.setCourse(course);
