@@ -1,0 +1,80 @@
+<div class="table-responsive">
+    <div class="col-12 mb-2">
+        <div class="alert alert-info">
+            {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate: { timeZone: timeZoneUsedForDisplay } }}
+        </div>
+    </div>
+    <table class="table table-sm table-hover">
+        <thead>
+            <tr>
+                <th *ngIf="showIdColumn">{{ 'global.field.id' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.entities.tutorialGroupSession.date' | artemisTranslate }}</th>
+                <th>
+                    <span>{{
+                        (tutorialGroup.isOnline ? 'artemisApp.forms.scheduleForm.locationInput.labelOnline' : 'artemisApp.forms.scheduleForm.locationInput.labelOffline')
+                            | artemisTranslate
+                    }}</span>
+                </th>
+                <th *ngIf="tutorialGroup.tutorialGroupSchedule">{{ 'artemisApp.pages.tutorialGroupSessionManagement.columns.notes' | artemisTranslate }}</th>
+                <th *ngIf="extraColumn"></th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Next session -->
+            <ng-container *ngIf="tutorialGroup.nextSession">
+                <tr
+                    jhi-session-row
+                    [extraColumn]="extraColumn"
+                    [session]="tutorialGroup.nextSession!"
+                    [tutorialGroup]="tutorialGroup"
+                    [timeZone]="timeZone"
+                    [showIdColumn]="showIdColumn"
+                ></tr>
+            </ng-container>
+            <!-- All sessions -->
+            <tr class="table-dark text-center">
+                <td [colSpan]="numberOfColumns">
+                    {{ 'artemisApp.pages.tutorialGroupSessionManagement.divider' | artemisTranslate }}
+                    <div class="text-center">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" (click)="isCollapsed = !isCollapsed">
+                            {{ 'artemisApp.pages.tutorialGroupSessionManagement.showAll' | artemisTranslate }}
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            <tr
+                [(ngbCollapse)]="isCollapsed"
+                jhi-session-row
+                *ngFor="let session of upcomingSessions; trackBy: trackSession"
+                [extraColumn]="extraColumn"
+                [session]="session"
+                [timeZone]="timeZone"
+                [tutorialGroup]="tutorialGroup"
+                [showIdColumn]="showIdColumn"
+            ></tr>
+            <tr [(ngbCollapse)]="isCollapsed">
+                <td [colSpan]="numberOfColumns">
+                    <div class="text-center">
+                        <h4>
+                            {{ 'artemisApp.pages.tutorialGroupSessionManagement.currentDate' | artemisTranslate }}
+                            {{ getCurrentDate() | artemisDate: 'long-date':false:timeZoneUsedForDisplay:true }}
+                            {{ getCurrentDate() | artemisDate: 'time':false:timeZoneUsedForDisplay:false }}
+                        </h4>
+                    </div>
+                </td>
+            </tr>
+            <ng-container *ngIf="pastSessions && pastSessions.length > 0">
+                <tr
+                    [(ngbCollapse)]="isCollapsed"
+                    jhi-session-row
+                    *ngFor="let session of pastSessions; trackBy: trackSession"
+                    [extraColumn]="extraColumn"
+                    [session]="session"
+                    [tutorialGroup]="tutorialGroup"
+                    [timeZone]="timeZone"
+                    [showIdColumn]="showIdColumn"
+                ></tr>
+            </ng-container>
+        </tbody>
+    </table>
+</div>

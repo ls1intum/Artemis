@@ -54,7 +54,7 @@
                 <div class="col-lg-4 col-sm-12">
                     <div class="form-group">
                         <ng-container *ngIf="!isExamMode">
-                            <label jhiTranslate="artemisApp.quizExercise.duration">Duration</label>
+                            <label for="quiz-duration-minutes" jhiTranslate="artemisApp.quizExercise.duration">Duration</label>
                             <div class="d-flex align-items-center">
                                 <input
                                     id="quiz-duration-minutes"
@@ -86,7 +86,7 @@
                 </div>
                 <div class="col-lg-4 col-sm-12">
                     <div class="form-group">
-                        <label jhiTranslate="artemisApp.quizExercise.options">Options</label>
+                        <label for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.options">Options</label>
                         <div class="form-check custom-control custom-checkbox">
                             <input
                                 type="checkbox"
@@ -98,9 +98,9 @@
                             <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"> </label>
                         </div>
                         <ng-container *ngIf="!isExamMode">
-                            <label jhiTranslate="artemisApp.quizExercise.quizMode.title" class="colon-suffix no-flex-shrink"></label>
+                            <label for="quizMode" jhiTranslate="artemisApp.quizExercise.quizMode.title" class="colon-suffix no-flex-shrink"></label>
                             <jhi-help-icon placement="auto" text="artemisApp.quizExercise.quizMode.explanation"></jhi-help-icon>
-                            <select class="form-select" [(ngModel)]="quizExercise.quizMode" (ngModelChange)="cacheValidation()">
+                            <select id="quizMode" class="form-select" [(ngModel)]="quizExercise.quizMode" (ngModelChange)="cacheValidation()">
                                 <option [value]="QuizMode.SYNCHRONIZED">{{ 'artemisApp.quizExercise.quizMode.synchronized' | artemisTranslate }}</option>
                                 <option [value]="QuizMode.BATCHED">{{ 'artemisApp.quizExercise.quizMode.batched' | artemisTranslate }}</option>
                                 <option [value]="QuizMode.INDIVIDUAL">{{ 'artemisApp.quizExercise.quizMode.individual' | artemisTranslate }}</option>
