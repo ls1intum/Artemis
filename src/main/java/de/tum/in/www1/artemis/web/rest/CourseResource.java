@@ -13,7 +13,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -291,7 +290,7 @@ public class CourseResource {
     @PutMapping("courses/{courseId}/onlineCourseConfiguration")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
-            @RequestBody @Valid OnlineCourseConfiguration onlineCourseConfiguration) {
+            @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
         log.debug("REST request to update the online course configuration for Course : {}", courseId);
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);

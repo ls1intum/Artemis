@@ -2238,7 +2238,6 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
         OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
-        onlineCourseConfiguration.setRegistrationId("100000");
         course = courseRepo.save(course);
 
         request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
@@ -2264,7 +2263,7 @@ public class CourseTestService {
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
 
         // with invalid user prefix - not matching regex
-        ModelFactory.updateOnlineCourseConfiguration(ocConfiguration, "key", "secret", "with space", null);
+        ModelFactory.updateOnlineCourseConfiguration(ocConfiguration, "key", "secret", "with space", null, "10000");
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -2292,7 +2291,6 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
         OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
-        onlineCourseConfiguration.setRegistrationId("100000");
         course = courseRepo.save(course);
 
         String courseId = course.getId().toString();
@@ -2309,7 +2307,6 @@ public class CourseTestService {
         String courseId = createdCourse.getId().toString();
 
         OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", null);
-        onlineCourseConfiguration.setRegistrationId("10000");
 
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), onlineCourseConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
@@ -2331,7 +2328,6 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
         OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
-        onlineCourseConfiguration.setRegistrationId("100000");
         course = courseRepo.save(course);
 
         OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();
