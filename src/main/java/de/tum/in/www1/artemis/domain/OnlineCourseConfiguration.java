@@ -35,7 +35,7 @@ public class OnlineCourseConfiguration extends DomainObject {
     @Column(name = "original_url")
     private String originalUrl;
 
-    @Column(name = "registration_id", nullable = false)
+    @Column(name = "registration_id")
     private String registrationId;
 
     @Column(name = "client_id")
