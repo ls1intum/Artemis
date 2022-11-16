@@ -364,7 +364,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             endOffset: 0,
         } as Range;
 
-        const nodeValue = {
+        let nodeValue = {
             anchorNode: node,
             focusNode: {
                 parentNode: {
@@ -399,6 +399,10 @@ describe('ShortAnswerQuestionEditComponent', () => {
             substring(start: number, end?: number): string {
                 return '';
             },
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            replace(pattern: string, replacement: string): string {
+                return '';
+            },
         } as string;
         jest.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue(markdownHelper);
         const questionUpdated = jest.spyOn(component.questionUpdated, 'emit');
@@ -413,11 +417,23 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.firstPressed).toBe(2);
         expect(questionUpdated).toHaveBeenCalledTimes(3);
 
+        nodeValue = {
+            ...nodeValue,
+            toString() {
+                return '1.2345';
+            },
+        } as unknown as Selection;
+        jest.spyOn(window, 'getSelection').mockReturnValue(nodeValue);
+
         markdownHelper = {
             length: 1,
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             substring(start: number, end?: number): string {
-                return '10.5';
+                return '1.2345';
+            },
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            replace(pattern: string, replacement: string): string {
+                return '1.2345';
             },
         } as string;
         jest.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue(markdownHelper);
