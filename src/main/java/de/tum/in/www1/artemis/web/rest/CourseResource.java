@@ -288,7 +288,7 @@ public class CourseResource {
      * @param onlineCourseConfiguration the online course configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
      */
-    @PutMapping(value = "courses/{courseId}/onlineCourseConfiguration")
+    @PutMapping("courses/{courseId}/onlineCourseConfiguration")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
             @RequestBody @Valid OnlineCourseConfiguration onlineCourseConfiguration) {
