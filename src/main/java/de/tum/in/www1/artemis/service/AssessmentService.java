@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -45,12 +45,12 @@ public class AssessmentService {
 
     private final SubmissionService submissionService;
 
-    private final LtiService ltiService;
+    private final LtiNewResultService ltiNewResultService;
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService,
-            GradingCriterionRepository gradingCriterionRepository, UserRepository userRepository, LtiService ltiService) {
+            GradingCriterionRepository gradingCriterionRepository, UserRepository userRepository, LtiNewResultService ltiNewResultService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -63,7 +63,7 @@ public class AssessmentService {
         this.exerciseDateService = exerciseDateService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.userRepository = userRepository;
-        this.ltiService = ltiService;
+        this.ltiNewResultService = ltiNewResultService;
     }
 
     /**
@@ -229,7 +229,7 @@ public class AssessmentService {
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
-        ltiService.onNewResult((StudentParticipation) result.getParticipation());
+        ltiNewResultService.onNewResult((StudentParticipation) result.getParticipation());
         return result;
     }
 

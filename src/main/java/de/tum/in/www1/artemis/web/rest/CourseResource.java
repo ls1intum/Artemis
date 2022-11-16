@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
@@ -47,6 +48,7 @@ import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -79,6 +81,8 @@ public class CourseResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final OAuth2JWKSService oAuth2JWKSService;
+
     private final CourseRepository courseRepository;
 
     private final ExerciseService exerciseService;
@@ -99,13 +103,17 @@ public class CourseResource {
 
     private final FileService fileService;
 
+    private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
-            AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService,
-            ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService, FileService fileService) {
+            OAuth2JWKSService oAuth2JWKSService, AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository,
+            SubmissionService submissionService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
+        this.oAuth2JWKSService = oAuth2JWKSService;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.submissionService = submissionService;
@@ -116,6 +124,7 @@ public class CourseResource {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.fileService = fileService;
+        this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
     }
 
     /**
@@ -160,6 +169,9 @@ public class CourseResource {
         }
 
         Course result = courseRepository.save(course);
+        if (course.isOnlineCourse()) {
+            oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
+        }
         return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
 
@@ -177,7 +189,14 @@ public class CourseResource {
         log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(courseId);
+        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(courseUpdate.getId());
+
+        if (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() == null) {
+            throw new IllegalArgumentException("You can not remove the time zone of a course");
+        }
+
+        var timeZoneChanged = (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() != null && !existingCourse.getTimeZone().equals(courseUpdate.getTimeZone()));
+
         if (!Objects.equals(existingCourse.getShortName(), courseUpdate.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
@@ -213,7 +232,7 @@ public class CourseResource {
 
         // Make sure to preserve associations in updated entity
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
-
+        courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.validateRegistrationConfirmationMessage();
         courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();
         courseUpdate.validateOnlineCourseAndRegistrationEnabled();
@@ -238,10 +257,18 @@ public class CourseResource {
         final var oldInstructorGroup = existingCourse.getInstructorGroupName();
         final var oldEditorGroup = existingCourse.getEditorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
+
+        if (courseUpdate.isOnlineCourse()) {
+            oAuth2JWKSService.updateKey(courseUpdate.getOnlineCourseConfiguration().getRegistrationId());
+        }
+
         optionalVcsUserManagementService
                 .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+        if (timeZoneChanged) {
+            tutorialGroupsConfigurationService.onTimeZoneUpdate(result);
+        }
         return ResponseEntity.ok(result);
     }
 
@@ -485,8 +512,12 @@ public class CourseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+            course = courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId);
         }
+        else if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
+        }
+
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
