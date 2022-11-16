@@ -42,6 +42,7 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
     public containerWidth = 0;
 
     scrollListener: any;
+    focusInListener: any;
 
     public get el() {
         return this.elRef && this.elRef.nativeElement;
@@ -54,6 +55,7 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
     constructor(private elRef: ElementRef<HTMLElement>, private renderer: Renderer2) {}
 
     ngOnInit() {
+        this.focusInListener = this.el.addEventListener('focusin', () => (this.el.scrollTop = this.currentScroll));
         this.scrollListener = this.renderer.listen(this.el, 'scroll', (event) => this.onScroll(event));
 
         this.el.style.height = this.height;
@@ -210,5 +212,6 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
     ngOnDestroy() {
         // stop listening to scroll events
         this.scrollListener();
+        this.focusInListener();
     }
 }
