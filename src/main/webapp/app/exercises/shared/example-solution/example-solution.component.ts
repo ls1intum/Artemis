@@ -3,6 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
     selector: 'jhi-example-solution',
@@ -13,7 +14,7 @@ export class ExampleSolutionComponent implements OnInit {
     public exercise?: Exercise;
     public exampleSolutionInfo?: ExampleSolutionInfo;
 
-    constructor(private exerciseService: ExerciseService, private route: ActivatedRoute) {}
+    constructor(private exerciseService: ExerciseService, private route: ActivatedRoute, private artemisMarkdown: ArtemisMarkdownService) {}
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
@@ -30,7 +31,7 @@ export class ExampleSolutionComponent implements OnInit {
         this.exerciseService.getExerciseForExampleSolution(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             const newExercise = exerciseResponse.body!;
             this.exercise = newExercise;
-            this.exampleSolutionInfo = this.exerciseService.extractExampleSolutionInfo(newExercise);
+            this.exampleSolutionInfo = this.exerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown);
         });
     }
 }

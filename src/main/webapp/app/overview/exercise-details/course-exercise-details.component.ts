@@ -237,7 +237,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * @param newExercise Exercise model that may have an exampleSolution.
      */
     showIfExampleSolutionPresent(newExercise: Exercise) {
-        this.exampleSolutionInfo = this.exerciseService.extractExampleSolutionInfo(newExercise);
+        this.exampleSolutionInfo = this.exerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown);
 
         // For TAs the example solution is collapsed on default to avoid spoiling, as the example solution is always shown to TAs
         this.exampleSolutionCollapsed = !!newExercise?.isAtLeastTutor;

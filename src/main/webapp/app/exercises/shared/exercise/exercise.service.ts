@@ -55,7 +55,6 @@ export class ExerciseService {
         private translateService: TranslateService,
         private entityTitleService: EntityTitleService,
         private profileService: ProfileService,
-        private artemisMarkdown: ArtemisMarkdownService,
     ) {}
 
     /**
@@ -519,8 +518,13 @@ export class ExerciseService {
      * depending on the exercise type.
      *
      * @param exercise Exercise model that may have an exampleSolution.
+     * @param artemisMarkdown An ArtemisMarkdownService instance so we don't need to include it in the same bundle with ExerciseService when compiling.
      */
-    extractExampleSolutionInfo(exercise: Exercise): ExampleSolutionInfo {
+    extractExampleSolutionInfo(exercise: Exercise, artemisMarkdown: ArtemisMarkdownService): ExampleSolutionInfo {
+        // ArtemisMarkdownService is expected as a parameter as opposed to a dependency in the constructor because doing
+        // that increased initial bundle size from 2.31 MB to 3.75 MB and caused production build to fail with error since
+        // it exceeded maximum budget.
+
         let modelingExercise = undefined;
         let exampleSolution = undefined;
         let exampleSolutionUML = undefined;
@@ -534,7 +538,7 @@ export class ExerciseService {
         } else if (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD) {
             const textExercise = exercise as TextExercise & FileUploadExercise;
             if (textExercise.exampleSolution) {
-                exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(textExercise.exampleSolution);
+                exampleSolution = artemisMarkdown.safeHtmlForMarkdown(textExercise.exampleSolution);
             }
         } else if (exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = exercise as ProgrammingExercise;
