@@ -6,8 +6,8 @@
         </div>
         <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" [checked]="showOnlyActive" (change)="toggleShowOnlyActive()" />
-                <label class="form-check-label" jhiTranslate="artemisApp.course.showActive">Show only active courses</label>
+                <input id="showOnlyActive" class="form-check-input" type="checkbox" [checked]="showOnlyActive" (change)="toggleShowOnlyActive()" />
+                <label for="showOnlyActive" class="form-check-label" jhiTranslate="artemisApp.course.showActive">Show only active courses</label>
             </div>
             <a
                 jhiOrionFilter

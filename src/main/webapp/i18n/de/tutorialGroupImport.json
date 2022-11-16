@@ -1,6 +1,8 @@
 {
     "artemisApp": {
         "tutorialGroupImportDialog": {
+            "warning": "Warnung",
+            "finishedWarning": "Artemis hat den Import der Übungsgruppe abgeschlossen. Beachte, dass die Übungsgruppen ohne Zeitplan und mit Standardeinstellungen erstellt wurden, z. B. mit dir als Tutor. Du kannst diese Einstellungen ändern und einen Zeitplan hinzufügen, indem du die jeweiligen Gruppen bearbeitest.",
             "importButton": "Übunsgruppen importieren",
             "dialogTitle": "Übungsgruppen importieren",
             "explanations": {
@@ -21,6 +23,7 @@
             "errorMessages": {
                 "genericErrorMessage": "Import von Übungsgruppen sind fehlgeschlagen!",
                 "withoutTitle": "Die folgenden Zeilen enthalten keinen Übungsgruppen Titel: ",
+                "invalidTitle": "Die folgenden Zeilen haben einen ungültigen Titel für die Übungsgruppe (Titel dürfen nur Buchstaben, Zahlen, Leerzeichen und Bindestriche und maximal 19 Zeichen enthalten): ",
                 "noIdentificationInformation": "Die folgenden Zeilen geben einen Benutzer an, enthalten jedoch keinen Benutzernamen oder Immatrikulationsnummer: ",
                 "duplicatedLogins": "Die folgenden Benutzernamen werden mehreren Übungsgruppen zugeordnet: ",
                 "duplicatedRegistrationNumbers": "Die folgenden Immatrikulationsnummern werden mehreren Übungsgruppen zugeordnet: "

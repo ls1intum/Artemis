@@ -36,7 +36,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
@@ -85,7 +85,7 @@ public class ResultResource {
 
     private final WebsocketMessagingService messagingService;
 
-    private final LtiService ltiService;
+    private final LtiNewResultService ltiNewResultService;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
@@ -101,7 +101,7 @@ public class ResultResource {
 
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ResultService resultService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, ResultRepository resultRepository,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, LtiNewResultService ltiNewResultService, ResultRepository resultRepository,
             WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -116,7 +116,7 @@ public class ResultResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.messagingService = messagingService;
-        this.ltiService = ltiService;
+        this.ltiNewResultService = ltiNewResultService;
         this.userRepository = userRepository;
         this.examDateService = examDateService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -183,7 +183,7 @@ public class ResultResource {
             messagingService.broadcastNewResult((Participation) participation, result);
             if (participation instanceof StudentParticipation) {
                 // do not try to report results for template or solution participations
-                ltiService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
+                ltiNewResultService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
             }
             log.info("The new result for {} was saved successfully", planKey);
         }
@@ -331,29 +331,6 @@ public class ResultResource {
         Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
         return result;
-    }
-
-    /**
-     * GET /participations/:participationId/latest-result : get the latest result with feedbacks for the given participation.
-     * The order of results is determined by completionDate desc.
-     *
-     * @param participationId the id of the participation for which to retrieve the latest result.
-     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
-     */
-    @GetMapping("participations/{participationId}/latest-result")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Result> getLatestResultWithFeedbacks(@PathVariable Long participationId) {
-        log.debug("REST request to get latest result for participation : {}", participationId);
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
-
-        if (participation instanceof StudentParticipation && !authCheckService.canAccessParticipation((StudentParticipation) participation)
-                || participation instanceof ProgrammingExerciseParticipation
-                        && !programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
-            throw new AccessForbiddenException();
-        }
-
-        Result result = resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(participation.getId());
-        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     /**

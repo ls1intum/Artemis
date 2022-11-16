@@ -38,11 +38,12 @@
                     <input
                         type="checkbox"
                         class="form-check-input"
+                        id="examMonitoring"
                         [checked]="exam.monitoring"
                         (change)="exam.monitoring = !exam.monitoring"
                         [jhiFeatureToggle]="FeatureToggle.ExamLiveStatistics"
                     />
-                    <label class="form-control-label" jhiTranslate="artemisApp.examManagement.monitoring.enable.title">Exam Monitoring Enabled</label>
+                    <label for="examMonitoring" class="form-control-label" jhiTranslate="artemisApp.examManagement.monitoring.enable.title">Exam Monitoring Enabled</label>
                     <jhi-help-icon placement="top" text="artemisApp.examManagement.monitoring.enable.description"></jhi-help-icon>
                 </div>
             </div>

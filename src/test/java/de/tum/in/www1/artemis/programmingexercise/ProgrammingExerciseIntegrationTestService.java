@@ -693,6 +693,11 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), true);
     }
 
+    private void mockConfigureRepository(ProgrammingExercise programmingExercise) throws Exception {
+        mockDelegate.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), true);
+        mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), true);
+    }
+
     void updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
@@ -795,6 +800,7 @@ class ProgrammingExerciseIntegrationTestService {
 
     void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
+        mockConfigureRepository(programmingExercise);
 
         final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
 
@@ -1534,8 +1540,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void unlockAllRepositories() throws Exception {
-        mockDelegate.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), true);
-        mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), true);
+        mockConfigureRepository(programmingExercise);
         mockDelegate.mockDefaultBranch(programmingExercise);
 
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
