@@ -49,17 +49,17 @@
             "launchTargetTooltip": "The recommended launch target is 'New Window' for the best user experience",
             "requestUserEmailTooltip": "The user's email must be sent as it is required by Artemis to create or find the user",
             "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",
-            "lookupUserByEmailTooltip": "If selected, Artemis will try to find an existing user with the provided email"
-        },
-        "onlineCourseConfiguration": {
-            "title": "Online Course Configuration",
-            "ltiKeyTooltip": "Key used for LTI 1.0. You can freely change this value, but it is recommended to use the auto-generated value.",
-            "ltiSecretTooltip": "Secret used for LTI 1.0. You can freely change this value, but it is recommended to use the auto-generated value.",
-            "registrationIdTooltip": "ID used to identify the registration of the learning platform. This must be unique across all courses. You can freely change this value, but it is recommended to use the auto-generated value.",
-            "clientIdTooltip": "It is possible to configure this field and the URI fields below manually, but it is highly recommended to use the Dynamic Registration Service to configure them automatically.",
-            "form": {
-                "userPrefix": {
-                    "forbidden": "User prefix cannot contain special characters."
+            "lookupUserByEmailTooltip": "If selected, Artemis will try to find an existing user with the provided email",
+            "edit": {
+                "configurationForCourse": "Edit LTI Configuration for course {{ title }}",
+                "ltiKeyTooltip": "Key used for LTI 1.0. You can freely change this value, but it is recommended to use the auto-generated value.",
+                "ltiSecretTooltip": "Secret used for LTI 1.0. You can freely change this value, but it is recommended to use the auto-generated value.",
+                "registrationIdTooltip": "ID used to identify the registration of the learning platform. This must be unique across all courses. You can freely change this value, but it is recommended to use the auto-generated value.",
+                "clientIdTooltip": "It is possible to configure this field and the URI fields below manually, but it is highly recommended to use the Dynamic Registration Service to configure them automatically.",
+                "form": {
+                    "userPrefix": {
+                        "forbidden": "User prefix cannot contain special characters."
+                    }
                 }
             }
         },

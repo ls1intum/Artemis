@@ -22,6 +22,7 @@ import { convertDateFromClient } from 'app/utils/date.utils';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -78,6 +79,15 @@ export class CourseManagementService {
         return this.http
             .put<Course>(`${this.resourceUrl}/${courseId}`, formData, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+    }
+
+    /**
+     * updates the online course configuration of a course using a PUT request
+     * @param courseId - the id of the course to be updated
+     * @param onlineCourseConfiguration - the updates to the online course configuration
+     */
+    updateOnlineCourseConfiguration(courseId: number, onlineCourseConfiguration: OnlineCourseConfiguration): Observable<EntityResponseType> {
+        return this.http.put<OnlineCourseConfiguration>(`${this.resourceUrl}/${courseId}/onlineCourseConfiguration`, onlineCourseConfiguration, { observe: 'response' });
     }
 
     /**

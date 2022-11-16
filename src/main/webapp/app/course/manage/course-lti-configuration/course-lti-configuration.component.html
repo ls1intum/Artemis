@@ -3,6 +3,15 @@
         <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course?.title }">
             LTI Configuration for course {{ course?.title }}
         </h4>
+
+        <a
+            *ngIf="course.isAtLeastInstructor"
+            id="edit-course"
+            [routerLink]="['/course-management', course.id!, 'lti-configuration', 'edit']"
+            class="tab-item btn btn-warning btn-md"
+        >
+            <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+        </a>
     </div>
 
     <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mt-4">

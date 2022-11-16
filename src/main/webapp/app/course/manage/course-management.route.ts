@@ -21,6 +21,7 @@ import { TutorialGroupManagementResolve } from 'app/course/tutorial-groups/tutor
 import { TutorialGroupsChecklistComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
+import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 
 export const courseManagementState: Routes = [
     {
@@ -108,6 +109,18 @@ export const courseManagementState: Routes = [
     {
         path: ':courseId/lti-configuration',
         component: CourseLtiConfigurationComponent,
+        resolve: {
+            course: CourseManagementResolve,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.lti.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/lti-configuration/edit',
+        component: EditCourseLtiConfigurationComponent,
         resolve: {
             course: CourseManagementResolve,
         },

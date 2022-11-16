@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
@@ -26,32 +26,12 @@ export class CourseLtiConfigurationComponent implements OnInit {
     // Icons
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
-
-    /*
-        onlineCourseConfigurationForm: FormGroup;
-
-            this.onlineCourseConfigurationForm = new FormGroup({
-            id: new FormControl(this.course.onlineCourseConfiguration?.id),
-            course: new FormControl(this.course),
-            ltiKey: new FormControl(ltiKey),
-            ltiSecret: new FormControl(ltiSecret),
-            userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
-            registrationId: new FormControl(ltiRegistrationId),
-            clientId: new FormControl(this.course.onlineCourseConfiguration?.clientId),
-            authorizationUri: new FormControl(this.course.onlineCourseConfiguration?.authorizationUri),
-            tokenUri: new FormControl(this.course.onlineCourseConfiguration?.tokenUri),
-            jwkSetUri: new FormControl(this.course.onlineCourseConfiguration?.jwkSetUri),
-        });
-
-            get userPrefix() {
-        return this.onlineCourseConfigurationForm.get('userPrefix')!;
-    }
-     */
+    faWrench = faWrench;
 
     constructor(private route: ActivatedRoute, private sortService: SortService, private courseManagementService: CourseManagementService) {}
 
     /**
-     * Opens the configuration for the course encoded in the route
+     * Gets the configuration for the course encoded in the route and fetches the exercises
      */
     ngOnInit() {
         this.route.data.subscribe(({ course }) => {
