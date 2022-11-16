@@ -49,7 +49,8 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     void initTestCase() {
         course = database.createCourseWithTutor("tutor1");
         exercise = course.getExercises().iterator().next();
-        studentParticipation = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exercise.getId()).get(0);
+        studentParticipation = null; // TODO: The repository method is missing
+        // studentParticipation = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exercise.getId()).get(0);
         textSubmission = (TextSubmission) studentParticipation.findLatestSubmission().get();
         var instructor = database.createAndSaveUser("instructor");
         instructor.setGroups(Set.of(course.getInstructorGroupName()));
