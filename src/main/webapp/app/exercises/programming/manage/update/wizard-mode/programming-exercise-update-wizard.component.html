@@ -3,19 +3,8 @@
         class="form-step"
         *ngIf="currentStep >= 1"
         [isImport]="isImport"
-        [titleNamePattern]="infoStepInputs.titleNamePattern"
         [programmingExercise]="programmingExercise"
-        [shortNamePattern]="infoStepInputs.shortNamePattern"
-        [invalidRepositoryNamePattern]="infoStepInputs.invalidRepositoryNamePattern"
-        [invalidDirectoryNamePattern]="infoStepInputs.invalidDirectoryNamePattern"
-        [updateRepositoryName]="infoStepInputs.updateRepositoryName"
-        [updateCheckoutDirectory]="infoStepInputs.updateCheckoutDirectory"
-        [refreshAuxiliaryRepositoryChecks]="infoStepInputs.refreshAuxiliaryRepositoryChecks"
-        [auxiliaryRepositoryDuplicateNames]="infoStepInputs.auxiliaryRepositoryDuplicateNames"
-        [auxiliaryRepositoryDuplicateDirectories]="infoStepInputs.auxiliaryRepositoryDuplicateDirectories"
-        [exerciseCategories]="infoStepInputs.exerciseCategories"
-        [existingCategories]="infoStepInputs.existingCategories"
-        [updateCategories]="infoStepInputs.updateCategories"
+        [infoStepInputs]="infoStepInputs"
     ></jhi-programming-exercise-update-wizard-info>
 
     <jhi-programming-exercise-update-wizard-difficulty

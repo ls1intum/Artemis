@@ -7,7 +7,7 @@ import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.c
 import { Observable } from 'rxjs';
 import { ValidationReason } from 'app/entities/exercise.model';
 
-type InfoStepInputs = {
+export type InfoStepInputs = {
     titleNamePattern: string;
     shortNamePattern: RegExp;
     invalidRepositoryNamePattern: RegExp;
