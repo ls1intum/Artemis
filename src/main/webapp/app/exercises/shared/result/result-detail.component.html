@@ -73,9 +73,13 @@
                     <span class="ms-1" jhiTranslate="artemisApp.result.chart.filterApplied">A filter is applied to your feedback</span>
                     <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
                 </div>
-                <div *ngIf="testCaseCount || scaFeedbackCount || manualFeedbackCount" class="mb-2">
+                <div *ngIf="testCaseCount || numberOfNotExecutedTests || scaFeedbackCount || manualFeedbackCount" class="mb-2">
                     <div *ngIf="testCaseCount">
                         {{ 'artemisApp.result.testCount' | artemisTranslate: { passed: passedTestCaseCount, total: testCaseCount } }}
+                    </div>
+                    <div *ngIf="numberOfNotExecutedTests">
+                        {{ 'artemisApp.result.notExecutedTests' | artemisTranslate: { numberOfNotExecutedTests } }}
+                        <jhi-help-icon text="artemisApp.result.notExecutedTestsTooltip"></jhi-help-icon>
                     </div>
                     <div *ngIf="scaFeedbackCount">
                         {{ 'artemisApp.result.scaIssueCount' | artemisTranslate: { issues: scaFeedbackCount } }}

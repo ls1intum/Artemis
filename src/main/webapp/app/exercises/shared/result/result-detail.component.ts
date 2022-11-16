@@ -90,6 +90,7 @@ export class ResultDetailComponent implements OnInit {
     @Input() showMissingAutomaticFeedbackInformation = false;
     @Input() latestIndividualDueDate?: dayjs.Dayjs;
     @Input() taskName?: string;
+    @Input() numberOfNotExecutedTests?: number;
 
     isLoading = false;
     loadingFailed = false;

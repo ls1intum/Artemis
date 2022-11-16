@@ -1,13 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import {
-    MissingResultInformation,
-    ResultTemplateStatus,
-    evaluateTemplateStatus,
-    getResultIconClass,
-    getTextColorClass,
-    resultIsPreliminary,
-} from 'app/exercises/shared/result/result.utils';
+import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -47,9 +40,9 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInformation;
     readonly ParticipationType = ParticipationType;
+    readonly ExerciseType = ExerciseType;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
-    readonly resultIsPreliminary = resultIsPreliminary;
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;

@@ -11,19 +11,19 @@
                         <code class="text-white badge bg-primary label-preview">
                             {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-exercise
                         </code>
-                        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.preview.templateRepoTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.preview.templateRepoTooltip"></jhi-help-icon>
                     </li>
                     <li>
                         <code class="text-white badge bg-primary label-preview">
                             {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-solution
                         </code>
-                        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.preview.solutionRepoTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionRepoTooltip"></jhi-help-icon>
                     </li>
                     <li>
                         <code class="text-white badge bg-primary label-preview">
                             {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-tests
                         </code>
-                        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.preview.testRepoTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.preview.testRepoTooltip"></jhi-help-icon>
                     </li>
                     <div *ngIf="programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0">
                         <div *ngFor="let auxiliaryRepository of programmingExercise.auxiliaryRepositories">
@@ -49,13 +49,13 @@
             <ul>
                 <li>
                     <code class="text-white badge bg-primary label-preview">{{ getCourseShortName()?.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-BASE</code>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip"></jhi-help-icon>
                 </li>
                 <li>
                     <code class="text-white badge bg-primary label-preview"
                         >{{ getCourseShortName()?.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-SOLUTION</code
                     >
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.preview.solutionBuildPlanTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionBuildPlanTooltip"></jhi-help-icon>
                 </li>
             </ul>
         </div>

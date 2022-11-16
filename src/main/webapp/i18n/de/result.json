@@ -111,6 +111,8 @@
             "noFeedback": "Kein Feedback verfügbar",
             "afterDueDateFeedbackHidden": "Auch nach der Abgabefrist werden Detailfeedbacks nicht zu allen Testfällen angezeigt. Dies ist etwa der Fall wenn für andere Studierende eine spätere Abgabefrist gesetzt ist (z.B. zum Ausgleich von Krankheitstagen). Alle Feedbacks werden automatisch am {{date}} sichtbar sein.",
             "testCount": "Du hast {{passed}} von {{total}} Tests bestanden.",
+            "notExecutedTests": "{{numberOfNotExecutedTests}} Tests wurden nicht ausgeführt.",
+            "notExecutedTestsTooltip": "Diese Tests werden eventuell nur nach der Abgabefrist ausgeführt oder es gab ein Problem während der Ausführung der Tests.",
             "scaIssueCount": "Du hast {{issues}} Code-Issues.",
             "manualFeedbackCount": "Du hast {{feedbacks}} manuelle Feedbacks bekommen."
         }

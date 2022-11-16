@@ -8,28 +8,15 @@
         class="test-icon text-secondary"
     ></fa-icon>
     <span *ngIf="taskName" class="task-name">{{ taskName }}</span>
-    <span>
-        <!-- All tests are successful.-->
-        <span
-            *ngIf="latestResult && latestResult.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length); else detailedResult"
-            class="text-success"
-            [class.test-status--linked]="hasMessage"
-            [innerHTML]="translationBasePath + 'testPassing' | artemisTranslate"
-        ></span>
-        <!-- Some tests are successful, some not, show detailed status.-->
-        <ng-template #detailedResult>
-            <span
-                *ngIf="latestResult && latestResult.feedbacks && latestResult.feedbacks.length; else noResult"
-                class="guided-tour"
-                [class]="tests.length === successfulTests.length ? 'text-success' : failedTests.length ? 'text-danger' : 'text-secondary'"
-                [class.test-status--linked]="tests.length !== successfulTests.length || hasMessage"
-                [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate: { totalTests: tests.length, passedTests: successfulTests.length }"
-                (click)="failedTests.length + notExecutedTests.length > 0 || hasMessage ? showDetailsForTests() : null"
-            ></span>
-        </ng-template>
-        <!-- There are no results at all, build error or never executed.-->
-        <ng-template #noResult>
-            <span class="text-secondary" [innerHTML]="translationBasePath + 'noResult' | artemisTranslate"></span>
-        </ng-template>
-    </span>
+    <span
+        *ngIf="latestResult && latestResult.feedbacks && latestResult.feedbacks.length; else noResult"
+        class="guided-tour test-status--linked"
+        [class]="tests.length === successfulTests.length ? 'text-success' : failedTests.length ? 'text-danger' : 'text-secondary'"
+        [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate: { totalTests: tests.length, passedTests: successfulTests.length }"
+        (click)="showDetailsForTests()"
+    ></span>
+    <!-- There are no results at all, build error or never executed.-->
+    <ng-template #noResult>
+        <span class="text-secondary" [innerHTML]="translationBasePath + 'noResult' | artemisTranslate"></span>
+    </ng-template>
 </div>
