@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import dayjs from 'dayjs/esm';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
@@ -10,12 +10,46 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;
     let httpMock: HttpTestingController;
     let exercise: Exercise;
     let currentDate: dayjs.Dayjs;
+
+    const modelingExercise = {
+        id: 23,
+        type: ExerciseType.MODELING,
+        studentParticipations: [],
+        exampleSolutionModel: '{ "key": "value" }',
+        exampleSolutionExplanation: 'Solution<br>Explanation',
+    } as unknown as ModelingExercise;
+
+    const textExercise = {
+        id: 24,
+        type: ExerciseType.TEXT,
+        studentParticipations: [],
+        exampleSolution: 'Example<br>Solution',
+    } as unknown as TextExercise;
+
+    const fileUploadExercise = {
+        id: 25,
+        type: ExerciseType.FILE_UPLOAD,
+        studentParticipations: [],
+        exampleSolution: 'Example<br>Solution',
+    } as unknown as FileUploadExercise;
+
+    const programmingExercise = {
+        id: 26,
+        type: ExerciseType.PROGRAMMING,
+        studentParticipations: [],
+        exam: 'Example<br>Solution',
+        exampleSolutionPublished: true,
+    } as unknown as ProgrammingExercise;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -190,5 +224,58 @@ describe('Exercise Service', () => {
         expect(exercise.dueDateError).toBeFalse();
         expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
         expect(exercise.exampleSolutionPublicationDateWarning).toBeTrue();
+    });
+
+    it('should fill & empty example modeling solution', () => {
+        let exampleSolutionInfo = service.extractExampleSolutionInfo({ ...modelingExercise });
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
+        expect(exampleSolutionInfo.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
+
+        exampleSolutionInfo = service.extractExampleSolutionInfo({ ...exercise });
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
+    });
+
+    it('should fill & empty example text solution', () => {
+        let exampleSolutionInfo = service.extractExampleSolutionInfo({ ...textExercise });
+        expect(exampleSolutionInfo.exampleSolution).toBeDefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
+
+        exampleSolutionInfo = service.extractExampleSolutionInfo({ ...exercise });
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
+    });
+
+    it('should fill & empty example file upload solution', () => {
+        let exampleSolutionInfo = service.extractExampleSolutionInfo({ ...fileUploadExercise });
+        expect(exampleSolutionInfo.exampleSolution).toBeDefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
+
+        exampleSolutionInfo = service.extractExampleSolutionInfo({ ...exercise });
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
+    });
+
+    it('should fill & empty example programming exercise solution', () => {
+        let exampleSolutionInfo = service.extractExampleSolutionInfo({ ...programmingExercise });
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.isProgrammingExerciseExampleSolutionPublished).toBeTrue();
+
+        exampleSolutionInfo = service.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublished: false });
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
+
+        exampleSolutionInfo = service.extractExampleSolutionInfo({ ...exercise });
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
     });
 });

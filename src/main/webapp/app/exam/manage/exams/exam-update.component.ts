@@ -12,7 +12,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCheckDouble, faExclamationTriangle, faFont, faSave } from '@fortawesome/free-solid-svg-icons';
 import { tap } from 'rxjs/operators';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
@@ -292,7 +292,7 @@ export class ExamUpdateComponent implements OnInit {
         if (!this.exam.exampleSolutionPublicationDate) {
             return true;
         }
-        // dayjs.isBefore(null) is always false so exampleSolutionPublicationDate is valid if the visibleDate and endDate is not set
+        // dayjs.isBefore(null) is always false so exampleSolutionPublicationDate is valid if the visibleDate and endDate are not set
         return !(
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.visibleDate || null) ||
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)

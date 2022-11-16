@@ -16,7 +16,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExampleSolutionInfo, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -34,13 +34,8 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { UMLModel } from '@ls1intum/apollon';
-import { SafeHtml } from '@angular/platform-browser';
 import { faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
@@ -98,10 +93,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
 
-    public modelingExercise?: ModelingExercise;
-    public exampleSolution?: SafeHtml;
-    public exampleSolutionUML?: UMLModel;
-    public isProgrammingExerciseExampleSolutionPublished = false;
+    exampleSolutionInfo?: ExampleSolutionInfo;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -245,28 +237,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * @param newExercise Exercise model that may have an exampleSolution.
      */
     showIfExampleSolutionPresent(newExercise: Exercise) {
-        // Clear fields below to avoid displaying old data if this method is called more than once.
-        this.modelingExercise = undefined;
-        this.exampleSolution = undefined;
-        this.exampleSolutionUML = undefined;
-        this.isProgrammingExerciseExampleSolutionPublished = false;
+        this.exampleSolutionInfo = this.exerciseService.extractExampleSolutionInfo(newExercise);
 
-        if (newExercise.type === ExerciseType.MODELING) {
-            this.modelingExercise = newExercise as ModelingExercise;
-            if (this.modelingExercise.exampleSolutionModel) {
-                this.exampleSolutionUML = JSON.parse(this.modelingExercise.exampleSolutionModel);
-            }
-        } else if (newExercise.type === ExerciseType.TEXT || newExercise.type === ExerciseType.FILE_UPLOAD) {
-            const exercise = newExercise as TextExercise & FileUploadExercise;
-            if (exercise.exampleSolution) {
-                this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(exercise.exampleSolution);
-            }
-        } else if (newExercise.type === ExerciseType.PROGRAMMING) {
-            const exercise = newExercise as ProgrammingExercise;
-            this.isProgrammingExerciseExampleSolutionPublished = exercise.exampleSolutionPublished || false;
-        }
         // For TAs the example solution is collapsed on default to avoid spoiling, as the example solution is always shown to TAs
-        this.exampleSolutionCollapsed = !!this.exercise?.isAtLeastTutor;
+        this.exampleSolutionCollapsed = !!newExercise?.isAtLeastTutor;
     }
 
     /**

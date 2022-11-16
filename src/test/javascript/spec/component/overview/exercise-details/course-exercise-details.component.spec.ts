@@ -14,7 +14,7 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExampleSolutionInfo, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
@@ -50,10 +50,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 
 describe('CourseExerciseDetailsComponent', () => {
@@ -71,35 +68,12 @@ describe('CourseExerciseDetailsComponent', () => {
     let complaintService: ComplaintService;
     const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [], course: {} } as unknown as Exercise;
 
-    const modelingExercise = {
-        id: 23,
-        type: ExerciseType.MODELING,
-        studentParticipations: [],
-        exampleSolutionModel: '{ "key": "value" }',
-        exampleSolutionExplanation: 'Solution<br>Explanation',
-    } as unknown as ModelingExercise;
-
     const textExercise = {
         id: 24,
         type: ExerciseType.TEXT,
         studentParticipations: [],
-        exampleSolution: 'Sample<br>Solution',
+        exampleSolution: 'Example<br>Solution',
     } as unknown as TextExercise;
-
-    const fileUploadExercise = {
-        id: 25,
-        type: ExerciseType.FILE_UPLOAD,
-        studentParticipations: [],
-        exampleSolution: 'Sample<br>Solution',
-    } as unknown as FileUploadExercise;
-
-    const programmingExercise = {
-        id: 26,
-        type: ExerciseType.PROGRAMMING,
-        studentParticipations: [],
-        exam: 'Sample<br>Solution',
-        exampleSolutionPublished: true,
-    } as unknown as ProgrammingExercise;
 
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
@@ -240,56 +214,24 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.quizExerciseStatus).toBeUndefined();
     });
 
-    it('should fill & empty sample modeling solution', () => {
-        comp.showIfExampleSolutionPresent({ ...modelingExercise });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
+    it('should configure example solution for exercise', () => {
+        const exampleSolutionInfo = {} as ExampleSolutionInfo;
+        const exerciseServiceSpy = jest.spyOn(exerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
 
-        comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
+        expect(comp.exampleSolutionInfo).toBeUndefined();
+        const newExercise = { ...textExercise };
+        comp.showIfExampleSolutionPresent(newExercise);
+        expect(comp.exampleSolutionInfo).toBe(exampleSolutionInfo);
+        expect(exerciseServiceSpy).toHaveBeenCalledOnce();
+        expect(exerciseServiceSpy).toHaveBeenCalledWith(newExercise);
     });
 
-    it('should fill & empty sample text solution', () => {
-        comp.showIfExampleSolutionPresent({ ...textExercise });
-        expect(comp.exampleSolution).toBeDefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
+    it('should collapse example solution for tutors', () => {
+        expect(comp.exampleSolutionCollapsed).toBeUndefined();
+        comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: true });
+        expect(comp.exampleSolutionCollapsed).toBeTrue();
 
-        comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
-    });
-
-    it('should fill & empty sample file upload solution', () => {
-        comp.showIfExampleSolutionPresent({ ...fileUploadExercise });
-        expect(comp.exampleSolution).toBeDefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
-
-        comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
-    });
-
-    it('should fill & empty sample programming exercise solution', () => {
-        comp.showIfExampleSolutionPresent({ ...programmingExercise });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeTrue();
-
-        comp.showIfExampleSolutionPresent({ ...programmingExercise, exampleSolutionPublished: false });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
-
-        comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBeUndefined();
-        expect(comp.exampleSolutionUML).toBeUndefined();
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
+        comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: false });
+        expect(comp.exampleSolutionCollapsed).toBeFalse();
     });
 });

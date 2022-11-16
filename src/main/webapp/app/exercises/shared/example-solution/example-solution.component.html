@@ -1,39 +1,34 @@
 <div *ngIf="exercise">
-    <!-- HEADER INFORMATION START -->
     <jhi-header-exercise-page-with-details [exercise]="exercise" [course]="exercise?.exerciseGroup?.exam?.course">
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
-    <!-- HEADER INFORMATION END -->
-    <!-- EXERCISE ACTIONS START -->
     <div class="row">
         <div class="col pe-0 flex-grow-1">
-            <!-- EXERCISE ACTIONS END -->
             <!-- PROBLEM STATEMENT START -->
-            <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement" id="problem-statement">
+            <div class="row mt-2 mb-2 align-items-baseline" *ngIf="exercise.problemStatement" id="problem-statement">
                 <div class="col-12 col-md-12 markdown-preview problem-statement">
-                    <h3>{{ 'artemisApp.courseOverview.exerciseDetails.problemStatement' | artemisTranslate }}</h3>
+                    <h3>{{ 'artemisApp.exercise.problemStatement' | artemisTranslate }}</h3>
                     <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>
                 </div>
             </div>
             <!-- PROBLEM STATEMENT END -->
-            <ng-container *ngIf="exampleSolutionUML || exampleSolution || isProgrammingExerciseExampleSolutionPublished">
+            <ng-container
+                *ngIf="exampleSolutionInfo?.exampleSolutionUML || exampleSolutionInfo?.exampleSolution || exampleSolutionInfo?.isProgrammingExerciseExampleSolutionPublished"
+            >
                 <div class="row mb-2 mt-2 align-items-baseline">
-                    <div class="control-label" (click)="changeExampleSolution()">
-                        <span class="h3 pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</span>
-                        <fa-icon class="pe-3" [icon]="exampleSolutionCollapsed ? faAngleDown : faAngleUp"></fa-icon>
-                    </div>
+                    <h3 class="pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</h3>
                 </div>
-                <dl class="row-md jh-entity-details markdown-preview" *ngIf="!exampleSolutionCollapsed">
-                    <dd *ngIf="exampleSolutionUML && modelingExercise" class="editor-outline-background">
+                <dl class="row-md jh-entity-details markdown-preview">
+                    <dd *ngIf="exampleSolutionInfo?.exampleSolutionUML && exampleSolutionInfo?.modelingExercise" class="editor-outline-background">
                         <jhi-modeling-editor
                             [readOnly]="true"
-                            [diagramType]="modelingExercise.diagramType!"
-                            [umlModel]="exampleSolutionUML!"
-                            [withExplanation]="!!modelingExercise.exampleSolutionExplanation"
-                            [explanation]="modelingExercise.exampleSolutionExplanation || ''"
+                            [diagramType]="exampleSolutionInfo?.modelingExercise?.diagramType"
+                            [umlModel]="exampleSolutionInfo?.exampleSolutionUML"
+                            [withExplanation]="!!exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation"
+                            [explanation]="exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation || ''"
                         ></jhi-modeling-editor>
                     </dd>
-                    <dd *ngIf="exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolution"></dd>
+                    <dd *ngIf="exampleSolutionInfo?.exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolutionInfo?.exampleSolution"></dd>
                 </dl>
             </ng-container>
         </div>

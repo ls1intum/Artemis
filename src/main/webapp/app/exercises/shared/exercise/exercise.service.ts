@@ -19,9 +19,20 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { SafeHtml } from '@angular/platform-browser';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
+export type ExampleSolutionInfo = {
+    modelingExercise?: ModelingExercise;
+    exampleSolution?: SafeHtml;
+    exampleSolutionUML: any;
+    isProgrammingExerciseExampleSolutionPublished: boolean;
+};
 
 export interface ExerciseServicable<T extends Exercise> {
     create(exercise: T): Observable<HttpResponse<T>>;
@@ -44,6 +55,7 @@ export class ExerciseService {
         private translateService: TranslateService,
         private entityTitleService: EntityTitleService,
         private profileService: ProfileService,
+        private artemisMarkdown: ArtemisMarkdownService,
     ) {}
 
     /**
@@ -499,6 +511,42 @@ export class ExerciseService {
         return this.http
             .get<dayjs.Dayjs>(`${this.resourceUrl}/${exerciseId}/latest-due-date`, { observe: 'response' })
             .pipe(map((res: HttpResponse<dayjs.Dayjs>) => (res.body ? dayjs(res.body) : undefined)));
+    }
+
+    /**
+     * Returns an ExampleSolutionInfo object containing the processed example solution and related fields
+     * if exampleSolution exists on the exercise. The example solution is processed (parsed, sanitized, etc.)
+     * depending on the exercise type.
+     *
+     * @param exercise Exercise model that may have an exampleSolution.
+     */
+    extractExampleSolutionInfo(exercise: Exercise): ExampleSolutionInfo {
+        let modelingExercise = undefined;
+        let exampleSolution = undefined;
+        let exampleSolutionUML = undefined;
+        let isProgrammingExerciseExampleSolutionPublished = false;
+
+        if (exercise.type === ExerciseType.MODELING) {
+            modelingExercise = exercise as ModelingExercise;
+            if (modelingExercise.exampleSolutionModel) {
+                exampleSolutionUML = JSON.parse(modelingExercise.exampleSolutionModel);
+            }
+        } else if (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD) {
+            const textExercise = exercise as TextExercise & FileUploadExercise;
+            if (textExercise.exampleSolution) {
+                exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(textExercise.exampleSolution);
+            }
+        } else if (exercise.type === ExerciseType.PROGRAMMING) {
+            const programmingExercise = exercise as ProgrammingExercise;
+            isProgrammingExerciseExampleSolutionPublished = programmingExercise.exampleSolutionPublished || false;
+        }
+
+        return {
+            modelingExercise,
+            exampleSolution,
+            exampleSolutionUML,
+            isProgrammingExerciseExampleSolutionPublished,
+        };
     }
 }
 
