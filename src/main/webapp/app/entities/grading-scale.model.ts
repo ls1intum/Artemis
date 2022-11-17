@@ -7,6 +7,9 @@ export class GradingScale implements BaseEntity {
     public id?: number;
     public gradeType: GradeType = GradeType.NONE;
     public gradeSteps: GradeStep[];
+    public plagiarismGrade?: string;
+    public noParticipationGrade?: string;
+    public GradeStep?: GradeStep;
     public course?: Course;
     public exam?: Exam;
 

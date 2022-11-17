@@ -82,6 +82,38 @@
                 </tr>
             </thead>
             <tbody>
+                <tr class="grading-scale-table-row">
+                    <td>
+                        {{ 'artemisApp.gradingSystem.plagiarismGrade' | artemisTranslate
+                        }}<jhi-help-icon placement="auto" text="artemisApp.gradingSystem.plagiarismGradeHelp"></jhi-help-icon>
+                    </td>
+                    <td>&mdash;</td>
+                    <td>&mdash;</td>
+                    <td>
+                        <input
+                            [(ngModel)]="gradingScale.plagiarismGrade"
+                            type="text"
+                            [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate: { default: 'TODO: Ata' }"
+                        />
+                    </td>
+                    <td></td>
+                </tr>
+                <tr class="grading-scale-table-row">
+                    <td>
+                        {{ 'artemisApp.gradingSystem.noParticipationGrade' | artemisTranslate
+                        }}<jhi-help-icon placement="auto" text="artemisApp.gradingSystem.noParticipationGradeHelp"></jhi-help-icon>
+                    </td>
+                    <td>&mdash;</td>
+                    <td>&mdash;</td>
+                    <td>
+                        <input
+                            [(ngModel)]="gradingScale.plagiarismGrade"
+                            type="text"
+                            [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate: { default: 'TODO: Ata' }"
+                        />
+                    </td>
+                    <td></td>
+                </tr>
                 <tr *ngFor="let gradeStep of gradingScale.gradeSteps; let i = index" class="grading-scale-table-row">
                     <td>
                         <input [(ngModel)]="gradeStep.lowerBoundPercentage" type="number" step="0.5" min="0" required (change)="setPoints(gradeStep, true)" />

@@ -32,6 +32,11 @@
             "add": "Add Grade Step",
             "save": "Save",
             "stickyGradeStep": "The last grade step is always open ended to handle scores exceeding the maximum. It is stuck to the bottom.",
+            "plagiarismGrade": "Plagiarism Grade",
+            "plagiarismGradeHelp": "TODO: Ata",
+            "noParticipationGrade": "No-participation Grade",
+            "noParticipationGradeHelp": "TODO: Ata",
+            "defaultGradeName": "Default: {{default}}",
             "info": {
                 "title": "Grading Key Help",
                 "general": {

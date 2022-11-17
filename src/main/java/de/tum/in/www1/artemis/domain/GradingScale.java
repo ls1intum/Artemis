@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
@@ -23,6 +24,10 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradingScale extends DomainObject {
 
+    public static final String DEFAULT_PLAGIARISM_GRADE = "U";  // "U" stands for "Unterschleif"
+
+    public static final String DEFAULT_NO_PARTICIPATION_GRADE = "X";
+
     @Enumerated(EnumType.STRING)
     @Column(name = "grade_type")
     private GradeType gradeType = GradeType.NONE; // default
@@ -30,6 +35,12 @@ public class GradingScale extends DomainObject {
     @Enumerated(EnumType.STRING)
     @Column(name = "bonus_strategy")
     private BonusStrategy bonusStrategy;
+
+    @Column(name = "plagiarism_grade")
+    private String plagiarismGrade;
+
+    @Column(name = "no_participation_grade")
+    private String noParticipationGrade;
 
     @OneToOne
     @JoinColumn(name = "course_id")
@@ -153,6 +164,34 @@ public class GradingScale extends DomainObject {
      */
     GradeStep maxGrade() {
         return getGradeSteps().stream().filter(gradeStep -> gradeStep.isUpperBoundInclusive() && gradeStep.getUpperBoundPercentage() == 100.0).findAny().orElse(null);
+    }
+
+    public String getPlagiarismGrade() {
+        return plagiarismGrade;
+    }
+
+    public void setPlagiarismGrade(String plagiarismGrade) {
+        this.plagiarismGrade = plagiarismGrade;
+    }
+
+    @JsonIgnore
+    @Nonnull
+    public String getPlagiarismGradeOrDefault() {
+        return plagiarismGrade != null ? plagiarismGrade : DEFAULT_PLAGIARISM_GRADE;
+    }
+
+    public String getNoParticipationGrade() {
+        return noParticipationGrade;
+    }
+
+    public void setNoParticipationGrade(String noParticipationGrade) {
+        this.noParticipationGrade = noParticipationGrade;
+    }
+
+    @JsonIgnore
+    @Nonnull
+    public String getNoParticipationGradeOrDefault() {
+        return noParticipationGrade != null ? noParticipationGrade : DEFAULT_NO_PARTICIPATION_GRADE;
     }
 
     /**

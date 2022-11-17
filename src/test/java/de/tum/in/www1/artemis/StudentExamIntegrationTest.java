@@ -1803,7 +1803,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusStrategy()).isEqualTo(bonusStrategy);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusFromTitle()).isEqualTo("Real exam 1");
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(0.0);
-        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusGrade()).isEqualTo(GradeStep.PLAGIARISM_GRADE);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusGrade()).isEqualTo(GradingScale.DEFAULT_PLAGIARISM_GRADE);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalPoints()).isEqualTo(22.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalGrade()).isEqualTo("3.0");
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().mostSeverePlagiarismVerdict()).isEqualTo(PlagiarismVerdict.PLAGIARISM);

@@ -405,7 +405,7 @@ public class ExamService {
             BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, achievedPointsOfBonusTo, achievedPointsOfSource);
             String bonusGrade = null;
             if (verdict == PlagiarismVerdict.PLAGIARISM) {
-                bonusGrade = GradeStep.PLAGIARISM_GRADE;
+                bonusGrade = bonus.getSourceGradingScale().getPlagiarismGradeOrDefault();
             }
             else if (bonusExample.bonusGrade() != null) {
                 bonusGrade = bonusExample.bonusGrade().toString();
@@ -633,8 +633,9 @@ public class ExamService {
         User user = studentExam.getUser();
 
         if (plagiarismMapping.studentHasVerdict(user.getId(), PlagiarismVerdict.PLAGIARISM)) {
+            String plagiarismGrade = gradingScale.map(GradingScale::getPlagiarismGradeOrDefault).orElse(GradingScale.DEFAULT_PLAGIARISM_GRADE);
             return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
-                    0.0, GradeStep.PLAGIARISM_GRADE, GradeStep.PLAGIARISM_GRADE, false, 0.0, null, null, PlagiarismVerdict.PLAGIARISM);
+                    0.0, plagiarismGrade, plagiarismGrade, false, 0.0, null, null, PlagiarismVerdict.PLAGIARISM);
         }
 
         var overallPointsAchieved = 0.0;
