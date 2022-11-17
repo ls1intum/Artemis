@@ -21,11 +21,8 @@ public class ParticipationLifecycleService {
 
     private final TaskScheduler scheduler;
 
-    private final ExerciseDateService exerciseDateService;
-
-    public ParticipationLifecycleService(@Qualifier("taskScheduler") TaskScheduler scheduler, ExerciseDateService exerciseDateService) {
+    public ParticipationLifecycleService(@Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.scheduler = scheduler;
-        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -63,7 +60,7 @@ public class ParticipationLifecycleService {
 
     private Optional<ZonedDateTime> getDateForLifecycle(Participation participation, ParticipationLifecycle lifecycle) {
         return switch (lifecycle) {
-            case DUE -> exerciseDateService.getDueDate(participation);
+            case DUE -> ExerciseDateService.getDueDate(participation);
             case BUILD_AND_TEST_AFTER_DUE_DATE -> getBuildAndTestAfterDueDate(participation);
         };
     }
@@ -81,7 +78,7 @@ public class ParticipationLifecycleService {
     private Optional<ZonedDateTime> getBuildAndTestAfterDueDate(Participation participation) {
         if (participation.getExercise() instanceof ProgrammingExercise programmingExercise && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
             final ZonedDateTime exerciseBuildAndTestAfterDueDate = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate();
-            final Optional<ZonedDateTime> dueDate = exerciseDateService.getDueDate(participation);
+            final Optional<ZonedDateTime> dueDate = ExerciseDateService.getDueDate(participation);
 
             if (dueDate.map(date -> date.isAfter(exerciseBuildAndTestAfterDueDate)).orElse(false)) {
                 return dueDate;
