@@ -11,7 +11,7 @@
                         <span *ngIf="instruction!.usageCount; else usageCountInfinity">{{ instruction!.usageCount }}</span>
                         <!-- if the usage count has no limit, the infinity symbol is displayed (= &#8734) -->
                         <ng-template #usageCountInfinity>&#8734;</ng-template>
-                        <jhi-help-icon placement="top" text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
                     </td>
                 </tr>
             </tbody>
