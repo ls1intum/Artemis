@@ -98,6 +98,7 @@
                 "authorizationUri": "Authorization URI",
                 "tokenUri": "Token URI",
                 "jwkSetUri": "JWKSet URI",
+                "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",
                 "form": {
                     "userPrefix": {
                         "forbidden": "User prefix cannot contain special characters."

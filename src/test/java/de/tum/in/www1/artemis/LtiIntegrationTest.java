@@ -53,10 +53,10 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     private CourseRepository courseRepository;
 
     @Value("${artemis.user-management.external.user}")
-    private String JIRA_USER;
+    private String jiraUser;
 
     @Value("${artemis.user-management.external.password}")
-    private String JIRA_PASSWORD;
+    private String jiraPassword;
 
     private static final String EDX_REQUEST_BODY = """
             custom_component_display_name=Exercise\
@@ -146,7 +146,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
         if (existingUser != null) {
             jiraRequestMockProvider.mockGetUsernameForEmail(email, email, existingUser);
-            jiraRequestMockProvider.mockGetOrCreateUserLti(JIRA_USER, JIRA_PASSWORD, existingUser, email, "", Set.of("students"));
+            jiraRequestMockProvider.mockGetOrCreateUserLti(jiraUser, jiraPassword, existingUser, email, "", Set.of("students"));
         }
         else {
             jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(email);
