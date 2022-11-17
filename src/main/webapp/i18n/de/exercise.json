@@ -76,7 +76,7 @@
             "releaseDate": "Veröffentlichungsdatum",
             "startDate": "Startdatum",
             "dueDate": "Einreichungsfrist",
-            "dueDateError": "Einreichungsfrist muss nach dem Veröffentlichungsdatum und falls vorhanden dem Startdatum sein. Bitte überprüfe deine Auswahl nochmal.",
+            "dueDateError": "Einreichungsfrist muss nach dem Veröffentlichungsdatum und, falls vorhanden, dem Startdatum sein. Bitte überprüfe deine Auswahl nochmal.",
             "startDateError": "Startdatum muss nach dem Veröffentlichungsdatum sein. Bitte überprüfe deine Auswahl nochmal.",
             "assessmentDueDate": "Einreichungsfrist der Bewertung",
             "assessmentDueDateError": "Einreichungsfrist der Bewertung muss nach dem Veröffentlichungsdatum, Startdatum und nach der Einreichungsfrist für Aufgaben sein. Bitte überprüfe deine Auswahl nochmal.",

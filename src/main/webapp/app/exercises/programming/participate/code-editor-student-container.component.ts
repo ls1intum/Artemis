@@ -28,6 +28,7 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -88,10 +89,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                         this.participation = participationWithResults;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
-                        // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed or if they require manual assessment.
-                        // (this should match ProgrammingExerciseParticipation.isLocked on the server-side)
                         const dueDateHasPassed = hasExerciseDueDatePassed(this.exercise, this.participation);
-                        this.repositoryIsLocked = !this.participation.testRun && !!this.exercise.dueDate && dueDateHasPassed;
+                        this.determineRepoLockedState(dueDateHasPassed);
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
                         this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
                         this.checkForTutorAssessment(dueDateHasPassed);
@@ -206,5 +205,15 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     onHintActivated(exerciseHint: ExerciseHint) {
         this.availableExerciseHints = this.availableExerciseHints?.filter((hint) => hint.id !== exerciseHint.id);
         this.activatedExerciseHints?.push(exerciseHint);
+    }
+
+    /**
+     * The repository is locked if the due date is over or the student may not start yet (before start/release date)
+     * @param dueDateHasPassed flag indicating that the (individual) due date is passed
+     */
+    determineRepoLockedState(dueDateHasPassed: boolean) {
+        const participationStartDate = this.exercise.startDate ?? this.exercise.releaseDate;
+        const beforeParticipationStart = participationStartDate && dayjs().isBefore(participationStartDate);
+        this.repositoryIsLocked = ((!this.exercise.isAtLeastTutor && beforeParticipationStart) || dueDateHasPassed) && !this.participation.testRun;
     }
 }

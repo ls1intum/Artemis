@@ -305,7 +305,7 @@
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
-                "tooltip": "The due date has passed, your repository is locked. You may still read the code but you may not make any changes to it."
+                "tooltip": "You are outside of the participation timeframe, your repository is locked. You may still read the code but you may not make any changes to it."
             },
             "preview": {
                 "label": "Preview",

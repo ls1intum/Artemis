@@ -54,7 +54,7 @@ The German language is mainly used for user interaction.
 * **Nutze neutrale Formulierungen**: Wenn möglich ist es empfehlenswert, neutrale Formulierungen zu finden. Neben passiven Formen, wie z.B. Studierende, können auch aktive mit „Mensch“ bzw. „Person“ etc. verwendet werden. Das spart „der/die“ und inkludiert alle Menschen unabhängig davon, welche Eigenschaften/Kategorien diese Personen sonst noch mitbringen.
 * **Beschreibe Handlungen (aktiv oder passiv)**:
 
-  * „Automatisch generierte Ergebnisse werden am Ende des Bearbeitungszeitraums erstellt“. Statt „Die Studenten/Studentinnen erhalten am Ende des Bearbeitungszeitraums ein automisch generiertes Ergebnis.“)
+  * „Automatisch generierte Ergebnisse werden am Ende des Bearbeitungszeitraums erstellt“. Statt „Die Studierenden erhalten am Ende des Bearbeitungszeitraums ein automisch generiertes Ergebnis.“)
   * „Die Anmeldung für die Klausur ist bis zum 15.12.2020 möglich". Statt „Jeder muss sich bis zum 15.12.2020 für die Klausur anmelden.“
 
 * **Sprich Personen direkt an**:

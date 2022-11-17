@@ -679,7 +679,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      */
     public boolean isReleased() {
         // Exam
-        ZonedDateTime releaseDate = getIndividualReleaseDate();
+        ZonedDateTime releaseDate = getParticipationStartDate();
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
 
@@ -781,14 +781,14 @@ public abstract class Exercise extends BaseExercise implements Completable {
     }
 
     /**
-     * Return the individual release date for the exercise of the participation's user
+     * Return the date from when students can participate in the exercise
      * <p>
      * Currently, exercise start dates are the same for all users
      *
-     * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date or start date.
+     * @return the time from which on access to the participation is allowed, for exercises that are not part of an exam, this is just the release date or start date.
      */
     @JsonIgnore
-    public ZonedDateTime getIndividualReleaseDate() {
+    public ZonedDateTime getParticipationStartDate() {
         if (isExamExercise()) {
             return getExerciseGroup().getExam().getStartDate();
         }

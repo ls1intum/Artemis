@@ -80,7 +80,7 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
      * This is the case when the participation is a ProgrammingExerciseStudentParticipation,
      * the buildAndTestAfterDueDate of the exercise is set and the due date has passed,
      * or if manual correction is involved and the due date has passed.
-     *
+     * <p>
      * Locked means that the student can't make any changes to their repository anymore.
      * While we can control this easily in the remote VCS, we need to check this manually
      * for the local repository on the Artemis server.
@@ -103,7 +103,8 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
         else if (programmingExercise.getDueDate() != null) {
             isAfterDueDate = now.isAfter(programmingExercise.getDueDate());
         }
+        boolean isBeforeStartDate = programmingExercise.getParticipationStartDate() != null && now.isBefore(programmingExercise.getParticipationStartDate());
 
-        return isAfterDueDate && !studentParticipation.isTestRun();
+        return isBeforeStartDate && isAfterDueDate && !studentParticipation.isTestRun();
     }
 }
