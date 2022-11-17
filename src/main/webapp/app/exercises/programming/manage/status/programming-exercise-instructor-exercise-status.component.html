@@ -1,4 +1,4 @@
-<fa-icon *ngIf="issues.length; else noIssues" [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom" [ngbTooltip]="tooltipContent"></fa-icon>
+<fa-icon *ngIf="issues.length; else noIssues" [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto" [ngbTooltip]="tooltipContent"></fa-icon>
 
 <ng-template #noIssues>
     <fa-icon [icon]="faCheckCircle" size="2x" class="text-success"></fa-icon>

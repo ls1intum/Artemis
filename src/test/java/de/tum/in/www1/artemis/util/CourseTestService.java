@@ -2187,7 +2187,7 @@ public class CourseTestService {
         ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
         MvcResult result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
         Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
-        Course courseWithOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(createdCourse.getId());
+        Course courseWithOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createdCourse.getId());
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
     }
 
@@ -2221,7 +2221,7 @@ public class CourseTestService {
         result = request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
-        Course actualCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(updatedCourse.getId());
+        Course actualCourse = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.getId());
 
         assertThat(actualCourse.getOnlineCourseConfiguration().getLtiKey()).isEqualTo("changedKey");
         assertThat(actualCourse.getOnlineCourseConfiguration().getLtiSecret()).isEqualTo("changedSecret");
@@ -2242,7 +2242,7 @@ public class CourseTestService {
         result = request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
-        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationElseThrow(updatedCourse.getId());
+        Course courseWithoutOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(updatedCourse.getId());
         assertThat(courseWithoutOnlineConfiguration.getOnlineCourseConfiguration()).isNull();
     }
 

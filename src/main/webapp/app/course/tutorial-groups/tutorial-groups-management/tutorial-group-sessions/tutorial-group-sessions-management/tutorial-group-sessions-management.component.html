@@ -1,0 +1,62 @@
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <div class="row tutorial-group-session-management" *ngIf="isInitialized">
+        <div class="col-12 modal-header">
+            <h4>{{ 'artemisApp.pages.tutorialGroupSessionManagement.title' | artemisTranslate }} - {{ tutorialGroup.title }}</h4>
+            <button type="button" class="btn-close" (click)="clear()"></button>
+        </div>
+        <div class="col-12" *ngIf="tutorialGroup.tutorialGroupSchedule" class="modal-body">
+            <!-- Schedule -->
+            <dt>
+                <span>{{ 'artemisApp.entities.tutorialGroup.schedule' | artemisTranslate }}</span>
+            </dt>
+            <dd>
+                <ng-container *ngIf="tutorialGroup.tutorialGroupSchedule; else scheduleNotSet">
+                    <span>{{
+                        (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) +
+                            ' ' +
+                            tutorialGroup.tutorialGroupSchedule?.startTime +
+                            '-' +
+                            tutorialGroup.tutorialGroupSchedule?.endTime
+                    }}</span>
+                    <br />
+                    <span *ngIf="tutorialGroup.isOnline">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOnline' | artemisTranslate }}</span>
+                    <span *ngIf="!tutorialGroup.isOnline">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOffline' | artemisTranslate }}</span>
+                    : {{ tutorialGroup.tutorialGroupSchedule?.location }}
+                    <br />
+                    <span>
+                        {{
+                            (tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! === 1
+                                ? 'artemisApp.entities.tutorialGroupSchedule.repetitionOneWeek'
+                                : 'artemisApp.entities.tutorialGroupSchedule.repetitionNWeeks'
+                            ) | artemisTranslate: { n: tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! }
+                        }}
+                    </span>
+                </ng-container>
+                <br />
+                <ng-template #scheduleNotSet>
+                    <span>{{ 'artemisApp.pages.tutorialGroupDetail.scheduleNotSet' | artemisTranslate }}</span></ng-template
+                >
+            </dd>
+        </div>
+        <div class="my-2">
+            <button type="button" id="create-session-button" class="btn btn-primary" (click)="openCreateSessionDialog($event)">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span>{{ 'artemisApp.pages.tutorialGroupSessionManagement.createSessionButton' | artemisTranslate }}</span>
+            </button>
+        </div>
+        <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3 modal-body">
+            <jhi-tutorial-group-sessions-table [sessions]="sessions" [timeZone]="course.timeZone" [showIdColumn]="true" [tutorialGroup]="tutorialGroup">
+                <ng-template let-session>
+                    <jhi-tutorial-group-session-row-buttons
+                        [tutorialGroupSession]="session"
+                        [course]="course"
+                        [tutorialGroup]="tutorialGroup"
+                        (cancelOrActivatePressed)="loadAll()"
+                        (tutorialGroupSessionDeleted)="loadAll()"
+                        (tutorialGroupEdited)="loadAll()"
+                    ></jhi-tutorial-group-session-row-buttons>
+                </ng-template>
+            </jhi-tutorial-group-sessions-table>
+        </div>
+    </div>
+</jhi-loading-indicator-container>
