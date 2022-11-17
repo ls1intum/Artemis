@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.lti.Lti13ClientRegistration;
 import de.tum.in.www1.artemis.domain.lti.Lti13PlatformConfiguration;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
-import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
@@ -30,17 +29,13 @@ public class LtiDynamicRegistrationService {
 
     private final Logger log = LoggerFactory.getLogger(LtiDynamicRegistrationService.class);
 
-    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
-
     private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
 
     private final OAuth2JWKSService oAuth2JWKSService;
 
     private final RestTemplate restTemplate;
 
-    public LtiDynamicRegistrationService(OnlineCourseConfigurationService onlineCourseConfigurationService, OnlineCourseConfigurationRepository onlineCourseConfigurationRepository,
-            OAuth2JWKSService oAuth2JWKSService, RestTemplate restTemplate) {
-        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
+    public LtiDynamicRegistrationService(OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, OAuth2JWKSService oAuth2JWKSService, RestTemplate restTemplate) {
         this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
         this.oAuth2JWKSService = oAuth2JWKSService;
         this.restTemplate = restTemplate;

@@ -2187,16 +2187,15 @@ public class CourseTestService {
         MvcResult result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
         Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
-        course.setOnlineCourse(true);
+        createdCourse.setOnlineCourse(true);
         result = request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
-        Course courseWithOnlineConfiguration = courseRepo.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(createdCourse.getId());
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getRegistrationId()).isNotNull();
-        assertEquals(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix(), courseWithOnlineConfiguration.getShortName());
+        assertThat(updatedCourse.getOnlineCourseConfiguration()).isNotNull();
+        assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
+        assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
+        assertThat(updatedCourse.getOnlineCourseConfiguration().getRegistrationId()).isNotNull();
+        assertEquals(updatedCourse.getOnlineCourseConfiguration().getUserPrefix(), updatedCourse.getShortName());
     }
 
     public void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
@@ -2254,7 +2253,7 @@ public class CourseTestService {
     public void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
+        ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
         course = courseRepo.save(course);
 
         request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
