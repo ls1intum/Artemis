@@ -16,6 +16,16 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
+export enum NextDate {
+    START_OR_RELEASE_DATE = 'START_OR_RELEASE_DATE',
+    SUBMISSION_DUE_DATE = 'SUBMISSION_DUE_DATE',
+    ASSESSMENT_DUE_DATE = 'ASSESSMENT_DUE_DATE',
+    COMPLAINT = 'COMPLAINT',
+    EXAM_END_DATE = 'EXAM_END_DATE',
+    RESULT_PUBLISH_DATE = 'RESULT_PUBLISH_DATE',
+    NONE = 'NONE',
+}
+
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
@@ -28,6 +38,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     readonly getIcon = getIcon;
     readonly getIconTooltip = getIconTooltip;
     readonly dayjs = dayjs;
+    readonly NextDate = NextDate;
 
     @Input() public exercise: Exercise;
     @Input() public studentParticipation?: StudentParticipation;
@@ -42,7 +53,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     public isBeforeStartDate: boolean;
     public programmingExercise?: ProgrammingExercise;
     public individualComplaintDeadline?: dayjs.Dayjs;
-    public nextDueDateIndex?: number;
+    public nextDueDate = NextDate.NONE;
     public statusBadges: string[];
     public canComplainLaterOn: boolean;
     public achievedPoints?: number;
@@ -103,27 +114,27 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
     /**
      * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
-     * Arrays (for badge class (= statusBadges) and highlighting (= isNextDueDate)) consist of
+     * Array for badge class (= statusBadges) consist of
      * 0: Exam End Date
      * 1: Publish Results Date
      */
     private setIsNextDueDateExamMode() {
         const now = dayjs();
         if (this.exam?.endDate && now.isBefore(this.exam?.endDate)) {
-            this.nextDueDateIndex = 0;
+            this.nextDueDate = NextDate.EXAM_END_DATE;
             this.statusBadges = ['bg-success', 'bg-success'];
         } else if (this.exam?.publishResultsDate && now.isBefore(this.exam?.publishResultsDate)) {
-            this.nextDueDateIndex = 1;
+            this.nextDueDate = NextDate.RESULT_PUBLISH_DATE;
             this.statusBadges = ['bg-danger', 'bg-success'];
         } else {
-            this.nextDueDateIndex = undefined;
+            this.nextDueDate = NextDate.NONE;
             this.statusBadges = ['bg-danger', 'bg-danger'];
         }
     }
 
     /**
      * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
-     * Arrays (for badge class (= statusBadges) and highlighting (= isNextDueDate)) consist of
+     * Array for badge class (= statusBadges) consist of
      * 0: Start Date (either release date or start date if set)
      * 1: Submission Due Date
      * 2: Assessment Due Date
@@ -133,22 +144,22 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     private setIsNextDueDateCourseMode() {
         const now = dayjs();
         if (this.isBeforeStartDate) {
-            this.nextDueDateIndex = 0;
+            this.nextDueDate = NextDate.START_OR_RELEASE_DATE;
             this.statusBadges = ['bg-success', 'bg-success', 'bg-success', 'bg-success'];
         } else if (this.dueDate && now.isBefore(this.dueDate)) {
-            this.nextDueDateIndex = 1;
+            this.nextDueDate = NextDate.SUBMISSION_DUE_DATE;
             this.statusBadges = ['bg-danger', 'bg-success', 'bg-success', 'bg-success'];
         } else if (this.exercise.assessmentDueDate && now.isBefore(this.exercise.assessmentDueDate)) {
-            this.nextDueDateIndex = 2;
+            this.nextDueDate = NextDate.ASSESSMENT_DUE_DATE;
             this.statusBadges = ['bg-danger', 'bg-danger', 'bg-success', 'bg-success'];
         } else if (this.individualComplaintDeadline && now.isBefore(this.individualComplaintDeadline)) {
-            this.nextDueDateIndex = 3;
+            this.nextDueDate = NextDate.COMPLAINT;
             this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger', 'bg-success'];
         } else if (this.canComplainLaterOn) {
-            this.nextDueDateIndex = 4;
+            this.nextDueDate = NextDate.COMPLAINT;
             this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger', 'bg-danger'];
         } else {
-            this.nextDueDateIndex = undefined;
+            this.nextDueDate = NextDate.NONE;
             this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger', 'bg-danger'];
         }
     }
