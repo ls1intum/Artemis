@@ -92,7 +92,7 @@
                 "ltiKey": "LTI-Key",
                 "ltiSecret": "LTI-Geheimnis",
                 "userPrefix": "Nutzer-Präfix",
-                "requireExistingUser": "Vorhandener Nutzer:innen erforderlich",
+                "requireExistingUser": "Vorhandene:r Nutzer:in erforderlich",
                 "registrationId": "Registrierung ID",
                 "clientId": "Client ID",
                 "authorizationUri": "Authorization URI",
