@@ -353,11 +353,11 @@ public class Course extends DomainObject {
         this.defaultProgrammingLanguage = defaultProgrammingLanguage;
     }
 
-    public Boolean isOnlineCourse() {
+    public boolean isOnlineCourse() {
         return Boolean.TRUE.equals(onlineCourse);
     }
 
-    public void setOnlineCourse(Boolean onlineCourse) {
+    public void setOnlineCourse(boolean onlineCourse) {
         this.onlineCourse = onlineCourse;
     }
 
