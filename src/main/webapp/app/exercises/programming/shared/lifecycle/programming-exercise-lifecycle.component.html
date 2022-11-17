@@ -25,7 +25,7 @@
             <div class="test-schedule-date px-1">
                 <div class="mb-2 text-nowrap">
                     <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
                 </div>
                 <div class="btn btn-light scheduled-test btn-lifecycle" [class.btn-lifecycle--disabled]="readOnly">
                     <fa-icon [icon]="faCogs" size="lg"></fa-icon>
@@ -61,7 +61,6 @@
                     <div class="mb-2 text-nowrap">
                         <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.assessmentType"> Assessment Type </span>
                         <jhi-help-icon
-                            placement="auto"
                             [text]="
                                 'artemisApp.programmingExercise.timeline.' +
                                 (exercise.assessmentType === assessmentType.SEMI_AUTOMATIC ? 'assessmentTypeTooltipManualAssessment' : 'assessmentTypeTooltipAutomaticAssessment')
@@ -88,7 +87,6 @@
                     <div class="mb-2 text-nowrap">
                         <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests">requests</span>
                         <jhi-help-icon
-                            placement="auto"
                             [text]="
                                 'artemisApp.programmingExercise.timeline.' +
                                 (exercise.allowManualFeedbackRequests ? 'feedbackRequestsEnabledTooltip' : 'feedbackRequestsDisabledTooltip')
@@ -125,7 +123,6 @@
                     <div class="mb-2 text-nowrap">
                         <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"> Complaints </span>
                         <jhi-help-icon
-                            placement="auto"
                             [text]="
                                 'artemisApp.programmingExercise.timeline.' +
                                 (exercise.allowComplaintsForAutomaticAssessments ? 'allowComplaintOnAutomaticAssessmentTooltip' : 'disallowComplaintOnAutomaticAssessmentTooltip')
