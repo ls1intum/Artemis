@@ -24,8 +24,6 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-// eslint-disable-next-line @typescript-eslint/tslint/config
-// tslint:disable-next-line:max-line-length
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -365,8 +363,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         openModalStub.mockReturnValue(modalRef);
 
         bubbleSortStep.nativeElement.click();
-        mergeSortStep.nativeElement.click();
-
         expect(openModalStub).toHaveBeenCalledOnce();
         expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual({
@@ -377,6 +373,22 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 result,
                 showTestDetails: true,
                 taskName: 'Implement Bubble Sort',
+                numberOfNotExecutedTests: 1,
+            },
+        });
+
+        mergeSortStep.nativeElement.click();
+        expect(openModalStub).toHaveBeenCalledTimes(2);
+        expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(modalRef).toEqual({
+            componentInstance: {
+                exercise,
+                exerciseType: ExerciseType.PROGRAMMING,
+                feedbackFilter: ['testMergeSort'],
+                result,
+                showTestDetails: true,
+                taskName: 'Implement Merge Sort',
+                numberOfNotExecutedTests: 0,
             },
         });
     }));
@@ -434,8 +446,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         openModalStub.mockReturnValue(modalRef);
 
         bubbleSortStep.nativeElement.click();
-        mergeSortStep.nativeElement.click();
-
         expect(openModalStub).toHaveBeenCalledOnce();
         expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual({
@@ -446,6 +456,22 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 result,
                 showTestDetails: false,
                 taskName: 'Implement Bubble Sort',
+                numberOfNotExecutedTests: 0,
+            },
+        });
+
+        mergeSortStep.nativeElement.click();
+        expect(openModalStub).toHaveBeenCalledTimes(2);
+        expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(modalRef).toEqual({
+            componentInstance: {
+                exercise,
+                exerciseType: ExerciseType.PROGRAMMING,
+                feedbackFilter: ['testMergeSort'],
+                result,
+                showTestDetails: false,
+                taskName: 'Implement Merge Sort',
+                numberOfNotExecutedTests: 0,
             },
         });
     }));
