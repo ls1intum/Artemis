@@ -298,7 +298,7 @@ public class CourseResource {
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        if (!course.isOnlineCourse() || course.getOnlineCourseConfiguration() == null) {
+        if (Boolean.FALSE.equals(course.isOnlineCourse())) {
             throw new BadRequestAlertException("Course must be online course", Course.ENTITY_NAME, "courseMustBeOnline");
         }
 
