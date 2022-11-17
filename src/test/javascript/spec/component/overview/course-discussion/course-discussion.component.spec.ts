@@ -374,7 +374,7 @@ describe('CourseDiscussionComponent', () => {
         );
     }));
 
-    it('should not call fetchNextPage when rendering first fetched posts ', fakeAsync(() => {
+    it('should not call fetchNextPage when rendering first fetched posts', fakeAsync(() => {
         component.itemsPerPage = 5;
         component.ngOnInit();
         tick();
@@ -392,7 +392,7 @@ describe('CourseDiscussionComponent', () => {
         expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
     }));
 
-    it('should call fetchNextPage when rendering last of fetched posts ', fakeAsync(() => {
+    it('should call fetchNextPage when rendering last of fetched posts', fakeAsync(() => {
         prepareComponent();
 
         const onItemsRenderEvent = new CustomEvent('onItemsRender');
