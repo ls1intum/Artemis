@@ -31,7 +31,7 @@ export class ExampleSolutionComponent implements OnInit {
         this.exerciseService.getExerciseForExampleSolution(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             const newExercise = exerciseResponse.body!;
             this.exercise = newExercise;
-            this.exampleSolutionInfo = this.exerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown);
+            this.exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown);
         });
     }
 }

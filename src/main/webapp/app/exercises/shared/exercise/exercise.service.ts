@@ -520,7 +520,7 @@ export class ExerciseService {
      * @param exercise Exercise model that may have an exampleSolution.
      * @param artemisMarkdown An ArtemisMarkdownService instance so we don't need to include it in the same bundle with ExerciseService when compiling.
      */
-    extractExampleSolutionInfo(exercise: Exercise, artemisMarkdown: ArtemisMarkdownService): ExampleSolutionInfo {
+    static extractExampleSolutionInfo(exercise: Exercise, artemisMarkdown: ArtemisMarkdownService): ExampleSolutionInfo {
         // ArtemisMarkdownService is expected as a parameter as opposed to a dependency in the constructor because doing
         // that increased initial bundle size from 2.31 MB to 3.75 MB and caused production build to fail with error since
         // it exceeded maximum budget.

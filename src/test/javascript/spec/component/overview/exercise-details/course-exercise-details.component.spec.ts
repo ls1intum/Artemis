@@ -52,6 +52,7 @@ import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initi
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -216,14 +217,16 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should configure example solution for exercise', () => {
         const exampleSolutionInfo = {} as ExampleSolutionInfo;
-        const exerciseServiceSpy = jest.spyOn(exerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
+        const exerciseServiceSpy = jest.spyOn(ExerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
+
+        const artemisMarkdown = fixture.debugElement.injector.get(ArtemisMarkdownService);
 
         expect(comp.exampleSolutionInfo).toBeUndefined();
         const newExercise = { ...textExercise };
         comp.showIfExampleSolutionPresent(newExercise);
         expect(comp.exampleSolutionInfo).toBe(exampleSolutionInfo);
         expect(exerciseServiceSpy).toHaveBeenCalledOnce();
-        expect(exerciseServiceSpy).toHaveBeenCalledWith(newExercise);
+        expect(exerciseServiceSpy).toHaveBeenCalledWith(newExercise, artemisMarkdown);
     });
 
     it('should collapse example solution for tutors', () => {
