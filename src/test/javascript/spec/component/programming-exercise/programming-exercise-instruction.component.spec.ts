@@ -13,6 +13,8 @@ import { MockResultService } from '../../helpers/mocks/service/mock-result.servi
 import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
 import { problemStatement, problemStatementBubbleSortFailsHtml, problemStatementBubbleSortNotExecutedHtml } from '../../helpers/sample/problemStatement.json';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+// eslint-disable-next-line @typescript-eslint/tslint/config
+// tslint:disable-next-line:max-line-length
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
@@ -24,6 +26,8 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+// eslint-disable-next-line @typescript-eslint/tslint/config
+// tslint:disable-next-line:max-line-length
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
