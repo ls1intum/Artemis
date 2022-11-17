@@ -386,7 +386,7 @@ describe('CourseDiscussionComponent', () => {
         onItemsRenderEvent['startIndex'] = 0;
         onItemsRenderEvent['endIndex'] = 1;
 
-        const scrollableDiv = getElement(fixture.debugElement, 'ag-virtual-scroll');
+        const scrollableDiv = getElement(fixture.debugElement, 'virtual-scroll');
         scrollableDiv.dispatchEvent(onItemsRenderEvent);
 
         expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
@@ -401,7 +401,7 @@ describe('CourseDiscussionComponent', () => {
         onItemsRenderEvent['startIndex'] = 3;
         onItemsRenderEvent['endIndex'] = 4;
 
-        const scrollableDiv = getElement(fixture.debugElement, 'ag-virtual-scroll');
+        const scrollableDiv = getElement(fixture.debugElement, 'virtual-scroll');
         scrollableDiv.dispatchEvent(onItemsRenderEvent);
 
         expect(fetchNextPageSpy).toHaveBeenCalledOnce();
