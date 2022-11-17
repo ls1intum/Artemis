@@ -73,7 +73,6 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
      * @throws BadRequestAlertException 400 (Bad Request) if the online course configuration is invalid
      */
     public void validateOnlineCourseConfiguration(OnlineCourseConfiguration ocConfiguration) {
-
         if (StringUtils.isBlank(ocConfiguration.getLtiKey()) || StringUtils.isBlank(ocConfiguration.getLtiSecret())) {
             throw new BadRequestAlertException("Invalid online course configuration", ENTITY_NAME, "invalidOnlineCourseConfiguration");
         }
