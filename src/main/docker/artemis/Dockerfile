@@ -3,6 +3,7 @@
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
+# TODO: just use eclipse-temurin as gradle installs node, used image below to match bamboo build pipeline for prod
 FROM ghcr.io/ls1intum/docker-jdk-node-yarn as builder
 
 WORKDIR /opt/artemis
