@@ -20,6 +20,7 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/ov
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -53,6 +54,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faSync = faSync;
     faCircleNotch = faCircleNotch;
     FeatureToggle = FeatureToggle;
+
+    eProfileToggle = ProfileToggle;
 
     constructor(
         private courseService: CourseManagementService,

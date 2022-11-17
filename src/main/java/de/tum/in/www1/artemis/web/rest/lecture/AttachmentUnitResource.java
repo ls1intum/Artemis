@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 @RestController
 @RequestMapping("api/")
+@Profile("!decoupling || lecture") // TODO: Remove !decoupling
 public class AttachmentUnitResource {
 
     private final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);

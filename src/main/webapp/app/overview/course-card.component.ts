@@ -12,6 +12,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { GraphColors } from 'app/entities/statistics.model';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -48,6 +49,8 @@ export class CourseCardComponent implements OnChanges {
         group: ScaleType.Ordinal,
         domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
+
+    eProfileToggle = ProfileToggle;
 
     constructor(
         private router: Router,
