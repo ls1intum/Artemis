@@ -8,7 +8,8 @@ The core ideas of free software always have been "use", "study", "share", and "i
 With Artemis, we embrace all of those aspects:
 
 * Artemis is **used** by over ten universities and thousands of students.
-* Artemis is part of active research and is constantly improved by students as part of university courses or masters/bachelors theses.
+* Artemis is part of active research and is constantly improved by students as part of university courses or
+  masters/bachelors theses.
   **Studying** the Artemis source code helps our students to improve their software engineering skills
   while working on a real, actively used product.
 * The foundation of learning and teaching is **sharing** knowledge.
