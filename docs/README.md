@@ -5,7 +5,8 @@ To get started with RST, check out the [Quickstart] or this [cheatsheet].
 
 ## Documentation Hosting
 
-[Read the Docs] (RtD) hosts the [Artemis documentation] for the `develop` (latest) branch, as well as for git tags.
+[Read the Docs] (RtD) hosts the [Artemis documentation] for the `develop` (latest) branch, as well as for
+git tags and branches of pull requests.
 You can switch the shown version at the bottom of the sidebar.
 The latest tag is always the _stable_ version.
 For pull requests, the documentation is available at `https://artemis-platform--{PR_NUMBER}.org.readthedocs.build/en/{PR_NUMBER}/`.
@@ -32,7 +33,7 @@ pip3 install -r requirements.txtclient-tests.rst
 
 ## Running Sphinx Locally
 
-To  generate the documentation as single HTML file, use the provided `Makefile`/`make.bat` files in the folder `docs`:
+To generate the documentation as a single HTML file, use the provided `Makefile`/`make.bat` files in the folder `docs`:
 ```bash
 # maxOS / Linux
 make singlehtml
@@ -49,6 +50,19 @@ make livehtml
 
 # Windows
 make.bat livehtml
+```
+
+## Running Sphinx Locally with Docker
+
+To generate the documentation as an HTML file, use the provided docker command from the project root:
+```bash
+docker run --rm -v ${PWD}/docs:/docs $(docker build -q -t sphinx -f docs/Dockerfile ./docs) make singlehtml
+```
+
+To auto-generate the documentation as HTML file and live-reload on changes,
+use the provided docker command from the project root:
+```bash
+docker run --rm -v ${PWD}/docs:/docs -p 8000:8000 $(docker build -q -t sphinx -f docs/Dockerfile ./docs)
 ```
 
 ## Tool support
