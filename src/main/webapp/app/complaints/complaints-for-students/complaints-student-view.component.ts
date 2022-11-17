@@ -13,7 +13,6 @@ import { Submission } from 'app/entities/submission.model';
 import { filter } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
-import { AssessmentType } from 'app/entities/assessment-type.model';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -103,7 +102,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Determines whether or not to show the section
+     * Determines whether to show the section
      */
     private getSectionVisibility(): boolean {
         if (this.isExamMode) {
@@ -118,7 +117,11 @@ export class ComplaintsStudentViewComponent implements OnInit {
      */
     private isTimeOfComplaintValid(): boolean {
         if (!this.isExamMode) {
-            return this.canFileActionWithCompletionDate(this.result!.completionDate!, this.course?.maxComplaintTimeDays);
+            if (this.course?.maxComplaintTimeDays) {
+                const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise, this.course.maxComplaintTimeDays, this.result, this.participation);
+                return !!dueDate && dayjs().isBefore(dueDate);
+            }
+            return false;
         }
         return this.isWithinExamReviewPeriod();
     }
@@ -127,33 +130,9 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Checks whether the student is allowed to submit a more feedback request. This is only possible for course exercises.
      */
     private isTimeOfFeedbackRequestValid(): boolean {
-        if (!this.isExamMode) {
-            return this.canFileActionWithCompletionDate(this.result!.completionDate!, this.course?.maxRequestMoreFeedbackTimeDays);
-        }
-        return false;
-    }
-
-    /**
-     * Checks if a complaint (either actual complaint or more feedback request) can be filed
-     * The result's completionDate specifies the date when the assessment was submitted
-     */
-    private canFileActionWithCompletionDate(completionDate: dayjs.Dayjs, actionThresholdInDays?: number): boolean {
-        // Especially for programming exercises: If there is not yet a manual result for a manual correction, no action should be allowed
-        if (
-            !this.result!.assessmentType ||
-            (this.exercise.assessmentType && this.exercise.assessmentType !== AssessmentType.AUTOMATIC && this.result!.assessmentType === AssessmentType.AUTOMATIC)
-        ) {
-            return false;
-        }
-        if (!actionThresholdInDays) {
-            return false;
-        }
-        const isWithinThreshold = dayjs().isSameOrBefore(dayjs(completionDate).add(actionThresholdInDays, 'day'));
-        if (!this.exercise.assessmentDueDate) {
-            return isWithinThreshold;
-        }
-        if (dayjs().isAfter(dayjs(this.exercise.assessmentDueDate))) {
-            return isWithinThreshold || dayjs().isSameOrBefore(dayjs(this.exercise.assessmentDueDate).add(actionThresholdInDays, 'day'));
+        if (!this.isExamMode && this.course?.maxRequestMoreFeedbackTimeDays) {
+            const dueDate = ComplaintService.getIndividualComplaintDueDate(this.exercise, this.course.maxRequestMoreFeedbackTimeDays, this.result, this.participation);
+            return !!dueDate && dayjs().isBefore(dueDate);
         }
         return false;
     }
