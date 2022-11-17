@@ -17,13 +17,6 @@
     </div>
     <!-- Feedbacks container -->
     <ng-template #feedbackContainer>
-        <div *ngIf="!loadingFailed && resultIsPreliminary(result)">
-            <div class="d-flex justify-content-end m-1">
-                <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
-            </div>
-            <p *ngIf="exercise?.assessmentType !== AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
-            <p *ngIf="exercise?.assessmentType === AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
-        </div>
         <div *ngIf="!loadingFailed && filteredFeedbackList && filteredFeedbackList.length; else buildLogsContainer" class="result-detail-container">
             <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
                 <span class="result-score-chart-title">
@@ -72,6 +65,13 @@
                     <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
                     <span class="ms-1" jhiTranslate="artemisApp.result.chart.filterApplied">A filter is applied to your feedback</span>
                     <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
+                </div>
+                <div *ngIf="!loadingFailed && resultIsPreliminary(result)">
+                    <div class="d-flex justify-content-end m-1">
+                        <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
+                    </div>
+                    <p *ngIf="exercise?.assessmentType !== AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
+                    <p *ngIf="exercise?.assessmentType === AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
                 </div>
                 <div *ngIf="testCaseCount || numberOfNotExecutedTests || scaFeedbackCount || manualFeedbackCount" class="mb-2">
                     <div *ngIf="testCaseCount">
