@@ -12,7 +12,7 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
-import { AgVsRenderEvent } from 'app/shared/ag-virtual-scroll/ag-vs-render-event.class';
+import { VirtualScrollRenderEvent } from 'app/shared/virtual-scroll/virtual-scroll-render-event.class';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -253,7 +253,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      * fetches next page of posts if currently rendered posts are approaching the end of the available list of elements
      * @param event
      */
-    onItemsRender(event: AgVsRenderEvent<any>) {
+    onItemsRender(event: VirtualScrollRenderEvent<any>) {
         if (!this.isLoading && event.endIndex + 1 < this.totalItems && event.endIndex + 1 > this.posts.length - 2) {
             this.fetchNextPage();
         }

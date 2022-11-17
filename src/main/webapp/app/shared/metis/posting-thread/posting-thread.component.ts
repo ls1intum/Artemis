@@ -11,4 +11,8 @@ export class PostingThreadComponent {
     @Input() showAnswers: boolean;
     @Input() isCourseMessagesPage: boolean;
     @Output() openThread = new EventEmitter<Post>();
+
+    public setShowAnswers(value: boolean) {
+        this.showAnswers = value;
+    }
 }

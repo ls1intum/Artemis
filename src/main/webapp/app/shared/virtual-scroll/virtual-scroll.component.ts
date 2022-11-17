@@ -6,24 +6,22 @@
 
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
-import { AgVsRenderEvent } from 'app/shared/ag-virtual-scroll/ag-vs-render-event.class';
+import { VirtualScrollRenderEvent } from 'app/shared/virtual-scroll/virtual-scroll-render-event.class';
 
 @Component({
-    selector: 'ag-virtual-scroll',
-    templateUrl: './ag-virtual-scroll.component.html',
-    styleUrls: ['ag-virtual-scroll.style.css'],
+    selector: 'virtual-scroll',
+    templateUrl: './virtual-scroll.component.html',
+    styleUrls: ['virtual-scroll.style.css'],
 })
-export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
+export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
     @Input('items') public originalItems: any[] = [];
     @Input() forceReload: boolean;
     @Output() forceReloadChange = new EventEmitter<boolean>();
-    @Output() private onItemsRender = new EventEmitter<AgVsRenderEvent<any>>();
+    @Output() private onItemsRender = new EventEmitter<VirtualScrollRenderEvent<any>>();
 
-    public minRowHeight = 126.7;
-
-    public height = '500px';
+    minRowHeight = 126.7;
 
     public prevOriginalItems: any[] = [];
     public items: any[] = [];
@@ -62,7 +60,6 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
             }
         });
 
-        this.el.style.height = this.height;
         this.minRowHeight = Number(this.minRowHeight);
     }
 
@@ -85,14 +82,15 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
                     }
                 } else {
                     if (this.originalItems.length > this.prevOriginalItems.length) {
+                        // next page of arriving elements are appended to the end of the items list and are processed
+
                         this.previousItemsHeight = this.previousItemsHeight.concat(new Array(this.originalItems.length - this.prevOriginalItems.length).fill(null));
                         this.prepareDataItems();
                     } else {
+                        // changes in the displayed elements are reflected to the user
                         for (let i = 0; i < this.prevOriginalItems.length; i++) {
-                            this.previousItemsHeight[i] = null;
-
                             const displayIndex = i - this.startIndex;
-                            if (displayIndex >= 0 && displayIndex <= this.endIndex) {
+                            if (displayIndex >= 0 && i <= this.endIndex) {
                                 // if item is displayed to the user then it is updated
                                 this.items[displayIndex] = this.originalItems[i];
                             }
@@ -100,7 +98,7 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
                     }
                 }
                 this.prevOriginalItems = this.originalItems;
-                this.forceReloadChange.emit((this.forceReload = false));
+                this.forceReloadChange.emit(false);
             }
         });
     }
@@ -114,12 +112,11 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     private onScroll() {
-        const up = this.el.scrollTop < this.currentScroll;
-        this.currentScroll = this.el.scrollTop;
-
-        this.prepareDataItems();
         this.lastScrollIsUp = this.scrollIsUp;
-        this.scrollIsUp = up;
+        this.scrollIsUp = this.el.scrollTop < this.currentScroll;
+
+        this.currentScroll = this.el.scrollTop;
+        this.prepareDataItems();
     }
 
     /**
@@ -127,7 +124,7 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
      *
      */
     private onNavigate() {
-        this.forceReload = true;
+        this.forceReloadChange.emit(true);
     }
 
     private prepareDataItems() {
@@ -135,12 +132,28 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
         this.prepareDataVirtualScroll();
     }
 
-    private registerCurrentItemsHeight() {
+    private registerCurrentItemsHeight(itemsThatAreGone?: number) {
         const children = this.itemsContainerEl.children;
         for (let i = 0; i < children.length; i++) {
             const child = children[i];
             const realIndex = this.startIndex + i;
-            this.previousItemsHeight[realIndex] = child.getBoundingClientRect().height;
+
+            if (itemsThatAreGone !== undefined && i === itemsThatAreGone) {
+                let answerListHeight = 0;
+
+                child.querySelectorAll('.answer-post').forEach((subElement) => {
+                    answerListHeight += subElement.getBoundingClientRect().height;
+                });
+
+                if (answerListHeight > 0) {
+                    // recalculate element height for posts that are removed from the DOM tree via reducing by their answerPost heights
+                    this.previousItemsHeight[realIndex] = child.getBoundingClientRect().height - answerListHeight;
+                    this.el.scrollTop -= answerListHeight;
+                    this.currentScroll = this.el.scrollTop;
+                }
+            } else {
+                this.previousItemsHeight[realIndex] = child.getBoundingClientRect().height;
+            }
         }
     }
 
@@ -184,13 +197,20 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
         this.contentHeight = dimensions.contentHeight;
         this.paddingTop = dimensions.paddingTop;
+
+        if (dimensions.itemsThatAreGone > this.startIndex) {
+            // recalculate height for element to be removed
+            this.registerCurrentItemsHeight(dimensions.itemsThatAreGone - 1 - this.startIndex);
+        }
+
         this.startIndex = dimensions.itemsThatAreGone;
         this.endIndex = Math.min(this.startIndex + this.numberItemsCanRender(), this.originalItems.length - 1);
 
         this.items = this.originalItems.slice(this.startIndex, Math.min(this.endIndex + 1, this.originalItems.length));
 
+        // information about currently rendered items are emitted
         this.onItemsRender.emit(
-            new AgVsRenderEvent<any>({
+            new VirtualScrollRenderEvent<any>({
                 items: this.items,
                 startIndex: this.startIndex,
                 endIndex: this.endIndex,
@@ -202,6 +222,7 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     private numberItemsCanRender() {
+        // total number of items that are displayed
         return Math.floor(this.el.clientHeight / this.minRowHeight) + 2;
     }
 

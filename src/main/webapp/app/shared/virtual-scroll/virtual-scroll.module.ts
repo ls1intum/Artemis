@@ -7,11 +7,11 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { AgVirtualScrollComponent } from './ag-virtual-scroll.component';
+import { VirtualScrollComponent } from './virtual-scroll.component';
 
 @NgModule({
     imports: [CommonModule],
-    declarations: [AgVirtualScrollComponent],
-    exports: [AgVirtualScrollComponent],
+    declarations: [VirtualScrollComponent],
+    exports: [VirtualScrollComponent],
 })
-export class AgVirtualScrollModule {}
+export class VirtualScrollModule {}

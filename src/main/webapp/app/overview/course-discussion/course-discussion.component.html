@@ -143,13 +143,13 @@
         </div>
         <!-- list of posts -->
         <div class="col-12">
-            <ag-virtual-scroll #vs [items]="posts" [(forceReload)]="forceReload" (onItemsRender)="onItemsRender($event)">
-                <jhi-posting-thread *ngFor="let post of vs.items; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"> </jhi-posting-thread>
+            <virtual-scroll #vs [items]="posts" [(forceReload)]="forceReload" (onItemsRender)="onItemsRender($event)">
+                <jhi-posting-thread *ngFor="let post of vs.items; trackBy: postsTrackByFn" [post]="post" [showAnswers]="false"> </jhi-posting-thread>
                 <!-- spinner while loading posts -->
                 <div class="text-center">
                     <div *ngIf="isLoading" class="spinner-border mt-3" role="status"></div>
                 </div>
-            </ag-virtual-scroll>
+            </virtual-scroll>
         </div>
     </div>
 </div>

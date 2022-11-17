@@ -41,7 +41,7 @@ import {
     metisLecturePosts,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
-import { AgVirtualScrollComponent } from 'app/shared/ag-virtual-scroll/ag-virtual-scroll.component';
+import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -66,7 +66,7 @@ describe('CourseDiscussionComponent', () => {
             imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbPaginationModule)],
             declarations: [
                 CourseDiscussionComponent,
-                MockComponent(AgVirtualScrollComponent),
+                MockComponent(VirtualScrollComponent),
                 MockComponent(PostingThreadComponent),
                 MockComponent(PostCreateEditModalComponent),
                 MockComponent(FaIconComponent),

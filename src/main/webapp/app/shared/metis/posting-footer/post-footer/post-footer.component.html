@@ -18,7 +18,7 @@
         </span>
     </div>
 </div>
-<ng-container *ngIf="showAnswers">
+<ng-container *ngIf="showAnswers" class="list-answer-post">
     <jhi-answer-post
         *ngFor="let answerPost of sortedAnswerPosts; let isLastAnswer = last; trackBy: answerPostTrackByFn"
         [posting]="answerPost"
