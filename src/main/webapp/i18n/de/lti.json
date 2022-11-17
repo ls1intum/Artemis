@@ -58,7 +58,7 @@
                 "clientIdTooltip": "Es ist möglich, dieses Feld und die folgenden URI-Felder manuell zu konfigurieren, aber es wird dringend empfohlen, den Dynamic Registration Service zur automatischen Konfiguration zu verwenden.",
                 "form": {
                     "userPrefix": {
-                        "forbidden": "Nutzer Präfix darf keine Sonderzeichen beinhalten."
+                        "forbidden": "Nutzer-Präfix darf keine Sonderzeichen beinhalten."
                     }
                 }
             }
