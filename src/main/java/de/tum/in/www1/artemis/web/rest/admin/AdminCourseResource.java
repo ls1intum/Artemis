@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -47,13 +48,16 @@ public class AdminCourseResource {
 
     private final FileService fileService;
 
+    private final OAuth2JWKSService oAuth2JWKSService;
+
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService) {
+            FileService fileService, OAuth2JWKSService oAuth2JWKSService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
+        this.oAuth2JWKSService = oAuth2JWKSService;
     }
 
     /**
@@ -98,6 +102,9 @@ public class AdminCourseResource {
         }
 
         Course result = courseRepository.save(course);
+        if (course.isOnlineCourse()) {
+            oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
+        }
         return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
 

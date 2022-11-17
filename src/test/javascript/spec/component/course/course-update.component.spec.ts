@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -44,6 +44,7 @@ describe('Course Management Update Component', () => {
     let profileService: ProfileService;
     let organizationService: OrganizationManagementService;
     let course: Course;
+    const validTimeZone = 'Europe/Berlin';
 
     beforeEach(() => {
         course = new Course();
@@ -71,6 +72,7 @@ describe('Course Management Update Component', () => {
         course.presentationScore = 16;
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
+        course.timeZone = 'Europe/London';
 
         const parentRoute = {
             data: of({ course }),
@@ -98,10 +100,12 @@ describe('Course Management Update Component', () => {
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(RemoveKeysPipe),
+                MockDirective(NgbTypeahead),
             ],
         })
             .compileComponents()
             .then(() => {
+                (Intl as any).supportedValuesOf = () => [validTimeZone];
                 fixture = TestBed.createComponent(CourseUpdateComponent);
                 comp = fixture.componentInstance;
                 courseManagementService = TestBed.inject(CourseManagementService);
@@ -113,6 +117,7 @@ describe('Course Management Update Component', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        (Intl as any).supportedValuesOf = undefined;
     });
 
     describe('ngOnInit', () => {

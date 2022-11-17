@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseGroup, Language } from 'app/entities/course.model';
+import { Course, CourseGroup, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -9,6 +9,11 @@ import { Observable, OperatorFunction, Subject, catchError, concat, finalize, fo
 import { AlertService } from 'app/core/util/alert.service';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import {
+    ScheduleFormComponent,
+    ScheduleFormData,
+} from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
+import { isEqual } from 'lodash-es';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 
@@ -21,13 +26,14 @@ export interface TutorialGroupFormData {
     language?: Language;
     campus?: string;
     notificationText?: string; // Only in edit mode
+    schedule?: ScheduleFormData;
 }
 
 export class UserWithLabel extends User {
     label: string;
 }
 
-const nonWhitespaceRegExp: RegExp = new RegExp('\\S');
+export const titleRegex: RegExp = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
 
 @Component({
     selector: 'jhi-tutorial-group-form',
@@ -47,7 +53,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     GERMAN = Language.GERMAN;
     ENGLISH = Language.ENGLISH;
 
-    @Input() courseId: number;
+    @Input() course: Course;
     @Input() isEditMode = false;
     @Output() formSubmitted: EventEmitter<TutorialGroupFormData> = new EventEmitter<TutorialGroupFormData>();
 
@@ -66,6 +72,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     @ViewChild('campusInput', { static: true }) campusTypeAhead: NgbTypeahead;
     campusFocus$ = new Subject<string>();
     campusClick$ = new Subject<string>();
+
+    configureSchedule = true;
+    @ViewChild('scheduleForm') scheduleFormComponent: ScheduleFormComponent;
+    existingScheduleFormDate: ScheduleFormData | undefined;
 
     // icons
     faSave = faSave;
@@ -106,7 +116,39 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !this.form.invalid;
+        if (this.configureSchedule) {
+            return !this.form.invalid;
+        } else {
+            return !(
+                this.titleControl!.invalid ||
+                this.teachingAssistantControl!.invalid ||
+                this.capacityControl!.invalid ||
+                this.isOnlineControl!.invalid ||
+                this.languageControl!.invalid ||
+                this.campusControl!.invalid
+            );
+        }
+    }
+
+    get showScheduledChangedWarning() {
+        if (!this.isEditMode) {
+            return false;
+        }
+        const originalHasSchedule = !!this.existingScheduleFormDate;
+        if (!originalHasSchedule) {
+            return false;
+        }
+        const updateHasSchedule = this.configureSchedule && this.form.value.schedule;
+
+        if (originalHasSchedule && !updateHasSchedule) {
+            return true;
+        } else if (!originalHasSchedule && updateHasSchedule) {
+            return true;
+        } else if (!originalHasSchedule && !updateHasSchedule) {
+            return false;
+        } else {
+            return !isEqual({ ...this.form.value.schedule }, this.existingScheduleFormDate);
+        }
     }
 
     ngOnInit(): void {
@@ -125,6 +167,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     submitForm() {
         const tutorialGroupFormData: TutorialGroupFormData = { ...this.form.value };
         tutorialGroupFormData.additionalInformation = this.additionalInformation;
+        if (!this.configureSchedule) {
+            tutorialGroupFormData.schedule = undefined;
+        }
         this.formSubmitted.emit(tutorialGroupFormData);
     }
 
@@ -133,7 +178,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     }
 
     taFormatter = (user: UserWithLabel) => user.label;
-
     taSearch: OperatorFunction<string, readonly UserWithLabel[]> = (text$: Observable<string>) => {
         return this.mergeSearch$(text$, this.taFocus$, this.taClick$, this.taTypeAhead).pipe(
             map((term) => (term === '' ? this.teachingAssistants : this.teachingAssistants.filter((ta) => ta.label.toLowerCase().indexOf(term.toLowerCase()) > -1))),
@@ -160,7 +204,8 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         }
 
         this.form = this.fb.group({
-            title: [undefined, [Validators.required, Validators.maxLength(255), Validators.pattern(nonWhitespaceRegExp)]],
+            // Note: We restrict the title so 19 characters so we can create a 20char communication channel name with the prefix $ from the tite
+            title: [undefined, [Validators.required, Validators.maxLength(19), Validators.pattern(titleRegex)]],
             teachingAssistant: [undefined, [Validators.required]],
             capacity: [undefined, [Validators.min(1)]],
             isOnline: [false, [Validators.required]],
@@ -177,8 +222,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         if (formData.teachingAssistant) {
             formData.teachingAssistant = this.createUserWithLabel(formData.teachingAssistant);
         }
-        this.form.patchValue(formData);
+        this.configureSchedule = !!formData.schedule;
+        this.existingScheduleFormDate = formData.schedule;
         this.additionalInformation = formData.additionalInformation;
+        this.form.patchValue(formData);
     }
 
     private createUserWithLabel(user: User): UserWithLabel {
@@ -201,7 +248,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     private getTeachingAssistantsInCourse() {
         const generateUserObservable = (group: CourseGroup) => {
-            return this.courseManagementService.getAllUsersInCourseGroup(this.courseId, group).pipe(
+            return this.courseManagementService.getAllUsersInCourseGroup(this.course.id!, group).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
                     return of([]);
@@ -238,7 +285,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     private getUniqueCampusValuesOfCourse() {
         return concat(
             of([]), // default items
-            this.tutorialGroupService.getUniqueCampusValues(this.courseId).pipe(
+            this.tutorialGroupService.getUniqueCampusValues(this.course.id!).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
                     return of([]);

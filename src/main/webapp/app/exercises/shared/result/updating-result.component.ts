@@ -12,9 +12,9 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Submission, SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { MissingResultInfo } from 'app/exercises/shared/result/result.component';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
 
 /**
@@ -44,7 +44,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     result?: Result;
     isBuilding: boolean;
-    missingResultInfo = MissingResultInfo.NONE;
+    missingResultInfo = MissingResultInformation.NONE;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
@@ -64,7 +64,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             const latestResult = this.participation.results && this.participation.results.find(({ rated }) => this.showUngradedResults || rated === true);
             // Make sure that the participation result is connected to the newest result.
             this.result = latestResult ? { ...latestResult, participation: this.participation } : undefined;
-            this.missingResultInfo = MissingResultInfo.NONE;
+            this.missingResultInfo = MissingResultInformation.NONE;
 
             this.subscribeForNewResults();
             // Currently submissions are only used for programming exercises to visualize the build process.
@@ -131,9 +131,9 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     private generateMissingResultInfoForFailedProgrammingExerciseSubmission() {
         // Students have more options to check their code if the offline IDE is activated, so we suggest different actions
         if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
-            return MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
+            return MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE;
         }
-        return MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE;
+        return MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE;
     }
 
     /**
@@ -168,7 +168,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             this.missingResultInfo = this.generateMissingResultInfoForFailedProgrammingExerciseSubmission();
         } else {
             // everything ok, remove the warning
-            this.missingResultInfo = MissingResultInfo.NONE;
+            this.missingResultInfo = MissingResultInformation.NONE;
         }
     }
 }

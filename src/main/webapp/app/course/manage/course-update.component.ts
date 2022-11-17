@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { Observable } from 'rxjs';
+import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
@@ -16,7 +16,7 @@ import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { LOGIN_PATTERN, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +24,7 @@ import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-course-update',
@@ -33,6 +34,12 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
 export class CourseUpdateComponent implements OnInit {
     CachingStrategy = CachingStrategy;
     ProgrammingLanguage = ProgrammingLanguage;
+
+    @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
+    tzFocus$ = new Subject<string>();
+    tzClick$ = new Subject<string>();
+    timeZones: string[] = [];
+    originalTimeZone?: string;
 
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
@@ -49,7 +56,6 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false; // default value
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
-
     // Icons
     faSave = faSave;
     faBan = faBan;
@@ -62,6 +68,7 @@ export class CourseUpdateComponent implements OnInit {
     // Currently set to 65535 as this is the limit of TEXT
     readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
     readonly COMPLAINT_TEXT_LIMIT = 65535;
+    tutorialGroupsFeatureActivated = false;
 
     constructor(
         private courseManagementService: CourseManagementService,
@@ -74,9 +81,11 @@ export class CourseUpdateComponent implements OnInit {
         private modalService: NgbModal,
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
+        private featureToggleService: FeatureToggleService,
     ) {}
 
     ngOnInit() {
+        this.timeZones = (Intl as any).supportedValuesOf('timeZone');
         this.isSaving = false;
         // create a new course, and only overwrite it if we fetch a course to edit
         this.course = new Course();
@@ -86,6 +95,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
                     this.courseOrganizations = organizations;
                 });
+                this.originalTimeZone = this.course.timeZone;
 
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled =
@@ -128,6 +138,11 @@ export class CourseUpdateComponent implements OnInit {
             ltiKey: new FormControl(this.course.onlineCourseConfiguration?.ltiKey),
             ltiSecret: new FormControl(this.course.onlineCourseConfiguration?.ltiSecret),
             userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
+            registrationId: new FormControl(this.course.onlineCourseConfiguration?.registrationId),
+            clientId: new FormControl(this.course.onlineCourseConfiguration?.clientId),
+            authorizationUri: new FormControl(this.course.onlineCourseConfiguration?.authorizationUri),
+            tokenUri: new FormControl(this.course.onlineCourseConfiguration?.tokenUri),
+            jwkSetUri: new FormControl(this.course.onlineCourseConfiguration?.jwkSetUri),
         });
 
         this.courseForm = new FormGroup(
@@ -194,6 +209,35 @@ export class CourseUpdateComponent implements OnInit {
         );
         this.croppedImage = this.course.courseIcon;
         this.presentationScoreEnabled = this.course.presentationScore !== 0;
+
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.TutorialGroups)
+            .pipe(
+                tap((active) => {
+                    this.tutorialGroupsFeatureActivated = active;
+                }),
+            )
+            .subscribe(() => {
+                if (this.tutorialGroupsFeatureActivated && this.courseForm) {
+                    this.courseForm.addControl('timeZone', new FormControl(this.course?.timeZone));
+                }
+            });
+    }
+    tzResultFormatter = (timeZone: string) => timeZone;
+    tzInputFormatter = (timeZone: string) => timeZone;
+
+    tzSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
+        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
+        const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead.isPopupOpen()));
+        const inputFocus$ = this.tzFocus$;
+
+        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
+            map((term) => (term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().indexOf(term.toLowerCase()) > -1))),
+        );
+    };
+
+    get timeZoneChanged() {
+        return this.course?.id && this.originalTimeZone && this.originalTimeZone !== this.courseForm.value.timeZone;
     }
 
     /**
