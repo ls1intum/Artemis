@@ -41,6 +41,7 @@ import {
     metisLecturePosts,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
+import { AgVirtualScrollComponent } from 'app/shared/ag-virtual-scroll/ag-virtual-scroll.component';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -65,6 +66,7 @@ describe('CourseDiscussionComponent', () => {
             imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbPaginationModule)],
             declarations: [
                 CourseDiscussionComponent,
+                MockComponent(AgVirtualScrollComponent),
                 MockComponent(PostingThreadComponent),
                 MockComponent(PostCreateEditModalComponent),
                 MockComponent(FaIconComponent),
@@ -372,17 +374,36 @@ describe('CourseDiscussionComponent', () => {
         );
     }));
 
-    it('should call fetchNextPage at course discussions when scrolled to bottom and do nothing when scrolled to top', fakeAsync(() => {
+    it('should not call fetchNextPage when rendering first fetched posts ', fakeAsync(() => {
         component.itemsPerPage = 5;
         component.ngOnInit();
         tick();
         fixture.detectChanges();
 
-        const scrollableDiv = getElement(fixture.debugElement, 'div[id=scrollableDiv]');
-        scrollableDiv.dispatchEvent(new Event('scrolledUp'));
-        expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
+        const onItemsRenderEvent = new CustomEvent('onItemsRender');
+        onItemsRenderEvent['items'] = component.posts.slice(0, 2);
+        onItemsRenderEvent['length'] = 2;
+        onItemsRenderEvent['startIndex'] = 0;
+        onItemsRenderEvent['endIndex'] = 1;
 
-        scrollableDiv.dispatchEvent(new Event('scrolled'));
+        const scrollableDiv = getElement(fixture.debugElement, 'ag-virtual-scroll');
+        scrollableDiv.dispatchEvent(onItemsRenderEvent);
+
+        expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
+    }));
+
+    it('should call fetchNextPage when rendering last of fetched posts ', fakeAsync(() => {
+        prepareComponent();
+
+        const onItemsRenderEvent = new CustomEvent('onItemsRender');
+        onItemsRenderEvent['items'] = component.posts.slice(3, 5);
+        onItemsRenderEvent['length'] = 2;
+        onItemsRenderEvent['startIndex'] = 3;
+        onItemsRenderEvent['endIndex'] = 4;
+
+        const scrollableDiv = getElement(fixture.debugElement, 'ag-virtual-scroll');
+        scrollableDiv.dispatchEvent(onItemsRenderEvent);
+
         expect(fetchNextPageSpy).toHaveBeenCalledOnce();
     }));
 
@@ -421,4 +442,11 @@ describe('CourseDiscussionComponent', () => {
             expect(result).toBeFalse();
         });
     });
+
+    function prepareComponent() {
+        component.itemsPerPage = 5;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+    }
 });

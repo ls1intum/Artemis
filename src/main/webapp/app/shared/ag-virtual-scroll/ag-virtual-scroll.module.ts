@@ -13,6 +13,5 @@ import { AgVirtualScrollComponent } from './ag-virtual-scroll.component';
     imports: [CommonModule],
     declarations: [AgVirtualScrollComponent],
     exports: [AgVirtualScrollComponent],
-    entryComponents: [AgVirtualScrollComponent],
 })
 export class AgVirtualScrollModule {}

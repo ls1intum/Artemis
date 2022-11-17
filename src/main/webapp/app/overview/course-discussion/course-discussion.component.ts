@@ -249,8 +249,12 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         }
     }
 
+    /**
+     * fetches next page of posts if currently rendered posts are approaching the end of the available list of elements
+     * @param event
+     */
     onItemsRender(event: AgVsRenderEvent<any>) {
-        if (!this.isLoading && event.endIndex + 1 < this.totalItems && event.endIndex > this.posts.length - 3) {
+        if (!this.isLoading && event.endIndex + 1 < this.totalItems && event.endIndex + 1 > this.posts.length - 2) {
             this.fetchNextPage();
         }
     }

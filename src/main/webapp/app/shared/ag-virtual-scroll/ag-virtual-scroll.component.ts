@@ -4,7 +4,8 @@
  *
  */
 
-import { AfterContentChecked, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { NavigationStart, Router } from '@angular/router';
 import { AgVsRenderEvent } from 'app/shared/ag-virtual-scroll/ag-vs-render-event.class';
 
 @Component({
@@ -12,17 +13,17 @@ import { AgVsRenderEvent } from 'app/shared/ag-virtual-scroll/ag-vs-render-event
     templateUrl: './ag-virtual-scroll.component.html',
     styleUrls: ['ag-virtual-scroll.style.css'],
 })
-export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
+export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
-    @Input('min-row-height') public minRowHeight = 40;
-    @Input('height') public height = 'auto';
     @Input('items') public originalItems: any[] = [];
-
     @Input() forceReload: boolean;
     @Output() forceReloadChange = new EventEmitter<boolean>();
-
     @Output() private onItemsRender = new EventEmitter<AgVsRenderEvent<any>>();
+
+    public minRowHeight = 126.7;
+
+    public height = '500px';
 
     public prevOriginalItems: any[] = [];
     public items: any[] = [];
@@ -39,24 +40,27 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
 
     private previousItemsHeight: any[] = [];
 
-    public containerWidth = 0;
-
     scrollListener: any;
     focusInListener: any;
 
     public get el() {
-        return this.elRef && this.elRef.nativeElement;
+        return this.elRef.nativeElement;
     }
 
     public get itemsContainerEl() {
         return this.itemsContainerElRef && this.itemsContainerElRef.nativeElement;
     }
 
-    constructor(private elRef: ElementRef<HTMLElement>, private renderer: Renderer2) {}
+    constructor(private elRef: ElementRef<HTMLElement>, private renderer: Renderer2, private router: Router) {}
 
     ngOnInit() {
-        this.focusInListener = this.el.addEventListener('focusin', () => (this.el.scrollTop = this.currentScroll));
-        this.scrollListener = this.renderer.listen(this.el, 'scroll', (event) => this.onScroll(event));
+        this.focusInListener = this.renderer.listen(this.el, 'focusin', this.onFocusIn.bind(this));
+        this.scrollListener = this.renderer.listen(this.el, 'scroll', this.onScroll.bind(this));
+        this.router.events.forEach((event) => {
+            if (event instanceof NavigationStart) {
+                this.onNavigate();
+            }
+        });
 
         this.el.style.height = this.height;
         this.minRowHeight = Number(this.minRowHeight);
@@ -66,13 +70,14 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
         setTimeout(() => {
             if ('originalItems' in changes) {
                 if (!this.originalItems) {
-                    this.originalItems = [];
+                    return;
                 }
 
                 if (this.forceReload) {
                     this.previousItemsHeight = new Array(this.originalItems.length).fill(null);
 
                     if (this.el.scrollTop !== 0) {
+                        // scroll to the top of the elements
                         this.el.scrollTop = 0;
                     } else {
                         this.currentScroll = 0;
@@ -83,18 +88,13 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
                         this.previousItemsHeight = this.previousItemsHeight.concat(new Array(this.originalItems.length - this.prevOriginalItems.length).fill(null));
                         this.prepareDataItems();
                     } else {
-                        const begin = 0;
-                        const end = this.prevOriginalItems.length - 1;
+                        for (let i = 0; i < this.prevOriginalItems.length; i++) {
+                            this.previousItemsHeight[i] = null;
 
-                        for (let i = begin; i <= end; i++) {
-                            if (this.originalItems[i] !== this.prevOriginalItems[i]) {
-                                this.previousItemsHeight[i] = null;
-
-                                const displayIndex = i - this.startIndex;
-                                if (displayIndex >= 0 && displayIndex <= this.endIndex) {
-                                    // if item is displayed to the user then it is updated
-                                    this.items[displayIndex] = this.originalItems[i];
-                                }
+                            const displayIndex = i - this.startIndex;
+                            if (displayIndex >= 0 && displayIndex <= this.endIndex) {
+                                // if item is displayed to the user then it is updated
+                                this.items[displayIndex] = this.originalItems[i];
                             }
                         }
                     }
@@ -105,22 +105,29 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
         });
     }
 
-    ngAfterContentChecked() {
-        const currentContainerWidth = this.itemsContainerEl && this.itemsContainerEl.clientWidth;
-        if (currentContainerWidth !== this.containerWidth) {
-            this.containerWidth = currentContainerWidth;
-        }
-
-        this.manipuleRenderedItems();
+    /**
+     * workaround to prevent automatic scrolling when user clicks the text area of the ace-editor for answerPosts
+     *
+     */
+    private onFocusIn() {
+        this.el.scrollTop = this.currentScroll;
     }
 
-    private onScroll(event: any) {
+    private onScroll() {
         const up = this.el.scrollTop < this.currentScroll;
         this.currentScroll = this.el.scrollTop;
 
         this.prepareDataItems();
         this.lastScrollIsUp = this.scrollIsUp;
         this.scrollIsUp = up;
+    }
+
+    /**
+     * scroll to the top of posts in case user clicks to a post title to solely display it
+     *
+     */
+    private onNavigate() {
+        this.forceReload = true;
     }
 
     private prepareDataItems() {
@@ -191,14 +198,14 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
             }),
         );
 
-        this.manipuleRenderedItems();
+        this.manipulateRenderedItems();
     }
 
     private numberItemsCanRender() {
         return Math.floor(this.el.clientHeight / this.minRowHeight) + 2;
     }
 
-    private manipuleRenderedItems() {
+    private manipulateRenderedItems() {
         const children = this.itemsContainerEl.children;
         for (let i = 0; i < children.length; i++) {
             const child = children[i] as HTMLElement;
@@ -210,7 +217,7 @@ export class AgVirtualScrollComponent implements OnInit, OnChanges, OnDestroy, A
     }
 
     ngOnDestroy() {
-        // stop listening to scroll events
+        // stop listening to events
         this.scrollListener();
         this.focusInListener();
     }
