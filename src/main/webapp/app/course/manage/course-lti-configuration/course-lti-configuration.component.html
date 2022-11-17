@@ -27,7 +27,7 @@
 
                 <dt>
                     <span>{{ 'artemisApp.lti.ltiLaunchTarget' | artemisTranslate }}</span>
-                    <jhi-help-icon placement="top" text="artemisApp.lti.launchTargetTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.lti.launchTargetTooltip"></jhi-help-icon>
                 </dt>
                 <dd>
                     <span>New Window</span>
@@ -49,7 +49,7 @@
 
                 <dt>
                     <span>{{ 'artemisApp.lti.requestEmail' | artemisTranslate }}</span>
-                    <jhi-help-icon placement="top" text="artemisApp.lti.requestUserEmailTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.lti.requestUserEmailTooltip"></jhi-help-icon>
                 </dt>
                 <dd>
                     <span>True</span>
@@ -63,7 +63,7 @@
 
                     <dt>
                         <span>{{ 'artemisApp.lti.requireExistingUser' | artemisTranslate }}</span>
-                        <jhi-help-icon placement="top" text="artemisApp.lti.requireExistingUserTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.lti.requireExistingUserTooltip"></jhi-help-icon>
                     </dt>
                     <dd>
                         <input type="checkbox" class="form-check-input" (change)="requireExistingUser = !requireExistingUser" [checked]="requireExistingUser" />
@@ -71,7 +71,7 @@
 
                     <dt>
                         <span>{{ 'artemisApp.lti.lookupByEmail' | artemisTranslate }}</span>
-                        <jhi-help-icon placement="top" text="artemisApp.lti.lookupUserByEmailTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.lti.lookupUserByEmailTooltip"></jhi-help-icon>
                     </dt>
                     <dd>
                         <input type="checkbox" class="form-check-input" (change)="lookupUserByEmail = !lookupUserByEmail" [checked]="lookupUserByEmail" />
@@ -108,14 +108,13 @@
                     *ngIf="missingLti13ConfigurationField()"
                     [icon]="faExclamationTriangle"
                     class="text-warning"
-                    placement="top"
                     ngbTooltip="{{ 'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate }}"
                 ></fa-icon>
             </a>
             <ng-template ngbNavContent>
                 <dt>
                     <span>{{ 'artemisApp.lti.dynamicRegistrationUrl' | artemisTranslate }}</span>
-                    <jhi-help-icon placement="top" text="artemisApp.lti.dynamicRegistrationTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.lti.dynamicRegistrationTooltip"></jhi-help-icon>
                 </dt>
                 <dd>
                     <span>{{ getDynamicRegistrationUrl() }}</span>

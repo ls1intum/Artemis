@@ -1,10 +1,10 @@
 <label for="date-input-field" class="form-control-label col" *ngIf="labelName">
     {{ labelName }}
 </label>
-<fa-stack *ngIf="labelTooltip" class="text-secondary icon-full-size" placement="top" [ngbTooltip]="labelTooltip">
+<fa-stack *ngIf="labelTooltip" class="text-secondary icon-full-size" [ngbTooltip]="labelTooltip">
     <fa-icon [icon]="faQuestionCircle" stackItemSize="1x"></fa-icon>
 </fa-stack>
-<fa-stack *ngIf="shouldDisplayTimeZoneWarning" placement="top" ngbTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}" class="icon-full-size">
+<fa-stack *ngIf="shouldDisplayTimeZoneWarning" ngbTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}" class="icon-full-size">
     <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey"></fa-icon>
     <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary"></fa-icon>
 </fa-stack>
