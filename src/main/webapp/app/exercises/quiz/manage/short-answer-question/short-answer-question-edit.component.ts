@@ -276,7 +276,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const regexp = new RegExp('\\[-spot-?(number)? (\\d+)\\]', 'g');
         let match = regexp.exec(questionText);
         while (match !== null) {
-            const spotType = match[1] ? match[1] : 'text';
+            const spotType = match[1] ?? 'text';
             const spotID = match[2];
             spotParts.push({ spotID, spotType });
             match = regexp.exec(questionText);
