@@ -6,6 +6,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { Component, Input, ViewChild } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { SortService } from '../../../../../../main/webapp/app/shared/service/sort.service';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeader {
@@ -43,7 +44,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [TutorialGroupDetailComponent, MockWrapper, MockHeader, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(ArtemisMarkdownService)],
+            providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
         })
             .compileComponents()
             .then(() => {
@@ -76,7 +77,7 @@ describe('TutorialGroupDetailComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [TutorialGroupDetailComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(ArtemisMarkdownService)],
+            providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
         })
             .compileComponents()
             .then(() => {

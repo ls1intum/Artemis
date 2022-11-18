@@ -1,0 +1,63 @@
+<ng-container>
+    <td *ngIf="showIdColumn">
+        <ng-container *ngIf="tutorialGroupClickHandler; else noTutorialGroupClickHandler">
+            <a [id]="'id-' + tutorialGroup.id" [routerLink]="" class="link-primary" (click)="tutorialGroupClickHandler(tutorialGroup)">{{ tutorialGroup.id }}</a>
+        </ng-container>
+        <ng-template #noTutorialGroupClickHandler>
+            <span>{{ tutorialGroup.id }}</span>
+        </ng-template>
+    </td>
+    <td>
+        <ng-container *ngIf="tutorialGroupClickHandler; else noTutorialGroupClickHandler">
+            <a [routerLink]="" class="link-primary" (click)="tutorialGroupClickHandler(tutorialGroup)"
+                ><span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span></a
+            >
+        </ng-container>
+        <ng-template #noTutorialGroupClickHandler>
+            <span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span>
+        </ng-template>
+    </td>
+    <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
+    <td>{{ tutorialGroup.capacity }}</td>
+    <td>{{ tutorialGroup.tutorialGroupSchedule ? (getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate) : '' }}</td>
+    <td>
+        <span *ngIf="tutorialGroup.tutorialGroupSchedule; else no_schedule">
+            {{
+                (tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! === 1
+                    ? 'artemisApp.entities.tutorialGroupSchedule.repetitionOneWeek'
+                    : 'artemisApp.entities.tutorialGroupSchedule.repetitionNWeeks'
+                ) | artemisTranslate: { n: tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! }
+            }}
+        </span>
+        <ng-template #no_schedule></ng-template>
+    </td>
+    <td>
+        <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.tutorialGroupSchedule ? tutorialGroup.tutorialGroupSchedule?.location : '' }} </span>
+    </td>
+    <td>
+        {{ tutorialGroup.tutorialGroupSchedule ? tutorialGroup.tutorialGroupSchedule?.startTime + '-' + tutorialGroup.tutorialGroupSchedule?.endTime : '' }}
+    </td>
+    <td>{{ tutorialGroup.numberOfRegisteredUsers }}</td>
+    <td>
+        {{ (tutorialGroup.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline') | artemisTranslate }}
+    </td>
+    <td>
+        {{ (tutorialGroup.language === GERMAN ? 'artemisApp.generic.german' : 'artemisApp.generic.english') | artemisTranslate }}
+    </td>
+    <td>
+        <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.campus }} </span>
+    </td>
+    <td>
+        <span *ngIf="tutorialGroup.nextSession; else no_session">
+            {{ tutorialGroup.nextSession.start | artemisDate: 'short-date':false:timeZone!:true }}
+            {{ tutorialGroup.nextSession.start | artemisDate: 'time':false:timeZone! }} -
+            {{ tutorialGroup.nextSession.end | artemisDate: 'time':false:timeZone! }}
+        </span>
+        <ng-template #no_session></ng-template>
+    </td>
+    <td *ngIf="extraColumn">
+        <div class="extra-buttons">
+            <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
+        </div>
+    </td>
+</ng-container>
