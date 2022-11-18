@@ -1,6 +1,6 @@
 <ng-template #controls>
     <div class="course-overview-controls d-none d-sm-block" *ngIf="course?.lectures && course!.lectures!.length > 0">
-        <div ngbDropdown placement="bottom-right" class="d-inline-block">
+        <div ngbDropdown placement="bottom-right auto" class="d-inline-block">
             <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
                 {{ 'artemisApp.courseOverview.lectureList.sortLectures' | artemisTranslate }}
             </button>

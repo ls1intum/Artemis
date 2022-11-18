@@ -6,7 +6,7 @@
         <tr>
             <th class="w-25">
                 <label jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn">Exercise Group</label>
-                <jhi-help-icon placement="top" text="artemisApp.examManagement.exerciseGroup.importModal.exerciseGroupTooltip"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.examManagement.exerciseGroup.importModal.exerciseGroupTooltip"></jhi-help-icon>
             </th>
             <th class="w-75" jhiTranslate="artemisApp.examScores.titleExerciseColumn">Exercise</th>
         </tr>
@@ -67,7 +67,7 @@
                             <th class="smallbox" jhiTranslate="artemisApp.exercise.type">Type</th>
                             <th [class]="exerciseGroupContainsProgrammingExercises(exerciseGroup) ? 'mediumbox' : 'largebox'">
                                 <label jhiTranslate="artemisApp.exercise.title">Title</label>
-                                <jhi-help-icon placement="top" text="artemisApp.examManagement.exerciseGroup.importModal.exerciseTitleTooltip"></jhi-help-icon>
+                                <jhi-help-icon text="artemisApp.examManagement.exerciseGroup.importModal.exerciseTitleTooltip"></jhi-help-icon>
                             </th>
                             <th *ngIf="exerciseGroupContainsProgrammingExercises(exerciseGroup)" class="mediumbox">
                                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName">Short Name</label>

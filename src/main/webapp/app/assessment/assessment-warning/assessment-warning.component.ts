@@ -14,7 +14,7 @@ import { Submission } from 'app/entities/submission.model';
     template: `
         <h6>
             <div class="card-header" *ngIf="showWarning">
-                <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom"></fa-icon>
+                <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto"></fa-icon>
                 <span *ngIf="isBeforeExerciseDueDate">{{ 'artemisApp.assessment.dashboard.warning' | artemisTranslate }}</span>
                 <span *ngIf="!isBeforeExerciseDueDate">{{ 'artemisApp.assessment.dashboard.warningIndividual' | artemisTranslate }}</span>
             </div>

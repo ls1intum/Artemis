@@ -94,15 +94,14 @@ public abstract class Participation extends DomainObject implements Participatio
      * the exercise view.
      */
     @Transient
-    @JsonProperty
-    private Integer submissionCount;
+    private Integer submissionCountTransient;
 
     public Integer getSubmissionCount() {
-        return submissionCount;
+        return submissionCountTransient;
     }
 
     public void setSubmissionCount(Integer submissionCount) {
-        this.submissionCount = submissionCount;
+        this.submissionCountTransient = submissionCount;
     }
 
     public InitializationState getInitializationState() {
@@ -290,7 +289,7 @@ public abstract class Participation extends DomainObject implements Participatio
     @Override
     public String toString() {
         return getClass().getSimpleName() + "{" + "id=" + getId() + ", initializationState=" + initializationState + ", initializationDate=" + initializationDate + ", results="
-                + results + ", submissions=" + submissions + ", submissionCount=" + submissionCount + "}";
+                + results + ", submissions=" + submissions + ", submissionCount=" + submissionCountTransient + "}";
     }
 
     /**
