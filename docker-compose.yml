@@ -1,53 +1,26 @@
-version: '3'
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis-Dev-MySQL Setup
+# ----------------------------------------------------------------------------------------------------------------------
 
-# NOTE: this docker compose file starts the artemis-server (as jar file) and the artemis-client in separate containers. This setup is aimed for development.
-# If you want to start the whole Artemis application (server and client) in the same container, you need to specify a different service and
-# you have to execute the command './gradlew -Pprod -Pwar clean bootWar && java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira'
+# this links to /src/main/docker/artemis-dev-mysql.yml which is the default artemis development docker compose setup
+# just using a symlink doesn't work because of the relative paths ;)
 
 services:
-  artemis-server:
-    command: sh -c "(apt update && apt install -y fontconfig fonts-dejavu graphviz || true) && ./gradlew buildJarForDocker && java -jar --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED build/libs/Artemis-*.jar"
-    depends_on:
-      - artemis-mysql
-    image: eclipse-temurin:17-jdk
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
-      - SPRING_PROFILES_ACTIVE=dev,bamboo,bitbucket,jira,artemis,scheduling
-    networks:
-      - artemis
-    ports:
-      - 8080:8080
-    volumes:
-      - ./:/server/
-    working_dir: /server
-
-  artemis-client:
-    command: sh -c "npm install && npm run start-docker"
-    depends_on:
-      - artemis-server
-    image: node:14.17.6-alpine
-    networks:
-      - artemis
-    ports:
-      - 9000:9000
-    volumes:
-      - ./:/client/
-    working_dir: /client
-
-  artemis-mysql:
-    command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
-    environment:
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-      - MYSQL_ROOT_PASSWORD=
-      - MYSQL_DATABASE=Artemis
-    image: mysql:8.0.31
-    networks:
-      - artemis
-    ports:
-      - 3306:3306
-    volumes:
-      - ./data/.db:/var/lib/mysql
+    artemis-app:
+        extends:
+            file: ./src/main/docker/artemis-dev-mysql.yml
+            service: artemis-app
+    mysql:
+        extends:
+            file: ./src/main/docker/artemis-dev-mysql.yml
+            service: mysql
 
 networks:
-  artemis:
-    driver: bridge
+    artemis:
+        driver: "bridge"
+        name: artemis
+volumes:
+    artemis-mysql-data:
+        name: artemis-mysql-data
+    artemis-data:
+        name: artemis-data

@@ -2,20 +2,16 @@
 
 # Entrypoint file for Docker Images of Artemis. The deployment of the application is set to /opt/artemis
 
-cd /opt/artemis || exit 1
-
-if [ -z "$(ls -A config)" ]; then
-   echo "Config is Empty .. copying default ones .."
-   cp -n -a /defaults/artemis/. config/
+if [[ "$JAVA_REMOTE_DEBUG" == "true" ]]; then
+    # set JAVA_REMOTE_DEBUG_SUSPEND to y if Artemis should wait until you connect your remote debugger
+    RemoteDebuggingOption="-agentlib:jdwp=transport=dt_socket,server=y,suspend=${JAVA_REMOTE_DEBUG_SUSPEND:-n},address=*:5005"
 else
-   echo "Config is not empty .. not copying default configs .."
+    RemoteDebuggingOption=""
 fi
 
-# Ensure at least the directories are owned by artemis. "-R" takes too long
-chown artemis:artemis config data
-
 echo "Starting application..."
-exec gosu artemis java \
+exec java \
+  ${RemoteDebuggingOption} \
   -Djdk.tls.ephemeralDHKeySize=2048 \
   -DLC_CTYPE=UTF-8 \
   -Dfile.encoding=UTF-8 \
@@ -30,4 +26,4 @@ exec gosu artemis java \
   --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
   --add-opens java.management/sun.management=ALL-UNNAMED \
   --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
-  -jar Artemis.war
+  -jar /opt/artemis/Artemis.war

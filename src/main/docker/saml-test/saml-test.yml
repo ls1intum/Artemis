@@ -1,0 +1,23 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# SAML Testing service
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    saml-test:
+        container_name: artemis-saml-test
+        image: jamedjo/test-saml-idp
+        ports:
+            - 9980:8080
+        volumes:
+            - ./saml20-sp-remote.php:/var/www/simplesamlphp/metadata/saml20-sp-remote.php
+            - ./config.php:/var/www/simplesamlphp/config/config.php
+        networks:
+            - artemis
+
+#TODO: possible to add artemis yml here to artemis?
+# artemis volume: - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml:ro
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis

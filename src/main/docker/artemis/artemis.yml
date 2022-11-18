@@ -1,0 +1,40 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis base service
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    artemis-app:
+        container_name: artemis-app
+        # TODO: add support for armv8
+        platform: linux/x86_64
+        # TODO: change this to develop before merging to develop branch
+        # TODO: setup build pipeline for develop-deployment-wg
+        image: ghcr.io/ls1intum/artemis:develop-deployment-wg
+        build:
+            context: ../../../..
+            dockerfile: src/main/docker/artemis/Dockerfile
+        # maps application-local.yml to the container as this is the override file for all other configs
+        # (the default configs are packaged in the war file and don't need to be mapped here)
+        # TODO: check how the non-existent application-local.yml problem can be solved
+        volumes:
+            - artemis-data:/opt/artemis/data
+            - ../../resources/config/application-local.yml:/opt/artemis/config/application-local.yml:ro
+        # environments can also be used for custom overrides (alternative to application-local.yml volume)
+        # the following environments are necessary for docker images orchestrated by docker compose
+        environment:
+            _JAVA_OPTIONS: -Xmx5120m -Xms2560m
+            SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,athene,docker,local
+        # TODO: add a restart at a certain stage for prod systems for sure, not sure about dev systems?, discuss
+        # restart: unless-stopped
+        ports:
+            - 8080:8080
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+volumes:
+    artemis-data:
+        name: artemis-data

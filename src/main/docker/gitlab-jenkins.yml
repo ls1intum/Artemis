@@ -1,42 +1,27 @@
-version: "2"
+# ----------------------------------------------------------------------------------------------------------------------
+# GitLab-Jenkins Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
 services:
     gitlab:
-        image: gitlab/gitlab-ce:latest
-        volumes:
-            - artemis-gitlab-data:/var/opt/gitlab
-            - artemis-gitlab-logs:/var/log/gitlab
-            - artemis-gitlab-config:/etc/gitlab
-            - ./gitlab/gitlab-setup.sh:/gitlab-setup.sh
-        ports:
-            - "2222:22"
-            - "8082:80"
-        mem_limit: 3000m
-        hostname: gitlab
-        networks:
-            artemis:
-                ipv4_address: 172.19.0.2
+        extends:
+            file: ./gitlab/gitlab.yml
+            service: gitlab
     jenkins:
-        build: jenkins
-        volumes:
-            - artemis-jenkins-data:/var/jenkins_home
-            - /var/run/docker.sock:/var/run/docker.sock
-        ports:
-            - "8083:8080"
-        hostname: jenkins
-        networks:
-            artemis:
-                ipv4_address: 172.19.0.3
+        extends:
+            file: ./jenkins/jenkins.yml
+            service: jenkins
 
 networks:
     artemis:
         driver: "bridge"
-        ipam:
-            driver: default
-            config:
-                - subnet: 172.19.0.0/24
-
+        name: artemis
 volumes:
     artemis-gitlab-data:
+        name: artemis-gitlab-data
     artemis-gitlab-logs:
+        name: artemis-gitlab-logs
     artemis-gitlab-config:
+        name: artemis-gitlab-config
     artemis-jenkins-data:
+        name: artemis-jenkins-data

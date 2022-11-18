@@ -1,8 +1,13 @@
-version: "3.6"
+# ----------------------------------------------------------------------------------------------------------------------
+# GitLab-GitLabCI Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
 services:
     gitlab:
-        build: gitlab
-        container_name: gitlab
+        # TODO: check if the other settings can also be integrated into gitlab.yml
+        extends:
+            file: ./gitlab/gitlab.yml
+                service: gitlab
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab
             - artemis-gitlab-logs:/var/log/gitlab
@@ -22,31 +27,28 @@ services:
             - '80:80'
             - '443:443'
         shm_size: '256m'
-        networks:
-            gitlab:
-                ipv4_address: 172.20.0.2
     gitlab-runner:
         image: gitlab/gitlab-runner:latest
-        container_name: gitlab-runner
+        container_name: artemis-gitlab-runner
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
             - /usr/local/bin/docker:/usr/bin/docker
             - artemis-gitlabci-runner-config:/etc/gitlab-runner
         hostname: 'gitlab-runner'
         networks:
-            gitlab:
-                ipv4_address: 172.20.0.3
+            - artemis
 
 networks:
-  gitlab:
-      driver: "bridge"
-      ipam:
-        driver: default
-        config:
-            - subnet: 172.20.0.0/24
+    artemis:
+        driver: "bridge"
+        name: artemis
 
 volumes:
     artemis-gitlab-data:
+        name: artemis-gitlab-data
     artemis-gitlab-logs:
+        name: artemis-gitlab-logs
     artemis-gitlab-config:
+        name: artemis-gitlab-config
     artemis-gitlabci-runner-config:
+        name: artemis-gitlabci-runner-config

@@ -1,6 +1,6 @@
-version: '2'
 services:
   jhipster-registry:
+    container_name: artemis-jhipster-registry
     image: jhipster/jhipster-registry:v6.1.2
     volumes:
       - ./central-server-config:/central-config

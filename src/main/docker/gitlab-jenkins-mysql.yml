@@ -1,64 +1,33 @@
-version: "3"
+# ----------------------------------------------------------------------------------------------------------------------
+# GitLab-Jenkins-MySQL Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
 services:
     gitlab:
-        build: gitlab
-        volumes:
-            - artemis-gitlab-data:/var/opt/gitlab
-            - artemis-gitlab-logs:/var/log/gitlab
-            - artemis-gitlab-config:/etc/gitlab
-            - ./gitlab/gitlab-local-setup.sh:/gitlab-local-setup.sh
-        environment:
-            - GITLAB_OMNIBUS_CONFIG=prometheus_monitoring['enable'] = false; gitlab_rails['gitlab_shell_ssh_port'] = 2222; gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
-            - GITLAB_ROOT_PASSWORD
-        ports:
-            - "2222:22"
-            - "8081:80"
-        hostname: gitlab
-        networks:
-            artemis-gitlab:
-                ipv4_address: 172.33.0.2
+        extends:
+            file: ./gitlab/gitlab.yml
+            service: gitlab
     jenkins:
-        build: jenkins
-        user: root
-        volumes:
-            - artemis-jenkins-data:/var/jenkins_home
-            - ./jenkins/jenkins-disable-csrf.groovy:/var/jenkins_home/init.groovy # Disable CSRF token
-            - ./jenkins/master-key-only-for-testing.key:/var/jenkins_home/master.key # Preset master key to use pre-generated secrets
-            - ./jenkins/jenkins-casc-config.yml:/usr/share/jenkins/ref/jenkins-casc-config.yml:ro
-            - /var/run/docker.sock:/var/run/docker.sock
-            - /usr/bin/docker:/usr/bin/docker:ro
-        ports:
-            - "8082:8080"
-        hostname: jenkins
-        environment:
-            - CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/jenkins-casc-config.yml
-            - JAVA_OPTS
-        networks:
-            artemis-gitlab:
-                ipv4_address: 172.33.0.3
+        extends:
+            file: ./jenkins/jenkins.yml
+            service: jenkins
     mysql:
-        command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
-        environment:
-            - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-            - MYSQL_DATABASE=Artemis
-        image: mysql:8.0.31
-        ports:
-            - 3306:3306
-        volumes:
-            - artemis-mysql-data:/var/lib/mysql
-        networks:
-            artemis-gitlab:
-                ipv4_address: 172.33.0.4
+        extends:
+            file: mysql.yml
+            service: mysql
+
 networks:
-    artemis-gitlab:
+    artemis:
         driver: "bridge"
-        ipam:
-            driver: default
-            config:
-                - subnet: 172.33.0.0/24
+        name: artemis
 volumes:
     artemis-gitlab-data:
+        name: artemis-gitlab-data
     artemis-gitlab-logs:
+        name: artemis-gitlab-logs
     artemis-gitlab-config:
+        name: artemis-gitlab-config
     artemis-jenkins-data:
+        name: artemis-jenkins-data
     artemis-mysql-data:
+        name: artemis-mysql-data

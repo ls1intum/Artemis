@@ -3,7 +3,7 @@
 # Gitlab setup script                                                                             #
 # If you have any questions, ask Simon Leiß <simon.leiss@tum.de>                                  #
 # This script can be run by using the command                                                     #
-# docker-compose -f src/main/docker/gitlab-jenkins.yml exec artemis-gitlab /./gitlab-setup.sh     #
+# docker compose -f src/main/docker/gitlab-jenkins.yml exec artemis-gitlab /./gitlab-setup.sh     #
 ###################################################################################################
 
 
@@ -48,7 +48,7 @@ SSH_CHANGED=$REPLY
 if [[ $SSH_CHANGED =~ ^[Yy]$ ]]
 then
     echo
-    echo "Alright, we will setup the new SSH port now. Make sure to use the same port in the docker-compose file."
+    echo "Alright, we will setup the new SSH port now. Make sure to use the same port in the docker compose file."
     read -p "What alternative SSH port should be used? [e.g. \"2222\"]. Do not include any quotation marks.`echo $'\n> '`" -r
     echo
     SSH_PORT=$REPLY

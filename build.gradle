@@ -373,10 +373,6 @@ task executeCheckstyle (type: Exec) {
     commandLine "./gradlew", "checkstyleMain", "-x", "npm", "-x", "webapp"
 }
 
-task buildJarForDocker (type: Exec) {
-    commandLine "./gradlew", "build", "-x", "webapp", "-x", "test", "-x", "jacocoTestCoverageVerification"
-}
-
 def isNonStable = { String version ->
     def stableKeyword = ["RELEASE", "FINAL", "GA"].any { it -> version.toUpperCase().contains(it) }
     def regex = /^[0-9,.v-]+(-r)?$/

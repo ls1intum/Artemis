@@ -1,0 +1,60 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis-Server-Client-MySQL Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
+# NOTE: this docker compose file starts the artemis-server (as jar file) and the artemis-client in separate containers.
+# This setup is aimed for development.
+# If you want to start the whole Artemis application (server and client) in the same container, you need to use
+# the Artemis-Dev-MySQL Setup contained in artemis-dev-mysql.yml
+
+# TODO: unify more into depth for separate JS and Java container (maybe even sperated Dockerfiles?) for development?
+# TODO: or remove this setup completely
+
+services:
+  artemis-server:
+    # TODO: the command is outdated: either see the ansible script or the docs at
+    # https://artemis-platform.readthedocs.io/en/latest/dev/setup/#run-the-server-via-a-service-configuration
+    command: >
+      sh -c "(apt update && apt install -y fontconfig ttf-dejavu graphviz || true)
+      && ./gradlew build -x webapp -x test -x jacocoTestCoverageVerification -x spotlessCheck -x checkstyleMain -x checkstyleTest
+      && java -jar --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED build/libs/Artemis-*.jar"
+    depends_on:
+      - mysql
+    image: ghcr.io/ls1intum/docker-jdk-node-yarn
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+      SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling
+    networks:
+      - artemis
+    ports:
+      - 8080:8080
+    volumes:
+      - ./../../..:/server/
+    working_dir: /server
+
+  artemis-client:
+    # TODO: look if webpack is still being used otherwise delete it and put something more up to date here
+    # this is currently failing to build
+    command: sh -c "npm install && npm run start-docker"
+    depends_on:
+      - artemis-server
+    image: ghcr.io/ls1intum/docker-jdk-node-yarn
+    networks:
+      - artemis
+    ports:
+      - 9000:9000
+    volumes:
+      - ./../../..:/client/
+    working_dir: /client
+
+  mysql:
+    extends:
+      file: mysql.yml
+      service: mysql
+
+networks:
+  artemis:
+    driver: "bridge"
+    name: artemis
+volumes:
+  artemis-mysql-data:

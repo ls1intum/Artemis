@@ -1,7 +1,8 @@
 # This configuration is intended for development purpose, it's **your** responsibility to harden it for production
+
 services:
   prometheus:
-    container_name: prometheus
+    container_name: artemis-prometheus
     image: prom/prometheus:v2.34.0
     # If you want to run this in production, you should persist the /etc/prometheus-directory
     #volumes:
@@ -14,8 +15,9 @@ services:
     # grafana/provisioning/datasources/datasource.yml
     network_mode: 'host' # to test locally running service
   grafana:
-    container_name: grafana
+    container_name: artemis-grafana
     image: grafana/grafana:9.0.2
+    # TODO: docker named volume maybe instead of this? otherwise .gitignore the used bind src mount
     volumes:
       - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/
     environment:
@@ -28,4 +30,6 @@ services:
       - 127.0.0.1:3000:3000
     # On macOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and
     # grafana/provisioning/datasources/datasource.yml
+    # TODO: check if just host.docker.internal now works also for linux systems. already saw that there was progress.
+    # TODO: also check that it works when running Artemis locally and inside of our docker container
     network_mode: 'host' # to test locally running service

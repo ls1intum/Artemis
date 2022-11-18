@@ -1,9 +1,9 @@
-version: '2'
 services:
   activemq-broker:
+    container_name: artemis-activemq-broker
     image: vromero/activemq-artemis:latest
     environment:
-        - ARTEMIS_USERNAME=guest
-        - ARTEMIS_PASSWORD=guest
+        ARTEMIS_USERNAME: guest
+        ARTEMIS_PASSWORD: guest
     ports:
     - 61613:61613

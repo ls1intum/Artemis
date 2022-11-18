@@ -1,9 +1,9 @@
-version: '2.4'
 services:
-    artemis-mysql:
+    mysql:
+        # TODO: fix this
         extends:
             file: ../mysql.yml
-            service: artemis-mysql
+            service: mysql
         healthcheck:
             test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
             interval: 1s
@@ -11,10 +11,11 @@ services:
             retries: 30
 
     artemis-app:
+        # TODO: check bamboo E2E pipeline and how we can integrate this here
         build:
             # This is required to copy the Artemis war file properly into the container
             context: ../../../..
-            dockerfile: src/main/docker/Dockerfile
+            dockerfile: ../artemis/Dockerfile
         volumes:
             - ../../resources/config/application-prod.yml:/opt/artemis/config/application-prod.yml:ro
             - ./application.yml:/opt/artemis/config/application.yml:ro
@@ -45,7 +46,7 @@ services:
         networks:
             - artemis
         depends_on:
-            artemis-mysql:
+            mysql:
                 condition: service_healthy
 
     artemis-cypress:
@@ -75,3 +76,6 @@ services:
 networks:
     artemis:
         driver: "bridge"
+
+volumes:
+    artemis-mysql-data:
