@@ -118,8 +118,8 @@ public class ShortAnswerSubmittedText extends DomainObject {
             }
             else {
                 // Solution is a single number
-                double solutionInt = Double.parseDouble(solution.trim());
-                return submitted == solutionInt;
+                double solutionDouble = Double.parseDouble(solution.trim());
+                return submitted == solutionDouble;
             }
         }
         else {
