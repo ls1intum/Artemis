@@ -119,9 +119,6 @@ public class AdminCourseResource {
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
         Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(courseId);
-        if (course == null) {
-            throw new EntityNotFoundException("Course", courseId);
-        }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);

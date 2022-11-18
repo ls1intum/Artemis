@@ -41,7 +41,6 @@ public class AdminExerciseResource {
     @EnforceAdmin
     public ResponseEntity<Set<Exercise>> getUpcomingExercises() {
         log.debug("REST request to get all upcoming exercises");
-        authCheckService.checkIsAdminElseThrow(null);
         Set<Exercise> upcomingExercises = exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate();
         return ResponseEntity.ok(upcomingExercises);
     }

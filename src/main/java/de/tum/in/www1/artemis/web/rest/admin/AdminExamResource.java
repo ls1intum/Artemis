@@ -43,10 +43,6 @@ public class AdminExamResource {
     public ResponseEntity<List<Exam>> getCurrentAndUpcomingExams() {
         log.debug("REST request to get all upcoming exams");
 
-        if (!authCheckService.isAdmin()) {
-            throw new AccessForbiddenException("Only admins are allowed to access all exams!");
-        }
-
         List<Exam> upcomingExams = examRepository.findAllCurrentAndUpcomingExams();
         return ResponseEntity.ok(upcomingExams);
     }

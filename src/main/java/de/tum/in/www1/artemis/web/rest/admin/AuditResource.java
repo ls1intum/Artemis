@@ -39,8 +39,8 @@ public class AuditResource {
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
-    @EnforceAdmin
     @GetMapping("audits")
+    @EnforceAdmin
     public ResponseEntity<List<AuditEvent>> getAll(@ApiParam Pageable pageable) {
         Page<AuditEvent> page = auditEventService.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
