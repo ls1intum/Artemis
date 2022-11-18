@@ -332,8 +332,6 @@ The table contains all annotations for the corresponding minimum role. Different
 | ANONYMOUS        | @PreAuthorize("permitAll()")           |
 +------------------+----------------------------------------+
 
-Endpoints using a file token for authentication are not covered by this table. Use the annotation ``@EnforceFile`` instead.
-
 If a user passes the pre-authorization, the access to individual resources like courses and exercises still has to be checked. For example, a user can be a teaching assistant in one course, but only a student in another.
 However, do not fetch the user from the database yourself (unless you need to re-use the user object), but only hand a role to the ``AuthorizationCheckService``:
 

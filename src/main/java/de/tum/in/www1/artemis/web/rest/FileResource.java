@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceFile;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FilePathService;
@@ -158,7 +157,7 @@ public class FileResource {
      * @return The requested file, or 404 if the file doesn't exist
      */
     @GetMapping("files/markdown/{filename:.+}")
-    @EnforceFile
+    @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         return buildFileResponse(FilePathService.getMarkdownFilePath(), filename);
@@ -237,7 +236,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
-    @EnforceFile
+    @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename,
             @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
@@ -378,7 +377,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
-    @EnforceFile
+    @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
         // required claims to access this resource
@@ -405,7 +404,7 @@ public class FileResource {
      *         access it, or 404 if the files to be merged do not exist
      */
     @GetMapping("files/attachments/lecture/{lectureId}/merge-pdf")
-    @EnforceFile
+    @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
 
@@ -480,7 +479,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}")
-    @EnforceFile
+    @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId, @PathVariable String filename,
             @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
