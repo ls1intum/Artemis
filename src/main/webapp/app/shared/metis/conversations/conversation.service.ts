@@ -50,6 +50,10 @@ export class ConversationService {
             const otherUser = conversation.members?.find((user) => user.isRequestingUser === false);
             return otherUser ? getUserLabel(otherUser) : '';
         } else if (isGroupChatDto(conversation)) {
+            if (conversation.name && conversation.name.length > 0) {
+                return conversation.name;
+            }
+            // fallback to the list of members if no name is set
             const members = conversation.members ?? [];
             const containsCurrentUser = members.some((member) => member.isRequestingUser);
             const membersWithoutUser = members.filter((member) => member.isRequestingUser === false);

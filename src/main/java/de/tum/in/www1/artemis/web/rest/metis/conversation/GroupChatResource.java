@@ -77,6 +77,21 @@ public class GroupChatResource {
         return ResponseEntity.created(new URI("/api/group-chats/" + groupChat.getId())).body(conversationDTOService.convertGroupChatToDto(requestingUser, groupChat));
     }
 
+    @PutMapping("/{courseId}/group-chats/{groupChatId}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<GroupChatDTO> updateGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody GroupChatDTO groupChatDTO) {
+        log.debug("REST request to update groupChat {} with properties : {}", groupChatId, groupChatDTO);
+
+        var originalGroupChat = groupChatService.getGroupChatOrThrow(groupChatId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        if (!originalGroupChat.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("The group chat does not belong to the course", CHANNEL_ENTITY_NAME, "groupChat.course.mismatch");
+        }
+        groupChatAuthorizationService.isAllowedToUpdateGroupChat(originalGroupChat, requestingUser);
+        var updatedGroupChat = groupChatService.updateGroupChat(originalGroupChat.getId(), groupChatDTO);
+        return ResponseEntity.ok().body(conversationDTOService.convertGroupChatToDto(requestingUser, updatedGroupChat));
+    }
+
     @PostMapping("/{courseId}/group-chats/{groupChatId}/register")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> registerUsersToGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody List<String> userLogins) {

@@ -63,6 +63,7 @@
                     "addUsers": "Add users"
                 },
                 "infoTab": {
+                    "noName": "No name set...",
                     "noTopic": "No topic set...",
                     "editTopic": "Edit topic",
                     "noDescription": "No description set...",

@@ -68,7 +68,7 @@
                     "placeholder": "z.B. tech-hilfe",
                     "requiredValidationError": "Name ist erforderlich!",
                     "maxLengthValidationError": "Name darf maximal {{ max }} Zeichen lang sein!",
-                    "regexValidationError": "Kanalnamen dürfen nur Kleinbuchstaben, Zahlen und Bindestriche enthalten."
+                    "regexValidationError": "Namen dürfen nur Kleinbuchstaben, Zahlen und Bindestriche enthalten."
                 },
                 "topicInput": {
                     "label": "Thema (optional)",

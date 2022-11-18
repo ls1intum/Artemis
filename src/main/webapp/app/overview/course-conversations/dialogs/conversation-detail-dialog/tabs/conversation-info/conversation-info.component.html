@@ -1,12 +1,27 @@
 <div *ngIf="activeConversation && course" class="container-fluid conversation-info">
     <div class="row info-container">
-        <!-- Name (Only for Channels)-->
-        <ng-container *ngIf="getAsChannel(activeConversation) as channel">
+        <!-- Name (Only for Channels and Group Chats)-->
+        <ng-container *ngIf="getAsChannelOrGroupChat(activeConversation) as channelOrGroupChat">
             <div class="col-12 info-section" [class.interactive]="!readOnlyMode">
                 <div class="form-floating">
-                    <textarea class="form-control" readonly placeholder="dummyPlaceholder" id="name" value="{{ channel.name ?? '' }}"> </textarea>
+                    <textarea
+                        class="form-control"
+                        readonly
+                        placeholder="dummyPlaceholder"
+                        id="name"
+                        value="{{ channelOrGroupChat.name ?? ('artemisApp.messages.conversationDetail.infoTab.noName' | artemisTranslate) }}"
+                    >
+                    </textarea>
                     <label for="name">{{ 'artemisApp.entities.channel.name' | artemisTranslate }}</label>
-                    <button class="action-button right btn btn-outline-primary btn-sm" (click)="openEditNameModal($event)" *ngIf="canChangeChannelProperties(channel)">
+
+                    <button
+                        class="action-button right btn btn-outline-primary btn-sm"
+                        (click)="openEditNameModal($event)"
+                        *ngIf="
+                            (isChannel(channelOrGroupChat) && canChangeChannelProperties(channelOrGroupChat)) ||
+                            (isGroupChat(channelOrGroupChat) && canChangeGroupChatProperties(channelOrGroupChat))
+                        "
+                    >
                         {{ 'artemisApp.messages.conversationDetail.infoTab.editName' | artemisTranslate }}
                     </button>
                 </div>

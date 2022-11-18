@@ -18,6 +18,12 @@ export class GroupChatService {
             .pipe(map(this.conversationService.convertDateFromServer));
     }
 
+    update(courseId: number, groupChatId: number, groupChatDTO: GroupChatDto): Observable<HttpResponse<GroupChatDto>> {
+        return this.http
+            .put<GroupChatDto>(`${this.resourceUrl}${courseId}/group-chats/${groupChatId}`, groupChatDTO, { observe: 'response' })
+            .pipe(map(this.conversationService.convertDateFromServer));
+    }
+
     removeUsersFromGroupChat(courseId: number, groupChatId: number, logins?: string[]): Observable<HttpResponse<void>> {
         // if no explicit login is give we assume self deregistration
         const userLogins = logins ? logins : [this.accountService.userIdentity?.login];

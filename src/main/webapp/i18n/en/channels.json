@@ -68,7 +68,7 @@
                     "placeholder": "e.g. tech-support",
                     "requiredValidationError": "Name is required!",
                     "maxLengthValidationError": "Name can be max {{ max }} characters long!",
-                    "regexValidationError": "Channel names can only contain lowercase letters, numbers, and dashes."
+                    "regexValidationError": "Names can only contain lowercase letters, numbers, and dashes."
                 },
                 "topicInput": {
                     "label": "Topic (optional)",

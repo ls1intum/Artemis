@@ -105,6 +105,13 @@ export function canChangeChannelProperties(channel: ChannelDTO): boolean {
     return !channel.isArchived && !!channel.hasChannelAdminRights;
 }
 
+export function canChangeGroupChatProperties(groupChat: GroupChatDto): boolean {
+    if (!groupChat) {
+        return false;
+    }
+    return !!groupChat.isMember;
+}
+
 const hasChannelAdminRightsCheck = (channel: ChannelDTO) => {
     if (!channel) {
         return false;

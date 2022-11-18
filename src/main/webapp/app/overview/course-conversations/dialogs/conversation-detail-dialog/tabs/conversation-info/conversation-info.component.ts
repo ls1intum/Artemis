@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { Course } from 'app/entities/course.model';
@@ -15,7 +15,9 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
-import { canChangeChannelProperties, canLeaveConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { canChangeChannelProperties, canChangeGroupChatProperties } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { GroupChatDto, getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 
 @Component({
     selector: 'jhi-conversation-info',
@@ -25,9 +27,17 @@ import { canChangeChannelProperties, canLeaveConversation } from 'app/shared/met
 export class ConversationInfoComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
+    isGroupChat = isGroupChatDto;
+    isChannel = isChannelDto;
+    getAsGroupChat = getAsGroupChatDto;
     getAsChannel = getAsChannelDto;
     getUserLabel = getUserLabel;
     canChangeChannelProperties = canChangeChannelProperties;
+    canChangeGroupChatProperties = canChangeGroupChatProperties;
+
+    getAsChannelOrGroupChat(conversation: ConversationDto): ChannelDTO | GroupChatDto | undefined {
+        return getAsChannelDto(conversation) || getAsGroupChatDto(conversation);
+    }
 
     @Input()
     activeConversation: ConversationDto;
@@ -39,7 +49,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     changesPerformed = new EventEmitter<void>();
 
     readOnlyMode = false;
-    constructor(private channelService: ChannelService, private modalService: NgbModal, private alertService: AlertService) {}
+    constructor(private channelService: ChannelService, private groupChatService: GroupChatService, private modalService: NgbModal, private alertService: AlertService) {}
 
     ngOnInit(): void {
         if (this.activeConversation) {
@@ -59,8 +69,8 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     openEditNameModal(event: MouseEvent) {
-        const channel = getAsChannelDto(this.activeConversation);
-        if (!channel) {
+        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation);
+        if (!channelOrGroupChat) {
             return;
         }
 
@@ -74,7 +84,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         };
 
         event.stopPropagation();
-        this.openEditPropertyDialog(channel, 'name', 20, true, channelRegex, keys);
+        this.openEditPropertyDialog(channelOrGroupChat, 'name', 20, true, channelRegex, keys);
     }
 
     openEditTopicModal(event: MouseEvent) {
@@ -116,7 +126,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     private openEditPropertyDialog(
-        channel: ChannelDTO,
+        channelOrGroupChat: ChannelDTO | GroupChatDto,
         propertyName: string,
         maxLength: number,
         isRequired: boolean,
@@ -134,8 +144,8 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         modalRef.componentInstance.isRequired = isRequired;
         modalRef.componentInstance.regexPattern = regexPattern;
 
-        if (get(channel, propertyName) && get(channel, propertyName).length > 0) {
-            modalRef.componentInstance.initialValue = get(channel, propertyName);
+        if (get(channelOrGroupChat, propertyName) && get(channelOrGroupChat, propertyName).length > 0) {
+            modalRef.componentInstance.initialValue = get(channelOrGroupChat, propertyName);
         }
         modalRef.componentInstance.initialize();
         from(modalRef.result)
@@ -147,17 +157,43 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 } else {
                     updateValue = '';
                 }
+                if (isChannelDto(channelOrGroupChat)) {
+                    this.updateChannel(channelOrGroupChat, propertyName, updateValue);
+                } else {
+                    this.updateGroupChat(channelOrGroupChat, propertyName, updateValue);
+                }
+            });
+    }
 
-                this.channelService
-                    .update(this.course?.id!, channel.id!, { [propertyName]: updateValue })
-                    .pipe(map((res: HttpResponse<ChannelDTO>) => res.body))
-                    .subscribe({
-                        next: (updatedChannel: ChannelDTO) => {
-                            channel[propertyName] = updatedChannel[propertyName];
-                            this.onChangePerformed();
-                        },
-                        error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-                    });
+    private updateGroupChat(groupChat: GroupChatDto, propertyName: string, updateValue: string) {
+        this.groupChatService
+            .update(this.course?.id!, groupChat.id!, { [propertyName]: updateValue })
+            .pipe(
+                map((res: HttpResponse<GroupChatDto>) => res.body),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe({
+                next: (updatedGroupChat: GroupChatDto) => {
+                    groupChat[propertyName] = updatedGroupChat[propertyName];
+                    this.onChangePerformed();
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+    }
+
+    private updateChannel(channel: ChannelDTO, propertyName: string, updateValue: string) {
+        this.channelService
+            .update(this.course?.id!, channel.id!, { [propertyName]: updateValue })
+            .pipe(
+                map((res: HttpResponse<ChannelDTO>) => res.body),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe({
+                next: (updatedChannel: ChannelDTO) => {
+                    channel[propertyName] = updatedChannel[propertyName];
+                    this.onChangePerformed();
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
 }

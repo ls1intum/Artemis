@@ -48,6 +48,13 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
         }
     }
 
+    public void isAllowedToUpdateGroupChat(@NotNull GroupChat groupChat, @Nullable User user) {
+        user = getUserIfNecessary(user);
+        if (!isMember(groupChat.getId(), user.getId())) {
+            throw new AccessForbiddenException("You are not a member of this group chat");
+        }
+    }
+
     public void isAllowedToRemoveUsersFromGroupChat(@NotNull GroupChat groupChat, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (!isMember(groupChat.getId(), user.getId())) {

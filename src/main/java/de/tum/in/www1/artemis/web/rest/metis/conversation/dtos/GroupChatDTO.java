@@ -6,8 +6,15 @@ import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 
 public class GroupChatDTO extends ConversationDTO {
 
+    private String name;
+
     public GroupChatDTO(GroupChat groupChat) {
         super(groupChat, "groupChat");
+        this.name = groupChat.getName();
+    }
+
+    public GroupChatDTO() {
+        this.setType("groupChat");
     }
 
     public Set<ConversationUserDTO> members;
@@ -20,8 +27,16 @@ public class GroupChatDTO extends ConversationDTO {
         this.members = members;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @Override
     public String toString() {
-        return "GroupChatDTO{" + "members=" + members + "} " + super.toString();
+        return "GroupChatDTO{" + "name='" + name + '\'' + "members=" + members + "} " + super.toString();
     }
 }

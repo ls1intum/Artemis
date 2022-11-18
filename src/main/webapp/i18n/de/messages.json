@@ -63,6 +63,7 @@
                     "addUsers": "Benutzer hinzufügen"
                 },
                 "infoTab": {
+                    "noName": "Kein Name gesetzt...",
                     "noTopic": "Kein Thema gesetzt...",
                     "editTopic": "Thema bearbeiten",
                     "noDescription": "Keine Beschreibung gesetzt...",
