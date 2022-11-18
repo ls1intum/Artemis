@@ -1,0 +1,47 @@
+<ng-container>
+    <button
+        jhi-exercise-action-button
+        [buttonIcon]="faRedo"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [buttonLabel]="'artemisApp.exerciseActions.practice' | artemisTranslate"
+        [buttonLoading]="startingPracticeMode"
+        [smallButton]="smallButtons"
+        [hideLabelMobile]="false"
+        [ngbPopover]="popContent"
+        [autoClose]="'outside'"
+        placement="right auto"
+    ></button>
+    <ng-template #popContent>
+        <div style="max-width: 660px">
+            <h5>{{ 'artemisApp.exerciseActions.practiceMode.title' | artemisTranslate }}</h5>
+            <p>{{ 'artemisApp.exerciseActions.practiceMode.explanation' | artemisTranslate }}</p>
+            <p *ngIf="gradedStudentParticipation">{{ 'artemisApp.exerciseActions.practiceMode.repositoryChoice' | artemisTranslate }}</p>
+            <div class="button-footer">
+                <button
+                    jhi-exercise-action-button
+                    [buttonIcon]="faRedo"
+                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                    [buttonLabel]="
+                        (gradedStudentParticipation ? 'artemisApp.exerciseActions.practiceMode.practiceWithTemplate' : 'artemisApp.exerciseActions.practice') | artemisTranslate
+                    "
+                    [buttonLoading]="startingPracticeMode"
+                    [smallButton]="smallButtons"
+                    [hideLabelMobile]="false"
+                    (click)="startPractice(false)"
+                ></button>
+                <button
+                    jhi-exercise-action-button
+                    class="ms-2"
+                    [buttonIcon]="faRedo"
+                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                    [buttonLabel]="'artemisApp.exerciseActions.practiceMode.practiceWithGradedParticipation' | artemisTranslate"
+                    [buttonLoading]="startingPracticeMode"
+                    [smallButton]="smallButtons"
+                    [hideLabelMobile]="false"
+                    *ngIf="gradedStudentParticipation"
+                    (click)="startPractice(true)"
+                ></button>
+            </div>
+        </div>
+    </ng-template>
+</ng-container>

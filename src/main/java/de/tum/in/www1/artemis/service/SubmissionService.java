@@ -316,7 +316,6 @@ public class SubmissionService {
     private void copyFeedbackToResult(Result result, List<Feedback> feedbacks) {
         feedbacks.forEach(feedback -> {
             Feedback newFeedback = feedback.copyFeedback();
-            newFeedback.setPositiveViaCredits();
             result.addFeedback(newFeedback);
         });
         resultRepository.save(result);
@@ -551,7 +550,7 @@ public class SubmissionService {
      * @return true, if the submission date was before the due date or the exercise has no due date.
      */
     private boolean isBeforeDueDate(Submission submission) {
-        return exerciseDateService.getDueDate(submission.getParticipation())
+        return ExerciseDateService.getDueDate(submission.getParticipation())
                 .map(dueDate -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate)).orElse(true);
     }
 

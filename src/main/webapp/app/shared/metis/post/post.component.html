@@ -9,7 +9,7 @@
     <div class="col">
         <div class="mb-1">
             <fa-icon
-                *ngIf="postIsResolved && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT"
+                *ngIf="posting.resolved && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT"
                 [icon]="faCheckSquare"
                 iconSize="xs"
                 class="col-auto pe-0 resolved"

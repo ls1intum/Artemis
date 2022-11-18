@@ -22,7 +22,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     displayInlineInput = false;
 
-    postIsResolved: boolean;
     pageType: PageType;
     contextInformation: ContextInformation;
     readonly CourseWideContext = CourseWideContext;
@@ -37,20 +36,18 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     }
 
     /**
-     * on initialization: invokes the metis service to evaluate, if the post is already solved
+     * on initialization: evaluates post context and page type
      */
     ngOnInit() {
         super.ngOnInit();
-        this.postIsResolved = this.metisService.isPostResolved(this.posting);
         this.pageType = this.metisService.getPageType();
         this.contextInformation = this.metisService.getContextInformation(this.posting);
     }
 
     /**
-     * on changed: re-evaluates, if the post is already resolved by one of the given answers
+     * on changed: re-evaluates context information
      */
     ngOnChanges() {
-        this.postIsResolved = this.metisService.isPostResolved(this.posting);
         this.contextInformation = this.metisService.getContextInformation(this.posting);
     }
 

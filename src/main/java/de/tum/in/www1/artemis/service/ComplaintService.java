@@ -93,7 +93,7 @@ public class ComplaintService {
                 throw new BadRequestAlertException("You cannot request more feedback in this course because this feature has been disabled by the instructors.", ENTITY_NAME,
                         "moreFeedbackRequestsDisabled");
             }
-            validateTimeOfComplaintOrRequestMoreFeedback(originalResult, studentParticipation.getExercise(), course, complaint.getComplaintType());
+            validateTimeOfComplaintOrRequestMoreFeedback(originalResult, studentParticipation.getExercise(), studentParticipation, course, complaint.getComplaintType());
         }
 
         if (!studentParticipation.isOwnedBy(principal.getName())) {
@@ -253,32 +253,68 @@ public class ComplaintService {
     /**
      * This function checks whether the student is allowed to submit a complaint / more feedback request or not.
      * This is allowed within the corresponding number of days set in the course after the student received the result.
-     * If the result was submitted after the assessment due date or the assessment due date is not set, the completion date of the result is checked.
-     * If the result was submitted before the assessment due date, the assessment due date is checked, as the student can only see the result after the assessment due date.
+     * This starts from the latest of these three points in time: Completion date of result, due date, assessment due date of exercise
+     *
+     * @param result the result for which a complaint should be filed
+     * @param exercise the exercise where the student wants to complain
+     * @param studentParticipation StudentParticipation the participation which might contain an individual due date
+     * @param course the course specifying the number of available days for the complaint
+     * @param type specifies if this is an actual complaint or a more feedback request
      */
-    private static void validateTimeOfComplaintOrRequestMoreFeedback(Result result, Exercise exercise, Course course, ComplaintType type) {
+    private static void validateTimeOfComplaintOrRequestMoreFeedback(Result result, Exercise exercise, StudentParticipation studentParticipation, Course course,
+            ComplaintType type) {
         int maxDays = switch (type) {
             case COMPLAINT -> course.getMaxComplaintTimeDays();
             case MORE_FEEDBACK -> course.getMaxRequestMoreFeedbackTimeDays();
         };
 
-        boolean isTimeValid;
-        if (exercise.getAssessmentDueDate() == null || result.getCompletionDate().isAfter(exercise.getAssessmentDueDate())) {
-            isTimeValid = result.getCompletionDate().isAfter(ZonedDateTime.now().minusDays(maxDays));
+        if (result.getCompletionDate() == null) {
+            throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ") + " for an uncompleted result.",
+                    ENTITY_NAME, "complaintOrRequestMoreFeedbackNotCompleted");
         }
-        else {
-            isTimeValid = exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now().minusDays(maxDays));
+        if (!Boolean.TRUE.equals(result.isRated()) && !exercise.getAllowComplaintsForAutomaticAssessments()) {
+            throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ")
+                    + " for an unrated result with no complaints on automatic assessment.", ENTITY_NAME, "complaintOrRequestMoreFeedbackNotGraded");
         }
 
+        final ZonedDateTime complaintStartDate = getComplaintStartDate(exercise, studentParticipation, result);
+        boolean isTimeValid = ZonedDateTime.now().isBefore(complaintStartDate.plusDays(maxDays));
+
         if (!isTimeValid) {
+            String timeForComplaint = switch (maxDays) {
+                case 1 -> "one day";
+                case 7 -> "one week";
+                default -> maxDays % 7 == 0 ? (maxDays / 7) + " weeks" : maxDays + " days";
+            };
             String message = "You cannot " + (type == ComplaintType.COMPLAINT ? "submit a complaint" : "request more feedback") + " for a result that is older than "
-                    + switch (maxDays) {
-                    case 1 -> "one day";
-                    case 7 -> "one week";
-                    default -> maxDays % 7 == 0 ? (maxDays / 7) + " weeks" : maxDays + " days";
-                    } + ".";
+                    + timeForComplaint + ".";
             throw new BadRequestAlertException(message, ENTITY_NAME, "complaintOrRequestMoreFeedbackTimeInvalid");
         }
+    }
+
+    /**
+     * Obtains the time when the complaint period starts.
+     * <p>
+     * Assumes the {@link Result#getCompletionDate()} to be present.
+     *
+     * @param exercise The exercise for which complaints can be submitted.
+     * @param studentParticipation The participation for which a complaint should be submitted.
+     * @param result The result which the complaint is about.
+     * @return The time from which submitting a complaint is possible.
+     */
+    private static ZonedDateTime getComplaintStartDate(final Exercise exercise, final StudentParticipation studentParticipation, final Result result) {
+        final List<ZonedDateTime> possibleComplaintStartDates = new ArrayList<>();
+        possibleComplaintStartDates.add(result.getCompletionDate());
+
+        final Optional<ZonedDateTime> relevantDueDate = Optional.ofNullable(studentParticipation).flatMap(ExerciseDateService::getDueDate);
+        relevantDueDate.ifPresent(possibleComplaintStartDates::add);
+
+        if (exercise.getAssessmentDueDate() != null) {
+            possibleComplaintStartDates.add(exercise.getAssessmentDueDate());
+        }
+
+        return possibleComplaintStartDates.stream().max(Comparator.naturalOrder())
+                .orElseThrow(() -> new NoSuchElementException("Expected at least the result completion date to be present."));
     }
 
     /**

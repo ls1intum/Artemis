@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 
 import { TutorialGroupsImportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -54,7 +54,7 @@ describe('TutorialGroupsImportButtonComponent', () => {
         // then
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledOnce();
+            expect(modalOpenSpy).toBeCalledTimes(2);
             expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupsRegistrationImportDialog, { backdrop: 'static', scrollable: false, size: 'xl' });
             expect(mockModalRef.componentInstance.courseId).toEqual(exampleCourseId);
             expect(importFinishSpy).toHaveBeenCalledOnce();

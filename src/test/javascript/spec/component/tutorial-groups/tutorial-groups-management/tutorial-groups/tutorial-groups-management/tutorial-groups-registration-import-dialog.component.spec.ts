@@ -11,7 +11,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
-import { parse, ParseError, ParseResult, ParseWorkerConfig } from 'papaparse';
+import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 jest.mock('papaparse', () => {
@@ -179,6 +179,14 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
 
     it('should fail when no title value', async () => {
         await validationTest([generateImportDTO('')], 'artemisApp.tutorialGroupImportDialog.errorMessages.withoutTitle');
+    });
+
+    it('should fail when title contains invalid character', async () => {
+        await validationTest([generateImportDTO('$title')], 'artemisApp.tutorialGroupImportDialog.errorMessages.invalidTitle');
+    });
+
+    it('should fail when title too long', async () => {
+        await validationTest([generateImportDTO('this is a very long title that should not be accepted')], 'artemisApp.tutorialGroupImportDialog.errorMessages.invalidTitle');
     });
 
     it('should fail when no identifier information', async () => {

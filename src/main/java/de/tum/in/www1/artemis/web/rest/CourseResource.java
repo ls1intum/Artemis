@@ -32,6 +32,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -40,6 +41,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
@@ -49,6 +51,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -60,7 +63,7 @@ import tech.jhipster.web.util.PaginationUtil;
  * REST controller for managing Course.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 @PreAuthorize("hasRole('ADMIN')")
 public class CourseResource {
 
@@ -81,6 +84,8 @@ public class CourseResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final OAuth2JWKSService oAuth2JWKSService;
+
     private final CourseRepository courseRepository;
 
     private final ExerciseService exerciseService;
@@ -99,13 +104,19 @@ public class CourseResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final FileService fileService;
+
+    private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
-            AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService,
-            ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService) {
+            OAuth2JWKSService oAuth2JWKSService, AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository,
+            SubmissionService submissionService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
+        this.oAuth2JWKSService = oAuth2JWKSService;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.submissionService = submissionService;
@@ -115,18 +126,21 @@ public class CourseResource {
         this.assessmentDashboardService = assessmentDashboardService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
+        this.fileService = fileService;
+        this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
     }
 
     /**
      * POST /courses : create a new course.
      *
      * @param course the course to create
+     * @param file the optional course icon file
      * @return the ResponseEntity with status 201 (Created) and with body the new course, or with status 400 (Bad Request) if the course has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/courses")
+    @PostMapping(value = "courses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Course> createCourse(@RequestBody Course course) throws URISyntaxException {
+    public ResponseEntity<Course> createCourse(@RequestPart Course course, @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
         log.debug("REST request to save Course : {}", course);
         if (course.getId() != null) {
             throw new BadRequestAlertException("A new course cannot already have an ID", Course.ENTITY_NAME, "idExists");
@@ -151,33 +165,42 @@ public class CourseResource {
         }
 
         courseService.createOrValidateGroups(course);
+
+        if (file != null) {
+            String pathString = fileService.handleSaveFile(file, false, false);
+            course.setCourseIcon(pathString);
+        }
+
         Course result = courseRepository.save(course);
+        if (course.isOnlineCourse()) {
+            oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
+        }
         return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
 
     /**
-     * PUT /courses : Updates an existing updatedCourse.
+     * PUT /courses/:courseId : Updates an existing updatedCourse.
      *
-     * @param updatedCourse the course to update
+     * @param courseId the id of the course to update
+     * @param courseUpdate the course to update
+     * @param file the optional course icon file
      * @return the ResponseEntity with status 200 (OK) and with body the updated course
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/courses")
+    @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Course> updateCourse(@RequestBody Course updatedCourse) throws URISyntaxException {
-        log.debug("REST request to update Course : {}", updatedCourse);
+    public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") Course courseUpdate, @RequestPart(required = false) MultipartFile file) {
+        log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (updatedCourse.getId() == null) {
-            if (authCheckService.isAdmin(user)) {
-                return createCourse(updatedCourse);
-            }
-            else {
-                throw new AccessForbiddenException();
-            }
+
+        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(courseUpdate.getId());
+
+        if (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() == null) {
+            throw new IllegalArgumentException("You can not remove the time zone of a course");
         }
 
-        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(updatedCourse.getId());
-        if (!Objects.equals(existingCourse.getShortName(), updatedCourse.getShortName())) {
+        var timeZoneChanged = (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() != null && !existingCourse.getTimeZone().equals(courseUpdate.getTimeZone()));
+
+        if (!Objects.equals(existingCourse.getShortName(), courseUpdate.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
 
@@ -185,21 +208,17 @@ public class CourseResource {
         // this is important, otherwise someone could put himself into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
+        Set<String> existingGroupNames = Set.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(), existingCourse.getEditorGroupName(),
+                existingCourse.getInstructorGroupName());
+        Set<String> newGroupNames = Set.of(courseUpdate.getStudentGroupName(), courseUpdate.getTeachingAssistantGroupName(), courseUpdate.getEditorGroupName(),
+                courseUpdate.getInstructorGroupName());
+        Set<String> changedGroupNames = new HashSet<>(newGroupNames);
+        changedGroupNames.removeAll(existingGroupNames);
+
         if (authCheckService.isAdmin(user)) {
             // if an admin changes a group, we need to check that the changed group exists
             try {
-                if (!Objects.equals(existingCourse.getStudentGroupName(), updatedCourse.getStudentGroupName())) {
-                    courseService.checkIfGroupsExists(updatedCourse.getStudentGroupName());
-                }
-                if (!Objects.equals(existingCourse.getTeachingAssistantGroupName(), updatedCourse.getTeachingAssistantGroupName())) {
-                    courseService.checkIfGroupsExists(updatedCourse.getTeachingAssistantGroupName());
-                }
-                if (!Objects.equals(existingCourse.getEditorGroupName(), updatedCourse.getEditorGroupName())) {
-                    courseService.checkIfGroupsExists(updatedCourse.getEditorGroupName());
-                }
-                if (!Objects.equals(existingCourse.getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
-                    courseService.checkIfGroupsExists(updatedCourse.getInstructorGroupName());
-                }
+                changedGroupNames.forEach(courseService::checkIfGroupsExists);
             }
             catch (ArtemisAuthenticationException ex) {
                 // a specified group does not exist, notify the client
@@ -209,33 +228,31 @@ public class CourseResource {
         else {
             // this means the user must be an instructor, who has NO Admin rights.
             // instructors are not allowed to change group names, because this would lead to security problems
-
-            if (!Objects.equals(existingCourse.getStudentGroupName(), updatedCourse.getStudentGroupName())) {
-                throw new BadRequestAlertException("The student group name cannot be changed", Course.ENTITY_NAME, "studentGroupNameCannotChange", true);
-            }
-            if (!Objects.equals(existingCourse.getTeachingAssistantGroupName(), updatedCourse.getTeachingAssistantGroupName())) {
-                throw new BadRequestAlertException("The teaching assistant group name cannot be changed", Course.ENTITY_NAME, "teachingAssistantGroupNameCannotChange", true);
-            }
-            if (!Objects.equals(existingCourse.getEditorGroupName(), updatedCourse.getEditorGroupName())) {
-                throw new BadRequestAlertException("The editor group name cannot be changed", Course.ENTITY_NAME, "editorGroupNameCannotChange", true);
-            }
-            if (!Objects.equals(existingCourse.getInstructorGroupName(), updatedCourse.getInstructorGroupName())) {
-                throw new BadRequestAlertException("The instructor group name cannot be changed", Course.ENTITY_NAME, "instructorGroupNameCannotChange", true);
+            if (!changedGroupNames.isEmpty()) {
+                throw new BadRequestAlertException("You are not allowed to change the group names of a course", Course.ENTITY_NAME, "groupNamesCannotChange", true);
             }
         }
 
         // Make sure to preserve associations in updated entity
-        updatedCourse.setPrerequisites(existingCourse.getPrerequisites());
-
-        updatedCourse.validateRegistrationConfirmationMessage();
-        updatedCourse.validateComplaintsAndRequestMoreFeedbackConfig();
-        updatedCourse.validateOnlineCourseAndRegistrationEnabled();
-        updatedCourse.validateOnlineCourseConfiguration();
-        updatedCourse.validateShortName();
-        updatedCourse.validateAccuracyOfScores();
-        if (!updatedCourse.isValidStartAndEndDate()) {
+        courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
+        courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
+        courseUpdate.validateRegistrationConfirmationMessage();
+        courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();
+        courseUpdate.validateOnlineCourseAndRegistrationEnabled();
+        courseUpdate.validateOnlineCourseConfiguration();
+        courseUpdate.validateShortName();
+        courseUpdate.validateAccuracyOfScores();
+        if (!courseUpdate.isValidStartAndEndDate()) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
         }
+
+        if (file != null) {
+            String pathString = fileService.handleSaveFile(file, false, false);
+            courseUpdate.setCourseIcon(pathString);
+        }
+
+        courseUpdate.setId(courseId); // Don't persist a wrong ID
+        Course result = courseRepository.save(courseUpdate);
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
@@ -243,11 +260,18 @@ public class CourseResource {
         final var oldInstructorGroup = existingCourse.getInstructorGroupName();
         final var oldEditorGroup = existingCourse.getEditorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
-        Course result = courseRepository.save(updatedCourse);
+
+        if (courseUpdate.isOnlineCourse()) {
+            oAuth2JWKSService.updateKey(courseUpdate.getOnlineCourseConfiguration().getRegistrationId());
+        }
+
         optionalVcsUserManagementService
                 .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+        if (timeZoneChanged) {
+            tutorialGroupsConfigurationService.onTimeZoneUpdate(result);
+        }
         return ResponseEntity.ok(result);
     }
 
@@ -259,7 +283,7 @@ public class CourseResource {
      * @param courseId to find the course
      * @return response entity for user who has been registered to the course
      */
-    @PostMapping("/courses/{courseId}/register")
+    @PostMapping("courses/{courseId}/register")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
@@ -297,7 +321,7 @@ public class CourseResource {
      * @param onlyActive if true, only active courses will be considered in the result
      * @return the list of courses (the user has access to)
      */
-    @GetMapping("/courses")
+    @GetMapping("courses")
     @PreAuthorize("hasRole('TA')")
     public List<Course> getAllCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all Courses the user has access to");
@@ -317,7 +341,7 @@ public class CourseResource {
      *
      * @return the list of courses
      */
-    @GetMapping("/courses/courses-with-quiz")
+    @GetMapping("courses/courses-with-quiz")
     @PreAuthorize("hasRole('EDITOR')")
     public List<Course> getAllCoursesWithQuizExercises() {
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -336,7 +360,7 @@ public class CourseResource {
      * @param onlyActive if true, only active courses will be considered in the result
      * @return the list of courses (the user has access to)
      */
-    @GetMapping("/courses/with-user-stats")
+    @GetMapping("courses/with-user-stats")
     @PreAuthorize("hasRole('TA')")
     public List<Course> getAllCoursesWithUserStats(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("get courses with user stats, only active: {}", onlyActive);
@@ -356,7 +380,7 @@ public class CourseResource {
      * @param onlyActive if true, only active courses will be considered in the result
      * @return a list of courses (the user has access to)
      */
-    @GetMapping("/courses/course-management-overview")
+    @GetMapping("courses/course-management-overview")
     @PreAuthorize("hasRole('TA')")
     public List<Course> getAllCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         return courseService.getAllCoursesForManagementOverview(onlyActive);
@@ -368,7 +392,7 @@ public class CourseResource {
      *
      * @return the list of courses which are active
      */
-    @GetMapping("/courses/for-registration")
+    @GetMapping("courses/for-registration")
     @PreAuthorize("hasRole('USER')")
     public List<Course> getAllCoursesToRegister() {
         log.debug("REST request to get all currently active Courses that are not online courses");
@@ -394,7 +418,7 @@ public class CourseResource {
      * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
      * @return a course with all exercises, lectures, exams and learning goals visible to the student
      */
-    @GetMapping("/courses/{courseId}/for-dashboard")
+    @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
     public Course getCourseForDashboard(@PathVariable long courseId) {
         long start = System.currentTimeMillis();
@@ -410,7 +434,7 @@ public class CourseResource {
      *
      * @return the list of courses (the user has access to) including all exercises with participation and result for the user
      */
-    @GetMapping("/courses/for-dashboard")
+    @GetMapping("courses/for-dashboard")
     @PreAuthorize("hasRole('USER')")
     public List<Course> getAllCoursesForDashboard() {
         long start = System.currentTimeMillis();
@@ -428,7 +452,7 @@ public class CourseResource {
      *
      * @return the list of courses (the user has access to)
      */
-    @GetMapping("/courses/for-notifications")
+    @GetMapping("courses/for-notifications")
     @PreAuthorize("hasRole('USER')")
     public List<Course> getAllCoursesForNotifications() {
         log.debug("REST request to get all Courses the user has access to");
@@ -442,7 +466,7 @@ public class CourseResource {
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("/courses/{courseId}/for-assessment-dashboard")
+    @GetMapping("courses/{courseId}/for-assessment-dashboard")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Course> getCourseForAssessmentDashboard(@PathVariable long courseId) {
         log.debug("REST request /courses/{courseId}/for-assessment-dashboard");
@@ -458,15 +482,15 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/stats-for-assessment-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
-     * assessments - number of assessments assessed by the tutor - number of complaints
+     * GET /courses/:courseId/stats-for-assessment-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course -
+     * number of assessments - number of assessments assessed by the tutor - number of complaints
      * <p>
      * all timestamps were measured when calling this method from the PGdP assessment-dashboard
      *
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
-    @GetMapping("/courses/{courseId}/stats-for-assessment-dashboard")
+    @GetMapping("courses/{courseId}/stats-for-assessment-dashboard")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -481,7 +505,7 @@ public class CourseResource {
      * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("/courses/{courseId}")
+    @GetMapping("courses/{courseId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
@@ -491,8 +515,12 @@ public class CourseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+            course = courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId);
         }
+        else if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
+        }
+
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
@@ -509,7 +537,7 @@ public class CourseResource {
      * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("/courses/{courseId}/with-exercises")
+    @GetMapping("courses/{courseId}/with-exercises")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long courseId) {
         log.debug("REST request to get Course : {}", courseId);
@@ -520,10 +548,11 @@ public class CourseResource {
 
     /**
      * GET /courses/:courseId/with-organizations Get a course by id with eagerly loaded organizations
+     *
      * @param courseId the id of the course
      * @return the course with eagerly loaded organizations
      */
-    @GetMapping("/courses/{courseId}/with-organizations")
+    @GetMapping("courses/{courseId}/with-organizations")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Course> getCourseWithOrganizations(@PathVariable Long courseId) {
         log.debug("REST request to get a course with its organizations : {}", courseId);
@@ -538,7 +567,7 @@ public class CourseResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("/courses/{courseId}/lockedSubmissions")
+    @GetMapping("courses/{courseId}/lockedSubmissions")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
@@ -562,7 +591,7 @@ public class CourseResource {
      * @param onlyActive if true, only active courses will be considered in the result
      * @return ResponseEntity with status, containing a list of courses
      */
-    @GetMapping("/courses/exercises-for-management-overview")
+    @GetMapping("courses/exercises-for-management-overview")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<Course>> getExercisesForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         final List<Course> courses = new ArrayList<>();
@@ -583,7 +612,7 @@ public class CourseResource {
      * @param onlyActive if true, only active courses will be considered in the result
      * @return ResponseEntity with status, containing a list of <code>CourseManagementOverviewStatisticsDTO</code>
      */
-    @GetMapping("/courses/stats-for-management-overview")
+    @GetMapping("courses/stats-for-management-overview")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<CourseManagementOverviewStatisticsDTO>> getExerciseStatsForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         final List<CourseManagementOverviewStatisticsDTO> courseDTOs = new ArrayList<>();
@@ -612,7 +641,7 @@ public class CourseResource {
      * @param courseId the id of the course to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/courses/{courseId}")
+    @DeleteMapping("courses/{courseId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
@@ -636,7 +665,7 @@ public class CourseResource {
      * @param courseId the id of the course
      * @return empty
      */
-    @PutMapping("/courses/{courseId}/archive")
+    @PutMapping("courses/{courseId}/archive")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Void> archiveCourse(@PathVariable Long courseId) {
@@ -668,7 +697,7 @@ public class CourseResource {
      * @return ResponseEntity with status
      */
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @GetMapping("/courses/{courseId}/download-archive")
+    @GetMapping("courses/{courseId}/download-archive")
     public ResponseEntity<Resource> downloadCourseArchive(@PathVariable Long courseId) throws FileNotFoundException {
         log.info("REST request to download archive of Course : {}", courseId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
@@ -691,7 +720,7 @@ public class CourseResource {
      * @param courseId id of the course to clean up
      * @return ResponseEntity with status
      */
-    @DeleteMapping("/courses/{courseId}/cleanup")
+    @DeleteMapping("courses/{courseId}/cleanup")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Resource> cleanup(@PathVariable Long courseId) {
         log.info("REST request to cleanup the Course : {}", courseId);
@@ -711,7 +740,7 @@ public class CourseResource {
      * @param courseId the id of the course to get the categories from
      * @return the ResponseEntity with status 200 (OK) and the list of categories or with status 404 (Not Found)
      */
-    @GetMapping(value = "/courses/{courseId}/categories")
+    @GetMapping("courses/{courseId}/categories")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Set<String>> getCategoriesInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get categories of Course : {}", courseId);
@@ -726,7 +755,7 @@ public class CourseResource {
      * @param courseId the id of the course
      * @return list of users with status 200 (OK)
      */
-    @GetMapping(value = "/courses/{courseId}/students")
+    @GetMapping("courses/{courseId}/students")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<User>> getAllStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
@@ -741,7 +770,7 @@ public class CourseResource {
      * @param loginOrName the login or name by which to search users
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
-    @GetMapping("/courses/{courseId}/students/search")
+    @GetMapping("courses/{courseId}/students/search")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<UserDTO>> searchStudentsInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search for students in course : {} with login or name : {}", courseId, loginOrName);
@@ -810,7 +839,7 @@ public class CourseResource {
      * @param courseId the id of the course
      * @return list of users with status 200 (OK)
      */
-    @GetMapping(value = "/courses/{courseId}/tutors")
+    @GetMapping("courses/{courseId}/tutors")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<User>> getAllTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
@@ -824,7 +853,7 @@ public class CourseResource {
      * @param courseId the id of the course
      * @return list of users with status 200 (OK)
      */
-    @GetMapping(value = "/courses/{courseId}/editors")
+    @GetMapping("courses/{courseId}/editors")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<User>> getAllEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
@@ -838,7 +867,7 @@ public class CourseResource {
      * @param courseId the id of the course
      * @return list of users with status 200 (OK)
      */
-    @GetMapping(value = "/courses/{courseId}/instructors")
+    @GetMapping("courses/{courseId}/instructors")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<User>> getAllInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
@@ -849,11 +878,11 @@ public class CourseResource {
     /**
      * GET /courses/:courseId/search-users : search users for a given course within all groups.
      *
-     * @param courseId    the id of the course for which to search users
-     * @param nameOfUser  the name by which to search users
+     * @param courseId   the id of the course for which to search users
+     * @param nameOfUser the name by which to search users
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
-    @GetMapping("/courses/{courseId}/search-other-users")
+    @GetMapping("courses/{courseId}/search-other-users")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<User>> searchOtherUsersInCourse(@PathVariable long courseId, @RequestParam("nameOfUser") String nameOfUser) {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -873,7 +902,7 @@ public class CourseResource {
      * @param courseId the id of the course
      * @return the title of the course wrapped in an ResponseEntity or 404 Not Found if no course with that id exists
      */
-    @GetMapping(value = "/courses/{courseId}/title")
+    @GetMapping("courses/{courseId}/title")
     @PreAuthorize("hasRole('USER')")
     @ResponseBody
     public ResponseEntity<String> getCourseTitle(@PathVariable Long courseId) {
@@ -888,7 +917,7 @@ public class CourseResource {
      * @param studentLogin the login of the user who should get student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping(value = "/courses/{courseId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping("courses/{courseId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to course : {}", studentLogin, courseId);
@@ -903,7 +932,7 @@ public class CourseResource {
      * @param tutorLogin the login of the user who should get tutor access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping(value = "/courses/{courseId}/tutors/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping("courses/{courseId}/tutors/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> addTutorToCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to add {} as tutors to course : {}", tutorLogin, courseId);
@@ -914,11 +943,11 @@ public class CourseResource {
     /**
      * Post /courses/:courseId/editors/:editorLogin : Add the given user to the editors of the course so that the student can access the course administration
      *
-     * @param courseId   the id of the course
+     * @param courseId    the id of the course
      * @param editorLogin the login of the user who should get editor access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping(value = "/courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping("courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
@@ -934,7 +963,7 @@ public class CourseResource {
      * @param instructorLogin the login of the user who should get instructors access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @PostMapping(value = "/courses/{courseId}/instructors/{instructorLogin:" + Constants.LOGIN_REGEX + "}")
+    @PostMapping("courses/{courseId}/instructors/{instructorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> addInstructorToCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to add {} as instructors to course : {}", instructorLogin, courseId);
@@ -974,7 +1003,7 @@ public class CourseResource {
      * @param studentLogin the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping(value = "/courses/{courseId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping("courses/{courseId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to remove {} as student from course : {}", studentLogin, courseId);
@@ -989,7 +1018,7 @@ public class CourseResource {
      * @param tutorLogin the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping(value = "/courses/{courseId}/tutors/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping("courses/{courseId}/tutors/{tutorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
@@ -1000,11 +1029,11 @@ public class CourseResource {
     /**
      * DELETE /courses/:courseId/editors/:editorsLogin : Remove the given user from the editors of the course so that the editors cannot access the course administration anymore
      *
-     * @param courseId   the id of the course
+     * @param courseId    the id of the course
      * @param editorLogin the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping(value = "/courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping("courses/{courseId}/editors/{editorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeEditorFromCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to remove {} as editor from course : {}", editorLogin, courseId);
@@ -1013,13 +1042,14 @@ public class CourseResource {
     }
 
     /**
-     * DELETE /courses/:courseId/instructors/:instructorLogin : Remove the given user from the instructors of the course so that the instructor cannot access the course administration anymore
+     * DELETE /courses/:courseId/instructors/:instructorLogin : Remove the given user from the instructors of the course so that the instructor cannot access the course
+     * administration anymore
      *
      * @param courseId        the id of the course
      * @param instructorLogin the login of the user who should lose student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
-    @DeleteMapping(value = "/courses/{courseId}/instructors/{instructorLogin:" + Constants.LOGIN_REGEX + "}")
+    @DeleteMapping("courses/{courseId}/instructors/{instructorLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to remove {} as instructor from course : {}", instructorLogin, courseId);
@@ -1056,7 +1086,7 @@ public class CourseResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the body, or with status 404 (Not Found)
      */
-    @GetMapping("/courses/{courseId}/management-detail")
+    @GetMapping("courses/{courseId}/management-detail")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -1068,7 +1098,7 @@ public class CourseResource {
     /**
      * GET /courses/:courseId/statistics : Get the active students for this particular course
      *
-     * @param courseId the id of the course
+     * @param courseId    the id of the course
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
@@ -1115,9 +1145,9 @@ public class CourseResource {
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
-     * @param courseId      the id of the course
-     * @param studentDtos   the list of students (with at least registration number) who should get access to the course
-     * @param courseGroup   the group, the user has to be added to, either 'students', 'tutors', 'instructors' or 'editors'
+     * @param courseId    the id of the course
+     * @param studentDtos the list of students (with at least registration number) who should get access to the course
+     * @param courseGroup the group, the user has to be added to, either 'students', 'tutors', 'instructors' or 'editors'
      * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     @PostMapping("courses/{courseId}/{courseGroup}")

@@ -19,18 +19,20 @@
                 id="result-score"
                 (click)="showDetails(result)"
             >
-                <span class="guided-tour result" [ngbTooltip]="resultTooltip | artemisTranslate" container="body">
+                <span class="guided-tour result" [ngbTooltip]="resultTooltip | artemisTranslate">
                     {{ resultString }}
                 </span>
-                <span class="result" [ngbTooltip]="result.submission?.submissionDate | artemisDate"> ({{ result.submission?.submissionDate! | artemisTimeAgo }}) </span>
+                <span class="result" [ngbTooltip]="result.submission?.submissionDate ?? result.completionDate | artemisDate">
+                    ({{ result.submission?.submissionDate ?? result.completionDate! | artemisTimeAgo }})
+                </span>
             </span>
             <ng-template #notPreliminaryAndNoFeedback>
                 <span [ngClass]="textColorClass" class="guided-tour result" id="result-score">
-                    <span class="result" [ngbTooltip]="resultTooltip | artemisTranslate" container="body">
+                    <span class="result" [ngbTooltip]="resultTooltip | artemisTranslate">
                         {{ resultString }}
                     </span>
-                    <span class="result" [ngbTooltip]="result.submission?.submissionDate | artemisDate" container="body">
-                        ({{ result.submission?.submissionDate! | artemisTimeAgo }})
+                    <span class="result" [ngbTooltip]="result.submission?.submissionDate ?? result.completionDate | artemisDate">
+                        ({{ result.submission?.submissionDate ?? result.completionDate! | artemisTimeAgo }})
                     </span>
                 </span>
             </ng-template>
@@ -40,7 +42,7 @@
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-badge" ngbTooltip="{{ badgeTooltip | artemisTranslate }}" container="body">
+            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-badge" ngbTooltip="{{ badgeTooltip | artemisTranslate }}">
                 {{ badgeText | artemisTranslate | uppercase }}
             </span>
         </ng-container>

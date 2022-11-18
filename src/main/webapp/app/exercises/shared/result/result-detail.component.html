@@ -1,5 +1,8 @@
 <div class="modal-header">
-    <h4 class="modal-title">Feedback</h4>
+    <h4 class="modal-title">
+        <ng-container *ngIf="taskName; else noTaskDescription">{{ 'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName } }}</ng-container>
+        <ng-template #noTaskDescription>{{ 'artemisApp.result.detail.feedback' | artemisTranslate }}</ng-template>
+    </h4>
     <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()"></button>
 </div>
 <div class="modal-body position-relative" id="result-detail-body">
@@ -14,7 +17,7 @@
     </div>
     <!-- Feedbacks container -->
     <ng-template #feedbackContainer>
-        <div *ngIf="!loadingFailed && resultIsPreliminary()">
+        <div *ngIf="!loadingFailed && resultIsPreliminary(result)">
             <div class="d-flex justify-content-end m-1">
                 <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
             </div>
@@ -57,7 +60,7 @@
                     </ngx-charts-bar-horizontal-stacked>
                 </div>
                 <div *ngIf="showScoreChartTooltip" class="chart-tooltip-space d-flex justify-content-center position-relative">
-                    <div class="chart-tooltip-space-content" [ngbTooltip]="'artemisApp.result.chart.tooltip' | artemisTranslate" placement="bottom"></div>
+                    <div class="chart-tooltip-space-content" [ngbTooltip]="'artemisApp.result.chart.tooltip' | artemisTranslate" placement="bottom auto"></div>
                 </div>
                 <hr />
             </div>
@@ -70,12 +73,12 @@
                     <span class="ms-1" jhiTranslate="artemisApp.result.chart.filterApplied">A filter is applied to your feedback</span>
                     <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
                 </div>
-                <div *ngIf="result.testCaseCount || result.codeIssueCount || manualFeedbackCount" class="mb-2">
-                    <div *ngIf="result.testCaseCount">
-                        {{ 'artemisApp.result.testCount' | artemisTranslate: { passed: result.passedTestCaseCount, total: result.testCaseCount } }}
+                <div *ngIf="testCaseCount || scaFeedbackCount || manualFeedbackCount" class="mb-2">
+                    <div *ngIf="testCaseCount">
+                        {{ 'artemisApp.result.testCount' | artemisTranslate: { passed: passedTestCaseCount, total: testCaseCount } }}
                     </div>
-                    <div *ngIf="result.codeIssueCount">
-                        {{ 'artemisApp.result.scaIssueCount' | artemisTranslate: { issues: result.codeIssueCount } }}
+                    <div *ngIf="scaFeedbackCount">
+                        {{ 'artemisApp.result.scaIssueCount' | artemisTranslate: { issues: scaFeedbackCount } }}
                     </div>
                     <div *ngIf="manualFeedbackCount">
                         {{ 'artemisApp.result.manualFeedbackCount' | artemisTranslate: { feedbacks: manualFeedbackCount } }}

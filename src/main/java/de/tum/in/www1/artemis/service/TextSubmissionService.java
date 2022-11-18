@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class TextSubmissionService extends SubmissionService {
@@ -62,7 +61,7 @@ public class TextSubmissionService extends SubmissionService {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
         final var participation = optionalParticipation.get();
-        final var dueDate = exerciseDateService.getDueDate(participation);
+        final var dueDate = ExerciseDateService.getDueDate(participation);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
         if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
             throw new AccessForbiddenException();
@@ -150,21 +149,6 @@ public class TextSubmissionService extends SubmissionService {
             return Optional.of(textSubmission);
         }
         return Optional.empty();
-    }
-
-    /**
-     * Find a text submission of the given exercise that still needs to be assessed and lock it to prevent other tutors from receiving and assessing it.
-     *
-     * @param textExercise the exercise the submission should belong to
-     * @param correctionRound get submission with results in the correction round
-     * @param ignoreTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
-     * @return a locked modeling submission that needs an assessment
-     */
-    public TextSubmission findAndLockTextSubmissionToBeAssessed(TextExercise textExercise, boolean ignoreTestRunParticipations, int correctionRound) {
-        TextSubmission textSubmission = getRandomTextSubmissionEligibleForNewAssessment(textExercise, ignoreTestRunParticipations, correctionRound)
-                .orElseThrow(() -> new EntityNotFoundException("Text submission for exercise " + textExercise.getId() + " could not be found"));
-        lockSubmission(textSubmission, correctionRound);
-        return textSubmission;
     }
 
     /**

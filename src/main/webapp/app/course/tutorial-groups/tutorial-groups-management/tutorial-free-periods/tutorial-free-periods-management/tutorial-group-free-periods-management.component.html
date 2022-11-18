@@ -1,0 +1,58 @@
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <div class="row" *ngIf="tutorialGroupsConfiguration && tutorialGroupFreePeriods">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <h4>{{ 'artemisApp.pages.tutorialFreePeriodsManagement.title' | artemisTranslate }}</h4>
+                <div>
+                    <button type="button" class="btn btn-primary" id="create-tutorial-free-day" (click)="openCreateFreeDayDialog($event)">
+                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <span>{{ 'artemisApp.pages.tutorialFreePeriodsManagement.createFreePeriodButton' | artemisTranslate }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 mb-2">
+            <div class="alert alert-info">
+                {{ 'artemisApp.pages.tutorialFreePeriodsManagement.timeZoneExplanation' | artemisTranslate: { timeZone: course.timeZone } }}
+            </div>
+        </div>
+        <div class="table-responsive" *ngIf="tutorialGroupFreePeriods && tutorialGroupFreePeriods.length > 0">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ 'global.field.id' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.entities.tutorialFreePeriod.date' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let freePeriod of tutorialGroupFreePeriods" [ngClass]="{ 'opacity-50': isInThePast(freePeriod) }" class="free-period-row">
+                        <td>
+                            {{ freePeriod.id }}
+                        </td>
+                        <!-- Only support for one day right now, so only show "start" date -->
+                        <td>
+                            {{ freePeriod.start | artemisDate: 'long-date':false:course.timeZone:true }}
+                        </td>
+                        <td>
+                            <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>
+                        </td>
+                        <td>
+                            <div class="extra-buttons">
+                                <jhi-tutorial-group-free-period-row-buttons
+                                    [course]="course"
+                                    [tutorialGroupConfiguration]="tutorialGroupsConfiguration"
+                                    [tutorialFreePeriod]="freePeriod"
+                                    (tutorialFreePeriodDeleted)="loadAll()"
+                                    (tutorialFreePeriodEdited)="loadAll()"
+                                >
+                                </jhi-tutorial-group-free-period-row-buttons>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</jhi-loading-indicator-container>

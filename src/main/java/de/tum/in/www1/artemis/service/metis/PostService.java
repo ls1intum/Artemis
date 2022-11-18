@@ -208,12 +208,25 @@ public class PostService extends PostingService {
      * @param reaction reaction that was added by a user
      * @param courseId id of course the post belongs to
      */
-    public void updateWithReaction(Post post, Reaction reaction, Long courseId) {
+    public void addReaction(Post post, Reaction reaction, Long courseId) {
         final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
         updatedPost.setConversation(post.getConversation());
         broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+    }
+
+    /**
+     * Remove reaction from a post and persist the post
+     *
+     * @param post     post that reacted is removed from
+     * @param reaction reaction that was removed by a user
+     * @param courseId id of course the post belongs to
+     */
+    public void removeReaction(Post post, Reaction reaction, Long courseId) {
+        preCheckUserAndCourse(reaction.getUser(), courseId);
+        post.removeReaction(reaction);
+        postRepository.save(post);
     }
 
     /**

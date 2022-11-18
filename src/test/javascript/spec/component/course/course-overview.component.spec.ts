@@ -1,5 +1,5 @@
-import { of, Subject } from 'rxjs';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { Subject, of } from 'rxjs';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -42,6 +42,9 @@ import { CourseOverviewComponent } from 'app/overview/course-overview.component'
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { generateExampleTutorialGroupsConfiguration } from '../tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -107,6 +110,7 @@ describe('CourseOverviewComponent', () => {
     let teamService: TeamService;
     let learningGoalService: LearningGoalService;
     let tutorialGroupsService: TutorialGroupsService;
+    let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: JhiWebsocketService;
 
     const route: MockActivatedRouteWithSubjects = new MockActivatedRouteWithSubjects();
@@ -150,6 +154,7 @@ describe('CourseOverviewComponent', () => {
                 teamService = TestBed.inject(TeamService);
                 learningGoalService = TestBed.inject(LearningGoalService);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
+                tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
             });
     }));
@@ -230,9 +235,16 @@ describe('CourseOverviewComponent', () => {
             body: [new TutorialGroup()],
             status: 200,
         });
+        const configurationResponse: HttpResponse<TutorialGroupsConfiguration> = new HttpResponse({
+            body: generateExampleTutorialGroupsConfiguration({}),
+            status: 200,
+        });
+
         jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(learningGoalsResponse));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsResponse));
         jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(of(tutorialGroupsResponse));
+        jest.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
+
         getCourseStub.mockReturnValue(course2);
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
 

@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { finalize, Subject } from 'rxjs';
+import { Subject, finalize } from 'rxjs';
 import { BarControlConfiguration } from 'app/overview/tab-bar/tab-bar';
 import { Course } from 'app/entities/course.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
@@ -11,6 +11,7 @@ import { map } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
+import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 
 type filter = 'all' | 'registered';
 
@@ -28,6 +29,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     courseId: number;
     course: Course;
     isLoading = false;
+    tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
 
     selectedFilter: filter = 'registered';
 
@@ -48,6 +50,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
         this.activatedRoute.parent?.parent?.paramMap.subscribe((parentParams) => {
             this.courseId = Number(parentParams.get('courseId'));
             if (this.courseId) {
+                this.setCourse();
                 this.setTutorialGroups();
                 this.subscribeToCourseUpdates();
             }
@@ -69,15 +72,43 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     }
 
     subscribeToCourseUpdates() {
-        this.courseManagementService.getCourseUpdates(this.courseId).subscribe(() => {
+        this.courseManagementService.getCourseUpdates(this.courseId).subscribe((course) => {
+            this.course = course;
+            this.setFreeDays();
             this.setTutorialGroups();
         });
+    }
+
+    private setFreeDays() {
+        if (this.course?.tutorialGroupsConfiguration?.tutorialGroupFreePeriods) {
+            this.tutorialGroupFreeDays = this.course.tutorialGroupsConfiguration.tutorialGroupFreePeriods;
+        } else {
+            this.tutorialGroupFreeDays = [];
+        }
     }
 
     setTutorialGroups() {
         const tutorialGroupsLoadedFromCache = this.loadTutorialGroupsFromCache();
         if (!tutorialGroupsLoadedFromCache) {
             this.loadTutorialGroupsFromServer();
+        }
+    }
+
+    setCourse() {
+        const courseLoadedFromCache = this.loadCourseFromCache();
+        if (!courseLoadedFromCache) {
+            this.loadCourseFromServer();
+        }
+    }
+
+    loadCourseFromCache() {
+        const cachedCourse = this.courseCalculationService.getCourse(this.courseId);
+        if (cachedCourse === undefined) {
+            return false;
+        } else {
+            this.course = cachedCourse;
+            this.setFreeDays();
+            return true;
         }
     }
 
@@ -117,6 +148,26 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
+
+    loadCourseFromServer() {
+        this.isLoading = true;
+        this.courseManagementService
+            .find(this.courseId)
+            .pipe(
+                map((res: HttpResponse<Course>) => res.body),
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe({
+                next: (course: Course) => {
+                    this.course = course;
+                    this.setFreeDays();
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+    }
+
     renderTopBarControls() {
         if (this.controls) {
             this.controlConfiguration.subject!.next(this.controls);

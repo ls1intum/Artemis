@@ -1,24 +1,35 @@
-<div class="alert alert-warning" role="alert" *ngIf="capacityReached">
-    {{ 'artemisApp.pages.registeredStudents.capacityWarning' | artemisTranslate: { capacity: tutorialGroup.capacity } }}
-</div>
-<jhi-course-group
-    [tutorialGroup]="tutorialGroup"
-    [allGroupUsers]="registeredStudents"
-    [courseGroup]="courseGroup"
-    [isLoadingAllGroupUsers]="isLoading"
-    [isAdmin]="isAdmin"
-    [course]="course"
-    [userSearch]="userSearch"
-    [addUserToGroup]="addToGroup"
-    [removeUserFromGroup]="removeFromGroup"
-    [exportFileName]="exportFilename"
-    [handleUsersSizeChange]="handleUsersSizeChange"
-    (importFinish)="loadAll()"
->
-    <span *ngIf="tutorialGroup">
-        <span>{{ tutorialGroup.title }} - </span>
-        <span *ngIf="filteredUsersSize < registeredStudents.length">{{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"> out of </span> </span
-        >{{ registeredStudents.length }}
-        <span [jhiTranslate]="'artemisApp.course.students'"></span>
-    </span>
-</jhi-course-group>
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <div *ngIf="isInitialized">
+        <div class="modal-header">
+            <h4 class="modal-title">{{ 'artemisApp.pages.registeredStudents.header' | artemisTranslate: { title: tutorialGroup.title } }}</h4>
+            <button type="button" class="btn-close" (click)="clear()"></button>
+        </div>
+        <div class="modal-body">
+            <div class="alert alert-warning" role="alert" *ngIf="capacityReached">
+                {{ 'artemisApp.pages.registeredStudents.capacityWarning' | artemisTranslate: { capacity: tutorialGroup.capacity } }}
+            </div>
+            <jhi-course-group
+                [tutorialGroup]="tutorialGroup"
+                [allGroupUsers]="registeredStudents"
+                [courseGroup]="courseGroup"
+                [isLoadingAllGroupUsers]="isLoading"
+                [isAdmin]="isAdmin"
+                [course]="course"
+                [userSearch]="userSearch"
+                [addUserToGroup]="addToGroup"
+                [removeUserFromGroup]="removeFromGroup"
+                [exportFileName]="exportFilename"
+                [handleUsersSizeChange]="handleUsersSizeChange"
+                (importFinish)="loadAll()"
+            >
+                <span *ngIf="tutorialGroup">
+                    <span>{{ tutorialGroup.title }} - </span>
+                    <span *ngIf="filteredUsersSize < registeredStudents.length"
+                        >{{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"> out of </span> </span
+                    >{{ registeredStudents.length }}
+                    <span [jhiTranslate]="'artemisApp.course.students'"></span>
+                </span>
+            </jhi-course-group>
+        </div>
+    </div>
+</jhi-loading-indicator-container>

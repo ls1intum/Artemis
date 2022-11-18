@@ -5,7 +5,7 @@ import { InitializationState, Participation } from 'app/entities/participation/p
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { from, Observable, of } from 'rxjs';
+import { Observable, from, of } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseServicable } from 'app/exercises/shared/exercise/exercise.service';
@@ -196,14 +196,15 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
     return ParticipationStatus.INACTIVE;
 };
 
-/**
- * The start exercise button should be available for programming exercises when
- * - there is no due date
- * - now is before the due date
- * - test run after due date is deactivated and manual grading is deactivated
- */
 export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean => {
-    return exercise.dueDate == undefined || dayjs().isBefore(exercise.dueDate!);
+    return !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
+};
+
+export const isResumeExerciseAvailable = (exercise: Exercise, studentParticipation?: StudentParticipation): boolean => {
+    if (!studentParticipation?.individualDueDate) {
+        return isStartExerciseAvailable(exercise);
+    }
+    return dayjs().isBefore(studentParticipation.individualDueDate);
 };
 
 /**

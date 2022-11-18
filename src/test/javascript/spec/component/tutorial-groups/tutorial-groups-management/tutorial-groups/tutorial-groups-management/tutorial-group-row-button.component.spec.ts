@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -8,15 +8,21 @@ import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { MockRouter } from '../../../../../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Course } from 'app/entities/course.model';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
+import { MockRouter } from '../../../../../helpers/mocks/mock-router';
+import { Router } from '@angular/router';
+import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
 
 describe('TutorialGroupRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupRowButtonsComponent>;
     let component: TutorialGroupRowButtonsComponent;
-    const courseId = 1;
+    const course = {
+        id: 1,
+    } as Course;
     let tutorialGroup: TutorialGroup;
 
     const router = new MockRouter();
@@ -30,7 +36,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [MockProvider(TutorialGroupsService), { provide: Router, useValue: router }],
+            providers: [MockProvider(TutorialGroupsService), MockProvider(NgbModal), { provide: Router, useValue: router }],
         })
             .compileComponents()
             .then(() => {
@@ -41,17 +47,58 @@ describe('TutorialGroupRowButtonsComponent', () => {
             });
     });
     const setInputValues = () => {
-        component.courseId = courseId;
+        component.course = course;
         component.tutorialGroup = tutorialGroup;
         component.isAtLeastInstructor = true;
     };
 
-    it('should navigate to registrations management', fakeAsync(() => {
-        testButtonLeadsToRouting('registrations-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups', tutorialGroup.id!, 'registered-students']);
+    it('should open the session management dialog when the respective button is clicked', fakeAsync(() => {
+        const modalService = TestBed.inject(NgbModal);
+        const mockModalRef = {
+            componentInstance: { course: undefined, tutorialGroupId: undefined, initialize: () => {} },
+            result: of(),
+        };
+        const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+
+        fixture.detectChanges();
+        const openDialogSpy = jest.spyOn(component, 'openSessionDialog');
+
+        const button = fixture.debugElement.nativeElement.querySelector('#sessions-' + tutorialGroup.id);
+        button.click();
+
+        fixture.whenStable().then(() => {
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(modalOpenSpy).toHaveBeenCalledOnce();
+            expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupSessionsManagementComponent, { backdrop: 'static', scrollable: false, size: 'xl' });
+            expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroup.id);
+            expect(mockModalRef.componentInstance.course).toEqual(course);
+        });
     }));
 
+    it('should open the registrations dialog when the respective button is clicked', fakeAsync(() => {
+        const modalService = TestBed.inject(NgbModal);
+        const mockModalRef = {
+            componentInstance: { course: undefined, tutorialGroupId: undefined, initialize: () => {} },
+            result: of(),
+        };
+        const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+
+        fixture.detectChanges();
+        const openDialogSpy = jest.spyOn(component, 'openRegistrationDialog');
+
+        const button = fixture.debugElement.nativeElement.querySelector('#registrations-' + tutorialGroup.id);
+        button.click();
+
+        fixture.whenStable().then(() => {
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(modalOpenSpy).toHaveBeenCalledOnce();
+            expect(modalOpenSpy).toHaveBeenCalledWith(RegisteredStudentsComponent, { backdrop: 'static', scrollable: false, size: 'xl' });
+            expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroup.id);
+            expect(mockModalRef.componentInstance.course).toEqual(course);
+        });
+    }));
     it('should navigate to edit', fakeAsync(() => {
-        testButtonLeadsToRouting('edit-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups', tutorialGroup.id!, 'edit']);
+        testButtonLeadsToRouting('edit-' + tutorialGroup.id, ['/course-management', course.id!, 'tutorial-groups', tutorialGroup.id!, 'edit']);
     }));
 
     afterEach(() => {
@@ -65,7 +112,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
 
         fixture.detectChanges();
         component.deleteTutorialGroup();
-        expect(deleteSpy).toHaveBeenCalledWith(courseId, tutorialGroup.id);
+        expect(deleteSpy).toHaveBeenCalledWith(course.id!, tutorialGroup.id);
         expect(deleteEventSpy).toHaveBeenCalledOnce();
     });
 

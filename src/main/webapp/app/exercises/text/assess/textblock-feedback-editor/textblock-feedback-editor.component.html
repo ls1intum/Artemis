@@ -9,7 +9,6 @@
         *ngIf="feedback.type === FeedbackType.AUTOMATIC"
         (click)="openOriginOfFeedbackModal(toggleMore)"
         [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.automaticFeedbackInformationModal.trace' | artemisTranslate"
-        placement="top"
     >
         <fa-icon [icon]="faSearch"></fa-icon>
     </span>
@@ -46,14 +45,14 @@
 
     <div class="row">
         <div class="form-group col-md-10 m-0">
-            <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedbackWithColon" [for]="'detailText-' + textBlock.id"></label>
+            <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedbackWithColon" for="detailText-{{ textBlock.id }}"></label>
             <div class="d-inline" *ngIf="feedback.gradingInstruction!">
                 <span class="fw-bold">{{ feedback.gradingInstruction!.feedback }}</span>
-                <fa-icon [icon]="faQuestionCircle" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" container="body"></fa-icon>
+                <fa-icon [icon]="faQuestionCircle" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate"></fa-icon>
             </div>
         </div>
         <div class="form-group col-md-1 text-end m-0">
-            <label jhiTranslate="artemisApp.exercise.score" [for]="'score-' + textBlock.id"></label>
+            <label jhiTranslate="artemisApp.exercise.score" for="'score-{{ textBlock.id }}"></label>
         </div>
         <div class="form-group col-md-1 m-0" *ngIf="feedback.gradingInstruction!">
             <jhi-grading-instruction-link-icon [assessment]="feedback"></jhi-grading-instruction-link-icon>
@@ -105,11 +104,11 @@
                     (ngModelChange)="didChange()"
                 ></textarea>
                 <div class="card-header" *ngIf="!conflictMode && feedback.credits !== 0 && textBlock?.numberOfAffectedSubmissions && feedback.type === FeedbackType.MANUAL">
-                    <fa-icon [icon]="faInfoCircle" size="1x" class="text-info" placement="left"></fa-icon>
+                    <fa-icon [icon]="faInfoCircle" size="1x" class="text-info" placement="left auto"></fa-icon>
                     <span
                         jhiTranslate="artemisApp.textAssessment.feedbackEditor.impactWarning"
                         [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.impactWarningTooltip' | artemisTranslate"
-                        placement="bottom"
+                        placement="bottom auto"
                         class="impactWarningLabel"
                         (mouseenter)="mouseEnteredWarningLabel()"
                         [translateValues]="{ affectedSubmissionsCount: textBlock.numberOfAffectedSubmissions }"

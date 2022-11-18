@@ -75,20 +75,18 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final UrlService urlService;
 
-    private final TestwiseCoverageService testwiseCoverageService;
-
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
             UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate);
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate,
+                testwiseCoverageService);
         this.gitService = gitService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.mapper = mapper;
         this.urlService = urlService;
-        this.testwiseCoverageService = testwiseCoverageService;
     }
 
     @Override
@@ -615,53 +613,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
     private boolean isFirstBuildForThisPlan(BambooBuildResultNotificationDTO buildResult) {
         final var reason = buildResult.getBuild().reason();
         return reason != null && reason.contains("First build for this plan");
-    }
-
-    @Override
-    // TODO: extract common parts with JenkinsService.addFeedbackToResult into a common method. If necessary provide additional (abstract) methods in
-    // AbstractBuildResultNotificationDTO. An alternative would be to first convert the two different build results (Jenkins/Bamboo) into an intermediate common representation and
-    // then apply the logic
-    protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
-        final var jobs = ((BambooBuildResultNotificationDTO) buildResult).getBuild().jobs();
-        final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
-        final var programmingLanguage = programmingExercise.getProgrammingLanguage();
-        final var projectType = programmingExercise.getProjectType();
-
-        for (final var job : jobs) {
-            // 1) add feedback for failed test cases
-            for (final var failedTest : job.failedTests()) {
-                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(failedTest.name(), failedTest.errors(), false, programmingLanguage, projectType));
-            }
-            result.setTestCaseCount(result.getTestCaseCount() + job.failedTests().size());
-
-            // 2) add feedback for passed test cases
-            for (final var successfulTest : job.successfulTests()) {
-                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.name(), successfulTest.errors(), true, programmingLanguage, projectType));
-            }
-            result.setTestCaseCount(result.getTestCaseCount() + job.successfulTests().size());
-            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.successfulTests().size());
-
-            // 3) process static code analysis feedback
-            final var staticCodeAnalysisReports = job.staticCodeAnalysisReports();
-            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
-                var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
-                result.addFeedbacks(scaFeedbackList);
-                result.setCodeIssueCount(scaFeedbackList.size());
-            }
-
-            // 4) process testwise coverage analysis report
-            if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled())) {
-                var report = job.testwiseCoverageReport();
-                if (report != null) {
-                    // since the test cases are not saved to the database yet, the test case is null for the entries
-                    var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(report);
-                    result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
-                }
-            }
-
-            // Relevant feedback is negative
-            result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive()));
-        }
     }
 
     /**

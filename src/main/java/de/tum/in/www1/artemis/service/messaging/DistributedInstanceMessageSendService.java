@@ -93,6 +93,18 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
+    public void sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
+        log.info("Sending unlock all repositories without an individual due date before now for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed("programming-exercise-unlock-repositories-without-earlier-individual-due-date", exerciseId);
+    }
+
+    @Override
+    public void sendLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
+        log.info("Sending lock all repositories without an individual due date after now for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed("programming-exercise-lock-repositories-without-later-individual-due-date", exerciseId);
+    }
+
+    @Override
     public void sendRemoveNonActivatedUserSchedule(Long userId) {
         log.info("Sending remove non-activated user {} to broker.", userId);
         sendMessageDelayed("user-management-remove-non-activated-user", userId);

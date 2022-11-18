@@ -66,7 +66,7 @@
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
                     </a>
                     <a
-                        *ngIf="programmingExercise.assessmentType === assessmentType"
+                        *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise.allowComplaintsForAutomaticAssessments"
                         [routerLink]="shortBaseResource + 'assessment-dashboard/' + programmingExercise.id"
                         class="btn btn-info btn-sm me-1"
                         style="margin-bottom: 10px"
@@ -132,7 +132,6 @@
                             type="button"
                             (click)="combineTemplateCommits()"
                             class="btn btn-secondary btn-sm"
-                            container="body"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.combineTemplateCommitsWarning' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.combineTemplateCommits">Combine Template Commits</span>
@@ -144,7 +143,6 @@
                             type="button"
                             (click)="generateStructureOracle()"
                             class="btn btn-secondary btn-sm"
-                            container="body"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
@@ -164,7 +162,6 @@
                             type="button"
                             (click)="getAndShowTestwiseCoverage()"
                             class="btn btn-secondary btn-sm"
-                            container="body"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.testwiseCoverageReport.tooltip' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.button">Show Testwise Coverage</span>
@@ -541,7 +538,7 @@
                 <div *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.buildLogStatistics">
                     <dt>
                         <span jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.title">Build Log Statistics</span>
-                        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildLogStatistics.tooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.buildLogStatistics.tooltip"></jhi-help-icon>
                     </dt>
                     <dd>
                         <table class="table table-striped">
