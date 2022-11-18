@@ -1,6 +1,10 @@
 <div *ngIf="activeConversation && course" class="container-fluid conversation-settings">
     <div class="row settings-container">
-        <!-- Actions -->
+        <div class="col-12 settings-section text-center">
+            <button *ngIf="canLeaveConversation(activeConversation)" type="button" class="btn btn-danger" (click)="leaveConversation($event)">
+                {{ 'artemisApp.actions.leave' | artemisTranslate }}
+            </button>
+        </div>
         <ng-container *ngIf="getAsChannel(activeConversation) as channel">
             <div class="col-12 settings-section text-center" *ngIf="!channel.isArchived && canChangeArchivalState(channel)">
                 <button type="button" class="btn btn-danger" (click)="openArchivalModal($event)">{{ 'artemisApp.pages.archiveChannel.confirmButton' | artemisTranslate }}</button>

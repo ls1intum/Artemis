@@ -20,7 +20,7 @@
                     {{ 'artemisApp.messages.conversationDetail.tabs.members' | artemisTranslate }}
                 </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" *ngIf="!isOneToOneChat(activeConversation)">
                 <a class="nav-link" [class.active]="selectedTab === Tabs.SETTINGS" role="button" (click)="selectedTab = Tabs.SETTINGS">
                     {{ 'artemisApp.messages.conversationDetail.tabs.settings' | artemisTranslate }}
                 </a>
@@ -39,7 +39,6 @@
                 [activeConversation]="activeConversation"
                 [course]="course"
                 *ngSwitchCase="Tabs.INFO"
-                (channelLeave)="onChannelLeave()"
                 (changesPerformed)="changesWerePerformed = true"
             ></jhi-conversation-info>
             <jhi-conversation-settings
@@ -48,6 +47,7 @@
                 *ngSwitchCase="Tabs.SETTINGS"
                 (channelArchivalChange)="onArchivalChange()"
                 (channelDeleted)="onChannelDeleted()"
+                (conversationLeave)="onConversationLeave()"
             ></jhi-conversation-settings>
         </ng-container>
     </div>

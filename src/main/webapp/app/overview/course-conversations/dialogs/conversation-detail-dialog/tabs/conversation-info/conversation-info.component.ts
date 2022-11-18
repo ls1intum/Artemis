@@ -27,7 +27,6 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
 
     getAsChannel = getAsChannelDto;
     getUserLabel = getUserLabel;
-    canLeaveConversation = canLeaveConversation;
     canChangeChannelProperties = canChangeChannelProperties;
 
     @Input()
@@ -35,9 +34,6 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
 
     @Input()
     course: Course;
-
-    @Output()
-    channelLeave: EventEmitter<void> = new EventEmitter<void>();
 
     @Output()
     changesPerformed = new EventEmitter<void>();
@@ -56,16 +52,6 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
-    }
-
-    leaveChannel($event: MouseEvent) {
-        $event.stopPropagation();
-        this.channelService
-            .deregisterUsersFromChannel(this.course?.id!, this.activeConversation.id!)
-            .pipe(takeUntil(this.ngUnsubscribe))
-            .subscribe(() => {
-                this.channelLeave.emit();
-            });
     }
 
     onChangePerformed() {

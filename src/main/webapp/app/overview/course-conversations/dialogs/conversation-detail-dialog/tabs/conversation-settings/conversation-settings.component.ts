@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -10,7 +10,9 @@ import { Subject, from, takeUntil } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { canChangeChannelArchivalState, canDeleteChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { canChangeChannelArchivalState, canDeleteChannel, canLeaveConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 
 @Component({
     selector: 'jhi-conversation-settings',
@@ -19,8 +21,6 @@ import { canChangeChannelArchivalState, canDeleteChannel } from 'app/shared/meti
 })
 export class ConversationSettingsComponent implements OnDestroy {
     private ngUnsubscribe = new Subject<void>();
-
-    getAsChannel = getAsChannelDto;
 
     @Input()
     activeConversation: ConversationDto;
@@ -34,15 +34,40 @@ export class ConversationSettingsComponent implements OnDestroy {
     @Output()
     channelDeleted: EventEmitter<void> = new EventEmitter<void>();
 
+    @Output()
+    conversationLeave: EventEmitter<void> = new EventEmitter<void>();
+
     canChangeArchivalState = canChangeChannelArchivalState;
     canDeleteChannel = canDeleteChannel;
+    canLeaveConversation = canLeaveConversation;
+    getAsChannel = getAsChannelDto;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     faTimes = faTimes;
 
-    constructor(private modalService: NgbModal, private channelService: ChannelService, private alertService: AlertService) {}
+    constructor(private modalService: NgbModal, private channelService: ChannelService, private groupChatService: GroupChatService, private alertService: AlertService) {}
+
+    leaveConversation($event: MouseEvent) {
+        $event.stopPropagation();
+        if (isGroupChatDto(this.activeConversation)) {
+            this.groupChatService
+                .removeUsersFromGroupChat(this.course?.id!, this.activeConversation.id!)
+                .pipe(takeUntil(this.ngUnsubscribe))
+                .subscribe(() => {
+                    this.conversationLeave.emit();
+                });
+        } else if (isChannelDto(this.activeConversation)) {
+            this.channelService
+                .deregisterUsersFromChannel(this.course?.id!, this.activeConversation.id!)
+                .pipe(takeUntil(this.ngUnsubscribe))
+                .subscribe(() => {
+                    this.conversationLeave.emit();
+                });
+        }
+        throw new Error('The conversation type is not supported');
+    }
 
     ngOnDestroy() {
         this.ngUnsubscribe.next();

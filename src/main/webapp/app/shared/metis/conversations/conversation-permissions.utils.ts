@@ -56,10 +56,15 @@ export function canLeaveConversation(conversation: ConversationDto): boolean {
     if (!conversation.isMember) {
         return false;
     }
-    // the creator of a conversation can not leave it
-    if (conversation.isCreator) {
+    // the creator of a channel can not leave it
+    if (isChannelDto(conversation) && conversation.isCreator) {
         return false;
     }
+
+    if (isOneToOneChatDto(conversation)) {
+        return false;
+    }
+
     return true;
 }
 

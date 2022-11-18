@@ -4,6 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 export enum ConversationDetailTabs {
     MEMBERS = 'members',
@@ -37,6 +38,8 @@ export class ConversationDetailDialogComponent implements OnInit {
     getAsChannel = getAsChannelDto;
     getConversationName = this.conversationService.getConversationName;
 
+    isOneToOneChat = isOneToOneChatDto;
+
     changesWerePerformed = false;
 
     Tabs = ConversationDetailTabs;
@@ -51,7 +54,7 @@ export class ConversationDetailDialogComponent implements OnInit {
         }
     }
 
-    onChannelLeave() {
+    onConversationLeave() {
         this.markAsChangedAndClose();
     }
 

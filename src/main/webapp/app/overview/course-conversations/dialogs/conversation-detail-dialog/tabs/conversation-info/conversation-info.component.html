@@ -67,11 +67,5 @@
                 <li>Id: {{ activeConversation.id ?? '' }}</li>
             </ul>
         </div>
-        <!-- Actions -->
-        <div class="col-12 info-section text-center">
-            <button *ngIf="canLeaveConversation(activeConversation)" type="button" class="btn btn-danger wide-button" (click)="leaveChannel($event)">
-                {{ 'artemisApp.actions.leave' | artemisTranslate }}
-            </button>
-        </div>
     </div>
 </div>

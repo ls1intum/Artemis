@@ -24,7 +24,8 @@ export class GroupChatService {
         return this.http.post<void>(`${this.resourceUrl}${courseId}/group-chats/${groupChatId}/deregister`, userLogins, { observe: 'response' });
     }
 
-    addUsersToGroupChat(courseId: number, groupChatId: number, logins?: string[]): Observable<HttpResponse<void>> {
+    addUsersToGroupChat(courseId: number, groupChatId: number, logins: string[]): Observable<HttpResponse<void>> {
+        // you can not add yourself to a group chat, therefore logins must contain at least one user
         return this.http.post<void>(`${this.resourceUrl}${courseId}/group-chats/${groupChatId}/register`, logins, { observe: 'response' });
     }
 }

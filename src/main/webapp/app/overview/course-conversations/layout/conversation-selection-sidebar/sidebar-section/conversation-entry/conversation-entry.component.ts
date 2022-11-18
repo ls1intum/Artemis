@@ -14,6 +14,7 @@ import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 @Component({
     selector: '[jhi-conversation-entry]',
@@ -56,6 +57,8 @@ export class ConversationEntryComponent implements OnInit, OnDestroy {
 
     getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
+
+    isOneToOneChat = isOneToOneChatDto;
     getConversationName = this.conversationService.getConversationName;
 
     onHiddenClicked(event: MouseEvent) {

@@ -19,7 +19,7 @@
                 <fa-icon [icon]="faEllipsis" size="xs"></fa-icon>
             </button>
             <div ngbDropdownMenu>
-                <button ngbDropdownItem (click)="openConversationDetailDialog($event)">Settings</button>
+                <button ngbDropdownItem (click)="openConversationDetailDialog($event)" *ngIf="!isOneToOneChat(conversation)">Settings</button>
                 <button ngbDropdownItem (click)="onHiddenClicked($event)">{{ conversation.isHidden ? 'Show' : 'Hide' }}</button>
                 <button ngbDropdownItem (click)="onFavoriteClicked($event)">{{ conversation.isFavorite ? 'Unfavorite' : 'Favorite' }}</button>
             </div>
