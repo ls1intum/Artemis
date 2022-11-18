@@ -57,6 +57,7 @@ public class ConversationDTOService {
         channelDTO.setHasChannelAdminRights(channelAuthorizationService.hasChannelAdminRights(channel.getId(), requestingUser));
         var participantOptional = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), requestingUser.getId());
         channelDTO.setIsMember(participantOptional.isPresent());
+        participantOptional.ifPresent(conversationParticipant -> channelDTO.setLastReadDate(conversationParticipant.getLastRead()));
         channelDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
         channelDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
         channelDTO.setIsCreator(channel.getCreator().getId().equals(requestingUser.getId()));
@@ -68,13 +69,14 @@ public class ConversationDTOService {
     public OneToOneChatDTO convertOneToOneChatToDto(User requestingUser, OneToOneChat oneToOneChat) {
         var course = oneToOneChat.getCourse();
         Set<ConversationParticipant> conversationParticipants = getConversationParticipants(oneToOneChat);
+        var participantOfRequestingUser = conversationParticipants.stream()
+                .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(requestingUser.getId())).findFirst();
         Set<ConversationUserDTO> chatParticipants = getChatParticipantDTOs(requestingUser, course, conversationParticipants);
         var oneToOneChatDTO = new OneToOneChatDTO(oneToOneChat);
-
-        var participantOptional = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(oneToOneChatDTO.getId(), requestingUser.getId());
-        oneToOneChatDTO.setIsMember(participantOptional.isPresent());
-        oneToOneChatDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
-        oneToOneChatDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
+        oneToOneChatDTO.setIsMember(participantOfRequestingUser.isPresent());
+        participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setLastReadDate(conversationParticipant.getLastRead()));
+        participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setIsFavorite(conversationParticipant.getIsFavorite()));
+        participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setIsHidden(conversationParticipant.getIsHidden()));
         oneToOneChatDTO.setMembers(chatParticipants);
         oneToOneChatDTO.setIsCreator(oneToOneChat.getCreator().getId().equals(requestingUser.getId()));
         oneToOneChatDTO.setNumberOfMembers(conversationParticipants.size());
@@ -85,13 +87,14 @@ public class ConversationDTOService {
     public GroupChatDTO convertGroupChatToDto(User requestingUser, GroupChat groupChat) {
         var course = groupChat.getCourse();
         Set<ConversationParticipant> conversationParticipants = getConversationParticipants(groupChat);
+        var participantOfRequestingUser = conversationParticipants.stream()
+                .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(requestingUser.getId())).findFirst();
         Set<ConversationUserDTO> chatParticipants = getChatParticipantDTOs(requestingUser, course, conversationParticipants);
         var groupChatDTO = new GroupChatDTO(groupChat);
-        var participantOptional = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(groupChat.getId(), requestingUser.getId());
-        groupChatDTO.setIsMember(participantOptional.isPresent());
-        groupChatDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
-        groupChatDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
-        groupChatDTO.setIsMember(conversationParticipants.stream().anyMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(requestingUser.getId())));
+        groupChatDTO.setIsMember(participantOfRequestingUser.isPresent());
+        participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setLastReadDate(conversationParticipant.getLastRead()));
+        participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setIsFavorite(conversationParticipant.getIsFavorite()));
+        participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setIsHidden(conversationParticipant.getIsHidden()));
         groupChatDTO.setMembers(chatParticipants);
         groupChatDTO.setIsCreator(groupChat.getCreator().getId().equals(requestingUser.getId()));
         groupChatDTO.setNumberOfMembers(conversationParticipants.size());

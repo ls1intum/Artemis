@@ -85,6 +85,8 @@ public class ConversationMessagingService extends PostingService {
                 conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, participants);
             }
         }
+        // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
+        conversationService.notifyConversationMembersAboutUpdate(conversation);
         return savedMessage;
     }
 

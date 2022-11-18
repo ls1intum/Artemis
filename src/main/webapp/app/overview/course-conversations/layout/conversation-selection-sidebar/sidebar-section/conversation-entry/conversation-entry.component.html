@@ -1,13 +1,18 @@
 <div class="conversation-list-entry" *ngIf="conversation" [class.active]="isActive">
-    <span class="conversation-name">
-        <ng-container *ngIf="getAsChannel(conversation) as channel">
-            <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!"></jhi-channel-icon>
-        </ng-container>
-        <ng-container *ngIf="getAsGroupChat(conversation) as groupChatDto">
-            <jhi-group-chat-icon></jhi-group-chat-icon>
-        </ng-container>
-        {{ getConversationName(conversation) }}
-    </span>
+    <div>
+        <span class="conversation-name">
+            <ng-container *ngIf="getAsChannel(conversation) as channel">
+                <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!"></jhi-channel-icon>
+            </ng-container>
+            <ng-container *ngIf="getAsGroupChat(conversation) as groupChatDto">
+                <jhi-group-chat-icon></jhi-group-chat-icon>
+            </ng-container>
+            {{ getConversationName(conversation) }}
+        </span>
+        <span [hidden]="!isConversationUnread(conversation)">
+            <fa-icon [icon]="faMessage"></fa-icon>
+        </span>
+    </div>
     <div class="interaction" (click)="$event.stopPropagation()">
         <div ngbDropdown class="d-inline-block">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" ngbDropdownToggle>
@@ -20,7 +25,4 @@
             </div>
         </div>
     </div>
-    <span *ngIf="isConversationUnread">
-        <fa-icon [icon]="faMessage"></fa-icon>
-    </span>
 </div>

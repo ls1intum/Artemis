@@ -33,9 +33,6 @@ export class ConversationEntryComponent implements OnInit, OnDestroy {
     conversation: ConversationDto;
 
     @Input()
-    isConversationUnread = false;
-
-    @Input()
     isActive: boolean | undefined = false;
 
     @Output()
@@ -44,6 +41,10 @@ export class ConversationEntryComponent implements OnInit, OnDestroy {
     faEllipsis = faEllipsis;
     faMessage = faMessage;
     constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal) {}
+
+    isConversationUnread(conversation: ConversationDto): boolean {
+        return !!(conversation.lastReadDate && conversation.lastMessageDate && conversation.lastReadDate.isBefore(conversation.lastMessageDate.subtract(1, 'second'), 'second'));
+    }
 
     getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;

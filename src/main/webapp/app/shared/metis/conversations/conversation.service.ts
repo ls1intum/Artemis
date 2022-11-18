@@ -126,6 +126,7 @@ export class ConversationService {
     public convertServerDates = (conversation: ConversationDto) => {
         conversation.creationDate = conversation.creationDate ? dayjs(conversation.creationDate) : undefined;
         conversation.lastMessageDate = conversation.lastMessageDate ? dayjs(conversation.lastMessageDate) : undefined;
+        conversation.lastReadDate = conversation.lastReadDate ? dayjs(conversation.lastReadDate) : undefined;
         return conversation;
     };
 

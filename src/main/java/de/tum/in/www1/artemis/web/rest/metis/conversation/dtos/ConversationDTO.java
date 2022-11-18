@@ -21,6 +21,9 @@ public abstract class ConversationDTO {
     private User creator;
 
     // property not taken from entity
+    private ZonedDateTime lastReadDate;
+
+    // property not taken from entity
     private Boolean isFavorite;
 
     // property not taken from entity
@@ -128,10 +131,18 @@ public abstract class ConversationDTO {
         isHidden = hidden;
     }
 
+    public ZonedDateTime getLastReadDate() {
+        return lastReadDate;
+    }
+
+    public void setLastReadDate(ZonedDateTime lastReadDate) {
+        this.lastReadDate = lastReadDate;
+    }
+
     @Override
     public String toString() {
-        return "ConversationDTO{" + "type='" + type + '\'' + ", id=" + id + ", creationDate=" + creationDate + ", lastMessageDate=" + lastMessageDate + ", isMember=" + isMember
-                + ", isFavorite=" + isFavorite + ", isHidden=" + isHidden + ", isCreator=" + isCreator + ", numberOfMembers=" + numberOfMembers + ", creator="
-                + (creator != null ? creator.getName() : "") + '}';
+        return "ConversationDTO{" + "type='" + type + '\'' + ", id=" + id + ", creationDate=" + creationDate + ", lastMessageDate=" + lastMessageDate + ", lastReadDate="
+                + lastReadDate + ", isMember=" + isMember + ", isFavorite=" + isFavorite + ", isHidden=" + isHidden + ", isCreator=" + isCreator + ", numberOfMembers="
+                + numberOfMembers + ", creator=" + (creator != null ? creator.getName() : "") + '}';
     }
 }

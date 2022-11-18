@@ -36,11 +36,11 @@ export abstract class ConversationDto {
     public id?: number;
     public creationDate?: dayjs.Dayjs;
     public lastMessageDate?: dayjs.Dayjs;
+    public lastReadDate?: dayjs.Dayjs;
     public isMember?: boolean;
     public numberOfMembers?: number;
     public creator?: User;
     public isCreator?: boolean;
-
     public isFavorite?: boolean;
 
     public isHidden?: boolean;

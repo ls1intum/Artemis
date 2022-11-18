@@ -244,7 +244,6 @@ export class MetisConversationService implements OnDestroy {
         const conversationsCopy = [...this._conversationsOfUser];
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === createdConversation.id);
         if (indexOfCachedConversation === -1) {
-            // create new array to trigger change detection
             conversationsCopy.push(createdConversation);
         } else {
             console.error('Conversation with id ' + createdConversation.id + " already exists in cache, but was sent as 'CREATE' action");
@@ -291,10 +290,5 @@ export class MetisConversationService implements OnDestroy {
             conversationsCopy[indexOfCachedConversation] = readConversation;
         }
         this._conversationsOfUser = conversationsCopy;
-
-        // ToDo: Investigate how to handle the last read case now that we do not send the conversation particpants naymore
-        // conversationDTO.conversation.conversationParticipants?.forEach((conversationParticipant) => {
-        //     conversationParticipant.lastRead = conversationParticipant.lastRead ? dayjs(conversationParticipant.lastRead) : undefined;
-        // });
     }
 }
