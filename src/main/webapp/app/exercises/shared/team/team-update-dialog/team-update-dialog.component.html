@@ -31,7 +31,7 @@
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.team.shortName.label" for="teamShortName">Short Name</label>
-                <jhi-help-icon placement="auto" text="artemisApp.team.shortName.tooltip"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.team.shortName.tooltip"></jhi-help-icon>
             </div>
             <input
                 type="text"
@@ -56,7 +56,7 @@
             <div class="d-flex align-items-end">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.team.owner.label">Tutor</label>
-                    <jhi-help-icon placement="auto" text="artemisApp.team.owner.tooltip" class="me-1"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.team.owner.tooltip" class="me-1"></jhi-help-icon>
                 </div>
                 <fa-icon class="search-searching" [icon]="faSpinner" [spin]="true" *ngIf="searchingOwner"></fa-icon>
                 <span *ngIf="searchingOwnerQueryTooShort" class="label-inline-message text-danger" jhiTranslate="artemisApp.team.ownerSearch.queryTooShort">
