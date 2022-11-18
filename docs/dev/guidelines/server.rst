@@ -306,7 +306,7 @@ The following example makes the call only accessible to ADMIN and INSTRUCTOR use
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable long exerciseId) {
         var exercise = programmingExerciseRepository.findById(exerciseId);
-        authCheckService.isAtLeastInstructorForExercise(exercise);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
         [...]
         return ResponseEntity.ok(programmingExerciseRepository.findById(exerciseId));
     }
@@ -323,7 +323,7 @@ The table contains all annotations for the corresponding minimum role. Different
 +------------------+----------------------------------------+
 | INSTRUCTOR       | @PreAuthorize("hasRole('INSTRUCTOR')") |
 +------------------+----------------------------------------+
-| EDITOR           | @PreAuthorize("hasRole('Editor')")     |
+| EDITOR           | @PreAuthorize("hasRole('EDITOR')")     |
 +------------------+----------------------------------------+
 | TA               | @PreAuthorize("hasRole('TA')")         |
 +------------------+----------------------------------------+
