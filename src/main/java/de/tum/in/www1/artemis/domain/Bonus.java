@@ -36,8 +36,7 @@ public class Bonus extends DomainObject {
      * This field is persisted at {@see bonusToGradingScale}, it is defined here for transferring the value from client.
      */
     @Transient
-    @JsonProperty
-    private BonusStrategy bonusStrategy;
+    private BonusStrategy bonusStrategyTransient;
 
     public GradingScale getSourceGradingScale() {
         return sourceGradingScale;
@@ -74,10 +73,16 @@ public class Bonus extends DomainObject {
     }
 
     public BonusStrategy getBonusStrategy() {
-        return bonusStrategy;
+        return bonusStrategyTransient;
     }
 
     public void setBonusStrategy(BonusStrategy bonusStrategy) {
-        this.bonusStrategy = bonusStrategy;
+        this.bonusStrategyTransient = bonusStrategy;
+    }
+
+    @Override
+    public String toString() {
+        return "Bonus{" + "weight=" + weight + ", sourceGradingScale=" + sourceGradingScale + ", bonusToGradingScale=" + bonusToGradingScale + ", bonusStrategy="
+                + bonusStrategyTransient + '}';
     }
 }
