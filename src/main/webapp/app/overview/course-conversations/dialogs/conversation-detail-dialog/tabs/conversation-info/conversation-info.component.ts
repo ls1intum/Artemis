@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
@@ -10,7 +10,7 @@ import {
     GenericUpdateTextPropertyDialog,
     GenericUpdateTextPropertyTranslationKeys,
 } from 'app/overview/course-conversations/dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
-import { from, map } from 'rxjs';
+import { Subject, from, map, takeUntil } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -22,7 +22,9 @@ import { canChangeChannelProperties, canLeaveConversation } from 'app/shared/met
     templateUrl: './conversation-info.component.html',
     styleUrls: ['./conversation-info.component.scss'],
 })
-export class ConversationInfoComponent implements OnInit {
+export class ConversationInfoComponent implements OnInit, OnDestroy {
+    private ngUnsubscribe = new Subject<void>();
+
     getAsChannel = getAsChannelDto;
     getUserLabel = getUserLabel;
     canLeaveConversation = canLeaveConversation;
@@ -51,11 +53,19 @@ export class ConversationInfoComponent implements OnInit {
         }
     }
 
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+
     leaveChannel($event: MouseEvent) {
         $event.stopPropagation();
-        this.channelService.deregisterUsersFromChannel(this.course?.id!, this.activeConversation.id!).subscribe(() => {
-            this.channelLeave.emit();
-        });
+        this.channelService
+            .deregisterUsersFromChannel(this.course?.id!, this.activeConversation.id!)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {
+                this.channelLeave.emit();
+            });
     }
 
     onChangePerformed() {
@@ -142,24 +152,26 @@ export class ConversationInfoComponent implements OnInit {
             modalRef.componentInstance.initialValue = get(channel, propertyName);
         }
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe((newValue: string) => {
-            let updateValue = null;
-            if (newValue && newValue.trim().length > 0) {
-                updateValue = newValue.trim();
-            } else {
-                updateValue = '';
-            }
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((newValue: string) => {
+                let updateValue = null;
+                if (newValue && newValue.trim().length > 0) {
+                    updateValue = newValue.trim();
+                } else {
+                    updateValue = '';
+                }
 
-            this.channelService
-                .update(this.course?.id!, channel.id!, { [propertyName]: updateValue })
-                .pipe(map((res: HttpResponse<ChannelDTO>) => res.body))
-                .subscribe({
-                    next: (updatedChannel: ChannelDTO) => {
-                        channel[propertyName] = updatedChannel[propertyName];
-                        this.onChangePerformed();
-                    },
-                    error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-                });
-        });
+                this.channelService
+                    .update(this.course?.id!, channel.id!, { [propertyName]: updateValue })
+                    .pipe(map((res: HttpResponse<ChannelDTO>) => res.body))
+                    .subscribe({
+                        next: (updatedChannel: ChannelDTO) => {
+                            channel[propertyName] = updatedChannel[propertyName];
+                            this.onChangePerformed();
+                        },
+                        error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                    });
+            });
     }
 }

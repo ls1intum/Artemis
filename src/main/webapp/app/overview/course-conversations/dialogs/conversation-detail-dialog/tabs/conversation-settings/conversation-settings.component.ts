@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
@@ -6,7 +6,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { GenericConfirmationDialog } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject, from } from 'rxjs';
+import { Subject, from, takeUntil } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -17,7 +17,9 @@ import { canChangeChannelArchivalState, canDeleteChannel } from 'app/shared/meti
     templateUrl: './conversation-settings.component.html',
     styleUrls: ['./conversation-settings.component.scss'],
 })
-export class ConversationSettingsComponent {
+export class ConversationSettingsComponent implements OnDestroy {
+    private ngUnsubscribe = new Subject<void>();
+
     getAsChannel = getAsChannelDto;
 
     @Input()
@@ -41,6 +43,11 @@ export class ConversationSettingsComponent {
     faTimes = faTimes;
 
     constructor(private modalService: NgbModal, private channelService: ChannelService, private alertService: AlertService) {}
+
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
 
     openArchivalModal(event: MouseEvent) {
         const channel = getAsChannelDto(this.activeConversation);
@@ -70,14 +77,16 @@ export class ConversationSettingsComponent {
         modalRef.componentInstance.canBeUndone = true;
         modalRef.componentInstance.initialize();
 
-        from(modalRef.result).subscribe(() => {
-            this.channelService.archive(this.course?.id!, channel.id!).subscribe({
-                next: () => {
-                    this.channelArchivalChange.emit();
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {
+                this.channelService.archive(this.course?.id!, channel.id!).subscribe({
+                    next: () => {
+                        this.channelArchivalChange.emit();
+                    },
+                    error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                });
             });
-        });
     }
 
     openUnArchivalModal(event: MouseEvent) {
@@ -109,12 +118,15 @@ export class ConversationSettingsComponent {
         modalRef.componentInstance.initialize();
 
         from(modalRef.result).subscribe(() => {
-            this.channelService.unarchive(this.course?.id!, channel.id!).subscribe({
-                next: () => {
-                    this.channelArchivalChange.emit();
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+            this.channelService
+                .unarchive(this.course?.id!, channel.id!)
+                .pipe(takeUntil(this.ngUnsubscribe))
+                .subscribe({
+                    next: () => {
+                        this.channelArchivalChange.emit();
+                    },
+                    error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                });
         });
     }
 
@@ -123,12 +135,15 @@ export class ConversationSettingsComponent {
         if (!channel) {
             return;
         }
-        this.channelService.delete(this.course?.id!, channel.id!).subscribe({
-            next: () => {
-                this.dialogErrorSource.next('');
-                this.channelDeleted.emit();
-            },
-            error: (errorResponse: HttpErrorResponse) => this.dialogErrorSource.next(errorResponse.message),
-        });
+        this.channelService
+            .delete(this.course?.id!, channel.id!)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe({
+                next: () => {
+                    this.dialogErrorSource.next('');
+                    this.channelDeleted.emit();
+                },
+                error: (errorResponse: HttpErrorResponse) => this.dialogErrorSource.next(errorResponse.message),
+            });
     }
 }

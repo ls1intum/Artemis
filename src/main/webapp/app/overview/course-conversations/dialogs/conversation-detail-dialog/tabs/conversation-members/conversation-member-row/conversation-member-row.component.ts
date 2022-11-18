@@ -1,10 +1,10 @@
-import { Component, EventEmitter, HostBinding, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { faChalkboardTeacher, faEllipsis, faUser, faUserCheck, faUserGear } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { from } from 'rxjs';
+import { Subject, from, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { canGrantChannelAdminRights, canRemoveUsersFromConversation, canRevokeChannelAdminRights } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
@@ -25,7 +25,9 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
     templateUrl: './conversation-member-row.component.html',
     styleUrls: ['./conversation-member-row.component.scss'],
 })
-export class ConversationMemberRowComponent implements OnInit {
+export class ConversationMemberRowComponent implements OnInit, OnDestroy {
+    private ngUnsubscribe = new Subject<void>();
+
     @Input()
     activeConversation: ConversationDto;
 
@@ -94,6 +96,11 @@ export class ConversationMemberRowComponent implements OnInit {
         }
     }
 
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+
     openGrantChannelAdminRightsDialog(event: MouseEvent) {
         const channel = getAsChannelDto(this.activeConversation);
         if (!channel) {
@@ -124,14 +131,19 @@ export class ConversationMemberRowComponent implements OnInit {
         modalRef.componentInstance.isDangerousAction = true;
         modalRef.componentInstance.initialize();
 
-        from(modalRef.result).subscribe(() => {
-            this.channelService.grantChannelAdminRights(this.course?.id!, channel.id!, [this.user.login!]).subscribe({
-                next: () => {
-                    this.changePerformed.emit();
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {
+                this.channelService
+                    .grantChannelAdminRights(this.course?.id!, channel.id!, [this.user.login!])
+                    .pipe(takeUntil(this.ngUnsubscribe))
+                    .subscribe({
+                        next: () => {
+                            this.changePerformed.emit();
+                        },
+                        error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                    });
             });
-        });
     }
 
     openRevokeChannelAdminRightsDialog(event: MouseEvent) {
@@ -164,14 +176,19 @@ export class ConversationMemberRowComponent implements OnInit {
         modalRef.componentInstance.isDangerousAction = true;
         modalRef.componentInstance.initialize();
 
-        from(modalRef.result).subscribe(() => {
-            this.channelService.revokeChannelAdminRights(this.course?.id!, channel.id!, [this.user.login!]).subscribe({
-                next: () => {
-                    this.changePerformed.emit();
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {
+                this.channelService
+                    .revokeChannelAdminRights(this.course?.id!, channel.id!, [this.user.login!])
+                    .pipe(takeUntil(this.ngUnsubscribe))
+                    .subscribe({
+                        next: () => {
+                            this.changePerformed.emit();
+                        },
+                        error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                    });
             });
-        });
     }
 
     openRemoveFromConversationDialog(event: MouseEvent) {
@@ -213,14 +230,19 @@ export class ConversationMemberRowComponent implements OnInit {
         modalRef.componentInstance.isDangerousAction = true;
         modalRef.componentInstance.initialize();
 
-        from(modalRef.result).subscribe(() => {
-            this.channelService.deregisterUsersFromChannel(this.course.id!, this.activeConversation.id!, [this.user.login!]).subscribe({
-                next: () => {
-                    this.changePerformed.emit();
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {
+                this.channelService
+                    .deregisterUsersFromChannel(this.course.id!, this.activeConversation.id!, [this.user.login!])
+                    .pipe(takeUntil(this.ngUnsubscribe))
+                    .subscribe({
+                        next: () => {
+                            this.changePerformed.emit();
+                        },
+                        error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                    });
             });
-        });
     }
 
     openRemoveFromGroupChatDialog(event: MouseEvent) {
@@ -251,14 +273,19 @@ export class ConversationMemberRowComponent implements OnInit {
         modalRef.componentInstance.isDangerousAction = true;
         modalRef.componentInstance.initialize();
 
-        from(modalRef.result).subscribe(() => {
-            this.groupChatService.removeUsersFromGroupChat(this.course.id!, this.activeConversation.id!, [this.user.login!]).subscribe({
-                next: () => {
-                    this.changePerformed.emit();
-                },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {
+                this.groupChatService
+                    .removeUsersFromGroupChat(this.course.id!, this.activeConversation.id!, [this.user.login!])
+                    .pipe(takeUntil(this.ngUnsubscribe))
+                    .subscribe({
+                        next: () => {
+                            this.changePerformed.emit();
+                        },
+                        error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                    });
             });
-        });
     }
 
     setUserAuthorityIconAndTooltip(): void {

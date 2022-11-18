@@ -1,8 +1,8 @@
-import { Component, ElementRef, HostBinding, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable, OperatorFunction, catchError, map, of } from 'rxjs';
+import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
 import { CourseManagementService, RoleGroup } from 'app/course/manage/course-management.service';
-import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { faX } from '@fortawesome/free-solid-svg-icons';
@@ -32,7 +32,9 @@ let selectorId = 0;
     host: { class: 'course-users-selector' },
     encapsulation: ViewEncapsulation.None,
 })
-export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit {
+export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit, OnDestroy {
+    private ngUnsubscribe = new Subject<void>();
+
     @ViewChild('instance', { static: true }) typeAheadInstance: NgbTypeahead;
     @Input() disabled = false;
     @ViewChild('searchInput') searchInput: ElementRef;
@@ -78,6 +80,11 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
         if (this.rolesToAllowSearchingIn.includes('instructors')) {
             this.searchInstructors = true;
         }
+    }
+
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 
     usersFormatter = (user: UserPublicInfoDTO) => this.getUserLabel(user);
@@ -154,9 +161,11 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
                             this.isSearching = false;
                             return of([]);
                         }),
+                        takeUntil(this.ngUnsubscribe),
                     );
                 }
             }),
+            takeUntil(this.ngUnsubscribe),
         );
 
     // === START CONTROL VALUE ACCESSOR ===

@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import interact from 'interactjs';
 import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
-import { from } from 'rxjs';
+import { Subject, from, takeUntil } from 'rxjs';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
@@ -23,7 +23,9 @@ import { GroupChatCreateDialogComponent } from 'app/overview/course-conversation
     styleUrls: ['./conversation-selection-sidebar.component.scss'],
     templateUrl: './conversation-selection-sidebar.component.html',
 })
-export class ConversationSelectionSidebarComponent implements AfterViewInit, OnInit {
+export class ConversationSelectionSidebarComponent implements AfterViewInit, OnInit, OnDestroy {
+    private ngUnsubscribe = new Subject<void>();
+
     canCreateChannel = canCreateChannel;
 
     course?: Course;
@@ -62,14 +64,18 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         this.subscribeToConversationsOfUser();
     }
 
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.subscribe((conversation: ConversationDto) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
             this.activeConversation = conversation;
         });
     }
 
     private subscribeToConversationsOfUser() {
-        this.metisConversationService.conversationsOfUser$.subscribe((conversations: ConversationDto[]) => {
+        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDto[]) => {
             this.onConversationsUpdate(conversations);
         });
     }
@@ -138,7 +144,10 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     }
 
     onSettingsChanged() {
-        this.metisConversationService.forceRefresh().subscribe(() => {});
+        this.metisConversationService
+            .forceRefresh()
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {});
     }
 
     openCreateChannelDialog(event: MouseEvent) {
@@ -146,41 +155,47 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe((channelToCreate: ChannelDTO) => {
-            this.metisConversationService.createChannel(channelToCreate).subscribe({
-                complete: () => {
-                    this.metisConversationService.forceRefresh().subscribe(() => {});
-                },
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((channelToCreate: ChannelDTO) => {
+                this.metisConversationService.createChannel(channelToCreate).subscribe({
+                    complete: () => {
+                        this.metisConversationService.forceRefresh().subscribe(() => {});
+                    },
+                });
             });
-        });
     }
     openCreateGroupChatDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(GroupChatCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe((chatPartners: UserPublicInfoDTO[]) => {
-            this.metisConversationService.createGroupChat(chatPartners?.map((partner) => partner.login!)).subscribe({
-                complete: () => {
-                    this.metisConversationService.forceRefresh().subscribe(() => {});
-                },
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((chatPartners: UserPublicInfoDTO[]) => {
+                this.metisConversationService.createGroupChat(chatPartners?.map((partner) => partner.login!)).subscribe({
+                    complete: () => {
+                        this.metisConversationService.forceRefresh().subscribe(() => {});
+                    },
+                });
             });
-        });
     }
     openCreateOneToOneChatDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(OneToOneChatCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe((chatPartner: UserPublicInfoDTO) => {
-            if (chatPartner?.login) {
-                this.metisConversationService.createOneToOneChat(chatPartner.login).subscribe({
-                    complete: () => {
-                        this.metisConversationService.forceRefresh().subscribe(() => {});
-                    },
-                });
-            }
-        });
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((chatPartner: UserPublicInfoDTO) => {
+                if (chatPartner?.login) {
+                    this.metisConversationService.createOneToOneChat(chatPartner.login).subscribe({
+                        complete: () => {
+                            this.metisConversationService.forceRefresh().subscribe(() => {});
+                        },
+                    });
+                }
+            });
     }
 
     openChannelOverviewDialog(event: MouseEvent) {
@@ -189,13 +204,15 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.createChannelFn = this.metisConversationService.createChannel;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe((newActiveConversation: ConversationDto) => {
-            this.metisConversationService.forceRefresh().subscribe(() => {
-                if (newActiveConversation) {
-                    this.metisConversationService.setActiveConversation(newActiveConversation);
-                }
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((newActiveConversation: ConversationDto) => {
+                this.metisConversationService.forceRefresh().subscribe(() => {
+                    if (newActiveConversation) {
+                        this.metisConversationService.setActiveConversation(newActiveConversation);
+                    }
+                });
             });
-        });
     }
 
     onConversationSelected($event: ConversationDto) {

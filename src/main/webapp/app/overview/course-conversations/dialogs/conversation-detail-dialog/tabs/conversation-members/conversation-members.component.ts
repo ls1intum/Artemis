@@ -1,9 +1,9 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, from, map } from 'rxjs';
@@ -22,7 +22,9 @@ interface SearchQuery {
     selector: 'jhi-conversation-members',
     templateUrl: './conversation-members.component.html',
 })
-export class ConversationMembers implements OnInit {
+export class ConversationMembers implements OnInit, OnDestroy {
+    private ngUnsubscribe = new Subject<void>();
+
     private readonly search$ = new Subject<SearchQuery>();
     @Input()
     course: Course;
@@ -67,9 +69,11 @@ export class ConversationMembers implements OnInit {
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.activeConversation = this.activeConversation;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe(() => {
-            this.onChangePerformed();
-        });
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {
+                this.onChangePerformed();
+            });
     }
 
     onChangePerformed() {
@@ -110,6 +114,7 @@ export class ConversationMembers implements OnInit {
                         this.selectedFilter,
                     ),
                 ),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (res: HttpResponse<ConversationUserDTO[]>) => {
@@ -125,6 +130,11 @@ export class ConversationMembers implements OnInit {
             searchTerm: '',
             force: true,
         });
+    }
+
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 
     onFilterChange(newFilterValue: ConversationMemberSearchFilter) {

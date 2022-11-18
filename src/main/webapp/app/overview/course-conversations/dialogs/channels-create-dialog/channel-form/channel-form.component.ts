@@ -1,5 +1,6 @@
-import { Component, EventEmitter, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 
 export interface ChannelFormData {
     name?: string;
@@ -15,7 +16,9 @@ export const channelRegex: RegExp = new RegExp('^[a-z0-9-]{1}[a-z0-9-]{0,20}$');
     selector: 'jhi-channel-form',
     templateUrl: './channel-form.component.html',
 })
-export class ChannelFormComponent implements OnInit, OnChanges {
+export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
+    private ngUnsubscribe = new Subject<void>();
+
     formData: ChannelFormData = {
         name: undefined,
         description: undefined,
@@ -48,6 +51,11 @@ export class ChannelFormComponent implements OnInit, OnChanges {
     ngOnInit(): void {
         this.initializeForm();
     }
+
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
     ngOnChanges(): void {
         this.initializeForm();
     }
@@ -68,7 +76,7 @@ export class ChannelFormComponent implements OnInit, OnChanges {
         });
 
         if (this.isPublicControl) {
-            this.isPublicControl.valueChanges.subscribe((value) => {
+            this.isPublicControl.valueChanges.pipe(takeUntil(this.ngUnsubscribe)).subscribe((value) => {
                 this.channelTypeChanged.emit(value ? 'PUBLIC' : 'PRIVATE');
             });
         }

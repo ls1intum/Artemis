@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ActivatedRoute } from '@angular/router';
-import { switchMap, take } from 'rxjs';
+import { Subject, switchMap, take, takeUntil } from 'rxjs';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
@@ -12,7 +12,9 @@ import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
     templateUrl: './course-conversations.component.html',
     providers: [MetisService, MetisConversationService],
 })
-export class CourseConversationsComponent implements OnInit {
+export class CourseConversationsComponent implements OnInit, OnDestroy {
+    private ngUnsubscribe = new Subject<void>();
+
     isLoading = false;
     isServiceSetUp = false;
 
@@ -40,6 +42,7 @@ export class CourseConversationsComponent implements OnInit {
                     return this.metisConversationService.setUpConversationService(courseId);
                 }),
             )
+            .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 complete: () => {
                     // service is fully set up, now we can subscribe to the respective observables
@@ -51,20 +54,25 @@ export class CourseConversationsComponent implements OnInit {
             });
     }
 
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.subscribe((conversation: ConversationDto) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
             this.activeConversation = conversation;
         });
     }
 
     private subscribeToConversationsOfUser() {
-        this.metisConversationService.conversationsOfUser$.subscribe((conversations: ConversationDto[]) => {
+        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDto[]) => {
             this.conversations = conversations ?? [];
         });
     }
 
     private subscribeToLoading() {
-        this.metisConversationService.isLoading$.subscribe((isLoading: boolean) => {
+        this.metisConversationService.isLoading$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isLoading: boolean) => {
             this.isLoading = isLoading;
         });
     }

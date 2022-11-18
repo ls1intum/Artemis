@@ -1,5 +1,5 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, from, map } from 'rxjs';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, from, map, takeUntil } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -21,7 +21,9 @@ export type ChannelAction = {
     templateUrl: './channels-overview-dialog.component.html',
     styleUrls: ['./channels-overview-dialog.component.scss'],
 })
-export class ChannelsOverviewDialogComponent implements OnInit {
+export class ChannelsOverviewDialogComponent implements OnInit, OnDestroy {
+    private ngUnsubscribe = new Subject<void>();
+
     canCreateChannel = canCreateChannel;
     @Input()
     createChannelFn: (channel: ChannelDTO) => Observable<never>;
@@ -57,9 +59,14 @@ export class ChannelsOverviewDialogComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.channelActions$.pipe(debounceTime(500), distinctUntilChanged()).subscribe((channelAction) => {
+        this.channelActions$.pipe(debounceTime(500), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((channelAction) => {
             this.performChannelAction(channelAction);
         });
+    }
+
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 
     clear() {
@@ -81,27 +88,35 @@ export class ChannelsOverviewDialogComponent implements OnInit {
     performChannelAction(channelAction: ChannelAction) {
         switch (channelAction.action) {
             case 'register':
-                this.channelService.registerUsersToChannel(this.course?.id!, channelAction.channel.id!).subscribe(() => {
-                    this.loadChannelsOfCourse();
-                    this.channelModificationPerformed = true;
-                });
+                this.channelService
+                    .registerUsersToChannel(this.course?.id!, channelAction.channel.id!)
+                    .pipe(takeUntil(this.ngUnsubscribe))
+                    .subscribe(() => {
+                        this.loadChannelsOfCourse();
+                        this.channelModificationPerformed = true;
+                    });
                 break;
             case 'deregister':
-                this.channelService.deregisterUsersFromChannel(this.course?.id!, channelAction.channel.id!).subscribe(() => {
-                    this.loadChannelsOfCourse();
-                    this.channelModificationPerformed = true;
-                });
+                this.channelService
+                    .deregisterUsersFromChannel(this.course?.id!, channelAction.channel.id!)
+                    .pipe(takeUntil(this.ngUnsubscribe))
+                    .subscribe(() => {
+                        this.loadChannelsOfCourse();
+                        this.channelModificationPerformed = true;
+                    });
                 break;
             case 'view':
                 this.activeModal.close(channelAction);
                 break;
             case 'create':
-                this.createChannelFn(channelAction.channel).subscribe({
-                    complete: () => {
-                        this.loadChannelsOfCourse();
-                        this.channelModificationPerformed = true;
-                    },
-                });
+                this.createChannelFn(channelAction.channel)
+                    .pipe(takeUntil(this.ngUnsubscribe))
+                    .subscribe({
+                        complete: () => {
+                            this.loadChannelsOfCourse();
+                            this.channelModificationPerformed = true;
+                        },
+                    });
                 break;
         }
     }
@@ -114,6 +129,7 @@ export class ChannelsOverviewDialogComponent implements OnInit {
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (channels: ChannelDTO[]) => {
@@ -129,8 +145,10 @@ export class ChannelsOverviewDialogComponent implements OnInit {
         const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe((channel: ChannelDTO) => {
-            this.channelActions$.next({ action: 'create', channel });
-        });
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((channel: ChannelDTO) => {
+                this.channelActions$.next({ action: 'create', channel });
+            });
     }
 }

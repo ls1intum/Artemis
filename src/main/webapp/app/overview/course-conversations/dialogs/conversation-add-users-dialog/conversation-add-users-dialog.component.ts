@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/add-users-form.component';
@@ -13,12 +13,15 @@ import { getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversati
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { MAX_GROUP_CHAT_PARTICIPANTS } from 'app/shared/metis/conversations/conversation-settings';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
     selector: 'jhi-conversation-add-users-dialog',
     templateUrl: './conversation-add-users-dialog.component.html',
 })
-export class ConversationAddUsersDialogComponent implements OnInit {
+export class ConversationAddUsersDialogComponent implements OnDestroy {
+    private ngUnsubscribe = new Subject<void>();
+
     @Input()
     course: Course;
 
@@ -49,7 +52,10 @@ export class ConversationAddUsersDialogComponent implements OnInit {
         public groupChatService: GroupChatService,
     ) {}
 
-    ngOnInit(): void {}
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
 
     onFormSubmitted($event: AddUsersFormData) {
         this.addUsers($event.selectedUsers ?? []);
@@ -68,25 +74,31 @@ export class ConversationAddUsersDialogComponent implements OnInit {
         const userLogins = usersToAdd.map((user) => user.login!);
 
         if (isChannelDto(this.activeConversation)) {
-            this.channelService.registerUsersToChannel(this.course.id!, this.activeConversation.id!, userLogins).subscribe({
-                next: () => {
-                    this.activeModal.close();
-                },
-                error: (errorResponse: HttpErrorResponse) => {
-                    onError(this.alertService, errorResponse);
-                    this.activeModal.close();
-                },
-            });
+            this.channelService
+                .registerUsersToChannel(this.course.id!, this.activeConversation.id!, userLogins)
+                .pipe(takeUntil(this.ngUnsubscribe))
+                .subscribe({
+                    next: () => {
+                        this.activeModal.close();
+                    },
+                    error: (errorResponse: HttpErrorResponse) => {
+                        onError(this.alertService, errorResponse);
+                        this.activeModal.close();
+                    },
+                });
         } else if (isGroupChatDto(this.activeConversation)) {
-            this.groupChatService.addUsersToGroupChat(this.course.id!, this.activeConversation.id!, userLogins).subscribe({
-                next: () => {
-                    this.activeModal.close();
-                },
-                error: (errorResponse: HttpErrorResponse) => {
-                    onError(this.alertService, errorResponse);
-                    this.activeModal.close();
-                },
-            });
+            this.groupChatService
+                .addUsersToGroupChat(this.course.id!, this.activeConversation.id!, userLogins)
+                .pipe(takeUntil(this.ngUnsubscribe))
+                .subscribe({
+                    next: () => {
+                        this.activeModal.close();
+                    },
+                    error: (errorResponse: HttpErrorResponse) => {
+                        onError(this.alertService, errorResponse);
+                        this.activeModal.close();
+                    },
+                });
         } else {
             throw new Error('Conversation type not supported');
         }

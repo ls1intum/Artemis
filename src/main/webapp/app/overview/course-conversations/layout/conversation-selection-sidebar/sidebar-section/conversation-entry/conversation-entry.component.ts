@@ -1,9 +1,9 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { faEllipsis, faMessage } from '@fortawesome/free-solid-svg-icons';
-import { Subject, debounceTime, distinctUntilChanged, from } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -20,7 +20,9 @@ import {
     templateUrl: './conversation-entry.component.html',
     styleUrls: ['./conversation-entry.component.scss'],
 })
-export class ConversationEntryComponent implements OnInit {
+export class ConversationEntryComponent implements OnInit, OnDestroy {
+    private ngUnsubscribe = new Subject<void>();
+
     hide$ = new Subject<boolean>();
     favorite$ = new Subject<boolean>();
 
@@ -64,12 +66,14 @@ export class ConversationEntryComponent implements OnInit {
         modalRef.componentInstance.activeConversation = this.conversation;
         modalRef.componentInstance.selectedTab = ConversationDetailTabs.SETTINGS;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe(() => {
-            this.settingsChanged.emit();
-        });
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {
+                this.settingsChanged.emit();
+            });
     }
     ngOnInit(): void {
-        this.hide$.pipe(debounceTime(500), distinctUntilChanged()).subscribe((shouldHide) => {
+        this.hide$.pipe(debounceTime(500), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((shouldHide) => {
             this.conversationService.changeHiddenStatus(this.course.id!, this.conversation.id!, shouldHide).subscribe({
                 next: () => {
                     this.conversation.isHidden = shouldHide;
@@ -78,7 +82,7 @@ export class ConversationEntryComponent implements OnInit {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
-        this.favorite$.pipe(debounceTime(500), distinctUntilChanged()).subscribe((shouldFavorite) => {
+        this.favorite$.pipe(debounceTime(500), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((shouldFavorite) => {
             this.conversationService.changeFavoriteStatus(this.course.id!, this.conversation.id!, shouldFavorite).subscribe({
                 next: () => {
                     this.conversation.isFavorite = shouldFavorite;
@@ -87,5 +91,10 @@ export class ConversationEntryComponent implements OnInit {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
+    }
+
+    ngOnDestroy() {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 }

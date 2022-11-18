@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, takeUntil } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
@@ -18,6 +18,7 @@ import { OneToOneChat, isOneToOneChatDto } from 'app/entities/metis/conversation
     styleUrls: ['./conversation-messages.component.scss'],
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
+    private ngUnsubscribe = new Subject<void>();
     readonly PageType = PageType;
     readonly ButtonType = ButtonType;
 
@@ -72,20 +73,19 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.subscribe((conversation: ConversationDto) => {
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
             this._activeConversation = conversation;
             this.onActiveConversationChange();
         });
     }
 
     ngAfterViewInit() {
-        this.scrollBottomSubscription = this.messages.changes.subscribe(this.handleScrollOnNewMessage);
+        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
     }
 
     ngOnDestroy(): void {
-        this.metisPostsSubscription?.unsubscribe();
-        this.metisTotalNumberOfPostsSubscription?.unsubscribe();
-        this.scrollBottomSubscription?.unsubscribe();
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 
     private onActiveConversationChange() {
@@ -102,11 +102,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private subscribeToMetis() {
-        this.metisPostsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+        this.metisPostsSubscription = this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.setPosts(posts);
             this.isFetchingPosts = false;
         });
-        this.metisTotalNumberOfPostsSubscription = this.metisService.totalNumberOfPosts.subscribe((totalNumberOfPosts: number) => {
+        this.metisTotalNumberOfPostsSubscription = this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
         });
     }
