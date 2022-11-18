@@ -184,43 +184,43 @@ public class BonusResource {
     }
 
     /**
-     * PUT /courses/{courseId}/exams/{examId}/bonus/{bonusId} : Update bonus applying to exam
+     * PUT /courses/{courseId}/exams/{examId}/bonus/{bonusId} : Update updatedBonus applying to exam
      *
      * @param courseId the course to which the exam belongs
-     * @param examId   the exam to which the bonus belongs
-     * @param bonus    the bonus which will be updated
-     * @param bonusId  the id of the bonus to update
-     * @return ResponseEntity with status 200 (Ok) with body the newly updated bonus if it is correctly formatted and 400 (Bad request) otherwise
+     * @param examId   the exam to which the updatedBonus belongs
+     * @param updatedBonus    the updatedBonus which will be updated
+     * @param bonusId  the id of the updatedBonus to update
+     * @return ResponseEntity with status 200 (Ok) with body the newly updated updatedBonus if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PutMapping("courses/{courseId}/exams/{examId}/bonus/{bonusId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Bonus> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId, @RequestBody Bonus bonus) {
-        log.debug("REST request to update a bonus: {}", bonusId);
+    public ResponseEntity<Bonus> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId, @RequestBody Bonus updatedBonus) {
+        log.debug("REST request to update a updatedBonus: {}", bonusId);
 
-        if (!Objects.equals(bonus.getId(), bonusId)) {
-            throw new ConflictException("The bonus id in the body and path do not match", ENTITY_NAME, "bonusIdMismatch");
+        if (!Objects.equals(updatedBonus.getId(), bonusId)) {
+            throw new ConflictException("The updatedBonus id in the body and path do not match", ENTITY_NAME, "bonusIdMismatch");
         }
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        Bonus oldBonus = bonusRepository.findByIdElseThrow(bonus.getId());
+        Bonus oldBonus = bonusRepository.findByIdElseThrow(updatedBonus.getId());
         checkBonusAppliesToExam(oldBonus, examId);
 
         GradingScale bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByBonusFromId(oldBonus.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Grading Scale From Bonus", bonus.getId()));
+                .orElseThrow(() -> new EntityNotFoundException("Grading Scale From Bonus", updatedBonus.getId()));
 
         boolean isSourceGradeScaleUpdated = false;
-        if (bonus.getSourceGradingScale() != null && !oldBonus.getSourceGradingScale().getId().equals(bonus.getSourceGradingScale().getId())) {
-            var sourceFromDb = gradingScaleRepository.findById(bonus.getSourceGradingScale().getId()).orElseThrow();
-            bonus.setSourceGradingScale(sourceFromDb);
+        if (updatedBonus.getSourceGradingScale() != null && !oldBonus.getSourceGradingScale().getId().equals(updatedBonus.getSourceGradingScale().getId())) {
+            var sourceFromDb = gradingScaleRepository.findById(updatedBonus.getSourceGradingScale().getId()).orElseThrow();
+            updatedBonus.setSourceGradingScale(sourceFromDb);
             checkIsAtLeastInstructorForGradingScaleCourse(sourceFromDb);
             isSourceGradeScaleUpdated = true;
         }
 
-        bonusToGradingScale.addBonusFrom(bonus);
-        bonusToGradingScale.setBonusStrategy(bonus.getBonusStrategy());
+        bonusToGradingScale.addBonusFrom(updatedBonus);
+        bonusToGradingScale.setBonusStrategy(updatedBonus.getBonusStrategy());
         gradingScaleRepository.save(bonusToGradingScale);
-        Bonus savedBonus = bonusService.saveBonus(bonus, isSourceGradeScaleUpdated);
+        Bonus savedBonus = bonusService.saveBonus(updatedBonus, isSourceGradeScaleUpdated);
 
         filterBonusForResponse(savedBonus, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
