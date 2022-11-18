@@ -9,7 +9,7 @@
     </div>
 </div>
 <div class="col-12 mt-4">
-    <div class="alert alert-info" [hidden]="hasStudentInformation">
+    <div class="alert alert-info" [hidden]="!course || course.isAtLeastInstructor">
         <span *ngIf="!allComplaintsForTutorLoaded && complaintType === ComplaintType.COMPLAINT">{{
             'artemisApp.complaint.listOfComplaints.loadAllComplaintsExplanation' | artemisTranslate
         }}</span>
@@ -67,20 +67,20 @@
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.submissionId' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="result.assessor.login">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerLogin' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
-                    </th>
                     <th jhiSortBy="result.assessor.name">
-                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a>
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorName' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="student.login" *ngIf="hasStudentInformation">
+                    <th jhiSortBy="student.login" *ngIf="course?.isAtLeastInstructor">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="student.name" *ngIf="hasStudentInformation">
+                    <th jhiSortBy="student.name" *ngIf="course?.isAtLeastInstructor">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | artemisTranslate }}</a>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="complaintResponse.reviewer.name" *ngIf="course?.isAtLeastInstructor">
+                        <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="submittedTime">
@@ -118,19 +118,19 @@
                     </td>
 
                     <td>
-                        <span>{{ complaint.result?.assessor?.login }}</span>
-                    </td>
-
-                    <td>
                         <span>{{ complaint.result?.assessor?.name }}</span>
                     </td>
 
-                    <td *ngIf="hasStudentInformation">
+                    <td *ngIf="course?.isAtLeastInstructor">
                         <span>{{ complaint.student?.login }}</span>
                     </td>
 
-                    <td *ngIf="hasStudentInformation">
+                    <td *ngIf="course?.isAtLeastInstructor">
                         <span>{{ complaint.student?.name }}</span>
+                    </td>
+
+                    <td *ngIf="course?.isAtLeastInstructor">
+                        <span>{{ complaint.complaintResponse?.reviewer?.name }}</span>
                     </td>
 
                     <td>

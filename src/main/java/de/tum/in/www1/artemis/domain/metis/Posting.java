@@ -48,8 +48,7 @@ public abstract class Posting extends DomainObject {
     private String tokenizedContent;
 
     @Transient
-    @JsonProperty
-    private UserRole authorRole;
+    private UserRole authorRoleTransient;
 
     public String getTokenizedContent() {
         return tokenizedContent;
@@ -85,11 +84,11 @@ public abstract class Posting extends DomainObject {
     }
 
     public UserRole getAuthorRole() {
-        return authorRole;
+        return authorRoleTransient;
     }
 
     public void setAuthorRole(UserRole authorRole) {
-        this.authorRole = authorRole;
+        this.authorRoleTransient = authorRole;
     }
 
     public abstract Set<Reaction> getReactions();
