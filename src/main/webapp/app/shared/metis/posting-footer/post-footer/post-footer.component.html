@@ -29,11 +29,13 @@
     >
     </jhi-answer-post>
 </ng-container>
-<!-- rendered during the first reply to a post -->
-<ng-container #createEditAnswerPostContainer></ng-container>
-<jhi-answer-post-create-edit-modal
-    #createAnswerPostModal
-    [posting]="createdAnswerPost"
-    [createEditAnswerPostContainerRef]="containerRef"
-    (onCreate)="createdAnswerPost = createEmptyAnswerPost(); showAnswers = true"
-></jhi-answer-post-create-edit-modal>
+<div class="new-reply-inline-input">
+    <!-- rendered during the first reply to a post -->
+    <ng-container #createEditAnswerPostContainer></ng-container>
+    <jhi-answer-post-create-edit-modal
+        #createAnswerPostModal
+        [posting]="createdAnswerPost"
+        [createEditAnswerPostContainerRef]="containerRef"
+        (onCreate)="createdAnswerPost = createEmptyAnswerPost(); showAnswers = true"
+    ></jhi-answer-post-create-edit-modal>
+</div>

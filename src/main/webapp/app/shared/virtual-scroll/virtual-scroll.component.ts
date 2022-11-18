@@ -137,22 +137,32 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
         for (let i = 0; i < children.length; i++) {
             const child = children[i];
             const realIndex = this.startIndex + i;
+            let collapsableHeight = 0;
 
+            /* calculates collapsible nested components of item being removed from the DOM tree and updates the elements height where nested elements would be closed
+               this operation is necessary to have a smooth scrolling experience when redisplaying an element previously removed from the DOM tree due to being above the screen's
+               upper border */
             if (itemsThatAreGone !== undefined && i === itemsThatAreGone) {
-                let answerListHeight = 0;
-
+                // height of answerPosts
                 child.querySelectorAll('.answer-post').forEach((subElement) => {
-                    answerListHeight += subElement.getBoundingClientRect().height;
+                    collapsableHeight += subElement.getBoundingClientRect().height;
                 });
 
-                if (answerListHeight > 0) {
-                    // recalculate element height for posts that are removed from the DOM tree via reducing by their answerPost heights
-                    this.previousItemsHeight[realIndex] = child.getBoundingClientRect().height - answerListHeight;
-                    this.el.scrollTop -= answerListHeight;
-                    this.currentScroll = this.el.scrollTop;
-                }
-            } else {
-                this.previousItemsHeight[realIndex] = child.getBoundingClientRect().height;
+                // height of posting markdown editor used to create new answerPosts
+                child.querySelectorAll('.new-reply-inline-input').forEach((subElement) => {
+                    collapsableHeight += subElement.getBoundingClientRect().height;
+                });
+            }
+
+            // update height of posts that are removed from the DOM tree
+            // reduce height according to the height their answerPosts and posting markdown editor occupies within the user's display
+            this.previousItemsHeight[realIndex] = child.getBoundingClientRect().height - collapsableHeight;
+
+            if (collapsableHeight > 0) {
+                // scroll up by the height of collapsed nested components of removed post to prevent unintentional jumps to other posts
+                this.el.scrollTop -= collapsableHeight;
+                // register currentScroll after update
+                this.currentScroll = this.el.scrollTop;
             }
         }
     }
