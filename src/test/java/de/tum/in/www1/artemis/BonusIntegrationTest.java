@@ -181,8 +181,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
         BonusStrategy newBonusStrategy = BonusStrategy.POINTS;
         foundBonus.setBonusStrategy(newBonusStrategy);
-        double newWeight = -foundBonus.getWeight();
-        foundBonus.setWeight(newWeight);
+        foundBonus.setWeight(-foundBonus.getWeight());
 
         request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + foundBonus.getId(), foundBonus, HttpStatus.OK);
         Bonus updatedBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
@@ -197,10 +196,8 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
         Bonus foundBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
 
-        BonusStrategy newBonusStrategy = BonusStrategy.POINTS;
-        foundBonus.setBonusStrategy(newBonusStrategy);
-        double newWeight = -foundBonus.getWeight();
-        foundBonus.setWeight(newWeight);
+        foundBonus.setBonusStrategy(BonusStrategy.POINTS);
+        foundBonus.setWeight(-foundBonus.getWeight());
 
         assertThat(foundBonus.getSourceGradingScale().getId()).isNotEqualTo(sourceExamGradingScale.getId());
         foundBonus.setSourceGradingScale(sourceExamGradingScale);
