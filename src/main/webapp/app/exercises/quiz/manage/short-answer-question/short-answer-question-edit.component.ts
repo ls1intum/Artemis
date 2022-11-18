@@ -357,7 +357,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     addSpotAtCursor(type: SpotType): void {
         const editor = this.questionEditor.getEditor();
         const optionText = editor.getCopyText();
-        const addedText = `[-spot${type === SpotType.NUMBER ? '-number' : ''} ` + this.numberOfSpot + ']';
+        const addedText = `[-spot${type === SpotType.NUMBER ? '-number' : ''} ${this.numberOfSpot}]`;
         editor.focus();
         editor.insert(addedText);
         editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
@@ -463,11 +463,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
         const textOfSelectedRow = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
         this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] =
-            textOfSelectedRow.substring(0, startOfRange) +
-            `[-spot${type === SpotType.NUMBER ? '-number' : ''} ` +
-            this.numberOfSpot +
-            ']' +
-            textOfSelectedRow.substring(endOfRange);
+            textOfSelectedRow.substring(0, startOfRange) + `[-spot${type === SpotType.NUMBER ? '-number' : ''} ${this.numberOfSpot}]` + textOfSelectedRow.substring(endOfRange);
 
         // recreation of question text from array and update textParts and parse textParts to html
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
@@ -741,7 +737,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
 
         this.textParts = this.textParts.map((part) =>
-            part.filter((text) => !text || !text.includes(`[-spot${spotToDelete.type === SpotType.NUMBER ? '-number' : ''} ` + spotToDelete.spotNr + ']')),
+            part.filter((text) => !text || !text.includes(`[-spot${spotToDelete.type === SpotType.NUMBER ? '-number' : ''} ${spotToDelete.spotNr}]`)),
         );
 
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
