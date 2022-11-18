@@ -3,13 +3,13 @@
         <div class="row justify-content-center">
             <div class="row ps-0">
                 <!-- search bar -->
-                <div class="input-group col-10 px-0 mb-4">
+                <div class="bold-line row mt-2 mb-3"></div>
+                <div class="input-group col-10 px-0">
                     <input name="searchText" [(ngModel)]="searchText" class="form-control" placeholder="{{ 'artemisApp.messages.searchBarPlaceholder' | artemisTranslate }}" />
                     <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSearch()"></jhi-button>
                     <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSearch()"></jhi-button>
                 </div>
-                <div class="bold-line row mt-1 mb-2"></div>
-                <!-- ToDo: Add Search Result Text: Found XX Messages containing bla bla -->
+                <div class="bold-line row mt-3 mb-2"></div>
             </div>
         </div>
         <div class="row">

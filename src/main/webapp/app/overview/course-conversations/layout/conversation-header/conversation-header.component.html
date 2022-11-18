@@ -1,26 +1,33 @@
-<div *ngIf="activeConversation && course" class="conversation-header d-flex justify-content-between">
-    <div>
-        <h3 class="conversation-name d-inline-block rounded p-2" (click)="openConversationDetailDialog($event, INFO)">
-            <ng-container *ngIf="getAsChannel(activeConversation) as channel">
-                <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!"></jhi-channel-icon>
-            </ng-container>
-            <ng-container *ngIf="getAsGroupChat(activeConversation) as groupChat">
-                <jhi-group-chat-icon></jhi-group-chat-icon>
-            </ng-container>
-            {{ getConversationName(activeConversation) }}
-            <fa-icon [icon]="faChevronDown" size="xs"></fa-icon>
-        </h3>
-    </div>
-    <div>
-        <div class="btn-toolbar p-2" role="toolbar" aria-label="Toolbar with button groups">
-            <div class="btn-group me-2" role="group" aria-label="First group">
-                <button type="button" class="btn btn-outline-secondary" (click)="openConversationDetailDialog($event, MEMBERS)">
-                    <fa-icon [icon]="faUserGroup"></fa-icon> {{ activeConversation.numberOfMembers || 0 }}
-                </button>
-                <button type="button" class="btn btn-outline-secondary" (click)="openAddUsersDialog($event)" *ngIf="canAddUsers(activeConversation)">
-                    <fa-icon [icon]="faUserPlus"></fa-icon>
-                </button>
+<div *ngIf="activeConversation && course" class="conversation-header">
+    <div class="d-flex justify-content-between">
+        <div>
+            <h3 class="conversation-name d-inline-block rounded p-2" (click)="openConversationDetailDialog($event, INFO)">
+                <ng-container *ngIf="getAsChannel(activeConversation) as channel">
+                    <jhi-channel-icon [isPublic]="channel.isPublic!" [isArchived]="channel.isArchived!"></jhi-channel-icon>
+                </ng-container>
+                <ng-container *ngIf="getAsGroupChat(activeConversation) as groupChat">
+                    <jhi-group-chat-icon></jhi-group-chat-icon>
+                </ng-container>
+                {{ getConversationName(activeConversation) }}
+                <fa-icon [icon]="faChevronDown" size="xs"></fa-icon>
+            </h3>
+        </div>
+        <div>
+            <div class="btn-toolbar p-2" role="toolbar" aria-label="Toolbar with button groups">
+                <div class="btn-group me-2" role="group" aria-label="First group">
+                    <button type="button" class="btn btn-outline-secondary" (click)="openConversationDetailDialog($event, MEMBERS)">
+                        <fa-icon [icon]="faUserGroup"></fa-icon> {{ activeConversation.numberOfMembers || 0 }}
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" (click)="openAddUsersDialog($event)" *ngIf="canAddUsers(activeConversation)">
+                        <fa-icon [icon]="faUserPlus"></fa-icon>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
+    <ng-container *ngIf="getAsChannel(activeConversation) as channel">
+        <div *ngIf="channel.topic && channel.topic.length > 0" class="text-muted d-flex justify-content-between">
+            <span class="d-inline-block">{{ channel.topic }}</span>
+        </div>
+    </ng-container>
 </div>
