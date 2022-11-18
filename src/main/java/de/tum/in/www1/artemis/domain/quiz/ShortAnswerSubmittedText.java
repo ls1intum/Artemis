@@ -109,8 +109,9 @@ public class ShortAnswerSubmittedText extends DomainObject {
             String patternStr = Constants.SHORT_ANSWER_NUMBER_SPOT_TYPE_SOLUTION_REGEX;
             Pattern pattern = Pattern.compile(patternStr);
             Matcher matcher = pattern.matcher(solution.trim());
+            boolean isRangeFormat = matcher.find();
             // Check if solution is in range format (e.g. 0.5 - 10) or a single number (e.g. 8.0)
-            if (matcher.find()) {
+            if (isRangeFormat) {
                 // Solution is in range format
                 double lowerBound = Double.parseDouble(matcher.group(1));
                 double upperBound = Double.parseDouble(matcher.group(4));
