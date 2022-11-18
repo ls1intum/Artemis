@@ -98,10 +98,10 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
-        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), ltiIdToken.getSubject(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration),
-                ltiIdToken.getGivenName(), ltiIdToken.getFamilyName(), false, true);
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                ltiIdToken.getFamilyName(), false, true);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        ltiService.onSuccessfulLtiAuthentication(user, ltiIdToken.getSubject(), targetExercise.get());
+        ltiService.onSuccessfulLtiAuthentication(user, targetExercise.get());
 
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 

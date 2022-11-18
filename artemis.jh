@@ -226,10 +226,6 @@ entity Participation (participation) {
     presentationScore Integer
 }
 
-entity LtiUserId (lti_user_id) {
-    ltiUserId String
-}
-
 entity ExerciseResult (result) {
     completionDate ZonedDateTime,
     successful Boolean,
@@ -510,7 +506,6 @@ relationship OneToOne {
     ShortAnswerSpotCounter{spot} to ShortAnswerSpot,
     ShortAnswerSubmittedText{spot} to ShortAnswerSpot,
     Submission{result} to ExerciseResult{submission},
-    LtiUserId{user} to User,
     ExerciseResult{assessor} to User,
     Complaint{result} to ExerciseResult,
     ComplaintResponse{complaint} to Complaint,

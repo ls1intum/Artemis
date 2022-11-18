@@ -28,7 +28,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -84,19 +83,15 @@ public class UserResource {
 
     private final AuthorityRepository authorityRepository;
 
-    private final LtiUserIdRepository ltiUserIdRepository;
-
     private final Optional<LdapUserService> ldapUserService;
 
     public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, LtiUserIdRepository ltiUserIdRepository,
-            Optional<LdapUserService> ldapUserService) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.authorityRepository = authorityRepository;
-        this.ltiUserIdRepository = ltiUserIdRepository;
         this.ldapUserService = ldapUserService;
     }
 
@@ -379,7 +374,7 @@ public class UserResource {
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO());
         }
-        if (ltiUserIdRepository.findByUser(user).isEmpty() || !user.isInternal()) {
+        if (/* TODO: isLti */ false || !user.isInternal()) {
             user.setActivated(true);
             userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO());

@@ -21,10 +21,8 @@ import org.thymeleaf.util.StringUtils;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.LtiUserId;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
@@ -49,22 +47,18 @@ public class LtiService {
 
     private final TokenProvider tokenProvider;
 
-    private final LtiUserIdRepository ltiUserIdRepository;
-
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            TokenProvider tokenProvider, LtiUserIdRepository ltiUserIdRepository) {
+            TokenProvider tokenProvider) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.tokenProvider = tokenProvider;
-        this.ltiUserIdRepository = ltiUserIdRepository;
     }
 
     /**
      * Signs in the LTI user into the exercise app. If necessary, it will create a user.
      *
      * @param email the user's email
-     * @param userId the user's id in the external LMS
      * @param username the user's username if we create a new user
      * @param firstName the user's firstname if we create a new user
      * @param lastName the user's lastname if we create a new user
@@ -72,7 +66,7 @@ public class LtiService {
      * @param lookupUserByEmail false if it's not allowed to find existing users with the provided email
      * @throws InternalAuthenticationServiceException if no email is provided, or if no user can be authenticated, this exception will be thrown
      */
-    public void authenticateLtiUser(String email, String userId, String username, String firstName, String lastName, boolean requireExistingUser, boolean lookupUserByEmail)
+    public void authenticateLtiUser(String email, String username, String firstName, String lastName, boolean requireExistingUser, boolean lookupUserByEmail)
             throws InternalAuthenticationServiceException {
         if (SecurityUtils.isAuthenticated()) {
             // 1. Case: User is already signed in. We are done here.
@@ -83,16 +77,7 @@ public class LtiService {
             throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
         }
 
-        // 2. Case: Existing mapping for LTI user id
-        final var optionalLtiUserId = ltiUserIdRepository.findByLtiUserId(userId);
-        if (optionalLtiUserId.isPresent()) {
-            final var user = optionalLtiUserId.get().getUser();
-            // Authenticate
-            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
-            return;
-        }
-
-        // 3. Case: Lookup user with the LTI email address and sign in as this user if lookup by email is enabled
+        // 2. Case: Lookup user with the LTI email address and sign in as this user if lookup by email is enabled
         if (lookupUserByEmail) {
             // check if a user with this email address exists
             final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
@@ -102,7 +87,7 @@ public class LtiService {
             }
         }
 
-        // 4. Case: Create new user if an existing user is not required
+        // 3. Case: Create new user if an existing user is not required
         if (!requireExistingUser) {
             SecurityContextHolder.getContext().setAuthentication(createNewUserFromLaunchRequest(email, username, firstName, lastName));
             return;
@@ -137,18 +122,14 @@ public class LtiService {
     }
 
     /**
-     * Handler for successful LTI auth. Maps the LTI user id to the user and adds the groups to the user
+     * Handler for successful LTI auth. Adds the groups to the user
      *
      * @param user The user that is authenticated
-     * @param userId The userId in the external LMS
      * @param exercise Exercise to launch
      */
-    public void onSuccessfulLtiAuthentication(User user, String userId, Exercise exercise) {
+    public void onSuccessfulLtiAuthentication(User user, Exercise exercise) {
         // Make sure user is added to group for this exercise
         addUserToExerciseGroup(user, exercise.getCourseViaExerciseGroupOrCourseMember());
-
-        // Save LTI user ID to automatically sign in the next time
-        saveLtiUserId(user, userId);
     }
 
     /**
@@ -173,27 +154,6 @@ public class LtiService {
                 // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
             }
         }
-    }
-
-    /**
-     * Save the User <-> LTI User ID mapping
-     *
-     * @param user            the user that should be saved
-     * @param ltiUserIdString the user id
-     */
-    private void saveLtiUserId(User user, String ltiUserIdString) {
-
-        if (ltiUserIdString == null || ltiUserIdString.isEmpty()) {
-            return;
-        }
-
-        LtiUserId ltiUserId = ltiUserIdRepository.findByUser(user).orElseGet(() -> {
-            LtiUserId newltiUserId = new LtiUserId();
-            newltiUserId.setUser(user);
-            return newltiUserId;
-        });
-        ltiUserId.setLtiUserId(ltiUserIdString);
-        ltiUserIdRepository.save(ltiUserId);
     }
 
     /**
