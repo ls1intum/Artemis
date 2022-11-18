@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 /**
  * REST controller for administrating Exercise.
@@ -23,12 +22,9 @@ public class AdminExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminExerciseResource.class);
 
-    private final AuthorizationCheckService authCheckService;
-
     private final ExerciseRepository exerciseRepository;
 
-    public AdminExerciseResource(AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository) {
-        this.authCheckService = authCheckService;
+    public AdminExerciseResource(ExerciseRepository exerciseRepository) {
         this.exerciseRepository = exerciseRepository;
     }
 

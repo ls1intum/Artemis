@@ -55,8 +55,8 @@ public class AuditResource {
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
-    @EnforceAdmin
     @GetMapping(value = ("audits"), params = { "fromDate", "toDate" })
+    @EnforceAdmin
     public ResponseEntity<List<AuditEvent>> getByDates(@RequestParam(value = "fromDate") LocalDate fromDate, @RequestParam(value = "toDate") LocalDate toDate,
             @ApiParam Pageable pageable) {
 
@@ -74,8 +74,8 @@ public class AuditResource {
      * @param id the id of the entity to get
      * @return the ResponseEntity with status 200 (OK) and the AuditEvent in body, or status 404 (Not Found)
      */
-    @EnforceAdmin
     @GetMapping("audits/{id:.+}")
+    @EnforceAdmin
     public ResponseEntity<AuditEvent> get(@PathVariable Long id) {
         return ResponseUtil.wrapOrNotFound(auditEventService.find(id));
     }
