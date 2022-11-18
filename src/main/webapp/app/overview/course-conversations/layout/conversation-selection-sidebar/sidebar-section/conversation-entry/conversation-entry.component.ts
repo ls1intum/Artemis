@@ -1,15 +1,14 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { faEllipsis, faMessage, faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
-import { debounceTime, distinctUntilChanged, from, Subject } from 'rxjs';
+import { faEllipsis, faMessage } from '@fortawesome/free-solid-svg-icons';
+import { Subject, debounceTime, distinctUntilChanged, from } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
-import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import {
     ConversationDetailDialogComponent,

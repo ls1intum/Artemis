@@ -26,11 +26,24 @@ export class SidebarSectionComponent {
     activeConversation?: ConversationDto;
 
     @Input()
-    conversations: ConversationDto[] = [];
+    set conversations(conversations: ConversationDto[]) {
+        this.hiddenConversations = [];
+        this.visibleConversations = [];
+        conversations.forEach((conversation) => {
+            if (conversation.isHidden) {
+                this.hiddenConversations.push(conversation);
+            } else {
+                this.visibleConversations.push(conversation);
+            }
+        });
+    }
 
     @Input()
     isCollapsed = false;
     @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
+
+    hiddenConversations: ConversationDto[] = [];
+    visibleConversations: ConversationDto[] = [];
 
     getAsChannel = getAsChannelDto;
     getConversationName = this.conversationService.getConversationName;
@@ -41,6 +54,7 @@ export class SidebarSectionComponent {
     constructor(public conversationService: ConversationService) {}
 
     conversationsTrackByFn = (index: number, conversation: ConversationDto): number => conversation.id!;
+    showHiddenConversations = false;
 
     isConversationUnread(conversation: ConversationDto): boolean {
         // ToDo: Refactor as we do not have participants for course-wide conversations (dto or transient property)

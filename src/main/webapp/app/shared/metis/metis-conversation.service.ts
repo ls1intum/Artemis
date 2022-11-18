@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { catchError, EMPTY, finalize, map, Observable, of, ReplaySubject, switchMap, tap } from 'rxjs';
+import { EMPTY, Observable, ReplaySubject, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -14,9 +14,8 @@ import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { isOneToOneChatDto, OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 
 /**

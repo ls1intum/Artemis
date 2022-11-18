@@ -10,9 +10,9 @@
         </div>
     </div>
     <div #collapse="ngbCollapse" [(ngbCollapse)]="isCollapsed">
-        <ul class="conversation-list" *ngIf="conversations && conversations.length">
+        <ul class="conversation-list" *ngIf="visibleConversations.length > 0 || hiddenConversations.length > 0">
             <li
-                *ngFor="let conversation of conversations; trackBy: conversationsTrackByFn"
+                *ngFor="let conversation of visibleConversations; trackBy: conversationsTrackByFn"
                 [conversation]="conversation"
                 [course]="course"
                 jhi-conversation-entry
@@ -20,6 +20,22 @@
                 (click)="conversationSelected.emit(conversation)"
                 (settingsChanged)="settingsChanged.emit()"
             ></li>
+            <ng-container *ngIf="hiddenConversations && hiddenConversations.length > 0">
+                <li (click)="showHiddenConversations = !showHiddenConversations" class="hidden-conversation-divider text-center">
+                    {{ hiddenConversations.length }} {{ showHiddenConversations ? 'shown' : 'hidden' }}
+                </li>
+                <ng-container *ngIf="showHiddenConversations">
+                    <li
+                        *ngFor="let conversation of hiddenConversations; trackBy: conversationsTrackByFn"
+                        [conversation]="conversation"
+                        [course]="course"
+                        jhi-conversation-entry
+                        [isActive]="activeConversation && conversation && activeConversation.id! === conversation.id!"
+                        (click)="conversationSelected.emit(conversation)"
+                        (settingsChanged)="settingsChanged.emit()"
+                    ></li>
+                </ng-container>
+            </ng-container>
         </ul>
     </div>
 </div>

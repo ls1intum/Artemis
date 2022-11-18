@@ -1,4 +1,8 @@
 .conversation-list-entry {
+    .dropdown-toggle::after {
+        content: none;
+    }
+
     &.active {
         background-color: var(--metis-light-blue);
     }

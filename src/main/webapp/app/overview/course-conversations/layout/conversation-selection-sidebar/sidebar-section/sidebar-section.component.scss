@@ -25,4 +25,12 @@
         padding: 0;
         list-style-type: none;
     }
+
+    .hidden-conversation-divider {
+        cursor: pointer;
+        &:hover {
+            text-decoration: underline;
+            background-color: var(--metis-blue);
+        }
+    }
 }

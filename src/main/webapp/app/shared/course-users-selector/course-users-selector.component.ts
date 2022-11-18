@@ -1,6 +1,6 @@
 import { Component, ElementRef, HostBinding, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { catchError, map, Observable, of, OperatorFunction } from 'rxjs';
+import { Observable, OperatorFunction, catchError, map, of } from 'rxjs';
 import { CourseManagementService, RoleGroup } from 'app/course/manage/course-management.service';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
