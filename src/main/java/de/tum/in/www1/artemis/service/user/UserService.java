@@ -501,19 +501,32 @@ public class UserService {
      * @param password The password to check
      */
     public void checkUsernameAndPasswordValidityElseThrow(String username, String password) {
+        checkUsernameOrThrow(username);
+        checkNullablePasswordOrThrow(password);
+    }
+
+    private void checkUsernameOrThrow(String username) {
         if (username == null || username.length() < USERNAME_MIN_LENGTH) {
             throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
         }
         else if (username.length() > USERNAME_MAX_LENGTH) {
             throw new AccessForbiddenException("The username has to be less than " + USERNAME_MAX_LENGTH + " characters long");
         }
+    }
 
-        // Note: the password can be null, then a random one will be generated (Create) or it won't be changed (Update).
-        // If the password is not null, its length has to be at least PASSWORD_MIN_LENGTH
-        if (password != null && password.length() < PASSWORD_MIN_LENGTH) {
+    /**
+     * <p>The password can be null, then a random one will be generated ({@code Create}) or it won't be changed ({@code Update}).
+     * <p>If the password is not null, its length has to be at least {@code PASSWORD_MIN_LENGTH}.
+     * @param password The password to check
+     */
+    private void checkNullablePasswordOrThrow(String password) {
+        if (password == null) {
+            return;
+        }
+        if (password.length() < PASSWORD_MIN_LENGTH) {
             throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
         }
-        else if (password != null && password.length() > PASSWORD_MAX_LENGTH) {
+        if (password.length() > PASSWORD_MAX_LENGTH) {
             throw new AccessForbiddenException("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
         }
     }
