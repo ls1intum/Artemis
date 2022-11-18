@@ -322,9 +322,4 @@ export const conversationCreatedDTO = {
     crudAction: MetisPostAction.CREATE,
 } as ConversationWebsocketDTO;
 
-export const conversationReadDTO = {
-    conversation: conversationBetweenUser1Tutor,
-    crudAction: MetisPostAction.READ_CONVERSATION,
-} as ConversationWebsocketDTO;
-
 export const metisConversationsOfUser1 = [conversationToCreateUser1];

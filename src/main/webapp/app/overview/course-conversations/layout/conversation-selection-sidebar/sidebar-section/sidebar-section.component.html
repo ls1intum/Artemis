@@ -14,6 +14,7 @@
             <li
                 *ngFor="let conversation of visibleConversations; trackBy: conversationsTrackByFn"
                 [conversation]="conversation"
+                [activeConversation]="activeConversation"
                 [course]="course"
                 jhi-conversation-entry
                 [isActive]="activeConversation && conversation && activeConversation.id! === conversation.id!"
@@ -28,6 +29,7 @@
                     <li
                         *ngFor="let conversation of hiddenConversations; trackBy: conversationsTrackByFn"
                         [conversation]="conversation"
+                        [activeConversation]="activeConversation"
                         [course]="course"
                         jhi-conversation-entry
                         [isActive]="activeConversation && conversation && activeConversation.id! === conversation.id!"

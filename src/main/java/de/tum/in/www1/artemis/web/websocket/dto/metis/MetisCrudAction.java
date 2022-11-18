@@ -5,5 +5,5 @@ package de.tum.in.www1.artemis.web.websocket.dto.metis;
  * it is used to differentiate the behavior when a websocket message is received by the client components
  */
 public enum MetisCrudAction {
-    CREATE, UPDATE, DELETE, READ_CONVERSATION
+    CREATE, UPDATE, DELETE
 }

@@ -17,6 +17,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import dayjs from 'dayjs/esm';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -80,6 +81,7 @@ export class MetisConversationService implements OnDestroy {
         if (!cachedConversation) {
             throw new Error('The conversation is not part of the cache. Therefore, it cannot be set as active conversation.');
         }
+        cachedConversation.lastReadDate = dayjs();
         this._activeConversation = cachedConversation;
         this._activeConversation$.next(this._activeConversation);
     };
@@ -230,9 +232,6 @@ export class MetisConversationService implements OnDestroy {
             case MetisPostAction.UPDATE:
                 this.handleUpdateConversation(conversationDTO);
                 break;
-            case MetisPostAction.READ_CONVERSATION:
-                this.handleReadConversation(conversationDTO);
-                break;
             case MetisPostAction.DELETE:
                 this.handleDeleteConversation(conversationDTO);
                 break;
@@ -276,18 +275,6 @@ export class MetisConversationService implements OnDestroy {
             conversationsCopy.push(updatedConversation);
         } else {
             conversationsCopy[indexOfCachedConversation] = updatedConversation;
-        }
-        this._conversationsOfUser = conversationsCopy;
-    }
-
-    private handleReadConversation(readConversation: ConversationDto) {
-        const conversationsCopy = [...this._conversationsOfUser];
-        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === readConversation.id);
-        if (indexOfCachedConversation === -1) {
-            console.error('Conversation with id ' + readConversation.id + " doesn't exist in cache, but was sent as 'READ_CONVERSATION' action");
-            conversationsCopy.push(readConversation);
-        } else {
-            conversationsCopy[indexOfCachedConversation] = readConversation;
         }
         this._conversationsOfUser = conversationsCopy;
     }

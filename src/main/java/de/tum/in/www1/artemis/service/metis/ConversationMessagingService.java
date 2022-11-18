@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -113,8 +112,6 @@ public class ConversationMessagingService extends PostingService {
             setAuthorRoleOfPostings(conversationPosts.getContent());
 
             conversationService.auditConversationReadTimeOfUser(conversation, user);
-
-            conversationService.broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.READ_CONVERSATION, conversation, Set.of(user));
         }
         else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");

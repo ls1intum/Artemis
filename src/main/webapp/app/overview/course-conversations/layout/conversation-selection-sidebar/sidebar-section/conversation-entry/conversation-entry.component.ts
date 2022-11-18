@@ -33,6 +33,9 @@ export class ConversationEntryComponent implements OnInit, OnDestroy {
     conversation: ConversationDto;
 
     @Input()
+    activeConversation: ConversationDto | undefined;
+
+    @Input()
     isActive: boolean | undefined = false;
 
     @Output()
@@ -43,7 +46,12 @@ export class ConversationEntryComponent implements OnInit, OnDestroy {
     constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal) {}
 
     isConversationUnread(conversation: ConversationDto): boolean {
-        return !!(conversation.lastReadDate && conversation.lastMessageDate && conversation.lastReadDate.isBefore(conversation.lastMessageDate.subtract(1, 'second'), 'second'));
+        // do not show unread badge for open conversation that the user is currently reading
+        if (this.activeConversation && this.activeConversation.id === conversation.id) {
+            return false;
+        } else {
+            return !!(conversation.lastReadDate && conversation.lastMessageDate && conversation.lastReadDate.isBefore(conversation.lastMessageDate));
+        }
     }
 
     getAsChannel = getAsChannelDto;
