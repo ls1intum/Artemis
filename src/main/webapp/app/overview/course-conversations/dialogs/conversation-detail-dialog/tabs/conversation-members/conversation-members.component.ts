@@ -65,7 +65,13 @@ export class ConversationMembers implements OnInit, OnDestroy {
 
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, {
+            size: 'lg',
+            scrollable: false,
+            backdrop: 'static',
+            backdropClass: 'second-layer-modal-bg',
+            centered: true,
+        });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.activeConversation = this.activeConversation;
         modalRef.componentInstance.initialize();

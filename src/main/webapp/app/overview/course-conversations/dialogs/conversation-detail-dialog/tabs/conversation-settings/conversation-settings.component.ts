@@ -96,6 +96,8 @@ export class ConversationSettingsComponent implements OnDestroy {
             size: 'lg',
             scrollable: false,
             backdrop: 'static',
+            backdropClass: 'second-layer-modal-bg',
+            centered: true,
         });
         modalRef.componentInstance.translationParameters = translationParams;
         modalRef.componentInstance.translationKeys = keys;
@@ -136,6 +138,8 @@ export class ConversationSettingsComponent implements OnDestroy {
             size: 'lg',
             scrollable: false,
             backdrop: 'static',
+            backdropClass: 'second-layer-modal-bg',
+            centered: true,
         });
         modalRef.componentInstance.translationParameters = translationParams;
         modalRef.componentInstance.translationKeys = keys;

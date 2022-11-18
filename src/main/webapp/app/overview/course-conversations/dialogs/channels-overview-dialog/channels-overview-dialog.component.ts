@@ -142,7 +142,13 @@ export class ChannelsOverviewDialogComponent implements OnInit, OnDestroy {
 
     openCreateChannelDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, {
+            size: 'lg',
+            scrollable: false,
+            backdrop: 'static',
+            backdropClass: 'second-layer-modal-bg',
+            centered: true,
+        });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
         from(modalRef.result)

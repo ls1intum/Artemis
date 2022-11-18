@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -10,7 +10,9 @@ import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
+    styleUrls: ['./course-conversations.component.scss'],
     providers: [MetisService, MetisConversationService],
+    encapsulation: ViewEncapsulation.None,
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
