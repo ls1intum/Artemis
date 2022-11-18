@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsBuildLogParseUtils;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -36,6 +37,8 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     private final List<TestSuiteDTO> results;
 
+    // For an unknown reason, the deserialization only works with this annotation
+    @JsonProperty("staticCodeAnalysisReports")
     private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
 
     // For an unknown reason, the deserialization only works with this annotation
@@ -150,11 +153,13 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return results;
     }
 
+    @Override
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
         return staticCodeAnalysisReports;
     }
 
-    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReport() {
+    @Override
+    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
         return testwiseCoverageReport;
     }
 
@@ -173,6 +178,11 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
         var buildLogs = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(getLogs());
         return filterBuildLogs(buildLogs);
+    }
+
+    @Override
+    public List<? extends BuildJobDTOInterface> getBuildJobs() {
+        return getResults();
     }
 
     /**

@@ -119,7 +119,7 @@
                 </tr>
                 <tr *ngFor="let gradeStep of gradingScale.gradeSteps; let i = index; let last = last" class="grading-scale-table-row">
                     <td *ngIf="last; else intervalInputs">
-                        <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.stickyGradeStep"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.gradingSystem.stickyGradeStep"></jhi-help-icon>
                     </td>
                     <ng-template #intervalInputs>
                         <td *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
