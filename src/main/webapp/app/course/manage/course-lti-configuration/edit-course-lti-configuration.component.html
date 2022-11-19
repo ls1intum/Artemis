@@ -17,6 +17,18 @@
             </div>
         </ng-container>
     </div>
+    <div class="form-group">
+        <input
+            type="checkbox"
+            class="form-check-input"
+            name="requireExistingUser"
+            id="field_requireExistingUser"
+            [checked]="course.onlineCourseConfiguration?.requireExistingUser"
+            formControlName="requireExistingUser"
+        />
+        <label class="form-control-label" jhiTranslate="artemisApp.lti.requireExistingUser" for="field_requireExistingUser">Require Existing User</label>
+        <jhi-help-icon placement="top" text="artemisApp.lti.edit.requireExistingUserTooltip"></jhi-help-icon>
+    </div>
     <h4 class="modal-title mt-4" id="lti10" jhiTranslate="artemisApp.lti.version10">LTI 1.0</h4>
     <div class="form-group mt-2">
         <label class="form-control-label" jhiTranslate="artemisApp.lti.ltiKey" for="field_ltiKey">LTI Key</label>

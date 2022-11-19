@@ -15,8 +15,6 @@ export class CourseLtiConfigurationComponent implements OnInit {
     course: Course;
     onlineCourseConfiguration: OnlineCourseConfiguration;
     exercises: Exercise[];
-    requireExistingUser = true;
-    lookupUserByEmail = true;
 
     activeTab = 1;
 
@@ -92,13 +90,6 @@ export class CourseLtiConfigurationComponent implements OnInit {
      */
     getExerciseLti13LaunchUrl(exercise: Exercise): string {
         return `${location.origin}/courses/${this.course.id}/exercises/${exercise.id}`; // Needs to match url in Lti13Service
-    }
-
-    /**
-     * Gets the formatted custom parameters
-     */
-    getFormattedCustomParameters(): string {
-        return `require_existing_user=${this.requireExistingUser}\n` + `lookup_user_by_email=${this.lookupUserByEmail}`;
     }
 
     sortRows() {
