@@ -10,7 +10,6 @@ export class Result implements BaseEntity {
     public id?: number;
     public completionDate?: dayjs.Dayjs;
     public successful?: boolean;
-    public hasFeedback?: boolean;
 
     /**
      * Current score in percent i.e. between 1 - 100

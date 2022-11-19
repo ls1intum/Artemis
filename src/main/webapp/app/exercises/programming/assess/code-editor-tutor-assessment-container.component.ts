@@ -544,7 +544,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.setFeedbacksForManualResult();
         // Manual result is always rated and has feedback
         this.manualResult!.rated = true;
-        this.manualResult!.hasFeedback = true;
         this.isFirstAssessment = false;
 
         this.manualResult!.score = (totalScore / this.exercise.maxPoints!) * 100;

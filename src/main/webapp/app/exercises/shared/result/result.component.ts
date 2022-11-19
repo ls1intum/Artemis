@@ -56,7 +56,6 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() exercise?: Exercise;
 
     textColorClass: string;
-    hasFeedback: boolean;
     resultIconClass: IconProp;
     resultString: string;
     templateStatus: ResultTemplateStatus;
@@ -174,7 +173,6 @@ export class ResultComponent implements OnInit, OnChanges {
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
         } else if (this.result && this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
-            this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             this.resultTooltip = this.buildResultTooltip();
@@ -204,18 +202,6 @@ export class ResultComponent implements OnInit, OnChanges {
             }
             return 'artemisApp.result.preliminaryTooltip';
         }
-    }
-
-    /**
-     * Checks if there is feedback or not for a build result.
-     */
-    getHasFeedback(): boolean {
-        if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
-            return true;
-        } else if (this.result?.hasFeedback === undefined) {
-            return false;
-        }
-        return this.result.hasFeedback;
     }
 
     /**

@@ -75,7 +75,6 @@ public abstract class ExerciseImportService {
         newResult.setCompletionDate(originalResult.getCompletionDate());
         newResult.setExampleResult(true);
         newResult.setRated(true);
-        newResult.setHasFeedback(originalResult.getHasFeedback());
         newResult.setScore(originalResult.getScore());
         newResult.copyProgrammingExerciseCounters(originalResult);
         newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult, gradingInstructionCopyTracker));

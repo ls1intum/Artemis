@@ -45,7 +45,6 @@ describe('Submission Service', () => {
                     id: 2374,
                     score: 8,
                     rated: true,
-                    hasFeedback: true,
                     hasComplaint: false,
                 },
             ],
@@ -125,7 +124,6 @@ describe('Submission Service', () => {
             id: 3556,
             score: 24,
             rated: true,
-            hasFeedback: true,
             hasComplaint: false,
             feedbacks: [firstFeedback],
         };

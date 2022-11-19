@@ -834,7 +834,6 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
         var result = results.get(0);
-        assertThat(result.getHasFeedback()).isFalse();
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getScore()).isZero();
 

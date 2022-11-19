@@ -317,7 +317,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (this.latestRatedResult) {
                 if (this.latestRatedResult.successful) {
                     this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess, true);
-                } else if (this.latestRatedResult.hasFeedback && !this.latestRatedResult.successful) {
+                } else {
                     this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail, true);
                 }
             }

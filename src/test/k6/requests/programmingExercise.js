@@ -23,11 +23,11 @@ export function ParticipationSimulation(timeout, exerciseId, participationId, co
                 break;
             case TestResult.FAIL:
                 {
-                    if (result.successful || !result.hasFeedback) fail('FAILTEST: The result for participation ' + participationId + ' did not fail!');
+                    if (result.successful) fail('FAILTEST: The result for participation ' + participationId + ' did not fail!');
                 }
                 break;
             default: {
-                if (result.successful || result.hasFeedback) fail('FAILTEST: The result for participation ' + participationId + ' contained no build errors!');
+                if (result.successful) fail('FAILTEST: The result for participation ' + participationId + ' contained no build errors!');
             }
         }
     };

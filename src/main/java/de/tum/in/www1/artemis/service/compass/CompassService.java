@@ -118,7 +118,6 @@ public class CompassService {
             }
             result.getFeedbacks().clear(); // Note, that a result is always initialized with an empty list -> no NPE here
             result.getFeedbacks().addAll(feedbacksForSuggestion);
-            result.setHasFeedback(false);
             result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         }
         return result;

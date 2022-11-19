@@ -60,7 +60,6 @@
             "scoreWithPoints": "Bewertung {{score}}%, {{points}} Punkte",
             "currentScore": "Aktuelle Bewertung",
             "rated": "Bewertet",
-            "hasFeedback": "Enthält Feedback",
             "assessmentType": "Bewertungstyp",
             "assessor": "Reviewer:in",
             "feedbacks": "Feedback",

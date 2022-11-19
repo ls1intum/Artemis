@@ -369,7 +369,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
         var result = results.get(0);
-        assertThat(result.getHasFeedback()).isFalse();
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getScore()).isEqualTo(0D);
 

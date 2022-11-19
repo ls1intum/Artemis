@@ -236,7 +236,6 @@ entity ExerciseResult (result) {
     buildArtifact Boolean,
     score Long,
     rated Boolean,
-    hasFeedback Boolean,
     assessmentType AssessmentType,
     hasComplaint Boolean,
     exampleResult Boolean

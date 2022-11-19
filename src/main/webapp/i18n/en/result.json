@@ -60,7 +60,6 @@
             "scoreWithPoints": "Score {{score}}%, {{points}} points",
             "currentScore": "Current Score",
             "rated": "Rated",
-            "hasFeedback": "Has Feedback",
             "assessmentType": "Assessment Type",
             "assessor": "Reviewer",
             "feedbacks": "Feedback",

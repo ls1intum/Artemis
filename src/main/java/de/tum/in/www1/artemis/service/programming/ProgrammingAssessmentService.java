@@ -28,7 +28,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @return result that was saved in the database
      */
     public Result saveManualAssessment(Result result) {
-        result.setHasFeedback(!result.getFeedbacks().isEmpty());
         var participation = result.getParticipation();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 

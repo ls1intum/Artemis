@@ -285,7 +285,6 @@ describe('TextAssessment Service', () => {
                 id: 2374,
                 score: 8,
                 rated: true,
-                hasFeedback: true,
                 hasComplaint: false,
             } as unknown as Result,
         ];
