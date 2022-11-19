@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.authentication;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import javax.servlet.http.Cookie;
+
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 public class AuthenticationIntegrationTestHelper {
@@ -31,5 +35,21 @@ public class AuthenticationIntegrationTestHelper {
         ltiLaunchRequest.setRoles("Student");
         ltiLaunchRequest.setUser_id("ff30145d6884eeb2c1cef50298939383");
         return ltiLaunchRequest;
+    }
+
+    public static void authenticationCookieAssertions(Cookie cookie, boolean logoutCookie) {
+        assertThat(cookie).isNotNull();
+        assertThat(cookie.isHttpOnly()).isTrue();
+        assertThat(cookie.getSecure()).isTrue();
+        assertThat(cookie.getPath()).isEqualTo("/");
+
+        if (logoutCookie) {
+            assertThat(cookie.getMaxAge()).isZero();
+            assertThat(cookie.getValue()).isEmpty();
+        }
+        else {
+            assertThat(cookie.getMaxAge()).isGreaterThan(0);
+            assertThat(cookie.getValue()).isNotEmpty();
+        }
     }
 }

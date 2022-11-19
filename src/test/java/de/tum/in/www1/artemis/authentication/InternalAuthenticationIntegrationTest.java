@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.servlet.http.Cookie;
 import javax.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.AfterEach;
@@ -258,8 +257,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/authenticate", loginVM, HttpStatus.OK, httpHeaders);
-        assertThat(response.getCookie("jwt")).isNotNull();
-        cookieAssertions(response.getCookie("jwt"), false);
+        AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
     }
 
     @Test
@@ -280,8 +278,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/logout", HttpStatus.OK, httpHeaders);
-        assertThat(response.getCookie("jwt")).isNotNull();
-        cookieAssertions(response.getCookie("jwt"), true);
+        AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), true);
     }
 
     @Test
@@ -310,20 +307,5 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         assertThat(response).isNotNull();
         assertThat(student).as("Returned user is equal to sent update").isEqualTo(response);
         assertThat(student).as("Updated user in DB is equal to sent update").isEqualTo(updatedUserIndDB);
-    }
-
-    private void cookieAssertions(Cookie cookie, boolean logoutCookie) {
-        assertThat(cookie.isHttpOnly()).isTrue();
-        assertThat(cookie.getSecure()).isTrue();
-        assertThat(cookie.getPath()).isEqualTo("/");
-
-        if (logoutCookie) {
-            assertThat(cookie.getMaxAge()).isZero();
-            assertThat(cookie.getValue()).isEmpty();
-        }
-        else {
-            assertThat(cookie.getMaxAge()).isGreaterThan(0);
-            assertThat(cookie.getValue()).isNotEmpty();
-        }
     }
 }
