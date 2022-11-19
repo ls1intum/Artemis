@@ -17,7 +17,6 @@ describe('VirtualScrollComponent', () => {
     let comp: VirtualScrollComponent;
     let fixture: ComponentFixture<VirtualScrollComponent>;
     let debugElement: DebugElement;
-    let router: Router;
 
     let prepareDataItemsSpy: jest.SpyInstance;
     let forceReloadChangeSpy: jest.SpyInstance;
@@ -30,7 +29,6 @@ describe('VirtualScrollComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                router = TestBed.inject(Router);
                 fixture = TestBed.createComponent(VirtualScrollComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
