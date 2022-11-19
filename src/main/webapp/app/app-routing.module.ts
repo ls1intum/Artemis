@@ -104,6 +104,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'features',
                     loadChildren: () => import('./feature-overview/feature-overview.module').then((m) => m.FeatureOverviewModule),
                 },
+                {
+                    path: 'lti',
+                    loadChildren: () => import('./lti/lti.module').then((m) => m.ArtemisLtiModule),
+                },
             ],
             { enableTracing: false, onSameUrlNavigation: 'reload' },
         ),

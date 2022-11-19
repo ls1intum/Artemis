@@ -184,7 +184,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
      * @return A filtered and better formatted error message
      */
     private static String processResultErrorMessage(final ProgrammingLanguage programmingLanguage, final ProjectType projectType, final String message) {
-        final String timeoutDetailText = "The test case execution timed out. This indicates issues in your code such as endless for / while loops or issues with recursion. Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.";
+        final String timeoutDetailText = "The test case execution timed out. This indicates issues in your code such as endless loops, issues with recursion or really slow performance. Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.";
         final String exceptionPrefix = "Exception message: ";
         // Overwrite timeout exception messages for Junit4, Junit5 and other
         List<String> exceptions = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",

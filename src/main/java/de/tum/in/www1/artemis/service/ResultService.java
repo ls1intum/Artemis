@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -29,7 +29,7 @@ public class ResultService {
 
     private final ResultRepository resultRepository;
 
-    private final LtiService ltiService;
+    private final LtiNewResultService ltiNewResultService;
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -49,13 +49,13 @@ public class ResultService {
 
     private final ExerciseDateService exerciseDateService;
 
-    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiService ltiService, FeedbackRepository feedbackRepository,
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService, FeedbackRepository feedbackRepository,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
             ComplaintRepository complaintRepository, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository,
             AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
-        this.ltiService = ltiService;
+        this.ltiNewResultService = ltiNewResultService;
         this.websocketMessagingService = websocketMessagingService;
         this.feedbackRepository = feedbackRepository;
         this.complaintResponseRepository = complaintResponseRepository;
@@ -101,7 +101,7 @@ public class ResultService {
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
 
             if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation) {
-                ltiService.onNewResult((StudentParticipation) savedResult.getParticipation());
+                ltiNewResultService.onNewResult((StudentParticipation) savedResult.getParticipation());
             }
 
             websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);

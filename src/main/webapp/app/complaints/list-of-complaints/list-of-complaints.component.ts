@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Course } from 'app/entities/course.model';
+import { Observable, combineLatestWith } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
@@ -20,15 +22,16 @@ import { faExclamationTriangle, faFolderOpen, faSort } from '@fortawesome/free-s
     providers: [],
 })
 export class ListOfComplaintsComponent implements OnInit {
+    readonly ComplaintType = ComplaintType;
+
     public complaints: Complaint[] = [];
-    public hasStudentInformation = false;
     public complaintType: ComplaintType;
-    ComplaintType = ComplaintType;
 
     private courseId: number;
     private exerciseId: number;
     private tutorId: number;
     private examId?: number;
+    course?: Course;
     correctionRound?: number;
     complaintsSortingPredicate = 'id';
     complaintsReverseOrder = false;
@@ -55,25 +58,29 @@ export class ListOfComplaintsComponent implements OnInit {
         private sortService: SortService,
         private translateService: TranslateService,
         private artemisDatePipe: ArtemisDatePipe,
+        private courseManagementService: CourseManagementService,
     ) {}
 
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        this.route.params.pipe(combineLatestWith(this.route.queryParams, this.route.data)).subscribe((result) => {
+            const params = result[0];
+            const queryParams = result[1];
+            const data = result[2];
+
             this.courseId = Number(params['courseId']);
             this.exerciseId = Number(params['exerciseId']);
             this.examId = Number(params['examId']);
-        });
-        this.route.queryParams.subscribe((queryParams) => {
+
             this.tutorId = Number(queryParams['tutorId']);
             this.correctionRound = Number(queryParams['correctionRound']);
-        });
-        this.route.data.subscribe((data) => (this.complaintType = data.complaintType));
-        this.route.queryParams.subscribe((queryParams) => {
             if (queryParams['filterOption']) {
                 this.filterOption = Number(queryParams['filterOption']);
             }
+
+            this.complaintType = data.complaintType;
+
+            this.loadComplaints();
         });
-        this.loadComplaints();
     }
 
     loadComplaints() {
@@ -98,6 +105,9 @@ export class ListOfComplaintsComponent implements OnInit {
             }
         }
         this.subscribeToComplaintResponse(complaintResponse);
+        this.courseManagementService.find(this.courseId).subscribe((response) => {
+            this.course = response?.body!;
+        });
     }
 
     subscribeToComplaintResponse(complaintResponse: Observable<HttpResponse<Complaint[]>>) {
@@ -114,10 +124,6 @@ export class ListOfComplaintsComponent implements OnInit {
                     this.complaintsToShow = this.complaints.filter((complaint) => complaint.accepted !== undefined);
                 } else {
                     this.complaintsToShow = this.complaints;
-                }
-
-                if (this.complaints.some((complaint) => complaint.student)) {
-                    this.hasStudentInformation = true;
                 }
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),

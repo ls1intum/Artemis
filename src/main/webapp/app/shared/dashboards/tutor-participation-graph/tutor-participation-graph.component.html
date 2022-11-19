@@ -6,7 +6,6 @@
             [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)"
             (click)="navigate()"
             [ngbTooltip]="'artemisApp.assessmentDashboard.readGradingInstructions' | artemisTranslate"
-            container="body"
         >
             <fa-icon [icon]="faBook"></fa-icon>
         </li>
@@ -15,7 +14,6 @@
             [ngClass]="calculateClasses(TRAINED)"
             (click)="navigate()"
             [ngbTooltip]="'artemisApp.assessmentDashboard.trainOnExampleSubmissions' | artemisTranslate"
-            container="body"
         >
             <fa-icon [icon]="faChalkboardTeacher"></fa-icon>
         </li>
