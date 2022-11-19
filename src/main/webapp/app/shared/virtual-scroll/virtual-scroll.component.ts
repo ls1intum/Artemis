@@ -18,10 +18,10 @@ import { Post } from 'app/entities/metis/post.model';
 export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
-    @Input('items') public originalItems: any[] | undefined = [];
+    @Input('items') public originalItems: Post[] | undefined = [];
     @Input() forceReload: boolean;
     @Output() forceReloadChange = new EventEmitter<boolean>();
-    @Output() private onItemsRender = new EventEmitter<VirtualScrollRenderEvent<any>>();
+    @Output() private onItemsRender = new EventEmitter<VirtualScrollRenderEvent<Post>>();
 
     minRowHeight = 126.7;
 
@@ -40,8 +40,8 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
     previousItemsHeight: number[];
 
-    scrollListener: any;
-    focusInListener: any;
+    scrollListener: () => void;
+    focusInListener: () => void;
 
     constructor(private elementRef: ElementRef<HTMLElement>, private renderer: Renderer2, private router: Router) {}
 
@@ -82,7 +82,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
                         this.previousItemsHeight = this.previousItemsHeight.concat(new Array(this.originalItems.length - this.prevOriginalItems.length).fill(null));
                         this.prepareDataItems();
                     } else {
-                        let indexOfFirstDisplayedItem: any;
+                        let indexOfFirstDisplayedItem: number;
                         // changes in the displayed items are reflected to the user
                         this.domTreeItems.every((domTreeItem) => {
                             // find the index of the first domTreeItem in the updated list of items
@@ -93,7 +93,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
                         // update items on the domTree
                         for (let k = 0; k < this.domTreeItems.length; k++) {
-                            this.domTreeItems[k] = this.originalItems[indexOfFirstDisplayedItem + k];
+                            this.domTreeItems[k] = this.originalItems[indexOfFirstDisplayedItem! + k];
                         }
                     }
                 }
@@ -230,7 +230,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
         // information about the currently rendered items are emitted
         this.onItemsRender.emit(
-            new VirtualScrollRenderEvent<any>({
+            new VirtualScrollRenderEvent({
                 items: this.domTreeItems,
                 startIndex: this.startIndex,
                 endIndex: this.endIndex,

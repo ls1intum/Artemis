@@ -4,7 +4,7 @@ export class VirtualScrollRenderEvent<T> {
     public endIndex: number;
     public length: number;
 
-    constructor(obj: Partial<VirtualScrollRenderEvent<T>>) {
+    constructor(obj: VirtualScrollRenderEvent<T>) {
         Object.assign(this, obj);
     }
 }
