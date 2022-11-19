@@ -2311,7 +2311,7 @@ public class CourseTestService {
     public void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
+        ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
         course = courseRepo.save(course);
 
         String courseId = course.getId().toString();
