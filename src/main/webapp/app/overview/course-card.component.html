@@ -69,13 +69,7 @@
                     <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel">Next exercises:</h6>
                 </div>
                 <div class="col-6 next-exercise-col">
-                    <fa-icon
-                        class="next-exercise-icon"
-                        [icon]="nextExerciseIcon"
-                        placement="right"
-                        [ngbTooltip]="nextExerciseTooltip | artemisTranslate"
-                        container="body"
-                    ></fa-icon>
+                    <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" placement="right auto" [ngbTooltip]="nextExerciseTooltip | artemisTranslate"></fa-icon>
                     <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
                 </div>
                 <div class="col-3 next-exercise-col text-nowrap">

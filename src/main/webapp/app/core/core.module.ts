@@ -5,7 +5,7 @@ import { Title } from '@angular/platform-browser';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
-import { NgbDateAdapter, NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDateAdapter, NgbDatepickerConfig, NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
 import { NgxWebstorageModule, SessionStorageService } from 'ngx-webstorage';
 import locale from '@angular/common/locales/en';
 import { MissingTranslationHandler, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -96,11 +96,18 @@ import { Router } from '@angular/router';
     ],
 })
 export class ArtemisCoreModule {
-    constructor(dpConfig: NgbDatepickerConfig, translateService: TranslateService, languageHelper: JhiLanguageHelper, sessionStorageService: SessionStorageService) {
+    constructor(
+        dpConfig: NgbDatepickerConfig,
+        tooltipConfig: NgbTooltipConfig,
+        translateService: TranslateService,
+        languageHelper: JhiLanguageHelper,
+        sessionStorageService: SessionStorageService,
+    ) {
         registerLocaleData(locale);
         dpConfig.minDate = { year: dayjs().subtract(100, 'year').year(), month: 1, day: 1 };
         translateService.setDefaultLang('en');
         const languageKey = sessionStorageService.retrieve('locale') || languageHelper.determinePreferredLanguage();
         translateService.use(languageKey);
+        tooltipConfig.container = 'body';
     }
 }
