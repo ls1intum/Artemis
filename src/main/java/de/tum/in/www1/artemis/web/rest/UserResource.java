@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
@@ -77,6 +78,8 @@ public class UserResource {
 
     private final UserCreationService userCreationService;
 
+    private final LtiService ltiService;
+
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     private final UserRepository userRepository;
@@ -85,10 +88,11 @@ public class UserResource {
 
     private final Optional<LdapUserService> ldapUserService;
 
-    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
+    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, LtiService ltiService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.ltiService = ltiService;
         this.userCreationService = userCreationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.authorityRepository = authorityRepository;
@@ -370,11 +374,11 @@ public class UserResource {
     @PutMapping("users/initialize")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserInitializationDTO> initializeUser() {
-        User user = userRepository.getUser();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO());
         }
-        if (/* TODO: isLti */ false || !user.isInternal()) {
+        if (!ltiService.isLtiCreatedUser(user) || !user.isInternal()) {
             user.setActivated(true);
             userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO());

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -171,5 +172,17 @@ class LtiServiceTest {
         SecurityContextHolder.getContext().setAuthentication(null);
 
         assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", true, false));
+    }
+
+    @Test
+    void isLtiCreatedUser() {
+        assertTrue(ltiService.isLtiCreatedUser(user));
+    }
+
+    @Test
+    void isNotLtiCreatedUser() {
+        user.setGroups(new HashSet<>(Arrays.asList("students", "editors")));
+
+        assertFalse(ltiService.isLtiCreatedUser(user));
     }
 }

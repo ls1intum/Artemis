@@ -92,9 +92,9 @@ class Lti10ServiceTest {
 
     @Test
     void performLaunch() {
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean(), anyBoolean());
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
-        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any(), any());
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
         lti10Service.performLaunch(launchRequest, exercise, onlineCourseConfiguration);
 
@@ -104,9 +104,9 @@ class Lti10ServiceTest {
 
     @Test
     void performLaunchNoOutcomeUrl() {
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean(), anyBoolean());
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
-        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any(), any());
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
         launchRequest.setLis_outcome_service_url("");
 

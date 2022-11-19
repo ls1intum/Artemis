@@ -175,4 +175,14 @@ public class LtiService {
             uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }
     }
+
+    /**
+     * Checks if a user was created as part of an LTI launch.
+     *
+     * @param user the user to check if
+     * @return true if the user was created as part of an LTI launch
+     */
+    public boolean isLtiCreatedUser(User user) {
+        return user.getGroups().contains(LTI_GROUP_NAME);
+    }
 }
