@@ -7,6 +7,7 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 import { VirtualScrollRenderEvent } from 'app/shared/virtual-scroll/virtual-scroll-render-event.class';
+import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 @Component({
     selector: 'virtual-scroll',
@@ -62,30 +63,36 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
                     return;
                 }
 
-                if (this.forceReload) {
+                if (this.forceReload || this.currentScroll < this.minRowHeight) {
                     // invalidate previously calculated item heights
                     this.previousItemsHeight = new Array(this.originalItems.length).fill(null);
 
                     if (this.elRef.nativeElement.scrollTop !== 0) {
-                        // scroll to the top of the elements
+                        // scroll to the top of the items
                         this.elRef.nativeElement.scrollTop = 0;
                     } else {
                         this.currentScroll = 0;
                         this.prepareDataItems();
                     }
                 } else {
-                    if (this.originalItems.length > this.prevOriginalItems.length) {
-                        // previousItemsHeight array is extended for next page of arriving elements
+                    if (this.originalItems.length > this.prevOriginalItems.length && this.prevOriginalItems.length % ITEMS_PER_PAGE === 0) {
+                        // previousItemsHeight array is extended for next page of arriving items
                         this.previousItemsHeight = this.previousItemsHeight.concat(new Array(this.originalItems.length - this.prevOriginalItems.length).fill(null));
                         this.prepareDataItems();
                     } else {
-                        // changes in the displayed elements are reflected to the user
-                        for (let i = 0; i < this.prevOriginalItems.length; i++) {
-                            const displayIndex = i - this.startIndex;
-                            if (displayIndex >= 0 && i <= this.endIndex) {
-                                // if item is displayed to the user then it is updated
-                                this.items[displayIndex] = this.originalItems[i];
+                        let indexOfFirstDisplayedItem: any;
+                        // changes in the displayed items are reflected to the user
+                        for (let i = 0; i < this.items.length; i++) {
+                            indexOfFirstDisplayedItem = this.originalItems.findIndex((originalItem) => originalItem.id === this.items[i].id);
+
+                            if (indexOfFirstDisplayedItem !== -1) {
+                                break;
                             }
+                        }
+
+                        for (let k = 0; k < this.items.length; k++) {
+                            // if item is displayed to the user then it is updated
+                            this.items[k] = this.originalItems[indexOfFirstDisplayedItem + k];
                         }
                     }
                 }
@@ -104,6 +111,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
     /**
      * catches scroll event, calculates scroll direction and saves new distance from the top
+     * calls prepareDataItems() to perform virtual scrolling and manipulated the items in the DOM Tree accordingly
      */
     private onScroll() {
         this.lastScrollIsUp = this.scrollIsUp;
@@ -126,8 +134,8 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * updates the stored heights of elements currently available in the DOM tree
-     * this update is necessary to correctly realize when to display and remove elements from the DOM tree, with respect to the amount of height the user scrolls
+     * updates the stored heights of items currently available in the DOM tree
+     * this update is necessary to correctly realize when to display and remove items from the DOM tree, with respect to the amount of height the user scrolls
      * @param itemsThatAreGone  real index of element which is to be removed from the DOM Tree
      */
     private registerCurrentItemsHeight(itemsThatAreGone?: number) {
@@ -137,7 +145,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
             const realIndex = this.startIndex + i;
             let collapsableHeight = 0;
 
-            /* calculates collapsible nested components of item being removed from the DOM tree and updates the elements height where nested elements would be closed
+            /* calculates collapsible nested components of item being removed from the DOM tree and updates the items height where nested items would be closed
                this operation is necessary to have a smooth scrolling experience when redisplaying an element previously removed from the DOM tree due to being above the screen's
                upper border */
             if (itemsThatAreGone !== undefined && i === itemsThatAreGone) {
@@ -214,7 +222,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
         this.startIndex = dimensions.itemsThatAreGone;
         this.endIndex = Math.min(this.startIndex + this.numberItemsCanRender(), this.originalItems.length - 1);
 
-        // update available elements on the DOM tree
+        // update available items on the DOM tree
         this.items = this.originalItems.slice(this.startIndex, Math.min(this.endIndex + 1, this.originalItems.length));
 
         // information about the currently rendered items are emitted
