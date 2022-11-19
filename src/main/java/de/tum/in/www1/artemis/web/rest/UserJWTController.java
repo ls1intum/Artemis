@@ -123,7 +123,7 @@ public class UserJWTController {
      */
     @PostMapping("/logout")
     public void logout(HttpServletResponse response) {
-        // Logout needs to build the same cookie (secure, httpOnly and sameSite='Strict') or browsers will ignore the header and not unset the cookie
+        // Logout needs to build the same cookie (secure, httpOnly and sameSite='Lax') or browsers will ignore the header and not unset the cookie
         ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }

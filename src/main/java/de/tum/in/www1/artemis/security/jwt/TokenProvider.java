@@ -71,7 +71,7 @@ public class TokenProvider {
     /**
      * Gets the validity for the generated tokens.
      *
-     * @param rememberMe     Determines Token lifetime (30 minutes vs 30 days)
+     * @param rememberMe     Determines Token lifetime
      * @return long          The validity of the generated tokens
      */
     public long getTokenValidity(boolean rememberMe) {
