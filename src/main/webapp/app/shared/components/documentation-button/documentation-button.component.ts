@@ -1,6 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 
+// The routes here are used to build the link to the documentation.
+// Therefore, it's important that they exactly match the url to the subpage of the documentation.
 export enum DocumentationType {
     Course = 'courses/customizable/',
     Lecture = 'lectures/',
