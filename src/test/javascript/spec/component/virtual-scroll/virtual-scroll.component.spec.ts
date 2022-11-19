@@ -58,7 +58,7 @@ describe('VirtualScrollComponent', () => {
         tick();
         fixture.detectChanges();
 
-        expect(comp.originalItems).not.toBe(undefined);
+        expect(comp.originalItems).toBeDefined();
         expect(comp.originalItems).toBeEmpty();
     }));
 
@@ -110,8 +110,8 @@ describe('VirtualScrollComponent', () => {
         tick();
         fixture.detectChanges();
 
+        expect(comp.domTreeItems).toHaveLength(comp.originalItems.length);
         expect(comp.domTreeItems[0].title).toBe(updatedTitle);
-        expect(comp.domTreeItems).toHaveLength(Math.min(comp.originalItems.length, comp.numberItemsCanRender()));
     }));
 
     it('should not unintentionally scroll on clicking the text area of posting markdown editor component', fakeAsync(() => {
