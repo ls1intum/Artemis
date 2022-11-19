@@ -82,7 +82,7 @@ public class TokenProvider {
      * Create JWT Token a fully populated <code>Authentication</code> object.
      *
      * @param authentication Authentication Object
-     * @param rememberMe     Determines Token lifetime (30 minutes vs 30 days)
+     * @param rememberMe     Determines Token lifetime
      * @return JWT Token
      */
     public String createToken(Authentication authentication, boolean rememberMe) {
