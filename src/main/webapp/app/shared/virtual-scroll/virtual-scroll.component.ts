@@ -8,6 +8,7 @@ import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnIni
 import { NavigationStart, Router } from '@angular/router';
 import { VirtualScrollRenderEvent } from 'app/shared/virtual-scroll/virtual-scroll-render-event.class';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
+import { Post } from 'app/entities/metis/post.model';
 
 @Component({
     selector: 'virtual-scroll',
@@ -24,8 +25,8 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
     minRowHeight = 126.7;
 
-    public prevOriginalItems: any[] = [];
-    public domTreeItems: any[] = [];
+    public prevOriginalItems: Post[] = [];
+    public domTreeItems: Post[] = [];
 
     public currentScroll = 0;
     public contentHeight = 0;
@@ -37,12 +38,12 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     private scrollIsUp = false;
     private lastScrollIsUp = false;
 
-    previousItemsHeight: any[] = [];
+    previousItemsHeight: number[];
 
     scrollListener: any;
     focusInListener: any;
 
-    constructor(private elRef: ElementRef<HTMLElement>, private renderer: Renderer2, private router: Router) {}
+    constructor(private elementRef: ElementRef<HTMLElement>, private renderer: Renderer2, private router: Router) {}
 
     /**
      * start listening to focusin events on initialization to prevent unintentional scrolling when the user focuses into the text area of posting markdown editor
@@ -50,8 +51,8 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
      * start listening to navigationStart events of router and enable forceReloadChange to scroll to the top of the updated item list
      */
     ngOnInit() {
-        this.focusInListener = this.renderer.listen(this.elRef.nativeElement, 'focusin', this.onFocusIn.bind(this));
-        this.scrollListener = this.renderer.listen(this.elRef.nativeElement, 'scroll', this.onScroll.bind(this));
+        this.focusInListener = this.renderer.listen(this.elementRef.nativeElement, 'focusin', this.onFocusIn.bind(this));
+        this.scrollListener = this.renderer.listen(this.elementRef.nativeElement, 'scroll', this.onScroll.bind(this));
         this.router.events.forEach((event) => {
             if (event instanceof NavigationStart) {
                 // scroll to the top of posts in case user clicks to a post title to solely display that post
@@ -70,10 +71,10 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
                 if (this.forceReload || this.currentScroll < this.minRowHeight) {
                     // invalidate previously calculated item heights
-                    this.previousItemsHeight = new Array(this.originalItems.length).fill(null);
+                    this.previousItemsHeight = new Array<number>(this.originalItems.length).fill(0);
 
                     // scroll to the top of the items
-                    this.elRef.nativeElement.scrollTop = 0;
+                    this.elementRef.nativeElement.scrollTop = 0;
                     this.prepareDataItems();
                 } else {
                     if (this.originalItems.length > this.prevOriginalItems.length && this.prevOriginalItems.length % ITEMS_PER_PAGE === 0) {
@@ -106,7 +107,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
      * prevents automatic scrolling to other posts when user clicks the text area of posting markdown editor component while creating/editing answerPosts
      */
     onFocusIn() {
-        this.elRef.nativeElement.scrollTop = this.currentScroll;
+        this.elementRef.nativeElement.scrollTop = this.currentScroll;
     }
 
     /**
@@ -115,9 +116,9 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
      */
     onScroll() {
         this.lastScrollIsUp = this.scrollIsUp;
-        this.scrollIsUp = this.elRef.nativeElement.scrollTop < this.currentScroll;
+        this.scrollIsUp = this.elementRef.nativeElement.scrollTop < this.currentScroll;
 
-        this.currentScroll = this.elRef.nativeElement.scrollTop;
+        this.currentScroll = this.elementRef.nativeElement.scrollTop;
         this.prepareDataItems();
     }
 
@@ -162,9 +163,9 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
             if (collapsableHeight > 0) {
                 // scroll upwards by the height of collapsed nested components of the removed post to prevent unintentional automatic scrolling to other posts
-                this.elRef.nativeElement.scrollTop -= collapsableHeight;
+                this.elementRef.nativeElement.scrollTop -= collapsableHeight;
                 // register currentScroll after update
-                this.currentScroll = this.elRef.nativeElement.scrollTop;
+                this.currentScroll = this.elementRef.nativeElement.scrollTop;
             }
         }
     }
@@ -181,7 +182,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
         dimensions.contentHeight = this.originalItems!.reduce((prev, curr, i) => {
             const height = this.previousItemsHeight[i];
-            return prev + (height ? height : this.minRowHeight);
+            return prev + (height !== 0 ? height : this.minRowHeight);
         }, 0);
 
         if (this.currentScroll >= this.minRowHeight) {
@@ -190,7 +191,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
             let initialScroll = this.currentScroll;
 
             for (const h of this.previousItemsHeight) {
-                const height = h ? h : this.minRowHeight;
+                const height = h !== 0 ? h : this.minRowHeight;
                 if (initialScroll >= height) {
                     newPaddingTop += height;
                     initialScroll -= height;
@@ -242,7 +243,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
      *  @return total number of items that are to be rendered on the DOM tree
      */
     numberItemsCanRender() {
-        return Math.floor(this.elRef.nativeElement.clientHeight / this.minRowHeight) + 2;
+        return Math.floor(this.elementRef.nativeElement.clientHeight / this.minRowHeight) + 2;
     }
 
     /**
