@@ -143,8 +143,12 @@
         </div>
         <!-- list of posts -->
         <div class="col-12">
-            <virtual-scroll #vs [items]="posts" [(forceReload)]="forceReload" (onItemsRender)="onItemsRender($event)">
-                <jhi-posting-thread *ngFor="let post of vs.domTreeItems; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"> </jhi-posting-thread>
+            <virtual-scroll #virtualScrollContainer [items]="posts" [(forceReload)]="forceReload" (onItemsRender)="onItemsRender($event)">
+                <jhi-posting-thread
+                    *ngFor="let post of virtualScrollContainer.domTreeItems; trackBy: postsTrackByFn"
+                    [post]="post"
+                    [showAnswers]="posts.length === 1"
+                ></jhi-posting-thread>
                 <!-- spinner while loading posts -->
                 <div class="text-center">
                     <div *ngIf="isLoading" class="spinner-border mt-3" role="status"></div>
