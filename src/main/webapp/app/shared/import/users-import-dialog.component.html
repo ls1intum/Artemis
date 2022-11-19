@@ -14,7 +14,7 @@
             <div class="d-flex align-items-end">
                 <div>
                     <label for="importCSV" class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.csvFile.label">Select .csv file</label>
-                    <jhi-help-icon placement="top" text="artemisApp.importUsers.csvFile.tooltip" class="me-1"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.importUsers.csvFile.tooltip" class="me-1"></jhi-help-icon>
                 </div>
                 <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" *ngIf="isParsing"></fa-icon>
             </div>
@@ -34,7 +34,7 @@
         <div *ngIf="usersToImport && usersToImport.length > 0" class="form-group mt-4">
             <div>
                 <label class="label-narrow font-weight-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"> Users for import</label>
-                <jhi-help-icon placement="top" text="artemisApp.importUsers.usersForImport.tooltip" class="me-1"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.importUsers.usersForImport.tooltip" class="me-1"></jhi-help-icon>
             </div>
             <table class="table table-striped table-sm header-fixed mt-2">
                 <thead>

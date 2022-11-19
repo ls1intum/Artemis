@@ -96,7 +96,7 @@
                 <ngx-datatable-column name="" prop="removeButton">
                     <ng-template ngx-datatable-cell-template let-row="row">
                         <jhi-remove-auxiliary-repository-button
-                            placement="right"
+                            placement="right auto"
                             [programmingExercise]="programmingExercise"
                             (onRefresh)="refreshAuxiliaryRepositoryChecks()"
                             [row]="row"
@@ -312,7 +312,6 @@
                 <fa-icon
                     [icon]="faQuestionCircle"
                     class="text-secondary"
-                    placement="auto"
                     ngbTooltip="{{ 'artemisApp.programmingExercise.enableStaticCodeAnalysis.description' | artemisTranslate }}"
                 ></fa-icon>
             </div>
@@ -323,7 +322,6 @@
                 <fa-icon
                     [icon]="faQuestionCircle"
                     class="text-secondary"
-                    placement="auto"
                     ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate }}"
                 ></fa-icon>
                 <div class="input-group">
@@ -420,7 +418,7 @@
                         *ngIf="!validIdeSelection()"
                         [icon]="faQuestionCircle"
                         class="text-danger"
-                        [placement]="'top'"
+                        [placement]="'top auto'"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alert' | artemisTranslate }}"
                     ></fa-icon>
                 </label>
@@ -442,7 +440,7 @@
                         *ngIf="!validIdeSelection()"
                         [icon]="faQuestionCircle"
                         class="text-danger"
-                        [placement]="'top'"
+                        [placement]="'top auto'"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alert' | artemisTranslate }}"
                     ></fa-icon>
                 </label>
@@ -463,7 +461,6 @@
                     <fa-icon
                         [icon]="faQuestionCircle"
                         class="text-secondary"
-                        placement="auto"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.showTestNamesToStudentsTooltip' | artemisTranslate }}"
                     ></fa-icon>
                 </label>
@@ -521,7 +518,6 @@
                     <fa-icon
                         [icon]="faQuestionCircle"
                         class="text-secondary"
-                        placement="auto"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.recordTestwiseCoverageTooltip' | artemisTranslate }}"
                     ></fa-icon>
                 </label>
@@ -570,7 +566,7 @@
                         <p jhiTranslate="{{ reason.translateKey }}"></p>
                     </div>
                 </ng-template>
-                <span *ngIf="getInvalidReasons().length > 0" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
+                <span *ngIf="getInvalidReasons().length > 0" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
                     <fa-icon [icon]="faExclamationCircle"></fa-icon>
                     <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                     <span>({{ getInvalidReasons().length }})</span>

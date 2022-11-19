@@ -309,12 +309,12 @@
                                     <p *ngIf="(warning.translateValues | json) == '{}'" jhiTranslate="{{ warning.translateKey }}"></p>
                                 </div>
                             </ng-template>
-                            <span *ngIf="!quizIsValid" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right">
+                            <span *ngIf="!quizIsValid" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
                                 <fa-icon [icon]="faExclamationCircle"></fa-icon>
                                 <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                                 <span>({{ computeInvalidReasons().length }})</span>
                             </span>
-                            <span *ngIf="warningQuizCache" class="badge bg-warning" [ngbTooltip]="warningTranslate" tooltip-placement="top-right">
+                            <span *ngIf="warningQuizCache" class="badge bg-warning" [ngbTooltip]="warningTranslate" tooltip-placement="top-right auto">
                                 <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
                                 <span>({{ computeInvalidWarnings().length }})</span>
                             </span>
@@ -333,7 +333,7 @@
                                 [disabled]="isSaveDisabled()"
                                 jhiTranslate="entity.action.save"
                                 [ngbTooltip]="quizIsValid ? '' : tooltipTranslate"
-                                tooltip-placement="top-right"
+                                tooltip-placement="top-right auto"
                                 tooltip-class="invalid-reasons-tooltip"
                             ></button>
                         </div>

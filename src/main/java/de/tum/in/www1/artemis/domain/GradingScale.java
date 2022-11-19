@@ -173,4 +173,9 @@ public class GradingScale extends DomainObject {
             return mappedColumnName;
         }
     }
+
+    @Override
+    public String toString() {
+        return "GradingScale{" + "gradeType=" + gradeType + ", bonusStrategy=" + bonusStrategy + '}';
+    }
 }

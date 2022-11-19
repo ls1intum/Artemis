@@ -49,7 +49,6 @@
                     <div class="mb-2 text-nowrap">
                         <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.assessmentType"> Assessment Type </span>
                         <jhi-help-icon
-                            placement="auto"
                             [text]="
                                 'artemisApp.programmingExercise.timeline.' +
                                 (exercise.assessmentType === assessmentType.SEMI_AUTOMATIC ? 'assessmentTypeTooltipManualAssessment' : 'assessmentTypeTooltipAutomaticAssessment')
@@ -76,7 +75,6 @@
                     <div class="mb-2 text-nowrap">
                         <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests">requests</span>
                         <jhi-help-icon
-                            placement="auto"
                             [text]="
                                 'artemisApp.programmingExercise.timeline.' +
                                 (exercise.allowManualFeedbackRequests ? 'feedbackRequestsEnabledTooltip' : 'feedbackRequestsDisabledTooltip')
@@ -113,7 +111,6 @@
                     <div class="mb-2 text-nowrap">
                         <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"> Complaints </span>
                         <jhi-help-icon
-                            placement="auto"
                             [text]="
                                 'artemisApp.programmingExercise.timeline.' +
                                 (exercise.allowComplaintsForAutomaticAssessments ? 'allowComplaintOnAutomaticAssessmentTooltip' : 'disallowComplaintOnAutomaticAssessmentTooltip')
