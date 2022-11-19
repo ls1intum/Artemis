@@ -403,11 +403,11 @@ public class FileResource {
      */
     private boolean checkAttachmentAuthorization(Course course, Attachment attachment) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        if (!attachment.isVisibleToStudents() && !authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
-            log.info("User not authorized to access attachment");
-            return false;
+        if (attachment.isVisibleToStudents() || authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+            return true;
         }
-        return true;
+        log.info("User not authorized to access attachment");
+        return false;
     }
 
     /**
