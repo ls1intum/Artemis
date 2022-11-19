@@ -84,12 +84,12 @@ public class UserJWTController {
     /**
      * Authorizes a User logged in with SAML2
      *
-     * @param body      the body of the request. "true" to remember the user.
-     * @param response  HTTP response
+     * @param rememberMe    the body of the request. true to remember the user.
+     * @param response      HTTP response
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (user not activated)
      */
     @PostMapping("/saml2")
-    public ResponseEntity<Void> authorizeSAML2(@RequestBody final String body, HttpServletResponse response) {
+    public ResponseEntity<Void> authorizeSAML2(@RequestBody final boolean rememberMe, HttpServletResponse response) {
         if (saml2Service.isEmpty()) {
             throw new AccessForbiddenException("SAML2 is disabled");
         }
@@ -110,7 +110,6 @@ public class UserJWTController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();
         }
 
-        final boolean rememberMe = Boolean.parseBoolean(body);
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
