@@ -7,7 +7,7 @@
     <h4 class="modal-title mt-4" id="generalConfiguration" jhiTranslate="artemisApp.lti.generalConfiguration">General Configuration</h4>
     <div class="form-group mt-2">
         <label class="form-control-label" jhiTranslate="artemisApp.lti.userPrefix" for="field_userPrefix">User Prefix</label>
-        <jhi-help-icon placement="top" text="artemisApp.lti.edit.userPrefixTooltip"></jhi-help-icon>
+        <jhi-help-icon text="artemisApp.lti.edit.userPrefixTooltip"></jhi-help-icon>
         <input required type="text" class="form-control" name="userPrefix" id="field_userPrefix" formControlName="userPrefix" />
         <ng-container *ngIf="userPrefix.invalid && (userPrefix.dirty || userPrefix.touched)">
             <div *ngIf="(userPrefix.errors! | keyvalue | removekeys: ['required']).length > 0" class="alert alert-danger">
@@ -17,26 +17,38 @@
             </div>
         </ng-container>
     </div>
+    <div class="form-group">
+        <input
+            type="checkbox"
+            class="form-check-input"
+            name="requireExistingUser"
+            id="field_requireExistingUser"
+            [checked]="course.onlineCourseConfiguration?.requireExistingUser"
+            formControlName="requireExistingUser"
+        />
+        <label class="form-control-label" jhiTranslate="artemisApp.lti.requireExistingUser" for="field_requireExistingUser">Require Existing User</label>
+        <jhi-help-icon text="artemisApp.lti.edit.requireExistingUserTooltip"></jhi-help-icon>
+    </div>
     <h4 class="modal-title mt-4" id="lti10" jhiTranslate="artemisApp.lti.version10">LTI 1.0</h4>
     <div class="form-group mt-2">
         <label class="form-control-label" jhiTranslate="artemisApp.lti.ltiKey" for="field_ltiKey">LTI Key</label>
-        <jhi-help-icon placement="top" text="artemisApp.lti.edit.ltiKeyTooltip"></jhi-help-icon>
+        <jhi-help-icon text="artemisApp.lti.edit.ltiKeyTooltip"></jhi-help-icon>
         <input required type="text" class="form-control" name="ltiKey" id="field_ltiKey" formControlName="ltiKey" />
     </div>
     <div class="form-group">
         <label class="form-control-label" jhiTranslate="artemisApp.lti.ltiSecret" for="field_ltiSecret">LTI Secret</label>
-        <jhi-help-icon placement="top" text="artemisApp.lti.edit.ltiSecretTooltip"></jhi-help-icon>
+        <jhi-help-icon text="artemisApp.lti.edit.ltiSecretTooltip"></jhi-help-icon>
         <input required type="text" class="form-control" name="ltiSecret" id="field_ltiSecret" formControlName="ltiSecret" />
     </div>
     <h4 class="modal-title mt-4" id="lti13" jhiTranslate="artemisApp.lti.version13">LTI 1.3</h4>
     <div class="form-group mt-2">
         <label class="form-control-label" jhiTranslate="artemisApp.lti.registrationId" for="field_registrationId">Registration Id</label>
-        <jhi-help-icon placement="top" text="artemisApp.lti.edit.registrationIdTooltip"></jhi-help-icon>
+        <jhi-help-icon text="artemisApp.lti.edit.registrationIdTooltip"></jhi-help-icon>
         <input required type="text" class="form-control" name="registrationId" id="field_registrationId" formControlName="registrationId" />
     </div>
     <div class="form-group">
         <label class="form-control-label" jhiTranslate="artemisApp.lti.clientId" for="field_clientId">Client Id</label>
-        <jhi-help-icon placement="top" text="artemisApp.lti.edit.clientIdTooltip"></jhi-help-icon>
+        <jhi-help-icon text="artemisApp.lti.edit.clientIdTooltip"></jhi-help-icon>
         <input type="text" class="form-control" name="clientId" id="field_clientId" formControlName="clientId" />
     </div>
     <div class="form-group">

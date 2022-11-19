@@ -111,9 +111,9 @@ describe('Course LTI Configuration Component', () => {
             expect(comp.exercises).toEqual(courseWithExercises.exercises);
             expect(findWithExercisesStub).toHaveBeenCalledOnce();
 
-            expect(comp.getKeysetUrl()).toBe(`${SERVER_API_URL}/.well-known/jwks.json`);
-            expect(comp.getDeepLinkingUrl()).toBe(`${SERVER_API_URL}/api/lti13/deep-linking/${course.id}`);
-            expect(comp.getDynamicRegistrationUrl()).toBe(`${SERVER_API_URL}/lti/dynamic-registration/${course.id}`);
+            expect(comp.getKeysetUrl()).toBe(`${location.origin}/.well-known/jwks.json`);
+            expect(comp.getDeepLinkingUrl()).toBe(`${location.origin}/api/lti13/deep-linking/${course.id}`);
+            expect(comp.getDynamicRegistrationUrl()).toBe(`${location.origin}/lti/dynamic-registration/${course.id}`);
         });
     });
 

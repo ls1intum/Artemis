@@ -99,7 +99,7 @@ public class Lti13Service {
         }
 
         ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
-                ltiIdToken.getFamilyName(), false, true);
+                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ltiService.onSuccessfulLtiAuthentication(user, targetExercise.get());
 

@@ -44,8 +44,6 @@ class LtiServiceTest {
 
     private LtiService ltiService;
 
-    private Course course;
-
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
     private User user;
@@ -57,13 +55,11 @@ class LtiServiceTest {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
         ltiService = new LtiService(userCreationService, userRepository, artemisAuthenticationProvider, tokenProvider);
-        course = new Course();
+        Course course = new Course();
         course.setId(100L);
         course.setStudentGroupName(courseStudentGroupName);
-        course.setOnlineCourse(true);
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setCourse(course);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         exercise = new TextExercise();
         exercise.setCourse(course);
         user = new User();
@@ -125,20 +121,38 @@ class LtiServiceTest {
     }
 
     @Test
-    void authenticateLtiUser_AlreadyAuthenticated() {
+    void authenticateLtiUser_AlreadyAuthenticatedSameEmail() {
         Authentication auth = SecurityUtils.makeAuthorizationObject("student1");
         SecurityContextHolder.getContext().setAuthentication(auth);
+        user.setEmail("useremail@tum.de");
+        when(userRepository.getUser()).thenReturn(user);
 
-        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false, false);
+        ltiService.authenticateLtiUser("useremail@tum.de", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         assertEquals(auth, SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    void authenticateLtiUser_AlreadyAuthenticatedDifferentEmail() {
+        Authentication auth = SecurityUtils.makeAuthorizationObject("user");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        user.setEmail("useremail@tum.de");
+        when(userRepository.getUser()).thenReturn(user);
+        when(userRepository.findOneByLogin("username")).thenReturn(Optional.empty());
+        when(userCreationService.createUser(any(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(user);
+
+        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
+
+        auth = SecurityContextHolder.getContext().getAuthentication();
+        assertEquals(user.getLogin(), auth.getPrincipal());
     }
 
     @Test
     void authenticateLtiUser_noEmail() {
         SecurityContextHolder.getContext().setAuthentication(null);
 
-        assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.authenticateLtiUser("", "username", "firstname", "lastname", false, false));
+        assertThrows(InternalAuthenticationServiceException.class,
+                () -> ltiService.authenticateLtiUser("", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser()));
     }
 
     @Test
@@ -148,7 +162,7 @@ class LtiServiceTest {
         when(userRepository.findOneByLogin("username")).thenReturn(Optional.empty());
         when(userCreationService.createUser(any(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean())).thenReturn(user);
 
-        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false, true);
+        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         assertEquals(user.getLogin(), auth.getPrincipal());
@@ -161,17 +175,20 @@ class LtiServiceTest {
         when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.of("username"));
         when(artemisAuthenticationProvider.getOrCreateUser(any(), any(), any(), any(), anyBoolean())).thenReturn(user);
 
-        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false, true);
+        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         assertEquals(user.getLogin(), auth.getPrincipal());
+        assertThat(user.getGroups().contains(LtiService.LTI_GROUP_NAME));
     }
 
     @Test
     void authenticateLtiUser_noAuth() {
         SecurityContextHolder.getContext().setAuthentication(null);
+        onlineCourseConfiguration.setRequireExistingUser(true);
 
-        assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", true, false));
+        assertThrows(InternalAuthenticationServiceException.class,
+                () -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser()));
     }
 
     @Test

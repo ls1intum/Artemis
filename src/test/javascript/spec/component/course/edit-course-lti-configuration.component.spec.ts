@@ -32,6 +32,7 @@ describe('Edit Course LTI Configuration Component', () => {
         ltiKey: 'key',
         ltiSecret: 'secret',
         userPrefix: 'prefix',
+        requireExistingUser: false,
         registrationId: 'regId',
         clientId: 'clientId',
         jwkSetUri: 'jwkUri',
@@ -97,6 +98,7 @@ describe('Edit Course LTI Configuration Component', () => {
             expect(comp.onlineCourseConfigurationForm.get(['ltiKey'])?.value).toBe(onlineCourseConfiguration.ltiKey);
             expect(comp.onlineCourseConfigurationForm.get(['ltiSecret'])?.value).toBe(onlineCourseConfiguration.ltiSecret);
             expect(comp.onlineCourseConfigurationForm.get(['userPrefix'])?.value).toBe(onlineCourseConfiguration.userPrefix);
+            expect(comp.onlineCourseConfigurationForm.get(['requireExistignUser'])?.value).toBe(onlineCourseConfiguration.requireExistingUser);
             expect(comp.onlineCourseConfigurationForm.get(['registrationId'])?.value).toBe(onlineCourseConfiguration.registrationId);
             expect(comp.onlineCourseConfigurationForm.get(['clientId'])?.value).toBe(onlineCourseConfiguration.clientId);
             expect(comp.onlineCourseConfigurationForm.get(['authorizationUri'])?.value).toBe(onlineCourseConfiguration.authorizationUri);
@@ -118,6 +120,7 @@ describe('Edit Course LTI Configuration Component', () => {
             ltiKey: new FormControl(changedConfiguration.ltiKey),
             ltiSecret: new FormControl(changedConfiguration.ltiSecret),
             userPrefix: new FormControl(changedConfiguration.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
+            requireExistingUser: new FormControl(changedConfiguration.requireExistingUser),
             registrationId: new FormControl(changedConfiguration.registrationId),
             clientId: new FormControl(changedConfiguration.clientId),
             authorizationUri: new FormControl(changedConfiguration.authorizationUri),

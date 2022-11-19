@@ -26,6 +26,13 @@
                 </dd>
 
                 <dt>
+                    <span>{{ 'artemisApp.lti.requireExistingUser' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ (onlineCourseConfiguration?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                </dd>
+
+                <dt>
                     <span>{{ 'artemisApp.lti.ltiLaunchTarget' | artemisTranslate }}</span>
                     <jhi-help-icon text="artemisApp.lti.launchTargetTooltip"></jhi-help-icon>
                 </dt>
@@ -54,31 +61,6 @@
                 <dd>
                     <span>True</span>
                 </dd>
-
-                <div class="form-group">
-                    <h4>
-                        {{ 'artemisApp.lti.customParameters' | artemisTranslate }}
-                        <jhi-copy-icon-button [copyText]="getFormattedCustomParameters()"></jhi-copy-icon-button>
-                    </h4>
-
-                    <dt>
-                        <span>{{ 'artemisApp.lti.requireExistingUser' | artemisTranslate }}</span>
-                        <jhi-help-icon text="artemisApp.lti.requireExistingUserTooltip"></jhi-help-icon>
-                    </dt>
-                    <dd>
-                        <input type="checkbox" class="form-check-input" (change)="requireExistingUser = !requireExistingUser" [checked]="requireExistingUser" />
-                    </dd>
-
-                    <dt>
-                        <span>{{ 'artemisApp.lti.lookupByEmail' | artemisTranslate }}</span>
-                        <jhi-help-icon text="artemisApp.lti.lookupUserByEmailTooltip"></jhi-help-icon>
-                    </dt>
-                    <dd>
-                        <input type="checkbox" class="form-check-input" (change)="lookupUserByEmail = !lookupUserByEmail" [checked]="lookupUserByEmail" />
-                    </dd>
-
-                    <textarea class="form-control" rows="3" [value]="getFormattedCustomParameters()" readonly></textarea>
-                </div>
             </ng-template>
         </ng-container>
         <ng-container ngbNavItem [ngbNavItem]="2">
