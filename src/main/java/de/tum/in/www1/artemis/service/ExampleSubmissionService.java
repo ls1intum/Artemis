@@ -82,7 +82,10 @@ public class ExampleSubmissionService {
             Optional<Exercise> optionalExercise = exerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId);
 
             // Remove the reference to the exercise when the example submission is deleted
-            optionalExercise.ifPresent(exercise -> exercise.removeExampleSubmission(exampleSubmission));
+            optionalExercise.ifPresent(exercise -> {
+                exercise.removeExampleSubmission(exampleSubmission);
+                exerciseRepository.save(exercise);
+            });
 
             // due to Cascade.Remove this will also remove the submission and the result(s) in case they exist
             exampleSubmissionRepository.delete(exampleSubmission);

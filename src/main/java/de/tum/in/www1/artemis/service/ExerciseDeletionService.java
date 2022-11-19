@@ -202,7 +202,7 @@ public class ExerciseDeletionService {
                     modelAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
                 }
             }
-            exerciseRepository.delete(exercise);
+            exerciseRepository.deleteById(exercise.getId());
         }
     }
 
