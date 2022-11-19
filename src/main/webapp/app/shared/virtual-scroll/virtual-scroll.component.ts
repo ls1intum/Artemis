@@ -17,7 +17,7 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
-    @Input('items') public originalItems: any[] = [];
+    @Input('items') public originalItems: any[] | undefined = [];
     @Input() forceReload: boolean;
     @Output() forceReloadChange = new EventEmitter<boolean>();
     @Output() private onItemsRender = new EventEmitter<VirtualScrollRenderEvent<any>>();
@@ -37,7 +37,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     private scrollIsUp = false;
     private lastScrollIsUp = false;
 
-    private previousItemsHeight: any[] = [];
+    previousItemsHeight: any[] = [];
 
     scrollListener: any;
     focusInListener: any;
@@ -58,8 +58,6 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
                 this.forceReloadChange.emit(true);
             }
         });
-
-        this.minRowHeight = Number(this.minRowHeight);
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -74,13 +72,9 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
                     // invalidate previously calculated item heights
                     this.previousItemsHeight = new Array(this.originalItems.length).fill(null);
 
-                    if (this.elRef.nativeElement.scrollTop !== 0) {
-                        // scroll to the top of the items
-                        this.elRef.nativeElement.scrollTop = 0;
-                    } else {
-                        this.currentScroll = 0;
-                        this.prepareDataItems();
-                    }
+                    // scroll to the top of the items
+                    this.elRef.nativeElement.scrollTop = 0;
+                    this.prepareDataItems();
                 } else {
                     if (this.originalItems.length > this.prevOriginalItems.length && this.prevOriginalItems.length % ITEMS_PER_PAGE === 0) {
                         // previousItemsHeight array is extended for next page of arriving items
@@ -91,7 +85,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
                         // changes in the displayed items are reflected to the user
                         this.domTreeItems.every((domTreeItem) => {
                             // find the index of the first domTreeItem in the updated list of items
-                            indexOfFirstDisplayedItem = this.originalItems.findIndex((originalItem) => originalItem.id === domTreeItem.id);
+                            indexOfFirstDisplayedItem = this.originalItems!.findIndex((originalItem) => originalItem.id === domTreeItem.id);
                             // if the first domTreeItem no longer exists in the updated list of items, proceed to the next domTreeItem available
                             return indexOfFirstDisplayedItem === -1;
                         });
@@ -109,9 +103,9 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * prevents automatic scrolling to other posts when user clicks the text area of posting markdown editor while creating/editing answerPosts
+     * prevents automatic scrolling to other posts when user clicks the text area of posting markdown editor component while creating/editing answerPosts
      */
-    private onFocusIn() {
+    onFocusIn() {
         this.elRef.nativeElement.scrollTop = this.currentScroll;
     }
 
@@ -119,7 +113,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
      * catches scroll event, calculates scroll direction and saves new distance from the top
      * calls prepareDataItems() to continue with the virtual scrolling logic
      */
-    private onScroll() {
+    onScroll() {
         this.lastScrollIsUp = this.scrollIsUp;
         this.scrollIsUp = this.elRef.nativeElement.scrollTop < this.currentScroll;
 
@@ -130,7 +124,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     /**
      *  prepares for and performs virtual scroll
      */
-    private prepareDataItems() {
+    prepareDataItems() {
         this.registerCurrentItemsHeight();
         this.prepareDataVirtualScroll();
     }
@@ -140,7 +134,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
      * this update is necessary to correctly realize when to insert and remove items from the DOM tree, considering the amount of height the user scrolls
      * @param itemsThatAreGone  real index of element which is to be removed from the DOM Tree
      */
-    private registerCurrentItemsHeight(itemsThatAreGone?: number) {
+    registerCurrentItemsHeight(itemsThatAreGone?: number) {
         const children = this.itemsContainerElRef.nativeElement.children;
         for (let i = 0; i < children.length; i++) {
             const child = children[i];
@@ -178,14 +172,14 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     /**
      * calculates items to display in the DOM tree by comparing currentScroll to the sum of the heights of consecutive items
      */
-    private getDimensions() {
+    getDimensions() {
         const dimensions = {
             contentHeight: 0,
             paddingTop: 0,
             itemsThatAreGone: 0,
         };
 
-        dimensions.contentHeight = this.originalItems.reduce((prev, curr, i) => {
+        dimensions.contentHeight = this.originalItems!.reduce((prev, curr, i) => {
             const height = this.previousItemsHeight[i];
             return prev + (height ? height : this.minRowHeight);
         }, 0);
@@ -216,7 +210,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     /**
      * updates elements of the DOM tree, emits currently rendered items, their real start and end indexes and the total number of elements in the DOM tree
      */
-    private prepareDataVirtualScroll() {
+    prepareDataVirtualScroll() {
         const dimensions = this.getDimensions();
 
         this.contentHeight = dimensions.contentHeight;
@@ -228,10 +222,10 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
         }
 
         this.startIndex = dimensions.itemsThatAreGone;
-        this.endIndex = Math.min(this.startIndex + this.numberItemsCanRender(), this.originalItems.length - 1);
+        this.endIndex = Math.min(this.startIndex + this.numberItemsCanRender(), this.originalItems!.length - 1);
 
         // update available items on the DOM tree
-        this.domTreeItems = this.originalItems.slice(this.startIndex, Math.min(this.endIndex + 1, this.originalItems.length));
+        this.domTreeItems = this.originalItems!.slice(this.startIndex, Math.min(this.endIndex + 1, this.originalItems!.length));
 
         // information about the currently rendered items are emitted
         this.onItemsRender.emit(
@@ -247,7 +241,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     /**
      *  @return total number of items that are to be rendered on the DOM tree
      */
-    private numberItemsCanRender() {
+    numberItemsCanRender() {
         return Math.floor(this.elRef.nativeElement.clientHeight / this.minRowHeight) + 2;
     }
 
