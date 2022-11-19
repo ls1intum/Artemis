@@ -25,7 +25,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     minRowHeight = 126.7;
 
     public prevOriginalItems: any[] = [];
-    public items: any[] = [];
+    public domTreeItems: any[] = [];
 
     public currentScroll = 0;
     public contentHeight = 0;
@@ -44,12 +44,18 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
     constructor(private elRef: ElementRef<HTMLElement>, private renderer: Renderer2, private router: Router) {}
 
+    /**
+     * start listening to focusin events on initialization to prevent unintentional scrolling when the user focuses into the text area of posting markdown editor
+     * start listening to scroll events on initialization to perform virtual scrolling when the user scrolls through the item container
+     * start listening to navigationStart events of router and enable forceReloadChange to scroll to the top of the updated item list
+     */
     ngOnInit() {
         this.focusInListener = this.renderer.listen(this.elRef.nativeElement, 'focusin', this.onFocusIn.bind(this));
         this.scrollListener = this.renderer.listen(this.elRef.nativeElement, 'scroll', this.onScroll.bind(this));
         this.router.events.forEach((event) => {
             if (event instanceof NavigationStart) {
-                this.onNavigate();
+                // scroll to the top of posts in case user clicks to a post title to solely display that post
+                this.forceReloadChange.emit(true);
             }
         });
 
@@ -59,8 +65,9 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     ngOnChanges(changes: SimpleChanges) {
         setTimeout(() => {
             if ('originalItems' in changes) {
+                // on item change
                 if (!this.originalItems) {
-                    return;
+                    this.originalItems = [];
                 }
 
                 if (this.forceReload || this.currentScroll < this.minRowHeight) {
@@ -82,17 +89,16 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
                     } else {
                         let indexOfFirstDisplayedItem: any;
                         // changes in the displayed items are reflected to the user
-                        for (let i = 0; i < this.items.length; i++) {
-                            indexOfFirstDisplayedItem = this.originalItems.findIndex((originalItem) => originalItem.id === this.items[i].id);
+                        this.domTreeItems.every((domTreeItem) => {
+                            // find the index of the first domTreeItem in the updated list of items
+                            indexOfFirstDisplayedItem = this.originalItems.findIndex((originalItem) => originalItem.id === domTreeItem.id);
+                            // if the first domTreeItem no longer exists in the updated list of items, proceed to the next domTreeItem available
+                            return indexOfFirstDisplayedItem === -1;
+                        });
 
-                            if (indexOfFirstDisplayedItem !== -1) {
-                                break;
-                            }
-                        }
-
-                        for (let k = 0; k < this.items.length; k++) {
-                            // if item is displayed to the user then it is updated
-                            this.items[k] = this.originalItems[indexOfFirstDisplayedItem + k];
+                        // update items on the domTree
+                        for (let k = 0; k < this.domTreeItems.length; k++) {
+                            this.domTreeItems[k] = this.originalItems[indexOfFirstDisplayedItem + k];
                         }
                     }
                 }
@@ -111,7 +117,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
     /**
      * catches scroll event, calculates scroll direction and saves new distance from the top
-     * calls prepareDataItems() to perform virtual scrolling and manipulated the items in the DOM Tree accordingly
+     * calls prepareDataItems() to continue with the virtual scrolling logic
      */
     private onScroll() {
         this.lastScrollIsUp = this.scrollIsUp;
@@ -122,12 +128,8 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * scroll to the top of posts in case user clicks to a post title to solely display that post
+     *  prepares for and performs virtual scroll
      */
-    private onNavigate() {
-        this.forceReloadChange.emit(true);
-    }
-
     private prepareDataItems() {
         this.registerCurrentItemsHeight();
         this.prepareDataVirtualScroll();
@@ -135,7 +137,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
     /**
      * updates the stored heights of items currently available in the DOM tree
-     * this update is necessary to correctly realize when to display and remove items from the DOM tree, with respect to the amount of height the user scrolls
+     * this update is necessary to correctly realize when to insert and remove items from the DOM tree, considering the amount of height the user scrolls
      * @param itemsThatAreGone  real index of element which is to be removed from the DOM Tree
      */
     private registerCurrentItemsHeight(itemsThatAreGone?: number) {
@@ -161,7 +163,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
             }
 
             // update height of posts that are removed from the DOM tree
-            // reduce height according to the height their answerPosts and posting markdown editor occupies within the user's display
+            // reduce item height according to the height their collapsable components occupies within the user's display
             this.previousItemsHeight[realIndex] = child.getBoundingClientRect().height - collapsableHeight;
 
             if (collapsableHeight > 0) {
@@ -173,6 +175,9 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
         }
     }
 
+    /**
+     * calculates items to display in the DOM tree by comparing currentScroll to the sum of the heights of consecutive items
+     */
     private getDimensions() {
         const dimensions = {
             contentHeight: 0,
@@ -208,6 +213,9 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
         return dimensions;
     }
 
+    /**
+     * updates elements of the DOM tree, emits currently rendered items, their real start and end indexes and the total number of elements in the DOM tree
+     */
     private prepareDataVirtualScroll() {
         const dimensions = this.getDimensions();
 
@@ -223,26 +231,30 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
         this.endIndex = Math.min(this.startIndex + this.numberItemsCanRender(), this.originalItems.length - 1);
 
         // update available items on the DOM tree
-        this.items = this.originalItems.slice(this.startIndex, Math.min(this.endIndex + 1, this.originalItems.length));
+        this.domTreeItems = this.originalItems.slice(this.startIndex, Math.min(this.endIndex + 1, this.originalItems.length));
 
         // information about the currently rendered items are emitted
         this.onItemsRender.emit(
             new VirtualScrollRenderEvent<any>({
-                items: this.items,
+                items: this.domTreeItems,
                 startIndex: this.startIndex,
                 endIndex: this.endIndex,
-                length: this.items.length,
+                length: this.domTreeItems.length,
             }),
         );
     }
 
+    /**
+     *  @return total number of items that are to be rendered on the DOM tree
+     */
     private numberItemsCanRender() {
-        // total number of items that can be rendered
         return Math.floor(this.elRef.nativeElement.clientHeight / this.minRowHeight) + 2;
     }
 
+    /**
+     *  stop listening to events
+     */
     ngOnDestroy() {
-        // stop listening to events
         this.scrollListener();
         this.focusInListener();
     }
