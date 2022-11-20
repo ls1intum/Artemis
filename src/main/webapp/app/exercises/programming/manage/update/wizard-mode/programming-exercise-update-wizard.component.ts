@@ -45,13 +45,13 @@ export type LanguageStepInputs = {
     onProjectTypeChange: (projectType: ProjectType) => ProjectType;
 };
 
-type GradingStepInputs = {
+export type GradingStepInputs = {
     staticCodeAnalysisAllowed: boolean;
     onStaticCodeAnalysisChanged: () => void;
     maxPenaltyPattern: string;
 };
 
-type ProblemStepInputs = {
+export type ProblemStepInputs = {
     problemStatementLoaded: boolean;
     templateParticipationResultLoaded: boolean;
     hasUnsavedChanges: boolean;

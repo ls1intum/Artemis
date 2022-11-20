@@ -27,9 +27,7 @@
         *ngIf="currentStep >= 4"
         [isImport]="isImport"
         [programmingExercise]="programmingExercise"
-        [staticCodeAnalysisAllowed]="gradingStepInputs.staticCodeAnalysisAllowed"
-        [onStaticCodeAnalysisChanged]="gradingStepInputs.onStaticCodeAnalysisChanged"
-        [maxPenaltyPattern]="gradingStepInputs.maxPenaltyPattern"
+        [gradingStepInputs]="gradingStepInputs"
     ></jhi-programming-exercise-update-wizard-grading>
 
     <jhi-programming-exercise-update-wizard-problem
