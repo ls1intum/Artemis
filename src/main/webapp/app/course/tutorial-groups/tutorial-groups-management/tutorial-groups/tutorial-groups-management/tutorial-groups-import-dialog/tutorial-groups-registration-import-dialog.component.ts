@@ -100,8 +100,9 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
     ) {}
 
     ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
         this.dialogErrorSource.unsubscribe();
-        takeUntil(this.ngUnsubscribe);
     }
 
     ngOnInit(): void {
