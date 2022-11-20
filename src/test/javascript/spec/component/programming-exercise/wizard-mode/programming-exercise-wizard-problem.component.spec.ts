@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseUpdateWizardProblemComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard-problem.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -29,8 +29,6 @@ describe('ProgrammingExerciseWizardProblemComponent', () => {
             .then(() => {
                 wizardComponentFixture = TestBed.createComponent(ProgrammingExerciseUpdateWizardProblemComponent);
                 wizardComponent = wizardComponentFixture.componentInstance;
-
-                wizardComponent.validIdeSelection = () => true;
 
                 const exercise = new ProgrammingExercise(undefined, undefined);
                 exercise.maxPoints = 10;
