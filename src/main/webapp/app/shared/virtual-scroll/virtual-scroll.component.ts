@@ -8,7 +8,6 @@ import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnIni
 import { NavigationStart, Router } from '@angular/router';
 import { VirtualScrollRenderEvent } from 'app/shared/virtual-scroll/virtual-scroll-render-event.class';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
-import { Post } from 'app/entities/metis/post.model';
 
 @Component({
     selector: 'virtual-scroll',
@@ -18,15 +17,15 @@ import { Post } from 'app/entities/metis/post.model';
 export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
-    @Input('items') public originalItems: Post[] | undefined = [];
+    @Input('items') public originalItems: any[] | undefined = [];
     @Input() forceReload: boolean;
     @Output() forceReloadChange = new EventEmitter<boolean>();
-    @Output() private onItemsRender = new EventEmitter<VirtualScrollRenderEvent<Post>>();
+    @Output() private onItemsRender = new EventEmitter<VirtualScrollRenderEvent<any>>();
 
     minRowHeight = 126.7;
 
-    public prevOriginalItems: Post[] = [];
-    public domTreeItems: Post[] = [];
+    public prevOriginalItems: any[] = [];
+    public domTreeItems: any[] = [];
 
     public currentScroll = 0;
     public contentHeight = 0;
@@ -38,10 +37,10 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     private scrollIsUp = false;
     private lastScrollIsUp = false;
 
-    previousItemsHeight: number[];
+    previousItemsHeight: any[] = [];
 
-    scrollListener: () => void;
-    focusInListener: () => void;
+    scrollListener: any;
+    focusInListener: any;
 
     constructor(private elementRef: ElementRef<HTMLElement>, private renderer: Renderer2, private router: Router) {}
 
@@ -71,7 +70,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
                 if (this.forceReload || this.currentScroll < this.minRowHeight) {
                     // invalidate previously calculated item heights
-                    this.previousItemsHeight = new Array<number>(this.originalItems.length).fill(0);
+                    this.previousItemsHeight = new Array(this.originalItems.length).fill(null);
 
                     // scroll to the top of the items
                     this.elementRef.nativeElement.scrollTop = 0;
@@ -82,7 +81,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
                         this.previousItemsHeight = this.previousItemsHeight.concat(new Array(this.originalItems.length - this.prevOriginalItems.length).fill(null));
                         this.prepareDataItems();
                     } else {
-                        let indexOfFirstDisplayedItem: number;
+                        let indexOfFirstDisplayedItem: any;
                         // changes in the displayed items are reflected to the user
                         this.domTreeItems.every((domTreeItem) => {
                             // find the index of the first domTreeItem in the updated list of items
@@ -93,7 +92,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
                         // update items on the domTree
                         for (let k = 0; k < this.domTreeItems.length; k++) {
-                            this.domTreeItems[k] = this.originalItems[indexOfFirstDisplayedItem! + k];
+                            this.domTreeItems[k] = this.originalItems[indexOfFirstDisplayedItem + k];
                         }
                     }
                 }
@@ -182,7 +181,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
         dimensions.contentHeight = this.originalItems!.reduce((prev, curr, i) => {
             const height = this.previousItemsHeight[i];
-            return prev + (height !== 0 ? height : this.minRowHeight);
+            return prev + (height ? height : this.minRowHeight);
         }, 0);
 
         if (this.currentScroll >= this.minRowHeight) {
@@ -191,7 +190,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
             let initialScroll = this.currentScroll;
 
             for (const h of this.previousItemsHeight) {
-                const height = h !== 0 ? h : this.minRowHeight;
+                const height = h ? h : this.minRowHeight;
                 if (initialScroll >= height) {
                     newPaddingTop += height;
                     initialScroll -= height;
@@ -230,7 +229,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
         // information about the currently rendered items are emitted
         this.onItemsRender.emit(
-            new VirtualScrollRenderEvent({
+            new VirtualScrollRenderEvent<any>({
                 items: this.domTreeItems,
                 startIndex: this.startIndex,
                 endIndex: this.endIndex,
