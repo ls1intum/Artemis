@@ -18,11 +18,13 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
     @Input('items') public originalItems: any[] | undefined = [];
+    @Input() minItemHeight: number;
+    @Input() endOfListReachedItemThreshold: number;
     @Input() forceReload: boolean;
-    @Output() forceReloadChange = new EventEmitter<boolean>();
-    @Output() private onItemsRender = new EventEmitter<VirtualScrollRenderEvent<any>>();
 
-    minRowHeight = 126.7;
+    @Output() forceReloadChange = new EventEmitter<boolean>();
+    @Output() onItemsRender = new EventEmitter<VirtualScrollRenderEvent<any>>();
+    @Output() onEndOfOriginalItemsReached = new EventEmitter();
 
     public prevOriginalItems: any[] = [];
     public domTreeItems: any[] = [];
@@ -68,7 +70,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
                     this.originalItems = [];
                 }
 
-                if (this.forceReload || this.currentScroll < this.minRowHeight) {
+                if (this.forceReload || this.currentScroll < this.minItemHeight) {
                     // invalidate previously calculated item heights
                     this.previousItemsHeight = new Array(this.originalItems.length).fill(null);
 
@@ -181,16 +183,16 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
         dimensions.contentHeight = this.originalItems!.reduce((prev, curr, i) => {
             const height = this.previousItemsHeight[i];
-            return prev + (height ? height : this.minRowHeight);
+            return prev + (height ? height : this.minItemHeight);
         }, 0);
 
-        if (this.currentScroll >= this.minRowHeight) {
+        if (this.currentScroll >= this.minItemHeight) {
             let newPaddingTop = 0;
             let itemsThatAreGone = 0;
             let initialScroll = this.currentScroll;
 
             for (const h of this.previousItemsHeight) {
-                const height = h ? h : this.minRowHeight;
+                const height = h ? h : this.minItemHeight;
                 if (initialScroll >= height) {
                     newPaddingTop += height;
                     initialScroll -= height;
@@ -236,13 +238,17 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
                 length: this.domTreeItems.length,
             }),
         );
+
+        if (this.endIndex + 1 > this.originalItems!.length - this.endOfListReachedItemThreshold) {
+            this.onEndOfOriginalItemsReached.emit();
+        }
     }
 
     /**
      *  @return total number of items that are to be rendered on the DOM tree
      */
     numberItemsCanRender() {
-        return Math.floor(this.elementRef.nativeElement.clientHeight / this.minRowHeight) + 2;
+        return Math.floor(this.elementRef.nativeElement.clientHeight / this.minItemHeight) + 2;
     }
 
     /**

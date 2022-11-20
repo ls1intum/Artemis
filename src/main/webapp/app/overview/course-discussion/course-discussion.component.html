@@ -143,7 +143,14 @@
         </div>
         <!-- list of posts -->
         <div class="col-12">
-            <virtual-scroll #virtualScrollContainer [items]="posts" [(forceReload)]="forceReload" (onItemsRender)="onItemsRender($event)">
+            <virtual-scroll
+                #virtualScrollContainer
+                [items]="posts"
+                [endOfListReachedItemThreshold]="5"
+                [minItemHeight]="126.7"
+                [(forceReload)]="forceReload"
+                (onEndOfOriginalItemsReached)="fetchNextPage()"
+            >
                 <jhi-posting-thread
                     *ngFor="let post of virtualScrollContainer.domTreeItems; trackBy: postsTrackByFn"
                     [post]="post"

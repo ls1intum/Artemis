@@ -392,17 +392,13 @@ describe('CourseDiscussionComponent', () => {
         expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
     }));
 
-    it('should call fetchNextPage when rendering last of fetched posts', fakeAsync(() => {
+    it('should call fetchNextPage when rendering last part of fetched posts', fakeAsync(() => {
         prepareComponent();
 
-        const onItemsRenderEvent = new CustomEvent('onItemsRender');
-        onItemsRenderEvent['items'] = component.posts.slice(3, 5);
-        onItemsRenderEvent['length'] = 2;
-        onItemsRenderEvent['startIndex'] = 3;
-        onItemsRenderEvent['endIndex'] = 4;
+        const onEndOfOriginalItemsReachedEvent = new CustomEvent('onEndOfOriginalItemsReached');
 
         const scrollableDiv = getElement(fixture.debugElement, 'virtual-scroll');
-        scrollableDiv.dispatchEvent(onItemsRenderEvent);
+        scrollableDiv.dispatchEvent(onEndOfOriginalItemsReachedEvent);
 
         expect(fetchNextPageSpy).toHaveBeenCalledOnce();
     }));

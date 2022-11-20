@@ -20,6 +20,9 @@ describe('VirtualScrollComponent', () => {
 
     let prepareDataItemsSpy: jest.SpyInstance;
     let forceReloadChangeSpy: jest.SpyInstance;
+    let onEndOfOriginalItemsReachedSpy: jest.SpyInstance;
+
+    const minPostItemHeight = 126.7;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -34,6 +37,7 @@ describe('VirtualScrollComponent', () => {
                 debugElement = fixture.debugElement;
                 prepareDataItemsSpy = jest.spyOn(comp, 'prepareDataItems');
                 forceReloadChangeSpy = jest.spyOn(comp.forceReloadChange, 'emit');
+                onEndOfOriginalItemsReachedSpy = jest.spyOn(comp.onEndOfOriginalItemsReached, 'emit');
             });
     });
 
@@ -41,7 +45,7 @@ describe('VirtualScrollComponent', () => {
         fixture.detectChanges();
 
         expect(comp.prevOriginalItems).toBeEmpty();
-        expect(comp.minRowHeight).not.toBeNull();
+        expect(comp.minItemHeight).not.toBeNull();
         expect(comp.focusInListener).not.toBeNull();
         expect(comp.scrollListener).not.toBeNull();
     }));
@@ -86,6 +90,8 @@ describe('VirtualScrollComponent', () => {
     }));
 
     it('should update rendered DOM tree items correctly', fakeAsync(() => {
+        comp.minItemHeight = minPostItemHeight;
+        comp.endOfListReachedItemThreshold = 2;
         comp.originalItems = metisCoursePostsWithCourseWideContext;
 
         const changes = {} as SimpleChanges;
@@ -97,7 +103,7 @@ describe('VirtualScrollComponent', () => {
 
         // conditions to append new items to the end of originalItems
         comp.forceReload = false;
-        comp.currentScroll = comp.minRowHeight * 2;
+        comp.currentScroll = comp.minItemHeight * 2;
 
         const updatedTitle = 'Updated title';
         comp.prevOriginalItems[0].title = updatedTitle;
@@ -124,13 +130,15 @@ describe('VirtualScrollComponent', () => {
 
         expect(fixture.nativeElement.scrollTop).toBe(0);
 
-        comp.currentScroll = comp.minRowHeight * 2;
+        comp.currentScroll = comp.minItemHeight * 2;
         debugElement.nativeElement.dispatchEvent(new Event('focusin'));
 
         expect(fixture.nativeElement.scrollTop).toBe(comp.currentScroll);
     }));
 
     it('should perform virtual scroll on scroll event and update the DOM tree', fakeAsync(() => {
+        comp.minItemHeight = minPostItemHeight;
+        comp.endOfListReachedItemThreshold = 2;
         comp.originalItems = metisCoursePosts;
 
         const changes = {} as SimpleChanges;
@@ -145,13 +153,13 @@ describe('VirtualScrollComponent', () => {
         expect(comp.domTreeItems[1].id).toBe(2);
         expect(comp.domTreeItems[2].id).toBe(3);
 
-        fixture.nativeElement.scrollTop = comp.minRowHeight * 2;
+        fixture.nativeElement.scrollTop = comp.minItemHeight * 2;
         debugElement.nativeElement.dispatchEvent(new Event('scroll'));
 
         tick();
         fixture.detectChanges();
 
-        expect(comp.currentScroll).toBe(comp.minRowHeight * 2);
+        expect(comp.currentScroll).toBe(comp.minItemHeight * 2);
         expect(prepareDataItemsSpy).toHaveBeenCalledTimes(2);
         expect(comp.domTreeItems[0].id).toBe(3);
         expect(comp.domTreeItems[1].id).toBe(5);

@@ -12,7 +12,6 @@ import { HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
-import { VirtualScrollRenderEvent } from 'app/shared/virtual-scroll/virtual-scroll-render-event.class';
 
 @Component({
     selector: 'jhi-course-discussion',
@@ -242,20 +241,10 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      * fetches next page of posts when user scrolls to the end of posts
      */
     fetchNextPage() {
-        if (this.posts.length < this.totalItems) {
+        if (!this.isLoading && this.posts.length < this.totalItems) {
             this.isLoading = true;
             this.page += 1;
             this.onSelectPage();
-        }
-    }
-
-    /**
-     * fetches next page of posts if currently rendered posts are approaching the end of the available list of elements
-     * @param event
-     */
-    onItemsRender(event: VirtualScrollRenderEvent<any>) {
-        if (!this.isLoading && event.endIndex + 1 < this.totalItems && event.endIndex + 1 > this.posts.length - 2) {
-            this.fetchNextPage();
         }
     }
 }
