@@ -28,7 +28,7 @@ export class ProgrammingExerciseProblemComponent {
     @Input() selectedProjectType: ProjectType;
     @Input() inProductionEnvironment: boolean;
     @Input() recreateBuildPlans: boolean;
-    @Input() onRecreateBuildPlanOrUpdateTemplateChange: () => void;
+    @Input() recreateBuildPlanOrUpdateTemplateChange: () => void;
     @Input() updateTemplate: boolean;
 
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
