@@ -115,7 +115,7 @@
                 <tbody>
                     <tr *ngFor="let exercise of currentlyShownExercises">
                         <td>
-                            <fa-icon [icon]="getIcon(exercise.type)" placement="right" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
+                            <fa-icon [icon]="getIcon(exercise.type)" placement="right auto" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate"></fa-icon>
                         </td>
                         <td>
                             <span>{{ exercise.title }}</span>
@@ -142,12 +142,12 @@
                             <span *ngIf="exercise.averageRating === undefined"> n.a. </span>
                         </td>
                         <td *ngIf="!isExamMode">
-                            <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
+                            <span placement="right auto" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
                                 {{ exercise.dueDate | artemisTimeAgo }}
                             </span>
                         </td>
                         <td *ngIf="!isExamMode">
-                            <span placement="right" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
+                            <span placement="right auto" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
                                 {{ exercise.assessmentDueDate | artemisTimeAgo }}
                             </span>
                         </td>

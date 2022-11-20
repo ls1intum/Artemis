@@ -29,7 +29,7 @@
             <div class="form-group">
                 <div>
                     <label class="form-check-label" jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</label>
-                    <jhi-help-icon placement="top" text="artemisApp.examManagement.testExam.examModeTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.examManagement.testExam.examModeTooltip"></jhi-help-icon>
                 </div>
                 <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined"></jhi-exam-mode-picker>
             </div>
@@ -44,7 +44,7 @@
                         [jhiFeatureToggle]="FeatureToggle.ExamLiveStatistics"
                     />
                     <label for="examMonitoring" class="form-control-label" jhiTranslate="artemisApp.examManagement.monitoring.enable.title">Exam Monitoring Enabled</label>
-                    <jhi-help-icon placement="top" text="artemisApp.examManagement.monitoring.enable.description"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.examManagement.monitoring.enable.description"></jhi-help-icon>
                 </div>
             </div>
             <div class="row mb-3">
@@ -101,7 +101,7 @@
             <div class="row mb-3">
                 <div class="col-sm-6">
                     <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime">Working Time</label>
-                    <jhi-help-icon placement="top" [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'"></jhi-help-icon>
+                    <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'"></jhi-help-icon>
                     <input *ngIf="!exam.testExam" readonly type="text" class="form-control" [value]="calculateWorkingTime" />
                     <input
                         *ngIf="exam.testExam"
@@ -117,7 +117,7 @@
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod">Grace period (seconds)</label>
-                    <jhi-help-icon placement="top" text="artemisApp.examManagement.gracePeriodTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.examManagement.gracePeriodTooltip"></jhi-help-icon>
                     <input id="gracePeriod" name="gracePeriod" class="form-control" type="number" min="0" [(ngModel)]="exam.gracePeriod" />
                 </div>
             </div>
@@ -127,12 +127,7 @@
             <div class="row mb-3">
                 <div class="col-sm-6">
                     <label class="form-check-label" for="maxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum Number of Points in Exam</label>
-                    <fa-icon
-                        [icon]="faExclamationTriangle"
-                        class="text-warning"
-                        placement="top"
-                        ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}"
-                    ></fa-icon>
+                    <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}"></fa-icon>
                     <input id="maxPoints" name="maxPoints" class="form-control" type="number" min="1" [(ngModel)]="exam.maxPoints" />
                 </div>
                 <div class="col-sm-6">
@@ -237,7 +232,7 @@
                 <ng-template #renderedWarning>
                     <div>{{ 'artemisApp.examManagement.reviewDatesInvalidExplanation' | artemisTranslate }}</div>
                 </ng-template>
-                <span *ngIf="!isValidExamStudentReviewEnd" class="badge bg-warning" [ngbTooltip]="renderedWarning" tooltip-placement="right">
+                <span *ngIf="!isValidExamStudentReviewEnd" class="badge bg-warning" [ngbTooltip]="renderedWarning" tooltip-placement="right auto">
                     <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
                 </span>
             </div>

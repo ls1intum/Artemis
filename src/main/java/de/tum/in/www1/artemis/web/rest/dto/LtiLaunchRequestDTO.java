@@ -58,27 +58,7 @@ public class LtiLaunchRequestDTO {
 
     private String oauth_signature;
 
-    private Boolean custom_require_existing_user = false;
-
-    private Boolean custom_lookup_user_by_email = false;
-
     public LtiLaunchRequestDTO() {
-    }
-
-    public Boolean getCustom_require_existing_user() {
-        return custom_require_existing_user;
-    }
-
-    public void setCustom_require_existing_user(Boolean custom_require_existing_user) {
-        this.custom_require_existing_user = custom_require_existing_user;
-    }
-
-    public Boolean getCustom_lookup_user_by_email() {
-        return custom_lookup_user_by_email;
-    }
-
-    public void setCustom_lookup_user_by_email(Boolean custom_lookup_user_by_email) {
-        this.custom_lookup_user_by_email = custom_lookup_user_by_email;
     }
 
     public String getLis_person_sourcedid() {
@@ -283,6 +263,6 @@ public class LtiLaunchRequestDTO {
                 + launch_presentation_locale + '\'' + ", custom_component_display_name='" + custom_component_display_name + '\'' + ", launch_presentation_return_url='"
                 + launch_presentation_return_url + '\'' + ", lis_result_sourcedid='" + lis_result_sourcedid + '\'' + ", resource_link_id='" + resource_link_id + '\''
                 + ", user_id='" + user_id + '\'' + ", oauth_nonce=" + oauth_nonce + ", oauth_consumer_key='" + oauth_consumer_key + '\'' + ", oauth_signature='" + oauth_signature
-                + ", custom_require_existing_user=" + custom_require_existing_user + ", custom_lookup_user_by_email='" + custom_lookup_user_by_email + '\'' + '}';
+                + '}';
     }
 }

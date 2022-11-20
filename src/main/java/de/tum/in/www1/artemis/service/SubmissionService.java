@@ -550,7 +550,7 @@ public class SubmissionService {
      * @return true, if the submission date was before the due date or the exercise has no due date.
      */
     private boolean isBeforeDueDate(Submission submission) {
-        return exerciseDateService.getDueDate(submission.getParticipation())
+        return ExerciseDateService.getDueDate(submission.getParticipation())
                 .map(dueDate -> submission.getSubmissionDate() != null && submission.getSubmissionDate().isBefore(dueDate)).orElse(true);
     }
 
