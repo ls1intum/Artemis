@@ -1,0 +1,18 @@
+:host {
+    display: block;
+    position: relative;
+    width: 100%;
+    overflow-y: auto;
+}
+
+:host .content-height {
+    width: 1px;
+    opacity: 0;
+}
+
+:host .items-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
