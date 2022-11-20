@@ -21,29 +21,21 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
  *
  * Example use from within an HTML file;
  *
- * <!-- list of posts -->
- *         <div class="col-12">
- *             <jhi-virtual-scroll
- *                 #virtualScrollContainer
- *                 [items]="posts"
- *                 [minItemHeight]="126.7"
- *                 [containerHeight]="'500px'"
- *                 [collapsableHtmlClassNames]="['.answer-post', '.new-reply-inline-input']"
- *                 [endOfListReachedItemThreshold]="5"
- *                 [(forceReload)]="forceReload"
- *                 (onEndOfOriginalItemsReached)="fetchNextPage()"
- *             >
- *                 <jhi-posting-thread
- *                     *ngFor="let post of virtualScrollContainer.domTreeItems; trackBy: postsTrackByFn"
- *                     [post]="post"
- *                     [showAnswers]="posts.length === 1"
- *                 ></jhi-posting-thread>
- *                 <!-- spinner while loading posts -->
- *                 <div class="text-center">
- *                     <div *ngIf="isLoading" class="spinner-border mt-3" role="status"></div>
- *                 </div>
- *             </jhi-virtual-scroll>
- *         </div>
+ * <jhi-virtual-scroll
+ *   #virtualScrollContainer
+ *   [items]="posts"
+ *   [minItemHeight]="126.7"
+ *   [containerHeight]="'500px'"
+ *   [collapsableHtmlClassNames]="['.answer-post', '.new-reply-inline-input']"
+ *   [endOfListReachedItemThreshold]="5"
+ *   [(forceReload)]="forceReload"
+ *   (onEndOfOriginalItemsReached)="fetchNextPage()">
+ *     <jhi-posting-thread
+ *       *ngFor="let post of virtualScrollContainer.domTreeItems; trackBy: postsTrackByFn"
+ *       [post]="post"
+ *       [showAnswers]="posts.length === 1">
+ *     </jhi-posting-thread>
+ * </jhi-virtual-scroll>
  */
 export class VirtualScrollComponent<T extends { id?: number }> implements OnInit, OnChanges, OnDestroy {
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
