@@ -47,7 +47,10 @@
 <div *ngIf="course">
     <div class="row" *ngIf="course.exercises && course.exercises.length > 0; else noStatistics">
         <div class="statistic-summary">
-            <h2>{{ 'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate }}</h2>
+            <div class="d-flex align-items-center">
+                <h2>{{ 'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate }}</h2>
+                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+            </div>
             <div class="row d-flex justify-content-center align-items-start">
                 <div class="chart-container col-md-6" #doughnutref>
                     <div class="chart-text">

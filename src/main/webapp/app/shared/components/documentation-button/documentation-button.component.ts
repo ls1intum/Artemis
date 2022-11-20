@@ -21,6 +21,7 @@ export enum DocumentationType {
     Grading = <any>'grading/',
     Units = <any>'lectures/#lecture-units',
     Assessment = <any>'exercises/assessment/',
+    Statistics = <any>'learning-analytics/',
 }
 
 @Component({

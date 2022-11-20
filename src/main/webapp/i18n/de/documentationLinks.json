@@ -16,7 +16,8 @@
             "plagiarismchecks": "Gehe zur Dokumentation für Plagiatsfälle.",
             "grading": "Gehe zur Dokumentation für die Benotung.",
             "units": "Gehe zur Dokumentation für Lerneinheiten.",
-            "assessment": "Gehe zur Dokumentation für Bewertungen."
+            "assessment": "Gehe zur Dokumentation für Bewertungen.",
+            "statistics": "Gehe zur Dokumentation für Statistiken."
         }
     }
 }

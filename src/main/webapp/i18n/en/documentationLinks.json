@@ -16,7 +16,8 @@
             "plagiarismchecks": "Go to the documentation for plagiarism checks.",
             "grading": "Go to the documentation for grading.",
             "units": "Go to the documentation for lecture units.",
-            "assessment": "Go to the documentation for assessments."
+            "assessment": "Go to the documentation for assessments.",
+            "statistics": "Go to the documentation for statistics."
         }
     }
 }
