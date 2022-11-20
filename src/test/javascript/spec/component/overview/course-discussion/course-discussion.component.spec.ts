@@ -374,7 +374,7 @@ describe('CourseDiscussionComponent', () => {
         );
     }));
 
-    it('should call fetchNextPage when scrolled to the last part of fetched posts', fakeAsync(() => {
+    it('should call fetchNextPage when virtual scroller component renders last part of fetched posts', fakeAsync(() => {
         prepareComponent();
 
         const onEndOfOriginalItemsReachedEvent = new CustomEvent('onEndOfOriginalItemsReached');

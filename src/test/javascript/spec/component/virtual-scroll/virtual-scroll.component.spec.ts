@@ -21,6 +21,7 @@ describe('VirtualScrollComponent', () => {
 
     let prepareDataItemsSpy: jest.SpyInstance;
     let forceReloadChangeSpy: jest.SpyInstance;
+    let onEndOfOriginalItemsReachedSpy: jest.SpyInstance;
 
     const minPostItemHeight = 126.7;
 
@@ -37,6 +38,7 @@ describe('VirtualScrollComponent', () => {
                 debugElement = fixture.debugElement;
                 prepareDataItemsSpy = jest.spyOn(comp, 'prepareDataItems');
                 forceReloadChangeSpy = jest.spyOn(comp.forceReloadChange, 'emit');
+                onEndOfOriginalItemsReachedSpy = jest.spyOn(comp.onEndOfOriginalItemsReached, 'emit');
             });
     });
 
@@ -77,6 +79,7 @@ describe('VirtualScrollComponent', () => {
 
         expect(comp.previousItemsHeight).toHaveLength(metisCoursePosts.length);
         expect(prepareDataItemsSpy).toHaveBeenCalledOnce();
+        expect(onEndOfOriginalItemsReachedSpy).toHaveBeenCalledTimes(0);
     }));
 
     it('should set forceReloadChange flag to true when user navigates to specific post', fakeAsync(() => {
@@ -89,16 +92,7 @@ describe('VirtualScrollComponent', () => {
     }));
 
     it('should update rendered DOM tree items correctly', fakeAsync(() => {
-        comp.minItemHeight = minPostItemHeight;
-        comp.endOfListReachedItemThreshold = 2;
-        comp.originalItems = metisCoursePostsWithCourseWideContext;
-
-        const changes = {} as SimpleChanges;
-        changes.originalItems = new SimpleChange([], metisCoursePostsWithCourseWideContext, true);
-        comp.ngOnChanges(changes);
-
-        tick();
-        fixture.detectChanges();
+        prepareComponent();
 
         // conditions to append new items to the end of originalItems
         comp.forceReload = false;
@@ -107,14 +101,16 @@ describe('VirtualScrollComponent', () => {
         const updatedTitle = 'Updated title';
         comp.prevOriginalItems[0].title = updatedTitle;
 
+        const changes = {} as SimpleChanges;
         changes.originalItems = new SimpleChange(comp.prevOriginalItems, comp.originalItems, false);
         comp.ngOnChanges(changes);
 
         tick();
         fixture.detectChanges();
 
-        expect(comp.domTreeItems).toHaveLength(comp.originalItems.length);
+        expect(comp.domTreeItems).toHaveLength(3);
         expect(comp.domTreeItems[0].title).toBe(updatedTitle);
+        expect(onEndOfOriginalItemsReachedSpy).toHaveBeenCalledTimes(0);
     }));
 
     it('should not unintentionally scroll on clicking the text area of posting markdown editor component', fakeAsync(() => {
@@ -136,16 +132,7 @@ describe('VirtualScrollComponent', () => {
     }));
 
     it('should perform virtual scroll on scroll event and update the DOM tree', fakeAsync(() => {
-        comp.minItemHeight = minPostItemHeight;
-        comp.endOfListReachedItemThreshold = 2;
-        comp.originalItems = metisCoursePosts;
-
-        const changes = {} as SimpleChanges;
-        changes.originalItems = new SimpleChange([], metisCoursePosts, true);
-        comp.ngOnChanges(changes);
-
-        tick();
-        fixture.detectChanges();
+        prepareComponent();
 
         expect(fixture.nativeElement.scrollTop).toBe(0);
         expect(comp.domTreeItems[0].id).toBe(1);
@@ -160,8 +147,30 @@ describe('VirtualScrollComponent', () => {
 
         expect(comp.currentScroll).toBe(comp.minItemHeight * 2);
         expect(prepareDataItemsSpy).toHaveBeenCalledTimes(2);
+        expect(onEndOfOriginalItemsReachedSpy).toHaveBeenCalledTimes(0);
         expect(comp.domTreeItems[0].id).toBe(3);
         expect(comp.domTreeItems[1].id).toBe(5);
         expect(comp.domTreeItems[2].id).toBe(6);
+
+        fixture.nativeElement.scrollTop = comp.minItemHeight * 4;
+        debugElement.nativeElement.dispatchEvent(new Event('scroll'));
+
+        tick();
+        fixture.detectChanges();
+
+        expect(onEndOfOriginalItemsReachedSpy).toHaveBeenCalledOnce();
     }));
+
+    function prepareComponent() {
+        comp.minItemHeight = minPostItemHeight;
+        comp.endOfListReachedItemThreshold = 2;
+        comp.originalItems = metisCoursePosts;
+
+        const changes = {} as SimpleChanges;
+        changes.originalItems = new SimpleChange([], metisCoursePosts, true);
+        comp.ngOnChanges(changes);
+
+        tick();
+        fixture.detectChanges();
+    }
 });
