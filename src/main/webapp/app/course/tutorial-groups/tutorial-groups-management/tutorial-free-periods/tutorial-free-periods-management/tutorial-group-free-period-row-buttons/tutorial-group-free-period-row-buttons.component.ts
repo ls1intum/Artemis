@@ -62,5 +62,6 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.dialogErrorSource.unsubscribe();
     }
 }
