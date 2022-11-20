@@ -45,8 +45,8 @@ describe('VirtualScrollComponent', () => {
 
         expect(comp.prevOriginalItems).toBeEmpty();
         expect(comp.minItemHeight).not.toBeNull();
-        expect(comp.focusInListener).not.toBeNull();
-        expect(comp.scrollListener).not.toBeNull();
+        expect(comp.focusInUnlistener).not.toBeNull();
+        expect(comp.scrollUnlistener).not.toBeNull();
     }));
 
     it('should set originalItems to empty array if undefined value is passed into the component', fakeAsync(() => {

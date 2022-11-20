@@ -10,54 +10,109 @@ import { VirtualScrollRenderEvent } from 'app/shared/virtual-scroll/virtual-scro
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 
 @Component({
-    selector: 'virtual-scroll',
+    selector: 'jhi-virtual-scroll',
     templateUrl: './virtual-scroll.component.html',
-    styleUrls: ['virtual-scroll.style.css'],
+    styleUrls: ['virtual-scroll.style.scss'],
 })
+
+/**
+ * A container component to allow virtual scrolling of a component list to increase performance by only having the currently displayed items on the DOM tree.
+ *
+ *
+ * Example use from within an HTML file;
+ *
+ * <!-- list of posts -->
+ *         <div class="col-12">
+ *             <jhi-virtual-scroll
+ *                 #virtualScrollContainer
+ *                 [items]="posts"
+ *                 [minItemHeight]="126.7"
+ *                 [containerHeight]="'500px'"
+ *                 [collapsableHtmlClassNames]="['.answer-post', '.new-reply-inline-input']"
+ *                 [endOfListReachedItemThreshold]="5"
+ *                 [(forceReload)]="forceReload"
+ *                 (onEndOfOriginalItemsReached)="fetchNextPage()"
+ *             >
+ *                 <jhi-posting-thread
+ *                     *ngFor="let post of virtualScrollContainer.domTreeItems; trackBy: postsTrackByFn"
+ *                     [post]="post"
+ *                     [showAnswers]="posts.length === 1"
+ *                 ></jhi-posting-thread>
+ *                 <!-- spinner while loading posts -->
+ *                 <div class="text-center">
+ *                     <div *ngIf="isLoading" class="spinner-border mt-3" role="status"></div>
+ *                 </div>
+ *             </jhi-virtual-scroll>
+ *         </div>
+ */
 export class VirtualScrollComponent<T extends { id?: number }> implements OnInit, OnChanges, OnDestroy {
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
+    // all items being listed
     @Input('items') public originalItems: T[] | undefined = [];
+
+    /**
+     * Names of HTML classes which needs toggling to be displayed
+     * Subcomponents of items removed from the DOM tree are automatically collapsed, hence the difference in height
+     * must be calculated to rerender these items smoothly when needed
+     */
     @Input() collapsableHtmlClassNames: string[];
+
+    // the minimum height an item can occupy, needed when the item's height is not cached before
     @Input() minItemHeight: number;
+
+    // height of the container elements are listed in
+    @Input() containerHeight = 'auto';
+
+    // number of items from the bottom which should be rendered so that the endOfListReached event is emitted to the parent component
     @Input() endOfListReachedItemThreshold: number;
+
+    // whether an automatic scroll should be made to the top of the item list or not after items are updated
     @Input() forceReload: boolean;
 
+    // emits the status of forceReload flag to parent components when it is changed
     @Output() forceReloadChange = new EventEmitter<boolean>();
+
+    // emits information about items currently rendered on the DOM tree
     @Output() onItemsRender = new EventEmitter<VirtualScrollRenderEvent<T>>();
+
+    // emits when user scrolls to the end of the item list
     @Output() onEndOfOriginalItemsReached = new EventEmitter();
 
     public prevOriginalItems: T[] = [];
     public domTreeItems: T[] = [];
+    previousItemsHeight: number[] = [];
 
     public currentScroll = 0;
     public contentHeight = 0;
+
     public paddingTop = 0;
-
     public startIndex = 0;
-    public endIndex = 0;
 
+    public endIndex = 0;
     private scrollIsUp = false;
+
     private lastScrollIsUp = false;
 
-    previousItemsHeight: number[] = [];
-
-    scrollListener: () => void;
-    focusInListener: () => void;
+    scrollUnlistener: () => void;
+    focusInUnlistener: () => void;
 
     constructor(private elementRef: ElementRef<HTMLElement>, private renderer: Renderer2, private router: Router) {}
 
     /**
-     * start listening to focusin events on initialization to prevent unintentional scrolling when the user focuses into the text area of posting markdown editor
+     * start listening to focusin events on initialization to prevent unintentional scrolling when the user focuses into the text area of ace editor component
      * start listening to scroll events on initialization to perform virtual scrolling when the user scrolls through the item container
      * start listening to navigationStart events of router and enable forceReloadChange to scroll to the top of the updated item list
      */
     ngOnInit() {
-        this.focusInListener = this.renderer.listen(this.elementRef.nativeElement, 'focusin', this.onFocusIn.bind(this));
-        this.scrollListener = this.renderer.listen(this.elementRef.nativeElement, 'scroll', this.onScroll.bind(this));
+        // set element container height
+        this.elementRef.nativeElement.style.height = this.containerHeight;
+
+        this.focusInUnlistener = this.renderer.listen(this.elementRef.nativeElement, 'focusin', this.onFocusIn.bind(this));
+        this.scrollUnlistener = this.renderer.listen(this.elementRef.nativeElement, 'scroll', this.onScroll.bind(this));
         this.router.events.forEach((event) => {
             if (event instanceof NavigationStart) {
-                // scroll to the top of posts in case user clicks to a post title to solely display that post
+                // scroll to the top of items in case user clicks to an item reference to solely display that item within the same page
                 this.forceReloadChange.emit(true);
             }
         });
@@ -65,6 +120,10 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
 
     ngOnChanges(changes: SimpleChanges) {
         setTimeout(() => {
+            if ('height' in changes) {
+                this.elementRef.nativeElement.style.height = this.containerHeight;
+            }
+
             if ('originalItems' in changes) {
                 // on item change
                 if (!this.originalItems) {
@@ -108,7 +167,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     }
 
     /**
-     * prevents automatic scrolling to other posts when user clicks the text area of posting markdown editor component while creating/editing answerPosts
+     * prevents automatic scrolling to other items when user clicks the text area of ace editor component
      */
     onFocusIn() {
         this.elementRef.nativeElement.scrollTop = this.currentScroll;
@@ -157,12 +216,12 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
                 });
             }
 
-            // update height of posts that are removed from the DOM tree
+            // update cached height of items that are removed from the DOM tree
             // reduce item height according to the height their collapsable components occupies within the user's display
             this.previousItemsHeight[realIndex] = child.getBoundingClientRect().height - collapsableHeight;
 
             if (collapsableHeight > 0) {
-                // scroll upwards by the height of collapsed nested components of the removed post to prevent unintentional automatic scrolling to other posts
+                // scroll upwards by the height of collapsed nested components of the removed item to prevent unintentional automatic scrolling to other items
                 this.elementRef.nativeElement.scrollTop -= collapsableHeight;
                 // register currentScroll after update
                 this.currentScroll = this.elementRef.nativeElement.scrollTop;
@@ -255,7 +314,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
      *  stop listening to events
      */
     ngOnDestroy() {
-        this.scrollListener();
-        this.focusInListener();
+        this.scrollUnlistener();
+        this.focusInUnlistener();
     }
 }

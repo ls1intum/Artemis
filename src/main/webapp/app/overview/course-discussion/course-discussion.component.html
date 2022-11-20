@@ -143,12 +143,13 @@
         </div>
         <!-- list of posts -->
         <div class="col-12">
-            <virtual-scroll
+            <jhi-virtual-scroll
                 #virtualScrollContainer
                 [items]="posts"
+                [minItemHeight]="126.7"
+                [containerHeight]="'500px'"
                 [collapsableHtmlClassNames]="['.answer-post', '.new-reply-inline-input']"
                 [endOfListReachedItemThreshold]="5"
-                [minItemHeight]="126.7"
                 [(forceReload)]="forceReload"
                 (onEndOfOriginalItemsReached)="fetchNextPage()"
             >
@@ -161,7 +162,7 @@
                 <div class="text-center">
                     <div *ngIf="isLoading" class="spinner-border mt-3" role="status"></div>
                 </div>
-            </virtual-scroll>
+            </jhi-virtual-scroll>
         </div>
     </div>
 </div>
