@@ -425,17 +425,35 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         }
 
         const editor = this.questionEditor.getEditor();
+        const focusParentNode = selection.focusNode!.parentNode!;
+        let focusParentElement;
+        let range;
+        // @ts-ignore
+        const isTextSelected = focusParentNode.tagName === 'P';
+        // Check if the text is selected
+        if (isTextSelected) {
+            focusParentElement = focusParentNode.parentElement!;
+            range = selection.getRangeAt(0);
+        } else {
+            // Div that contains the text is selected
+            const pNode = focusParentNode.children[0].children[0];
+            focusParentElement = pNode.parentElement!;
+            const selectedNode = pNode.childNodes[0];
+            range = document.createRange();
+            range.setStart(selectedNode, 0);
+            // @ts-ignore
+            range.setEnd(selectedNode, selectedNode.length);
+        }
         // ID 'element-row-column' is divided into array of [row, column]
-        const selectedTextRowColumn = selection.focusNode!.parentNode!.parentElement!.id.split('-').slice(1);
+        const selectedTextRowColumn = focusParentElement.id.split('-').slice(1);
 
         if (selectedTextRowColumn.length === 0) {
             return;
         }
 
         // get the right range for text with markdown
-        const range = selection.getRangeAt(0);
         const preCaretRange = range.cloneRange();
-        const element = selection.focusNode!.parentNode!.parentElement!.firstElementChild!;
+        const element = focusParentElement.firstElementChild!;
         preCaretRange.selectNodeContents(element);
         preCaretRange.setEnd(range.endContainer, range.endOffset);
 

@@ -335,7 +335,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.shortAnswerQuestion.solutions).toHaveLength(2); // 3 -> 2
     });
 
-    it('should add spot at cursor visual mode', () => {
+    it('should add spot at cursor visual mode - text selected', () => {
         const textParts = [['0'], ['0']];
         const shortAnswerQuestionUtil = TestBed.inject(ShortAnswerQuestionUtil);
         jest.spyOn(shortAnswerQuestionUtil, 'divideQuestionTextIntoTextParts').mockReturnValue(textParts);
@@ -372,6 +372,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
                         id: '0-0-0-0',
                         firstElementChild: {} as Element,
                     },
+                    tagName: 'P',
                 },
             },
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -392,6 +393,129 @@ describe('ShortAnswerQuestionEditComponent', () => {
             innerHTML: 'innerHTML',
         } as unknown as HTMLDivElement;
         jest.spyOn(document, 'createElement').mockReturnValue(returnHTMLDivElement);
+
+        let markdownHelper = {
+            length: 1,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            substring(start: number, end?: number): string {
+                return '';
+            },
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            replace(pattern: string, replacement: string): string {
+                return '';
+            },
+        } as string;
+        jest.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue(markdownHelper);
+        const questionUpdated = jest.spyOn(component.questionUpdated, 'emit');
+
+        component.shortAnswerQuestion.spots = [spot1, spot2];
+        component.shortAnswerQuestion.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
+        fixture.detectChanges();
+
+        component.addSpotAtCursorVisualMode(SpotType.TEXT);
+
+        expect(component.numberOfSpot).toBe(2);
+        expect(component.firstPressed).toBe(2);
+        expect(questionUpdated).toHaveBeenCalledTimes(3);
+
+        nodeValue = {
+            ...nodeValue,
+            toString() {
+                return '1.2345';
+            },
+        } as unknown as Selection;
+        jest.spyOn(window, 'getSelection').mockReturnValue(nodeValue);
+
+        markdownHelper = {
+            length: 1,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            substring(start: number, end?: number): string {
+                return '1.2345';
+            },
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            replace(pattern: string, replacement: string): string {
+                return '1.2345';
+            },
+        } as string;
+        jest.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue(markdownHelper);
+        component.addSpotAtCursorVisualMode(SpotType.NUMBER);
+        expect(component.numberOfSpot).toBe(3);
+        expect(component.firstPressed).toBe(3);
+    });
+
+    it('should add spot at cursor visual mode - div container selected', () => {
+        const textParts = [['0'], ['0']];
+        const shortAnswerQuestionUtil = TestBed.inject(ShortAnswerQuestionUtil);
+        jest.spyOn(shortAnswerQuestionUtil, 'divideQuestionTextIntoTextParts').mockReturnValue(textParts);
+
+        const node = {} as Node;
+
+        const returnValue = {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            contains(other: Node | null): boolean {
+                return true;
+            },
+        } as unknown as HTMLElement;
+        jest.spyOn(document, 'getElementById').mockReturnValue(returnValue);
+
+        const range = {
+            cloneRange(): Range {
+                return {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    selectNodeContents(node1: Node) {},
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    setEnd(node2: Node, offset: number) {},
+                    cloneContents() {},
+                } as Range;
+            },
+            endContainer: {} as Node,
+            endOffset: 0,
+            setStart: (_: Node, __: number) => {},
+            setEnd: (_: Node, __: number) => {},
+        } as Range;
+
+        let parentElement = {
+            id: '0-0-0-0',
+            firstElementChild: {} as Element,
+        };
+        let nodeValue = {
+            anchorNode: node,
+            focusNode: {
+                parentNode: {
+                    parentElement,
+                    tagName: 'div',
+                    children: [
+                        {
+                            children: [
+                                {
+                                    parentElement,
+                                    childNodes: [node],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            },
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            getRangeAt(index: number): Range {
+                return range as Range;
+            },
+            toString() {
+                return [];
+            },
+        } as unknown as Selection;
+        jest.spyOn(window, 'getSelection').mockReturnValue(nodeValue);
+
+        const returnHTMLDivElement = {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            appendChild(param: DocumentFragment) {
+                return {} as DocumentFragment;
+            },
+            innerHTML: 'innerHTML',
+        } as unknown as HTMLDivElement;
+        jest.spyOn(document, 'createElement').mockReturnValue(returnHTMLDivElement);
+
+        jest.spyOn(document, 'createRange').mockReturnValue(range);
 
         let markdownHelper = {
             length: 1,
