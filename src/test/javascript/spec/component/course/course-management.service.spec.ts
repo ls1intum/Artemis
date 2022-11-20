@@ -99,19 +99,6 @@ describe('Course Management Service', () => {
         }
     };
 
-    it('should create course', fakeAsync(() => {
-        delete course.id;
-
-        courseManagementService
-            .create({ ...course })
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({ ...course, id: 1234 }));
-
-        const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
-        req.flush(returnedFromService);
-        tick();
-    }));
-
     it('should update course', fakeAsync(() => {
         courseManagementService
             .update(1, { ...course })
@@ -300,16 +287,6 @@ describe('Course Management Service', () => {
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/course-management-overview?testParam=testParamValue` });
         req.flush(returnedFromService);
         expectAccessRightsToBeCalled(1, 1, 1);
-        tick();
-    }));
-
-    it('should delete a course', fakeAsync(() => {
-        courseManagementService
-            .delete(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({}));
-        const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}` });
-        req.flush({});
         tick();
     }));
 

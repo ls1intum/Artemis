@@ -5,8 +5,6 @@ import static java.time.ZonedDateTime.now;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -18,8 +16,6 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -61,7 +57,6 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @RestController
 @RequestMapping("api/")
-@PreAuthorize("hasRole('ADMIN')")
 public class CourseResource {
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
@@ -99,8 +94,6 @@ public class CourseResource {
 
     private final Optional<CIUserManagementService> optionalCiUserManagementService;
 
-    private final AuditEventRepository auditEventRepository;
-
     private final ExerciseRepository exerciseRepository;
 
     private final FileService fileService;
@@ -108,10 +101,10 @@ public class CourseResource {
     private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            OAuth2JWKSService oAuth2JWKSService, AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository,
-            SubmissionService submissionService, AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+            OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
+            TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            OnlineCourseConfigurationService onlineCourseConfigurationService, FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService) {
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -122,61 +115,11 @@ public class CourseResource {
         this.submissionService = submissionService;
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCiUserManagementService = optionalCiUserManagementService;
-        this.auditEventRepository = auditEventRepository;
         this.assessmentDashboardService = assessmentDashboardService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.fileService = fileService;
         this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
-    }
-
-    /**
-     * POST /courses : create a new course.
-     *
-     * @param course the course to create
-     * @param file the optional course icon file
-     * @return the ResponseEntity with status 201 (Created) and with body the new course, or with status 400 (Bad Request) if the course has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping(value = "courses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Course> createCourse(@RequestPart Course course, @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
-        log.debug("REST request to save Course : {}", course);
-        if (course.getId() != null) {
-            throw new BadRequestAlertException("A new course cannot already have an ID", Course.ENTITY_NAME, "idExists");
-        }
-
-        course.validateShortName();
-
-        List<Course> coursesWithSameShortName = courseRepository.findAllByShortName(course.getShortName());
-        if (!coursesWithSameShortName.isEmpty()) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createAlert(applicationName, "A course with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists"))
-                    .body(null);
-        }
-
-        course.validateRegistrationConfirmationMessage();
-        course.validateComplaintsAndRequestMoreFeedbackConfig();
-        course.validateOnlineCourseAndRegistrationEnabled();
-        course.validateAccuracyOfScores();
-        if (!course.isValidStartAndEndDate()) {
-            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
-        }
-
-        if (course.isOnlineCourse()) {
-            onlineCourseConfigurationService.createOnlineCourseConfiguration(course);
-        }
-
-        courseService.createOrValidateGroups(course);
-
-        if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false);
-            course.setCourseIcon(pathString);
-        }
-
-        Course result = courseRepository.save(course);
-
-        return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
 
     /**
@@ -235,6 +178,7 @@ public class CourseResource {
         }
 
         // Make sure to preserve associations in updated entity
+        courseUpdate.setId(courseId);
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
@@ -675,29 +619,6 @@ public class CourseResource {
         }
 
         return ResponseEntity.ok(courseDTOs);
-    }
-
-    /**
-     * DELETE /courses/:courseId : delete the "id" course.
-     *
-     * @param courseId the id of the course to delete
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("courses/{courseId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
-        log.info("REST request to delete Course : {}", courseId);
-        Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(courseId);
-        if (course == null) {
-            throw new EntityNotFoundException("Course", courseId);
-        }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
-        auditEventRepository.add(auditEvent);
-        log.info("User {} has requested to delete the course {}", user.getLogin(), course.getTitle());
-
-        courseService.delete(course);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
     }
 
     /**
