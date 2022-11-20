@@ -1,6 +1,6 @@
 <div class="sidebar-section">
     <!-- Todo: Do not hide when popover is open-->
-    <div class="section-header" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed">
+    <div class="section-header" (click)="toggleCollapsed()" [attr.aria-expanded]="!isCollapsed">
         <div>
             <fa-icon [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
             <span>{{ label }}</span>
@@ -9,7 +9,7 @@
             <ng-template [ngTemplateOutlet]="sectionButtons" [ngTemplateOutletContext]="{}"></ng-template>
         </div>
     </div>
-    <div #collapse="ngbCollapse" [(ngbCollapse)]="isCollapsed">
+    <div [(ngbCollapse)]="isCollapsed">
         <ul class="conversation-list" *ngIf="visibleConversations.length > 0 || hiddenConversations.length > 0">
             <li
                 *ngFor="let conversation of visibleConversations; trackBy: conversationsTrackByFn"

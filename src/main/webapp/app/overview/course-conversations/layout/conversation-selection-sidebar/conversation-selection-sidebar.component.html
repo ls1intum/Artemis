@@ -13,85 +13,107 @@
             </div>
             <!-- body -->
             <div class="card-body">
+                <div class="input-group p-1">
+                    <span class="input-group-text">
+                        <fa-icon [icon]="faMagnifyingGlass" size="xs"></fa-icon>
+                    </span>
+                    <input (input)="onSearchQueryInput($event)" class="form-control" id="searchQuery" type="text" />
+                </div>
+                <div class="text-center my-1">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="expandAll()">
+                        <fa-icon [icon]="faExpand"></fa-icon> <span>{{ 'artemisApp.assessmentInstructions.expandAll' | artemisTranslate }}</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="collapseAll()">
+                        <fa-icon [icon]="faCompress"></fa-icon> <span>{{ 'artemisApp.assessmentInstructions.collapseAll' | artemisTranslate }}</span>
+                    </button>
+                </div>
                 <div>
                     <!-- Starred -->
                     <!-- ToDo: Translate -->
-                    <jhi-sidebar-section
-                        [label]="'Starred'"
-                        [isCollapsed]="false"
-                        [conversations]="starredConversations"
-                        [activeConversation]="activeConversation"
-                        (conversationSelected)="onConversationSelected($event)"
-                        [course]="course"
-                        (settingsChanged)="onSettingsChanged()"
-                    >
-                    </jhi-sidebar-section>
-                    <hr class="m-0" />
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedStarredConversations?.length">
+                        <jhi-sidebar-section
+                            [label]="'Starred'"
+                            [headerKey]="'starred'"
+                            [conversations]="displayedStarredConversations"
+                            [activeConversation]="activeConversation"
+                            (conversationSelected)="onConversationSelected($event)"
+                            [course]="course"
+                            (settingsChanged)="onSettingsChanged()"
+                        >
+                        </jhi-sidebar-section>
+                        <hr class="m-0" />
+                    </div>
                     <!-- Channels -->
-                    <jhi-sidebar-section
-                        [label]="'Channels'"
-                        [isCollapsed]="true"
-                        [conversations]="channelConversations"
-                        [activeConversation]="activeConversation"
-                        (conversationSelected)="onConversationSelected($event)"
-                        (settingsChanged)="onSettingsChanged()"
-                        [course]="course"
-                    >
-                        <ng-template>
-                            <div ngbDropdown class="d-inline-block">
-                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" ngbDropdownToggle>
-                                    <fa-icon [icon]="faPlus" size="xs"></fa-icon>
-                                </button>
-                                <div ngbDropdownMenu>
-                                    <button ngbDropdownItem (click)="openChannelOverviewDialog($event)">Browse Channels</button>
-                                    <button ngbDropdownItem [hidden]="!course.isAtLeastInstructor" (click)="openCreateChannelDialog($event)" *ngIf="canCreateChannel(course)">
-                                        Create Channel
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedChannelConversations?.length">
+                        <jhi-sidebar-section
+                            [label]="'Channels'"
+                            [headerKey]="'channels'"
+                            [conversations]="displayedChannelConversations"
+                            [activeConversation]="activeConversation"
+                            (conversationSelected)="onConversationSelected($event)"
+                            (settingsChanged)="onSettingsChanged()"
+                            [course]="course"
+                        >
+                            <ng-template>
+                                <div ngbDropdown class="d-inline-block">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" ngbDropdownToggle>
+                                        <fa-icon [icon]="faPlus" size="xs"></fa-icon>
+                                    </button>
+                                    <div ngbDropdownMenu>
+                                        <button ngbDropdownItem (click)="openChannelOverviewDialog($event)">Browse Channels</button>
+                                        <button ngbDropdownItem [hidden]="!course.isAtLeastInstructor" (click)="openCreateChannelDialog($event)" *ngIf="canCreateChannel(course)">
+                                            Create Channel
+                                        </button>
+                                    </div>
+                                </div>
+                            </ng-template>
+                        </jhi-sidebar-section>
+                        <hr class="m-0" />
+                    </div>
+                    <!-- Group Chats -->
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedGroupChats?.length">
+                        <jhi-sidebar-section
+                            [label]="'GroupChats'"
+                            [headerKey]="'groupChats'"
+                            [conversations]="displayedGroupChats"
+                            [activeConversation]="activeConversation"
+                            (conversationSelected)="onConversationSelected($event)"
+                            (settingsChanged)="onSettingsChanged()"
+                            [course]="course"
+                        >
+                            <ng-template>
+                                <div class="d-inline-block">
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateGroupChatDialog($event)">
+                                        <fa-icon [icon]="faPlus" size="xs"></fa-icon>
                                     </button>
                                 </div>
-                            </div>
-                        </ng-template>
-                    </jhi-sidebar-section>
-                    <hr class="m-0" />
-                    <!-- Group Chats -->
-                    <jhi-sidebar-section
-                        [label]="'GroupChats'"
-                        [isCollapsed]="true"
-                        [conversations]="groupChats"
-                        [activeConversation]="activeConversation"
-                        (conversationSelected)="onConversationSelected($event)"
-                        (settingsChanged)="onSettingsChanged()"
-                        [course]="course"
-                    >
-                        <ng-template>
-                            <div class="d-inline-block">
-                                <button class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateGroupChatDialog($event)">
-                                    <fa-icon [icon]="faPlus" size="xs"></fa-icon>
-                                </button>
-                            </div>
-                        </ng-template>
-                    </jhi-sidebar-section>
-                    <hr class="m-0" />
+                            </ng-template>
+                        </jhi-sidebar-section>
+                        <hr class="m-0" />
+                    </div>
                     <!-- Direct Messages -->
-                    <jhi-sidebar-section
-                        [label]="'Direct Messages'"
-                        [isCollapsed]="true"
-                        [conversations]="oneToOneChats"
-                        [activeConversation]="activeConversation"
-                        (conversationSelected)="onConversationSelected($event)"
-                        (settingsChanged)="onSettingsChanged()"
-                        [course]="course"
-                    >
-                        <ng-template>
-                            <div class="d-inline-block">
-                                <button class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateOneToOneChatDialog($event)">
-                                    <fa-icon [icon]="faPlus" size="xs"></fa-icon>
-                                </button>
-                            </div>
-                        </ng-template>
-                    </jhi-sidebar-section>
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedOneToOneChats?.length">
+                        <jhi-sidebar-section
+                            [label]="'Direct Messages'"
+                            [headerKey]="'directMessages'"
+                            [conversations]="displayedOneToOneChats"
+                            [activeConversation]="activeConversation"
+                            (conversationSelected)="onConversationSelected($event)"
+                            (settingsChanged)="onSettingsChanged()"
+                            [course]="course"
+                        >
+                            <ng-template>
+                                <div class="d-inline-block">
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateOneToOneChatDialog($event)">
+                                        <fa-icon [icon]="faPlus" size="xs"></fa-icon>
+                                    </button>
+                                </div>
+                            </ng-template>
+                        </jhi-sidebar-section>
+                    </div>
                 </div>
                 <!-- no conversations -->
-                <div class="conversation-empty" *ngIf="!isLoading && (allConversations === undefined || allConversations.length === 0)">
+                <div class="conversation-empty" *ngIf="allConversations === undefined || allConversations.length === 0">
                     <fa-icon size="3x" [icon]="faConversation"></fa-icon>
                     <h5 class="mb-3 font-weight-bold">{{ 'artemisApp.messages.conversation.notFound' | artemisTranslate }}</h5>
                     <span jhiTranslate="artemisApp.messages.conversation.instructionForNewConversation"></span>

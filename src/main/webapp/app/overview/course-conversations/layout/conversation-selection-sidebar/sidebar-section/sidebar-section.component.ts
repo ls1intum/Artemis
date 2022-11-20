@@ -1,16 +1,17 @@
-import { Component, ContentChild, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef } from '@angular/core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
+import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({
     selector: 'jhi-sidebar-section',
     templateUrl: './sidebar-section.component.html',
     styleUrls: ['./sidebar-section.component.scss'],
 })
-export class SidebarSectionComponent {
+export class SidebarSectionComponent implements OnInit {
     @Output() conversationSelected = new EventEmitter<ConversationDto>();
 
     @Output()
@@ -25,6 +26,10 @@ export class SidebarSectionComponent {
     @Input()
     activeConversation?: ConversationDto;
 
+    @Input() headerKey: string;
+
+    readonly prefix = 'collapsed.';
+
     @Input()
     set conversations(conversations: ConversationDto[]) {
         this.hiddenConversations = [];
@@ -36,14 +41,19 @@ export class SidebarSectionComponent {
                 this.visibleConversations.push(conversation);
             }
         });
+        this.numberOfConversations = this.visibleConversations.length + this.hiddenConversations.length;
     }
 
-    @Input()
-    isCollapsed = false;
+    isCollapsed: boolean;
     @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
+    toggleCollapsed() {
+        this.isCollapsed = !this.isCollapsed;
+        this.localStorageService.store(this.storageKey, this.isCollapsed);
+    }
 
     hiddenConversations: ConversationDto[] = [];
     visibleConversations: ConversationDto[] = [];
+    numberOfConversations = 0;
 
     getAsChannel = getAsChannelDto;
     getConversationName = this.conversationService.getConversationName;
@@ -51,23 +61,17 @@ export class SidebarSectionComponent {
     // icon imports
     faChevronRight = faChevronRight;
 
-    constructor(public conversationService: ConversationService) {}
+    constructor(public conversationService: ConversationService, private localStorageService: LocalStorageService) {}
 
     conversationsTrackByFn = (index: number, conversation: ConversationDto): number => conversation.id!;
     showHiddenConversations = false;
 
-    isConversationUnread(conversation: ConversationDto): boolean {
-        // ToDo: Refactor as we do not have participants for course-wide conversations (dto or transient property)
-        //
-        // const conversationParticipant = conversation.conversationParticipants!.find(
-        //     (conversationParticipants) => conversationParticipants.user.id === this.courseMessagesService.userId,
-        // )!;
-        //
-        // if (this.activeConversation && conversation.id !== this.activeConversation.id && !!conversation.lastMessageDate && !!conversationParticipant.lastRead) {
-        //     if (conversationParticipant.lastRead.isBefore(conversation.lastMessageDate.subtract(1, 'second'), 'second')) {
-        //         return true;
-        //     }
-        // }
-        return false;
+    ngOnInit(): void {
+        this.isCollapsed = !!this.localStorageService.retrieve(this.storageKey);
+        this.localStorageService.store(this.storageKey, this.isCollapsed);
+    }
+
+    get storageKey() {
+        return this.prefix + this.headerKey;
     }
 }
