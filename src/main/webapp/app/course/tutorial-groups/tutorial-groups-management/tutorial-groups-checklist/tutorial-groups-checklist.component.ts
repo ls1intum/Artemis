@@ -1,19 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { combineLatest, finalize, switchMap, take } from 'rxjs';
+import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { faPlus, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-tutorial-groups-checklist',
     templateUrl: './tutorial-groups-checklist.component.html',
 })
-export class TutorialGroupsChecklistComponent implements OnInit {
+export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     isLoading = false;
     course: Course;
     isTimeZoneConfigured = false;
@@ -22,6 +23,7 @@ export class TutorialGroupsChecklistComponent implements OnInit {
     faWrench = faWrench;
     faPlus = faPlus;
 
+    ngUnsubscribe = new Subject<void>();
     constructor(
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
@@ -47,6 +49,7 @@ export class TutorialGroupsChecklistComponent implements OnInit {
                     return combineLatest([this.courseManagementService.find(courseId), this.tutorialGroupsConfigurationService.getOneOfCourse(courseId)]);
                 }),
                 finalize(() => (this.isLoading = false)),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: ([courseResult, configurationResult]) => {
@@ -61,5 +64,10 @@ export class TutorialGroupsChecklistComponent implements OnInit {
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 }

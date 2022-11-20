@@ -1,12 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { TutorialGroupsConfigurationFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { onError } from 'app/shared/util/global.utils';
-import { combineLatest } from 'rxjs';
-import { finalize, switchMap, take } from 'rxjs/operators';
+import { Subject, combineLatest } from 'rxjs';
+import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -15,7 +15,9 @@ import { Course } from 'app/entities/course.model';
     selector: 'jhi-edit-tutorial-groups-configuration',
     templateUrl: './edit-tutorial-groups-configuration.component.html',
 })
-export class EditTutorialGroupsConfigurationComponent implements OnInit {
+export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     isLoading = false;
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
     formData: TutorialGroupsConfigurationFormData;
@@ -41,6 +43,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
                     return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!);
                 }),
                 finalize(() => (this.isLoading = false)),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroupsConfigurationResult) => {
@@ -58,6 +61,11 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
             });
     }
 
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+
     updateTutorialGroupsConfiguration(formData: TutorialGroupsConfigurationFormData) {
         const { period } = formData;
 
@@ -69,6 +77,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
                     this.isLoading = false;
                     this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (resp) => {

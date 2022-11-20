@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
@@ -93,7 +93,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
         const modalService = TestBed.inject(NgbModal);
         const mockModalRef = {
             componentInstance: { tutorialGroupSession: undefined, course: undefined, tutorialGroupId: undefined },
-            result: { then: () => undefined },
+            result: { then: () => Promise.resolve() },
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
 

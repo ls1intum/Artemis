@@ -1,20 +1,21 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { finalize } from 'rxjs';
+import { Subject, finalize } from 'rxjs';
 import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-free-period',
     templateUrl: './edit-tutorial-group-free-period.component.html',
 })
-export class EditTutorialGroupFreePeriodComponent {
+export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     isLoading = false;
 
     @Input()
@@ -28,6 +29,7 @@ export class EditTutorialGroupFreePeriodComponent {
 
     isInitialized = false;
 
+    ngUnsubscribe = new Subject<void>();
     formData: TutorialGroupFreePeriodFormData;
     constructor(private activeModal: NgbActiveModal, private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService, private alertService: AlertService) {}
 
@@ -58,6 +60,7 @@ export class EditTutorialGroupFreePeriodComponent {
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: () => {
@@ -72,5 +75,10 @@ export class EditTutorialGroupFreePeriodComponent {
 
     clear() {
         this.activeModal.dismiss();
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 }

@@ -1,8 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { from } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
+import { Subject, from } from 'rxjs';
+import { finalize, map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -19,7 +19,9 @@ import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/
     templateUrl: './tutorial-group-sessions-management.component.html',
     styleUrls: ['./tutorial-group-sessions-management.component.scss'],
 })
-export class TutorialGroupSessionsManagementComponent {
+export class TutorialGroupSessionsManagementComponent implements OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     isLoading = false;
 
     faPlus = faPlus;
@@ -55,6 +57,7 @@ export class TutorialGroupSessionsManagementComponent {
                 map((res: HttpResponse<TutorialGroup>) => {
                     return res.body;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroup) => {
@@ -78,12 +81,19 @@ export class TutorialGroupSessionsManagementComponent {
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe(() => {
-            this.loadAll();
-        });
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {
+                this.loadAll();
+            });
     }
 
     clear() {
         this.activeModal.dismiss();
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 }

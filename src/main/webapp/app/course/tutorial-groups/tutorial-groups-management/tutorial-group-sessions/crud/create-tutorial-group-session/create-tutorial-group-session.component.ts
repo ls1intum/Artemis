@@ -1,18 +1,21 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { AlertService } from 'app/core/util/alert.service';
-import { finalize } from 'rxjs/operators';
+import { finalize, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-create-tutorial-group-session',
     templateUrl: './create-tutorial-group-session.component.html',
 })
-export class CreateTutorialGroupSessionComponent {
+export class CreateTutorialGroupSessionComponent implements OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     tutorialGroupSessionToCreate: TutorialGroupSessionDTO = new TutorialGroupSessionDTO();
     isLoading: boolean;
 
@@ -50,6 +53,7 @@ export class CreateTutorialGroupSessionComponent {
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: () => {
@@ -75,5 +79,10 @@ export class CreateTutorialGroupSessionComponent {
 
     clear() {
         this.activeModal.dismiss();
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 }

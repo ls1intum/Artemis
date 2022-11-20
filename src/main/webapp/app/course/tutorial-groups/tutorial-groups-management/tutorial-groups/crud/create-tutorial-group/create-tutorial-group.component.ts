@@ -1,29 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
-import { finalize } from 'rxjs/operators';
+import { finalize, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-create-tutorial-group',
     templateUrl: './create-tutorial-group.component.html',
 })
-export class CreateTutorialGroupComponent implements OnInit {
+export class CreateTutorialGroupComponent implements OnInit, OnDestroy {
     tutorialGroupToCreate: TutorialGroup = new TutorialGroup();
     isLoading: boolean;
     course: Course;
 
+    ngUnsubscribe = new Subject<void>();
     constructor(private activatedRoute: ActivatedRoute, private router: Router, private tutorialGroupService: TutorialGroupsService, private alertService: AlertService) {}
 
     ngOnInit(): void {
-        this.activatedRoute.data.subscribe(({ course }) => {
+        this.activatedRoute.data.pipe(takeUntil(this.ngUnsubscribe)).subscribe(({ course }) => {
             if (course) {
                 this.course = course;
             }
@@ -63,6 +65,7 @@ export class CreateTutorialGroupComponent implements OnInit {
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: () => {
@@ -70,5 +73,10 @@ export class CreateTutorialGroupComponent implements OnInit {
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 }

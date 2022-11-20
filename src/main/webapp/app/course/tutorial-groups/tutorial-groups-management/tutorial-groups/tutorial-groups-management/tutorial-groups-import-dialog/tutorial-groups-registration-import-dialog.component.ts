@@ -5,12 +5,13 @@ import { ParseResult, parse } from 'papaparse';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { titleRegex } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
+import { takeUntil } from 'rxjs/operators';
 
 /**
  * Each row is a object with the structure
@@ -43,6 +44,8 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
     styleUrls: ['./tutorial-groups-registration-import-dialog.component.scss'],
 })
 export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
     selectedFile?: File;
 
@@ -59,8 +62,6 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
     isImportDone = false;
     numberOfImportedRegistrations = 0;
     numberOfNotImportedRegistration = 0;
-
-    subscriptions: (Subscription | undefined)[] = [];
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -100,7 +101,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-        this.subscriptions.forEach((sub) => sub?.unsubscribe());
+        takeUntil(this.ngUnsubscribe);
     }
 
     ngOnInit(): void {
@@ -116,32 +117,28 @@ export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy
     }
 
     onStatusChanges() {
-        this.subscriptions.push(
-            this.statusHeaderControl?.valueChanges.subscribe((selectedStatusColumn) => {
-                if (!selectedStatusColumn) {
-                    this.fixedPlaceValueControl?.reset('', { emitEvent: false });
-                    this.fixedPlaceValueControl?.disable();
-                } else {
-                    this.fixedPlaceValueControl?.enable();
-                }
-            }),
-        );
+        this.statusHeaderControl?.valueChanges.pipe(takeUntil(this.ngUnsubscribe)).subscribe((selectedStatusColumn) => {
+            if (!selectedStatusColumn) {
+                this.fixedPlaceValueControl?.reset('', { emitEvent: false });
+                this.fixedPlaceValueControl?.disable();
+            } else {
+                this.fixedPlaceValueControl?.enable();
+            }
+        });
     }
 
     onFixedPlaceCheckboxChange() {
-        this.subscriptions.push(
-            this.specifyFixedPlaceControl?.valueChanges.subscribe((specifyFixedPlace) => {
-                this.fixedPlaceValueControl?.reset('', { emitEvent: false });
-                this.statusHeaderControl?.reset('', { emitEvent: false });
-                if (specifyFixedPlace) {
-                    this.statusHeaderControl?.enable();
-                    this.fixedPlaceValueControl?.enable();
-                } else {
-                    this.statusHeaderControl?.disable();
-                    this.fixedPlaceValueControl?.disable();
-                }
-            }),
-        );
+        this.specifyFixedPlaceControl?.valueChanges.pipe(takeUntil(this.ngUnsubscribe)).subscribe((specifyFixedPlace) => {
+            this.fixedPlaceValueControl?.reset('', { emitEvent: false });
+            this.statusHeaderControl?.reset('', { emitEvent: false });
+            if (specifyFixedPlace) {
+                this.statusHeaderControl?.enable();
+                this.fixedPlaceValueControl?.enable();
+            } else {
+                this.statusHeaderControl?.disable();
+                this.fixedPlaceValueControl?.disable();
+            }
+        });
     }
 
     get isParseDisabled() {
