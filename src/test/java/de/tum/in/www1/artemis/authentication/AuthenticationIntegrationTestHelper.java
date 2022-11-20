@@ -13,8 +13,6 @@ public class AuthenticationIntegrationTestHelper {
         ltiLaunchRequest.setContext_id("contextId123");
         ltiLaunchRequest.setContext_label("U4I");
         ltiLaunchRequest.setCustom_component_display_name("someDisplayName");
-        ltiLaunchRequest.setCustom_lookup_user_by_email(false);
-        ltiLaunchRequest.setCustom_require_existing_user(false);
         ltiLaunchRequest.setLaunch_presentation_locale("EN");
         ltiLaunchRequest.setLaunch_presentation_return_url("some.return.url.com");
         ltiLaunchRequest.setLis_outcome_service_url("some.outcome.service.url.com");

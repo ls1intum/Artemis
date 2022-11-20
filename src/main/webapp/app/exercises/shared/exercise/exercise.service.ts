@@ -36,6 +36,7 @@ export interface ExerciseServicable<T extends Exercise> {
 @Injectable({ providedIn: 'root' })
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
+    public adminResourceUrl = SERVER_API_URL + 'api/admin/exercises';
 
     constructor(
         private http: HttpClient,
@@ -170,7 +171,7 @@ export class ExerciseService {
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' })
+            .get<Exercise[]>(`${this.adminResourceUrl}/upcoming`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processExerciseEntityArrayResponse(res)));
     }
 
