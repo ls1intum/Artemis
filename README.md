@@ -49,15 +49,16 @@
 The Artemis development team prioritizes the following issues in the future. We welcome feature requests from students, tutors, instructors, and administrators. We are happy to discuss any suggestions for improvements.
 
 * **Short term**: Further enhance the usability and user experience in different places based on best practices
-* **Short term**: Further increase the coverage of automatic tests to secure the quality of Artemis releases and to prevent bugs 
-* **Medium term**: Further improve discussions and provide communication channels
-* **Medium term**: Develop grading strategies (e.g., homework counts as bonus to an exam)
+* **Short term**: Further improve discussions and provide communication channels
+* **Short term**: Improve the integration of learning analytics for students and instructors
+* **Short term**: Simplify the setup of Artemis
 * **Medium term**: Improve semi-automatic assessment by reusing knowledge from previous exercises and by offering it for the manual assessment of programming exercises
-* **Medium term**: Improve the integration of learning analytics for students and instructors
-* **Medium term**: Microservices, Kubernetes based deployment, and micro frontends
+* **Medium term**: Integrate adaptive learning with different exercise difficulties and the automatic generation of hints
+* **Medium term**: Further improve the security of the involved systems (e.g. when executing code of programming exercises)
+* **Long term**: Microservices, Kubernetes based deployment, and micro frontends
 * **Long term**: Allow students to take notes on lecture slides and support the automatic updates of lecture slides
 * **Long term**: Develop an exchange platform for exercises
-* **Long term**: Integrate adaptive learning with different exercise difficulties and the automatic generation of hints
+
 
 ## Setup, guides, and contributing
 
