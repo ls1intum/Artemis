@@ -1,4 +1,4 @@
-.form-step + .form-step:before {
+.form-step + .form-step::before {
     content: '';
     display: block;
     height: 1px;
