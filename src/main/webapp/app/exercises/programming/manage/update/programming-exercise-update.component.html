@@ -45,13 +45,7 @@
                 [infoInputs]="getInfoStepInputs()"
             >
             </jhi-programming-exercise-info>
-            <div class="form-group">
-                <label class="label-narrow" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
-                <div>
-                    <jhi-difficulty-picker [exercise]="programmingExercise"></jhi-difficulty-picker>
-                </div>
-            </div>
-            <jhi-team-config-form-group class="form-element" [exercise]="programmingExercise" [isImport]="isImport"></jhi-team-config-form-group>
+            <jhi-programming-exercise-difficulty [isImport]="isImport" [programmingExercise]="programmingExercise"></jhi-programming-exercise-difficulty>
             <div class="form-group">
                 <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
                 <select
