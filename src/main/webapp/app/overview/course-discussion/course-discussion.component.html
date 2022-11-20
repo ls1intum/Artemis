@@ -146,6 +146,7 @@
             <virtual-scroll
                 #virtualScrollContainer
                 [items]="posts"
+                [collapsableHtmlClassNames]="['.answer-post', '.new-reply-inline-input']"
                 [endOfListReachedItemThreshold]="5"
                 [minItemHeight]="126.7"
                 [(forceReload)]="forceReload"

@@ -18,6 +18,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
     @Input('items') public originalItems: T[] | undefined = [];
+    @Input() collapsableHtmlClassNames: string[];
     @Input() minItemHeight: number;
     @Input() endOfListReachedItemThreshold: number;
     @Input() forceReload: boolean;
@@ -148,15 +149,11 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
             /* calculates collapsible nested components of item being removed from the DOM tree and updates the items height where nested items would be closed
                this operation is necessary to have a smooth scrolling experience when redisplaying an element previously removed from the DOM tree due to being above the screen's
                upper border */
-            if (itemsThatAreGone !== undefined && i === itemsThatAreGone) {
-                // height of answerPosts
-                child.querySelectorAll('.answer-post').forEach((subElement) => {
-                    collapsableHeight += subElement.getBoundingClientRect().height;
-                });
-
-                // height of posting markdown editor used to create new answerPosts
-                child.querySelectorAll('.new-reply-inline-input').forEach((subElement) => {
-                    collapsableHeight += subElement.getBoundingClientRect().height;
+            if (this.collapsableHtmlClassNames && itemsThatAreGone !== undefined && i === itemsThatAreGone) {
+                this.collapsableHtmlClassNames.forEach((collapsableHtmlClassName) => {
+                    child.querySelectorAll(collapsableHtmlClassName).forEach((subElement) => {
+                        collapsableHeight += subElement.getBoundingClientRect().height;
+                    });
                 });
             }
 
