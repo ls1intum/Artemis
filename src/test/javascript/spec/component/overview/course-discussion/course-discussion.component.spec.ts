@@ -374,30 +374,12 @@ describe('CourseDiscussionComponent', () => {
         );
     }));
 
-    it('should not call fetchNextPage when rendering first fetched posts', fakeAsync(() => {
-        component.itemsPerPage = 5;
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-
-        const onItemsRenderEvent = new CustomEvent('onItemsRender');
-        onItemsRenderEvent['items'] = component.posts.slice(0, 2);
-        onItemsRenderEvent['length'] = 2;
-        onItemsRenderEvent['startIndex'] = 0;
-        onItemsRenderEvent['endIndex'] = 1;
-
-        const scrollableDiv = getElement(fixture.debugElement, 'virtual-scroll');
-        scrollableDiv.dispatchEvent(onItemsRenderEvent);
-
-        expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
-    }));
-
-    it('should call fetchNextPage when rendering last part of fetched posts', fakeAsync(() => {
+    it('should call fetchNextPage when scrolled to the last part of fetched posts', fakeAsync(() => {
         prepareComponent();
 
         const onEndOfOriginalItemsReachedEvent = new CustomEvent('onEndOfOriginalItemsReached');
 
-        const scrollableDiv = getElement(fixture.debugElement, 'virtual-scroll');
+        const scrollableDiv = getElement(fixture.debugElement, 'jhi-virtual-scroll');
         scrollableDiv.dispatchEvent(onEndOfOriginalItemsReachedEvent);
 
         expect(fetchNextPageSpy).toHaveBeenCalledOnce();
