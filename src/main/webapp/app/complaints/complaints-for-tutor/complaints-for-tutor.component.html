@@ -18,11 +18,17 @@
     </div>
     <div class="mt-3 mb-3">
         <div id="lockDuration" class="alert alert-info" *ngIf="showLockDuration">
-            {{
-                'artemisApp.locks.lockInformation' | artemisTranslate: { user: this.complaintResponse?.reviewer?.login, endDate: this.complaintResponse.lockEndDate | artemisDate }
-            }}
+            <ng-container *ngIf="lockedByCurrentUser; else lockedByOther">
+                {{ 'artemisApp.locks.lockInformationYou' | artemisTranslate: { endDate: this.complaintResponse.lockEndDate | artemisDate } }}
+            </ng-container>
+            <ng-template #lockedByOther>
+                {{
+                    'artemisApp.locks.lockInformation'
+                        | artemisTranslate: { user: this.complaintResponse?.reviewer?.login, endDate: this.complaintResponse.lockEndDate | artemisDate }
+                }}
+            </ng-template>
         </div>
-        <button id="lockButton" class="btn btn-secondary" *ngIf="showRemoveLockButton" (click)="removeLock()">
+        <button id="lockButton" class="btn btn-secondary" *ngIf="lockedByCurrentUser" (click)="removeLock()">
             {{ 'artemisApp.locks.removeButton' | artemisTranslate }}
         </button>
     </div>
