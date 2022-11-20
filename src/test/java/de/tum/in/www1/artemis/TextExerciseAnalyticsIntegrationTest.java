@@ -5,26 +5,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.TextAssessmentEventResource;
 
-class TextExerciseAssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -34,6 +28,9 @@ class TextExerciseAssessmentEventIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    private TextAssessmentEventResource textAssessmentEventResource;
 
     @Autowired
     private TextAssessmentEventRepository textAssessmentEventRepository;
@@ -70,11 +67,12 @@ class TextExerciseAssessmentEventIntegrationTest extends AbstractSpringIntegrati
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void testAddMultipleCompleteAssessmentEvents() throws Exception {
+    void testAddMultipleCompleteAssessmentEvents() {
         List<TextAssessmentEvent> events = ModelFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
         for (TextAssessmentEvent event : events) {
-            request.post("/api/event-insights/text-assessment/events", event, HttpStatus.CREATED);
+            ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
+            assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         }
     }
 
@@ -83,8 +81,8 @@ class TextExerciseAssessmentEventIntegrationTest extends AbstractSpringIntegrati
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void testAddSingleCompleteAssessmentEvent() throws Exception {
-        expectEventAddedWithResponse(HttpStatus.CREATED, tutor.getId());
+    void testAddSingleCompleteAssessmentEvent() {
+        expectEventAddedWithResponse(HttpStatus.OK, tutor.getId());
     }
 
     /**
@@ -92,7 +90,7 @@ class TextExerciseAssessmentEventIntegrationTest extends AbstractSpringIntegrati
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void testAddSingleCompleteAssessmentEvent_withTutorNotInCourse() throws Exception {
+    void testAddSingleCompleteAssessmentEvent_withTutorNotInCourse() {
         // Tutor with tutor1 id incremented is not part of the course, therefore forbidden to access this resource
         expectEventAddedWithResponse(HttpStatus.BAD_REQUEST, tutor.getId() + 1);
     }
@@ -102,10 +100,10 @@ class TextExerciseAssessmentEventIntegrationTest extends AbstractSpringIntegrati
      * @param expected the status expected from the Http response
      * @param userId the id of the user to be tested in the event
      */
-    private void expectEventAddedWithResponse(HttpStatus expected, Long userId) throws Exception {
+    private void expectEventAddedWithResponse(HttpStatus expected, Long userId) {
         TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), userId, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
-
-        request.post("/api/event-insights/text-assessment/events", event, expected);
+        ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(expected);
     }
 
     /**
@@ -114,19 +112,21 @@ class TextExerciseAssessmentEventIntegrationTest extends AbstractSpringIntegrati
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void testAddSingleCompleteAssessmentEvent_withNotNullEventId() throws Exception {
+    void testAddSingleCompleteAssessmentEvent_withNotNullEventId() {
         TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(), textSubmission.getId());
         event.setId(1L);
-        request.post("/api/event-insights/text-assessment/events", event, HttpStatus.BAD_REQUEST);
+        ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void testAddSingleCompleteAssessmentEvent_withExampleSubmission() throws Exception {
+    void testAddSingleCompleteAssessmentEvent_withExampleSubmission() {
         textSubmission.setExampleSubmission(true);
         textSubmissionRepository.saveAndFlush(textSubmission);
         TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(), textSubmission.getId());
-        request.post("/api/event-insights/text-assessment/events", event, HttpStatus.BAD_REQUEST);
+        ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -134,24 +134,18 @@ class TextExerciseAssessmentEventIntegrationTest extends AbstractSpringIntegrati
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAllEventsByCourseId() throws Exception {
+    void testGetAllEventsByCourseId() {
         User user = new User();
         user.setLogin("admin");
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepository.save(user);
         TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), user.getId(), exercise.getId(), studentParticipation.getId(), textSubmission.getId());
+        ResponseEntity<Void> responseAddEvent = textAssessmentEventResource.addAssessmentEvent(event);
+        assertThat(responseAddEvent.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        request.post("/api/event-insights/text-assessment/events", event, HttpStatus.CREATED);
-
-        var foundEvents = request.getList("/api/admin/event-insights/text-assessment/events/" + course.getId(), HttpStatus.OK, TextAssessmentEvent.class);
-        assertThat(foundEvents).hasSize(1);
-        TextAssessmentEvent foundEvent = foundEvents.get(0);
-        assertThat(foundEvent.getId()).isNotNull();
-        assertThat(foundEvent.getCourseId()).isEqualTo(course.getId());
-        assertThat(foundEvent.getUserId()).isEqualTo(user.getId());
-        assertThat(foundEvent.getTextExerciseId()).isEqualTo(exercise.getId());
-        assertThat(foundEvent.getParticipationId()).isEqualTo(studentParticipation.getId());
-        assertThat(foundEvent.getSubmissionId()).isEqualTo(textSubmission.getId());
+        ResponseEntity<List<TextAssessmentEvent>> responseFindEvents = textAssessmentEventResource.getEventsByCourseId(course.getId());
+        assertThat(responseFindEvents.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(responseFindEvents.getBody()).isEqualTo(List.of(event));
     }
 
     /**

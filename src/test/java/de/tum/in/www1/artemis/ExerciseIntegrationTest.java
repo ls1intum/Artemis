@@ -246,31 +246,31 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetUpcomingExercises() throws Exception {
-        List<Exercise> exercises = request.getList("/api/admin/exercises/upcoming", HttpStatus.OK, Exercise.class);
+        List<Exercise> exercises = request.getList("/api/exercises/upcoming", HttpStatus.OK, Exercise.class);
         assertThat(exercises).isEmpty();
 
         // Test for exercise with upcoming due date.
         Course course = database.addCourseWithOneProgrammingExercise();
-        exercises = request.getList("/api/admin/exercises/upcoming", HttpStatus.OK, Exercise.class);
+        exercises = request.getList("/api/exercises/upcoming", HttpStatus.OK, Exercise.class);
         assertThat(exercises).hasSize(1).contains(course.getExercises().stream().findFirst().get());
     }
 
     @Test
     @WithMockUser(username = "student11", roles = "USER")
     void testGetUpcomingExercisesAsStudentForbidden() throws Exception {
-        request.getList("/api/admin/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
+        request.getList("/api/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     void testGetUpcomingExercisesAsInstructorForbidden() throws Exception {
-        request.getList("/api/admin/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
+        request.getList("/api/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = "tutor6", roles = "TA")
     void testGetUpcomingExercisesAsTutorForbidden() throws Exception {
-        request.getList("/api/admin/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
+        request.getList("/api/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test

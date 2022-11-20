@@ -6,7 +6,7 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
     template: ` <fa-icon [icon]="faQuestionCircle" class="text-secondary" [placement]="placement" ngbTooltip="{{ text | artemisTranslate }}"></fa-icon> `,
 })
 export class HelpIconComponent {
-    @Input() placement = 'auto';
+    @Input() placement: string;
     @Input() text: string;
 
     // Icons

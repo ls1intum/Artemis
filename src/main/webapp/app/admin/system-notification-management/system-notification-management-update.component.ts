@@ -4,8 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { UserService } from 'app/core/user/user.service';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
+import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import dayjs from 'dayjs/esm';
-import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
 
 @Component({
     selector: 'jhi-system-notification-management-update',
@@ -26,7 +26,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     faSave = faSave;
     faBan = faBan;
 
-    constructor(private userService: UserService, private systemNotificationService: AdminSystemNotificationService, private route: ActivatedRoute, private router: Router) {}
+    constructor(private userService: UserService, private systemNotificationService: SystemNotificationService, private route: ActivatedRoute, private router: Router) {}
 
     /**
      * Loads notification from route data

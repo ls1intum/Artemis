@@ -17,6 +17,28 @@ export class SystemNotificationService {
     constructor(private router: Router, private http: HttpClient) {}
 
     /**
+     * Create a notification on the server using a POST request.
+     * @param notification The notification to create.
+     */
+    create(notification: SystemNotification): Observable<EntityResponseType> {
+        const copy = this.convertSystemNotificationDatesFromClient(notification);
+        return this.http
+            .post<SystemNotification>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertSystemNotificationResponseDatesFromServer(res)));
+    }
+
+    /**
+     * Update a notification on the server using a PUT request.
+     * @param notification The notification to update.
+     */
+    update(notification: SystemNotification): Observable<EntityResponseType> {
+        const copy = this.convertSystemNotificationDatesFromClient(notification);
+        return this.http
+            .put<SystemNotification>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertSystemNotificationResponseDatesFromServer(res)));
+    }
+
+    /**
      * Find a notification on the server using a GET request.
      * @param systemNotificationId The id of the notification to get.
      */
@@ -34,6 +56,14 @@ export class SystemNotificationService {
     }
 
     /**
+     * Delete a notification on the server using a DELETE request.
+     * @param systemNotificationId The id of the notification to delete.
+     */
+    delete(systemNotificationId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<any>(`${this.resourceUrl}/${systemNotificationId}`, { observe: 'response' });
+    }
+
+    /**
      * Fetch active and future notifications from the server.
      */
     getActiveNotifications(): Observable<SystemNotification[]> {
@@ -48,7 +78,7 @@ export class SystemNotificationService {
      * @param {SystemNotification} notification The notification to format.
      * @return {SystemNotification} A copy of notification with formatted dates.
      */
-    convertSystemNotificationDatesFromClient(notification: SystemNotification): SystemNotification {
+    protected convertSystemNotificationDatesFromClient(notification: SystemNotification): SystemNotification {
         const copy: SystemNotification = Object.assign({}, notification, {
             notificationDate: convertDateFromClient(notification.notificationDate),
             expireDate: convertDateFromClient(notification.expireDate),

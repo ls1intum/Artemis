@@ -21,13 +21,11 @@ import { UsersImportButtonComponent } from 'app/shared/import/users-import-butto
 import { EventManager } from 'app/core/util/event-manager.service';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { Course } from 'app/entities/course.model';
-import { CourseAdminService } from 'app/course/manage/course-admin.service';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
     let fixture: ComponentFixture<CourseDetailComponent>;
-    let courseManagementService: CourseManagementService;
-    let courseAdminService: CourseAdminService;
+    let courseService: CourseManagementService;
     let eventManager: EventManager;
 
     const course: Course = {
@@ -97,13 +95,12 @@ describe('Course Management Detail Component', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
         component = fixture.componentInstance;
-        courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-        courseAdminService = fixture.debugElement.injector.get(CourseAdminService);
+        courseService = fixture.debugElement.injector.get(CourseManagementService);
         eventManager = fixture.debugElement.injector.get(EventManager);
     });
 
     beforeEach(fakeAsync(() => {
-        const statsStub = jest.spyOn(courseManagementService, 'getCourseStatisticsForDetailView');
+        const statsStub = jest.spyOn(courseService, 'getCourseStatisticsForDetailView');
         statsStub.mockReturnValue(of(new HttpResponse({ body: dtoMock })));
     }));
 
@@ -129,7 +126,7 @@ describe('Course Management Detail Component', () => {
 
     it('should broadcast course modification on delete', () => {
         const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
-        const deleteStub = jest.spyOn(courseAdminService, 'delete');
+        const deleteStub = jest.spyOn(courseService, 'delete');
         deleteStub.mockReturnValue(of(new HttpResponse<void>()));
 
         const courseId = 444;

@@ -9,7 +9,6 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementService {
     public resourceUrl = SERVER_API_URL + 'api/organizations';
-    public adminResourceUrl = SERVER_API_URL + 'api/admin/organizations';
 
     constructor(private http: HttpClient, private entityTitleService: EntityTitleService) {}
 
@@ -17,7 +16,7 @@ export class OrganizationManagementService {
      * Send GET request to retrieve all organizations
      */
     getOrganizations(): Observable<Organization[]> {
-        return this.http.get<Organization[]>(this.adminResourceUrl).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
+        return this.http.get<Organization[]>(this.resourceUrl).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
     /**
@@ -25,7 +24,7 @@ export class OrganizationManagementService {
      * all organizations
      */
     getNumberOfUsersAndCoursesOfOrganizations(): Observable<OrganizationCountDto[]> {
-        return this.http.get<OrganizationCountDto[]>(this.adminResourceUrl + '/count-all');
+        return this.http.get<OrganizationCountDto[]>(this.resourceUrl + '/count-all');
     }
 
     /**
@@ -33,7 +32,7 @@ export class OrganizationManagementService {
      * @param organizationId
      */
     getOrganizationById(organizationId: number): Observable<Organization> {
-        return this.http.get(`${this.adminResourceUrl}/${organizationId}`).pipe(tap((org) => this.sendTitlesToEntityTitleService(org)));
+        return this.http.get(`${this.resourceUrl}/${organizationId}`).pipe(tap((org) => this.sendTitlesToEntityTitleService(org)));
     }
 
     /**
@@ -42,7 +41,7 @@ export class OrganizationManagementService {
      * @param organizationId
      */
     getOrganizationByIdWithUsersAndCourses(organizationId: number): Observable<Organization> {
-        return this.http.get(`${this.adminResourceUrl}/${organizationId}/full`).pipe(tap((org) => this.sendTitlesToEntityTitleService(org)));
+        return this.http.get(`${this.resourceUrl}/${organizationId}/full`).pipe(tap((org) => this.sendTitlesToEntityTitleService(org)));
     }
 
     /**
@@ -58,7 +57,7 @@ export class OrganizationManagementService {
      * @param userId the id of the user to retrieve the organizations from
      */
     getOrganizationsByUser(userId: number): Observable<Organization[]> {
-        return this.http.get<Organization[]>(`${this.adminResourceUrl}/users/${userId}`).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
+        return this.http.get<Organization[]>(`${this.resourceUrl}/users/${userId}`).pipe(tap((orgs) => orgs?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
     /**
@@ -66,7 +65,7 @@ export class OrganizationManagementService {
      * @param organization the organization to update
      */
     update(organization: Organization): Observable<HttpResponse<Organization>> {
-        return this.http.put<Organization>(`${this.adminResourceUrl}/${organization.id}`, organization, { observe: 'response' });
+        return this.http.put<Organization>(`${this.resourceUrl}/${organization.id}`, organization, { observe: 'response' });
     }
 
     /**
@@ -74,7 +73,7 @@ export class OrganizationManagementService {
      * @param organization the organization to add
      */
     add(organization: Organization): Observable<HttpResponse<Organization>> {
-        return this.http.post<Organization>(`${this.adminResourceUrl}`, organization, { observe: 'response' });
+        return this.http.post<Organization>(`${this.resourceUrl}`, organization, { observe: 'response' });
     }
 
     /**
@@ -82,7 +81,7 @@ export class OrganizationManagementService {
      * @param organizationId the id of the organization to remove
      */
     deleteOrganization(organizationId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/${organizationId}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${organizationId}`, { observe: 'response' });
     }
 
     /**
@@ -91,7 +90,7 @@ export class OrganizationManagementService {
      * @param userLogin the user to remove
      */
     removeUserFromOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/${organizationId}/users/${userLogin}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${organizationId}/users/${userLogin}`, { observe: 'response' });
     }
 
     /**
@@ -100,7 +99,7 @@ export class OrganizationManagementService {
      * @param userLogin the user to add
      */
     addUserToOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.adminResourceUrl}/${organizationId}/users/${userLogin}`, {}, { observe: 'response' });
+        return this.http.post<void>(`${this.resourceUrl}/${organizationId}/users/${userLogin}`, {}, { observe: 'response' });
     }
 
     private sendTitlesToEntityTitleService(org: Organization | undefined | null) {

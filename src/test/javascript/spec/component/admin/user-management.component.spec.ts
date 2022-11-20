@@ -8,6 +8,7 @@ import {
     UserManagementComponent,
     UserStorageKey,
 } from 'app/admin/user-management/user-management.component';
+import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -35,12 +36,11 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { AdminUserService } from 'app/core/user/admin-user.service';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
     let fixture: ComponentFixture<UserManagementComponent>;
-    let userService: AdminUserService;
+    let userService: UserService;
     let accountService: AccountService;
     let eventManager: EventManager;
     let courseManagementService: CourseManagementService;
@@ -103,7 +103,7 @@ describe('UserManagementComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UserManagementComponent);
                 comp = fixture.componentInstance;
-                userService = TestBed.inject(AdminUserService);
+                userService = TestBed.inject(UserService);
                 accountService = TestBed.inject(AccountService);
                 eventManager = TestBed.inject(EventManager);
                 courseManagementService = TestBed.inject(CourseManagementService);
@@ -228,7 +228,7 @@ describe('UserManagementComponent', () => {
         comp.deleteUser('test');
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith('test');
-        const reqD = httpMock.expectOne(SERVER_API_URL + 'api/admin/users/test');
+        const reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
         reqD.flush(null, { status, statusText });
 
         if (status === 200) {

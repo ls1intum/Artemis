@@ -9,12 +9,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class SystemNotificationService {
-
-    private static final String ENTITY_NAME = "systemNotification";
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -41,18 +38,5 @@ public class SystemNotificationService {
      */
     public void distributeActiveAndFutureNotificationsToClients() {
         messagingTemplate.convertAndSend("/topic/system-notification", findAllActiveAndFutureSystemNotifications());
-    }
-
-    /**
-     * Validates the dates of a system notification and throws an exception if the dates are invalid.
-     * @param systemNotification the system notification to validate
-     */
-    public void validateDatesElseThrow(SystemNotification systemNotification) {
-        if (systemNotification.getNotificationDate() == null || systemNotification.getExpireDate() == null) {
-            throw new BadRequestAlertException("System notification needs both a notification and expiration date.", ENTITY_NAME, "systemNotificationNeedsBothDates");
-        }
-        if (!systemNotification.getNotificationDate().isBefore(systemNotification.getExpireDate())) {
-            throw new BadRequestAlertException("The notification date must be before the expiration date.", ENTITY_NAME, "systemNotificationNeedsNotificationBeforeExpiration");
-        }
     }
 }

@@ -96,9 +96,17 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private Long idOfTextUnitOfLectureOne;
 
+    private Long idOfExerciseUnitTextOfLectureOne;
+
+    private Long idOfExerciseUnitModelingOfLectureOne;
+
     private Long idOfLectureTwo;
 
     private Long idOfTextUnitOfLectureTwo;
+
+    private Long idOfExerciseUnitTextOfLectureTwo;
+
+    private Long idOfExerciseUnitModelingOfLectureTwo;
 
     private Long idOfTextExercise;
 
@@ -196,11 +204,13 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseUnit textExerciseUnit = new ExerciseUnit();
         textExerciseUnit.setExercise(textExercise);
         textExerciseUnit = exerciseUnitRepository.save(textExerciseUnit);
+        idOfExerciseUnitTextOfLectureOne = textExerciseUnit.getId();
 
         Exercise modelingExercise = exerciseRepository.findById(idOfModelingExercise).get();
         ExerciseUnit modelingExerciseUnit = new ExerciseUnit();
         modelingExerciseUnit.setExercise(modelingExercise);
         modelingExerciseUnit = exerciseUnitRepository.save(modelingExerciseUnit);
+        idOfExerciseUnitModelingOfLectureOne = modelingExerciseUnit.getId();
 
         Exercise textTeamExercise = exerciseRepository.findById(idOfTeamTextExercise).get();
         ExerciseUnit teamTextExerciseUnit = new ExerciseUnit();
@@ -226,11 +236,13 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseUnit textExerciseUnit = new ExerciseUnit();
         textExerciseUnit.setExercise(textExercise);
         textExerciseUnit = exerciseUnitRepository.save(textExerciseUnit);
+        idOfExerciseUnitTextOfLectureTwo = textExerciseUnit.getId();
 
         Exercise modelingExercise = exerciseRepository.findById(idOfModelingExercise).get();
         ExerciseUnit modelingExerciseUnit = new ExerciseUnit();
         modelingExerciseUnit.setExercise(modelingExercise);
         modelingExerciseUnit = exerciseUnitRepository.save(modelingExerciseUnit);
+        idOfExerciseUnitModelingOfLectureTwo = modelingExerciseUnit.getId();
 
         List<LectureUnit> lectureUnitsOfLectureTwo = List.of(textUnit, textExerciseUnit, modelingExerciseUnit);
         Lecture lectureTwo = lectureRepository.findByIdWithLectureUnits(idOfLectureTwo).get();
@@ -428,7 +440,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteCourse_asAdmin_shouldAlsoDeleteLearningGoal() throws Exception {
-        request.delete("/api/admin/courses/" + idOfCourse, HttpStatus.OK);
+        request.delete("/api/courses/" + idOfCourse, HttpStatus.OK);
         request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.NOT_FOUND, LearningGoal.class);
     }
 

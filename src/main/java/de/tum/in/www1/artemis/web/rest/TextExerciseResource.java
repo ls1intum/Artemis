@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
  * REST controller for managing TextExercise.
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping(TextExerciseResource.Endpoints.ROOT)
 public class TextExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(TextExerciseResource.class);
@@ -135,7 +135,7 @@ public class TextExerciseResource {
      * with status 400 (Bad Request) if the textExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("text-exercises")
+    @PostMapping("/text-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextExercise> createTextExercise(@RequestBody TextExercise textExercise) throws URISyntaxException {
         log.debug("REST request to save TextExercise : {}", textExercise);
@@ -175,7 +175,7 @@ public class TextExerciseResource {
      * Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("text-exercises")
+    @PutMapping("/text-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
@@ -219,7 +219,7 @@ public class TextExerciseResource {
      * @param courseId id of the course of which all the exercises should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of textExercises in body
      */
-    @GetMapping("courses/{courseId}/text-exercises")
+    @GetMapping(value = "/courses/{courseId}/text-exercises")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<TextExercise>> getTextExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
@@ -243,7 +243,7 @@ public class TextExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the textExercise, or with
      * status 404 (Not Found)
      */
-    @GetMapping("text-exercises/{exerciseId}")
+    @GetMapping("/text-exercises/{exerciseId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
@@ -275,7 +275,7 @@ public class TextExerciseResource {
      * @param exerciseId the id of the textExercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("text-exercises/{exerciseId}")
+    @DeleteMapping("/text-exercises/{exerciseId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteTextExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete TextExercise : {}", exerciseId);
@@ -297,7 +297,7 @@ public class TextExerciseResource {
      * @return the ResponseEntity with the participation as body
      */
     // TODO: fix the URL scheme
-    @GetMapping("text-editor/{participationId}")
+    @GetMapping("/text-editor/{participationId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -359,6 +359,22 @@ public class TextExerciseResource {
     }
 
     /**
+     * POST /text-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment
+     * (clustering task) for given exercise id As the clustering can be performed on a different
+     * node, this will always return 200, despite an error could occur on the other node.
+     *
+     * @param exerciseId id of the exercised that for which the automatic assessment should be
+     *                   triggered
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("/text-exercises/{exerciseId}/trigger-automatic-assessment")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {
+        instanceMessageSendService.sendTextExerciseInstantClustering(exerciseId);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * Search for all text exercises by id, title and course title. The result is pageable since there
      * might be hundreds of exercises in the DB.
      *
@@ -367,7 +383,7 @@ public class TextExerciseResource {
      * @param isExamFilter   Whether to search in the groups for exercises
      * @return The desired page, sorted and matching the given query
      */
-    @GetMapping("text-exercises")
+    @GetMapping("/text-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<TextExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search, @RequestParam(defaultValue = "true") Boolean isCourseFilter,
             @RequestParam(defaultValue = "true") Boolean isExamFilter) {
@@ -388,7 +404,7 @@ public class TextExerciseResource {
      * or a forbidden error (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
-    @PostMapping("text-exercises/import/{sourceExerciseId}")
+    @PostMapping("/text-exercises/import/{sourceExerciseId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody TextExercise importedExercise) throws URISyntaxException {
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
@@ -415,7 +431,7 @@ public class TextExerciseResource {
      * @param submissionExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      */
-    @PostMapping("text-exercises/{exerciseId}/export-submissions")
+    @PostMapping("/text-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
@@ -441,7 +457,7 @@ public class TextExerciseResource {
      * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
      * parameters are invalid
      */
-    @GetMapping("text-exercises/{exerciseId}/plagiarism-result")
+    @GetMapping("/text-exercises/{exerciseId}/plagiarism-result")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the text exercise with id: {}", exerciseId);
@@ -463,7 +479,7 @@ public class TextExerciseResource {
      * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
-    @GetMapping("text-exercises/{exerciseId}/check-plagiarism")
+    @GetMapping("/text-exercises/{exerciseId}/check-plagiarism")
     @FeatureToggle(Feature.PlagiarismChecks)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
@@ -498,7 +514,7 @@ public class TextExerciseResource {
      * (Internal Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("text-exercises/{exerciseId}/re-evaluate")
+    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody TextExercise textExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
@@ -519,4 +535,19 @@ public class TextExerciseResource {
 
         return updateTextExercise(textExercise, null);
     }
+
+    public static final class Endpoints {
+
+        public static final String ROOT = "/api";
+
+        public static final String TEXT_EXERCISES = "/text-exercises";
+
+        public static final String TEXT_EXERCISE = TEXT_EXERCISES + "/{exerciseId}";
+
+        public static final String REEVALUATE_EXERCISE = TEXT_EXERCISE + "/re-evaluate";
+
+        private Endpoints() {
+        }
+    }
+
 }

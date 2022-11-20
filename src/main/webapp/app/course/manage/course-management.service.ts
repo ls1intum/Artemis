@@ -45,6 +45,23 @@ export class CourseManagementService {
     ) {}
 
     /**
+     * creates a course using a POST request
+     * @param course - the course to be created on the server
+     * @param courseImage - the course icon file
+     */
+    create(course: Course, courseImage?: Blob): Observable<EntityResponseType> {
+        const copy = CourseManagementService.convertCourseDatesFromClient(course);
+        const formData = new FormData();
+        formData.append('course', objectToJsonBlob(copy));
+        if (courseImage) {
+            // The image was cropped by us and is a blob, so we need to set a placeholder name for the server check
+            formData.append('file', courseImage, 'placeholderName.png');
+        }
+
+        return this.http.post<Course>(this.resourceUrl, formData, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+    }
+
+    /**
      * updates a course using a PUT request
      * @param courseId - the id of the course to be updated
      * @param courseUpdate - the updates to the course
@@ -270,6 +287,14 @@ export class CourseManagementService {
     }
 
     /**
+     * deletes the course corresponding to the given unique identifier using a DELETE request
+     * @param courseId - the id of the course to be deleted
+     */
+    delete(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
+    }
+
+    /**
      * returns the exercise details of the courses for the courses' management dashboard
      * @param onlyActive - if true, only active courses will be considered in the result
      */
@@ -423,7 +448,7 @@ export class CourseManagementService {
      * @param courseRes
      * @private
      */
-    processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
+    private processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
         this.convertTutorialGroupDatesFromServer(courseRes);
         this.convertTutorialGroupConfigurationDateFromServer(courseRes);
         this.convertCourseResponseDateFromServer(courseRes);
@@ -457,7 +482,7 @@ export class CourseManagementService {
         return res;
     }
 
-    static convertCourseDatesFromClient(course: Course): Course {
+    private static convertCourseDatesFromClient(course: Course): Course {
         // copy of the object
         return Object.assign({}, course, {
             startDate: convertDateFromClient(course.startDate),
@@ -609,7 +634,7 @@ export class CourseManagementService {
         );
     }
 
-    sendCourseTitleAndExerciseTitlesToTitleService(course: Course | null | undefined) {
+    private sendCourseTitleAndExerciseTitlesToTitleService(course: Course | null | undefined) {
         this.entityTitleService.setTitle(EntityType.COURSE, [course?.id], course?.title);
 
         course?.exercises?.forEach((exercise) => {

@@ -190,7 +190,7 @@ describe('ModelingExercise Service', () => {
             .getNumberOfClusters(elemDefault.id)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.body).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.adminResourceUrl}/${elemDefault.id}/check-clusters` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${elemDefault.id}/check-clusters` });
         req.flush(expected);
         tick();
     }));
@@ -202,7 +202,7 @@ describe('ModelingExercise Service', () => {
             .buildClusters(elemDefault.id)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.adminResourceUrl}/${elemDefault.id}/trigger-automatic-assessment` });
+        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${elemDefault.id}/trigger-automatic-assessment` });
         req.flush(expected);
         tick();
     }));
@@ -210,7 +210,7 @@ describe('ModelingExercise Service', () => {
     it('should delete clusters', fakeAsync(() => {
         elemDefault.id = 756;
         service.deleteClusters(elemDefault.id).subscribe((resp) => expect(resp).toResolve());
-        const req = httpMock.expectOne({ method: 'DELETE', url: `${service.adminResourceUrl}/${elemDefault.id}/clusters` });
+        const req = httpMock.expectOne({ method: 'DELETE', url: `${service.resourceUrl}/${elemDefault.id}/clusters` });
         req.flush({});
         tick();
     }));

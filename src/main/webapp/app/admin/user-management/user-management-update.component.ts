@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
+import { UserService } from 'app/core/user/user.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -15,7 +16,6 @@ import { MatChipInputEvent } from '@angular/material/chips';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { AdminUserService } from 'app/core/user/admin-user.service';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -64,7 +64,7 @@ export class UserManagementUpdateComponent implements OnInit {
 
     constructor(
         private languageHelper: JhiLanguageHelper,
-        private userService: AdminUserService,
+        private userService: UserService,
         private route: ActivatedRoute,
         private organizationService: OrganizationManagementService,
         private modalService: NgbModal,

@@ -208,27 +208,24 @@ public class Post extends Posting {
         return resolved;
     }
 
-    public void setResolved(Boolean resolved) {
-        // the case "null" should NOT happen and is only a safety measurement
-        this.resolved = resolved != null ? resolved : false;
+    public void setResolved(boolean resolved) {
+        this.resolved = resolved;
     }
 
     public int getAnswerCount() {
         return answerCount;
     }
 
-    public void setAnswerCount(Integer answerCount) {
-        // the case "null" should NOT happen and is only a safety measurement
-        this.answerCount = answerCount != null ? answerCount : 0;
+    public void setAnswerCount(int answerCount) {
+        this.answerCount = answerCount;
     }
 
     public int getVoteCount() {
         return voteCount;
     }
 
-    public void setVoteCount(Integer voteCount) {
-        // the case "null" should NOT happen and is only a safety measurement
-        this.voteCount = voteCount != null ? voteCount : 0;
+    public void setVoteCount(int voteCount) {
+        this.voteCount = voteCount;
     }
 
     /**

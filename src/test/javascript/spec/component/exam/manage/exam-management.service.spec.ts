@@ -231,7 +231,7 @@ describe('Exam Management Service Tests', () => {
         service.findAllCurrentAndUpcomingExams().subscribe((res) => expect(res.body).toEqual([mockExamPopulated]));
 
         // THEN
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.adminResourceUrl}/upcoming-exams` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/upcoming-exams` });
         req.flush(mockExamResponse);
         tick();
     }));

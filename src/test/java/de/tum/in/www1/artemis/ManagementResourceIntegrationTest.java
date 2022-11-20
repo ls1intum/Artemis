@@ -97,7 +97,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
         var features = new HashMap<Feature, Boolean>();
         features.put(Feature.ProgrammingExercises, false);
-        request.put("/api/admin/management/feature-toggle", features, HttpStatus.OK);
+        request.put("/api/management/feature-toggle", features, HttpStatus.OK);
         verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", featureToggleService.enabledFeatures());
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).as("Feature was disabled").isFalse();
 
@@ -116,7 +116,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void getAllAuditEvents() throws Exception {
-        var auditEvents = request.getList("/api/admin/audits", HttpStatus.OK, PersistentAuditEvent.class);
+        var auditEvents = request.getList("/management/audits", HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvents).hasSize(2);
     }
 
@@ -125,7 +125,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void getAllAuditEventsByDate() throws Exception {
         String pastDate = LocalDate.now().minusDays(1).toString();
         String currentDate = LocalDate.now().toString();
-        var auditEvents = request.getList("/api/admin/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
+        var auditEvents = request.getList("/management/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvents).hasSize(1);
         var auditEvent = auditEvents.get(0);
         var auditEventsInDb = persistenceAuditEventRepository.findAllByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
@@ -136,7 +136,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void getAuditEvent() throws Exception {
-        var auditEvent = request.get("/api/admin/audits/" + persAuditEvent.getId(), HttpStatus.OK, PersistentAuditEvent.class);
+        var auditEvent = request.get("/management/audits/" + persAuditEvent.getId(), HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvent).isNotNull();
         var auditEventInDb = persistenceAuditEventRepository.findById(persAuditEvent.getId()).get();
         assertThat(auditEventInDb.getPrincipal()).isEqualTo(auditEvent.getPrincipal());

@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
+import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
@@ -23,7 +23,7 @@ import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from 
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
-import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { debounceTime, distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
@@ -71,8 +71,7 @@ export class CourseUpdateComponent implements OnInit {
     tutorialGroupsFeatureActivated = false;
 
     constructor(
-        private courseManagementService: CourseManagementService,
-        private courseAdminService: CourseAdminService,
+        private courseService: CourseManagementService,
         private activatedRoute: ActivatedRoute,
         private fileUploaderService: FileUploaderService,
         private alertService: AlertService,
@@ -138,7 +137,6 @@ export class CourseUpdateComponent implements OnInit {
             ltiKey: new FormControl(this.course.onlineCourseConfiguration?.ltiKey),
             ltiSecret: new FormControl(this.course.onlineCourseConfiguration?.ltiSecret),
             userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
-            requireExistingUser: new FormControl(this.course.onlineCourseConfiguration?.requireExistingUser),
             registrationId: new FormControl(this.course.onlineCourseConfiguration?.registrationId),
             clientId: new FormControl(this.course.onlineCourseConfiguration?.clientId),
             authorizationUri: new FormControl(this.course.onlineCourseConfiguration?.authorizationUri),
@@ -269,9 +267,9 @@ export class CourseUpdateComponent implements OnInit {
             file = base64StringToBlob(base64Data, 'image/*');
         }
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseManagementService.update(this.course.id, course, file));
+            this.subscribeToSaveResponse(this.courseService.update(this.course.id, course, file));
         } else {
-            this.subscribeToSaveResponse(this.courseAdminService.create(course, file));
+            this.subscribeToSaveResponse(this.courseService.create(course, file));
         }
     }
 

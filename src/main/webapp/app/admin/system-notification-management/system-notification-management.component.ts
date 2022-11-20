@@ -13,7 +13,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
 import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
 
 enum NotificationState {
     SCHEDULED = 'SCHEDULED',
@@ -57,7 +56,6 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
 
     constructor(
         private systemNotificationService: SystemNotificationService,
-        private adminSystemNotificationService: AdminSystemNotificationService,
         private alertService: AlertService,
         private accountService: AccountService,
         private parseLinks: ParseLinks,
@@ -107,7 +105,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
      * @param notificationId the id of the notification that we want to delete
      */
     deleteNotification(notificationId: number) {
-        this.adminSystemNotificationService.delete(notificationId).subscribe({
+        this.systemNotificationService.delete(notificationId).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'notificationListModification',

@@ -213,7 +213,7 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/admin/courses").file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/courses").file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         request.getMvc().perform(builder).andExpect(status().isBadRequest());
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent).as("Course has not been stored").isEmpty();
@@ -379,7 +379,7 @@ public class CourseTestService {
             if (!course.getExercises().isEmpty()) {
                 groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next(), "notify");
             }
-            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
         }
         assertThat(courseRepo.findAll()).as("All courses deleted").isEmpty();
         assertThat(notificationRepo.findAll()).as("All notifications are deleted").isEmpty();
@@ -390,7 +390,7 @@ public class CourseTestService {
 
     // Test
     public void testDeleteNotExistingCourse() throws Exception {
-        request.delete("/api/admin/courses/1", HttpStatus.NOT_FOUND);
+        request.delete("/api/courses/1", HttpStatus.NOT_FOUND);
     }
 
     // Test
@@ -2253,7 +2253,7 @@ public class CourseTestService {
         ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "validprefix", null);
         course = courseRepo.save(course);
 
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
 
         assertThat(onlineCourseConfigurationRepository.findById(course.getOnlineCourseConfiguration().getId())).isNotPresent();
     }
@@ -2264,7 +2264,7 @@ public class CourseTestService {
 
     public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course, String fileContent) throws JsonProcessingException {
         var coursePart = new MockMultipartFile("course", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsString(course).getBytes());
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/admin/courses").file(coursePart);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/courses").file(coursePart);
         if (fileContent != null) {
             var filePart = new MockMultipartFile("file", "placeholderName.png", MediaType.IMAGE_PNG_VALUE, fileContent.getBytes());
             builder.file(filePart);

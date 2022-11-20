@@ -22,6 +22,14 @@ describe('Audits Service', () => {
     });
 
     describe('Service methods', () => {
+        it('should call correct URL', () => {
+            service.query({}).subscribe(() => {});
+
+            const req = httpMock.expectOne({ method: 'GET' });
+            const resourceUrl = SERVER_API_URL + 'management/audits';
+            expect(req.request.url).toEqual(resourceUrl);
+        });
+
         it('should return Audits', fakeAsync(() => {
             const audit = new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user', '20140101', 'AUTHENTICATION_SUCCESS');
 

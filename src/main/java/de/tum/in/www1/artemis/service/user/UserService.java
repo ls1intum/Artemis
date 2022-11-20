@@ -1,16 +1,11 @@
 package de.tum.in.www1.artemis.service.user;
 
-import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.Role.ADMIN;
-import static de.tum.in.www1.artemis.security.Role.STUDENT;
+import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -26,14 +21,8 @@ import org.springframework.util.StringUtils;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
-import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
-import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
-import de.tum.in.www1.artemis.repository.StudentScoreRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.exception.*;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
@@ -47,7 +36,6 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.PasswordViolatesRequirementsException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -493,42 +481,6 @@ public class UserService {
 
             log.debug("Changed password for User: {}", user);
         });
-    }
-
-    /**
-     * Check the username and password for validity. Throws Exception if invalid.
-     * @param username The username to check
-     * @param password The password to check
-     */
-    public void checkUsernameAndPasswordValidityElseThrow(String username, String password) {
-        checkUsernameOrThrow(username);
-        checkNullablePasswordOrThrow(password);
-    }
-
-    private void checkUsernameOrThrow(String username) {
-        if (username == null || username.length() < USERNAME_MIN_LENGTH) {
-            throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
-        }
-        else if (username.length() > USERNAME_MAX_LENGTH) {
-            throw new AccessForbiddenException("The username has to be less than " + USERNAME_MAX_LENGTH + " characters long");
-        }
-    }
-
-    /**
-     * <p>The password can be null, then a random one will be generated ({@code Create}) or it won't be changed ({@code Update}).
-     * <p>If the password is not null, its length has to be at least {@code PASSWORD_MIN_LENGTH}.
-     * @param password The password to check
-     */
-    private void checkNullablePasswordOrThrow(String password) {
-        if (password == null) {
-            return;
-        }
-        if (password.length() < PASSWORD_MIN_LENGTH) {
-            throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
-        }
-        if (password.length() > PASSWORD_MAX_LENGTH) {
-            throw new AccessForbiddenException("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
-        }
     }
 
     private void clearUserCaches(User user) {
