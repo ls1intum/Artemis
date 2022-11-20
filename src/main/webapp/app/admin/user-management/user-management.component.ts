@@ -4,7 +4,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription, combineLatest } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
-import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
@@ -20,6 +19,8 @@ import { Course } from 'app/entities/course.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { AdminUserService } from 'app/core/user/admin-user.service';
+import { UserService } from 'app/core/user/user.service';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -147,6 +148,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     readonly medium = ButtonSize.MEDIUM;
 
     constructor(
+        private adminUserService: AdminUserService,
         private userService: UserService,
         private alertService: AlertService,
         private accountService: AccountService,
@@ -176,7 +178,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 tap(() => (this.loadingSearchResult = true)),
                 debounceTime(1000),
                 switchMap(() =>
-                    this.userService.query(
+                    this.adminUserService.query(
                         {
                             page: this.page - 1,
                             pageSize: this.itemsPerPage,
@@ -456,7 +458,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     setActive(user: User, isActivated: boolean) {
         user.activated = isActivated;
-        this.userService.update(user).subscribe(() => {
+        this.adminUserService.update(user).subscribe(() => {
             this.loadAll();
         });
     }
@@ -500,7 +502,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     deleteAllSelectedUsers() {
         const logins = this.selectedUsers.map((user) => user.login!);
-        this.userService.deleteUsers(logins).subscribe({
+        this.adminUserService.deleteUsers(logins).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'userListModification',
@@ -563,7 +565,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param login of the user that should be deleted
      */
     deleteUser(login: string) {
-        this.userService.deleteUser(login).subscribe({
+        this.adminUserService.deleteUser(login).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'userListModification',
