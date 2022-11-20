@@ -401,7 +401,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 comp.onStaticCodeAnalysisChanged();
 
                 if (!scaActivatedOriginal) {
-                    comp.programmingExercise.maxPoints = newMaxPenalty;
+                    comp.programmingExercise.maxStaticCodeAnalysisPenalty = newMaxPenalty;
                 }
 
                 // Recreate build plan and template update should be automatically selected
