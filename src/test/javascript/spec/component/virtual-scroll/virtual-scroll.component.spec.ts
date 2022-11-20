@@ -20,7 +20,6 @@ describe('VirtualScrollComponent', () => {
 
     let prepareDataItemsSpy: jest.SpyInstance;
     let forceReloadChangeSpy: jest.SpyInstance;
-    let onEndOfOriginalItemsReachedSpy: jest.SpyInstance;
 
     const minPostItemHeight = 126.7;
 
@@ -37,7 +36,6 @@ describe('VirtualScrollComponent', () => {
                 debugElement = fixture.debugElement;
                 prepareDataItemsSpy = jest.spyOn(comp, 'prepareDataItems');
                 forceReloadChangeSpy = jest.spyOn(comp.forceReloadChange, 'emit');
-                onEndOfOriginalItemsReachedSpy = jest.spyOn(comp.onEndOfOriginalItemsReached, 'emit');
             });
     });
 
