@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "documentationLinks": {
+            "course": "Go to the documentation for courses.",
+            "lecture": "Go to the documentation for lectures.",
+            "exercise": "Go to the documentation for exercises.",
+            "quiz": "Go to the documentation for quizzes.",
+            "model": "Go to the documentation for modelling exercises.",
+            "programming": "Go to the documentation for programming exercises.",
+            "text": "Go to the documentation for text exercises.",
+            "fileupload": "Go to the documentation for file upload exercises.",
+            "notifications": "Go to the documentation for notifications.",
+            "learninggoals": "Go to the documentation for learning goals.",
+            "communications": "Go to the documentation for communications.",
+            "exams": "Go to the documentation for exams.",
+            "plagiarismchecks": "Go to the documentation for plagiarism checks.",
+            "grading": "Go to the documentation for grading.",
+            "units": "Go to the documentation for lecture units.",
+            "assessment": "Go to the documentation for assessments."
+        }
+    }
+}

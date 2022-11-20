@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "documentationLinks": {
+            "course": "Gehe zur Dokumentation für Kurse.",
+            "lecture": "Gehe zur Dokumentation für Vorlesungen.",
+            "exercise": "Gehe zur Dokumentation für Aufgaben.",
+            "quiz": "Gehe zur Dokumentation für Quiz-Aufgaben.",
+            "model": "Gehe zur Dokumentation für Modellierungs-Aufgaben.",
+            "programming": "Gehe zur Dokumentation für Programmieraufgaben.",
+            "text": "Gehe zur Dokumentation für Text-Aufgaben.",
+            "fileupload": "Gehe zur Dokumentation für Dateiupload-Aufgaben.",
+            "notifications": "Gehe zur Dokumentation für Benachrichtigungen.",
+            "learninggoals": "Gehe zur Dokumentation für Lernziele.",
+            "communications": "Gehe zur Dokumentation für Kommunikation.",
+            "exams": "Gehe zur Dokumentation für Klausuren.",
+            "plagiarismchecks": "Gehe zur Dokumentation für Plagiatsfälle.",
+            "grading": "Gehe zur Dokumentation für die Benotung.",
+            "units": "Gehe zur Dokumentation für Lerneinheiten.",
+            "assessment": "Gehe zur Dokumentation für Bewertungen."
+        }
+    }
+}
