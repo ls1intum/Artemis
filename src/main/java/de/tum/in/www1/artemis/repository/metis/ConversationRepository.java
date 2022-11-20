@@ -45,4 +45,17 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
              ORDER BY conversation.lastMessageDate DESC
             """)
     List<Conversation> findActiveConversationsOfUserWithConversationParticipants(@Param("courseId") Long courseId, @Param("userId") Long userId);
+
+    @Query("""
+             SELECT COUNT(post.id)
+             FROM ConversationParticipant conversationParticipant
+             JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+             JOIN Post post ON post.conversation.id = conversation.id
+             WHERE conversation.course.id = :#{#courseId}
+             AND conversation.id = :#{#conversationId}
+             AND conversationParticipant.user.id = :#{#userId}
+             AND post.creationDate > conversationParticipant.lastRead
+            """)
+    long findUnreadMessages(@Param("courseId") Long courseId, @Param("userId") Long userId, @Param("conversationId") Long conversationId);
+
 }

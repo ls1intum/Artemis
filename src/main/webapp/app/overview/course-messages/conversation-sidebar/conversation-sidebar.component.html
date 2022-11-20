@@ -43,7 +43,10 @@
                                 {{ getNameOfConversationParticipant(conversation) }}
                             </span>
                             <span *ngIf="isConversationUnread(conversation)">
-                                <fa-icon [icon]="faMessage"></fa-icon>
+                                <!--                                <fa-icon [icon]="faMessage"></fa-icon>-->
+                                <span class="badge bg-secondary">
+                                    {{ getNumberOfUnreadMessages(conversation) }}
+                                </span>
                             </span>
                         </li>
                     </ul>

@@ -213,7 +213,25 @@ public class ConversationService {
         ConversationParticipant readingParticipant = conversation.getConversationParticipants().stream()
                 .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId())).findAny().get();
         readingParticipant.setLastRead(ZonedDateTime.now());
-        conversationParticipantRepository.save(readingParticipant);
         return readingParticipant.getLastRead();
+    }
+
+    /**
+     * Retrieve the number of unread messages of a conversation
+     *
+     * @param userId    userId of the conversation
+     * @param userId    courseId ...... *****
+     * @return number of unread messages
+     */
+    public void unreadMessages(Long userId, Long courseId, Long conversationId) {
+
+        List<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversationId);
+        ConversationParticipant receiverConversationParticipants = conversationParticipants.stream()
+                .filter(conversationParticipant -> conversationParticipant.getUser().getId() != userId).findAny().get();
+        long unreadMessagesCount = conversationRepository.findUnreadMessages(courseId, receiverConversationParticipants.getUser().getId(), conversationId);
+
+        // ConversationParticipant conversationParticipant = conversationParticipantRepository.findConversationParticipantByIdElseThrow(userId);
+        receiverConversationParticipants.setUnreadMessagesCount(unreadMessagesCount);
+        conversationParticipantRepository.save(receiverConversationParticipants);
     }
 }

@@ -14,11 +14,13 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Conversation;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.MessageRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
@@ -35,10 +37,13 @@ public class MessageService extends PostingService {
 
     private final MessageRepository messageRepository;
 
-    protected MessageService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, MessageRepository messageRepository,
-            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            ConversationService conversationService) {
+    private final ConversationParticipantRepository conversationParticipantRepository;
+
+    protected MessageService(ConversationParticipantRepository conversationParticipantRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
+            LectureRepository lectureRepository, MessageRepository messageRepository, AuthorizationCheckService authorizationCheckService,
+            SimpMessageSendingOperations messagingTemplate, UserRepository userRepository, ConversationService conversationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
+        this.conversationParticipantRepository = conversationParticipantRepository;
         this.conversationService = conversationService;
         this.messageRepository = messageRepository;
     }
@@ -79,8 +84,11 @@ public class MessageService extends PostingService {
             Post savedMessage = messageRepository.save(messagePost);
             savedMessage.setConversation(conversation);
 
+            // conversationService.unreadMessages(user.getId(), courseId, conversation.getId());
             conversationService.updateConversation(conversation);
-
+            conversationService.unreadMessages(user.getId(), courseId, conversation.getId());
+            conversation = conversationService.getConversationById(conversation.getId());
+            conversation.getConversationParticipants().forEach(a -> System.out.println(a.getUnreadMessagesCount()));
             broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
             conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.UPDATE), null);
 
@@ -114,6 +122,12 @@ public class MessageService extends PostingService {
             setAuthorRoleOfPostings(conversationPosts.getContent());
 
             conversationService.auditConversationReadTimeOfUser(conversation, user);
+
+            ConversationParticipant readingParticipant = conversation.getConversationParticipants().stream()
+                    .filter(conversationParticipant -> conversationParticipant.getUser().getId() == user.getId()).findAny().get();
+            readingParticipant.setUnreadMessagesCount(0L);
+            conversationParticipantRepository.save(readingParticipant);
+
             conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION), user);
         }
         else {
