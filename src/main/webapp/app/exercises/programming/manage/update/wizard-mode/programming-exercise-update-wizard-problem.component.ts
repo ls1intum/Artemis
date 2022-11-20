@@ -1,8 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { Observable } from 'rxjs';
+import { ProblemStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard-problem',
@@ -10,26 +8,10 @@ import { Observable } from 'rxjs';
     styleUrls: ['./programming-exercise-update-wizard.component.scss'],
 })
 export class ProgrammingExerciseUpdateWizardProblemComponent {
-    readonly ProgrammingLanguage = ProgrammingLanguage;
-    readonly ProjectType = ProjectType;
-    readonly AssessmentType = AssessmentType;
-
     programmingExercise: ProgrammingExercise;
 
     @Input() isImport: boolean;
-
-    @Input() problemStatementLoaded: boolean;
-    @Input() templateParticipationResultLoaded: boolean;
-    @Input() hasUnsavedChanges: boolean;
-    @Input() rerenderSubject: Observable<void>;
-    @Input() sequentialTestRunsAllowed: boolean;
-    @Input() checkoutSolutionRepositoryAllowed: boolean;
-    @Input() validIdeSelection: () => boolean | undefined;
-    @Input() selectedProjectType: ProjectType;
-    @Input() inProductionEnvironment: boolean;
-    @Input() recreateBuildPlans: boolean;
-    @Input() onRecreateBuildPlanOrUpdateTemplateChange: () => void;
-    @Input() updateTemplate: boolean;
+    @Input() problemStepInputs: ProblemStepInputs;
 
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
 
@@ -42,6 +24,4 @@ export class ProgrammingExerciseUpdateWizardProblemComponent {
         this.programmingExercise = exercise;
         this.exerciseChange.emit(this.programmingExercise);
     }
-
-    faQuestionCircle = faQuestionCircle;
 }

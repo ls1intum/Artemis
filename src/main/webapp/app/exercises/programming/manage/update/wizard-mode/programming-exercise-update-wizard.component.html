@@ -35,17 +35,7 @@
         *ngIf="currentStep >= 5"
         [isImport]="isImport"
         [(exercise)]="exercise"
-        [problemStatementLoaded]="problemStepInputs.problemStatementLoaded"
-        [templateParticipationResultLoaded]="problemStepInputs.templateParticipationResultLoaded"
-        [hasUnsavedChanges]="problemStepInputs.hasUnsavedChanges"
-        [rerenderSubject]="problemStepInputs.rerenderSubject"
-        [sequentialTestRunsAllowed]="problemStepInputs.sequentialTestRunsAllowed"
-        [checkoutSolutionRepositoryAllowed]="problemStepInputs.checkoutSolutionRepositoryAllowed"
-        [validIdeSelection]="problemStepInputs.validIdeSelection"
-        [inProductionEnvironment]="problemStepInputs.inProductionEnvironment"
-        [recreateBuildPlans]="problemStepInputs.recreateBuildPlans"
-        [onRecreateBuildPlanOrUpdateTemplateChange]="problemStepInputs.onRecreateBuildPlanOrUpdateTemplateChange"
-        [updateTemplate]="problemStepInputs.updateTemplate"
+        [problemStepInputs]="problemStepInputs"
     ></jhi-programming-exercise-update-wizard-problem>
 
     <!-- Bottom Navigation Bar -->
