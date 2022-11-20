@@ -5,6 +5,7 @@ import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll
 import { metisCoursePosts, metisCoursePostsWithCourseWideContext } from '../../helpers/sample/metis-sample-data';
 import { ReplaySubject } from 'rxjs';
 import { NavigationStart, Router, RouterEvent } from '@angular/router';
+import { Post } from 'app/entities/metis/post.model';
 
 const routerEventSubject = new ReplaySubject<RouterEvent>(1);
 
@@ -14,8 +15,8 @@ class MockRouter {
 }
 
 describe('VirtualScrollComponent', () => {
-    let comp: VirtualScrollComponent;
-    let fixture: ComponentFixture<VirtualScrollComponent>;
+    let comp: VirtualScrollComponent<Post>;
+    let fixture: ComponentFixture<VirtualScrollComponent<Post>>;
     let debugElement: DebugElement;
 
     let prepareDataItemsSpy: jest.SpyInstance;

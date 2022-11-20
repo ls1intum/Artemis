@@ -14,20 +14,20 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
     templateUrl: './virtual-scroll.component.html',
     styleUrls: ['virtual-scroll.style.css'],
 })
-export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
+export class VirtualScrollComponent<T extends { id?: number }> implements OnInit, OnChanges, OnDestroy {
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
-    @Input('items') public originalItems: any[] | undefined = [];
+    @Input('items') public originalItems: T[] | undefined = [];
     @Input() minItemHeight: number;
     @Input() endOfListReachedItemThreshold: number;
     @Input() forceReload: boolean;
 
     @Output() forceReloadChange = new EventEmitter<boolean>();
-    @Output() onItemsRender = new EventEmitter<VirtualScrollRenderEvent<any>>();
+    @Output() onItemsRender = new EventEmitter<VirtualScrollRenderEvent<T>>();
     @Output() onEndOfOriginalItemsReached = new EventEmitter();
 
-    public prevOriginalItems: any[] = [];
-    public domTreeItems: any[] = [];
+    public prevOriginalItems: T[] = [];
+    public domTreeItems: T[] = [];
 
     public currentScroll = 0;
     public contentHeight = 0;
@@ -39,10 +39,10 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
     private scrollIsUp = false;
     private lastScrollIsUp = false;
 
-    previousItemsHeight: any[] = [];
+    previousItemsHeight: number[] = [];
 
-    scrollListener: any;
-    focusInListener: any;
+    scrollListener: () => void;
+    focusInListener: () => void;
 
     constructor(private elementRef: ElementRef<HTMLElement>, private renderer: Renderer2, private router: Router) {}
 
@@ -83,12 +83,14 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
                         this.previousItemsHeight = this.previousItemsHeight.concat(new Array(this.originalItems.length - this.prevOriginalItems.length).fill(null));
                         this.prepareDataItems();
                     } else {
-                        let indexOfFirstDisplayedItem: any;
                         // changes in the displayed items are reflected to the user
+
+                        let indexOfFirstDisplayedItem = 0;
+                        // find the index of the first domTreeItem in the updated list of items
                         this.domTreeItems.every((domTreeItem) => {
-                            // find the index of the first domTreeItem in the updated list of items
                             indexOfFirstDisplayedItem = this.originalItems!.findIndex((originalItem) => originalItem.id === domTreeItem.id);
-                            // if the first domTreeItem no longer exists in the updated list of items, proceed to the next domTreeItem available
+                            // if the first domTreeItem no longer exists in the updated list of items (index not found therefore is -1), proceed to the next domTreeItem available
+                            // by returning the every method with true
                             return indexOfFirstDisplayedItem === -1;
                         });
 
@@ -231,7 +233,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
 
         // information about the currently rendered items are emitted
         this.onItemsRender.emit(
-            new VirtualScrollRenderEvent<any>({
+            new VirtualScrollRenderEvent<T>({
                 items: this.domTreeItems,
                 startIndex: this.startIndex,
                 endIndex: this.endIndex,
@@ -239,6 +241,7 @@ export class VirtualScrollComponent implements OnInit, OnChanges, OnDestroy {
             }),
         );
 
+        // emit event when the user scrolls near the end of available items
         if (this.endIndex + 1 > this.originalItems!.length - this.endOfListReachedItemThreshold) {
             this.onEndOfOriginalItemsReached.emit();
         }
