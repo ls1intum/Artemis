@@ -37,136 +37,14 @@
                 <label for="id" jhiTranslate="global.field.id">ID</label>
                 <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
             </div>
-            <div class="form-group">
-                <div>
-                    <label class="label-narrow" jhiTranslate="artemisApp.exercise.title" for="field_title">Title</label>
-                    <jhi-help-icon text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
-                </div>
-                <input
-                    required
-                    type="text"
-                    class="form-control"
-                    name="title"
-                    id="field_title"
-                    [pattern]="titleNamePattern"
-                    [(ngModel)]="programmingExercise.title"
-                    #title="ngModel"
-                />
-                <ng-container *ngFor="let e of title.errors! | keyvalue | removekeys: ['required']">
-                    <div *ngIf="title.invalid && (title.dirty || title.touched)" class="alert alert-danger">
-                        <div [jhiTranslate]="'artemisApp.exercise.form.title' + '.' + e.key"></div>
-                    </div>
-                </ng-container>
-            </div>
-            <div class="form-group">
-                <div>
-                    <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName">Short Name</label>
-                    <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip"></jhi-help-icon>
-                </div>
-                <input
-                    required
-                    type="text"
-                    class="form-control"
-                    name="shortName"
-                    id="field_shortName"
-                    minlength="3"
-                    [pattern]="shortNamePattern"
-                    [(ngModel)]="programmingExercise.shortName"
-                    [readonly]="!isImport && programmingExercise.id"
-                    #shortName="ngModel"
-                />
-                <ng-container *ngFor="let error of shortName.errors! | keyvalue | removekeys: ['required']">
-                    <div *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)" class="alert alert-danger">
-                        <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
-                    </div>
-                </ng-container>
-            </div>
-            <div class="form-group mt-2 mb-0">
-                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label" for="preview"></label>
-                <jhi-help-icon text="artemisApp.programmingExercise.preview.tooltip"></jhi-help-icon>
-            </div>
-            <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise"></jhi-programming-exercise-plans-and-repositories-preview>
-            <div *ngIf="!isImport" class="form-group">
-                <ngx-datatable
-                    id="auxiliaryRepositoryTable"
-                    class="bootstrap"
-                    trackByProp="id"
-                    [headerHeight]="50"
-                    [limit]="20"
-                    [columnMode]="'force'"
-                    [rowHeight]="'auto'"
-                    [rows]="programmingExercise.auxiliaryRepositories"
-                    *ngIf="programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0"
-                >
-                    <ngx-datatable-column name="Repository Name" prop="repositoryName">
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <jhi-table-editable-field
-                                [id]="row.id + '-repositoryName'"
-                                [value]="row.name || ''"
-                                [onValueUpdate]="updateRepositoryName(row)"
-                                [pattern]="invalidRepositoryNamePattern"
-                                [isRequired]="true"
-                                [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
-                            >
-                            </jhi-table-editable-field>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="Checkout Directory" prop="checkoutDirectory">
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <jhi-table-editable-field
-                                [id]="row.id + '-checkoutDirectory'"
-                                [value]="row.checkoutDirectory || ''"
-                                [onValueUpdate]="updateCheckoutDirectory(row)"
-                                [pattern]="invalidDirectoryNamePattern"
-                                [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
-                            >
-                            </jhi-table-editable-field>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="Description" prop="description">
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <textarea class="form-control table-editable-field__input me-2" [id]="row.id + '-description'" [(ngModel)]="row.description" name="description">
-                            </textarea>
-                        </ng-template>
-                    </ngx-datatable-column>
-                    <ngx-datatable-column name="" prop="removeButton">
-                        <ng-template ngx-datatable-cell-template let-row="row">
-                            <jhi-remove-auxiliary-repository-button
-                                placement="right auto"
-                                [programmingExercise]="programmingExercise"
-                                (onRefresh)="refreshAuxiliaryRepositoryChecks()"
-                                [row]="row"
-                                class="ml-2"
-                            ></jhi-remove-auxiliary-repository-button>
-                        </ng-template>
-                    </ngx-datatable-column>
-                </ngx-datatable>
-                <ngb-alert [dismissible]="false" [type]="'danger'" *ngIf="auxiliaryRepositoryDuplicateNames || auxiliaryRepositoryDuplicateDirectories">
-                    <span *ngIf="auxiliaryRepositoryDuplicateNames">{{ 'artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames' | artemisTranslate }}</span>
-                    <span *ngIf="auxiliaryRepositoryDuplicateDirectories">{{
-                        'artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames' | artemisTranslate
-                    }}</span>
-                </ngb-alert>
-                <ngb-alert [dismissible]="false" [type]="'info'" *ngIf="isEdit">
-                    <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}</span>
-                </ngb-alert>
-                <jhi-add-auxiliary-repository-button
-                    [programmingExercise]="programmingExercise"
-                    (onRefresh)="refreshAuxiliaryRepositoryChecks()"
-                    class="ml-2"
-                ></jhi-add-auxiliary-repository-button>
-            </div>
-            <div *ngIf="!isExamMode" class="form-group position-relative">
-                <div>
-                    <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories">Categories</label>
-                    <jhi-help-icon text="artemisApp.programmingExercise.categoriesTooltip"></jhi-help-icon>
-                </div>
-                <jhi-category-selector
-                    [categories]="exerciseCategories"
-                    [existingCategories]="existingCategories"
-                    (selectedCategories)="updateCategories($event)"
-                ></jhi-category-selector>
-            </div>
+            <jhi-programming-exercise-info
+                [isImport]="isImport"
+                [isEdit]="isEdit"
+                [isExamMode]="isExamMode"
+                [programmingExercise]="programmingExercise"
+                [infoInputs]="getInfoStepInputs()"
+            >
+            </jhi-programming-exercise-info>
             <div class="form-group">
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
                 <div>
