@@ -54,7 +54,21 @@
                 [programmingExercise]="programmingExercise"
                 [gradingInputs]="getGradingStepInputs()"
             ></jhi-programming-exercise-grading>
-            <jhi-programming-exercise-problem [isImport]="isImport" [(exercise)]="programmingExercise" [problemInputs]="getProblemStepInputs()"></jhi-programming-exercise-problem>
+            <jhi-programming-exercise-problem
+                [isImport]="isImport"
+                [(exercise)]="programmingExercise"
+                [problemStatementLoaded]="problemStatementLoaded"
+                [templateParticipationResultLoaded]="templateParticipationResultLoaded"
+                [hasUnsavedChanges]="hasUnsavedChanges"
+                [rerenderSubject]="rerenderSubject"
+                [sequentialTestRunsAllowed]="sequentialTestRunsAllowed"
+                [checkoutSolutionRepositoryAllowed]="checkoutSolutionRepositoryAllowed"
+                [validIdeSelection]="validIdeSelection"
+                [inProductionEnvironment]="inProductionEnvironment"
+                [recreateBuildPlans]="recreateBuildPlans"
+                [onRecreateBuildPlanOrUpdateTemplateChange]="onRecreateBuildPlanOrUpdateTemplateChange"
+                [updateTemplate]="updateTemplate"
+            ></jhi-programming-exercise-problem>
 
             <div class="update-programming-exercise-footer">
                 <div class="update-programming-exercise-footer-content">

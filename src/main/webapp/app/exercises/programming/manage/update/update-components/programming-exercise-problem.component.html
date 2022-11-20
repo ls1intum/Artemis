@@ -9,13 +9,13 @@
         </jhi-programming-exercise-instructions>
     </ng-container>
     <jhi-programming-exercise-editable-instructions
-        *ngIf="problemInputs.problemStatementLoaded && problemInputs.templateParticipationResultLoaded && !isImport"
+        *ngIf="problemStatementLoaded && templateParticipationResultLoaded && !isImport"
         [participation]="programmingExercise.templateParticipation!"
         [(exercise)]="exercise"
         [showStatus]="!!programmingExercise?.id"
         [editMode]="!!programmingExercise?.id"
-        (hasUnsavedChanges)="problemInputs.hasUnsavedChanges = $event"
-        [forceRender]="problemInputs.rerenderSubject"
+        (hasUnsavedChanges)="hasUnsavedChanges = $event"
+        [forceRender]="rerenderSubject"
         class="form__editable-instructions"
     ></jhi-programming-exercise-editable-instructions>
 </div>
@@ -24,7 +24,7 @@
     <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
 </div>
 <!-- It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
-<div class="form-group mb-0" *ngIf="problemInputs.sequentialTestRunsAllowed">
+<div class="form-group mb-0" *ngIf="sequentialTestRunsAllowed">
     <div class="form-check">
         <label class="form-check-label" for="field_sequentialTestRuns">
             <input
@@ -42,7 +42,7 @@
     </div>
 </div>
 <!-- Setting whether the solution repository should be checked out is only supported for Haskell exercises and is only available for new exercises -->
-<div class="form-group mb-0" *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage && problemInputs.checkoutSolutionRepositoryAllowed">
+<div class="form-group mb-0" *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage && checkoutSolutionRepositoryAllowed">
     <div class="form-check">
         <label class="form-check-label" for="field_checkoutSolutionRepository">
             <input
@@ -59,11 +59,11 @@
 </div>
 <div class="form-group mb-0">
     <div class="form-check">
-        <label [class]="!problemInputs.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
+        <label [class]="!validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
             <input class="form-check-input" type="checkbox" name="allowOfflineIde" id="field_allowOfflineIde" [(ngModel)]="programmingExercise.allowOfflineIde" checked />
             <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title">Allow Offline IDE</span>
             <fa-icon
-                *ngIf="!problemInputs.validIdeSelection()"
+                *ngIf="!validIdeSelection()"
                 [icon]="faQuestionCircle"
                 class="text-danger"
                 [placement]="'top'"
@@ -72,13 +72,13 @@
         </label>
     </div>
 </div>
-<div class="form-group mb-0" *ngIf="ProjectType.XCODE !== problemInputs.selectedProjectType">
+<div class="form-group mb-0" *ngIf="ProjectType.XCODE !== selectedProjectType">
     <div class="form-check">
-        <label [class]="!problemInputs.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineEditor">
+        <label [class]="!validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineEditor">
             <input class="form-check-input" type="checkbox" name="allowOnlineEditor" id="field_allowOnlineEditor" [(ngModel)]="programmingExercise.allowOnlineEditor" checked />
             <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title">Allow Online Editor</span>
             <fa-icon
-                *ngIf="!problemInputs.validIdeSelection()"
+                *ngIf="!validIdeSelection()"
                 [icon]="faQuestionCircle"
                 class="text-danger"
                 [placement]="'top'"
@@ -111,7 +111,7 @@
 <!--This checkbox is only visible in the dev environment. If the checkbox is checked and the user clicks on the generate button
      a programming exercise without a connection to the VCS and CI will be generated
      This functionality is only for testing purposes-->
-<div class="form-group mb-0" *ngIf="!problemInputs.inProductionEnvironment">
+<div class="form-group mb-0" *ngIf="!inProductionEnvironment">
     <div class="form-check">
         <label class="form-check-label" for="field_noVersionControlAndContinuousIntegrationAvailable">
             <input
@@ -171,8 +171,8 @@
                 type="checkbox"
                 name="recreateBuildPlans"
                 id="field_recreateBuildPlans"
-                [(ngModel)]="problemInputs.recreateBuildPlans"
-                (change)="problemInputs.onRecreateBuildPlanOrUpdateTemplateChange()"
+                [(ngModel)]="recreateBuildPlans"
+                (change)="onRecreateBuildPlanOrUpdateTemplateChange()"
             />
             <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title">Recreate Build Plans</span>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recreateBuildPlans.description"></jhi-help-icon>
@@ -187,8 +187,8 @@
                 type="checkbox"
                 name="updateTemplateFiles"
                 id="field_updateTemplateFiles"
-                [(ngModel)]="problemInputs.updateTemplate"
-                (change)="problemInputs.onRecreateBuildPlanOrUpdateTemplateChange()"
+                [(ngModel)]="updateTemplate"
+                (change)="onRecreateBuildPlanOrUpdateTemplateChange()"
             />
             <span jhiTranslate="artemisApp.programmingExercise.updateTemplate.title">Update template</span>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.updateTemplate.description"></jhi-help-icon>

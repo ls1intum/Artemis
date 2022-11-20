@@ -1,5 +1,19 @@
 <h1><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle">Problem</span></h1>
 <p><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage">Set problem.</span></p>
 <div class="form-group">
-    <jhi-programming-exercise-problem [isImport]="isImport" [(exercise)]="exercise" [problemInputs]="problemStepInputs"></jhi-programming-exercise-problem>
+    <jhi-programming-exercise-problem
+        [isImport]="isImport"
+        [(exercise)]="exercise"
+        [problemStatementLoaded]="problemStepInputs.problemStatementLoaded"
+        [templateParticipationResultLoaded]="problemStepInputs.templateParticipationResultLoaded"
+        [hasUnsavedChanges]="problemStepInputs.hasUnsavedChanges"
+        [rerenderSubject]="problemStepInputs.rerenderSubject"
+        [sequentialTestRunsAllowed]="problemStepInputs.sequentialTestRunsAllowed"
+        [checkoutSolutionRepositoryAllowed]="problemStepInputs.checkoutSolutionRepositoryAllowed"
+        [validIdeSelection]="problemStepInputs.validIdeSelection"
+        [inProductionEnvironment]="problemStepInputs.inProductionEnvironment"
+        [recreateBuildPlans]="problemStepInputs.recreateBuildPlans"
+        [onRecreateBuildPlanOrUpdateTemplateChange]="problemStepInputs.onRecreateBuildPlanOrUpdateTemplateChange"
+        [updateTemplate]="problemStepInputs.updateTemplate"
+    ></jhi-programming-exercise-problem>
 </div>

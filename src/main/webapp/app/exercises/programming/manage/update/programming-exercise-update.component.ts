@@ -990,7 +990,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             recreateBuildPlans: this.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.updateTemplate,
-            selectedProjectType: this.selectedProjectType,
         };
     }
 }

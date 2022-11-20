@@ -63,7 +63,6 @@ export type ProblemStepInputs = {
     recreateBuildPlans: boolean;
     onRecreateBuildPlanOrUpdateTemplateChange: () => void;
     updateTemplate: boolean;
-    selectedProjectType: ProjectType;
 };
 
 @Component({
