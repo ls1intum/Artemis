@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
+import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
@@ -23,7 +23,7 @@ import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from 
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
-import { debounceTime, distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
+import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
@@ -71,7 +71,8 @@ export class CourseUpdateComponent implements OnInit {
     tutorialGroupsFeatureActivated = false;
 
     constructor(
-        private courseService: CourseManagementService,
+        private courseManagementService: CourseManagementService,
+        private courseAdminService: CourseAdminService,
         private activatedRoute: ActivatedRoute,
         private fileUploaderService: FileUploaderService,
         private alertService: AlertService,
@@ -268,9 +269,9 @@ export class CourseUpdateComponent implements OnInit {
             file = base64StringToBlob(base64Data, 'image/*');
         }
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseService.update(this.course.id, course, file));
+            this.subscribeToSaveResponse(this.courseManagementService.update(this.course.id, course, file));
         } else {
-            this.subscribeToSaveResponse(this.courseService.create(course, file));
+            this.subscribeToSaveResponse(this.courseAdminService.create(course, file));
         }
     }
 
