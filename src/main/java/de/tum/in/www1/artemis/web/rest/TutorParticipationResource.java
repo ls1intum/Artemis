@@ -27,8 +27,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing TutorParticipation.
  */
 @RestController
-@RequestMapping("/api")
-@PreAuthorize("hasRole('ADMIN')")
+@RequestMapping("api/")
 public class TutorParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(TutorParticipationResource.class);
@@ -70,7 +69,7 @@ public class TutorParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      * @throws URISyntaxException if URI path can't be created
      */
-    @PostMapping(value = "/exercises/{exerciseId}/tutor-participations")
+    @PostMapping("exercises/{exerciseId}/tutor-participations")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TutorParticipation> initTutorParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start tutor participation : {}", exerciseId);
@@ -98,7 +97,7 @@ public class TutorParticipationResource {
      * @param exampleSubmission the example submission that will be added
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @PostMapping(value = "/exercises/{exerciseId}/assess-example-submission")
+    @PostMapping("exercises/{exerciseId}/assess-example-submission")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TutorParticipation> assessExampleSubmissionForTutorParticipation(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to add example submission to exercise id : {}", exerciseId);
@@ -123,7 +122,7 @@ public class TutorParticipationResource {
      * @param exerciseId    the exercise id which has example submissions and tutor participations
      * @return  the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
      */
-    @DeleteMapping(value = "/guided-tour/exercises/{exerciseId}/example-submission")
+    @DeleteMapping("guided-tour/exercises/{exerciseId}/example-submission")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<TutorParticipation> deleteTutorParticipationForGuidedTour(@PathVariable Long exerciseId) {
         log.debug("REST request to remove tutor participation of the example submission for exercise id : {}", exerciseId);
