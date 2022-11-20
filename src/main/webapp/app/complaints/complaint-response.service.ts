@@ -24,7 +24,17 @@ export class ComplaintResponseService {
      * @param exercise exercise used to find out if currently logged-in user is instructor
      */
     isComplaintResponseLockedForLoggedInUser(complaintResponse: ComplaintResponse, exercise: Exercise): boolean {
-        return !this.accountService.isAtLeastInstructorForExercise(exercise) && !this.isComplaintResponseLockedByLoggedInUser(complaintResponse);
+        return !this.accountService.isAtLeastInstructorForExercise(exercise) && this.isComplaintResponseLockedByOtherUser(complaintResponse);
+    }
+
+    /**
+     * Checks if the lock on a complaint response is active and if NOT the currently logged-in user is the creator of the lock
+     * @param complaintResponse complaint response to check
+     */
+    isComplaintResponseLockedByOtherUser(complaintResponse: ComplaintResponse): boolean {
+        return (
+            !!complaintResponse.isCurrentlyLocked && complaintResponse.submittedTime === undefined && complaintResponse.reviewer?.login !== this.accountService.userIdentity?.login
+        );
     }
 
     /**
@@ -69,6 +79,7 @@ export class ComplaintResponseService {
     public convertComplaintResponseDatesFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
         return Object.assign({}, complaintResponse, {
             submittedTime: convertDateFromClient(complaintResponse.submittedTime),
+            lockEndDate: convertDateFromClient(complaintResponse.lockEndDate),
         });
     }
 

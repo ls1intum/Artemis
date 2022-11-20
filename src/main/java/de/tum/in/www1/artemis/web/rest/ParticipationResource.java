@@ -53,8 +53,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing Participation.
  */
 @RestController
-@RequestMapping("/api")
-@PreAuthorize("hasRole('ADMIN')")
+@RequestMapping("api/")
 public class ParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
@@ -150,7 +149,7 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
      */
-    @PostMapping("/exercises/{exerciseId}/participations")
+    @PostMapping("exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
@@ -206,7 +205,7 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
      */
-    @PostMapping("/exercises/{exerciseId}/participations/practice")
+    @PostMapping("exercises/{exerciseId}/participations/practice")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId,
@@ -412,7 +411,7 @@ public class ParticipationResource {
      * @param participations for which the individual due date should be updated.
      * @return all participations where the individual due date actually changed.
      */
-    @PutMapping("/exercises/{exerciseId}/participations/update-individual-due-date")
+    @PutMapping("exercises/{exerciseId}/participations/update-individual-due-date")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<StudentParticipation>> updateParticipationDueDates(@PathVariable long exerciseId, @RequestBody List<StudentParticipation> participations) {
         final boolean anyInvalidExerciseId = participations.stream()
