@@ -173,13 +173,6 @@ public abstract class BaseExercise extends DomainObject {
     }
 
     /**
-     * Checks whether students should be able to see the example solution.
-     *
-     * @return true if example solution publication date is in the past, false otherwise (including null case).
-     */
-    public abstract boolean isExampleSolutionPublished();
-
-    /**
      * check if students are allowed to see this exercise
      *
      * @return true, if students are allowed to see this exercise, otherwise false

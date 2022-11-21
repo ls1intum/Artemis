@@ -860,7 +860,11 @@ public abstract class Exercise extends BaseExercise implements Completable {
         return newGradingInstructions;
     }
 
-    @Override
+    /**
+     * Checks whether students should be able to see the example solution.
+     *
+     * @return true if example solution publication date is in the past, false otherwise (including null case).
+     */
     public boolean isExampleSolutionPublished() {
         ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExamViaExerciseGroupOrCourseMember().getExampleSolutionPublicationDate()
                 : this.getExampleSolutionPublicationDate();
