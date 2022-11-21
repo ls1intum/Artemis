@@ -23,7 +23,7 @@ export class AuthServerProvider implements IAuthServerProvider {
     }
 
     loginSAML2(rememberMe: boolean): Observable<Object> {
-        return this.http.post(SERVER_API_URL + 'api/saml2', rememberMe.toString());
+        return this.http.post(SERVER_API_URL + 'api/saml2', rememberMe);
     }
 
     logout(): Observable<Object> {
