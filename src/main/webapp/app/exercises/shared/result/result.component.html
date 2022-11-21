@@ -50,10 +50,7 @@
     <ng-container *ngSwitchCase="ResultTemplateStatus.LATE">
         <span [ngClass]="textColorClass">
             <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-            <span class="score" *ngIf="exercise">
-                &nbsp;<span *ngIf="!short" jhiTranslate="artemisApp.result.score">Score:</span>
-                {{ roundScoreSpecifiedByCourseSettings(result!.score, getCourseFromExercise(exercise!)) }} %,
-            </span>
+            <span class="score"> {{ resultString }}, </span>
             <span class="text-muted">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateFeedback' | artemisTranslate }}</span>
         </span>
     </ng-container>

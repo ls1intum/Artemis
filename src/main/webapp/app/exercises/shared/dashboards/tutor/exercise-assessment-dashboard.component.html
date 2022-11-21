@@ -667,6 +667,7 @@
                                         <a
                                             *ngIf="moreFeedbackRequest.complaint.accepted === undefined; else continueButton"
                                             class="btn btn-success btn-sm"
+                                            [class.disabled]="isComplaintLocked(moreFeedbackRequest.complaint)"
                                             [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
                                             [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"
                                         >
