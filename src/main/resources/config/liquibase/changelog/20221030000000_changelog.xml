@@ -36,6 +36,7 @@
             </column>
         </addColumn>
         <addForeignKeyConstraint baseColumnNames="creator_id" baseTableName="conversation" constraintName="fk_conversation_creator" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addUniqueConstraint columnNames="conversation_id, user_id" constraintName="conversation_participant_uq" tableName="conversation_participant"/>
     </changeSet>
     <changeSet author="stefanwaldhauser" id="20221030000000-2">
         <sql>update conversation c set c.discriminator = 'O' WHERE c.discriminator IS NULL;</sql>
