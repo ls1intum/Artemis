@@ -9,6 +9,13 @@
         <a [routerLink]="['/privacy']" id="privacy" jhiTranslate="legal.privacy.title" class="footer-text ms-3"></a>
         <a [routerLink]="['/imprint']" id="imprint" jhiTranslate="legal.imprint.title" class="footer-text ms-3"></a>
     </div>
+
+    <div class="col-sm-12 footer-git-wrapper" *ngIf="!inProduction || testServer">
+        <div class="footer-git">{{ 'git.branch' | artemisTranslate }}: {{ gitBranch }} •</div>
+        <div class="footer-git">{{ 'git.commit' | artemisTranslate }}: {{ gitCommitId }} •</div>
+        <div class="footer-git">{{ 'git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} •</div>
+        <div class="footer-git">{{ 'git.username' | artemisTranslate }}: {{ gitCommitUser }}</div>
+    </div>
 </footer>
 
 <footer class="d-flex d-md-none justify-content-between mw-100">

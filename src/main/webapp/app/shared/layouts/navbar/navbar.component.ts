@@ -64,8 +64,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly SERVER_API_URL = SERVER_API_URL;
 
     inProduction: boolean;
+    testServer: boolean;
     isNavbarCollapsed: boolean;
     isTourAvailable: boolean;
+    gitCommitId: string;
+    gitBranchName: string;
+    gitTimestamp: string;
+    gitUsername: string;
     languages = LANGUAGES;
     openApiEnabled?: boolean;
     modalRef: NgbModalRef;
@@ -177,7 +182,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
+                this.testServer = profileInfo.testServer == undefined ? false : profileInfo.testServer;
                 this.openApiEnabled = profileInfo.openApiEnabled;
+                this.gitCommitId = profileInfo.git.commit.id.abbrev;
+                this.gitBranchName = profileInfo.git.branch;
+                this.gitTimestamp = profileInfo.git.commit.time;
+                this.gitUsername = profileInfo.git.commit.user.name;
             }
         });
 

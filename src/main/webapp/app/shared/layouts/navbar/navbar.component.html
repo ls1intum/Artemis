@@ -76,7 +76,15 @@
         <a class="navbar-brand" routerLink="/" (click)="collapseNavbar()">
             <img [src]="SERVER_API_URL + 'public/images/logo.png'" height="30" alt="" />
             <div jhiTranslate="global.title" class="navbar-title">Artemis</div>
-            <div class="navbar-version">{{ version }}</div>
+            <ng-template #gitInfo>
+                {{ 'git.branch' | artemisTranslate }}: {{ gitBranchName }} <br />
+                {{ 'git.commit' | artemisTranslate }}: {{ gitCommitId }} <br />
+                {{ 'git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} <br />
+                {{ 'git.username' | artemisTranslate }}: {{ gitUsername }}
+            </ng-template>
+            <div class="navbar-version" placement="bottom" [ngbTooltip]="gitInfo" [disableTooltip]="inProduction && !testServer">
+                {{ version }}
+            </div>
         </a>
         <div class="indicators">
             <jhi-connection-warning class="align-self-center"></jhi-connection-warning>

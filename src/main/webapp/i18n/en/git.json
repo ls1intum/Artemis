@@ -1,0 +1,9 @@
+{
+    "git": {
+        "title": "Git Information",
+        "branch": "Branch",
+        "commit": "Commit ID",
+        "timestamp": "Commit Timestamp",
+        "username": "Commit Username"
+    }
+}

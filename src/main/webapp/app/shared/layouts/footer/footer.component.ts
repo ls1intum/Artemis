@@ -14,6 +14,12 @@ export class FooterComponent implements OnInit {
     readonly requestChangeUrl = 'https://github.com/ls1intum/Artemis/issues/new/choose';
 
     email: string;
+    gitBranch: string;
+    gitCommitId: string;
+    gitTimestamp: string;
+    gitCommitUser: string;
+    testServer: Boolean;
+    inProduction: Boolean;
 
     constructor(private profileService: ProfileService) {}
 
@@ -24,6 +30,12 @@ export class FooterComponent implements OnInit {
                 filter(Boolean),
                 tap((info: ProfileInfo) => {
                     this.contact = info.contact;
+                    this.gitBranch = info.git.branch;
+                    this.gitCommitId = info.git.commit.id.abbrev;
+                    this.gitTimestamp = info.git.commit.time;
+                    this.gitCommitUser = info.git.commit.user.name;
+                    this.testServer = info.testServer == undefined ? false : info.testServer;
+                    this.inProduction = info.inProduction;
                 }),
             )
             .subscribe();

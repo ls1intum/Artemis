@@ -123,6 +123,14 @@ describe('Profile Service', () => {
         allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
         allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
         activeProfiles: ['prod', 'jenkins', 'gitlab', 'athene', 'openapi', 'apollon'],
+        git: {
+            branch: 'profile-service-spec',
+            commit: {
+                id: {
+                    abbrev: '95ef2a',
+                },
+            },
+        },
     };
 
     const expectedProfileInfo: ProfileInfo = {
@@ -215,6 +223,18 @@ describe('Profile Service', () => {
                 staticCodeAnalysis: true,
             },
         ],
+        git: {
+            branch: 'clone-repo-button',
+            commit: {
+                id: {
+                    abbrev: '95ef2a',
+                },
+                time: '2022-11-20T20:35:01Z',
+                user: {
+                    name: 'Max Musterman',
+                },
+            },
+        },
     };
 
     beforeEach(() => {
