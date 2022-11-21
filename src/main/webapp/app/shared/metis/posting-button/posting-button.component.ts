@@ -8,7 +8,6 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './posting-button.component.html',
 })
 export class PostingButtonComponent {
-    @Input() buttonVisible = true;
     @Input() buttonIcon: IconProp;
     @Input() buttonLabel: string;
     @Input() buttonLoading = false;

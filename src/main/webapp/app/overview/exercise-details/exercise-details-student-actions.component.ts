@@ -1,4 +1,4 @@
-import { Component, ContentChild, HostBinding, Input, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, HostBinding, Input, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';
@@ -23,7 +23,7 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['../course-overview.scss'],
     providers: [SourceTreeService],
 })
-export class ExerciseDetailsStudentActionsComponent implements OnInit {
+export class ExerciseDetailsStudentActionsComponent {
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly ParticipationStatus = ParticipationStatus;
@@ -41,8 +41,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
 
     // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
-
-    beforeStartDateStudent: boolean;
 
     // Icons
     faComment = faComment;
@@ -62,10 +60,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
         private translateService: TranslateService,
         private participationService: ParticipationService,
     ) {}
-
-    ngOnInit(): void {
-        this.beforeStartDateStudent = !this.exercise.isAtLeastTutor && !!this.exercise.startDate && dayjs().isBefore(this.exercise.startDate);
-    }
 
     /**
      * Starting an exercise is not possible in the exam, otherwise see exercise.utils -> isStartExerciseAvailable
@@ -159,10 +153,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             });
     }
 
-    isManualFeedbackRequestsAllowed(): boolean {
-        return this.exercise.allowManualFeedbackRequests ?? false;
-    }
-
     private feedbackSent = false;
 
     isFeedbackRequestButtonDisabled(): boolean {
@@ -194,6 +184,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
             },
         });
+    }
+
+    get isBeforeStartDateAndStudent(): boolean {
+        return !this.exercise.isAtLeastTutor && !!this.exercise.startDate && dayjs().isBefore(this.exercise.startDate);
     }
 
     /**

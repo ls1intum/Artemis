@@ -242,16 +242,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(comp.publishBuildPlanUrl()).toBeUndefined();
     });
 
-    it('should hide the feedback request button', () => {
-        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: false };
-        expect(comp.isManualFeedbackRequestsAllowed()).toBeFalse();
-    });
-
-    it('should show the feedback request button', () => {
-        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
-        expect(comp.isManualFeedbackRequestsAllowed()).toBeTrue();
-    });
-
     it('should disable the feedback request button', () => {
         const result: Result = { score: 50, rated: true };
         const participation: StudentParticipation = {

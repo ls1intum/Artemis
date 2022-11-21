@@ -9,11 +9,11 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['../../overview/course-overview.scss'],
 })
 export class ExerciseActionButtonComponent {
-    @Input() buttonVisible = true;
     @Input() buttonIcon: IconProp;
     @Input() buttonLabel: string;
     @Input() hideLabelMobile = true;
-    @HostBinding('disabled') @Input() buttonLoading = false;
+    @Input() overwriteDisabled = false;
+    @Input() buttonLoading = false;
     @HostBinding('class.btn-outline-primary') @Input() outlined = false;
     @HostBinding('class.btn-sm') @Input() smallButton = false;
     @HostBinding('class.btn') isButton = true;
@@ -21,6 +21,11 @@ export class ExerciseActionButtonComponent {
     @HostBinding('class.btn-primary')
     public get btnPrimary(): boolean {
         return !this.outlined;
+    }
+
+    @HostBinding('disabled')
+    get disabled(): boolean {
+        return this.buttonLoading || this.overwriteDisabled;
     }
 
     // Icons
