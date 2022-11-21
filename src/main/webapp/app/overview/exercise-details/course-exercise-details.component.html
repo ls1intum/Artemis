@@ -40,7 +40,7 @@
                 <span class="me-1">{{
                     'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise.isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate
                 }}</span>
-                <div class="btn-group flex-btn-group-container gap-1">
+                <div class="gap-1">
                     <!-- Actions for Tutors, Editors and Instructors -->
                     <a *ngIf="exercise.type !== QUIZ" [routerLink]="baseResource" class="btn btn-info btn-sm">
                         <fa-icon [icon]="faEye"></fa-icon>
