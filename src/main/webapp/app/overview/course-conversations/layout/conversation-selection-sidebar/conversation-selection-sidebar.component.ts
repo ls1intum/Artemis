@@ -251,7 +251,9 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         this.metisConversationService
             .forceRefresh()
             .pipe(takeUntil(this.ngUnsubscribe))
-            .subscribe(() => {});
+            .subscribe({
+                complete: () => {},
+            });
     }
 
     openCreateChannelDialog(event: MouseEvent) {
@@ -264,7 +266,9 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             .subscribe((channelToCreate: ChannelDTO) => {
                 this.metisConversationService.createChannel(channelToCreate).subscribe({
                     complete: () => {
-                        this.metisConversationService.forceRefresh().subscribe(() => {});
+                        this.metisConversationService.forceRefresh().subscribe({
+                            complete: () => {},
+                        });
                     },
                 });
             });
@@ -279,7 +283,9 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             .subscribe((chatPartners: UserPublicInfoDTO[]) => {
                 this.metisConversationService.createGroupChat(chatPartners?.map((partner) => partner.login!)).subscribe({
                     complete: () => {
-                        this.metisConversationService.forceRefresh().subscribe(() => {});
+                        this.metisConversationService.forceRefresh().subscribe({
+                            complete: () => {},
+                        });
                     },
                 });
             });
@@ -295,7 +301,9 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 if (chatPartner?.login) {
                     this.metisConversationService.createOneToOneChat(chatPartner.login).subscribe({
                         complete: () => {
-                            this.metisConversationService.forceRefresh().subscribe(() => {});
+                            this.metisConversationService.forceRefresh().subscribe({
+                                complete: () => {},
+                            });
                         },
                     });
                 }
@@ -311,10 +319,12 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         from(modalRef.result)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe((newActiveConversation: ConversationDto) => {
-                this.metisConversationService.forceRefresh().subscribe(() => {
-                    if (newActiveConversation) {
-                        this.metisConversationService.setActiveConversation(newActiveConversation);
-                    }
+                this.metisConversationService.forceRefresh().subscribe({
+                    complete: () => {
+                        if (newActiveConversation) {
+                            this.metisConversationService.setActiveConversation(newActiveConversation);
+                        }
+                    },
                 });
             });
     }

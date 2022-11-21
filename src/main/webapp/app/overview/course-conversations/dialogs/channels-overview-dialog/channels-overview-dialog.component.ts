@@ -106,7 +106,7 @@ export class ChannelsOverviewDialogComponent implements OnInit, OnDestroy {
                     });
                 break;
             case 'view':
-                this.activeModal.close(channelAction);
+                this.activeModal.close(channelAction.channel);
                 break;
             case 'create':
                 this.createChannelFn(channelAction.channel)

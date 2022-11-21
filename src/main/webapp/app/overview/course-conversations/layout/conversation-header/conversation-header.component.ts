@@ -71,7 +71,9 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         from(modalRef.result)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe(() => {
-                this.metisConversationService.forceRefresh().subscribe();
+                this.metisConversationService.forceRefresh().subscribe({
+                    complete: () => {},
+                });
             });
     }
 
@@ -85,7 +87,9 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         from(modalRef.result)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe(() => {
-                this.metisConversationService.forceRefresh().subscribe();
+                this.metisConversationService.forceRefresh().subscribe({
+                    complete: () => {},
+                });
             });
     }
 }
