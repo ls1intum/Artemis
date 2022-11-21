@@ -55,13 +55,13 @@ public class ContinuousIntegrationTestService {
     /**
      * This method initializes the test case by setting up a local repo
      */
-    public void setup(MockDelegate mockDelegate, ContinuousIntegrationService continuousIntegrationService) throws Exception {
+    public void setup(String testPrefix, MockDelegate mockDelegate, ContinuousIntegrationService continuousIntegrationService) throws Exception {
         this.mockDelegate = mockDelegate;
         this.continuousIntegrationService = continuousIntegrationService;
 
-        database.addUsers(2, 0, 0, 0);
-        database.addCourseWithOneProgrammingExercise();
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        database.addUsers(testPrefix, 2, 0, 0, 1);
+        var course = database.addCourseWithOneProgrammingExercise();
+        programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
 
         // init local repo
         String currentLocalFileName = "currentFileName";
@@ -79,7 +79,7 @@ public class ContinuousIntegrationTestService {
 
         GitUtilService.MockFileRepositoryUrl localRepoUrl = new GitUtilService.MockFileRepositoryUrl(localRepo.localRepoFile);
         // create a participation
-        participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURI());
+        participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, testPrefix + "student1", localRepoUrl.getURI());
         assertThat(programmingExercise).as("Exercise was correctly set").isEqualTo(participation.getProgrammingExercise());
 
         // mock return of git path

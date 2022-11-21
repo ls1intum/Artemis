@@ -2638,13 +2638,16 @@ public class DatabaseUtilService {
     }
 
     public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        // Clean up existing test cases
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+
         List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
-        testCases.add(new ProgrammingExerciseTestCase().testName("test1").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1D)
-                .bonusPoints(0D));
-        testCases.add(new ProgrammingExerciseTestCase().testName("test2").weight(2.0).active(false).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1D)
-                .bonusPoints(0D));
-        testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3.0).active(true).exercise(programmingExercise).visibility(Visibility.AFTER_DUE_DATE)
+        testCases.add(new ProgrammingExerciseTestCase().testName("test1-" + generateTempId()).weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
                 .bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test2-" + generateTempId()).weight(2.0).active(false).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("test3-" + generateTempId()).weight(3.0).active(true).exercise(programmingExercise)
+                .visibility(Visibility.AFTER_DUE_DATE).bonusMultiplier(1D).bonusPoints(0D));
         testCaseRepository.saveAll(testCases);
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));

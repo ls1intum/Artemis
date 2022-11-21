@@ -16,6 +16,8 @@ import de.tum.in.www1.artemis.programmingexercise.ContinuousIntegrationTestServi
 
 class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "bambooservicetest";
+
     @Autowired
     private ContinuousIntegrationTestService continuousIntegrationTestService;
 
@@ -26,7 +28,7 @@ class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void initTestCase() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
-        continuousIntegrationTestService.setup(this, continuousIntegrationService);
+        continuousIntegrationTestService.setup(TEST_PREFIX, this, continuousIntegrationService);
     }
 
     @AfterEach
@@ -40,7 +42,7 @@ class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
      * This method tests if the local repo is deleted if the exercise cannot be accessed
      */
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void performEmptySetupCommitWithNullExercise() {
         // test performEmptyCommit() with empty exercise
         continuousIntegrationTestService.getParticipation().setProgrammingExercise(null);
@@ -54,61 +56,61 @@ class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetBuildStatusNotFound() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusNotFound();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetBuildStatusInactive1() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusInactive1();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetBuildStatusInactive2() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusInactive2();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetBuildStatusQueued() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusQueued();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetBuildStatusBuilding() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusBuilding();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetBuildStatusFails() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusFails();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testHealthRunning() throws Exception {
         continuousIntegrationTestService.testHealthRunning();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testHealthNotRunning() throws Exception {
         continuousIntegrationTestService.testHealthNotRunning();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testHealthException() throws Exception {
         continuousIntegrationTestService.testHealthException();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testConfigureBuildPlan() throws Exception {
         continuousIntegrationTestService.testConfigureBuildPlan();
     }
