@@ -94,7 +94,7 @@ class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJira
         final HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.set("Authorization", atheneApiSecret);
         AtheneResponse atheneResponse = atheneResultBuilder.build();
-        request.postWithoutLocation("/api/athene-result/" + exercise.getId(), atheneResponse.toByteArray(), HttpStatus.OK, httpHeaders, "application/x-protobuf");
+        request.postWithoutLocation("/api/public/athene-result/" + exercise.getId(), atheneResponse.toByteArray(), HttpStatus.OK, httpHeaders, "application/x-protobuf");
 
         final List<TextCluster> clusters = textClusterRepository.findAllByExercise(exercise);
 

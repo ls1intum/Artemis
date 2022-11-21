@@ -129,7 +129,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         web.ignoring()
             .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH);
         web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/athene-result/*");
+            .antMatchers(HttpMethod.POST, "/api/public/athene-result/*");
         // @formatter:on
     }
 
