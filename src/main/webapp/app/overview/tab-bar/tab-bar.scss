@@ -4,14 +4,20 @@
     min-height: 60px;
     margin: 0 -1rem;
 
-    $padding-y: 11px;
-    padding-top: $padding-y;
-    padding-bottom: $padding-y;
+    padding: 0.5rem 1rem;
     border-bottom: 1px solid var(--overview-border-color);
 
     .tab-item {
         cursor: pointer;
-        margin: 0 0.5em;
+        margin: 0 0.25em;
+
+        &:first-child {
+            margin-left: 0;
+        }
+
+        &:last-child {
+            margin-right: 0;
+        }
 
         &.active {
             box-shadow: 0 2px 0 var(--overview-tab-active-border-color);
