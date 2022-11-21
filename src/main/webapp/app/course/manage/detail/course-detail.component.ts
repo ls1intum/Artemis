@@ -27,6 +27,7 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CourseAdminService } from 'app/course/manage/course-admin.service';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -78,7 +79,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     constructor(
         private eventManager: EventManager,
-        private courseService: CourseManagementService,
+        private courseManagementService: CourseManagementService,
+        private courseAdminService: CourseAdminService,
         private route: ActivatedRoute,
         private router: Router,
         private alertService: AlertService,
@@ -107,7 +109,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      */
     registerChangeInCourses(courseId: number) {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
-            this.courseService.find(courseId).subscribe((courseResponse) => {
+            this.courseManagementService.find(courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
             });
             this.fetchCourseStatistics(courseId);
@@ -128,7 +130,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * fetch the course specific statistics separately because it takes quite long for larger courses
      */
     private fetchCourseStatistics(courseId: number) {
-        this.courseService.getCourseStatisticsForDetailView(courseId).subscribe({
+        this.courseManagementService.getCourseStatisticsForDetailView(courseId).subscribe({
             next: (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
                 this.courseDTO = courseResponse.body!;
                 this.activeStudents = courseResponse.body!.activeStudents;
@@ -142,7 +144,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * @param courseId id the course that will be deleted
      */
     deleteCourse(courseId: number) {
-        this.courseService.delete(courseId).subscribe({
+        this.courseAdminService.delete(courseId).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'courseListModification',
