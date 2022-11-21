@@ -5,7 +5,7 @@
     <div class="col pe-0 flex-grow-1">
         <jhi-messages [activeConversation]="selectedConversation" (openThread)="setPostInThread($event)"> </jhi-messages>
     </div>
-    <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+    <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
         <jhi-thread-sidebar *ngIf="showPostThread" [activePost]="postInThread" (closePostThread)="showPostThread = false"> </jhi-thread-sidebar>
     </div>
 </div>
