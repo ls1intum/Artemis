@@ -56,7 +56,7 @@
         <ng-template #renderedHint>
             <div [innerHTML]="renderedQuestion.hint"></div>
         </ng-template>
-        <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="shortAnswerQuestion.hint">
+        <span class="label label-info" [ngbPopover]="renderedHint" placement="right auto" triggers="mouseenter:mouseleave" *ngIf="shortAnswerQuestion.hint">
             <fa-icon [icon]="farQuestionCircle"></fa-icon>
             <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
         </span>
@@ -67,7 +67,7 @@
         <span
             class="label label-primary"
             [ngbPopover]="renderedExplanation"
-            placement="right"
+            placement="right auto"
             triggers="mouseenter:mouseleave"
             *ngIf="shortAnswerQuestion.explanation && showResult"
         >
