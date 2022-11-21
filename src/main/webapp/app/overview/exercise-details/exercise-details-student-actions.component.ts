@@ -1,4 +1,4 @@
-import { Component, ContentChild, HostBinding, Input, TemplateRef, OnInit } from '@angular/core';
+import { Component, ContentChild, HostBinding, Input, OnInit, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';
