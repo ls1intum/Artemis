@@ -124,10 +124,14 @@ describe('Profile Service', () => {
         allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
         activeProfiles: ['prod', 'jenkins', 'gitlab', 'athene', 'openapi', 'apollon'],
         git: {
-            branch: 'profile-service-spec',
+            branch: 'clone-repo-button',
             commit: {
                 id: {
                     abbrev: '95ef2a',
+                },
+                time: '2022-11-20T20:35:01Z',
+                user: {
+                    name: 'Max Musterman',
                 },
             },
         },
