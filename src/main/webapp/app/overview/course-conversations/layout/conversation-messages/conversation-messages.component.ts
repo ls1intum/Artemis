@@ -6,7 +6,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { Channel, getAsChannel, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Channel, getAsChannel, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
@@ -30,7 +30,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     content: ElementRef;
     course?: Course;
 
-    getAsChannel = getAsChannel;
+    getAsChannel = getAsChannelDto;
 
     previousScrollDistanceFromTop: number;
     // as set for the css class '.posting-infinite-scroll-container'
