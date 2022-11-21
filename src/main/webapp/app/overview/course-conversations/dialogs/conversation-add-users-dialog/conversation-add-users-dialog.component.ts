@@ -57,8 +57,8 @@ export class ConversationAddUsersDialogComponent implements OnDestroy {
         this.ngUnsubscribe.complete();
     }
 
-    onFormSubmitted($event: AddUsersFormData) {
-        this.addUsers($event.selectedUsers ?? []);
+    onFormSubmitted({ selectedUsers, addAllStudents, addAllTutors, addAllEditors, addAllInstructors }: AddUsersFormData) {
+        this.addUsers(selectedUsers ?? [], addAllStudents, addAllTutors, addAllEditors, addAllInstructors);
     }
 
     clear() {
@@ -70,12 +70,12 @@ export class ConversationAddUsersDialogComponent implements OnDestroy {
 
     getConversationName = this.conversationService.getConversationName;
 
-    private addUsers(usersToAdd: UserPublicInfoDTO[]) {
+    private addUsers(usersToAdd: UserPublicInfoDTO[], addAllStudents: boolean, addAllTutors: boolean, addAllEditors: boolean, addAllInstructors: boolean) {
         const userLogins = usersToAdd.map((user) => user.login!);
 
         if (isChannelDto(this.activeConversation)) {
             this.channelService
-                .registerUsersToChannel(this.course.id!, this.activeConversation.id!, userLogins)
+                .registerUsersToChannel(this.course.id!, this.activeConversation.id!, addAllStudents, addAllTutors, addAllEditors, addAllInstructors, userLogins)
                 .pipe(takeUntil(this.ngUnsubscribe))
                 .subscribe({
                     next: () => {

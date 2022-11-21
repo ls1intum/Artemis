@@ -1,9 +1,15 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 export interface AddUsersFormData {
     selectedUsers?: UserPublicInfoDTO[];
+    addAllStudents: boolean;
+    addAllTutors: boolean;
+    addAllEditors: boolean;
+    addAllInstructors: boolean;
 }
 
 @Component({
@@ -15,8 +21,14 @@ export class AddUsersFormComponent implements OnInit, OnChanges {
     @Input() courseId: number;
     @Input() maxSelectable?: number = undefined;
 
+    @Input()
+    activeConversation: ConversationDto;
+
     form: FormGroup;
 
+    getAsChannel = getAsChannelDto;
+
+    mode: 'individual' | 'group' = 'individual';
     constructor(private fb: FormBuilder) {}
 
     get selectedUsersControl() {
@@ -24,7 +36,10 @@ export class AddUsersFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !this.form.invalid;
+        return (
+            (this.mode === 'individual' && !this.form.invalid) ||
+            (this.mode === 'group' && (this.form.value?.addAllStudents || this.form.value?.addAllTutors || this.form.value?.addAllEditors || this.form.value?.addAllInstructors))
+        );
     }
 
     ngOnInit(): void {
@@ -43,6 +58,10 @@ export class AddUsersFormComponent implements OnInit, OnChanges {
 
         this.form = this.fb.group({
             selectedUsers: [[], validators],
+            addAllStudents: [false],
+            addAllTutors: [false],
+            addAllEditors: [false],
+            addAllInstructors: [false],
         });
     }
 

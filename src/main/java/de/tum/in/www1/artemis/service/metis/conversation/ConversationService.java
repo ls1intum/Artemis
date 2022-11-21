@@ -112,10 +112,11 @@ public class ConversationService {
             }
             newConversationParticipants.add(conversationParticipant);
         }
-        conversationParticipantRepository.saveAll(newConversationParticipants);
-
-        broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, usersToRegisterWithoutExistingParticipants);
-        notifyConversationMembersAboutUpdate(conversation);
+        if (newConversationParticipants.size() > 0) {
+            conversationParticipantRepository.saveAll(newConversationParticipants);
+            broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, usersToRegisterWithoutExistingParticipants);
+            notifyConversationMembersAboutUpdate(conversation);
+        }
     }
 
     public void notifyConversationMembersAboutUpdate(Conversation conversation) {
@@ -137,9 +138,11 @@ public class ConversationService {
                 throw new IllegalArgumentException("The creator of a channel cannot be deregistered");
             }
         }
-        conversationParticipantRepository.deleteAll(participantsToRemove);
-        broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersWithExistingParticipants);
-        notifyConversationMembersAboutUpdate(conversation);
+        if (participantsToRemove.size() > 0) {
+            conversationParticipantRepository.deleteAll(participantsToRemove);
+            broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersWithExistingParticipants);
+            notifyConversationMembersAboutUpdate(conversation);
+        }
     }
 
     @Transactional // ok because of delete
@@ -229,6 +232,23 @@ public class ConversationService {
      */
     public enum ConversationMemberSearchFilters {
         INSTRUCTOR, EDITOR, TUTOR, STUDENT, CHANNEL_ADMIN // this is a special role that is only used for channels
+    }
+
+    public Set<User> findUsersInDatabase(Course course, boolean findAllStudents, boolean findAllTutors, boolean findAllEditors, boolean findAllInstructors) {
+        Set<User> users = new HashSet<>();
+        if (findAllStudents) {
+            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getStudentGroupName()));
+        }
+        if (findAllTutors) {
+            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()));
+        }
+        if (findAllEditors) {
+            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()));
+        }
+        if (findAllInstructors) {
+            users.addAll(userRepository.findAllInGroupWithAuthorities(course.getInstructorGroupName()));
+        }
+        return users;
     }
 
     public Set<User> findUsersInDatabase(@RequestBody List<String> userLogins) {

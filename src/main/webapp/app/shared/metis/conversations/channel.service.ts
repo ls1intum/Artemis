@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 
@@ -45,10 +45,33 @@ export class ChannelService {
         return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/deregister`, userLogins, { observe: 'response' });
     }
 
-    registerUsersToChannel(courseId: number, channelId: number, logins?: string[]): Observable<HttpResponse<void>> {
-        // if no explicit login is give we assume self registration
+    registerUsersToChannel(
+        courseId: number,
+        channelId: number,
+        addAllStudents = false,
+        addAllTutors = false,
+        addAllEditors = false,
+        addAllInstructors = false,
+        logins?: string[],
+    ): Observable<HttpResponse<void>> {
+        // if no explicit login is give we assume self registration (will be ignored on the server if any of the addAll booleans is true)
         const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
-        return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/register`, userLogins, { observe: 'response' });
+
+        let params = new HttpParams();
+        if (addAllStudents) {
+            params = params.set('addAllStudents', 'true');
+        }
+        if (addAllTutors) {
+            params = params.set('addAllTutors', 'true');
+        }
+        if (addAllEditors) {
+            params = params.set('addAllEditors', 'true');
+        }
+        if (addAllInstructors) {
+            params = params.set('addAllInstructors', 'true');
+        }
+
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/register`, userLogins, { observe: 'response', params });
     }
 
     grantChannelAdminRights(courseId: number, channelId: number, logins?: string[]): Observable<HttpResponse<void>> {

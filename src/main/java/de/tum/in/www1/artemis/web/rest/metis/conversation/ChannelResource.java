@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -172,14 +173,26 @@ public class ChannelResource {
 
     @PostMapping("/{courseId}/channels/{channelId}/register")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
-        if (userLogins == null || userLogins.isEmpty()) {
-            throw new BadRequestAlertException("No user logins provided", CHANNEL_ENTITY_NAME, "userLoginsEmpty");
+    public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins,
+            @RequestParam(defaultValue = "false") Boolean addAllStudents, @RequestParam(defaultValue = "false") Boolean addAllTutors,
+            @RequestParam(defaultValue = "false") Boolean addAllEditors, @RequestParam(defaultValue = "false") Boolean addAllInstructors) {
+        var anyAddAllTrue = addAllStudents || addAllTutors || addAllEditors || addAllInstructors;
+        if (!anyAddAllTrue) {
+            if (userLogins == null || userLogins.isEmpty()) {
+                throw new BadRequestAlertException("No user logins provided", CHANNEL_ENTITY_NAME, "userLoginsEmpty");
+            }
+            if (userLogins.size() > MAX_REGISTRATIONS_TO_CHANNEL_AT_ONCE) {
+                throw new BadRequestAlertException("Too many user logins provided.", CHANNEL_ENTITY_NAME, "userLoginsTooMany");
+            }
+            log.debug("REST request to register {} users to channel : {}", userLogins.size(), channelId);
         }
-        if (userLogins.size() > MAX_REGISTRATIONS_TO_CHANNEL_AT_ONCE) {
-            throw new BadRequestAlertException("Too many user logins provided.", CHANNEL_ENTITY_NAME, "userLoginsTooMany");
+        else {
+            var registerAllString = "addAllStudents: " + addAllStudents + ", addAllTutors: " + addAllTutors + ", addAllEditors: " + addAllEditors + ", addAllInstructors: "
+                    + addAllInstructors;
+            log.debug("REST request to register {} to channel : {}", registerAllString, channelId);
+            userLogins = new ArrayList<>();
         }
-        log.debug("REST request to register {} users to channel : {}", userLogins.size(), channelId);
+
         var course = courseRepository.findByIdElseThrow(courseId);
         var channelFromDatabase = this.channelService.getChannelOrThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
@@ -188,7 +201,15 @@ public class ChannelResource {
         }
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToRegisterUsersToChannel(channelFromDatabase, userLogins, requestingUser);
-        var usersToRegister = conversationService.findUsersInDatabase(userLogins);
+        Set<User> usersToRegister;
+
+        if (!anyAddAllTrue) {
+            usersToRegister = conversationService.findUsersInDatabase(userLogins);
+        }
+        else {
+            usersToRegister = conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllEditors, addAllInstructors);
+        }
+
         conversationService.registerUsersToConversation(course, usersToRegister, channelFromDatabase, Optional.empty());
         return ResponseEntity.noContent().build();
     }

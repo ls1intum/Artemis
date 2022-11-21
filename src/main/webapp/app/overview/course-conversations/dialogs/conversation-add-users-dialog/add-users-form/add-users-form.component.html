@@ -1,20 +1,54 @@
-<form class="row">
+<div class="row">
     <div class="col-12">
         <div *ngIf="maxSelectable" class="alert alert-info">
             {{ 'artemisApp.messages.addUserForm.maxUsersNote' | artemisTranslate: { max: maxSelectable } }}
         </div>
-        <form (ngSubmit)="submitForm()" [formGroup]="form">
-            <jhi-course-users-selector
-                formControlName="selectedUsers"
-                [courseId]="courseId"
-                [label]="'artemisApp.messages.addUserForm.addUserLabel' | artemisTranslate"
-            ></jhi-course-users-selector>
-            <div *ngIf="selectedUsersControl?.invalid && (selectedUsersControl?.dirty || selectedUsersControl?.touched)" class="alert alert-danger">
-                <div *ngIf="selectedUsersControl?.errors?.required">
-                    {{ 'artemisApp.messages.addUserForm.requiredError' | artemisTranslate }}
+        <div [hidden]="!getAsChannel(activeConversation)">
+            <div class="form-group">
+                <div class="btn-group" role="group">
+                    <input [(ngModel)]="mode" type="radio" class="btn-check" id="individual" autocomplete="off" [value]="'individual'" [ngModelOptions]="{ standalone: true }" />
+                    <label class="btn btn-secondary" for="individual">Add individual Users</label>
+                    <input [(ngModel)]="mode" type="radio" class="btn-check" id="group" autocomplete="off" [value]="'group'" [ngModelOptions]="{ standalone: true }" />
+                    <label class="btn btn-secondary" for="group">Add whole groups</label>
                 </div>
-                <div *ngIf="selectedUsersControl?.errors?.maxlength">
-                    {{ 'artemisApp.messages.addUserForm.maxError' | artemisTranslate: { max: maxSelectable } }}
+            </div>
+        </div>
+        <form (ngSubmit)="submitForm()" [formGroup]="form">
+            <div class="row" [hidden]="mode !== 'individual'">
+                <div clas="col-12">
+                    <jhi-course-users-selector
+                        formControlName="selectedUsers"
+                        [courseId]="courseId"
+                        [label]="'artemisApp.messages.addUserForm.addUserLabel' | artemisTranslate"
+                    ></jhi-course-users-selector>
+                    <div *ngIf="selectedUsersControl?.invalid && (selectedUsersControl?.dirty || selectedUsersControl?.touched)" class="alert alert-danger">
+                        <div *ngIf="selectedUsersControl?.errors?.required">
+                            {{ 'artemisApp.messages.addUserForm.requiredError' | artemisTranslate }}
+                        </div>
+                        <div *ngIf="selectedUsersControl?.errors?.maxlength">
+                            {{ 'artemisApp.messages.addUserForm.maxError' | artemisTranslate: { max: maxSelectable } }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" [hidden]="mode !== 'group'">
+                <div class="col-12">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="allStudents" formControlName="addAllStudents" />
+                        <label class="form-check-label" for="allStudents">Add all Students</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="allTutors" formControlName="addAllTutors" />
+                        <label class="form-check-label" for="allTutors">Add all Tutors</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="allEditors" formControlName="addAllEditors" />
+                        <label class="form-check-label" for="allEditors">Add all Editors</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="allInstructors" formControlName="addAllInstructors" />
+                        <label class="form-check-label" for="allInstructors">Add all Instructors</label>
+                    </div>
                 </div>
             </div>
             <div class="row">
@@ -26,4 +60,4 @@
             </div>
         </form>
     </div>
-</form>
+</div>

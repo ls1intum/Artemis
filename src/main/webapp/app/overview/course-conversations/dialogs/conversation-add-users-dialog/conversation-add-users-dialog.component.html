@@ -13,6 +13,11 @@
         <button type="button" class="btn-close" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <jhi-add-users-form [maxSelectable]="maxSelectable" [courseId]="course.id!" (formSubmitted)="onFormSubmitted($event)"> </jhi-add-users-form>
+        <jhi-add-users-form
+            [maxSelectable]="maxSelectable"
+            [courseId]="course.id!"
+            (formSubmitted)="onFormSubmitted($event)"
+            [activeConversation]="activeConversation"
+        ></jhi-add-users-form>
     </div>
 </div>
