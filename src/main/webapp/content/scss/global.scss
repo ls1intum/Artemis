@@ -721,7 +721,7 @@ Course Info Bar
 ========================================================================== */
 .course-info-bar {
     background-color: $artemis-dark;
-    padding: 1em 1em;
+    padding: 1rem 1rem;
     margin: -1rem -1rem 0 -1rem;
     display: flex;
     color: $white;
@@ -745,7 +745,7 @@ Course Info Bar
     }
 
     blockquote {
-        padding: 0 1em;
+        padding: 0 1rem;
         color: $markdown-preview-blockquote;
         border-left: 0.25em solid $markdown-preview-blockquote-border;
     }
@@ -953,7 +953,7 @@ Course Info Bar
 }
 
 .mat-form-field-outline {
-    top: -0.1em !important;
+    top: -0.1rem !important;
     color: $mat-form-field-outline;
 }
 

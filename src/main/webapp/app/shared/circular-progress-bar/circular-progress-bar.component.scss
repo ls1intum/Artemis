@@ -21,7 +21,7 @@ $howManySteps: 100; //this needs to be even.
     background: none;
     box-shadow: none;
     position: relative;
-    margin: 0 auto 1em;
+    margin: 0 auto 1rem;
 
     &::after {
         content: '';
