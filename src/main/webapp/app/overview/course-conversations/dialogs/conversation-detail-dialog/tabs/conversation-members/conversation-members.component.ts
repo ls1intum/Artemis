@@ -145,6 +145,7 @@ export class ConversationMembers implements OnInit, OnDestroy {
 
     onFilterChange(newFilterValue: ConversationMemberSearchFilter) {
         this.selectedFilter = newFilterValue;
+        this.page = 1;
         this.search$.next({
             searchTerm: this.searchTerm,
             force: true,
@@ -159,6 +160,7 @@ export class ConversationMembers implements OnInit, OnDestroy {
     }
 
     onSearchQueryInput($event: Event) {
+        this.page = 1;
         const searchTerm = ($event.target as HTMLInputElement).value?.trim().toLowerCase() ?? '';
         this.search$.next({
             searchTerm,
