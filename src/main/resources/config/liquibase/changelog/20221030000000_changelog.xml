@@ -55,4 +55,8 @@
             </column>
         </addColumn>
     </changeSet>
+    <changeSet author="stefanwaldhauser" id="20221030000000-7">
+        <sql>update conversation c set c.discriminator = 'O' WHERE c.discriminator IS NULL;</sql>
+        <sql>update conversation c, conversation_participant cp set c.creator_id = cp.user_id where cp.conversation_id = c.id AND c.creator_id IS NULL AND c.discriminator = 'O';</sql>
+    </changeSet>
 </databaseChangeLog>
