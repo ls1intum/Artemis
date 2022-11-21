@@ -32,7 +32,7 @@
             "startExercise": "<strong>Herzlich Willkommen bei Artemis!</strong> Klicke auf den Button <i>Aufgabe starten</i>!",
             "ltiSuccessLoginRequired": "LTI Übung erfolgreich gestartet. Bitte melde dich als Nutzer:in {{user}} an.",
             "lti": "LTI",
-            "configurationForCourse": "LTI Konfiguration der Kurs {{ title }}",
+            "configurationForCourse": "LTI Konfiguration des Kurses {{ title }}",
             "ltiKey": "LTI Key",
             "ltiSecret": "LTI Geheimnis",
             "lti10LaunchUrl": "LTI 1.0 Start URL",
