@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("/api")
 public class ProgrammingExerciseParticipationResource {
 
-    private static final String ENTITY_NAME = "rogrammingExerciseParticipation";
+    private static final String ENTITY_NAME = "programmingExerciseParticipation";
 
     private final ParticipationRepository participationRepository;
 
@@ -220,8 +220,8 @@ public class ProgrammingExerciseParticipationResource {
         VcsRepositoryUrl sourceURL;
         if (gradedParticipationId != null) {
             ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(gradedParticipationId);
-            if (!programmingExerciseParticipationService.canAccessParticipation(participation)) {
-                throw new AccessForbiddenException("participation", participationId);
+            if (!programmingExerciseParticipationService.canAccessParticipation(gradedParticipation)) {
+                throw new AccessForbiddenException("participation", gradedParticipationId);
             }
             sourceURL = gradedParticipation.getVcsRepositoryUrl();
         }

@@ -258,7 +258,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Rerplaces all files except the .git folder of the target repository with the files from the source repository
+     * Replaces all files except the .git folder of the target repository with the files from the source repository
      *
      * @param targetURL the repository where all files should be replaced
      * @param sourceURL the repository that should be used as source for all files

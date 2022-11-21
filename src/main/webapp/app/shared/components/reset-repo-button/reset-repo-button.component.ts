@@ -8,6 +8,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
 import { finalize } from 'rxjs/operators';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-reset-repo-button',
@@ -30,7 +31,11 @@ export class ResetRepoButtonComponent implements OnInit {
     // Icons
     faBackward = faBackward;
 
-    constructor(private participationService: ParticipationService, private programmingExerciseParticipationService: ProgrammingExerciseParticipationService) {}
+    constructor(
+        private participationService: ParticipationService,
+        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit() {
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(this.participations, false);
@@ -56,7 +61,13 @@ export class ResetRepoButtonComponent implements OnInit {
         const participationId = this.practiceParticipation?.id ?? this.gradedParticipation?.id!;
         this.programmingExerciseParticipationService
             .resetRepository(participationId, gradedParticipationId)
-            .pipe(finalize(() => (this.exercise.loading = false)))
+            .pipe(
+                finalize(() => {
+                    this.exercise.loading = false;
+                    this.alertService.success('artemisApp.exerciseActions.resetRepository.success');
+                    window.scrollTo(0, 0);
+                }),
+            )
             .subscribe();
     }
 }
