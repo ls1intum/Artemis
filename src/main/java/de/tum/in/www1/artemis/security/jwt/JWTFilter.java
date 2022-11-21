@@ -29,13 +29,18 @@ public class JWTFilter extends GenericFilterBean {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         Cookie jwtCookie = WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME);
-        if (jwtCookie != null) {
-            String jwt = jwtCookie.getValue();
-            if (StringUtils.hasText(jwt) && this.tokenProvider.validateTokenForAuthority(jwt)) {
-                Authentication authentication = this.tokenProvider.getAuthentication(jwt);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+        if (isJwtCookieValid(this.tokenProvider, jwtCookie)) {
+            Authentication authentication = this.tokenProvider.getAuthentication(jwtCookie.getValue());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(servletRequest, servletResponse);
+    }
+
+    public static boolean isJwtCookieValid(TokenProvider tokenProvider, Cookie jwtCookie) {
+        if (jwtCookie == null) {
+            return false;
+        }
+        String jwt = jwtCookie.getValue();
+        return StringUtils.hasText(jwt) && tokenProvider.validateTokenForAuthority(jwt);
     }
 }

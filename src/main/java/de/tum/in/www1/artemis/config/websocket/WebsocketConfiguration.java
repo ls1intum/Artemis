@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -35,7 +34,6 @@ import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.util.StringUtils;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.DelegatingWebSocketMessageBrokerConfiguration;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -196,7 +194,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     @NotNull Map<String, Object> attributes) {
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
-                    return isJWTCookieValid(servletRequest.getServletRequest());
+                    Cookie jwtCookie = WebUtils.getCookie(servletRequest.getServletRequest(), JWTFilter.JWT_COOKIE_NAME);
+                    return JWTFilter.isJwtCookieValid(tokenProvider, jwtCookie);
                 }
                 return false;
             }
@@ -208,17 +207,6 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 }
             }
         };
-    }
-
-    private boolean isJWTCookieValid(HttpServletRequest request) {
-        Cookie token = WebUtils.getCookie(request, JWTFilter.JWT_COOKIE_NAME);
-
-        if (token == null) {
-            return false;
-        }
-
-        String jwt = token.getValue();
-        return StringUtils.hasText(jwt) && this.tokenProvider.validateTokenForAuthority(jwt);
     }
 
     private DefaultHandshakeHandler defaultHandshakeHandler() {
