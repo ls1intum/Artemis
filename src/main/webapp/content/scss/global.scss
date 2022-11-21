@@ -739,6 +739,11 @@ Course Info Bar
     }
 }
 
+.git-info {
+    text-align: left;
+    --bs-tooltip-max-width: 500px;
+}
+
 .warning-modal-window .modal-dialog {
     width: 50%;
 }

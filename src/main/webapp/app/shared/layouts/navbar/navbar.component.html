@@ -77,12 +77,14 @@
             <img [src]="SERVER_API_URL + 'public/images/logo.png'" height="30" alt="" />
             <div jhiTranslate="global.title" class="navbar-title">Artemis</div>
             <ng-template #gitInfo>
-                {{ 'git.branch' | artemisTranslate }}: {{ gitBranchName }} <br />
-                {{ 'git.commit' | artemisTranslate }}: {{ gitCommitId }} <br />
-                {{ 'git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} <br />
-                {{ 'git.username' | artemisTranslate }}: {{ gitUsername }}
+                <div>
+                    {{ 'git.branch' | artemisTranslate }}: {{ gitBranchName }} <br />
+                    {{ 'git.commit' | artemisTranslate }}: {{ gitCommitId }} <br />
+                    {{ 'git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} <br />
+                    {{ 'git.username' | artemisTranslate }}: {{ gitUsername }}
+                </div>
             </ng-template>
-            <div class="navbar-version" placement="bottom" [ngbTooltip]="gitInfo" [disableTooltip]="inProduction && !testServer">
+            <div class="navbar-version" placement="bottom" [ngbTooltip]="gitInfo" tooltipClass="git-info" [disableTooltip]="inProduction && !testServer">
                 {{ version }}
             </div>
         </a>
