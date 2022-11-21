@@ -254,7 +254,10 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         Exam bonusToExam = bonusToExamGradingScale.getExam();
         Course sourceCourse = courseGradingScale.getCourse();
 
-        gradingScaleRepository.deleteAll();
+        bonusRepository.delete(courseBonus);
+        // Line below is needed to prevent EntityNotFoundException for the Bonus instance deleted above.
+        bonusToExamGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(bonusToExam.getId()).orElseThrow();
+        gradingScaleRepository.deleteAll(List.of(bonusToExamGradingScale, courseGradingScale));
 
         GradingScale sourceGradingScale = createSourceGradingScaleWithGradeStepsForGradesBonusStrategy(sourceCourse);
         GradingScale bonusToGradingScale = createBonusToGradingScale(bonusToExam);
@@ -329,7 +332,10 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         Exam bonusToExam = bonusToExamGradingScale.getExam();
         Course sourceCourse = courseGradingScale.getCourse();
 
-        gradingScaleRepository.deleteAll();
+        bonusRepository.delete(courseBonus);
+        // Line below is needed to prevent EntityNotFoundException for the Bonus instance deleted above.
+        bonusToExamGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(bonusToExam.getId()).orElseThrow();
+        gradingScaleRepository.deleteAll(List.of(bonusToExamGradingScale, courseGradingScale));
 
         GradingScale sourceGradingScale = createSourceGradingScaleWithGradeStepsForPointsBonusStrategy(sourceCourse);
         GradingScale bonusToGradingScale = createBonusToGradingScale(bonusToExam);
