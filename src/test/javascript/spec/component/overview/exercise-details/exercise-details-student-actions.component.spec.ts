@@ -279,9 +279,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     });
 
     it('should show correct buttons in exam mode', fakeAsync(() => {
-        const exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
-        exercise.allowOfflineIde = false;
-        exercise.allowOnlineEditor = true;
+        const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
         exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
         comp.exercise = exercise;
         comp.examMode = true;
@@ -308,4 +306,23 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
         expect(cloneRepoButton).not.toBeNull();
     }));
+
+    // Quiz not supported yet
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
+        'should disable start exercise button before start date %s',
+        fakeAsync((type: ExerciseType) => {
+            const exercise = { type, releaseDate: dayjs().subtract(1, 'hour'), startDate: dayjs().add(1, 'hour') } as ProgrammingExercise;
+            comp.exercise = exercise;
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+
+            expect(comp.beforeStartDateStudent).toBeTrue();
+
+            let startExerciseButton = debugElement.query(By.css('button.start-exercise'));
+            expect(startExerciseButton).not.toBeNull();
+            expect(startExerciseButton.nativeElement.disabled).toBeTrue();
+        }),
+    );
 });

@@ -1,4 +1,4 @@
-import { Component, ContentChild, HostBinding, Input, TemplateRef } from '@angular/core';
+import { Component, ContentChild, HostBinding, Input, TemplateRef, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';
@@ -15,6 +15,7 @@ import { faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -22,7 +23,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
     styleUrls: ['../course-overview.scss'],
     providers: [SourceTreeService],
 })
-export class ExerciseDetailsStudentActionsComponent {
+export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly ParticipationStatus = ParticipationStatus;
@@ -40,6 +41,8 @@ export class ExerciseDetailsStudentActionsComponent {
 
     // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
+
+    beforeStartDateStudent: boolean;
 
     // Icons
     faComment = faComment;
@@ -59,6 +62,10 @@ export class ExerciseDetailsStudentActionsComponent {
         private translateService: TranslateService,
         private participationService: ParticipationService,
     ) {}
+
+    ngOnInit(): void {
+        this.beforeStartDateStudent = !this.exercise.isAtLeastTutor && !!this.exercise.startDate && dayjs().isBefore(this.exercise.startDate);
+    }
 
     /**
      * Starting an exercise is not possible in the exam, otherwise see exercise.utils -> isStartExerciseAvailable

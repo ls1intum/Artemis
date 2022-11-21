@@ -205,8 +205,7 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
  * @param exercise the exercise that should be started
  */
 export const isStartExerciseAvailable = (exercise: Exercise): boolean => {
-    const beforeStartDateStudent = exercise.isAtLeastTutor === false && exercise.startDate && dayjs().isBefore(exercise.startDate);
-    return !beforeStartDateStudent && (exercise.type !== ExerciseType.PROGRAMMING || !exercise.dueDate || dayjs().isBefore(exercise.dueDate));
+    return exercise.type !== ExerciseType.PROGRAMMING || !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
 };
 
 /**
