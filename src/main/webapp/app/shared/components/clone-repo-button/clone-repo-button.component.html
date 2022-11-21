@@ -11,6 +11,7 @@
         [ngbPopover]="popContent"
         [autoClose]="'outside'"
         placement="right auto"
+        container="body"
     ></button>
     <ng-template #popContent>
         <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
