@@ -102,7 +102,8 @@ public class UserJWTController {
         log.debug("SAML2 authentication: {}", authentication);
 
         try {
-            saml2Service.get().handleAuthentication(principal);
+            authentication = saml2Service.get().handleAuthentication(principal);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         catch (UserNotActivatedException e) {
             // If the exception is not caught a 401 is returned.
