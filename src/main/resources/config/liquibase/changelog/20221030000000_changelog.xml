@@ -1,11 +1,10 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
-    <changeSet author="stefanwaldhauser" id="20221030000000">
+    <changeSet author="stefanwaldhauser" id="20221030000000-1">
         <addColumn tableName="conversation">
             <column name="discriminator" type="CHAR(1)" defaultValue="O">
                 <constraints nullable="false"/>
             </column>
-            <!-- Properties for type Channel -->
             <column name="name" type="VARCHAR(20)">
                 <constraints nullable="true" />
             </column>
@@ -15,38 +14,20 @@
             <column name="is_public" type="BIT(1)">
                 <constraints nullable="true" />
             </column>
-        </addColumn>
-    </changeSet>
-    <changeSet author="stefanwaldhauser" id="20221030000000-2">
-        <!-- Just for type channel -->
-        <addColumn tableName="conversation">
             <column name="topic" type="VARCHAR(250)">
                 <constraints nullable="true" />
             </column>
             <column name="creator_id" type="BIGINT">
+                <constraints nullable="true" />
             </column>
-        </addColumn>
-        <addForeignKeyConstraint baseColumnNames="creator_id" baseTableName="conversation" constraintName="fk_conversation_creator" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
-    </changeSet>
-    <changeSet author="stefanwaldhauser" id="20221030000000-3">
-        <!-- Just for type channel -->
-        <addColumn tableName="conversation">
             <column name="is_archived" type="BIT(1)" defaultValueBoolean="false">
                 <constraints nullable="true" />
             </column>
         </addColumn>
-    </changeSet>
-    <changeSet author="stefanwaldhauser" id="20221030000000-4">
-        <!-- Just for type channel -->
         <addColumn tableName="conversation_participant">
             <column name="is_admin" type="BIT(1)" defaultValueBoolean="false">
                 <constraints nullable="true" />
             </column>
-        </addColumn>
-    </changeSet>
-    <changeSet author="stefanwaldhauser" id="20221030000000-5">
-        <!-- Just for type channel -->
-        <addColumn tableName="conversation_participant">
             <column name="is_hidden" type="BIT(1)" defaultValueBoolean="false">
                 <constraints nullable="true" />
             </column>
@@ -54,8 +35,9 @@
                 <constraints nullable="true" />
             </column>
         </addColumn>
+        <addForeignKeyConstraint baseColumnNames="creator_id" baseTableName="conversation" constraintName="fk_conversation_creator" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
     </changeSet>
-    <changeSet author="stefanwaldhauser" id="20221030000000-7">
+    <changeSet author="stefanwaldhauser" id="20221030000000-2">
         <sql>update conversation c set c.discriminator = 'O' WHERE c.discriminator IS NULL;</sql>
         <sql>update conversation c, conversation_participant cp set c.creator_id = cp.user_id where cp.conversation_id = c.id AND c.creator_id IS NULL AND c.discriminator = 'O';</sql>
     </changeSet>
