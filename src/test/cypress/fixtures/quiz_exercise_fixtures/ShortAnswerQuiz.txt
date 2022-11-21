@@ -13,7 +13,7 @@ Never gonna tell a lie and hurt you
 [-option 4] desert
 [-option 5] cry
 [-option 6] goodbye
-[-option 7] 1.0
-[-option 8] 0.5 - 10
-[-option 9] 2.5
-[-option 10] 5 - 10.0
+[-option 7] [1.0|1]
+[-option 8] [0.5|10]
+[-option 9] [2.5|2.500]
+[-option 10] [5|10.0]

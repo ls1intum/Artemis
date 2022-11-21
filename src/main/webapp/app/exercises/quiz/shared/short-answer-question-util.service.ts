@@ -5,7 +5,6 @@ import { ShortAnswerSpot, SpotType } from 'app/entities/quiz/short-answer-spot.m
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-import { SHORT_ANSWER_NUMBER_SPOT_TYPE_OPTION_REGEX } from 'app/app.constants';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
@@ -342,20 +341,13 @@ export class ShortAnswerQuestionUtil {
      * @return {boolean}
      */
     isValidNumberSpotSolution(text: string): boolean {
-        const validSolutionRegex = new RegExp(SHORT_ANSWER_NUMBER_SPOT_TYPE_OPTION_REGEX);
-        const match = text.match(validSolutionRegex);
-        if (match) {
-            const lowerBound = +match[1];
-            const upperBound = +match[4];
-            if (isNaN(lowerBound) || isNaN(upperBound) || lowerBound > upperBound) {
-                return false;
-            }
-        } else {
-            if (text.length === 0 || isNaN(+text)) {
-                return false;
-            }
-        }
-        return true;
+        const isStartedWithSquareBracket = text[0] === '[';
+        const isEndedWIthSquareBracket = text[text.length - 1] === ']';
+        const bounds = text.substring(1, text.length - 1).split('|');
+        const hasUpperAndLowerBound = bounds.length === 2;
+        const lowerBound = +bounds[0];
+        const upperBound = +bounds[1];
+        return !(!isStartedWithSquareBracket || !isEndedWIthSquareBracket || !hasUpperAndLowerBound || isNaN(lowerBound) || isNaN(upperBound) || lowerBound > upperBound);
     }
 
     /**

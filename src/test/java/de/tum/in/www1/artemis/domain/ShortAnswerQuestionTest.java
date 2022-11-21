@@ -27,17 +27,15 @@ class ShortAnswerQuestionTest {
         assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("both untrimmed  ", "  both untrimmed\n")).isTrue();
         assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("  wrong but untrimmed", "different  ")).isFalse();
         shortAnswerSpot.setType(SpotType.NUMBER);
-        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("10", " 1-10 ")).isTrue();
-        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" 10 ", " 1-10 ")).isTrue();
-        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" -10 ", "-10-10")).isTrue();
-        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" 10 ", " 10 ")).isTrue();
-        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" 10 ", "10")).isTrue();
-        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("-10", " -10 ")).isTrue();
-        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("0.10", " 0.1-10.0 ")).isTrue();
-        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" 0.10 ", " 0.1-10.0 ")).isTrue();
-        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" -0.10 ", "-0.1-10.0")).isTrue();
-        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" 10.00 ", " 10.0 ")).isTrue();
-        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" -10.00 ", "-10.0")).isTrue();
-        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("10.00", " 10.0 ")).isTrue();
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("10", "[10|10]")).isTrue();
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" 10 ", "[10|10]")).isTrue();
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("-10", "[-10|-10]")).isTrue();
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" -10 ", "[-10|-10]")).isTrue();
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("0.10", "[.1|.1]")).isTrue();
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" 0.10 ", "[.1|.1]")).isTrue();
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" -0.10 ", "[-.1|-.1]")).isTrue();
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" 10.00 ", "[10|10]")).isTrue();
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect(" -10.00 ", "[-10|-10]")).isTrue();
+        assertThat(shortAnswerSubmittedText.isSubmittedTextCorrect("10.00", "[10|10]")).isTrue();
     }
 }

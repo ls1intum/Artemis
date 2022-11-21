@@ -109,22 +109,22 @@
         {
             "tempID": 6343183993645076,
             "invalid": false,
-            "text": "1.0"
+            "text": "[1.0|1]"
         },
         {
             "tempID": 9688463778946560,
             "invalid": false,
-            "text": "0.5 - 10"
+            "text": "[0.5|10]"
         },
         {
             "tempID": 7106393289200588,
             "invalid": false,
-            "text": "2.5"
+            "text": "[2.5|2.500]"
         },
         {
             "tempID": 1301028410071601,
             "invalid": false,
-            "text": "5 - 10.0"
+            "text": "[5|10.0]"
         }
     ],
     "correctMappings": [
@@ -223,7 +223,7 @@
             "solution": {
                 "tempID": 6343183993645076,
                 "invalid": false,
-                "text": "1.0"
+                "text": "[1.0|1]"
             },
             "invalid": false
         },
@@ -238,7 +238,7 @@
             "solution": {
                 "tempID": 9688463778946560,
                 "invalid": false,
-                "text": "0.5 - 10"
+                "text": "[0.5|10]"
             },
             "invalid": false
         },
@@ -253,7 +253,7 @@
             "solution": {
                 "tempID": 7106393289200588,
                 "invalid": false,
-                "text": "2.5"
+                "text": "[2.5|2.500]"
             },
             "invalid": false
         },
@@ -268,7 +268,7 @@
             "solution": {
                 "tempID": 1301028410071601,
                 "invalid": false,
-                "text": "5 - 10.0"
+                "text": "[5|10.0]"
             },
             "invalid": false
         }

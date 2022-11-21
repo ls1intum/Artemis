@@ -447,7 +447,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             '[-option 1] is\n' +
             '[-option 2] input\n' +
             '[-option 1,2] correctInBothFields\n' +
-            '[-option 3] 1-3\n';
+            '[-option 3] [1|3]\n';
         shortAnswerQuestion.scoringType = ScoringType.PROPORTIONAL_WITHOUT_PENALTY; // explicit default value for short answer questions
         shortAnswerQuestion.randomizeOrder = true;
         shortAnswerQuestion.points = 1;

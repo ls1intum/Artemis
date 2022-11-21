@@ -283,7 +283,21 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         }
 
         // Split new created Array by "]" to generate this structure: {"1,2", " SolutionText"}
-        const solutionParts = questionParts.map((questionPart) => questionPart.split(/\]/g)).slice(1);
+        const solutionParts = questionParts
+            .map((questionPart) => {
+                let splitQuestionPart = questionPart.split(/\]/g);
+                const spotNr = splitQuestionPart[0];
+                splitQuestionPart = splitQuestionPart.slice(1);
+                let solutionPart;
+                const isNumberSpot = splitQuestionPart.length > 1;
+                if (isNumberSpot) {
+                    solutionPart = splitQuestionPart.join(']');
+                } else {
+                    solutionPart = splitQuestionPart[0];
+                }
+                return [spotNr, solutionPart];
+            })
+            .slice(1);
 
         // Split question into main text, hint and explanation
         parseExerciseHintExplanation(questionText, this.shortAnswerQuestion);

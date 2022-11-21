@@ -129,37 +129,37 @@ class ShortAnswerSubmittedTextTest {
     void testNumberSubmissionInSolutionRange() {
         shortAnswerSpot.setType(SpotType.NUMBER);
 
-        String solution = "1-100";
+        String solution = "[1|100]";
         boolean observed = shortAnswerSubmittedText.isSubmittedTextCorrect("100", solution);
         assertTrue(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("1", solution);
         assertTrue(observed);
 
-        solution = "-100-100";
+        solution = "[-100|100]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("100", solution);
         assertTrue(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-100", solution);
         assertTrue(observed);
 
-        solution = "-100--1";
+        solution = "[-100|-1]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-100", solution);
         assertTrue(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-1", solution);
         assertTrue(observed);
 
-        solution = ".1-100.5";
+        solution = "[.1|100.5]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("100.5", solution);
         assertTrue(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect(".1", solution);
         assertTrue(observed);
 
-        solution = "-100.5-100.5";
+        solution = "[-100.5|100.5]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("100.5", solution);
         assertTrue(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-100.5", solution);
         assertTrue(observed);
 
-        solution = "-.100--.1";
+        solution = "[-.100|-.1]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-.1000", solution);
         assertTrue(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-0.100", solution);
@@ -174,37 +174,37 @@ class ShortAnswerSubmittedTextTest {
     void testNumberSubmissionNotInSolutionRange() {
         shortAnswerSpot.setType(SpotType.NUMBER);
 
-        String solution = "1-100";
+        String solution = "[1|100]";
         boolean observed = shortAnswerSubmittedText.isSubmittedTextCorrect("101", solution);
         assertFalse(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("0", solution);
         assertFalse(observed);
 
-        solution = "-100-100";
+        solution = "[-100|100]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("101", solution);
         assertFalse(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-101", solution);
         assertFalse(observed);
 
-        solution = "-100--1";
+        solution = "[-100|-1]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-101", solution);
         assertFalse(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("0", solution);
         assertFalse(observed);
 
-        solution = ".1-100.5";
+        solution = "[.1|100.5]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("100.5000001", solution);
         assertFalse(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect(".09999", solution);
         assertFalse(observed);
 
-        solution = "-100.5--.100";
+        solution = "[-100.5|-.100]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-100.50001", solution);
         assertFalse(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-0.099999", solution);
         assertFalse(observed);
 
-        solution = "-100.5--.000015";
+        solution = "[-100.5|-.000015]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-101", solution);
         assertFalse(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-.000014999", solution);
@@ -219,31 +219,31 @@ class ShortAnswerSubmittedTextTest {
     void testNumberSubmissionExactlySameSolution() {
         shortAnswerSpot.setType(SpotType.NUMBER);
 
-        String solution = "100";
+        String solution = "[100|100]";
         boolean observed = shortAnswerSubmittedText.isSubmittedTextCorrect("100", solution);
         assertTrue(observed);
 
-        solution = "0";
+        solution = "[0|0]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("0", solution);
         assertTrue(observed);
 
-        solution = "-100";
+        solution = "[-100|-100]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-100", solution);
         assertTrue(observed);
 
-        solution = "100";
+        solution = "[100|100]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("100.00", solution);
         assertTrue(observed);
 
-        solution = "0.00";
+        solution = "[0.00|0.0]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("0.0", solution);
         assertTrue(observed);
 
-        solution = "-100.00";
+        solution = "[-100|-100.00]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-100", solution);
         assertTrue(observed);
 
-        solution = "0.1";
+        solution = "[0.1|.1]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("0.1000", solution);
         assertTrue(observed);
     }
@@ -256,31 +256,31 @@ class ShortAnswerSubmittedTextTest {
     void testNumberSubmissionNotExactlySameSolution() {
         shortAnswerSpot.setType(SpotType.NUMBER);
 
-        String solution = "100";
+        String solution = "[100|100]";
         boolean observed = shortAnswerSubmittedText.isSubmittedTextCorrect("10", solution);
         assertFalse(observed);
 
-        solution = "0";
+        solution = "[0|0]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("1", solution);
         assertFalse(observed);
 
-        solution = "-100";
+        solution = "[-100|100]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-1000", solution);
         assertFalse(observed);
 
-        solution = "100";
+        solution = "[100|100]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("100.0000001", solution);
         assertFalse(observed);
 
-        solution = "0.00";
+        solution = "[0.00|0]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("0.000001", solution);
         assertFalse(observed);
 
-        solution = "-100.00";
+        solution = "[-100.00|-100]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("-100.00001", solution);
         assertFalse(observed);
 
-        solution = "0.1";
+        solution = "[0.1|.1]";
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("0.10001", solution);
         assertFalse(observed);
     }
@@ -293,7 +293,7 @@ class ShortAnswerSubmittedTextTest {
     void testNumberSubmissionNotNumber() {
         shortAnswerSpot.setType(SpotType.NUMBER);
 
-        String solution = "100";
+        String solution = "[100|100]";
         boolean observed = shortAnswerSubmittedText.isSubmittedTextCorrect("not a number", solution);
         assertFalse(observed);
         observed = shortAnswerSubmittedText.isSubmittedTextCorrect("100x", solution);

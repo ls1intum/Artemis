@@ -212,10 +212,10 @@ describe('ShortAnswerQuestionUtil', () => {
         const solution2 = new ShortAnswerSolution();
         const solution3 = new ShortAnswerSolution();
         const solution4 = new ShortAnswerSolution();
-        solution1.text = '1.1-5.9';
-        solution2.text = '-10.1-12.1';
-        solution3.text = '-100--90.1';
-        solution4.text = '-8.2';
+        solution1.text = '[1.1|5.9]';
+        solution2.text = '[-10.1|12.1]';
+        solution3.text = '[-100|-90.1]';
+        solution4.text = '[-8.2|-8.20]';
 
         const mapping1 = new ShortAnswerMapping(spot1, solution1);
         const mapping2 = new ShortAnswerMapping(spot1, solution2);
@@ -235,19 +235,64 @@ describe('ShortAnswerQuestionUtil', () => {
         expect(service.everyNumberSpotHasValidSolution([mapping6], [spot1])).toBeFalse();
 
         const solution7 = new ShortAnswerSolution();
-        solution7.text = '-1.1--10.1';
+        solution7.text = '[1.1|-10.1]';
         const mapping7 = new ShortAnswerMapping(spot1, solution7);
         expect(service.everyNumberSpotHasValidSolution([mapping7], [spot1])).toBeFalse();
 
         const solution8 = new ShortAnswerSolution();
-        solution8.text = 'x--10.1';
+        solution8.text = '[x|-10.1]';
         const mapping8 = new ShortAnswerMapping(spot1, solution8);
         expect(service.everyNumberSpotHasValidSolution([mapping8], [spot1])).toBeFalse();
 
         const solution9 = new ShortAnswerSolution();
-        solution9.text = '-1.1-a';
+        solution9.text = '[-1.1|a]';
         const mapping9 = new ShortAnswerMapping(spot1, solution9);
         expect(service.everyNumberSpotHasValidSolution([mapping9], [spot1])).toBeFalse();
+
+        const solution10 = new ShortAnswerSolution();
+        solution10.text = '[0]';
+        const mapping10 = new ShortAnswerMapping(spot1, solution10);
+        expect(service.everyNumberSpotHasValidSolution([mapping10], [spot1])).toBeFalse();
+
+        const solution11 = new ShortAnswerSolution();
+        solution11.text = '[-1.0]';
+        const mapping11 = new ShortAnswerMapping(spot1, solution11);
+        expect(service.everyNumberSpotHasValidSolution([mapping11], [spot1])).toBeFalse();
+
+        const solution12 = new ShortAnswerSolution();
+        solution12.text = '[-1.0|0|1.0]';
+        const mapping12 = new ShortAnswerMapping(spot1, solution12);
+        expect(service.everyNumberSpotHasValidSolution([mapping12], [spot1])).toBeFalse();
+
+        const solution13 = new ShortAnswerSolution();
+        solution13.text = '[';
+        const mapping13 = new ShortAnswerMapping(spot1, solution13);
+        expect(service.everyNumberSpotHasValidSolution([mapping13], [spot1])).toBeFalse();
+
+        const solution14 = new ShortAnswerSolution();
+        solution14.text = ']';
+        const mapping14 = new ShortAnswerMapping(spot1, solution14);
+        expect(service.everyNumberSpotHasValidSolution([mapping14], [spot1])).toBeFalse();
+
+        const solution15 = new ShortAnswerSolution();
+        solution15.text = '[1';
+        const mapping15 = new ShortAnswerMapping(spot1, solution15);
+        expect(service.everyNumberSpotHasValidSolution([mapping15], [spot1])).toBeFalse();
+
+        const solution16 = new ShortAnswerSolution();
+        solution16.text = '1]';
+        const mapping16 = new ShortAnswerMapping(spot1, solution16);
+        expect(service.everyNumberSpotHasValidSolution([mapping16], [spot1])).toBeFalse();
+
+        const solution17 = new ShortAnswerSolution();
+        solution17.text = '[]';
+        const mapping17 = new ShortAnswerMapping(spot1, solution17);
+        expect(service.everyNumberSpotHasValidSolution([mapping17], [spot1])).toBeFalse();
+
+        const solution18 = new ShortAnswerSolution();
+        solution18.text = '[1|1] [1|1]';
+        const mapping18 = new ShortAnswerMapping(spot1, solution18);
+        expect(service.everyNumberSpotHasValidSolution([mapping18], [spot1])).toBeFalse();
 
         expect(service.everyNumberSpotHasValidSolution([mapping1, mapping2, mapping3, mapping4, mapping5], [spot1])).toBeFalse();
     });
