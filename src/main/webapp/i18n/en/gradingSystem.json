@@ -33,9 +33,9 @@
             "save": "Save",
             "stickyGradeStep": "The last grade step is always open ended to handle scores exceeding the maximum. It is stuck to the bottom.",
             "plagiarismGrade": "Plagiarism Grade",
-            "plagiarismGradeHelp": "TODO: Ata",
+            "plagiarismGradeHelp": "This special failing grade is assigned when a student has a confirmed \"Plagiarism\" verdict in any exercise.",
             "noParticipationGrade": "No-participation Grade",
-            "noParticipationGradeHelp": "TODO: Ata",
+            "noParticipationGradeHelp": "This special failing grade is assigned when a student did not participate. For courses, this means the student did not start any exercise. For exams, this means the student did not started or not submitted.",
             "defaultGradeName": "Default: {{default}}",
             "info": {
                 "title": "Grading Key Help",

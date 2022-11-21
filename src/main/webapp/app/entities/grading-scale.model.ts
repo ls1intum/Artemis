@@ -4,6 +4,9 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 
 export class GradingScale implements BaseEntity {
+    public static readonly DEFAULT_PLAGIARISM_GRADE = 'U'; // This should be the same as the same named constant in GradingScale.java
+    public static readonly DEFAULT_NO_PARTICIPATION_GRADE = 'X'; // This should be the same as the same named constant in GradingScale.java
+
     public id?: number;
     public gradeType: GradeType = GradeType.NONE;
     public gradeSteps: GradeStep[];

@@ -24,9 +24,10 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradingScale extends DomainObject {
 
-    public static final String DEFAULT_PLAGIARISM_GRADE = "U";  // "U" stands for "Unterschleif"
+    // "U" stands for "Unterschleif"
+    public static final String DEFAULT_PLAGIARISM_GRADE = "U";  // This should be the same as the same named constant in grading-scale.model.ts
 
-    public static final String DEFAULT_NO_PARTICIPATION_GRADE = "X";
+    public static final String DEFAULT_NO_PARTICIPATION_GRADE = "X";  // This should be the same as the same named constant in grading-scale.model.ts
 
     @Enumerated(EnumType.STRING)
     @Column(name = "grade_type")

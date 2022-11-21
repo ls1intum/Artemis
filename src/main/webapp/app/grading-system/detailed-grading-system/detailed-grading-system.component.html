@@ -93,7 +93,7 @@
                         <input
                             [(ngModel)]="gradingScale.plagiarismGrade"
                             type="text"
-                            [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate: { default: 'TODO: Ata' }"
+                            [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate: { default: GradingScale.DEFAULT_PLAGIARISM_GRADE }"
                         />
                     </td>
                     <td></td>
@@ -107,9 +107,9 @@
                     <td>&mdash;</td>
                     <td>
                         <input
-                            [(ngModel)]="gradingScale.plagiarismGrade"
+                            [(ngModel)]="gradingScale.noParticipationGrade"
                             type="text"
-                            [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate: { default: 'TODO: Ata' }"
+                            [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate: { default: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE }"
                         />
                     </td>
                     <td></td>

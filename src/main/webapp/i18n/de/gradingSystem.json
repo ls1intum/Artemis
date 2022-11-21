@@ -32,11 +32,11 @@
             "add": "Notenstufe hinzufügen",
             "save": "Speichern",
             "stickyGradeStep": "Der letzte Notenschritt ist immer offen, um Punkte zu verarbeiten, die das Maximum überschreiten. Es klebt am Boden.",
-            "plagiarismGrade": "Plagiarism Grade",
-            "plagiarismGradeHelp": "TODO: Ata",
-            "noParticipationGrade": "No-participation Grade",
-            "noParticipationGradeHelp": "TODO: Ata",
-            "defaultGradeName": "Default: {{default}}",
+            "plagiarismGrade": "Plagiatsnote",
+            "plagiarismGradeHelp": "Diese besondere Note wird vergeben, wenn ein Student in einer beliebigen Übung ein \"Unterschleif\" festgestellt hat.",
+            "noParticipationGrade": "Keine Teilnahme Note",
+            "noParticipationGradeHelp": "Diese besondere Note für Nichtbestehen wird vergeben, wenn ein Student nicht teilgenommen hat. Bei Kursen bedeutet dies, dass der Studierende keine Übung begonnen hat. Bei Prüfungen bedeutet dies, dass der Studierende nicht begonnen oder nicht abgegeben hat.",
+            "defaultGradeName": "Standard: {{default}}",
             "info": {
                 "title": "Hilfe zum Notenschlüssel",
                 "general": {
