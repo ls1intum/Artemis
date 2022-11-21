@@ -15,8 +15,6 @@ export class ExerciseLtiConfigurationComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
     exercise: Exercise;
     ltiConfiguration: LtiConfiguration;
-    requireExistingUser = true;
-    lookupUserByEmail = true;
 
     // Icons
 
@@ -45,12 +43,5 @@ export class ExerciseLtiConfigurationComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.routeSub.unsubscribe();
-    }
-
-    /**
-     * Gets the formatted custom parameters
-     */
-    getFormattedCustomParameters(): string {
-        return `require_existing_user=${this.requireExistingUser}\n` + `lookup_user_by_email=${this.lookupUserByEmail}`;
     }
 }
