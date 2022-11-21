@@ -444,14 +444,14 @@ public class ExamService {
 
             StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummaryAsStudent(targetUser, studentExam);
             var studentResult = studentExamWithGradeDTO.studentResult();
-            return Map.of(studentId,
-                    new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null, studentResult.hasParticipated()));
+            return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null,
+                    Boolean.TRUE.equals(studentResult.submitted())));
         }
         var scores = calculateExamScores(examId);
         var studentIdSet = new HashSet<>(studentIds);
         return scores.studentResults().stream().filter(studentResult -> studentIdSet.contains(studentResult.userId()))
                 .collect(Collectors.toMap(ExamScoresDTO.StudentResult::userId, studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(),
-                        studentResult.mostSeverePlagiarismVerdict(), null, null, studentResult.hasParticipated())));
+                        studentResult.mostSeverePlagiarismVerdict(), null, null, Boolean.TRUE.equals(studentResult.submitted()))));
 
     }
 
@@ -470,7 +470,7 @@ public class ExamService {
         loadQuizExercisesForStudentExam(studentExam);
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
-        if (!studentExam.isSubmitted() || !studentExam.areResultsPublishedYet()) {
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted()) || !studentExam.areResultsPublishedYet()) {
             throw new AccessForbiddenException("You are not allowed to access the grade summary of a student exam which was NOT submitted!");
         }
 
@@ -637,15 +637,15 @@ public class ExamService {
             PlagiarismMapping plagiarismMapping, ExamBonusCalculator examBonusCalculator) {
         User user = studentExam.getUser();
 
-        if (!studentExam.isSubmitted()) {
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
             String noParticipationGrade = gradingScale.map(GradingScale::getNoParticipationGradeOrDefault).orElse(GradingScale.DEFAULT_NO_PARTICIPATION_GRADE);
             return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
-                    0.0, noParticipationGrade, noParticipationGrade, false, 0.0, null, null, null, false);
+                    0.0, noParticipationGrade, noParticipationGrade, false, 0.0, null, null, null);
         }
         else if (plagiarismMapping.studentHasVerdict(user.getId(), PlagiarismVerdict.PLAGIARISM)) {
             String plagiarismGrade = gradingScale.map(GradingScale::getPlagiarismGradeOrDefault).orElse(GradingScale.DEFAULT_PLAGIARISM_GRADE);
             return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
-                    0.0, plagiarismGrade, plagiarismGrade, false, 0.0, null, null, PlagiarismVerdict.PLAGIARISM, true);
+                    0.0, plagiarismGrade, plagiarismGrade, false, 0.0, null, null, PlagiarismVerdict.PLAGIARISM);
         }
 
         var overallPointsAchieved = 0.0;
@@ -724,7 +724,7 @@ public class ExamService {
         }
         return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(),
                 overallPointsAchieved, overallScoreAchieved, overallGrade, overallGradeInFirstCorrection, hasPassed, overallPointsAchievedInFirstCorrection, gradeWithBonus,
-                exerciseGroupIdToExerciseResult, mostSevereVerdict, true);
+                exerciseGroupIdToExerciseResult, mostSevereVerdict);
     }
 
     private boolean hasNonEmptySubmissionInQuiz(StudentParticipation studentParticipation, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts) {
