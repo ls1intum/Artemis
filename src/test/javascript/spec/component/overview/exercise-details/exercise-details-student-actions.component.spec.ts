@@ -304,15 +304,12 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             const exercise = { type, releaseDate: dayjs().subtract(1, 'hour'), startDate: dayjs().add(1, 'hour') } as ProgrammingExercise;
             comp.exercise = exercise;
 
-            comp.ngOnInit();
             fixture.detectChanges();
             tick();
 
-            expect(comp.beforeStartDateStudent).toBeTrue();
-
             const startExerciseButton = debugElement.query(By.css('button.start-exercise'));
             expect(startExerciseButton).not.toBeNull();
-            expect(startExerciseButton.nativeElement.disabled).toBeTrue();
+            expect(startExerciseButton.componentInstance.overwriteDisabled).toBeTrue();
         }),
     );
 });
