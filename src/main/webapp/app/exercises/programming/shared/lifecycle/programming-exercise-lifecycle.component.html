@@ -153,18 +153,21 @@
 
                 <div class="test-schedule-date px-1" *ngIf="exercise.exampleSolutionPublicationDate">
                     <div class="test-schedule-date-title test-schedule-date-title-small-button">
-                        <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsAfterDueDate"> Assessment Type </span>
-                        <jhi-help-icon placement="auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsAfterDueDateTooltip'"> </jhi-help-icon>
+                        <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"> Assessment Type </span>
+                        <jhi-help-icon placement="auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'"> </jhi-help-icon>
                     </div>
                     <div
                         class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
                         [class.btn-lifecycle--disabled]="readOnly"
                         (click)="!readOnly && toggleReleaseTests()"
                     >
-                        <fa-icon [icon]="exercise.releaseTestsAfterDueDate ? faLink : faLinkSlash" size="lg"></fa-icon>
+                        <fa-icon [icon]="exercise.releaseTestsWithExampleSolution ? faLink : faLinkSlash" size="lg"></fa-icon>
                     </div>
                     <div class="mt-2">
-                        {{ 'artemisApp.programmingExercise.timeline.releaseTestsAfterDueDate' + (exercise.releaseTestsAfterDueDate ? 'Enabled' : 'Disabled') | artemisTranslate }}
+                        {{
+                            'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution' + (exercise.releaseTestsWithExampleSolution ? 'Enabled' : 'Disabled')
+                                | artemisTranslate
+                        }}
                     </div>
                 </div>
             </div>

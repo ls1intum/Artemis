@@ -209,12 +209,12 @@
                                 [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
                             ></jhi-programming-exercise-example-solution-repo-download>
                         </dd>
-                        <dd *ngIf="programmingExercise?.releaseTestsAfterDueDate" class="editor-outline-background">
+                        <dd *ngIf="programmingExercise?.releaseTestsWithExampleSolution" class="editor-outline-background">
                             <jhi-programming-exercise-example-solution-repo-download
                                 class="ms-2"
                                 [exerciseId]="exercise.id!"
                                 [includeTests]="true"
-                                [title]="'artemisApp.programmingExercise.export.downloadTests'"
+                                [title]="'artemisApp.programmingExercise.export.downloadTestsWithExampleSolution'"
                             ></jhi-programming-exercise-example-solution-repo-download>
                             <jhi-help-icon placement="top" text="artemisApp.programmingExercise.studentDownloadTestsTooltip"></jhi-help-icon>
                         </dd>

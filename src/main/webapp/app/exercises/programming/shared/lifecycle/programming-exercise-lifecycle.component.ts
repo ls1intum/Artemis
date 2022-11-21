@@ -88,7 +88,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
      * Toggles the value for allowing complaints for automatic assessment between true and false
      */
     toggleReleaseTests() {
-        this.exercise.releaseTestsAfterDueDate = !this.exercise.releaseTestsAfterDueDate;
+        this.exercise.releaseTestsWithExampleSolution = !this.exercise.releaseTestsWithExampleSolution;
     }
 
     /**

@@ -413,7 +413,7 @@ public class ProgrammingExerciseExportImportResource {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         Role atLeastRole = programmingExercise.isExampleSolutionPublished() ? Role.STUDENT : Role.TEACHING_ASSISTANT;
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(atLeastRole, programmingExercise, null);
-        if (includeTests && !programmingExercise.isReleaseTestsAfterDueDate()) {
+        if (includeTests && !programmingExercise.isReleaseTestsWithExampleSolution()) {
             throw new AccessForbiddenException(RepositoryType.SOLUTION.getName(), programmingExercise.getId());
         }
         long start = System.nanoTime();

@@ -1856,7 +1856,7 @@ public class ProgrammingExerciseTestService {
         exportStudentRequestedRepository(HttpStatus.FORBIDDEN, true);
 
         // Test include tests
-        exercise.setReleaseTestsAfterDueDate(true);
+        exercise.setReleaseTestsWithExampleSolution(true);
         programmingExerciseRepository.save(exercise);
 
         zip = exportStudentRequestedRepository(HttpStatus.OK, true);

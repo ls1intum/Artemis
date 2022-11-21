@@ -234,6 +234,7 @@
                 "downloadRepo": "Download Repo",
                 "downloadExampleSolution": "Download example solution",
                 "downloadTests": "Download tests",
+                "downloadTestsWithExampleSolution": "Download tests with example solution",
                 "downloadExercise": "Download Exercise",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
@@ -302,10 +303,10 @@
                 "complaintOnAutomaticAssessmentEnabled": "Complaints are possible",
                 "complaintOnAutomaticAssessmentDisabled": "Complaints are not possible",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
-                "releaseTestsAfterDueDate": "Publish tests",
-                "releaseTestsAfterDueDateTooltip": "Additionally to the example solution the automatic tests can be published after the deadline.",
-                "releaseTestsAfterDueDateEnabled": "Publish",
-                "releaseTestsAfterDueDateDisabled": "Don't publish"
+                "releaseTestsWithExampleSolution": "Publish tests",
+                "releaseTestsWithExampleSolutionTooltip": "Additionally to the example solution the automatic tests can be published after the deadline.",
+                "releaseTestsWithExampleSolutionEnabled": "Publish",
+                "releaseTestsWithExampleSolutionDisabled": "Don't publish"
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",

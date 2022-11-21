@@ -130,8 +130,8 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "branch", table = "programming_exercise_details")
     private String branch;
 
-    @Column(name = "release_tests_after_due_date", table = "programming_exercise_details")
-    private boolean releaseTestsAfterDueDate;
+    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
+    private boolean releaseTestsWithExampleSolution;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -290,12 +290,12 @@ public class ProgrammingExercise extends Exercise {
         return branch;
     }
 
-    public void setReleaseTestsAfterDueDate(boolean releaseTestsAfterDueDate) {
-        this.releaseTestsAfterDueDate = releaseTestsAfterDueDate;
+    public void setReleaseTestsWithExampleSolution(boolean releaseTestsWithExampleSolution) {
+        this.releaseTestsWithExampleSolution = releaseTestsWithExampleSolution;
     }
 
-    public boolean isReleaseTestsAfterDueDate() {
-        return releaseTestsAfterDueDate;
+    public boolean isReleaseTestsWithExampleSolution() {
+        return releaseTestsWithExampleSolution;
     }
 
     /**

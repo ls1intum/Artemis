@@ -127,9 +127,9 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     it('should change publication of tests for programming exercise with published solution', () => {
         comp.exercise = { ...exercise, exampleSolutionPublicationDate: dayjs() };
-        expect(comp.exercise.releaseTestsAfterDueDate).toBeFalsy();
+        expect(comp.exercise.releaseTestsWithExampleSolution).toBeFalsy();
         comp.toggleReleaseTests();
-        expect(comp.exercise.releaseTestsAfterDueDate).toBeTrue();
+        expect(comp.exercise.releaseTestsWithExampleSolution).toBeTrue();
     });
 
     it('should not cascade date changes when updateReleaseDate is called when readOnly is true', () => {
