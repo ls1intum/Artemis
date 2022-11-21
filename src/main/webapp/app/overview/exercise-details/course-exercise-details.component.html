@@ -247,7 +247,7 @@
                 <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.resolvedPlagiarismCase">Resolved Plagiarism Case</span>
             </a>
         </div>
-        <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+        <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
             <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" (activate)="onChildActivate($event)"></router-outlet>
         </div>
     </div>
