@@ -320,7 +320,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
             expect(comp.beforeStartDateStudent).toBeTrue();
 
-            let startExerciseButton = debugElement.query(By.css('button.start-exercise'));
+            const startExerciseButton = debugElement.query(By.css('button.start-exercise'));
             expect(startExerciseButton).not.toBeNull();
             expect(startExerciseButton.nativeElement.disabled).toBeTrue();
         }),

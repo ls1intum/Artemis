@@ -79,7 +79,7 @@
             </ng-container>
         </ng-template>
         <ng-template #courseMode>
-            <div *ngIf="isBeforeStartDate" [class.fw-500]="nextDueDate === NextDate.START_OR_RELEASE_DATE">
+            <div *ngIf="isBeforeStartDate && dayjs().isBefore(exercise.startDate ?? exercise.releaseDate)" [class.fw-500]="nextDueDate === NextDate.START_OR_RELEASE_DATE">
                 {{ 'artemisApp.courseOverview.exerciseDetails.startDate' | artemisTranslate }}
                 <span
                     [ngClass]="statusBadges[0]"
