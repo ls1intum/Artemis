@@ -73,8 +73,6 @@ public class ProgrammingExerciseExportService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final ExerciseDateService exerciseDateService;
-
     private final ObjectMapper objectMapper;
 
     private final FileService fileService;
@@ -88,12 +86,11 @@ public class ProgrammingExerciseExportService {
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
-            ExerciseDateService exerciseDateService, FileService fileService, GitService gitService, ZipFileService zipFileService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            FileService fileService, GitService gitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
-        this.exerciseDateService = exerciseDateService;
         this.fileService = fileService;
         this.gitService = gitService;
         this.zipFileService = zipFileService;
@@ -642,7 +639,7 @@ public class ProgrammingExerciseExportService {
         log.debug("Filter late submissions for participation {}", participation.toString());
         final Optional<ZonedDateTime> latestAllowedDate;
         if (repositoryExportOptions.isFilterLateSubmissionsIndividualDueDate()) {
-            latestAllowedDate = exerciseDateService.getDueDate(participation);
+            latestAllowedDate = ExerciseDateService.getDueDate(participation);
         }
         else {
             latestAllowedDate = Optional.of(repositoryExportOptions.getFilterLateSubmissionsDate());
