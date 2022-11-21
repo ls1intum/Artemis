@@ -17,7 +17,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { getAsGroupChat, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 
 @Component({
@@ -79,7 +79,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
                 if (this.user.id === this.idOfLoggedInUser) {
                     this.isCurrentUser = true;
                 }
-                if (this.user.id === this.activeConversation.creator?.id) {
+                if (this.user.id === this.activeConversation?.creator?.id) {
                     this.isCreator = true;
                 }
 
@@ -252,7 +252,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     }
 
     openRemoveFromGroupChatDialog(event: MouseEvent) {
-        const groupChat = getAsGroupChat(this.activeConversation);
+        const groupChat = getAsGroupChatDto(this.activeConversation);
         if (!groupChat) {
             return;
         }

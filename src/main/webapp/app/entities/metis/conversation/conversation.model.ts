@@ -3,6 +3,7 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { User } from 'app/core/user/user.model';
+import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 
 // IMPORTANT NOTICE: The following strings have to be consistent with
 // the ones defined in Conversation.java and ConversationDTO.java
@@ -39,7 +40,7 @@ export abstract class ConversationDto {
     public lastReadDate?: dayjs.Dayjs;
     public isMember?: boolean;
     public numberOfMembers?: number;
-    public creator?: User;
+    public creator?: ConversationUserDTO;
     public isCreator?: boolean;
     public isFavorite?: boolean;
 

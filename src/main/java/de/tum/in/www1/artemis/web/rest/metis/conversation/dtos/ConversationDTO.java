@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
 import java.time.ZonedDateTime;
 
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 
 public abstract class ConversationDTO {
@@ -18,7 +17,7 @@ public abstract class ConversationDTO {
 
     private ZonedDateTime lastMessageDate;
 
-    private User creator;
+    private ConversationUserDTO creator;
 
     // property not taken from entity
     private ZonedDateTime lastReadDate;
@@ -44,7 +43,9 @@ public abstract class ConversationDTO {
         this.id = conversation.getId();
         this.creationDate = conversation.getCreationDate();
         this.lastMessageDate = conversation.getLastMessageDate();
-        this.creator = conversation.getCreator();
+        if (conversation.getCreator() != null) {
+            this.creator = new ConversationUserDTO(conversation.getCreator());
+        }
         this.type = type;
     }
 
@@ -99,11 +100,11 @@ public abstract class ConversationDTO {
         this.numberOfMembers = numberOfMembers;
     }
 
-    public User getCreator() {
+    public ConversationUserDTO getCreator() {
         return creator;
     }
 
-    public void setCreator(User creator) {
+    public void setCreator(ConversationUserDTO creator) {
         this.creator = creator;
     }
 
