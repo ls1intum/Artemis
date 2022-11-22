@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.domain.metis;
 
-import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -9,7 +8,6 @@ import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -85,20 +83,6 @@ public class Post extends Posting {
 
     @Column(name = "vote_count")
     private int voteCount;
-
-    @CreatedDate
-    @Column(name = "creation_date", updatable = false)
-    private ZonedDateTime creationDate = ZonedDateTime.now();
-
-    @Override
-    public ZonedDateTime getCreationDate() {
-        return creationDate;
-    }
-
-    @Override
-    public void setCreationDate(ZonedDateTime creationDate) {
-        this.creationDate = creationDate;
-    }
 
     public String getTitle() {
         return title;
