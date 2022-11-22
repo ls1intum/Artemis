@@ -13,6 +13,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 describe('Example Solution Component', () => {
     let comp: ExampleSolutionComponent;
@@ -28,8 +29,21 @@ describe('Example Solution Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ExampleSolutionComponent, MockComponent(HeaderExercisePageWithDetailsComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute({ exerciseId: 10 }) }, MockProvider(ExerciseService), MockProvider(ArtemisMarkdownService)],
+            declarations: [
+                ExampleSolutionComponent,
+                MockComponent(HeaderExercisePageWithDetailsComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockPipe(HtmlForMarkdownPipe),
+            ],
+            providers: [
+                {
+                    provide: ActivatedRoute,
+                    useValue: new MockActivatedRoute({ exerciseId: 10 }),
+                },
+                MockProvider(ExerciseService),
+                MockProvider(ArtemisMarkdownService),
+            ],
         }).compileComponents();
         fixture = TestBed.createComponent(ExampleSolutionComponent);
         comp = fixture.componentInstance;
