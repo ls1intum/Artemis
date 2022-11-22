@@ -25,7 +25,6 @@
     "!/management/**",
     "!/public/**",
     "!/saml2/**",
-    "!/time",
     "!/v2/**",
     "!/websocket/**"
   ]
