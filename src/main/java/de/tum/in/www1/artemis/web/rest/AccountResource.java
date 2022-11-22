@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.MailService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -75,7 +76,9 @@ public class AccountResource {
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws LoginAlreadyUsedException {@code 400 (Bad Request)} if the login is already used.
      */
+    // TODO: /public
     @PostMapping("register")
+    @EnforceNothing
     @ResponseStatus(HttpStatus.CREATED)
     public void registerAccount(@Valid @RequestBody ManagedUserVM managedUserVM) {
 
@@ -105,7 +108,9 @@ public class AccountResource {
      * @param key the activation key.
      * @throws RuntimeException {@code 500 (Internal Server Error)} if the user couldn't be activated.
      */
+    // TODO: /public
     @GetMapping("activate")
+    @EnforceNothing
     public void activateAccount(@RequestParam(value = "key") String key) {
         if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
@@ -122,7 +127,9 @@ public class AccountResource {
      * @param request the HTTP request.
      * @return the login if the user is authenticated.
      */
+    // TODO: /public
     @GetMapping("authenticate")
+    @EnforceNothing
     public String isAuthenticated(HttpServletRequest request) {
         log.debug("REST request to check if the current user is authenticated");
         return request.getRemoteUser();
@@ -134,7 +141,9 @@ public class AccountResource {
      * @return the current user.
      * @throws EntityNotFoundException {@code 404 (User not found)} if the user couldn't be returned.
      */
+    // TODO: /public
     @GetMapping("account")
+    @EnforceNothing
     public UserDTO getAccount() {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAuthoritiesAndGuidedTourSettings();
@@ -151,7 +160,10 @@ public class AccountResource {
      * @throws EmailAlreadyUsedException {@code 400 (Bad Request)} if the email is already used.
      * @throws RuntimeException          {@code 500 (Internal Server Error)} if the user login wasn't found.
      */
+    // TODO: /public
+    // TODO shouldn't this be USER?
     @PutMapping("account")
+    @EnforceNothing
     public void saveAccount(@Valid @RequestBody UserDTO userDTO) {
         if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
@@ -175,6 +187,7 @@ public class AccountResource {
      * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the new password does not meet the requirements.
      */
     @PostMapping("account/change-password")
+    @PreAuthorize("hasRole('USER')")
     public void changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
         User user = userRepository.getUser();
         if (!user.isInternal()) {
@@ -192,7 +205,9 @@ public class AccountResource {
      * @param languageKey languageKey to change to.
      * @throws BadRequestAlertException {@code 400 (Bad Request)} if the language key is not 'en' or 'de'.
      */
+    // TODO: /public
     @PostMapping("account/change-language")
+    @EnforceNothing
     public void changeLanguageKey(@RequestBody String languageKey) {
         User user = userRepository.getUser();
         String langKey = languageKey.replaceAll("\"", "").toLowerCase().trim();
@@ -207,7 +222,9 @@ public class AccountResource {
      *
      * @param mailUsername string containing either mail or username of the user.
      */
+    // TODO: /public
     @PostMapping("account/reset-password/init")
+    @EnforceNothing
     public void requestPasswordReset(@RequestBody String mailUsername) {
         List<User> users = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
         if (!users.isEmpty()) {
@@ -237,7 +254,9 @@ public class AccountResource {
      * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the password does not meet the requirements.
      * @throws RuntimeException         {@code 500 (Internal Server Error)} if the password could not be reset.
      */
+    // TODO: /public
     @PostMapping("account/reset-password/finish")
+    @EnforceNothing
     public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
         if (isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
             throw new PasswordViolatesRequirementsException();

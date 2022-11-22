@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -103,13 +104,15 @@ public class ProgrammingSubmissionResource {
      * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
      */
+    // TODO: /public
     @PostMapping("programming-submissions/{participationId}")
+    @EnforceNothing
     public ResponseEntity<?> processNewProgrammingSubmission(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
         log.debug("REST request to inform about new commit+push for participation: {}", participationId);
 
         try {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-            // Therefore a mock auth object has to be created.
+            // Therefore, a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
             ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(participationId, requestBody);
             // Remove unnecessary information from the new submission.
@@ -285,7 +288,9 @@ public class ProgrammingSubmissionResource {
      * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK)
      */
+    // TODO: /public
     @PostMapping("programming-exercises/test-cases-changed/{exerciseId}")
+    @EnforceNothing
     public ResponseEntity<Void> testCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
         log.info("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
         // This is needed as a request using a custom query is made using the ExerciseRepository, but the user is not authenticated

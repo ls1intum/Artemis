@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.ase.athene.protobuf.AtheneResponse;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 
 /**
@@ -37,7 +38,9 @@ public class AtheneResource {
      * @param auth The secret for authorization
      * @return 200 Ok if successful or 401 unauthorized if secret is wrong
      */
+    // TODO: /public
     @PostMapping(value = "athene-result/{exerciseId}", consumes = "application/x-protobuf")
+    @EnforceNothing
     public ResponseEntity<Void> saveAtheneResult(@PathVariable Long exerciseId, @RequestBody AtheneResponse atheneResponse, @RequestHeader("Authorization") String auth) {
         log.debug("REST call to inform about new Athene results for exercise: {}", exerciseId);
 

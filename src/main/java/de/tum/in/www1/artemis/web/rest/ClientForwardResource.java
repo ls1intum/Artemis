@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.versioning.IgnoreGlobalMapping;
 
 @Controller
@@ -14,6 +15,7 @@ public class ClientForwardResource {
      */
     @IgnoreGlobalMapping(ignoreUniqueMethods = true, ignoreCollision = true)
     @RequestMapping({ "{path:[^\\.]*}", "{path:^(?!websocket).*}/**/{path:[^\\.]*}" })
+    @EnforceNothing
     public String forward() {
         return "forward:/";
     }

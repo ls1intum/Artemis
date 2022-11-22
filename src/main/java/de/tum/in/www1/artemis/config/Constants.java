@@ -36,7 +36,7 @@ public final class Constants {
     public static final String EXERCISE_TOPIC_ROOT = "/topic/exercise/";
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
-    
+
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
