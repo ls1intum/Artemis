@@ -152,12 +152,8 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     /**
      * Transforms the repository url to an ssh clone url
      */
-    private getSshCloneUrl(url: string) {
-        url = url?.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, this.sshTemplateUrl + '$2');
-        if (this.user.login) {
-            url = url.replace('git', this.user.login);
-        }
-        return url;
+    private getSshCloneUrl(url?: string) {
+        return url?.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, this.sshTemplateUrl + '$2');
     }
 
     /**

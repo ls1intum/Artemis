@@ -127,11 +127,11 @@ describe('JhiCloneRepoButtonComponent', () => {
 
         component.useSsh = true;
 
-        expect(component.getHttpOrSshRepositoryUrl()).toBe('ssh://user1@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
+        expect(component.getHttpOrSshRepositoryUrl()).toBe('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
 
         participation.team = undefined;
         component.isTeamParticipation = false;
-        expect(component.getHttpOrSshRepositoryUrl()).toBe('ssh://user1@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
+        expect(component.getHttpOrSshRepositoryUrl()).toBe('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
     });
 
     it('should get html url (not the same url for team and individual participation)', () => {
