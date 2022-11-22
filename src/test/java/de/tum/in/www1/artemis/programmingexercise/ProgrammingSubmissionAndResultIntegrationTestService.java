@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -90,7 +89,7 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
         Object obj = jsonParser.parse(jsonRequest);
 
         // Api should return ok.
-        request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participationId, obj, expectedStatus, new HttpHeaders());
+        request.postWithoutLocation("/api/programming-submissions/" + participationId, obj, expectedStatus, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAll();
 

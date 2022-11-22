@@ -37,22 +37,6 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_PATH = "programming-exercises/new-result";
-
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/" + NEW_RESULT_RESOURCE_PATH;
-
-    public static final String TEST_CASE_CHANGED_PATH = "/programming-exercises/test-cases-changed/";
-
-    public static final String TEST_CASE_CHANGED_API_PATH = "/api" + TEST_CASE_CHANGED_PATH;
-
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_PATH = "/programming-submissions/";
-
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
-
-    public static final String ATHENE_RESULT_PATH = "/athene-result/";
-
-    public static final String ATHENE_RESULT_API_PATH = "/api" + ATHENE_RESULT_PATH;
-
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active";

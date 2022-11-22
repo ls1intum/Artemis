@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.*;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
 import static de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService.*;
@@ -937,7 +936,7 @@ public class ProgrammingExerciseTestService {
         programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         // Mock REST Call from the VCS for a new programming submission (happens as part of the webhook after pushing code to git)
-        request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), body, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api/programming-submissions/" + participation.getId(), body, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
         ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());

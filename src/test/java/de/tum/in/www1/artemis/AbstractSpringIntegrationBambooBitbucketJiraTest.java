@@ -256,9 +256,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
         // take the latest participationId because we assume that it increases in the database for the participations in the imported exercises
         var nextParticipationId = Math.max(sourceExercise.getSolutionParticipation().getId(), sourceExercise.getTemplateParticipation().getId()) + 1;
-        final var artemisTemplateHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId++;
-        final var artemisSolutionHookPath = artemisServerUrl + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + nextParticipationId;
-        final var artemisTestsHookPath = artemisServerUrl + TEST_CASE_CHANGED_API_PATH + (sourceExercise.getId() + 1);
+        final var artemisTemplateHookPath = artemisServerUrl + "/api/programming-submissions/" + nextParticipationId++;
+        final var artemisSolutionHookPath = artemisServerUrl + "/api/programming-submissions/" + nextParticipationId;
+        final var artemisTestsHookPath = artemisServerUrl + "/api/programming-exercises/test-cases-changed/" + (sourceExercise.getId() + 1);
 
         bitbucketRequestMockProvider.mockCheckIfProjectExists(exerciseToBeImported, false);
         bitbucketRequestMockProvider.mockCreateProjectForExercise(exerciseToBeImported);

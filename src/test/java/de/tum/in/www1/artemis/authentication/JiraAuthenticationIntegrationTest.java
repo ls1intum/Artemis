@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
-import de.tum.in.www1.artemis.web.rest.UserJWTController;
+import de.tum.in.www1.artemis.web.rest.UserJWTResource;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
@@ -164,7 +164,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.OK, httpHeaders);
+        UserJWTResource.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTResource.JWTToken.class, HttpStatus.OK, httpHeaders);
         assertThat(jwtToken.getIdToken()).as("JWT token is present").isNotNull();
         assertThat(this.tokenProvider.validateTokenForAuthority(jwtToken.getIdToken())).as("JWT token is valid").isTrue();
     }
@@ -184,7 +184,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
         var expectedResponseHeaders = new HashMap<String, String>();
         expectedResponseHeaders.put("x-artemisapp-error", "CAPTCHA required");
-        UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.FORBIDDEN, httpHeaders,
+        UserJWTResource.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTResource.JWTToken.class, HttpStatus.FORBIDDEN, httpHeaders,
                 expectedResponseHeaders);
     }
 
@@ -202,7 +202,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
         // validation fails due to empty password is validated against min size
-        UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.BAD_REQUEST, httpHeaders);
+        UserJWTResource.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTResource.JWTToken.class, HttpStatus.BAD_REQUEST, httpHeaders);
         assertThat(jwtToken).as("JWT token is not present").isNull();
     }
 }

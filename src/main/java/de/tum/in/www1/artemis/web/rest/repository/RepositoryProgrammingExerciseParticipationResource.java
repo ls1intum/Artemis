@@ -41,7 +41,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @RestController
 @RequestMapping("/api")
-@PreAuthorize("hasRole('USER')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
     private final ProgrammingExerciseParticipationService participationService;
@@ -188,6 +187,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long participationId) {
         return super.getFiles(participationId);
     }
@@ -216,6 +216,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
         return super.getFile(participationId, filename);
     }
@@ -259,6 +260,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request) {
         return super.createFile(participationId, filename, request);
     }
@@ -266,6 +268,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) {
         return super.createFolder(participationId, folderName, request);
     }
@@ -273,18 +276,21 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) {
         return super.renameFile(participationId, fileMove);
     }
 
     @Override
     @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
         return super.deleteFile(participationId, filename);
     }
 
     @Override
     @GetMapping(value = "/repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) {
         return super.pullChanges(participationId);
     }
@@ -298,6 +304,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
     @PutMapping(value = "/repository/{participationId}/files")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
             @RequestParam(defaultValue = "false") boolean commit) {
         Participation participation;
@@ -368,6 +375,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) {
         return super.commitChanges(participationId);
     }
@@ -375,12 +383,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @PostMapping(value = "/repository/{participationId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long participationId) {
         return super.resetToLastCommit(participationId);
     }
 
     @Override
     @GetMapping(value = "/repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId) throws GitAPIException {
         return super.getStatus(participationId);
     }
@@ -393,6 +403,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping(value = "/repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId, @RequestParam(name = "resultId") Optional<Long> resultId) {
         log.debug("REST request to get build log : {}", participationId);
 

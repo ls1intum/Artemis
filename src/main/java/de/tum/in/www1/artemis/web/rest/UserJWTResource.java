@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.UserNotActivatedException;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
@@ -29,13 +30,13 @@ import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 /**
- * Controller to authenticate users.
+ * REST controller to authenticate users.
  */
 @RestController
-@RequestMapping("/api")
-public class UserJWTController {
+@RequestMapping("api/")
+public class UserJWTResource {
 
-    private static final Logger log = LoggerFactory.getLogger(UserJWTController.class);
+    private static final Logger log = LoggerFactory.getLogger(UserJWTResource.class);
 
     private final TokenProvider tokenProvider;
 
@@ -43,7 +44,7 @@ public class UserJWTController {
 
     private final Optional<SAML2Service> saml2Service;
 
-    public UserJWTController(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
+    public UserJWTResource(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
         this.tokenProvider = tokenProvider;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.saml2Service = saml2Service;
@@ -55,7 +56,9 @@ public class UserJWTController {
      * @param userAgent User Agent
      * @return a JWT Token if the authorization is successful
      */
-    @PostMapping("/authenticate")
+    // TODO: /public
+    @PostMapping("authenticate")
+    @EnforceNothing
     public ResponseEntity<JWTToken> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent) {
 
         var username = loginVM.getUsername();
@@ -86,7 +89,9 @@ public class UserJWTController {
      * @param body the body of the request. "true" to remember the user.
      * @return a JWT Token if the authorization is successful
      */
-    @PostMapping("/saml2")
+    // TODO: /public
+    @PostMapping("saml2")
+    @EnforceNothing
     public ResponseEntity<JWTToken> authorizeSAML2(@RequestBody final String body) {
         if (saml2Service.isEmpty()) {
             throw new AccessForbiddenException("SAML2 is disabled");

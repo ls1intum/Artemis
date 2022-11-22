@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.athene;
 
-import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -161,7 +159,7 @@ public class AtheneService {
         log.info("Calling Remote Service to calculate automatic feedback for {} submissions.", textSubmissions.size());
 
         try {
-            final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions, artemisServerUrl + ATHENE_RESULT_API_PATH + exercise.getId());
+            final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions, artemisServerUrl + "/api/athene-result/" + exercise.getId());
             ResponseDTO response = connector.invokeWithRetry(atheneUrl + "/submit", request, maxRetries);
             log.info("Remote Service to calculate automatic feedback responded: {}", response.detail);
 

@@ -101,7 +101,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     @PostConstruct
     public void init() {
-        this.artemisNotificationUrl = ARTEMIS_SERVER_URL + Constants.NEW_RESULT_RESOURCE_API_PATH;
+        this.artemisNotificationUrl = ARTEMIS_SERVER_URL + "/api/programming-exercises/new-result";
     }
 
     public String getPipelineScript(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,

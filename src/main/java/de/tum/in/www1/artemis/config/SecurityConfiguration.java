@@ -121,15 +121,15 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/test/**")
             .antMatchers(CustomLti13Configurer.JWKS_PATH);
         web.ignoring()
-            .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
+            .antMatchers(HttpMethod.POST, "programming-exercises/new-result");
         web.ignoring()
-            .antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
+            .antMatchers(HttpMethod.POST, "/api/programming-submissions/*");
         web.ignoring()
-            .antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
+            .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*");
         web.ignoring()
             .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH);
         web.ignoring()
-            .antMatchers(HttpMethod.POST, ATHENE_RESULT_API_PATH + "*");
+            .antMatchers(HttpMethod.POST, "/api/athene-result/*");
         // @formatter:on
     }
 
@@ -163,13 +163,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
             .authorizeRequests()
-            .antMatchers("/api/register").permitAll()
-            .antMatchers("/api/activate").permitAll()
-            .antMatchers("/api/authenticate").permitAll()
-            .antMatchers("/api/account/reset-password/init").permitAll()
-            .antMatchers("/api/account/reset-password/finish").permitAll()
-            .antMatchers("/api/lti/launch/*").permitAll()
-            .antMatchers("/api/lti13/auth-callback").permitAll()
+        .and()
+            // api
+            .authorizeRequests()
+            .antMatchers("/api/public/**").permitAll()
             .antMatchers("/api/files/attachments/lecture/**").permitAll()
             .antMatchers("/api/files/attachments/attachment-unit/**").permitAll()
             .antMatchers("/api/files/file-upload-exercises/**").permitAll()

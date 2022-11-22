@@ -349,7 +349,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         // Mock again because we call the trigger request two times
         bambooRequestMockProvider.mockGetBuildPlan(participation.getBuildPlanId(), buildPlan, false);
 
-        String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
+        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
 
         verify(messagingTemplate).convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission);
@@ -366,7 +366,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     void triggerFailedBuildSubmissionNotLatestButLastGradedNotFound() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
 
-        String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build?lastGraded=true";
+        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build?lastGraded=true";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, null);
     }
 
@@ -379,7 +379,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
 
         doThrow(ContinuousIntegrationException.class).when(continuousIntegrationService).triggerBuild(participation);
-        String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
+        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
     }
 
