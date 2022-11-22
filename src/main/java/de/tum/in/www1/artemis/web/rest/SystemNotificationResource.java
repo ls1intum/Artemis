@@ -16,6 +16,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.SystemNotificationService;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
@@ -72,7 +73,9 @@ public class SystemNotificationResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
+    // TODO: /public
     @GetMapping("system-notifications/active")
+    @EnforceNothing
     public List<SystemNotification> getActiveAndFutureSystemNotifications() {
         log.debug("REST request to get relevant system notifications");
         return systemNotificationService.findAllActiveAndFutureSystemNotifications();

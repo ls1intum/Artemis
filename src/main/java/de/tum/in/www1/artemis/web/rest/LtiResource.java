@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.Lti10Service;
 import de.tum.in.www1.artemis.service.connectors.LtiDynamicRegistrationService;
@@ -65,7 +66,9 @@ public class LtiResource {
      * @param response      HTTP response
      * @throws IOException If an input or output exception occurs
      */
+    // TODO: /public
     @PostMapping(value = "lti/launch/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceNothing
     public void launch(@ModelAttribute LtiLaunchRequestDTO launchRequest, @PathVariable("exerciseId") Long exerciseId, HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
