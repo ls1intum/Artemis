@@ -61,22 +61,18 @@ describe('ComplaintResponseService', () => {
         return lockedComplaintResponse;
     }
 
-    it('should correctly calculate that complaint response is locked for user', () => {
-        const lockedComplaintResponse = setupLockTest('test', false, 'test2', true);
+    it.each([
+        { user: 'test', instructor: false, reviewer: 'test2', lockActive: false, expected: false },
+        { user: 'test', instructor: false, reviewer: 'test2', lockActive: true, expected: true },
+        { user: 'test', instructor: true, reviewer: 'test2', lockActive: false, expected: false },
+        { user: 'test', instructor: true, reviewer: 'test2', lockActive: true, expected: false },
+        { user: 'test', instructor: false, reviewer: 'test', lockActive: true, expected: false },
+        { user: 'test', instructor: false, reviewer: 'test', lockActive: false, expected: false },
+        { user: 'test', instructor: true, reviewer: 'test', lockActive: false, expected: false },
+    ])('should correctly calculate complaint lock status', ({ user, instructor, reviewer, lockActive, expected }) => {
+        const lockedComplaintResponse = setupLockTest(user, instructor, reviewer, lockActive);
         const isLocked = complaintResponseService.isComplaintResponseLockedForLoggedInUser(lockedComplaintResponse, new TextExercise(undefined, undefined));
-        expect(isLocked).toBeTrue();
-    });
-
-    it('should correctly calculate that complaint response is not locked for instructor', () => {
-        const lockedComplaintResponse = setupLockTest('test', true, 'test2', true);
-        const isLocked = complaintResponseService.isComplaintResponseLockedForLoggedInUser(lockedComplaintResponse, new TextExercise(undefined, undefined));
-        expect(isLocked).toBeFalse();
-    });
-
-    it('should correctly calculate that complaint response is not locked for reviewer', () => {
-        const lockedComplaintResponse = setupLockTest('test', false, 'test', true);
-        const isLocked = complaintResponseService.isComplaintResponseLockedForLoggedInUser(lockedComplaintResponse, new TextExercise(undefined, undefined));
-        expect(isLocked).toBeFalse();
+        expect(isLocked).toBe(expected);
     });
 
     it('should call refreshLock', async () => {
