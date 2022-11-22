@@ -34,7 +34,7 @@ export class FooterComponent implements OnInit {
                     this.gitCommitId = info.git.commit.id.abbrev;
                     this.gitTimestamp = info.git.commit.time;
                     this.gitCommitUser = info.git.commit.user.name;
-                    this.testServer = info.testServer == undefined ? false : info.testServer;
+                    this.testServer = info.testServer ?? false;
                     this.inProduction = info.inProduction;
                 }),
             )

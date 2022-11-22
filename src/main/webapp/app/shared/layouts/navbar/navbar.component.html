@@ -78,10 +78,10 @@
             <div jhiTranslate="global.title" class="navbar-title">Artemis</div>
             <ng-template #gitInfo>
                 <div>
-                    {{ 'git.branch' | artemisTranslate }}: {{ gitBranchName }} <br />
-                    {{ 'git.commit' | artemisTranslate }}: {{ gitCommitId }} <br />
-                    {{ 'git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} <br />
-                    {{ 'git.username' | artemisTranslate }}: {{ gitUsername }}
+                    {{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranchName }} <br />
+                    {{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId }} <br />
+                    {{ 'artemisApp.git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} <br />
+                    {{ 'artemisApp.git.username' | artemisTranslate }}: {{ gitUsername }}
                 </div>
             </ng-template>
             <div class="navbar-version" placement="bottom" [ngbTooltip]="gitInfo" tooltipClass="git-info" [disableTooltip]="inProduction && !testServer">

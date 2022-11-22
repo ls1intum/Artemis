@@ -182,7 +182,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
-                this.testServer = profileInfo.testServer == undefined ? false : profileInfo.testServer;
+                this.testServer = profileInfo.testServer ?? false;
                 this.openApiEnabled = profileInfo.openApiEnabled;
                 this.gitCommitId = profileInfo.git.commit.id.abbrev;
                 this.gitBranchName = profileInfo.git.branch;

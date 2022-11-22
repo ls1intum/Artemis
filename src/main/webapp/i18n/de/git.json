@@ -1,9 +1,11 @@
 {
-    "git": {
-        "title": "Git Information",
-        "branch": "Branch",
-        "commit": "Commit ID",
-        "timestamp": "Commit Zeitstempel",
-        "username": "Commit Benutzername"
+    "artemisApp": {
+        "git": {
+            "title": "Git-Information",
+            "branch": "Branch",
+            "commit": "Commit-Hash",
+            "timestamp": "Commit-Datum",
+            "username": "Letzter Committer"
+        }
     }
 }

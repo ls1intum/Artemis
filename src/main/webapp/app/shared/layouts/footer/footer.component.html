@@ -11,10 +11,10 @@
     </div>
 
     <div class="col-sm-12 footer-git-wrapper" *ngIf="!inProduction || testServer">
-        <div class="footer-git">{{ 'git.branch' | artemisTranslate }}: {{ gitBranch }} •</div>
-        <div class="footer-git">{{ 'git.commit' | artemisTranslate }}: {{ gitCommitId }} •</div>
-        <div class="footer-git">{{ 'git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} •</div>
-        <div class="footer-git">{{ 'git.username' | artemisTranslate }}: {{ gitCommitUser }}</div>
+        <div class="footer-git">{{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranch }} •</div>
+        <div class="footer-git">{{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId }} •</div>
+        <div class="footer-git">{{ 'artemisApp.git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} •</div>
+        <div class="footer-git">{{ 'artemisApp.git.username' | artemisTranslate }}: {{ gitCommitUser }}</div>
     </div>
 </footer>
 

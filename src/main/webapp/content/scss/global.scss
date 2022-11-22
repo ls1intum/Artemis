@@ -740,8 +740,10 @@ Course Info Bar
 }
 
 .git-info {
-    text-align: left;
     --bs-tooltip-max-width: 500px;
+    .tooltip-inner {
+        text-align: left;
+    }
 }
 
 .warning-modal-window .modal-dialog {
