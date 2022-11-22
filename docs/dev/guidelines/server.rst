@@ -329,8 +329,10 @@ The table contains all annotations for the corresponding minimum role. Different
 +------------------+----------------------------------------+
 | USER             | @PreAuthorize("hasRole('USER')")       |
 +------------------+----------------------------------------+
-| ANONYMOUS        | @PreAuthorize("permitAll()")           |
+| ANONYMOUS        | @EnforceNothing                        |
 +------------------+----------------------------------------+
+
+If, for some reason, you need to deviate from this rule, use ``@ManualConfig``. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
 
 If a user passes the pre-authorization, the access to individual resources like courses and exercises still has to be checked. For example, a user can be a teaching assistant in one course, but only a student in another.
 However, do not fetch the user from the database yourself (unless you need to re-use the user object), but only hand a role to the ``AuthorizationCheckService``:
