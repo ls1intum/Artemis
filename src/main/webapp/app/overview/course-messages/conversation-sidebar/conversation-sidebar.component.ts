@@ -195,12 +195,9 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     }
 
     getNumberOfUnreadMessages(conversation: Conversation): number {
-        console.log(conversation.conversationParticipants);
-        console.log(conversation.conversationParticipants![0].unreadMessagesCount);
         const conversationParticipant = conversation.conversationParticipants!.find(
             (conversationParticipants) => conversationParticipants.user.id === this.courseMessagesService.userId,
         )!;
-        console.log(conversationParticipant.unreadMessagesCount!);
         return conversationParticipant.unreadMessagesCount!;
     }
 
