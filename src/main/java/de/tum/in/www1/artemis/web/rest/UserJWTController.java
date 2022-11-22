@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.Optional;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
@@ -120,10 +122,12 @@ public class UserJWTController {
 
     /**
      * Removes the cookie containing the jwt
+     * @param request HTTP request
      * @param response  HTTP response
      */
     @PostMapping("/logout")
-    public void logout(HttpServletResponse response) {
+    public void logout(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+        request.logout();
         // Logout needs to build the same cookie (secure, httpOnly and sameSite='Lax') or browsers will ignore the header and not unset the cookie
         ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
