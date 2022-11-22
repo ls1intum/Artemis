@@ -10,7 +10,6 @@ function setupProxy({ tls }) {
         '/h2-console',
         '/auth',
         '/health',
-        '/time',
         '/public'
       ],
       target: `http${tls ? 's' : ''}://localhost:8080`,

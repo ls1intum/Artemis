@@ -176,7 +176,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
             .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
             .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
-            .antMatchers("/time").permitAll()
         .and()
             .apply(securityConfigurerAdapter());
 

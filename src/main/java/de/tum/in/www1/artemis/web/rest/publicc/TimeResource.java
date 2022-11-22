@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.publicc;
 
 import java.time.Instant;
 
@@ -10,14 +10,13 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/public/")
 public class TimeResource {
 
     /**
      * {@code GET /time}:
      * @return the current server time as Instant
      */
-    // TODO: /public
     @GetMapping("time")
     @EnforceNothing
     public ResponseEntity<Instant> time() {

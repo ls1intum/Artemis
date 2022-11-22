@@ -23,7 +23,7 @@ export class ArtemisServerDateService implements ServerDateService {
 
     constructor(http: HttpClient) {
         this.http = http;
-        this.resourceUrl = SERVER_API_URL + 'time';
+        this.resourceUrl = SERVER_API_URL + 'api/public/time';
         this.recentOffsets = new Array<number>();
         this.recentClientDates = new Array<dayjs.Dayjs>();
     }
