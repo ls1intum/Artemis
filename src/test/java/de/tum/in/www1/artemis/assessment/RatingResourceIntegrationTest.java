@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -37,7 +36,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() {
-        List<User> users = database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         course = database.addCourseWithOneReleasedTextExercise();
         TextExercise exercise = database.getFirstExerciseWithType(course, TextExercise.class);
         User student1 = database.getUserByLogin(TEST_PREFIX + "student1");

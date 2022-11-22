@@ -40,8 +40,8 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBa
      */
     @BeforeEach
     void initTestCase() {
-        var users = database.addUsers(TEST_PREFIX, 10, TUTOR_COUNT, 0, 2);
-        var student1 = users.get(0);
+        database.addUsers(TEST_PREFIX, 10, TUTOR_COUNT, 0, 2);
+        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var tutor1 = database.getUserByLogin(TEST_PREFIX + "tutor1");
 
         course = database.addCourseWithOneModelingExercise();
