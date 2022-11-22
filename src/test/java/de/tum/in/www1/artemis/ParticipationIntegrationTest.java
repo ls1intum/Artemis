@@ -497,7 +497,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             assertThat(exercise.getPosts()).isEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getDifficulty()).isNull();
-            assertThat(exercise.getMode()).isNull();
+            assertThat(exercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
             if (exercise instanceof ProgrammingExercise programmingExercise) {
                 assertThat(programmingExercise.getSolutionParticipation()).isNull();
                 assertThat(programmingExercise.getTemplateParticipation()).isNull();
