@@ -20,7 +20,7 @@ export interface GenericUpdateTextPropertyTranslationKeys {
     selector: 'jhi-generic-update-text-property-dialog',
     templateUrl: './generic-update-text-property-dialog.component.html',
 })
-export class GenericUpdateTextPropertyDialog {
+export class GenericUpdateTextPropertyDialogComponent {
     @Input()
     propertyName: string;
 

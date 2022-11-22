@@ -31,7 +31,7 @@
                     <!-- Starred -->
                     <!-- ToDo: Translate -->
                     <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedStarredConversations?.length">
-                        <jhi-sidebar-section
+                        <jhi-conversation-sidebar-section
                             [label]="'Starred'"
                             [headerKey]="'starred'"
                             [conversations]="displayedStarredConversations"
@@ -40,12 +40,12 @@
                             [course]="course"
                             (settingsChanged)="onSettingsChanged()"
                         >
-                        </jhi-sidebar-section>
+                        </jhi-conversation-sidebar-section>
                         <hr class="m-0" />
                     </div>
                     <!-- Channels -->
                     <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedChannelConversations?.length">
-                        <jhi-sidebar-section
+                        <jhi-conversation-sidebar-section
                             [label]="'Channels'"
                             [headerKey]="'channels'"
                             [conversations]="displayedChannelConversations"
@@ -67,12 +67,12 @@
                                     </div>
                                 </div>
                             </ng-template>
-                        </jhi-sidebar-section>
+                        </jhi-conversation-sidebar-section>
                         <hr class="m-0" />
                     </div>
                     <!-- Group Chats -->
                     <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedGroupChats?.length">
-                        <jhi-sidebar-section
+                        <jhi-conversation-sidebar-section
                             [label]="'GroupChats'"
                             [headerKey]="'groupChats'"
                             [conversations]="displayedGroupChats"
@@ -88,12 +88,12 @@
                                     </button>
                                 </div>
                             </ng-template>
-                        </jhi-sidebar-section>
+                        </jhi-conversation-sidebar-section>
                         <hr class="m-0" />
                     </div>
                     <!-- Direct Messages -->
                     <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedOneToOneChats?.length">
-                        <jhi-sidebar-section
+                        <jhi-conversation-sidebar-section
                             [label]="'Direct Messages'"
                             [headerKey]="'directMessages'"
                             [conversations]="displayedOneToOneChats"
@@ -109,7 +109,7 @@
                                     </button>
                                 </div>
                             </ng-template>
-                        </jhi-sidebar-section>
+                        </jhi-conversation-sidebar-section>
                     </div>
                 </div>
                 <!-- no conversations -->

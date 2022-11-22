@@ -4,7 +4,7 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { GenericConfirmationDialog } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
+import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, from, takeUntil } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -92,7 +92,7 @@ export class ConversationSettingsComponent implements OnDestroy {
         };
 
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialog, {
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, {
             size: 'lg',
             scrollable: false,
             backdrop: 'static',
@@ -134,7 +134,7 @@ export class ConversationSettingsComponent implements OnDestroy {
         };
 
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialog, {
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, {
             size: 'lg',
             scrollable: false,
             backdrop: 'static',

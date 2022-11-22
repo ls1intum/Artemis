@@ -22,7 +22,7 @@ interface SearchQuery {
     selector: 'jhi-conversation-members',
     templateUrl: './conversation-members.component.html',
 })
-export class ConversationMembers implements OnInit, OnDestroy {
+export class ConversationMembersComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     private readonly search$ = new Subject<SearchQuery>();

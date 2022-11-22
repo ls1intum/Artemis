@@ -19,7 +19,7 @@ import { OneToOneChatDTO, isOneToOneChatDto } from 'app/entities/metis/conversat
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { SidebarSectionComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/sidebar-section/sidebar-section.component';
+import { ConversationSidebarSectionComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-sidebar-section/conversation-sidebar-section.component';
 
 interface SearchQuery {
     searchTerm: string;
@@ -31,8 +31,8 @@ interface SearchQuery {
     templateUrl: './conversation-selection-sidebar.component.html',
 })
 export class ConversationSelectionSidebarComponent implements AfterViewInit, OnInit, OnDestroy {
-    @ViewChildren(SidebarSectionComponent) sidebarSections: QueryList<SidebarSectionComponent>;
-    collapseToggles: SidebarSectionComponent[] = [];
+    @ViewChildren(ConversationSidebarSectionComponent) sidebarSections: QueryList<ConversationSidebarSectionComponent>;
+    collapseToggles: ConversationSidebarSectionComponent[] = [];
     private ngUnsubscribe = new Subject<void>();
     private readonly search$ = new Subject<SearchQuery>();
     searchTerm = '';

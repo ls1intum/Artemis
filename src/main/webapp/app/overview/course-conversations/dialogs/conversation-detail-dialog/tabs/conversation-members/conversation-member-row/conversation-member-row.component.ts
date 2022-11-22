@@ -12,7 +12,7 @@ import { ConversationUserDTO } from 'app/entities/metis/conversation/conversatio
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { TranslateService } from '@ngx-translate/core';
-import { GenericConfirmationDialog } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
+import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { onError } from 'app/shared/util/global.utils';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -120,7 +120,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         };
 
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialog, {
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, {
             size: 'lg',
             scrollable: false,
             backdrop: 'static',
@@ -167,7 +167,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         };
 
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialog, {
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, {
             size: 'lg',
             scrollable: false,
             backdrop: 'static',
@@ -223,7 +223,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         };
 
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialog, {
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, {
             size: 'lg',
             scrollable: false,
             backdrop: 'static',
@@ -268,7 +268,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         };
 
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialog, {
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, {
             size: 'lg',
             scrollable: false,
             backdrop: 'static',

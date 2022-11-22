@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/add-users-form.component';
+import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';

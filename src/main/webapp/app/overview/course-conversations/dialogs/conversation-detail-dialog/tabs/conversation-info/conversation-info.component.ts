@@ -7,7 +7,7 @@ import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { get } from 'lodash-es';
 import {
-    GenericUpdateTextPropertyDialog,
+    GenericUpdateTextPropertyDialogComponent,
     GenericUpdateTextPropertyTranslationKeys,
 } from 'app/overview/course-conversations/dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { Subject, from, map, takeUntil } from 'rxjs';
@@ -133,7 +133,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         regexPattern: RegExp | undefined,
         translationKeys: GenericUpdateTextPropertyTranslationKeys,
     ) {
-        const modalRef: NgbModalRef = this.modalService.open(GenericUpdateTextPropertyDialog, {
+        const modalRef: NgbModalRef = this.modalService.open(GenericUpdateTextPropertyDialogComponent, {
             size: 'lg',
             scrollable: false,
             backdrop: 'static',

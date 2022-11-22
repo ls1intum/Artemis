@@ -9,7 +9,7 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
-import { SidebarSectionComponent } from './layout/conversation-selection-sidebar/sidebar-section/sidebar-section.component';
+import { ConversationSidebarSectionComponent } from './layout/conversation-selection-sidebar/conversation-sidebar-section/conversation-sidebar-section.component';
 import { ChannelsOverviewDialogComponent } from './dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ChannelItemComponent } from './dialogs/channels-overview-dialog/channel-item/channel-item.component';
 import { ChannelFormComponent } from './dialogs/channels-create-dialog/channel-form/channel-form.component';
@@ -17,16 +17,16 @@ import { ChannelsCreateDialogComponent } from './dialogs/channels-create-dialog/
 import { ConversationHeaderComponent } from './layout/conversation-header/conversation-header.component';
 import { ChannelIconComponent } from './other/channel-icon/channel-icon.component';
 import { ConversationAddUsersDialogComponent } from './dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
-import { AddUsersFormComponent } from './dialogs/conversation-add-users-dialog/add-users-form/add-users-form.component';
+import { ConversationAddUsersFormComponent } from './dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { CourseUsersSelectorModule } from 'app/shared/course-users-selector/course-users-selector.module';
-import { ConversationMembers } from './dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
+import { ConversationMembersComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
 import { ConversationDetailDialogComponent } from './dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { ConversationInfoComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { ConversationMemberRowComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
-import { GenericUpdateTextPropertyDialog } from './dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
-import { GenericConfirmationDialog } from './dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
+import { GenericUpdateTextPropertyDialogComponent } from './dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
+import { GenericConfirmationDialogComponent } from './dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ConversationSettingsComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
-import { ConversationEntryComponent } from './layout/conversation-selection-sidebar/sidebar-section/conversation-entry/conversation-entry.component';
+import { ConversationSidebarEntryComponent } from './layout/conversation-selection-sidebar/conversation-sidebar-section/conversation-sidebar-entry/conversation-sidebar-entry.component';
 import { OneToOneChatCreateDialogComponent } from './dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { GroupChatCreateDialogComponent } from './dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { GroupChatIconComponent } from './other/group-chat-icon/group-chat-icon.component';
@@ -57,7 +57,7 @@ const routes: Routes = [
         ConversationSelectionSidebarComponent,
         ConversationThreadSidebarComponent,
         ConversationMessagesComponent,
-        SidebarSectionComponent,
+        ConversationSidebarSectionComponent,
         ChannelsOverviewDialogComponent,
         ChannelItemComponent,
         ChannelFormComponent,
@@ -65,15 +65,15 @@ const routes: Routes = [
         ConversationHeaderComponent,
         ChannelIconComponent,
         ConversationAddUsersDialogComponent,
-        AddUsersFormComponent,
-        ConversationMembers,
+        ConversationAddUsersFormComponent,
+        ConversationMembersComponent,
         ConversationDetailDialogComponent,
         ConversationInfoComponent,
         ConversationMemberRowComponent,
-        GenericUpdateTextPropertyDialog,
-        GenericConfirmationDialog,
+        GenericUpdateTextPropertyDialogComponent,
+        GenericConfirmationDialogComponent,
         ConversationSettingsComponent,
-        ConversationEntryComponent,
+        ConversationSidebarEntryComponent,
         OneToOneChatCreateDialogComponent,
         GroupChatCreateDialogComponent,
         GroupChatIconComponent,

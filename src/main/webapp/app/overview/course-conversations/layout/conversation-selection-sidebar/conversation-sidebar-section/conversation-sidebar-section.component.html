@@ -1,0 +1,43 @@
+<div class="sidebar-section">
+    <!-- Todo: Do not hide when popover is open-->
+    <div class="section-header" (click)="toggleCollapsed()" [attr.aria-expanded]="!isCollapsed">
+        <div>
+            <fa-icon [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
+            <span>{{ label }}</span>
+        </div>
+        <div *ngIf="sectionButtons" class="interaction" (click)="$event.stopPropagation()">
+            <ng-template [ngTemplateOutlet]="sectionButtons" [ngTemplateOutletContext]="{}"></ng-template>
+        </div>
+    </div>
+    <div [(ngbCollapse)]="isCollapsed">
+        <ul class="conversation-list" *ngIf="visibleConversations.length > 0 || hiddenConversations.length > 0">
+            <li
+                *ngFor="let conversation of visibleConversations; trackBy: conversationsTrackByFn"
+                [conversation]="conversation"
+                [activeConversation]="activeConversation"
+                [course]="course"
+                jhi-conversation-sidebar-entry
+                [isActive]="activeConversation && conversation && activeConversation.id! === conversation.id!"
+                (click)="conversationSelected.emit(conversation)"
+                (settingsChanged)="settingsChanged.emit()"
+            ></li>
+            <ng-container *ngIf="hiddenConversations && hiddenConversations.length > 0">
+                <li (click)="showHiddenConversations = !showHiddenConversations" class="hidden-conversation-divider text-center">
+                    {{ hiddenConversations.length }} {{ showHiddenConversations ? 'shown' : 'hidden' }}
+                </li>
+                <ng-container *ngIf="showHiddenConversations">
+                    <li
+                        *ngFor="let conversation of hiddenConversations; trackBy: conversationsTrackByFn"
+                        [conversation]="conversation"
+                        [activeConversation]="activeConversation"
+                        [course]="course"
+                        jhi-conversation-sidebar-entry
+                        [isActive]="activeConversation && conversation && activeConversation.id! === conversation.id!"
+                        (click)="conversationSelected.emit(conversation)"
+                        (settingsChanged)="settingsChanged.emit()"
+                    ></li>
+                </ng-container>
+            </ng-container>
+        </ul>
+    </div>
+</div>
