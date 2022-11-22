@@ -40,7 +40,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         List<User> users = database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         course = database.addCourseWithOneReleasedTextExercise();
         TextExercise exercise = database.getFirstExerciseWithType(course, TextExercise.class);
-        User student1 = users.get(0);
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         database.createAndSaveParticipationForExercise(exercise, student1.getLogin());
 
         TextSubmission submission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
