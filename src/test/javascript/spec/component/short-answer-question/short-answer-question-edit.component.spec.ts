@@ -421,7 +421,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         nodeValue = {
             ...nodeValue,
             toString() {
-                return '1.2345';
+                return '[1.2345|1.2345]';
             },
         } as unknown as Selection;
         jest.spyOn(window, 'getSelection').mockReturnValue(nodeValue);
@@ -430,11 +430,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
             length: 1,
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             substring(start: number, end?: number): string {
-                return '1.2345';
+                return '[1.2345|1.2345]';
             },
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             replace(pattern: string, replacement: string): string {
-                return '1.2345';
+                return '[1.2345|1.2345]';
             },
         } as string;
         jest.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue(markdownHelper);
@@ -544,7 +544,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         nodeValue = {
             ...nodeValue,
             toString() {
-                return '1.2345';
+                return '[1.2345|1.2345]';
             },
         } as unknown as Selection;
         jest.spyOn(window, 'getSelection').mockReturnValue(nodeValue);
@@ -553,11 +553,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
             length: 1,
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             substring(start: number, end?: number): string {
-                return '1.2345';
+                return '[1.2345|1.2345]';
             },
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             replace(pattern: string, replacement: string): string {
-                return '1.2345';
+                return '[1.2345|1.2345]';
             },
         } as string;
         jest.spyOn(markdownConversionUtil, 'markdownForHtml').mockReturnValue(markdownHelper);
