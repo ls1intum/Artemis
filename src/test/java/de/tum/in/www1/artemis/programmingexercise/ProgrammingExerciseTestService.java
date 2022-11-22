@@ -936,7 +936,7 @@ public class ProgrammingExerciseTestService {
         programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
 
         // Mock REST Call from the VCS for a new programming submission (happens as part of the webhook after pushing code to git)
-        request.postWithoutLocation("/api/programming-submissions/" + participation.getId(), body, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api/public/programming-submissions/" + participation.getId(), body, HttpStatus.OK, new HttpHeaders());
 
         // Fetch updated participation and assert
         ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());

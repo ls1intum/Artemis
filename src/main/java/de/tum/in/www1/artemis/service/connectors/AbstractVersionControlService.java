@@ -78,9 +78,9 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Override
     public void addWebHooksForExercise(ProgrammingExercise exercise) {
-        final var artemisTemplateHookPath = ARTEMIS_SERVER_URL + "/api/programming-submissions/" + exercise.getTemplateParticipation().getId();
-        final var artemisSolutionHookPath = ARTEMIS_SERVER_URL + "/api/programming-submissions/" + exercise.getSolutionParticipation().getId();
-        final var artemisTestsHookPath = ARTEMIS_SERVER_URL + "/api/programming-exercises/test-cases-changed/" + exercise.getId();
+        final var artemisTemplateHookPath = ARTEMIS_SERVER_URL + "/api/public/programming-submissions/" + exercise.getTemplateParticipation().getId();
+        final var artemisSolutionHookPath = ARTEMIS_SERVER_URL + "/api/public/programming-submissions/" + exercise.getSolutionParticipation().getId();
+        final var artemisTestsHookPath = ARTEMIS_SERVER_URL + "/api/public/programming-exercises/test-cases-changed/" + exercise.getId();
         // first add web hooks from the version control service to Artemis, so that Artemis is notified and can create ProgrammingSubmission when instructors push their template or
         // solution code
         addWebHook(exercise.getVcsTemplateRepositoryUrl(), artemisTemplateHookPath, "Artemis WebHook");
@@ -92,7 +92,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     public void addWebHookForParticipation(ProgrammingExerciseParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             // first add a web hook from the version control service to Artemis, so that Artemis is notified can create a ProgrammingSubmission when students push their code
-            addWebHook(participation.getVcsRepositoryUrl(), ARTEMIS_SERVER_URL + "/api/programming-submissions/" + participation.getId(), "Artemis WebHook");
+            addWebHook(participation.getVcsRepositoryUrl(), ARTEMIS_SERVER_URL + "/api/public/programming-submissions/" + participation.getId(), "Artemis WebHook");
         }
     }
 

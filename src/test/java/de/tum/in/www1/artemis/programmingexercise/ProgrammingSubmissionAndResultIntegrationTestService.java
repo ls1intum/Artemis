@@ -89,7 +89,7 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
         Object obj = jsonParser.parse(jsonRequest);
 
         // Api should return ok.
-        request.postWithoutLocation("/api/programming-submissions/" + participationId, obj, expectedStatus, new HttpHeaders());
+        request.postWithoutLocation("/api/public/programming-submissions/" + participationId, obj, expectedStatus, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAll();
 
