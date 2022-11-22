@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FilePathService;
@@ -158,6 +159,7 @@ public class FileResource {
      */
     @GetMapping("files/markdown/{filename:.+}")
     @PreAuthorize("permitAll()")
+    @ManualConfig // PR for removal is in progress
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         return buildFileResponse(FilePathService.getMarkdownFilePath(), filename);
@@ -237,6 +239,7 @@ public class FileResource {
      */
     @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}")
     @PreAuthorize("permitAll()")
+    @ManualConfig // PR for removal is in progress
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename,
             @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
@@ -378,6 +381,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}")
     @PreAuthorize("permitAll()")
+    @ManualConfig // PR for removal is in progress
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
         // required claims to access this resource
@@ -405,6 +409,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/lecture/{lectureId}/merge-pdf")
     @PreAuthorize("permitAll()")
+    @ManualConfig // PR for removal is in progress
     public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
 
@@ -480,6 +485,7 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}")
     @PreAuthorize("permitAll()")
+    @ManualConfig // PR for removal is in progress
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId, @PathVariable String filename,
             @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
