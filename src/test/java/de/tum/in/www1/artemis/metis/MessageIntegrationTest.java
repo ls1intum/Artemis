@@ -24,11 +24,14 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.MessageRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
@@ -37,6 +40,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Autowired
     private MessageRepository messageRepository;
+
+    @Autowired
+    private ConversationRepository conversationRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private List<Post> existingPostsAndConversationPosts;
 
@@ -51,6 +60,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     private Long courseId;
 
     private Validator validator;
+
+    private static final int MAX_POSTS_PER_PAGE = 20;
 
     @BeforeEach
     @WithMockUser(username = "student1", roles = "USER")
@@ -103,6 +114,18 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         // both conversation participants should be notified
         verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "USER")
+    void testIncreaseUnreadMessageCountAfterMessageSend() throws Exception {
+        Post postToSave = createPostWithConversation();
+        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+
+        long unreadMessages = conversationRepository.findConversationByIdWithConversationParticipants(createdPost.getConversation().getId()).getConversationParticipants().stream()
+                .filter(conversationParticipant -> conversationParticipant.getUser().getId() != postToSave.getAuthor().getId()).findAny().get().getUnreadMessagesCount();
+
+        assertThat(unreadMessages).isEqualTo(1L);
     }
 
     @Test

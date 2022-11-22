@@ -84,7 +84,6 @@ public class MessageService extends PostingService {
             Post savedMessage = messageRepository.save(messagePost);
             savedMessage.setConversation(conversation);
 
-            // conversationService.unreadMessages(user.getId(), courseId, conversation.getId());
             conversationService.updateConversation(conversation);
             conversationService.unreadMessages(user.getId(), courseId, conversation.getId());
             conversation = conversationService.getConversationById(conversation.getId());
