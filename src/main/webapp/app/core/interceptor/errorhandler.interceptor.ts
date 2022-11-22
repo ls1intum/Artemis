@@ -10,7 +10,7 @@ export class ErrorHandlerInterceptor implements HttpInterceptor {
 
     /**
      * Identifies and handles a given HTTP request. If the request's error status is not 401 and the error message is empty
-     * or the error url includes '/api/account' the httpError is broadcasted to the observer.
+     * or the error url includes '/api/public/account' or '/api/account' the httpError is broadcasted to the observer.
      * @param request The outgoing request object to handle.
      * @param next The next interceptor in the chain, or the server
      * if no interceptors remain in the chain.
@@ -21,7 +21,7 @@ export class ErrorHandlerInterceptor implements HttpInterceptor {
             tap({
                 error: (err: any) => {
                     if (err instanceof HttpErrorResponse) {
-                        if (!(err.status === 401 && (err.message === '' || (err.url && err.url.includes('/api/account'))))) {
+                        if (!(err.status === 401 && (err.message === '' || (err.url && err.url.match('/api(/public)?/account'))))) {
                             this.eventManager.broadcast({ name: 'artemisApp.httpError', content: err });
                         }
                     }

@@ -57,7 +57,7 @@ export function login(username, password) {
     req = [
         {
             method: 'post',
-            url: baseUrl + '/api/authenticate',
+            url: baseUrl + '/api/public/authenticate',
             body: '{"username":"' + username + '","password":"' + password + '","rememberMe":true}',
             params: {
                 headers: {
@@ -71,7 +71,7 @@ export function login(username, password) {
                     Connection: 'keep-alive',
                     TE: 'Trailers',
                 },
-                tags: { name: baseUrl + '/api/authenticate' },
+                tags: { name: baseUrl + '/api/public/authenticate' },
             },
         },
     ];
@@ -86,7 +86,7 @@ export function login(username, password) {
     req = [
         {
             method: 'get',
-            url: baseUrl + '/api/account',
+            url: baseUrl + '/api/public/account',
             params: {
                 headers: {
                     Host: host,
@@ -99,7 +99,7 @@ export function login(username, password) {
                     Connection: 'keep-alive',
                     TE: 'Trailers',
                 },
-                tags: { name: baseUrl + '/api/account' },
+                tags: { name: baseUrl + '/api/public/account' },
             },
         },
     ];

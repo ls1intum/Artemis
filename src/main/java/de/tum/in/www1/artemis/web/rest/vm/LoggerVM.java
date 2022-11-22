@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.vm;
 
+import org.springframework.util.ObjectUtils;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import ch.qos.logback.classic.Logger;
@@ -42,5 +44,20 @@ public class LoggerVM {
     @Override
     public String toString() {
         return "LoggerVM{" + "name='" + name + '\'' + ", level='" + level + '\'' + '}';
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof LoggerVM loggerVM)) {
+            return false;
+        }
+
+        if (!ObjectUtils.nullSafeEquals(getName(), loggerVM.getName())) {
+            return false;
+        }
+        return ObjectUtils.nullSafeEquals(getLevel(), loggerVM.getLevel());
     }
 }

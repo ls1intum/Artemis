@@ -48,14 +48,17 @@ describe(`ErrorHandlerInterceptor`, () => {
         expect(eventManagerMock.broadcast).not.toHaveBeenCalled();
     });
 
-    it('should not broadcast an http error if status is 401 but url includes /api/account', () => {
-        const error = new HttpErrorResponse({ status: 401, url: '/api/account' });
-        const mockHandler = {
-            handle: () => throwError(() => error),
-        };
+    it.each([{ url: '/api/public/account' }, { url: '/api/account' }])(
+        'should not broadcast an http error if status is 401 but url includes /api/public/account or /api/account',
+        ({ url }) => {
+            const error = new HttpErrorResponse({ status: 401, url });
+            const mockHandler = {
+                handle: () => throwError(() => error),
+            };
 
-        errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
+            errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
-        expect(eventManagerMock.broadcast).not.toHaveBeenCalled();
-    });
+            expect(eventManagerMock.broadcast).not.toHaveBeenCalled();
+        },
+    );
 });

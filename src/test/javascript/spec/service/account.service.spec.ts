@@ -21,7 +21,7 @@ describe('AccountService', () => {
     let getStub: jest.SpyInstance;
     let translateService: TranslateService;
 
-    const getUserUrl = 'api/account';
+    const getUserUrl = 'api/public/account';
     const user = { id: 1, groups: ['USER'] } as User;
     const user2 = { id: 2, groups: ['USER'] } as User;
     const user3 = { id: 3, groups: ['USER', 'TA'], authorities: [Authority.USER] } as User;

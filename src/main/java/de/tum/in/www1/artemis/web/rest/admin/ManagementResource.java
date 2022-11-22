@@ -45,7 +45,7 @@ public class ManagementResource {
      * GET management/logs -- Gets the current log levels.
      * @return A list of all loggers with their log level
      */
-    @GetMapping("logs")
+    @GetMapping("management/logs")
     @EnforceAdmin
     public ResponseEntity<List<LoggerVM>> getList() {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -57,8 +57,7 @@ public class ManagementResource {
      * @param jsonLogger The logger with the new log level
      * @return The updated logger
      */
-    @PutMapping("logs")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PutMapping("management/logs")
     @EnforceAdmin
     public ResponseEntity<LoggerVM> changeLevel(@RequestBody LoggerVM jsonLogger) {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();

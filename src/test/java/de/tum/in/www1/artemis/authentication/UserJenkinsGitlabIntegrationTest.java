@@ -414,7 +414,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         userVM.setPassword("password");
         gitlabRequestMockProvider.mockCreateVcsUser(user, false);
         gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
-        request.postWithoutLocation("/api/register", userVM, HttpStatus.CREATED, null);
+        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
 
         Optional<User> registeredUser = userTestService.getUserRepository().findOneWithGroupsAndAuthoritiesByLogin(user.getLogin());
         assertThat(registeredUser).isPresent();

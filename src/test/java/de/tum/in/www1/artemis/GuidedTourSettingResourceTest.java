@@ -47,7 +47,7 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "student1")
     void guidedTourSettingsIsInitiallyNull() throws Exception {
-        User user = request.get("/api/account", HttpStatus.OK, User.class);
+        User user = request.get("/api/public/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).isEmpty();
     }
 
@@ -58,7 +58,7 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbu
         Set<?> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         assertThat(serverGuidedTourSettings).hasSize(2);
 
-        User user = request.get("/api/account", HttpStatus.OK, User.class);
+        User user = request.get("/api/public/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).hasSize(2);
     }
 
@@ -69,7 +69,7 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbu
         request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         request.delete("/api/guided-tour-settings/new_tour", HttpStatus.OK);
 
-        User user = request.get("/api/account", HttpStatus.OK, User.class);
+        User user = request.get("/api/public/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).hasSize(1);
     }
 }

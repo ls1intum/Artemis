@@ -11,7 +11,7 @@ export class ActivateService {
      * @param key the activation key
      */
     get(key: string): Observable<{}> {
-        return this.http.get(SERVER_API_URL + 'api/activate', {
+        return this.http.get(SERVER_API_URL + 'api/public/activate', {
             params: new HttpParams().set('key', key),
         });
     }

@@ -77,7 +77,7 @@ describe('AuthServerProvider', () => {
                 expect(localStorageStoreSpy).toHaveBeenCalledWith(tokenKey, storedToken);
             });
 
-            const req = httpMock.expectOne({ method: 'POST', url: `api/authenticate` });
+            const req = httpMock.expectOne({ method: 'POST', url: `api/public/authenticate` });
             req.flush(respPayload);
             tick();
         }));
@@ -90,7 +90,7 @@ describe('AuthServerProvider', () => {
                 expect(sessionStorageStoreSpy).toHaveBeenCalledWith(tokenKey, storedToken);
             });
 
-            const req = httpMock.expectOne({ method: 'POST', url: `api/authenticate` });
+            const req = httpMock.expectOne({ method: 'POST', url: `api/public/authenticate` });
             req.flush(respPayload);
             tick();
         }));

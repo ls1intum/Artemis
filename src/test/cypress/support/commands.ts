@@ -70,7 +70,7 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
     // log = false does not prevent cypress to log the request if it failed, so failOnStatusCode also needs to be set to false, so that the request is never logged.
     // We still want to the test to fail if the authentication is unsuccessful, so we expect the status code in the then block. This only logs the status code, so it is safe.
     cy.request({
-        url: BASE_API + 'authenticate',
+        url: BASE_API + 'public/authenticate',
         method: POST,
         followRedirect: true,
         body: {
