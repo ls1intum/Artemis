@@ -203,7 +203,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith(entity.id, { ...entity, onlineCourseConfiguration: null }, undefined);
+            expect(updateStub).toHaveBeenCalledWith(entity.id, entity, undefined);
             expect(comp.isSaving).toBeFalse();
         }));
 
@@ -236,7 +236,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
-            expect(createStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null }, undefined);
+            expect(createStub).toHaveBeenCalledWith(entity, undefined);
             expect(comp.isSaving).toBeFalse();
         }));
     });
