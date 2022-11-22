@@ -22,11 +22,13 @@
             color: #212529;
         }
     }
+
     .course-exercise-row {
         display: flex;
         flex-wrap: wrap;
         padding: 0.5rem 1rem;
     }
+
     .exercise-row-icon {
         color: var(--bs-body-color);
         display: flex;
