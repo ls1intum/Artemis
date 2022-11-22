@@ -133,6 +133,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     @Input() showEditButton = true;
 
+    @Input() showVisualModeButton = false;
+
     /** {previewTextAsHtml} text that is emitted to the parent component if the parent does not use any domain commands */
     previewTextAsHtml: SafeHtml | null;
 
@@ -378,8 +380,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @function togglePreview
      * @desc Toggle the preview in the template and parse the text
      */
-    togglePreview(event: any): void {
-        this.previewMode = !this.previewMode;
+    changeNavigation(event: any): void {
+        this.previewMode = event.nextId === 'editor_preview';
+
         if (this.previewMode) {
             this.onPreviewSelect.emit();
         } else {

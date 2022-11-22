@@ -1,5 +1,5 @@
 <div #wrapper class="markdown-editor-wrapper">
-    <nav ngbNav #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="togglePreview($event)">
+    <nav ngbNav #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="changeNavigation($event)">
         <!-- editor -->
         <ng-container ngbNavItem="editor_edit">
             <a ngbNavLink class="btn-sm text-normal" *ngIf="showEditButton">{{ 'entity.action.edit' | artemisTranslate }}</a>
@@ -33,6 +33,10 @@
                     <fa-icon *ngIf="enableResize" [icon]="faGripLines" class="rg-bottom md-resize-icon"><span></span></fa-icon>
                 </div>
             </ng-template>
+        </ng-container>
+        <!-- visual Mode -->
+        <ng-container ngbNavItem="editor_visual">
+            <a ngbNavLink class="btn-sm text-normal" *ngIf="showVisualModeButton">{{ 'entity.action.visual' | artemisTranslate }}</a>
         </ng-container>
         <!-- preview -->
         <ng-container ngbNavItem="editor_preview">
