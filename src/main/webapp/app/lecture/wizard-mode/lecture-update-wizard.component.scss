@@ -54,7 +54,7 @@
         z-index: 2;
         font-size: 2em;
 
-        & > fa-icon {
+        & > .step-icon {
             cursor: pointer;
             background-color: var(--programming-exercise-instruction-step-wizard-card-header-background);
             width: 30px;
