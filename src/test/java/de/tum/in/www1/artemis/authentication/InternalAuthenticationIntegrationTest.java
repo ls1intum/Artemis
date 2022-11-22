@@ -124,7 +124,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Test
     void launchLtiRequest_authViaEmail_success() throws Exception {
-        request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
+        request.postForm("/api/public/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
 
         final var user = userRepository.findAll().get(0);
         final var ltiUser = ltiUserIdRepository.findAll().get(0);

@@ -166,8 +166,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/register").permitAll()
             .antMatchers("/api/activate").permitAll()
             .antMatchers("/api/authenticate").permitAll()
-            .antMatchers("/api/lti/launch/*").permitAll()
-            .antMatchers("/api/lti13/auth-callback").permitAll()
             .antMatchers("/api/files/attachments/lecture/**").permitAll()
             .antMatchers("/api/files/attachments/attachment-unit/**").permitAll()
             .antMatchers("/api/files/file-upload-exercises/**").permitAll()
