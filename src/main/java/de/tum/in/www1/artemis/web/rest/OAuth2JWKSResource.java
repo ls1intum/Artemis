@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.google.gson.GsonBuilder;
 
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 
 /**
  * REST controller to serve the public JWKSet related to all OAuth2 clients.
@@ -23,6 +24,7 @@ public class OAuth2JWKSResource {
     }
 
     @GetMapping(value = "/.well-known/jwks.json", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceNothing
     public ResponseEntity<String> getJwkSet() {
         String keysAsJson = new GsonBuilder().setPrettyPrinting().create().toJson(jwksService.getJwkSet().toPublicJWKSet().toJSONObject());
         return new ResponseEntity<>(keysAsJson, HttpStatus.OK);
