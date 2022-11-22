@@ -3,11 +3,8 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +15,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -92,20 +88,12 @@ public class ResultResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
     public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ResultService resultService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, LtiNewResultService ltiNewResultService, ResultRepository resultRepository,
             WebsocketMessagingService messagingService, UserRepository userRepository, ExamDateService examDateService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ParticipationRepository participationRepository,
-            StudentParticipationRepository studentParticipationRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
@@ -121,9 +109,6 @@ public class ResultResource {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
-        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     /**
@@ -165,7 +150,7 @@ public class ResultResource {
         log.info("Artemis received a new result for build plan {}", planKey);
 
         // Try to retrieve the participation with the build plan key.
-        var participation = getParticipationWithResults(planKey);
+        var participation = resultService.getParticipationWithResults(planKey);
         if (participation == null) {
             log.warn("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
             throw new EntityNotFoundException("Participation for build plan " + planKey + " does not exist");
@@ -189,31 +174,6 @@ public class ResultResource {
         return ResponseEntity.ok().build();
     }
 
-    @Nullable
-    private ProgrammingExerciseParticipation getParticipationWithResults(String planKey) {
-        // we have to support template, solution and student build plans here
-        if (planKey.endsWith("-" + BuildPlanType.TEMPLATE.getName())) {
-            return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
-        }
-        else if (planKey.endsWith("-" + BuildPlanType.SOLUTION.getName())) {
-            return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
-        }
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findByBuildPlanId(planKey);
-        ProgrammingExerciseStudentParticipation participation = null;
-        if (!participations.isEmpty()) {
-            participation = participations.get(0);
-            if (participations.size() > 1) {
-                // in the rare case of multiple participations, take the latest one.
-                for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {
-                    if (otherParticipation.getInitializationDate().isAfter(participation.getInitializationDate())) {
-                        participation = otherParticipation;
-                    }
-                }
-            }
-        }
-        return participation;
-    }
-
     /**
      * GET /exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
      *
@@ -232,7 +192,7 @@ public class ResultResource {
 
         final List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exerciseId, false);
 
-        List<Result> results = resultsForExercise(exercise, participations, withSubmissions);
+        List<Result> results = resultService.resultsForExercise(exercise, participations, withSubmissions);
         log.info("getResultsForExercise took {}ms for {} results.", System.currentTimeMillis() - start, results.size());
 
         return ResponseEntity.ok().body(results);
@@ -256,53 +216,11 @@ public class ResultResource {
         final List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacks(exerciseId, false);
 
         final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        final List<Result> results = resultsForExercise(exercise, participations, withSubmissions);
+        final List<Result> results = resultService.resultsForExercise(exercise, participations, withSubmissions);
         final List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = results.stream().map(result -> resultRepository.calculatePointsPerGradingCriterion(result, course))
                 .toList();
 
         return ResponseEntity.ok().body(resultsWithPoints);
-    }
-
-    /**
-     * Get the successful results for an exercise, ordered ascending by build completion date.
-     *
-     * @param exercise which the results belong to.
-     * @param withSubmissions true, if each result should also contain the submissions.
-     * @return a list of results as described above for the given exercise.
-     */
-    private List<Result> resultsForExercise(Exercise exercise, List<StudentParticipation> participations, boolean withSubmissions) {
-        final List<Result> results = new ArrayList<>();
-
-        for (StudentParticipation participation : participations) {
-            // Filter out participations without students / teams
-            if (participation.getParticipant() == null) {
-                continue;
-            }
-
-            Submission relevantSubmissionWithResult = exercise.findLatestSubmissionWithRatedResultWithCompletionDate(participation, true);
-            if (relevantSubmissionWithResult == null || relevantSubmissionWithResult.getLatestResult() == null) {
-                continue;
-            }
-
-            participation.setSubmissionCount(participation.getSubmissions().size());
-            if (withSubmissions) {
-                relevantSubmissionWithResult.getLatestResult().setSubmission(relevantSubmissionWithResult);
-            }
-            results.add(relevantSubmissionWithResult.getLatestResult());
-        }
-
-        if (withSubmissions) {
-            results.removeIf(result -> result.getSubmission() == null || !result.getSubmission().isSubmitted());
-        }
-
-        // remove unnecessary elements in the json response
-        results.forEach(result -> {
-            result.getParticipation().setResults(null);
-            result.getParticipation().setSubmissions(null);
-            result.getParticipation().setExercise(null);
-        });
-
-        return results;
     }
 
     /**
@@ -316,20 +234,8 @@ public class ResultResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> getResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
-        Result result = getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
+        Result result = resultService.getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
         return new ResponseEntity<>(result, HttpStatus.OK);
-    }
-
-    private Result getResultForParticipationAndCheckAccess(Long participationId, Long resultId, Role role) {
-        Result result = resultRepository.findByIdElseThrow(resultId);
-        Participation participation = result.getParticipation();
-        if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + "!",
-                    "Participation", "400");
-        }
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
-        return result;
     }
 
     /**
@@ -381,7 +287,7 @@ public class ResultResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> deleteResult(@PathVariable Long participationId, @PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
-        Result result = getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
+        Result result = resultService.getResultForParticipationAndCheckAccess(participationId, resultId, Role.TEACHING_ASSISTANT);
         resultService.deleteResult(result, true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, resultId.toString())).build();
     }
