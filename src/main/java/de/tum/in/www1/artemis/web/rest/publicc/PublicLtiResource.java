@@ -107,12 +107,12 @@ public class PublicLtiResource {
         }
         catch (InternalAuthenticationServiceException ex) {
             log.error("Error during LTI launch request of exercise {} for launch request: {}", exercise.getTitle(), launchRequest, ex);
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.");
             return;
         }
         catch (Exception ex) {
             log.error("Error during LTI launch request of exercise {} for launch request: {}", exercise.getTitle(), launchRequest, ex);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.");
             return;
         }
 
