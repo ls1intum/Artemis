@@ -87,7 +87,7 @@ public class MessageService extends PostingService {
             conversationService.updateConversation(conversation);
             conversationService.unreadMessages(user.getId(), courseId, conversation.getId());
             conversation = conversationService.getConversationById(conversation.getId());
-            conversation.getConversationParticipants().forEach(a -> System.out.println(a.getUnreadMessagesCount()));
+
             broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
             conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.UPDATE), null);
 

@@ -218,11 +218,11 @@ public class ConversationService {
     }
 
     /**
-     * Retrieve the number of unread messages of a conversation
+     * Update unreadMessageCount field of ConversationParticipant
      *
-     * @param userId    userId of the conversation
-     * @param userId    courseId ...... *****
-     * @return number of unread messages
+     * @param userId            userId of the sender of the message(Post)
+     * @param courseId          courseId id of the course that the messaging is happening
+     * @param conversationId    conversationId id of the conversation with participants
      */
     public void unreadMessages(Long userId, Long courseId, Long conversationId) {
 
@@ -231,7 +231,6 @@ public class ConversationService {
                 .filter(conversationParticipant -> conversationParticipant.getUser().getId() != userId).findAny().get();
         long unreadMessagesCount = conversationRepository.findUnreadMessages(courseId, receiverConversationParticipants.getUser().getId(), conversationId);
 
-        // ConversationParticipant conversationParticipant = conversationParticipantRepository.findConversationParticipantByIdElseThrow(userId);
         receiverConversationParticipants.setUnreadMessagesCount(unreadMessagesCount);
         conversationParticipantRepository.save(receiverConversationParticipants);
     }
