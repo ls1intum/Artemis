@@ -73,7 +73,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private void getActiveSystemNotification() throws Exception {
         // Do the actual request that is tested here.
-        List<SystemNotification> notification = request.getList("/api/system-notifications/active", HttpStatus.OK, SystemNotification.class);
+        List<SystemNotification> notification = request.getList("/api/public/system-notifications/active", HttpStatus.OK, SystemNotification.class);
 
         // The returned notification must be an active notification.
         assertThat(notification).hasSize(2).as("Returned notifications are active or scheduled.").containsExactly(systemNotificationActive, systemNotificationFuture);
