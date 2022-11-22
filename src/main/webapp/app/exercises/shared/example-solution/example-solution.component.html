@@ -5,20 +5,20 @@
     <div class="row">
         <div class="col pe-0 flex-grow-1">
             <!-- PROBLEM STATEMENT START -->
-            <div class="row mt-2 mb-2 align-items-baseline" *ngIf="exercise.problemStatement" id="problem-statement">
+            <div class="row mt-2 mb-2 align-items-baseline" id="problem-statement">
                 <div class="col-12 col-md-12 markdown-preview problem-statement">
                     <h3>{{ 'artemisApp.exercise.problemStatement' | artemisTranslate }}</h3>
-                    <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>
+                    <p
+                        [innerHTML]="exercise?.problemStatement ? (exercise.problemStatement | htmlForMarkdown) : ('artemisApp.exercise.emptyProblemStatement' | artemisTranslate)"
+                    ></p>
                 </div>
             </div>
             <!-- PROBLEM STATEMENT END -->
-            <ng-container
-                *ngIf="exampleSolutionInfo?.exampleSolutionUML || exampleSolutionInfo?.exampleSolution || exampleSolutionInfo?.isProgrammingExerciseExampleSolutionPublished"
-            >
-                <div class="row mb-2 mt-2 align-items-baseline">
-                    <h3 class="pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</h3>
-                </div>
-                <dl class="row-md jh-entity-details markdown-preview">
+            <div class="row mb-2 mt-2 align-items-baseline">
+                <h3 class="pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</h3>
+            </div>
+            <dl class="row-md jh-entity-details markdown-preview">
+                <ng-container *ngIf="exampleSolutionInfo?.exampleSolutionUML || exampleSolutionInfo?.exampleSolution; else emptyExampleSolution">
                     <dd *ngIf="exampleSolutionInfo?.exampleSolutionUML && exampleSolutionInfo?.modelingExercise" class="editor-outline-background">
                         <jhi-modeling-editor
                             [readOnly]="true"
@@ -28,9 +28,12 @@
                             [explanation]="exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation || ''"
                         ></jhi-modeling-editor>
                     </dd>
-                    <dd *ngIf="exampleSolutionInfo?.exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolutionInfo?.exampleSolution"></dd>
-                </dl>
-            </ng-container>
+                    <dd [innerHTML]="exampleSolutionInfo?.exampleSolution"></dd>
+                </ng-container>
+                <ng-template #emptyExampleSolution>
+                    <dd [innerHTML]="'artemisApp.exercise.emptyExampleSolution' | artemisTranslate"></dd>
+                </ng-template>
+            </dl>
         </div>
     </div>
 </div>
