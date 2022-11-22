@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 import java.util.Set;
@@ -20,8 +22,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -126,6 +134,32 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
                 .filter(conversationParticipant -> conversationParticipant.getUser().getId() != postToSave.getAuthor().getId()).findAny().get().getUnreadMessagesCount();
 
         assertThat(unreadMessages).isEqualTo(1L);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testDecreaseUnreadMessageCountAfterMessageRead() throws Exception {
+        Post postToSave1 = createPostWithConversation();
+
+        ResultActions resultActions = request.getMvc()
+                .perform(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postToSave1)).with(user("student1").roles("USER")).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated());
+
+        MvcResult result = resultActions.andReturn();
+        String contentAsString = result.getResponse().getContentAsString();
+        Post createdPost1 = objectMapper.readValue(contentAsString, Post.class);
+
+        request.getMvc()
+                .perform(MockMvcRequestBuilders.get("/api/courses/" + courseId + "/messages").param("conversationId", createdPost1.getConversation().getId().toString())
+                        .param("pagingEnabled", "true").param("size", String.valueOf(MAX_POSTS_PER_PAGE)).with(user("student2").roles("USER")).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+        long unreadMessages = conversationRepository.findConversationByIdWithConversationParticipants(createdPost1.getConversation().getId()).getConversationParticipants().stream()
+                .filter(conversationParticipant -> conversationParticipant.getUser().getId() != postToSave1.getAuthor().getId()).findAny().get().getUnreadMessagesCount();
+
+        assertThat(unreadMessages).isEqualTo(0);
     }
 
     @Test
