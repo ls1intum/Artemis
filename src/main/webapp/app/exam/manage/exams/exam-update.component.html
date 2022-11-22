@@ -209,7 +209,8 @@
                     <jhi-date-time-picker
                         class="form-element"
                         name="exampleSolutionPublicationDate"
-                        labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
+                        labelName="{{ 'artemisApp.exam.exampleSolutionPublicationDate' | artemisTranslate }}"
+                        labelTooltip="{{ 'artemisApp.examManagement.exampleSolutionPublicationDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.exampleSolutionPublicationDate"
                         [error]="!isValidExampleSolutionPublicationDate"
                     ></jhi-date-time-picker>
