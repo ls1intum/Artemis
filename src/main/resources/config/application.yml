@@ -56,7 +56,7 @@ artemis:
                     default: "ls1tum/artemis-c-docker:latest"
                     fact: "sharingcodeability/fact:latest"
                 haskell:
-                    default: "ghcr.io/b-fein/artemis-haskell:main"
+                    default: "ghcr.io/b-fein/artemis-haskell:v19.30.0"
                 vhdl:
                     default: "tizianleonhardt/era-artemis-vhdl:latest"
                 assembler:

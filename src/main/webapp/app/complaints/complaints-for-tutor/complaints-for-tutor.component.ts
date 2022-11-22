@@ -34,7 +34,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     ComplaintType = ComplaintType;
     isLoading = false;
     showLockDuration = false;
-    showRemoveLockButton = false;
+    lockedByCurrentUser = false;
     isLockedForLoggedInUser = false;
     course?: Course;
 
@@ -54,7 +54,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.handled = this.complaint.accepted !== undefined;
             if (this.handled) {
                 this.complaintResponse = this.complaint.complaintResponse!;
-                this.showRemoveLockButton = false;
+                this.lockedByCurrentUser = false;
                 this.showLockDuration = false;
             } else {
                 if (this.isAllowedToRespond) {
@@ -83,7 +83,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                 next: (response) => {
                     this.complaintResponse = response.body!;
                     this.complaint = this.complaintResponse.complaint!;
-                    this.showRemoveLockButton = true;
+                    this.lockedByCurrentUser = true;
                     this.showLockDuration = true;
                     this.alertService.success('artemisApp.locks.acquired');
                 },
@@ -112,7 +112,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                     next: (response) => {
                         this.complaintResponse = response.body!;
                         this.complaint = this.complaintResponse.complaint!;
-                        this.showRemoveLockButton = true;
+                        this.lockedByCurrentUser = true;
                         this.alertService.success('artemisApp.locks.acquired');
                     },
                     error: (err: HttpErrorResponse) => {
@@ -120,7 +120,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                     },
                 });
         } else {
-            this.showRemoveLockButton = false;
+            this.lockedByCurrentUser = false;
         }
     }
 
@@ -165,7 +165,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.updateAssessmentAfterComplaint.emit(this.complaintResponse);
             this.handled = true;
             this.showLockDuration = false;
-            this.showRemoveLockButton = false;
+            this.lockedByCurrentUser = false;
         } else {
             // If the complaint was rejected or it was a more feedback request, just the complaint response is updated.
             this.resolveComplaint();
@@ -193,7 +193,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                     this.complaint = this.complaintResponse.complaint!;
                     this.isLockedForLoggedInUser = false;
                     this.showLockDuration = false;
-                    this.showRemoveLockButton = false;
+                    this.lockedByCurrentUser = false;
                 },
                 error: (err: HttpErrorResponse) => {
                     this.onError(err);

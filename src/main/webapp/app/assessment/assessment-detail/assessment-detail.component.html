@@ -26,12 +26,7 @@
             <div class="col-4 assessment-label">
                 <label class="pe-0" style="float: left" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
                 <div *ngIf="assessment.gradingInstruction">
-                    <fa-icon
-                        [icon]="faQuestionCircle"
-                        class="text-secondary ps-1"
-                        [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate"
-                        container="body"
-                    ></fa-icon>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary ps-1" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate"></fa-icon>
                 </div>
             </div>
             <div class="col p-0">

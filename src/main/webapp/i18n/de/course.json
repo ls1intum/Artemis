@@ -92,11 +92,13 @@
                 "ltiKey": "LTI-Key",
                 "ltiSecret": "LTI-Geheimnis",
                 "userPrefix": "Nutzer-Präfix",
+                "requireExistingUser": "Vorhandene:r Nutzer:in erforderlich",
                 "registrationId": "Registrierung ID",
                 "clientId": "Client ID",
                 "authorizationUri": "Authorization URI",
                 "tokenUri": "Token URI",
                 "jwkSetUri": "JWKSet URI",
+                "requireExistingUserTooltip": "Wenn ausgewählt, erfordert das Starten der Übung einen bestehenden Benutzer in Artemis. Wenn abgewählt, kann ein Benutzer beim ersten Start erstellt werden, wenn er noch nicht existiert",
                 "form": {
                     "userPrefix": {
                         "forbidden": "Nutzer Präfix darf keine Sonderzeichen beinhalten."

@@ -7,6 +7,7 @@ export class OnlineCourseConfiguration implements BaseEntity {
     public ltiKey?: string;
     public ltiSecret?: string;
     public userPrefix?: string;
+    public requireExistingUser?: boolean;
     public originalUrl?: string;
     public registrationId?: string;
     public clientId?: string;

@@ -14,7 +14,7 @@
                 </span>
                 <span class="d-inline-block ms-2">
                     <span class="text-muted font-weight-bolder">Created:</span>
-                    <span ngbTooltip="{{ team.createdDate | artemisDate }}" placement="top" tooltipClass="date-tooltip">
+                    <span ngbTooltip="{{ team.createdDate | artemisDate }}" tooltipClass="date-tooltip">
                         {{ team.createdDate!.fromNow() }}
                     </span>
                     <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', team.createdBy]">({{ team.createdBy }})</a>
