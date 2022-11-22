@@ -353,11 +353,11 @@ public class Course extends DomainObject {
         this.defaultProgrammingLanguage = defaultProgrammingLanguage;
     }
 
-    public Boolean isOnlineCourse() {
+    public boolean isOnlineCourse() {
         return Boolean.TRUE.equals(onlineCourse);
     }
 
-    public void setOnlineCourse(Boolean onlineCourse) {
+    public void setOnlineCourse(boolean onlineCourse) {
         this.onlineCourse = onlineCourse;
     }
 
@@ -700,19 +700,6 @@ public class Course extends DomainObject {
         if (isOnlineCourse() && isRegistrationEnabled()) {
             throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
                     true);
-        }
-    }
-
-    /**
-     * Validates that there is an OnlineCourseConfiguration if the course is an online course
-     */
-    public void validateOnlineCourseConfiguration() {
-        if (isOnlineCourse()) {
-            OnlineCourseConfiguration ocConfiguration = getOnlineCourseConfiguration();
-            if (ocConfiguration == null) {
-                throw new BadRequestAlertException("Configuration must exist for online courses", ENTITY_NAME, "onlineCourseConfigurationMissing");
-            }
-            ocConfiguration.validate();
         }
     }
 
