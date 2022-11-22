@@ -58,7 +58,7 @@ class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     @AfterEach
     void teardown() {
-        database.resetDatabase();
+        migrationChangeRepository.deleteAllInBatch();
     }
 
     @Test
