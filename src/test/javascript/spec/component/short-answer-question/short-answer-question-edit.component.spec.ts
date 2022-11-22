@@ -474,7 +474,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             setEnd: (_: Node, __: number) => {},
         } as Range;
 
-        let parentElement = {
+        const parentElement = {
             id: '0-0-0-0',
             firstElementChild: {} as Element,
         };
