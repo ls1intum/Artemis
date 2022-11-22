@@ -103,7 +103,7 @@ describe('AuthServerProvider', () => {
                 expect(localStorageStoreSpy).toHaveBeenCalledWith(tokenKey, storedToken);
             });
 
-            const req = httpMock.expectOne({ method: 'POST', url: `api/saml2` });
+            const req = httpMock.expectOne({ method: 'POST', url: `api/public/saml2` });
             req.flush(respPayload);
             tick();
         }));
@@ -114,7 +114,7 @@ describe('AuthServerProvider', () => {
                 expect(sessionStorageStoreSpy).toHaveBeenCalledWith(tokenKey, storedToken);
             });
 
-            const req = httpMock.expectOne({ method: 'POST', url: `api/saml2` });
+            const req = httpMock.expectOne({ method: 'POST', url: `api/public/saml2` });
             req.flush(respPayload);
             tick();
         }));

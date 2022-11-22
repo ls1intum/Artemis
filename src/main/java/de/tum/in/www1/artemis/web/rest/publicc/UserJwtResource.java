@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.publicc;
 
 import java.util.Optional;
 
@@ -33,10 +33,10 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
  * REST controller to authenticate users.
  */
 @RestController
-@RequestMapping("api/")
-public class UserJWTResource {
+@RequestMapping("api/public/")
+public class UserJwtResource {
 
-    private static final Logger log = LoggerFactory.getLogger(UserJWTResource.class);
+    private final Logger log = LoggerFactory.getLogger(UserJwtResource.class);
 
     private final TokenProvider tokenProvider;
 
@@ -44,7 +44,7 @@ public class UserJWTResource {
 
     private final Optional<SAML2Service> saml2Service;
 
-    public UserJWTResource(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
+    public UserJwtResource(TokenProvider tokenProvider, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
         this.tokenProvider = tokenProvider;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.saml2Service = saml2Service;
@@ -56,7 +56,6 @@ public class UserJWTResource {
      * @param userAgent User Agent
      * @return a JWT Token if the authorization is successful
      */
-    // TODO: /public
     @PostMapping("authenticate")
     @EnforceNothing
     public ResponseEntity<JWTToken> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent) {
@@ -89,7 +88,6 @@ public class UserJWTResource {
      * @param body the body of the request. "true" to remember the user.
      * @return a JWT Token if the authorization is successful
      */
-    // TODO: /public
     @PostMapping("saml2")
     @EnforceNothing
     public ResponseEntity<JWTToken> authorizeSAML2(@RequestBody final String body) {
@@ -127,10 +125,8 @@ public class UserJWTResource {
 
         private String idToken;
 
-        /**
-         * Make Jackson happy
-         */
         JWTToken() {
+            // Make Jackson happy
         }
 
         JWTToken(String idToken) {
