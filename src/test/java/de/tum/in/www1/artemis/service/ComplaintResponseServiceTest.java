@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Set;
 
+import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +32,9 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private ResultRepository resultRepository;
+
+    @Autowired
+    private MigrationChangeRepository migrationChangeRepository;
 
     private TextExercise textExercise;
 
@@ -81,7 +85,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
+        migrationChangeRepository.deleteAllInBatch();;
     }
 
     @Test
