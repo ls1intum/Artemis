@@ -1811,6 +1811,43 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGradedFinalExamSummaryWithPlagiarismAndNotParticipatedBonusExamAsStudent() throws Exception {
+        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false);
+        bambooRequestMockProvider.reset();
+
+        final String noParticipationGrade = "NoParticipation";
+
+        studentExam1.setSubmitted(false);
+        studentExamRepository.save(studentExam1);
+
+        StudentExam bonusStudentExam = studentExam1;
+
+        BonusStrategy bonusStrategy = BonusStrategy.POINTS;
+
+        Exam finalExam = configureFinalExamWithBonusExam(finalStudentExam, bonusStudentExam, bonusStrategy);
+        var bonusGradingScale = bonusRepository.findAllByBonusToExamId(finalExam.getId()).iterator().next().getSourceGradingScale();
+        bonusGradingScale.setNoParticipationGrade(noParticipationGrade);
+        gradingScaleRepository.save(bonusGradingScale);
+
+        User student = finalStudentExam.getUser();
+
+        // users tries to access exam summary after results are published
+        database.changeUser(student.getLogin());
+
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/grade-summary",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
+
+        assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchieved()).isEqualTo(24.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().overallGrade()).isEqualTo("3.0");
+
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(0.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusGrade()).isEqualTo(noParticipationGrade);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalPoints()).isEqualTo(24.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalGrade()).isEqualTo("3.0");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithStudentExamsAfterConductionAndEvaluation() throws Exception {
         StudentExam studentExam = prepareStudentExamsForConduction(false, true).get(0);
 
