@@ -1,0 +1,19 @@
+.footer {
+    &.fixed {
+        position: absolute;
+        left: 15px;
+        right: 15px;
+        bottom: 0;
+        background-color: var(--footer-bg);
+        padding: 5px 0;
+    }
+
+    .footer-text {
+        font-weight: normal;
+        font-size: small;
+
+        &:hover {
+            font-weight: normal;
+        }
+    }
+}

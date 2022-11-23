@@ -103,26 +103,6 @@ a.btn {
     border-color: $default-btn-border;
 }
 
-.footer {
-    &.fixed {
-        position: absolute;
-        left: 15px;
-        right: 15px;
-        bottom: 0;
-        background-color: $footer-bg;
-        padding: 5px 0;
-    }
-
-    .footer-text {
-        font-weight: normal;
-        font-size: small;
-
-        &:hover {
-            font-weight: normal;
-        }
-    }
-}
-
 // make sure to align with the bootstrap rule here
 // workaround for unsupported justify-content-evenly by bootstrap
 @media (max-width: 576px) {
