@@ -573,13 +573,18 @@ public class ModelFactory {
 
     public static OnlineCourseConfiguration generateOnlineCourseConfiguration(Course course, String key, String secret, String userPrefix, String originalUrl) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
-        onlineCourseConfiguration.setCourse(course);
+        updateOnlineCourseConfiguration(onlineCourseConfiguration, key, secret, userPrefix, originalUrl, UUID.randomUUID().toString());
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        return onlineCourseConfiguration;
+    }
+
+    public static void updateOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration, String key, String secret, String userPrefix, String originalUrl,
+            String registrationId) {
         onlineCourseConfiguration.setLtiKey(key);
         onlineCourseConfiguration.setLtiSecret(secret);
         onlineCourseConfiguration.setUserPrefix(userPrefix);
         onlineCourseConfiguration.setOriginalUrl(originalUrl);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
-        return onlineCourseConfiguration;
+        onlineCourseConfiguration.setRegistrationId(registrationId);
     }
 
     /**
