@@ -35,15 +35,14 @@ describe('ChannelsCreateDialogComponent', () => {
         fixture = TestBed.createComponent(ChannelsCreateDialogComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
+        initializeDialog(component, fixture, { course });
     });
 
     it('should create', () => {
         expect(component).toBeTruthy();
-        initializeDialog(component, fixture, { course });
     });
 
     it('clicking close button in modal header should dismiss the modal', () => {
-        initializeDialog(component, fixture, { course });
         const closeButton = fixture.debugElement.nativeElement.querySelector('.modal-header button');
         const activeModal = TestBed.inject(NgbActiveModal);
         const dismissSpy = jest.spyOn(activeModal, 'dismiss');
@@ -51,7 +50,6 @@ describe('ChannelsCreateDialogComponent', () => {
         expect(dismissSpy).toHaveBeenCalledOnce();
     });
     it('should change channel type when channel type is changed in channel form', () => {
-        initializeDialog(component, fixture, { course });
         expect(component.isPublicChannel).toBeTrue();
         const channelTypeChangedEvent = 'PRIVATE';
         const form: ChannelFormStubComponent = fixture.debugElement.query(By.directive(ChannelFormStubComponent)).componentInstance;
@@ -59,7 +57,6 @@ describe('ChannelsCreateDialogComponent', () => {
         expect(component.isPublicChannel).toBeFalse();
     });
     it('should close modal with the channel to create when form is submitted', () => {
-        initializeDialog(component, fixture, { course });
         const activeModal = TestBed.inject(NgbActiveModal);
         const closeSpy = jest.spyOn(activeModal, 'close');
 
