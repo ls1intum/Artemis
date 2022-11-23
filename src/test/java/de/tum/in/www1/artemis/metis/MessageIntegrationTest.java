@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.MessageRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -160,6 +161,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
                 .filter(conversationParticipant -> conversationParticipant.getUser().getId() != postToSave1.getAuthor().getId()).findAny().get().getUnreadMessagesCount();
 
         assertThat(unreadMessages).isEqualTo(0);
+
+        // both conversation participants should be notified when conversation created but only receiver when reading messages
+        verify(messagingTemplate, times(3)).convertAndSendToUser(anyString(), anyString(), any(ConversationDTO.class));
     }
 
     @Test
