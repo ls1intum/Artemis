@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.sun.jersey.api.uri.UriComponent;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
@@ -25,6 +27,10 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.connectors.Lti10Service;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 
 /**
  * REST controller for receiving LTI requests.
@@ -124,8 +130,8 @@ public class PublicLtiResource {
     /**
      * POST lti13/auth-callback Redirects an LTI 1.3 Authorization Request Response to the client
      *
-     * @param request       HTTP request
-     * @param response      HTTP response
+     * @param request  HTTP request
+     * @param response HTTP response
      * @throws IOException If an input or output exception occurs
      */
     @PostMapping("/lti13/auth-callback")
@@ -143,30 +149,61 @@ public class PublicLtiResource {
             return;
         }
 
+        if (!isValidJwtIgnoreSignature(idToken)) {
+            errorOnIllegalParameter(response, "id_token");
+            return;
+        }
+
         UriComponentsBuilder uriBuilder = buildRedirect(request);
         uriBuilder.path(LOGIN_REDIRECT_CLIENT_PATH);
-        uriBuilder.queryParam("state", state);
-        uriBuilder.queryParam("id_token", idToken);
+        uriBuilder.queryParam("state", UriComponent.encode(state, UriComponent.Type.QUERY_PARAM));
+        uriBuilder.queryParam("id_token", UriComponent.encode(idToken, UriComponent.Type.QUERY_PARAM));
         String redirectUrl = uriBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);
         response.sendRedirect(redirectUrl); // Redirect using user-provided values is safe because user-provided values are used in the query parameters, not the url itself
     }
 
+    /**
+     * Strips the signature from a potential JWT and makes sure the rest is valid.
+     *
+     * @param token The potential token
+     * @return Whether the token is valid or not
+     */
+    private boolean isValidJwtIgnoreSignature(String token) {
+        String strippedToken = token.substring(0, token.lastIndexOf(".") + 1);
+        try {
+            Jwts.parserBuilder().build().parse(strippedToken);
+            return true;
+        }
+        catch (SignatureException e) {
+            // We ignore the signature
+            return true;
+        }
+        catch (ExpiredJwtException | MalformedJwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
     private void errorOnMissingParameter(HttpServletResponse response, String missingParamName) throws IOException {
         String message = "Missing parameter on oauth2 authorization response: " + missingParamName;
         log.error(message);
-        response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), message);
+        response.sendError(HttpStatus.BAD_REQUEST.value(), message);
+    }
+
+    private void errorOnIllegalParameter(HttpServletResponse response, String missingParamName) throws IOException {
+        String message = "Illegal parameter on oauth2 authorization response: " + missingParamName;
+        log.error(message);
+        response.sendError(HttpStatus.BAD_REQUEST.value(), message);
     }
 
     /**
      * Redirects the launch request to Artemis.
      * Note: The following redirect URL has to match the URL in user-route-access-service.ts in the method canActivate(...)
      *
-     * @param request       HTTP request
-     * @param response      HTTP response
-     * @param exercise      The exercise to redirect to
-     * @throws IOException  If an input or output exception occurs
-     *
+     * @param request  HTTP request
+     * @param response HTTP response
+     * @param exercise The exercise to redirect to
+     * @throws IOException If an input or output exception occurs
      */
     private void sendRedirect(HttpServletRequest request, HttpServletResponse response, Exercise exercise) throws IOException {
 
