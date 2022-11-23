@@ -35,6 +35,8 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "messageintegration";
+
     @Autowired
     private MessageRepository messageRepository;
 
@@ -53,16 +55,16 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     private Validator validator;
 
     @BeforeEach
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initTestCase() {
         // used to test hibernate validation using custom PostContextConstraintValidator
         validator = Validation.buildDefaultValidatorFactory().getValidator();
 
-        database.addUsers(5, 5, 4, 1);
+        database.addUsers(TEST_PREFIX, 5, 5, 4, 1);
 
         // initialize test setup and get all existing posts
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
-        existingPostsAndConversationPosts = database.createPostsWithinCourse();
+        existingPostsAndConversationPosts = database.createPostsWithinCourse(TEST_PREFIX);
 
         List<Post> existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
 
@@ -89,9 +91,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCreateConversationPost() throws Exception {
-        Post postToSave = createPostWithConversation();
+        Post postToSave = createPostWithConversation(TEST_PREFIX);
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedMessagePost(postToSave, createdPost);
@@ -106,45 +108,49 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(username = "student3", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void testCreateConversationPost_forbidden() throws Exception {
         // only participants of a conversation can create posts for it
 
-        Post postToSave = createPostWithConversation();
+        Post postToSave = createPostWithConversation(TEST_PREFIX);
         // attempt to save new post under someone else's conversation
         postToSave.setConversation(existingConversationPosts.get(0).getConversation());
 
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setConversationId(postToSave.getConversation().getId());
+        var numberOfPostsBefore = messageRepository.findMessages(postContextFilter, Pageable.unpaged()).getSize();
+
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notCreatedPost).isNull();
-        assertThat(messageRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
+        assertThat(messageRepository.findMessages(postContextFilter, Pageable.unpaged())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
         verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testValidatePostContextConstraintViolation() throws Exception {
-        Post invalidPost = createPostWithConversation();
+        Post invalidPost = createPostWithConversation(TEST_PREFIX);
         invalidPost.setCourseWideContext(CourseWideContext.RANDOM);
         request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         Set<ConstraintViolation<Post>> constraintViolations = validator.validate(invalidPost);
         assertThat(constraintViolations).hasSize(1);
 
-        invalidPost = createPostWithConversation();
+        invalidPost = createPostWithConversation(TEST_PREFIX);
         invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
         request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         constraintViolations = validator.validate(invalidPost);
         assertThat(constraintViolations).hasSize(1);
 
-        invalidPost = createPostWithConversation();
+        invalidPost = createPostWithConversation(TEST_PREFIX);
         invalidPost.setCourseWideContext(CourseWideContext.ORGANIZATION);
         invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
         request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         constraintViolations = validator.validate(invalidPost);
         assertThat(constraintViolations).hasSize(1);
 
-        invalidPost = createPostWithConversation();
+        invalidPost = createPostWithConversation(TEST_PREFIX);
         invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
         invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
         request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
@@ -153,7 +159,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetConversationPost() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
@@ -165,7 +171,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(username = "tutor1")
+    @WithMockUser(username = TEST_PREFIX + "tutor1")
     void testEditConversationPost() throws Exception {
         // conversation post of tutor1 must be only editable by them
         Post conversationPostToUpdate = existingConversationPosts.get(0);
@@ -181,7 +187,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testEditConversationPost_forbidden() throws Exception {
         // conversation post of tutor1 must not be editable by tutor2
         Post conversationPostToUpdate = existingConversationPosts.get(0);
@@ -197,34 +203,34 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(username = "tutor1")
+    @WithMockUser(username = TEST_PREFIX + "tutor1")
     void testDeleteConversationPost() throws Exception {
         // conversation post of tutor1 must be deletable by them
         Post conversationPostToDelete = existingConversationPosts.get(0);
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.OK);
 
-        assertThat(messageRepository.count()).isEqualTo(existingPostsAndConversationPosts.size() - 1);
+        assertThat(messageRepository.findById(conversationPostToDelete.getId())).isEmpty();
         // both conversation participants should be notified
         verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testDeleteConversationPost_forbidden() throws Exception {
         // conversation post of user must not be deletable by tutors
         Post conversationPostToDelete = existingConversationPosts.get(0);
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.FORBIDDEN);
 
-        assertThat(messageRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
+        assertThat(messageRepository.findById(conversationPostToDelete.getId())).isPresent();
         // conversation participants should not be notified
         verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
-    private Post createPostWithConversation() {
+    private Post createPostWithConversation(String userPrefix) {
         Post post = new Post();
-        post.setAuthor(database.getUserByLogin("student1"));
+        post.setAuthor(database.getUserByLogin(userPrefix + "student1"));
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.setConversation(ConversationIntegrationTest.conversationToCreate(course, database.getUserByLogin("student2")));
+        post.setConversation(ConversationIntegrationTest.conversationToCreate(course, database.getUserByLogin(userPrefix + "student2")));
         return post;
     }
 

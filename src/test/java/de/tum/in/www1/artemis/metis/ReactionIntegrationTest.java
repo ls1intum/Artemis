@@ -30,6 +30,8 @@ import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 
 class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "reactionintegration";
+
     @Autowired
     private ReactionRepository reactionRepository;
 
@@ -57,11 +59,11 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         // used to test hibernate validation using custom ReactionConstraintValidator
         validator = Validation.buildDefaultValidatorFactory().getValidator();
 
-        database.addUsers(5, 5, 4, 4);
+        database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
 
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
         // student1)
-        existingPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream()
+        existingPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
                 .filter(coursePost -> coursePost.getAnswers() != null && coursePost.getPlagiarismCase() == null).toList();
 
         // filters existing posts with conversation
@@ -81,7 +83,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     // CREATE
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateOwnPostReaction() throws Exception {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
@@ -93,7 +95,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void testCreateOwnPostReactionOnAnotherUsersConversationMessage() throws Exception {
         // tutor1 is the author of the message and tutor2 reacts on this post
         Post messageReactedOn = existingConversationPosts.get(0);
@@ -105,7 +107,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student3", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void testCreateReactionOnConversationBetweenOtherUsers_forbidden() throws Exception {
         // student 1 is the author of the message between student1 & student2 and student3 not part of the conversation tries to react on it
         Post messageReactedOn = existingConversationPosts.get(0);
@@ -118,7 +120,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateMultipleOwnPostReaction_internalServerError() throws Exception {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
@@ -133,7 +135,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateOwnAnswerPostReaction() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
@@ -145,7 +147,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateMultipleOwnAnswerPostReaction_internalServerError() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
@@ -160,7 +162,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testCreatePostReactions() throws Exception {
         // student 1 is the author of the post and student 2 reacts on this post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
@@ -183,7 +185,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testCreateAnswerPostReactions() throws Exception {
         // student 1 is the author of the answer post and student 2 reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
@@ -206,7 +208,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateExistingReaction_badRequest() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
@@ -219,7 +221,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testValidateReactionConstraintViolation() throws Exception {
         Reaction invalidReaction = createInvalidReaction();
 
@@ -231,7 +233,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     // GET
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourse_OrderByVoteCountDESC() throws Exception {
         // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
         // TODO: https://github.com/h2database/h2database/issues/408
@@ -271,7 +273,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourse_OrderByVoteCountASC() throws Exception {
         // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
         // TODO: https://github.com/h2database/h2database/issues/408
@@ -312,7 +314,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     // DELETE
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteOwnPostReaction() throws Exception {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
@@ -328,7 +330,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteOwnAnswerPostReaction() throws Exception {
         // student 1 is the author of the post and reacts on this post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
@@ -343,11 +345,11 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeletePostReactionOfOthers_forbidden() throws Exception {
         // student 1 is the author of the post and student 2 reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
-        Reaction reactionSaveOnPost = saveReactionOfOtherUserOnPost(postReactedOn);
+        Reaction reactionSaveOnPost = saveReactionOfOtherUserOnPost(postReactedOn, TEST_PREFIX);
 
         // student 1 wants to delete the reaction of student 2
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionSaveOnPost.getId(), HttpStatus.FORBIDDEN);
@@ -355,7 +357,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testDeletePostReactionWithWrongCourseId_badRequest() throws Exception {
         Course dummyCourse = database.createCourse();
         Post postToReactOn = existingPostsWithAnswers.get(0);
@@ -366,7 +368,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testDeletePostReaction() throws Exception {
         // student 1 is the author of the post and student 2 reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
@@ -406,12 +408,12 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         return reaction;
     }
 
-    private Reaction saveReactionOfOtherUserOnPost(Post postReactedOn) {
+    private Reaction saveReactionOfOtherUserOnPost(Post postReactedOn, String userPrefix) {
         Reaction reaction = new Reaction();
         reaction.setEmojiId("smiley");
         reaction.setPost(postReactedOn);
         Reaction savedReaction = reactionRepository.save(reaction);
-        User user = userRepository.getUserWithGroupsAndAuthorities("student2");
+        User user = userRepository.getUserWithGroupsAndAuthorities(userPrefix + "student2");
         savedReaction.setUser(user);
         reactionRepository.save(savedReaction);
         return savedReaction;

@@ -1006,7 +1006,7 @@ public class DatabaseUtilService {
         return Arrays.asList(course1, course2);
     }
 
-    public List<Post> createPostsWithinCourse() {
+    public List<Post> createPostsWithinCourse(String userPrefix) {
 
         Course course1 = createCourse();
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
@@ -1021,57 +1021,57 @@ public class DatabaseUtilService {
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
         plagiarismCase.setExercise(textExercise);
-        plagiarismCase.setStudent(userRepo.findOneByLogin("student1").get());
+        plagiarismCase.setStudent(userRepo.findOneByLogin(userPrefix + "student1").get());
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 
         List<Post> posts = new ArrayList<>();
 
         // add posts to exercise
-        posts.addAll(createBasicPosts(textExercise));
+        posts.addAll(createBasicPosts(textExercise, userPrefix));
 
         // add posts to lecture
-        posts.addAll(createBasicPosts(lecture));
+        posts.addAll(createBasicPosts(lecture, userPrefix));
 
         // add post to plagiarismCase
-        posts.add(createBasicPost(plagiarismCase));
+        posts.add(createBasicPost(plagiarismCase, userPrefix));
 
         // add posts to course with different course-wide contexts provided in input array
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
                 CourseWideContext.ANNOUNCEMENT };
-        posts.addAll(createBasicPosts(course1, courseWideContexts));
-        posts.addAll(createBasicPosts(createConversation(course1)));
+        posts.addAll(createBasicPosts(course1, courseWideContexts, userPrefix));
+        posts.addAll(createBasicPosts(createConversation(course1, userPrefix), userPrefix));
 
         return posts;
     }
 
-    public List<Post> createPostsWithAnswerPostsWithinCourse() {
-        List<Post> posts = createPostsWithinCourse();
+    public List<Post> createPostsWithAnswerPostsWithinCourse(String userPrefix) {
+        List<Post> posts = createPostsWithinCourse(userPrefix);
 
         // add answer for one post in each context (lecture, exercise, course-wide, conversation)
         Post lecturePost = posts.stream().filter(coursePost -> coursePost.getLecture() != null).findFirst().orElseThrow();
-        lecturePost.setAnswers(createBasicAnswers(lecturePost));
+        lecturePost.setAnswers(createBasicAnswers(lecturePost, userPrefix));
         postRepository.save(lecturePost);
 
         Post exercisePost = posts.stream().filter(coursePost -> coursePost.getExercise() != null).findFirst().orElseThrow();
-        exercisePost.setAnswers(createBasicAnswers(exercisePost));
+        exercisePost.setAnswers(createBasicAnswers(exercisePost, userPrefix));
         postRepository.save(exercisePost);
 
         // resolved post
         Post courseWidePost = posts.stream().filter(coursePost -> coursePost.getCourseWideContext() != null).findFirst().orElseThrow();
-        courseWidePost.setAnswers(createBasicAnswersThatResolves(courseWidePost));
+        courseWidePost.setAnswers(createBasicAnswersThatResolves(courseWidePost, userPrefix));
         postRepository.save(courseWidePost);
 
         Post conversationPost = posts.stream().filter(coursePost -> coursePost.getConversation() != null).findFirst().orElseThrow();
-        conversationPost.setAnswers(createBasicAnswers(conversationPost));
+        conversationPost.setAnswers(createBasicAnswers(conversationPost, userPrefix));
         postRepository.save(conversationPost);
 
         return posts;
     }
 
-    private List<Post> createBasicPosts(Exercise exerciseContext) {
+    private List<Post> createBasicPosts(Exercise exerciseContext, String userPrefix) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
-            Post postToAdd = createBasicPost(i, "student");
+            Post postToAdd = createBasicPost(i, userPrefix + "student");
             postToAdd.setExercise(exerciseContext);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -1079,10 +1079,10 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Lecture lectureContext) {
+    private List<Post> createBasicPosts(Lecture lectureContext, String userPrefix) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
-            Post postToAdd = createBasicPost(i, "tutor");
+            Post postToAdd = createBasicPost(i, userPrefix + "tutor");
             postToAdd.setLecture(lectureContext);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -1090,10 +1090,10 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts) {
+    private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts, String userPrefix) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < courseWideContexts.length; i++) {
-            Post postToAdd = createBasicPost(i, "editor");
+            Post postToAdd = createBasicPost(i, userPrefix + "editor");
             postToAdd.setCourse(courseContext);
             postToAdd.setCourseWideContext(courseWideContexts[i]);
             postRepository.save(postToAdd);
@@ -1102,8 +1102,8 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private Post createBasicPost(PlagiarismCase plagiarismCase) {
-        Post postToAdd = createBasicPost(0, "instructor");
+    private Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
+        Post postToAdd = createBasicPost(0, userPrefix + "instructor");
         postToAdd.setPlagiarismCase(plagiarismCase);
         postToAdd.getPlagiarismCase().setExercise(null);
         return postRepository.save(postToAdd);
@@ -1126,10 +1126,10 @@ public class DatabaseUtilService {
         return post;
     }
 
-    private List<Post> createBasicPosts(Conversation conversation) {
+    private List<Post> createBasicPosts(Conversation conversation, String userPrefix) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            Post postToAdd = createBasicPost(i, "tutor");
+            Post postToAdd = createBasicPost(i, userPrefix + "tutor");
             postToAdd.setConversation(conversation);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -1137,22 +1137,22 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private Set<AnswerPost> createBasicAnswers(Post post) {
+    private Set<AnswerPost> createBasicAnswers(Post post, String userPrefix) {
         Set<AnswerPost> answerPosts = new HashSet<>();
         AnswerPost answerPost = new AnswerPost();
         answerPost.setContent(post.getContent() + " Answer");
-        answerPost.setAuthor(getUserByLoginWithoutAuthorities("student1"));
+        answerPost.setAuthor(getUserByLoginWithoutAuthorities(userPrefix + "student1"));
         answerPost.setPost(post);
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
         return answerPosts;
     }
 
-    private Set<AnswerPost> createBasicAnswersThatResolves(Post post) {
+    private Set<AnswerPost> createBasicAnswersThatResolves(Post post, String userPrefix) {
         Set<AnswerPost> answerPosts = new HashSet<>();
         AnswerPost answerPost = new AnswerPost();
         answerPost.setContent(post.getContent() + " Answer");
-        answerPost.setAuthor(getUserByLoginWithoutAuthorities("student1"));
+        answerPost.setAuthor(getUserByLoginWithoutAuthorities(userPrefix + "student1"));
         answerPost.setPost(post);
         answerPost.setResolvesPost(true);
         answerPosts.add(answerPost);
@@ -1169,14 +1169,14 @@ public class DatabaseUtilService {
         }
     }
 
-    public Conversation createConversation(Course course) {
+    public Conversation createConversation(Course course, String userPrefix) {
         Conversation conversation = new Conversation();
         conversation.setCourse(course);
         conversation = conversationRepository.save(conversation);
 
         List<ConversationParticipant> conversationParticipants = new ArrayList<>();
-        conversationParticipants.add(createConversationParticipant(conversation, "tutor1"));
-        conversationParticipants.add(createConversationParticipant(conversation, "tutor2"));
+        conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor1"));
+        conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor2"));
 
         conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
         return conversationRepository.save(conversation);

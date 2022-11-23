@@ -46,6 +46,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "resultserviceintegration";
+
     @Autowired
     private FeedbackRepository feedbackRepository;
 
@@ -104,20 +106,20 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void reset() {
-        database.addUsers(10, 2, 0, 2);
+        database.addUsers(TEST_PREFIX, 10, 2, 0, 2);
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
-        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, "student1");
+        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, TEST_PREFIX + "student1");
 
         database.addCourseWithOneModelingExercise();
         modelingExercise = modelingExerciseRepository.findAll().get(0);
         modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(modelingExercise);
-        studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, "student2");
+        studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
 
         Exam exam = database.addExamWithExerciseGroup(this.course, true);
         this.examModelingExercise = new ModelingExercise();
@@ -141,13 +143,13 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRemoveCIDirectoriesFromPath() {
         // 1. Test that paths not containing the Constant.STUDENT_WORKING_DIRECTORY are not shortened
         String pathWithoutWorkingDir = "Path/Without/StudentWorkingDirectory/Constant";
 
         var resultNotification1 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
-            ProgrammingLanguage.JAVA);
+                ProgrammingLanguage.JAVA);
         for (var reports : resultNotification1.getBuild().jobs().iterator().next().staticCodeAnalysisReports()) {
             for (var issue : reports.getIssues()) {
                 issue.setFilePath(pathWithoutWorkingDir);
@@ -162,7 +164,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // 2. Test that null or empty paths default to FeedbackService.DEFAULT_FILEPATH
         var resultNotification2 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
-            ProgrammingLanguage.JAVA);
+                ProgrammingLanguage.JAVA);
         var reports2 = resultNotification2.getBuild().jobs().iterator().next().staticCodeAnalysisReports();
         for (int i = 0; i < reports2.size(); i++) {
             var report = reports2.get(i);
@@ -179,7 +181,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             }
         }
         final var staticCodeAnalysisFeedback2 = feedbackRepository
-            .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().jobs().get(0).staticCodeAnalysisReports());
+                .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().jobs().get(0).staticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback2) {
             JSONObject issueJSON = new JSONObject(feedback.getDetailText());
@@ -188,7 +190,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -198,13 +200,13 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         database.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
 
         List<Feedback> feedbacks = request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
-            Feedback.class);
+                Feedback.class);
 
         assertThat(feedbacks).isEqualTo(result.getFeedbacks());
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnTheResultDetailsForAStudentParticipation_studentForbidden() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -213,7 +215,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation_studentForbidden() throws Exception {
         Result result = database.addResultToParticipation(null, null, solutionParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -221,7 +223,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnNotFoundForNonExistingResult() throws Exception {
         Result result = database.addResultToParticipation(null, null, solutionParticipation);
         database.addSampleFeedbackToResults(result);
@@ -229,7 +231,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadrequestForNonMatchingParticipationId() throws Exception {
         Result result = database.addResultToParticipation(null, null, solutionParticipation);
         database.addSampleFeedbackToResults(result);
@@ -238,11 +240,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("setResultRatedPermutations")
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void setProgrammingExerciseResultRated(boolean shouldBeRated, ZonedDateTime buildAndTestAfterDueDate, SubmissionType submissionType, ZonedDateTime dueDate) {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(submissionType).submitted(true)
-            .submissionDate(ZonedDateTime.now());
-        programmingSubmission = database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
+                .submissionDate(ZonedDateTime.now());
+        programmingSubmission = database.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
         Result result = database.addResultToParticipation(programmingExerciseStudentParticipation, programmingSubmission);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
         programmingExercise.setDueDate(dueDate);
@@ -256,28 +258,28 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         ZonedDateTime dateInFuture = ZonedDateTime.now().plusHours(1);
         ZonedDateTime dateInPast = ZonedDateTime.now().minusHours(1);
         return Stream.of(
-            // The due date has not passed, normal student submission => rated result.
-            Arguments.of(true, null, SubmissionType.MANUAL, dateInFuture),
-            // The due date is not set, normal student submission => rated result.
-            Arguments.of(true, null, SubmissionType.MANUAL, null),
-            // The due date has passed, normal student submission => unrated result.
-            Arguments.of(false, null, SubmissionType.MANUAL, dateInPast),
-            // The result was generated by an instructor => rated result.
-            Arguments.of(true, null, SubmissionType.INSTRUCTOR, dateInPast),
-            // The result was generated by test update => rated result.
-            Arguments.of(true, null, SubmissionType.TEST, dateInPast),
-            // The build and test date has passed, the due date has passed, the result is generated by a test update => rated result.
-            Arguments.of(true, dateInPast, SubmissionType.TEST, dateInPast),
-            // The build and test date has passed, the due date has passed, the result is generated by an instructor => rated result.
-            Arguments.of(true, dateInPast, SubmissionType.INSTRUCTOR, dateInPast),
-            // The build and test date has not passed, due date has not passed, normal student submission => rated result.
-            Arguments.of(true, dateInFuture, SubmissionType.MANUAL, dateInFuture),
-            // The build and test date has not passed, due date has passed, normal student submission => unrated result.
-            Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast));
+                // The due date has not passed, normal student submission => rated result.
+                Arguments.of(true, null, SubmissionType.MANUAL, dateInFuture),
+                // The due date is not set, normal student submission => rated result.
+                Arguments.of(true, null, SubmissionType.MANUAL, null),
+                // The due date has passed, normal student submission => unrated result.
+                Arguments.of(false, null, SubmissionType.MANUAL, dateInPast),
+                // The result was generated by an instructor => rated result.
+                Arguments.of(true, null, SubmissionType.INSTRUCTOR, dateInPast),
+                // The result was generated by test update => rated result.
+                Arguments.of(true, null, SubmissionType.TEST, dateInPast),
+                // The build and test date has passed, the due date has passed, the result is generated by a test update => rated result.
+                Arguments.of(true, dateInPast, SubmissionType.TEST, dateInPast),
+                // The build and test date has passed, the due date has passed, the result is generated by an instructor => rated result.
+                Arguments.of(true, dateInPast, SubmissionType.INSTRUCTOR, dateInPast),
+                // The build and test date has not passed, due date has not passed, normal student submission => rated result.
+                Arguments.of(true, dateInFuture, SubmissionType.MANUAL, dateInFuture),
+                // The build and test date has not passed, due date has passed, normal student submission => unrated result.
+                Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)
     void testGetResultsForQuizExercise(QuizMode quizMode) throws Exception {
         var now = ZonedDateTime.now();
@@ -290,7 +292,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             quizSubmission.setScoreInPoints(2.0);
             quizSubmission.submitted(true);
             quizSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(quizExercise, quizSubmission, "student" + i);
+            database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
             if (i % 3 == 0) {
                 database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 10D, true);
             }
@@ -305,7 +307,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsForModelingExercise() throws Exception {
         var now = ZonedDateTime.now();
         for (int i = 1; i <= 10; i++) {
@@ -313,12 +315,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             modelingSubmission.model("Text");
             modelingSubmission.submitted(true);
             modelingSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(modelingExercise, modelingSubmission, "student" + i);
+            database.addSubmission(modelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
             if (i % 3 == 0) {
-                database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10D, true);
+                database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(modelingSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20D, true);
+                database.addResultToSubmission(modelingSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin(TEST_PREFIX + "instructor1"), 20D, true);
             }
         }
 
@@ -328,7 +330,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsForTextExercise() throws Exception {
         var now = ZonedDateTime.now();
         TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course);
@@ -340,12 +342,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             textSubmission.text("Text");
             textSubmission.submitted(true);
             textSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(textExercise, textSubmission, "student" + i);
+            database.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student" + i);
             if (i % 3 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10D, true);
+                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"), 20D, true);
+                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin(TEST_PREFIX + "instructor1"), 20D, true);
             }
         }
 
@@ -355,7 +357,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsForFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
         List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
@@ -364,13 +366,13 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsWithPointsForFileUploadExerciseNoGradingCriteria() throws Exception {
         FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
 
         List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
         List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion",
-            HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
+                HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);
@@ -385,14 +387,14 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsWithPointsForFileUploadExerciseWithGradingCriteria() throws Exception {
         FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
         addFeedbacksWithGradingCriteriaToExercise(fileUploadExercise);
 
         List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
         List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion",
-            HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
+                HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);
@@ -432,14 +434,14 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
             fileUploadSubmission.submitted(true);
             fileUploadSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(fileUploadExercise, fileUploadSubmission, "student" + i);
+            database.addSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student" + i);
             fileUploadExercise.addParticipation((StudentParticipation) fileUploadSubmission.getParticipation());
 
             if (i % 3 == 0) {
-                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 10D, true);
+                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 20D, true);
+                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 20D, true);
             }
             submissionRepository.save(fileUploadSubmission);
         }
@@ -503,7 +505,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getResult() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -512,14 +514,14 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getResult_asStudent() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsForExamExercise() throws Exception {
         setupExamModelingExerciseWithResults();
         List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
@@ -527,19 +529,19 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetResultsForExamExercise_asStudent() throws Exception {
         setupExamModelingExerciseWithResults();
         request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsWithPointsForExamExercise() throws Exception {
         setupExamModelingExerciseWithResults();
         List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
         List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request
-            .getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
+                .getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);
@@ -554,7 +556,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetResultsWithPointsForExamExercise_asTutor() throws Exception {
         setupExamModelingExerciseWithResults();
         request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.FORBIDDEN, Result.class);
@@ -567,8 +569,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             modelingSubmission.model("Testingsubmission");
             modelingSubmission.submitted(true);
             modelingSubmission.submissionDate(now.minusHours(2));
-            database.addSubmission(this.examModelingExercise, modelingSubmission, "student" + i);
-            database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"), 12D, true);
+            database.addSubmission(this.examModelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
+            database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 12D, true);
         }
 
         // empty participation with submission
@@ -588,7 +590,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteResult() throws Exception {
         assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdElseThrow(Long.MAX_VALUE));
@@ -603,7 +605,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteResult_wrongParticipationId() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -613,7 +615,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteResultStudent() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
@@ -621,56 +623,56 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExampleResult() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
+        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
         var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
         modelingSubmission.setExampleSubmission(true);
         submissionRepository.save(modelingSubmission);
         request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
-            Result.class, HttpStatus.CREATED);
+                Result.class, HttpStatus.CREATED);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExampleResult_wrongExerciseId() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
+        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
         var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
         modelingSubmission.setExampleSubmission(true);
         submissionRepository.save(modelingSubmission);
         long randomId = 1874;
         request.postWithResponseBody("/api/exercises/" + randomId + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission, Result.class,
-            HttpStatus.BAD_REQUEST);
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExampleResult_notExampleSubmission() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), "student1");
+        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
         var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
         modelingSubmission.setExampleSubmission(false);
         submissionRepository.save(modelingSubmission);
 
         request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
-            Result.class, HttpStatus.INTERNAL_SERVER_ERROR);
+                Result.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission() throws Exception {
         Result result = new Result().rated(false);
-        var createdResult = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
-            HttpStatus.CREATED);
+        var createdResult = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=" + TEST_PREFIX + "student1",
+                result, Result.class, HttpStatus.CREATED);
         assertThat(createdResult).isNotNull();
         assertThat(createdResult.isRated()).isFalse();
         // TODO: we should assert that the result has been created with all corresponding objects in the database
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission_wrongExerciseId() throws Exception {
         Result result = new Result().rated(false);
         long randomId = 2145;
@@ -679,15 +681,15 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission_programmingExercise() throws Exception {
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.enableMockingOfRequests();
-        var studentLogin = "student1";
+        var studentLogin = TEST_PREFIX + "student1";
         User user = userRepository.findOneByLogin(studentLogin).orElseThrow();
         final var repositorySlug = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
         bitbucketRequestMockProvider.mockSetStudentRepositoryPermission(repositorySlug, programmingExercise.getProjectKey(), studentLogin,
-            VersionControlRepositoryPermission.REPO_READ);
+                VersionControlRepositoryPermission.REPO_READ);
         mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
         Result result = new Result().rated(false);
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(5));
@@ -699,7 +701,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)
     void createResultForExternalSubmission_quizExercise(QuizMode quizMode) throws Exception {
         var now = ZonedDateTime.now();
@@ -707,22 +709,22 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         course.addExercises(quizExercise);
         quizExerciseRepository.save(quizExercise);
         Result result = new Result().rated(false);
-        request.postWithResponseBody(externalResultPath(quizExercise.getId(), "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(externalResultPath(quizExercise.getId(), TEST_PREFIX + "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission_studentNotInTheCourse() throws Exception {
         Result result = new Result().rated(false);
-        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), "student11"), result, Result.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student11"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmissionExam() throws Exception {
         Result result = new Result().rated(false);
         request.postWithResponseBody("/api/exercises/" + this.examModelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
-            HttpStatus.BAD_REQUEST);
+                HttpStatus.BAD_REQUEST);
     }
 
     private String externalResultPath(long exerciseId, String studentLogin) {
@@ -730,28 +732,28 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission_dueDateNotPassed() throws Exception {
         modelingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
         modelingExerciseRepository.save(modelingExercise);
         Result result = new Result().rated(false);
-        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission_resultExists() throws Exception {
         var now = ZonedDateTime.now();
         var modelingExercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
         course.addExercises(modelingExercise);
         modelingExerciseRepository.save(modelingExercise);
-        var participation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
+        var participation = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
         var result = database.addResultToParticipation(null, null, participation);
-        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAssessmentCountByCorrectionRound() {
         // exercise
         var now = ZonedDateTime.now();
@@ -760,7 +762,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // participation
         StudentParticipation studentParticipation = new StudentParticipation();
-        studentParticipation.setParticipant(userRepository.findOneByLogin("student1").get());
+        studentParticipation.setParticipant(userRepository.findOneByLogin(TEST_PREFIX + "student1").get());
         studentParticipation.setExercise(textExercise);
         studentParticipationRepository.save(studentParticipation);
 
@@ -772,13 +774,13 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         textSubmission = submissionRepository.save(textSubmission);
 
         // result 1
-        var result1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "instructor1", new ArrayList<>());
+        var result1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, TEST_PREFIX + "instructor1", new ArrayList<>());
         result1.setRated(true);
         result1 = database.addFeedbackToResults(result1);
         result1.setSubmission(textSubmission);
 
         // result 2
-        var result2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "tutor1", new ArrayList<>());
+        var result2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, TEST_PREFIX + "tutor1", new ArrayList<>());
         result2.setRated(true);
         result2 = database.addFeedbackToResults(result2);
         result2.setSubmission(textSubmission);
@@ -795,7 +797,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAssessmentCountByCorrectionRoundForProgrammingExercise() {
         // exercise
         Course course = database.createCourse();
@@ -805,7 +807,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // participation
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
-        programmingExerciseStudentParticipation.setParticipant(userRepository.findOneByLogin("student1").get());
+        programmingExerciseStudentParticipation.setParticipant(userRepository.findOneByLogin(TEST_PREFIX + "student1").get());
         programmingExerciseStudentParticipation.setExercise(programmingExercise);
         programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
 
@@ -817,13 +819,15 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
         // result 1
-        Result result1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "instructor1", new ArrayList<>());
+        Result result1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, TEST_PREFIX + "instructor1",
+                new ArrayList<>());
         result1.setRated(true);
         result1 = database.addFeedbackToResults(result1);
         result1.setSubmission(programmingSubmission);
 
         // result 2
-        Result result2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "tutor1", new ArrayList<>());
+        Result result2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, TEST_PREFIX + "tutor1",
+                new ArrayList<>());
         result2.setRated(true);
         result2 = database.addFeedbackToResults(result2);
         result2.setSubmission(programmingSubmission);
