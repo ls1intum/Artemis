@@ -1,31 +1,22 @@
 import { Component, Input } from '@angular/core';
 import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
 @Component({
     selector: 'jhi-channels-create-dialog',
     templateUrl: './channels-create-dialog.component.html',
 })
-export class ChannelsCreateDialogComponent {
+export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
     @Input()
     course: Course;
-
-    isInitialized = false;
-
     initialize() {
-        if (!this.course) {
-            console.error('Error: Dialog not fully configured');
-        } else {
-            this.isInitialized = true;
-        }
+        super.initialize(['course']);
     }
 
     channelToCreate: ChannelDTO = new ChannelDTO();
     isPublicChannel = true;
-    constructor(private activeModal: NgbActiveModal) {}
-
     onChannelTypeChanged($event: ChannelType) {
         this.isPublicChannel = $event === 'PUBLIC';
     }
@@ -34,17 +25,11 @@ export class ChannelsCreateDialogComponent {
         this.createChannel($event);
     }
 
-    clear() {
-        this.activeModal.dismiss();
-    }
-
     createChannel(formData: ChannelFormData) {
         const { name, description, isPublic } = formData;
-
         this.channelToCreate.name = name ? name.trim() : undefined;
         this.channelToCreate.description = description ? description.trim() : undefined;
         this.channelToCreate.isPublic = isPublic;
-
-        this.activeModal.close(this.channelToCreate);
+        this.close(this.channelToCreate);
     }
 }

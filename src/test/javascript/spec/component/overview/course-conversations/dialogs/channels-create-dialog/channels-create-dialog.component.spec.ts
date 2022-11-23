@@ -8,6 +8,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
 import { ChannelFormData, ChannelType } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { By } from '@angular/platform-browser';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { initializeDialog } from '../dialog-test-helpers';
 
 @Component({
     selector: 'jhi-channel-form',
@@ -38,11 +39,11 @@ describe('ChannelsCreateDialogComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
-        initializeModal();
+        initializeDialog(component, fixture, { course });
     });
 
     it('clicking close button in modal header should dismiss the modal', () => {
-        initializeModal();
+        initializeDialog(component, fixture, { course });
         const closeButton = fixture.debugElement.nativeElement.querySelector('.modal-header button');
         const activeModal = TestBed.inject(NgbActiveModal);
         const dismissSpy = jest.spyOn(activeModal, 'dismiss');
@@ -50,7 +51,7 @@ describe('ChannelsCreateDialogComponent', () => {
         expect(dismissSpy).toHaveBeenCalledOnce();
     });
     it('should change channel type when channel type is changed in channel form', () => {
-        initializeModal();
+        initializeDialog(component, fixture, { course });
         expect(component.isPublicChannel).toBeTrue();
         const channelTypeChangedEvent = 'PRIVATE';
         const form: ChannelFormStubComponent = fixture.debugElement.query(By.directive(ChannelFormStubComponent)).componentInstance;
@@ -58,7 +59,7 @@ describe('ChannelsCreateDialogComponent', () => {
         expect(component.isPublicChannel).toBeFalse();
     });
     it('should close modal with the channel to create when form is submitted', () => {
-        initializeModal();
+        initializeDialog(component, fixture, { course });
         const activeModal = TestBed.inject(NgbActiveModal);
         const closeSpy = jest.spyOn(activeModal, 'close');
 
@@ -78,21 +79,4 @@ describe('ChannelsCreateDialogComponent', () => {
         expect(closeSpy).toHaveBeenCalledOnce();
         expect(closeSpy).toHaveBeenCalledWith(expectedChannel);
     });
-
-    function initializeModal() {
-        // expect console.err to be called
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-        component.initialize();
-        fixture.detectChanges();
-        expect(consoleErrorSpy).toHaveBeenCalled();
-        expect(component.isInitialized).toBeFalse();
-        consoleErrorSpy.mockRestore();
-
-        // expect console.err not to be called
-        component.course = course;
-        component.initialize();
-        fixture.detectChanges();
-        expect(component.isInitialized).toBeTrue();
-        expect(consoleErrorSpy).not.toHaveBeenCalled();
-    }
 });
