@@ -208,6 +208,11 @@
                 <span *ngIf="course.onlineCourse">{{ 'global.generic.yes' | artemisTranslate }}</span>
                 <span *ngIf="!course.onlineCourse">{{ 'global.generic.no' | artemisTranslate }}</span>
             </dd>
+            <ng-container *ngIf="course.onlineCourse && course.isAtLeastInstructor">
+                <dd>
+                    <a [routerLink]="['/course-management', course?.id, 'lti-configuration']">LTI Configuration</a>
+                </dd>
+            </ng-container>
             <dt><span jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</span></dt>
             <dd>
                 <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | artemisTranslate }}</span>
