@@ -265,12 +265,10 @@ Generic styles
 }
 
 .page-wrapper {
-    @media (min-width: 768px) {
-        //Space reserved at bottom for footer
-        padding-bottom: 5rem;
-        min-height: 100vh;
-        position: relative;
-    }
+    //Space reserved at bottom for footer
+    padding-bottom: 5rem;
+    min-height: 100vh;
+    position: relative;
 }
 
 .main-container {
