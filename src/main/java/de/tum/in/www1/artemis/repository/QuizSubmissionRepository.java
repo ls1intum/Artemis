@@ -34,4 +34,12 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
     QuizSubmission findWithEagerSubmittedAnswersById(@Param("submissionId") long submissionId);
 
     Set<QuizSubmission> findByParticipation_Exercise_Id(long exerciseId);
+
+    @Query("""
+            SELECT submission FROM QuizSubmission submission
+            JOIN submission.participation participation
+            JOIN participation.exercise exercise
+            WHERE exercise.id = :#{#quizExerciseId}
+            """)
+    Optional<QuizSubmission> findByQuizExerciseId(@Param("quizExerciseId") long quizExerciseId);
 }
