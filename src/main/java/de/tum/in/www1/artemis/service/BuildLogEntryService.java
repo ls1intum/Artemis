@@ -83,10 +83,11 @@ public class BuildLogEntryService {
      * @return boolean indicating an unnecessary build log or not
      */
     public boolean isUnnecessaryBuildLogForProgrammingLanguage(String logString, ProgrammingLanguage programmingLanguage) {
-        boolean isInfoWarningOrErrorLog = isInfoLog(logString) || isWarningLog(logString) || isErrorLog(logString) || isDockerImageLog(logString);
+        boolean isInfoWarningOrErrorLog = isInfoLog(logString) || isWarningLog(logString) || isDockerImageLog(logString) || isGitLog(logString) || isTaskLog(logString);
         if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
-            return isInfoWarningOrErrorLog || logString.startsWith("Unable to publish artifact") || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS")
-                    || logString.startsWith("Picked up JAVA_TOOL_OPTIONS") || logString.startsWith("[withMaven]") || logString.startsWith("$ docker");
+            return isInfoWarningOrErrorLog || isMavenErrorLog(logString) || isGradleErrorLog(logString) || isGradleInfoLog(logString)
+                    || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS") || logString.startsWith("Picked up JAVA_TOOL_OPTIONS") || logString.startsWith("[withMaven]")
+                    || logString.startsWith("$ docker");
         }
         else if (ProgrammingLanguage.SWIFT.equals(programmingLanguage) || ProgrammingLanguage.C.equals(programmingLanguage)) {
             return isInfoWarningOrErrorLog || logString.contains("Unable to find image") || logString.contains(": Already exists") || logString.contains(": Pull")
@@ -97,17 +98,27 @@ public class BuildLogEntryService {
     }
 
     private boolean isInfoLog(String log) {
-        return (log.startsWith("[INFO]") && !log.contains("error")) || log.startsWith("[INFO] Downloading") || log.startsWith("[INFO] Downloaded");
+        return (log.startsWith("[INFO]") && !log.contains("error")) || log.startsWith("[INFO] Downloading") || log.startsWith("[INFO] Downloaded") || log.startsWith("<div>");
+    }
+
+    private boolean isGradleInfoLog(String log) {
+        return log.startsWith("Downloading https://services.gradle.org") || log.startsWith("...........10%") || log.startsWith("Here are the highlights of this release:")
+                || log.startsWith("- ") || log.startsWith("For more details see") || log.startsWith("Starting a Gradle Daemon");
     }
 
     private boolean isWarningLog(String log) {
         return log.startsWith("[WARNING]");
     }
 
-    private boolean isErrorLog(String log) {
+    private boolean isMavenErrorLog(String log) {
         return log.startsWith("[ERROR] [Help 1]") || log.startsWith("[ERROR] For more information about the errors and possible solutions")
                 || log.startsWith("[ERROR] Re-run Maven using") || log.startsWith("[ERROR] To see the full stack trace of the errors") || log.startsWith("[ERROR] -> [Help 1]")
                 || log.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins") || "[ERROR] ".equals(log);
+    }
+
+    private boolean isGradleErrorLog(String log) {
+        return log.startsWith("> Run with") || log.startsWith("FAILURE") || log.startsWith("* What went wrong:") || log.startsWith("Execution failed")
+                || log.contains("actionable tasks:") || log.startsWith("* Get more help");
     }
 
     private boolean isDockerImageLog(String log) {
@@ -118,6 +129,20 @@ public class BuildLogEntryService {
                 || (log.endsWith(": Pulling fs layer") && log.length() == 30) || (log.endsWith(": Waiting") && log.length() == 21)
                 || (log.endsWith(": Verifying Checksum") && log.length() == 32) || (log.endsWith(": Download complete") && log.length() == 31)
                 || (log.endsWith(": Pull complete") && log.length() == 27);
+    }
+
+    private boolean isGitLog(String log) {
+        return log.startsWith("Checking out") || log.startsWith("Switched to branch") || log.startsWith(".git") || log.startsWith("Fetching 'refs/heads")
+                || log.startsWith("Updating source code to revision") || log.startsWith("Updated source code to revision") || log.startsWith("Creating local git repository")
+                || log.startsWith("hint: ") || log.startsWith("Initialized empty Git") || log.startsWith("Warning: Permanently added") || log.startsWith(" * [new branch]")
+                || log.startsWith("From ssh://");
+    }
+
+    private boolean isTaskLog(String log) {
+        return log.startsWith("Executing build") || log.startsWith("Starting task") || log.startsWith("Finished task") || log.startsWith("Running pre-build action")
+                || log.startsWith("Failing task") || log.startsWith("Running post build") || log.startsWith("Running on server") || log.startsWith("Finalising the build...")
+                || log.startsWith("Stopping timer.") || log.startsWith("Finished building") || log.startsWith("Publishing an artifact")
+                || log.startsWith("Unable to publish artifact") || log.startsWith("The artifact hasn't been successfully published");
     }
 
     /**
@@ -180,11 +205,11 @@ public class BuildLogEntryService {
     }
 
     private boolean isCompilationError(String log) {
-        return log.contains("COMPILATION ERROR");
+        return log.contains("COMPILATION ERROR") || log.startsWith("> Compilation failed");
     }
 
     private boolean isBuildFailure(String log) {
-        return log.contains("BUILD FAILURE");
+        return log.contains("BUILD FAILURE") || log.startsWith("BUILD FAILED");
     }
 
     /**
