@@ -183,7 +183,7 @@
                 </div>
             </ng-template>
             <!-- PROBLEM STATEMENT END -->
-            <ng-container *ngIf="exampleSolutionUML || exampleSolution || isProgrammingExerciseExampleSolutionPublished">
+            <ng-container *ngIf="exampleSolutionUML || exampleSolution || programmingExercise?.exampleSolutionPublished">
                 <div class="row mb-2 mt-2 align-items-baseline">
                     <div class="control-label" (click)="changeExampleSolution()">
                         <span class="h3 pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</span>
@@ -201,7 +201,7 @@
                         ></jhi-modeling-editor>
                     </dd>
                     <dd *ngIf="exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolution"></dd>
-                    <ng-container *ngIf="isProgrammingExerciseExampleSolutionPublished">
+                    <ng-container *ngIf="programmingExercise?.exampleSolutionPublished">
                         <dd class="editor-outline-background">
                             <jhi-programming-exercise-example-solution-repo-download
                                 class="ms-2"
@@ -215,8 +215,8 @@
                                 [exerciseId]="exercise.id!"
                                 [includeTests]="true"
                                 [title]="'artemisApp.programmingExercise.export.downloadTestsWithExampleSolution'"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate }}"
                             ></jhi-programming-exercise-example-solution-repo-download>
-                            <jhi-help-icon placement="top" text="artemisApp.programmingExercise.studentDownloadTestsTooltip"></jhi-help-icon>
                         </dd>
                     </ng-container>
                 </dl>

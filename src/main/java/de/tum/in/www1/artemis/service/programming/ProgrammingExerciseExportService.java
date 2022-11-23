@@ -404,13 +404,12 @@ public class ProgrammingExerciseExportService {
         Path zipPath = uniquePath.resolve("zip");
 
         try {
-            Files.createDirectories(clonePath);
-            Files.createDirectories(zipPath);
-
             gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUrl(), clonePath, true);
             String assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(exercise.getProgrammingLanguage());
+            FileUtils.deleteDirectory(clonePath.resolve(assignmentPath).toFile());
             gitService.getOrCheckoutRepository(exercise.getVcsSolutionRepositoryUrl(), clonePath.resolve(assignmentPath), true);
             for (AuxiliaryRepository auxRepo : exercise.getAuxiliaryRepositoriesForBuildPlan()) {
+                FileUtils.deleteDirectory(clonePath.resolve(auxRepo.getCheckoutDirectory()).toFile());
                 gitService.getOrCheckoutRepository(auxRepo.getVcsRepositoryUrl(), clonePath.resolve(auxRepo.getCheckoutDirectory()), true);
             }
 
