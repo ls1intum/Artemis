@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -6,9 +6,7 @@ import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './group-chat-icon.component.html',
     styleUrls: ['./group-chat-icon.component.scss'],
 })
-export class GroupChatIconComponent implements OnInit {
+export class GroupChatIconComponent {
+    // icons
     faPeopleGroup = faPeopleGroup;
-    constructor() {}
-
-    ngOnInit(): void {}
 }

@@ -16,6 +16,5 @@ export class ChannelIconComponent {
     // icons
     faHashtag = faHashtag;
     faLock = faLock;
-
     faBoxArchive = faBoxArchive;
 }
