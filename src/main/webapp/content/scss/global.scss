@@ -37,7 +37,6 @@ h4 {
 a,
 a:not(.btn):not(.dropdown-item):not(.page-link):not(.nav-link):hover {
     color: $link-color;
-    font-weight: bold;
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
 }
@@ -101,15 +100,6 @@ a.btn {
     color: $default-btn-font;
     background-color: $default-btn-background;
     border-color: $default-btn-border;
-}
-
-// make sure to align with the bootstrap rule here
-// workaround for unsupported justify-content-evenly by bootstrap
-@media (max-width: 576px) {
-    .footer::before,
-    .footer::after {
-        content: '';
-    }
 }
 
 .popover {
@@ -276,7 +266,8 @@ Generic styles
 
 .page-wrapper {
     @media (min-width: 768px) {
-        padding-bottom: 46px;
+        //Space reserved at bottom for footer
+        padding-bottom: 5rem;
         min-height: 100vh;
         position: relative;
     }
