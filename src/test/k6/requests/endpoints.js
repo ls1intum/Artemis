@@ -8,6 +8,7 @@ export const ADMIN_COURSES = '/admin/courses';
 export const COURSES = '/courses';
 export const USERS = '/users';
 export const COURSE = (courseId) => `${COURSES}/${courseId}`;
+export const ADMIN_COURSE = (courseId) => `${ADMIN_COURSES}/${courseId}`;
 export const COURSE_STUDENTS = (courseId, username) => `${COURSES}/${courseId}/students/${username}`;
 export const COURSE_TUTORS = (courseId, username) => `${COURSES}/${courseId}/tutors/${username}`;
 export const COURSE_INSTRUCTORS = (courseId, username) => `${COURSES}/${courseId}/instructors/${username}`;

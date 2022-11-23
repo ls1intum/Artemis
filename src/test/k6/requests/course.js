@@ -1,4 +1,4 @@
-import { COURSE, COURSES, COURSE_STUDENTS, COURSE_INSTRUCTORS, COURSE_TUTORS, ADMIN_COURSES } from './endpoints.js';
+import { COURSE, COURSES, COURSE_STUDENTS, COURSE_INSTRUCTORS, COURSE_TUTORS, ADMIN_COURSES, ADMIN_COURSE } from './endpoints.js';
 import { nextAlphanumeric } from '../util/utils.js';
 import { fail } from 'k6';
 import http from 'k6/http';
@@ -87,7 +87,7 @@ export function removeUserFromInstructorsInCourse(artemis, username, courseId) {
 }
 
 export function deleteCourse(artemis, courseId) {
-    const res = artemis.delete(COURSE(courseId));
+    const res = artemis.delete(ADMIN_COURSE(courseId));
 
     if (res[0].status !== 200) {
         fail('FAILTEST: Unable to delete course ' + courseId);
