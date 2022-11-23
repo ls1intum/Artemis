@@ -134,15 +134,15 @@ public class BuildLogEntryService {
     private boolean isGitLog(String log) {
         return log.startsWith("Checking out") || log.startsWith("Switched to branch") || log.startsWith(".git") || log.startsWith("Fetching 'refs/heads")
                 || log.startsWith("Updating source code to revision") || log.startsWith("Updated source code to revision") || log.startsWith("Creating local git repository")
-                || log.startsWith("hint: ") || log.startsWith("Initialized empty Git") || log.startsWith("Warning: Permanently added") || log.startsWith(" * [new branch]")
+                || log.startsWith("hint: ") || log.startsWith("Initialized empty Git") || log.startsWith("Warning: Permanently added") || log.contains("* [new branch]")
                 || log.startsWith("From ssh://");
     }
 
     private boolean isTaskLog(String log) {
         return log.startsWith("Executing build") || log.startsWith("Starting task") || log.startsWith("Finished task") || log.startsWith("Running pre-build action")
                 || log.startsWith("Failing task") || log.startsWith("Running post build") || log.startsWith("Running on server") || log.startsWith("Finalising the build...")
-                || log.startsWith("Stopping timer.") || log.startsWith("Finished building") || log.startsWith("Publishing an artifact")
-                || log.startsWith("Unable to publish artifact") || log.startsWith("The artifact hasn't been successfully published");
+                || log.startsWith("Stopping timer.") || log.startsWith("Finished building") || log.startsWith("All post build plugins have finished")
+                || log.startsWith("Publishing an artifact") || log.startsWith("Unable to publish artifact") || log.startsWith("The artifact hasn't been successfully published");
     }
 
     /**
