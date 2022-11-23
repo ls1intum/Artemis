@@ -32,6 +32,7 @@ import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-grap
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { resultIsPreliminary } from 'app/exercises/shared/result/result.utils';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
 
 export enum FeedbackItemType {
     Issue,
@@ -91,6 +92,11 @@ export class ResultDetailComponent implements OnInit {
     @Input() latestIndividualDueDate?: dayjs.Dayjs;
     @Input() taskName?: string;
 
+    // Icons
+    faXmark = faXmark;
+    faCircleNotch = faCircleNotch;
+    faExclamationTriangle = faExclamationTriangle;
+
     isLoading = false;
     loadingFailed = false;
     feedbackList: FeedbackItem[];
@@ -124,10 +130,6 @@ export class ResultDetailComponent implements OnInit {
     showOnlyNegativeFeedback = false;
 
     numberOfAggregatedTestCases = 0;
-
-    // Icons
-    faCircleNotch = faCircleNotch;
-    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         public activeModal: NgbActiveModal,

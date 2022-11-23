@@ -1,20 +1,26 @@
-<div class="modal-header">
+<div class="modal-header feedback-header">
     <h4 class="modal-title">
         <ng-container *ngIf="taskName; else noTaskDescription">{{ 'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName } }}</ng-container>
         <ng-template #noTaskDescription>{{ 'artemisApp.result.detail.feedback' | artemisTranslate }}</ng-template>
     </h4>
-    <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()"></button>
+
+    <button type="button" class="feedback-header-close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
+        <fa-icon [icon]="faXmark" size="xl"></fa-icon>
+    </button>
 </div>
+
 <div class="modal-body position-relative" id="result-detail-body">
     <!-- Message, if defined -->
     <div *ngIf="messageKey" class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
     <div *ngIf="showMissingAutomaticFeedbackInformation" class="mb-3">
         <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: latestIndividualDueDate }"></h6>
     </div>
+
     <!-- Loading state -->
     <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
         <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch"></fa-icon>
     </div>
+
     <!-- Feedbacks container -->
     <ng-template #feedbackContainer>
         <div *ngIf="!loadingFailed && resultIsPreliminary(result)">
