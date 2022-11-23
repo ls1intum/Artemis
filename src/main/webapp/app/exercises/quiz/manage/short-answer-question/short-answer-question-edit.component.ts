@@ -480,11 +480,16 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const endOfRange = startOfRange + selection.toString().length;
 
         const markedTextHTML = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
-        const markedText = this.markdownSpotForHtml(markedTextHTML, type).substring(startOfRange, endOfRange);
+        let markedText = this.markdownSpotForHtml(markedTextHTML, type).substring(startOfRange, endOfRange);
 
-        // If spot type is number, only create spot if marked text is a valid solution
-        if (type === SpotType.NUMBER && !this.shortAnswerQuestionUtil.isValidNumberSpotSolution(markedText)) {
-            return;
+        // If spot type is number, only create spot if marked text is a valid solution or if a solution is a number
+        if (type === SpotType.NUMBER) {
+            markedText = markedText.trim();
+            if (!isNaN(+markedText)) {
+                markedText = `[${markedText}|${markedText}]`;
+            } else if (!this.shortAnswerQuestionUtil.isValidNumberSpotSolution(markedText)) {
+                return;
+            }
         }
 
         // split text before first option tag
