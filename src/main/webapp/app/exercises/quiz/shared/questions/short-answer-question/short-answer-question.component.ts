@@ -8,6 +8,7 @@ import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/entities/
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { SpotType } from 'app/entities/quiz/short-answer-spot.model';
 
 @Component({
     selector: 'jhi-short-answer-question',
@@ -93,7 +94,13 @@ export class ShortAnswerQuestionComponent {
             for (const element of textpart) {
                 if (this.shortAnswerQuestionUtil.isInputField(element!)) {
                     const submittedText = new ShortAnswerSubmittedText();
-                    submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this.shortAnswerQuestion.id)).value;
+                    let value = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this.shortAnswerQuestion.id)).value;
+                    if (this.getSpotType(element) === SpotType.NUMBER) {
+                        if (isNaN(+value)) {
+                            value = '';
+                        }
+                    }
+                    submittedText.text = value;
                     submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element!), this.shortAnswerQuestion);
                     this.submittedTexts.push(submittedText);
                 }
@@ -242,10 +249,25 @@ export class ShortAnswerQuestionComponent {
     }
 
     /**
-     * Returns the type of the input for the given spot tag
-     * @param spotTag Spot tag for which to get the type
+     * Returns the SpotType for the given spot tag
+     * @param spotTag Spot tag for which to get the SpotType
      */
-    getSpotInputType(spotTag: string): string {
-        return this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.shortAnswerQuestion).type.toLowerCase();
+    getSpotType(spotTag: string): SpotType {
+        return this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.shortAnswerQuestion).type;
+    }
+
+    /**
+     * Validates input for spot
+     * @param event FocusEvent triggered on blur
+     * @param spotTag Spot tag for which input to be validated
+     */
+    onBlurInput(event: FocusEvent, spotTag: string): void {
+        if (this.getSpotType(spotTag) === SpotType.NUMBER) {
+            const inputEl = event.target as HTMLInputElement;
+            const value = inputEl.value;
+            if (isNaN(+value)) {
+                inputEl.value = '';
+            }
+        }
     }
 }
