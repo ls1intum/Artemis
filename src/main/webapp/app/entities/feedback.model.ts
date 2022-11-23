@@ -222,11 +222,11 @@ export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText =
  * it keeps the number of how many times the grading instructions are applied. If the usage limit is exceeded for the
  * grading instruction, it marks the feedback as subsequent.
  *
- * @param assessment the list of feedback provided in the assessment
+ * @param feedbacks the list of feedbacks
  */
-export const checkSubsequentFeedbackInAssessment = (assessment: Feedback[]) => {
+export const checkSubsequentFeedbackInAssessment = (feedbacks: Feedback[]) => {
     const gradingInstructions = {}; // { instructionId: number of encounters }
-    for (const feedback of assessment) {
+    for (const feedback of feedbacks) {
         if (feedback.gradingInstruction && feedback.gradingInstruction.credits !== 0) {
             if (gradingInstructions[feedback.gradingInstruction!.id!]) {
                 // this grading instruction is counted before

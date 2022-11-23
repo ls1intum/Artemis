@@ -190,10 +190,14 @@ export class ResultDetailComponent implements OnInit {
     private fetchAdditionalInformation() {
         of(this.result.feedbacks)
             .pipe(
-                // If the result already has feedbacks assigned to it, don't query the server.
-                switchMap((feedbacks: Feedback[] | undefined | null) =>
-                    feedbacks && feedbacks.length ? of(feedbacks) : this.getFeedbackDetailsForResult(this.result.participation!.id!, this.result.id!),
-                ),
+                switchMap((feedbacks: Feedback[] | undefined | null) => {
+                    // don't query the server if feedback already exists
+                    if (feedbacks?.length) {
+                        return of(feedbacks);
+                    } else {
+                        return this.getFeedbackDetailsForResult(this.result.participation!.id!, this.result.id!);
+                    }
+                }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
                     /*
                      * If we have feedback, filter it if needed, distinguish between test case and static code analysis
@@ -491,6 +495,7 @@ export class ResultDetailComponent implements OnInit {
             });
             if (positiveTestCasesWithoutDetailText.length > 0) {
                 this.numberOfAggregatedTestCases = positiveTestCasesWithoutDetailText.length;
+
                 return [
                     {
                         type: FeedbackItemType.Test,
