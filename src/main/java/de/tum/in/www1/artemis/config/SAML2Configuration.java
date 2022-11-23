@@ -152,7 +152,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
             .requestMatchers()
                 // This filter chain is only applied if the URL matches
                 // Else the request is filtered by {@link SecurityConfiguration}.
-                .antMatchers("/api/saml2")
+                .antMatchers("/api/public/saml2")
                 .antMatchers("/saml2/**")
                 .antMatchers("/login/**")
             .and()
@@ -163,7 +163,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
                 // The request to the api is permitted and checked directly
                 // This allows returning a 401 if the user is not logged in via SAML2
                 // to notify the client that a login is needed.
-                .antMatchers("/api/saml2").permitAll()
+                .antMatchers("/api/public/saml2").permitAll()
                 // Every other request must be authenticated. Any request triggers a SAML2
                 // authentication flow
                 .anyRequest().authenticated()

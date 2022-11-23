@@ -277,12 +277,13 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Test
     @WithAnonymousUser
-    void testJWTAuthenticationLogoutUnauthorized() throws Exception {
+    void testJWTAuthenticationLogoutAnonymous() throws Exception {
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        request.postWithoutResponseBody("/api/logout", HttpStatus.UNAUTHORIZED, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/logout", HttpStatus.OK, httpHeaders);
+        AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), true);
     }
 
     @Test
@@ -292,7 +293,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/logout", HttpStatus.OK, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/logout", HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), true);
     }
 
