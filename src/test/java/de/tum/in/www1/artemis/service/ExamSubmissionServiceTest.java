@@ -4,9 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +29,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "esstest"; // only lower case is supported
+
     @Autowired
     private ExamSubmissionService examSubmissionService;
 
@@ -43,7 +43,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucket
     @Autowired
     private UserRepository userRepository;
 
-    private User user;
+    private User student1;
 
     private Exam exam;
 
@@ -53,55 +53,50 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void init() {
-        List<User> users = database.addUsers(1, 0, 0, 1);
-        user = users.get(0);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         exercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exam = examRepository.findByCourseId(course.getId()).get(0);
         studentExam = database.addStudentExam(exam);
         studentExam.setWorkingTime(7200); // 2 hours
-        studentExam.setUser(user);
+        studentExam.setUser(student1);
         studentExam.addExercise(exercise);
         studentExam = studentExamRepository.save(studentExam);
     }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowance_passIfNonExamSubmission() {
         Course tmpCourse = database.addEmptyCourse();
         Exercise nonExamExercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), tmpCourse);
         // should not throw
-        examSubmissionService.checkSubmissionAllowanceElseThrow(nonExamExercise, user);
-        boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(nonExamExercise, user, false);
+        examSubmissionService.checkSubmissionAllowanceElseThrow(nonExamExercise, student1);
+        boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(nonExamExercise, student1, false);
         assertThat(result2).isTrue();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowance_isSubmissionInTime() {
         // Should fail when submission is made before start date
         exam.setStartDate(ZonedDateTime.now().plusMinutes(5));
         examRepository.save(exam);
-        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user));
-        boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
+        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+        boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false);
         assertThat(result2).isFalse();
         // Should fail when submission is made after (start date + working time)
         exam.setStartDate(ZonedDateTime.now().minusMinutes(130));
         examRepository.save(exam);
-        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user));
-        result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
+        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+        result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false);
         assertThat(result2).isFalse();
         // Should pass if submission is made in time
         exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
         examRepository.save(exam);
         // should not throw
-        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
-        result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
+        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1);
+        result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false);
         assertThat(result2).isTrue();
         // Should fail when submission is made after end date (if no working time is set)
         studentExam.setWorkingTime(0);
@@ -109,34 +104,34 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucket
         exam.setStartDate(ZonedDateTime.now().minusMinutes(130));
         exam.setEndDate(ZonedDateTime.now().minusMinutes(120));
         examRepository.save(exam);
-        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user));
-        result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
+        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+        result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false);
         assertThat(result2).isFalse();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowance_allowedToSubmitToExercise() {
         // Should fail if there is no student exam for user
         exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
         examRepository.save(exam);
         studentExam.setUser(null);
         studentExamRepository.save(studentExam);
-        assertThrows(EntityNotFoundException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user));
-        assertThrows(EntityNotFoundException.class, () -> examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false));
+        assertThrows(EntityNotFoundException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+        assertThrows(EntityNotFoundException.class, () -> examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false));
         // Should fail if the user's student exam does not have the exercise
-        studentExam.setUser(user);
+        studentExam.setUser(student1);
         studentExam.removeExercise(exercise);
         studentExamRepository.save(studentExam);
-        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user));
-        boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
+        assertThrows(AccessForbiddenException.class, () -> examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, student1));
+        boolean result2 = examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false);
         assertThat(result2).isFalse();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckSubmissionAllowance_testRun() {
-        final var instructor = userRepository.findOneWithGroupsAndAuthoritiesByLogin("instructor1").get();
+        final var instructor = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "instructor1").get();
         studentExam.setTestRun(true);
         studentExam.setUser(instructor);
         studentExamRepository.save(studentExam);
@@ -144,21 +139,21 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowance_submittedStudentExam() {
         studentExam.setSubmitted(true);
         studentExamRepository.save(studentExam);
-        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false)).isFalse();
+        assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, student1, false)).isFalse();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPreventMultipleSubmissions() {
-        StudentParticipation participation = database.createAndSaveParticipationForExercise(exercise, "student1");
+        StudentParticipation participation = database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
         Submission existingSubmission = ModelFactory.generateTextSubmission("The initial submission", Language.ENGLISH, true);
         existingSubmission = database.addSubmission(participation, existingSubmission);
         Submission receivedSubmission = ModelFactory.generateTextSubmission("This is a submission", Language.ENGLISH, true);
-        receivedSubmission = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, user);
+        receivedSubmission = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, student1);
         assertThat(receivedSubmission.getId()).isEqualTo(existingSubmission.getId());
     }
 
