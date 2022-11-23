@@ -11,7 +11,7 @@ const userAgent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/201001
 const acceptLanguage = 'en-CA,en-US;q=0.7,en;q=0.3';
 const acceptEncoding = 'gzip, deflate, br';
 
-const request = function (method, endpoint, authToken, body, params) {
+const request = function (method, endpoint, authToken, body, params, formData) {
     let paramString;
     if (params) {
         paramString = Object.keys(params)
@@ -24,7 +24,7 @@ const request = function (method, endpoint, authToken, body, params) {
         {
             method: method,
             url: url,
-            body: body ? JSON.stringify(body) : null,
+            body: formData ? formData.body() : body ? JSON.stringify(body) : null,
             params: {
                 headers: {
                     Host: host,
@@ -34,7 +34,7 @@ const request = function (method, endpoint, authToken, body, params) {
                     'Accept-Encoding': acceptEncoding,
                     Referer: baseUrl + '/',
                     Authorization: 'Bearer ' + authToken,
-                    'Content-Type': 'application/json',
+                    'Content-Type': formData ? 'multipart/form-data; boundary=' + formData.boundary : 'application/json',
                     'X-Artemis-Client-Fingerprint': 'b832814fcce0cab9fc5f717d5b93fa07',
                     'X-Artemis-Client-Instance-ID': '9e0b78ec-e43e-43da-a767-89b3f80df63a',
                     Connection: 'keep-alive',
@@ -112,8 +112,8 @@ export function Artemis(authToken) {
     this.get = function (endpoint, params) {
         return request('get', endpoint, authToken, null, params);
     };
-    this.post = function (endpoint, body, params) {
-        return request('post', endpoint, authToken, body, params);
+    this.post = function (endpoint, body, params, formData) {
+        return request('post', endpoint, authToken, body, params, formData);
     };
     this.put = function (endpoint, body, params) {
         return request('put', endpoint, authToken, body, params);
