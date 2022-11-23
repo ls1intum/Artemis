@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -47,16 +46,16 @@ public class AdminCourseResource {
 
     private final FileService fileService;
 
-    private final OAuth2JWKSService oAuth2JWKSService;
+    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, OAuth2JWKSService oAuth2JWKSService) {
+            FileService fileService, OnlineCourseConfigurationService onlineCourseConfigurationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
-        this.oAuth2JWKSService = oAuth2JWKSService;
+        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
     }
 
     /**
@@ -87,10 +86,13 @@ public class AdminCourseResource {
         course.validateRegistrationConfirmationMessage();
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndRegistrationEnabled();
-        course.validateOnlineCourseConfiguration();
         course.validateAccuracyOfScores();
         if (!course.isValidStartAndEndDate()) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
+        }
+
+        if (course.isOnlineCourse()) {
+            onlineCourseConfigurationService.createOnlineCourseConfiguration(course);
         }
 
         courseService.createOrValidateGroups(course);
@@ -101,9 +103,7 @@ public class AdminCourseResource {
         }
 
         Course result = courseRepository.save(course);
-        if (course.isOnlineCourse()) {
-            oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
-        }
+
         return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
 
