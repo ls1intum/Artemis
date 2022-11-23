@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
 import { CourseManagementService, RoleGroup } from 'app/course/manage/course-management.service';
@@ -65,7 +65,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     isSearching = false;
     searchFailed = false;
 
-    constructor(private courseManagementService: CourseManagementService) {}
+    constructor(private courseManagementService: CourseManagementService, private cdr: ChangeDetectorRef) {}
 
     ngOnInit(): void {
         if (this.rolesToAllowSearchingIn.includes('students')) {
@@ -187,11 +187,18 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     }
 
     writeValue(selectedUsers: UserPublicInfoDTO[]): void {
+        if (!selectedUsers) {
+            this.selectedUsers = [];
+            this.cdr.detectChanges();
+            return;
+        }
+
         if (this.multiSelect) {
             this.selectedUsers = selectedUsers ?? [];
         } else {
             this.selectedUsers = selectedUsers?.length ? [selectedUsers[0]] : [];
         }
+        this.cdr.detectChanges();
     }
     // === END CONTROL VALUE ACCESSOR ===
 

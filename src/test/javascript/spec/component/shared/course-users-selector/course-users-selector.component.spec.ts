@@ -1,216 +1,195 @@
-import { Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
+import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { CourseManagementService, RoleGroup } from 'app/course/manage/course-management.service';
-import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
-import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
-import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
-import { faX } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Component, DebugElement, ViewChild } from '@angular/core';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
+import { By } from '@angular/platform-browser';
 
-let selectorId = 0;
-
-/**
- * Generic Input Component for searching and selecting one or more users from a course.
- * - Implements ControlValueAccessor to be used in reactive forms.
- * - Uses ng-bootstrap typeahead to provide a search input.
- * - Uses server side search to efficiently search for users.
- * - Uses a custom formatter to display the user's name and login.
- * - Search requires at least 3 characters.
- * - Always returns an array of users. In single mode the array will contain only one user.
- */
 @Component({
-    selector: 'jhi-course-users-selector',
-    templateUrl: './course-users-selector.component.html',
-    styleUrls: ['./course-users-selector.component.scss'],
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: CourseUsersSelectorComponent,
-            multi: true,
-        },
-    ],
-    host: { class: 'course-users-selector' },
-    encapsulation: ViewEncapsulation.None,
+    template: `
+        <jhi-course-users-selector
+            [(ngModel)]="selectedUsers"
+            [disabled]="disabled"
+            [courseId]="courseId"
+            [rolesToAllowSearchingIn]="rolesToAllowSearchingIn"
+            [multiSelect]="multiSelect"
+            [showUserList]="showUserList"
+        ></jhi-course-users-selector>
+    `,
 })
-export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit, OnDestroy {
-    private ngUnsubscribe = new Subject<void>();
+class WrapperComponent {
+    @ViewChild(CourseUsersSelectorComponent)
+    courseUsersSelectorComponent: CourseUsersSelectorComponent;
 
-    @ViewChild('instance', { static: true }) typeAheadInstance: NgbTypeahead;
-    @Input() disabled = false;
-    @ViewChild('searchInput') searchInput: ElementRef;
-    @Input()
-    courseId: number;
-    @Input()
-    @HostBinding('attr.id')
-    id = 'users-selector' + selectorId++;
-    @Input()
-    label?: string;
-    @Input()
+    disabled = false;
+    courseId = 1;
+    label = 'TestLabel';
     rolesToAllowSearchingIn: RoleGroup[] = ['tutors', 'students', 'instructors', 'editors'];
-    @Input()
     multiSelect = true;
-
-    @Input()
     showUserList = true;
 
-    searchStudents = true;
-    searchTutors = true;
-    searchEditors = true;
-    searchInstructors = true;
+    public selectedUsers: UserPublicInfoDTO[] | undefined | null = [];
+}
 
-    // icons
-    faX = faX;
+describe('CourseUsersSelectorComponent', () => {
+    let wrapperComponent: WrapperComponent;
+    let fixture: ComponentFixture<WrapperComponent>;
+    let userSelectorComponent: CourseUsersSelectorComponent;
+    let searchUsersSpy: jest.SpyInstance;
 
-    selectedUsers: UserPublicInfoDTO[] = [];
-    isSearching = false;
-    searchFailed = false;
+    beforeEach(waitForAsync(() => {
+        TestBed.configureTestingModule({
+            imports: [CommonModule, FormsModule, ReactiveFormsModule, ArtemisSharedModule, ArtemisSharedComponentModule, NgbTypeaheadModule],
+            declarations: [CourseUsersSelectorComponent, WrapperComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [MockProvider(CourseManagementService)],
+        }).compileComponents();
+    }));
 
-    constructor(private courseManagementService: CourseManagementService) {}
+    beforeEach(() => {
+        fixture = TestBed.createComponent(WrapperComponent);
+        fixture.detectChanges();
+        wrapperComponent = fixture.componentInstance;
+        userSelectorComponent = wrapperComponent.courseUsersSelectorComponent;
+        searchUsersSpy = jest.spyOn(TestBed.inject(CourseManagementService), 'searchUsers');
+    });
 
-    ngOnInit(): void {
-        if (this.rolesToAllowSearchingIn.includes('students')) {
-            this.searchStudents = true;
-        }
-        if (this.rolesToAllowSearchingIn.includes('tutors')) {
-            this.searchTutors = true;
-        }
-        if (this.rolesToAllowSearchingIn.includes('editors')) {
-            this.searchEditors = true;
-        }
-        if (this.rolesToAllowSearchingIn.includes('instructors')) {
-            this.searchInstructors = true;
-        }
+    it('should create', () => {
+        expect(wrapperComponent).toBeTruthy();
+    });
+
+    const testCases = [
+        {
+            multiSelect: true,
+        },
+        {
+            multiSelect: false,
+        },
+    ];
+
+    testCases.forEach((testCase) => {
+        it('changing connected wrapper should update the component property', fakeAsync(() => {
+            const exampleUserPublicInfoDTO = generateExampleUserPublicInfoDTO({});
+            wrapperComponent.selectedUsers = [exampleUserPublicInfoDTO];
+            wrapperComponent.multiSelect = testCase.multiSelect;
+            fixture.detectChanges();
+            tick();
+            expect(userSelectorComponent.selectedUsers).toEqual([exampleUserPublicInfoDTO]);
+            expect(fixture.debugElement.queryAll(By.css('.selected-user'))).toHaveLength(1);
+        }));
+
+        it('should convert undefined to empty array', fakeAsync(() => {
+            wrapperComponent.selectedUsers = undefined;
+            wrapperComponent.multiSelect = testCase.multiSelect;
+            fixture.detectChanges();
+            tick();
+            expect(userSelectorComponent.selectedUsers).toEqual([]);
+        }));
+
+        it('searching, selecting and deleting a user should update the selectedUsers property', fakeAsync(() => {
+            wrapperComponent.multiSelect = testCase.multiSelect;
+            const user = generateExampleUserPublicInfoDTO({});
+            const searchResponse: HttpResponse<UserPublicInfoDTO[]> = new HttpResponse({
+                body: [user],
+                status: 200,
+            });
+            const searchStub = searchUsersSpy.mockReturnValue(of(searchResponse));
+
+            // searching for a user
+            changeInput(fixture.debugElement.nativeElement, 'test');
+            tick(1000);
+            fixture.detectChanges();
+            expect(searchStub).toHaveBeenCalledOnce();
+            expect(searchStub).toHaveBeenCalledWith(1, 'test', ['students', 'tutors', 'editors', 'instructors']);
+            expectDropdownItems(fixture.nativeElement, ['Mortimer of Sto Helit (mort)']);
+            // selecting the user in the dropdown
+            getDropdownButtons(fixture.debugElement)[0].triggerEventHandler('click', {});
+            fixture.detectChanges();
+            tick();
+            expect(userSelectorComponent.selectedUsers).toEqual([user]);
+            expect(wrapperComponent.selectedUsers).toEqual([user]);
+
+            // now we delete the user again from the selected users
+            expect(fixture.debugElement.queryAll(By.css('.selected-user'))).toHaveLength(1);
+            const deleteButton = fixture.debugElement.query(By.css('.delete-user'));
+            deleteButton.triggerEventHandler('click', {});
+            fixture.detectChanges();
+            tick();
+            expect(userSelectorComponent.selectedUsers).toEqual([]);
+            expect(wrapperComponent.selectedUsers).toEqual([]);
+        }));
+
+        it('should block the input field and not show delete button', fakeAsync(() => {
+            wrapperComponent.multiSelect = testCase.multiSelect;
+            const exampleUserPublicInfoDTO = generateExampleUserPublicInfoDTO({});
+            wrapperComponent.selectedUsers = [exampleUserPublicInfoDTO];
+            wrapperComponent.disabled = true;
+            fixture.detectChanges();
+            tick(1000);
+            expect(userSelectorComponent.selectedUsers).toEqual([exampleUserPublicInfoDTO]);
+            expect(fixture.debugElement.query(By.css('input')).nativeElement.disabled).toBeTrue();
+            expect(fixture.debugElement.queryAll(By.css('.selected-user'))).toHaveLength(1);
+            expect(fixture.debugElement.query(By.css('.delete-user'))).toBeFalsy();
+        }));
+    });
+});
+
+function getNativeInput(element: HTMLElement): HTMLInputElement {
+    return <HTMLInputElement>element.querySelector('input');
+}
+
+function changeInput(element: any, value: string) {
+    const input = getNativeInput(element);
+    input.value = value;
+    const evt = new Event('input', { bubbles: true, cancelable: false });
+    input.dispatchEvent(evt);
+}
+
+function getDropdownButtons(element: DebugElement): DebugElement[] {
+    return Array.from(element.queryAll(By.css('button.dropdown-item')));
+}
+
+function expectDropdownItems(nativeEl: HTMLElement, dropdownEntries: string[]): void {
+    const pages = nativeEl.querySelectorAll('button.dropdown-item');
+    expect(pages).toHaveLength(dropdownEntries.length);
+    for (let i = 0; i < dropdownEntries.length; i++) {
+        const resultDef = dropdownEntries[i];
+        expect(normalizeText(pages[i].textContent)).toEqual(resultDef);
     }
+}
 
-    ngOnDestroy() {
-        this.ngUnsubscribe.next();
-        this.ngUnsubscribe.complete();
-    }
+function normalizeText(txt: string | null): string {
+    return !!txt ? txt.trim().replace(/\s+/g, ' ') : '';
+}
 
-    usersFormatter = (user: UserPublicInfoDTO) => this.getUserLabel(user);
-
-    trackIdentity(index: number, item: UserPublicInfoDTO) {
-        return item.id;
-    }
-
-    getUserLabel(user: UserPublicInfoDTO) {
-        let label = '';
-        if (user.firstName) {
-            label += user.firstName + ' ';
-        }
-        if (user.lastName) {
-            label += user.lastName + ' ';
-        }
-        if (user.login) {
-            label += '(' + user.login + ')';
-        }
-        return label.trim();
-    }
-
-    onSelectItem($event: NgbTypeaheadSelectItemEvent<User>) {
-        this.onUserSelected($event.item);
-        $event.preventDefault();
-        this.resetSearchInput();
-    }
-
-    onDelete(index: number) {
-        this.selectedUsers.splice(index, 1);
-        this.onChange(this.selectedUsers);
-    }
-
-    onFilterChange() {
-        this.typeAheadInstance?.dismissPopup();
-        this.searchInput.nativeElement.dispatchEvent(new Event('input'));
-    }
-
-    search: OperatorFunction<string, readonly UserPublicInfoDTO[]> = (text$: Observable<string>) =>
-        text$.pipe(
-            debounceTime(200),
-            distinctUntilChanged(),
-            map((term) => (term ? term.trim().toLowerCase() : '')),
-            // the three letter minimum is enforced by the server only for searching for students as they are so many
-            filter((term) => term.length >= 3 || !this.searchStudents),
-            switchMap((term) => {
-                const rolesToSearchIn: RoleGroup[] = [];
-                if (this.searchStudents) {
-                    rolesToSearchIn.push('students');
-                }
-                if (this.searchTutors) {
-                    rolesToSearchIn.push('tutors');
-                }
-                if (this.searchEditors) {
-                    rolesToSearchIn.push('editors');
-                }
-                if (this.searchInstructors) {
-                    rolesToSearchIn.push('instructors');
-                }
-                if (rolesToSearchIn.length === 0) {
-                    this.searchFailed = false;
-                    return of([]);
-                } else {
-                    this.isSearching = true;
-                    return this.courseManagementService.searchUsers(this.courseId, term, rolesToSearchIn).pipe(
-                        map((users) => users.body!),
-                        map((users) => users.filter((user) => !this.selectedUsers.find((selectedUser) => selectedUser.id === user.id))),
-                        tap(() => {
-                            this.isSearching = false;
-                            this.searchFailed = false;
-                        }),
-                        catchError(() => {
-                            this.searchFailed = true;
-                            this.isSearching = false;
-                            return of([]);
-                        }),
-                        takeUntil(this.ngUnsubscribe),
-                    );
-                }
-            }),
-            takeUntil(this.ngUnsubscribe),
-        );
-
-    // === START CONTROL VALUE ACCESSOR ===
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onChange = (selectedUsers: UserPublicInfoDTO[]) => {};
-
-    onTouched = () => {};
-
-    registerOnChange(fn: (selectedUsers: UserPublicInfoDTO[]) => void): void {
-        this.onChange = fn;
-    }
-
-    registerOnTouched(fn: () => void): void {
-        this.onTouched = fn;
-    }
-
-    setDisabledState(isDisabled: boolean): void {
-        this.disabled = isDisabled;
-    }
-
-    writeValue(selectedUsers: UserPublicInfoDTO[]): void {
-        if (this.multiSelect) {
-            this.selectedUsers = selectedUsers ?? [];
-        } else {
-            this.selectedUsers = selectedUsers?.length ? [selectedUsers[0]] : [];
-        }
-    }
-    // === END CONTROL VALUE ACCESSOR ===
-
-    private onUserSelected(selectedUser: UserPublicInfoDTO) {
-        if (selectedUser) {
-            if (!this.selectedUsers.find((user) => user.id === selectedUser.id)) {
-                if (this.multiSelect) {
-                    this.selectedUsers = [...this.selectedUsers, selectedUser];
-                } else {
-                    this.selectedUsers = [selectedUser];
-                }
-                this.onChange(this.selectedUsers);
-            }
-        }
-    }
-
-    private resetSearchInput() {
-        if (this.searchInput) {
-            this.searchInput.nativeElement.value = '';
-        }
-    }
+function generateExampleUserPublicInfoDTO({
+    id = 3,
+    login = 'mort',
+    name = 'Mortimer of Sto Helit',
+    firstName = 'Mortimer',
+    lastName = 'of Sto Helit',
+    isInstructor = false,
+    isEditor = false,
+    isTeachingAssistant = false,
+    isStudent = true,
+}: UserPublicInfoDTO) {
+    const exampleUserPublicInfoDTO = new UserPublicInfoDTO();
+    exampleUserPublicInfoDTO.id = id;
+    exampleUserPublicInfoDTO.login = login;
+    exampleUserPublicInfoDTO.name = name;
+    exampleUserPublicInfoDTO.firstName = firstName;
+    exampleUserPublicInfoDTO.lastName = lastName;
+    exampleUserPublicInfoDTO.isInstructor = isInstructor;
+    exampleUserPublicInfoDTO.isEditor = isEditor;
+    exampleUserPublicInfoDTO.isTeachingAssistant = isTeachingAssistant;
+    exampleUserPublicInfoDTO.isStudent = isStudent;
+    return exampleUserPublicInfoDTO;
 }

@@ -46,9 +46,9 @@
         </div>
     </div>
     <ul class="list-group" *ngIf="showUserList">
-        <li *ngFor="let user of selectedUsers; let i = index; trackBy: trackIdentity" class="list-group-item d-flex justify-content-between align-items-center">
+        <li *ngFor="let user of selectedUsers; let i = index; trackBy: trackIdentity" class="selected-user list-group-item d-flex justify-content-between align-items-center">
             <span class="d-inline-block">{{ getUserLabel(user) }}</span>
-            <button *ngIf="!disabled" class="btn btn-outline-secondary d-inline-block" type="button" (click)="onDelete(i)">
+            <button *ngIf="!disabled" class="delete-user btn btn-outline-secondary d-inline-block" type="button" (click)="onDelete(i)">
                 <fa-icon [icon]="faX"></fa-icon>
             </button>
         </li>
