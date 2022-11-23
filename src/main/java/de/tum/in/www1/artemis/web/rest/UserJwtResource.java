@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.UserNotActivatedException;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -30,12 +31,12 @@ import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 /**
- * Controller to authenticate users.
+ * REST controller to authenticate users.
  */
 @RestController
-public class UserJWTController {
+public class UserJwtResource {
 
-    private static final Logger log = LoggerFactory.getLogger(UserJWTController.class);
+    private static final Logger log = LoggerFactory.getLogger(UserJwtResource.class);
 
     private final JWTCookieService jwtCookieService;
 
@@ -43,7 +44,7 @@ public class UserJWTController {
 
     private final Optional<SAML2Service> saml2Service;
 
-    public UserJWTController(JWTCookieService jwtCookieService, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
+    public UserJwtResource(JWTCookieService jwtCookieService, AuthenticationManagerBuilder authenticationManagerBuilder, Optional<SAML2Service> saml2Service) {
         this.jwtCookieService = jwtCookieService;
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.saml2Service = saml2Service;
@@ -56,7 +57,9 @@ public class UserJWTController {
      * @param response      HTTP response
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
      */
-    @PostMapping("/authenticate")
+    // TODO: /public
+    @PostMapping("authenticate")
+    @EnforceNothing
     public ResponseEntity<Void> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
 
         var username = loginVM.getUsername();
@@ -89,7 +92,9 @@ public class UserJWTController {
      * @param response  HTTP response
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (user not activated)
      */
-    @PostMapping("/saml2")
+    // TODO: /public
+    @PostMapping("saml2")
+    @EnforceNothing
     public ResponseEntity<Void> authorizeSAML2(@RequestBody final String body, HttpServletResponse response) {
         if (saml2Service.isEmpty()) {
             throw new AccessForbiddenException("SAML2 is disabled");
@@ -124,7 +129,9 @@ public class UserJWTController {
      * @param request HTTP request
      * @param response  HTTP response
      */
-    @PostMapping("/logout")
+    // TODO: /public
+    @PostMapping("logout")
+    @EnforceNothing
     public void logout(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         request.logout();
         // Logout needs to build the same cookie (secure, httpOnly and sameSite='Lax') or browsers will ignore the header and not unset the cookie
