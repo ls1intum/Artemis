@@ -93,18 +93,22 @@ describe('Quiz Exercise Participation', () => {
             shortAnswerQuiz.typeAnswer(6, 0, quizQuestionId, 'text');
             cy.get(`#solution-6-0-${quizQuestionId}`).should('have.value', '');
             shortAnswerQuiz.typeAnswer(6, 0, quizQuestionId, '1.0');
+            cy.get(`#solution-6-0-${quizQuestionId}`).should('have.value', '1.0');
 
             shortAnswerQuiz.typeAnswer(6, 2, quizQuestionId, 'text');
             cy.get(`#solution-6-2-${quizQuestionId}`).should('have.value', '');
             shortAnswerQuiz.typeAnswer(6, 2, quizQuestionId, '1');
+            cy.get(`#solution-6-2-${quizQuestionId}`).should('have.value', '1');
 
             shortAnswerQuiz.typeAnswer(6, 4, quizQuestionId, 'text');
             cy.get(`#solution-6-4-${quizQuestionId}`).should('have.value', '');
             shortAnswerQuiz.typeAnswer(6, 4, quizQuestionId, '10.0');
+            cy.get(`#solution-6-4-${quizQuestionId}`).should('have.value', '10.0');
 
             shortAnswerQuiz.typeAnswer(6, 6, quizQuestionId, 'text');
             cy.get(`#solution-6-6-${quizQuestionId}`).should('have.value', '');
             shortAnswerQuiz.typeAnswer(6, 6, quizQuestionId, '5.0');
+            cy.get(`#solution-6-6-${quizQuestionId}`).should('have.value', '5.0');
             shortAnswerQuiz.submit();
         });
     });

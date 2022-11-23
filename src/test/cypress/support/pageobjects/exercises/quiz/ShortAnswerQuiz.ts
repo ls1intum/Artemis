@@ -6,7 +6,7 @@ export class ShortAnswerQuiz {
     }
 
     typeAnswer(line: number, column: number, quizQuestionId: number, answer: string) {
-        this.getQuizBody().find(`#solution-${line}-${column}-${quizQuestionId}`).type(answer);
+        this.getQuizBody().find(`#solution-${line}-${column}-${quizQuestionId}`).type(answer).blur();
     }
 
     submit() {
