@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
-    private static final String TEST_PREFIX = "userjenkinsgitlabintegrationtest";
+    private static final String TEST_PREFIX = "userjenkinsgitlabinttest";
 
     @Value("${artemis.continuous-integration.user}")
     private String jenkinsAdminUsername;
@@ -135,7 +135,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteAdminUserSkippedInJenkins() throws Exception {
-        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", "student1");
+        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", TEST_PREFIX + "student1");
         userTestService.deleteUser_isSuccessful();
         ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
     }
@@ -143,7 +143,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateAdminUserSkippedInJenkins() throws Exception {
-        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", "student1");
+        ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", TEST_PREFIX + "student1");
         userTestService.updateUser_asAdmin_isSuccessful();
         ReflectionTestUtils.setField(jenkinsUserManagementService, "jenkinsAdminUsername", jenkinsAdminUsername);
     }
@@ -475,7 +475,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUserNonLTI() throws Exception {
-        User user = database.getUserByLogin("student1");
+        User user = database.getUserByLogin(TEST_PREFIX + "student1");
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(user.getLogin(), user, Collections.emptySet(), Collections.emptySet(), true);
         userTestService.initializeUserNonLTI();
     }

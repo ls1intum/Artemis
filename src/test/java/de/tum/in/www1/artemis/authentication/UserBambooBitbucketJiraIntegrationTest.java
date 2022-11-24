@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "userbamboobitbucketjiraintegrationtest";
+    private static final String TEST_PREFIX = "userbamboobitbucketjirainttest";
 
     @Autowired
     private UserTestService userTestService;
@@ -170,8 +170,8 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteUser_isSuccessful() throws Exception {
-        bitbucketRequestMockProvider.mockDeleteUser("student1", false);
-        bitbucketRequestMockProvider.mockEraseDeletedUser("student1");
+        bitbucketRequestMockProvider.mockDeleteUser(TEST_PREFIX + "student1", false);
+        bitbucketRequestMockProvider.mockEraseDeletedUser(TEST_PREFIX + "student1");
         userTestService.deleteUser_isSuccessful();
     }
 

@@ -71,6 +71,8 @@ public class UserTestService {
     @Autowired
     private Optional<CIUserManagementService> optionalCIUserManagementService;
 
+    private String TEST_PREFIX;
+
     private MockDelegate mockDelegate;
 
     public User student;
@@ -84,6 +86,7 @@ public class UserTestService {
     private final static int numberOfInstructors = 1;
 
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
+        this.TEST_PREFIX = testPrefix;
         this.mockDelegate = mockDelegate;
 
         List<User> users = database.addUsers(testPrefix, numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
@@ -576,7 +579,7 @@ public class UserTestService {
 
     // Test
     public void searchUsers_asInstructor_isSuccessful() throws Exception {
-        final String loginOrName = "student1";
+        final String loginOrName = TEST_PREFIX + "student1";
         List<UserDTO> users = request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
         assertThat(users).hasSize(11); // size([student1, student10, ... student19]) = 11
     }
@@ -641,7 +644,7 @@ public class UserTestService {
 
     // Test
     public void getUser_asAdmin_isSuccessful() throws Exception {
-        final String userLogin = "student1";
+        final String userLogin = TEST_PREFIX + "student1";
         UserDTO userDTO = request.get("/api/users/" + userLogin, HttpStatus.OK, UserDTO.class);
         assertThat(userDTO.getLogin()).isEqualTo(userLogin);
     }
@@ -649,21 +652,21 @@ public class UserTestService {
     // Test
     public void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
         request.put("/api/users/notification-date", null, HttpStatus.OK);
-        User userInDB = database.getUserByLogin("student1");
+        User userInDB = database.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
     }
 
     // Test
     public void updateUserNotificationVisibilityShowAllAsStudentIsSuccessful() throws Exception {
         request.put("/api/users/notification-visibility", true, HttpStatus.OK);
-        User userInDB = database.getUserByLogin("student1");
+        User userInDB = database.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getHideNotificationsUntil()).isNull();
     }
 
     // Test
     public void updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful() throws Exception {
         request.put("/api/users/notification-visibility", false, HttpStatus.OK);
-        User userInDB = database.getUserByLogin("student1");
+        User userInDB = database.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getHideNotificationsUntil()).isNotNull();
         assertThat(userInDB.getHideNotificationsUntil()).isStrictlyBetween(ZonedDateTime.now().minusSeconds(1), ZonedDateTime.now().plusSeconds(1));
     }
@@ -671,7 +674,7 @@ public class UserTestService {
     // Test
     public void initializeUser(boolean mock) throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User repoUser = database.getUserByLogin("student1");
+        User repoUser = database.getUserByLogin(TEST_PREFIX + "student1");
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
@@ -695,7 +698,7 @@ public class UserTestService {
 
         assertThat(dto.getPassword()).isNotEmpty();
 
-        User currentUser = database.getUserByLogin("student1");
+        User currentUser = database.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(passwordService.checkPasswordMatch(dto.getPassword(), currentUser.getPassword())).isTrue();
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
@@ -706,7 +709,7 @@ public class UserTestService {
     // Test
     public void initializeUserWithoutFlag() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = database.getUserByLogin("student1");
+        User user = database.getUserByLogin(TEST_PREFIX + "student1");
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
@@ -720,7 +723,7 @@ public class UserTestService {
 
         assertThat(dto.getPassword()).isNull();
 
-        User currentUser = database.getUserByLogin("student1");
+        User currentUser = database.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
@@ -730,7 +733,7 @@ public class UserTestService {
     // Test
     public void initializeUserNonLTI() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = database.getUserByLogin("student1");
+        User user = database.getUserByLogin(TEST_PREFIX + "student1");
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(false);
@@ -741,7 +744,7 @@ public class UserTestService {
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
         assertThat(dto.getPassword()).isNull();
 
-        User currentUser = database.getUserByLogin("student1");
+        User currentUser = database.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
@@ -750,7 +753,7 @@ public class UserTestService {
     // Test
     public void initializeUserExternal() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = database.getUserByLogin("student1");
+        User user = database.getUserByLogin(TEST_PREFIX + "student1");
         user.setPassword(password);
         user.setInternal(false);
         user.setActivated(false);
@@ -764,7 +767,7 @@ public class UserTestService {
 
         assertThat(dto.getPassword()).isNull();
 
-        User currentUser = database.getUserByLogin("student1");
+        User currentUser = database.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
