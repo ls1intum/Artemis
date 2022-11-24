@@ -41,7 +41,7 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        database.addUsers(TEST_PREFIX,1,0,0,0);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
         // create the document before the mock so that it still works correctly
