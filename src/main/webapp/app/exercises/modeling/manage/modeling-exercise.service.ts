@@ -15,6 +15,7 @@ export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseService implements ExerciseServicable<ModelingExercise> {
     public resourceUrl = SERVER_API_URL + 'api/modeling-exercises';
+    public adminResourceUrl = SERVER_API_URL + 'api/admin/modeling-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {
         this.exerciseService = exerciseService;
@@ -101,7 +102,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * @param exerciseId
      */
     getNumberOfClusters(exerciseId: number): Observable<HttpResponse<number>> {
-        return this.http.get<number>(`${this.resourceUrl}/${exerciseId}/check-clusters`, {
+        return this.http.get<number>(`${this.adminResourceUrl}/${exerciseId}/check-clusters`, {
             observe: 'response',
         });
     }
@@ -111,7 +112,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * @param modelingExerciseId id of the exercise to build the clusters for
      */
     buildClusters(modelingExerciseId: number): Observable<{}> {
-        return this.http.post(`${this.resourceUrl}/${modelingExerciseId}/trigger-automatic-assessment`, { observe: 'response' });
+        return this.http.post(`${this.adminResourceUrl}/${modelingExerciseId}/trigger-automatic-assessment`, { observe: 'response' });
     }
 
     /**
@@ -119,7 +120,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * @param modelingExerciseId id of the exercise to delete the clusters of
      */
     deleteClusters(modelingExerciseId: number): Observable<{}> {
-        return this.http.delete(`${this.resourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
+        return this.http.delete(`${this.adminResourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
     }
 
     /**

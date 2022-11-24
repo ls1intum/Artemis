@@ -60,7 +60,7 @@
             <td>
                 <div class="d-flex" *ngIf="column.exerciseTitle">
                     <div style="padding-right: 10px; max-width: min-content" [ngbTooltip]="getIconTooltip(column!.exerciseType) | artemisTranslate">
-                        <fa-icon [icon]="getIcon(column!.exerciseType)" placement="right"></fa-icon>
+                        <fa-icon [icon]="getIcon(column!.exerciseType)" placement="right auto"></fa-icon>
                     </div>
                     <span>{{ column.exerciseTitle }}</span>
                 </div>

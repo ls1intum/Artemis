@@ -32,7 +32,7 @@
                         <td class="td-usage-count">
                             <span *ngIf="instruction!.usageCount && instruction!.usageCount !== 0; else usageCountInfinity">{{ instruction.usageCount }}</span>
                             <ng-template #usageCountInfinity>&#8734;</ng-template>
-                            <jhi-help-icon placement="top" text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
+                            <jhi-help-icon text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
                         </td>
                     </tr>
                 </tbody>

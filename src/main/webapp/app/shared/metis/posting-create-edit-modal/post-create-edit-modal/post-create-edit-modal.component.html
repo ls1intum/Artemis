@@ -9,7 +9,7 @@
                 <!-- context -> only tutors can select from all possibles contexts in update mode, no matter if they open the post at course overview or page section level -->
                 <div *ngIf="isAtLeastTutorInCourse && editType === EditType.UPDATE; else restrictedContextSelect" class="position-relative mb-3">
                     <label class="mb-1" jhiTranslate="artemisApp.metis.post.context"></label>
-                    <jhi-help-icon placement="top auto" text="artemisApp.metis.post.contextTutorTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.metis.post.contextTutorTooltip"></jhi-help-icon>
                     <select formControlName="context" class="form-select" [compareWith]="compareContextSelectorOptionFn" name="context">
                         <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
                             <!-- only tutors can select the announcement mode on post update -->
@@ -35,7 +35,7 @@
                 <ng-template #restrictedContextSelect>
                     <div *ngIf="pageType === PageType.OVERVIEW && editType === EditType.CREATE" class="position-relative mb-3">
                         <label class="mb-1" jhiTranslate="artemisApp.metis.post.context"></label>
-                        <jhi-help-icon placement="top auto" text="artemisApp.metis.post.courseWideTopicTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.metis.post.courseWideTopicTooltip"></jhi-help-icon>
                         <select formControlName="context" class="form-select" [compareWith]="compareContextSelectorOptionFn" name="context">
                             <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
                                 <ng-container *ngFor="let context of CourseWideContext | keyvalue">
@@ -60,7 +60,7 @@
             <div class="position-relative mb-3" *ngIf="!isCourseMessagesPage">
                 <div>
                     <label for="title" class="mb-1" jhiTranslate="artemisApp.metis.post.title">Title</label>
-                    <jhi-help-icon placement="top auto" text="artemisApp.metis.post.titleTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.metis.post.titleTooltip"></jhi-help-icon>
                 </div>
                 <div>
                     <input id="title" formControlName="title" type="text" class="form-control" name="title" />
@@ -70,7 +70,7 @@
             <div *ngIf="pageType !== PageType.PLAGIARISM_CASE && !isCourseMessagesPage" class="position-relative mb-3">
                 <div>
                     <label jhiTranslate="artemisApp.metis.post.tags">Tags</label>
-                    <jhi-help-icon placement="top auto" text="artemisApp.metis.post.tagsTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.metis.post.tagsTooltip"></jhi-help-icon>
                 </div>
                 <div>
                     <jhi-post-tag-selector [(postTags)]="tags"></jhi-post-tag-selector>
@@ -84,7 +84,7 @@
                             <div class="d-flex align-items-center justify-content-between">
                                 <p class="my-2 ps-1">
                                     {{ 'artemisApp.metis.post.similarPosts' | artemisTranslate }}
-                                    <jhi-help-icon placement="top auto" text="artemisApp.metis.post.similarPostsTooltip"></jhi-help-icon>
+                                    <jhi-help-icon text="artemisApp.metis.post.similarPostsTooltip"></jhi-help-icon>
                                 </p>
                                 <button ngbPanelToggle class="btn pe-3">
                                     <fa-icon [icon]="opened ? faAngleUp : faAngleDown"></fa-icon>
@@ -104,7 +104,7 @@
             <div class="position-relative mb-1">
                 <div>
                     <label class="mb-1" jhiTranslate="artemisApp.metis.post.content">Content</label>
-                    <jhi-help-icon placement="top auto" text="artemisApp.metis.post.contentTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.metis.post.contentTooltip"></jhi-help-icon>
                 </div>
                 <div class="row mb-2">
                     <jhi-posting-markdown-editor formControlName="content" [editorHeight]="editorHeight" [maxContentLength]="maxContentLength"> </jhi-posting-markdown-editor>

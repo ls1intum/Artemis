@@ -36,7 +36,6 @@ public class LtiDynamicRegistrationService {
     private final RestTemplate restTemplate;
 
     public LtiDynamicRegistrationService(OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, OAuth2JWKSService oAuth2JWKSService, RestTemplate restTemplate) {
-
         this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
         this.oAuth2JWKSService = oAuth2JWKSService;
         this.restTemplate = restTemplate;
@@ -50,7 +49,7 @@ public class LtiDynamicRegistrationService {
      * @param registrationToken the token to be used to authenticate the POST request
      */
     public void performDynamicRegistration(Course course, String openIdConfigurationUrl, String registrationToken) {
-        if (!course.isOnlineCourse()) {
+        if (!course.isOnlineCourse() || course.getOnlineCourseConfiguration() == null) {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
@@ -67,14 +66,8 @@ public class LtiDynamicRegistrationService {
         Lti13ClientRegistration clientRegistrationResponse = postClientRegistrationToPlatform(platformConfiguration.getRegistrationEndpoint(), course, clientRegistrationId,
                 registrationToken);
 
-        OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
-
-        // Save client in tool
-        onlineCourseConfiguration.setRegistrationId(clientRegistrationId);
-        onlineCourseConfiguration.setClientId(clientRegistrationResponse.getClientId());
-        onlineCourseConfiguration.setAuthorizationUri(platformConfiguration.getAuthorizationEndpoint());
-        onlineCourseConfiguration.setJwkSetUri(platformConfiguration.getJwksUri());
-        onlineCourseConfiguration.setTokenUri(platformConfiguration.getTokenEndpoint());
+        OnlineCourseConfiguration onlineCourseConfiguration = updateOnlineCourseConfiguration(course.getOnlineCourseConfiguration(), clientRegistrationId, platformConfiguration,
+                clientRegistrationResponse);
         onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
 
         oAuth2JWKSService.updateKey(clientRegistrationId);
@@ -121,5 +114,15 @@ public class LtiDynamicRegistrationService {
             throw new BadRequestAlertException("Could not register configuration in external LMS", "LTI", "postConfigurationFailed");
         }
         return registrationResponse;
+    }
+
+    private OnlineCourseConfiguration updateOnlineCourseConfiguration(OnlineCourseConfiguration ocConfiguration, String registrationId,
+            Lti13PlatformConfiguration platformConfiguration, Lti13ClientRegistration clientRegistrationResponse) {
+        ocConfiguration.setRegistrationId(registrationId);
+        ocConfiguration.setClientId(clientRegistrationResponse.getClientId());
+        ocConfiguration.setAuthorizationUri(platformConfiguration.getAuthorizationEndpoint());
+        ocConfiguration.setJwkSetUri(platformConfiguration.getJwksUri());
+        ocConfiguration.setTokenUri(platformConfiguration.getTokenEndpoint());
+        return ocConfiguration;
     }
 }

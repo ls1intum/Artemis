@@ -2,13 +2,7 @@
     <a *ngIf="course && lecture" class="stretched-link" [routerLink]="['/courses', course.id!, 'lectures', lecture.id!]"></a>
     <div class="col-auto d-none d-sm-block">
         <div class="exercise-row-icon">
-            <fa-icon
-                [icon]="faChalkboardTeacher"
-                size="2x"
-                placement="right"
-                [ngbTooltip]="'artemisApp.courseOverview.lectureList.isLecture' | artemisTranslate"
-                container="body"
-            ></fa-icon>
+            <fa-icon [icon]="faChalkboardTeacher" size="2x" placement="right auto" [ngbTooltip]="'artemisApp.courseOverview.lectureList.isLecture' | artemisTranslate"></fa-icon>
         </div>
     </div>
     <div class="col">
