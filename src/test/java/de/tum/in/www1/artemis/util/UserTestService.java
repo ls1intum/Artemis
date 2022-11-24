@@ -83,11 +83,11 @@ public class UserTestService {
 
     private final static int numberOfInstructors = 1;
 
-    public void setup(MockDelegate mockDelegate) throws Exception {
+    public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.mockDelegate = mockDelegate;
 
-        List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
-        student = userRepository.getUserByLoginElseThrow("student1");
+        List<User> users = database.addUsers(testPrefix, numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
+        student = userRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
         student = userRepository.save(student);
         student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();

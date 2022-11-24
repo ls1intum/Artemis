@@ -32,6 +32,8 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
+    private static final String TEST_PREFIX = "userjenkinsgitlabintegrationtest";
+
     @Value("${artemis.continuous-integration.user}")
     private String jenkinsAdminUsername;
 
@@ -58,7 +60,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @BeforeEach
     void setUp() throws Exception {
-        userTestService.setup(this);
+        userTestService.setup(TEST_PREFIX, this);
         gitlabRequestMockProvider.enableMockingOfRequests();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
     }
@@ -93,13 +95,13 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateUser_asInstructor_forbidden() throws Exception {
         request.put("/api/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateUser_asTutor_forbidden() throws Exception {
         request.put("/api/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
@@ -266,7 +268,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void searchUsers_asInstructor_isSuccessful() throws Exception {
         userTestService.searchUsers_asInstructor_isSuccessful();
     }
@@ -278,7 +280,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void searchUsers_asTutor_forbidden() throws Exception {
         userTestService.searchUsers_asTutor_forbidden();
     }
@@ -296,19 +298,19 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getUsersOrAuthorities_asInstructor_forbidden() throws Exception {
         userTestService.getUsersOrAuthorities_asInstructor_forbidden();
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getUsersOrAuthorities_asTutor_forbidden() throws Exception {
         userTestService.getUsersOrAuthorities_asTutor_forbidden();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getUsersOrAuthorities_asStudent_forbidden() throws Exception {
         userTestService.getUsersOrAuthorities_asStudent_forbidden();
     }
@@ -320,19 +322,19 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
         userTestService.updateUserNotificationDate_asStudent_isSuccessful();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updateUserNotificationVisibility_showAll_asStudent_isSuccessful() throws Exception {
         userTestService.updateUserNotificationVisibilityShowAllAsStudentIsSuccessful();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updateUserNotificationVisibility_hideUntil_asStudent_isSuccessful() throws Exception {
         userTestService.updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful();
     }
@@ -459,19 +461,19 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUser() throws Exception {
         userTestService.initializeUser(true);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUserWithoutFlag() throws Exception {
         userTestService.initializeUserWithoutFlag();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUserNonLTI() throws Exception {
         User user = database.getUserByLogin("student1");
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(user.getLogin(), user, Collections.emptySet(), Collections.emptySet(), true);
@@ -479,7 +481,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUserExternal() throws Exception {
         userTestService.initializeUserExternal();
     }
