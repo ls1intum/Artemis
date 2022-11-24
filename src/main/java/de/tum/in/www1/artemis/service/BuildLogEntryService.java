@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -55,11 +55,8 @@ public class BuildLogEntryService {
      * @return the build log entries
      */
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
-        Optional<ProgrammingSubmission> optionalProgrammingSubmission = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId());
-        if (optionalProgrammingSubmission.isPresent()) {
-            return optionalProgrammingSubmission.get().getBuildLogEntries();
-        }
-        return List.of();
+        return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries)
+                .orElseGet(Collections::emptyList);
     }
 
     /**
@@ -98,7 +95,7 @@ public class BuildLogEntryService {
     }
 
     private boolean isInfoLog(String log) {
-        return (log.startsWith("[INFO]") && !log.contains("error")) || log.startsWith("[INFO] Downloading") || log.startsWith("[INFO] Downloaded") || log.startsWith("<div>");
+        return (log.startsWith("[INFO]") && !log.contains("error")) || log.startsWith("[INFO] Downloading") || log.startsWith("[INFO] Downloaded");
     }
 
     private boolean isGradleInfoLog(String log) {
@@ -142,7 +139,8 @@ public class BuildLogEntryService {
         return log.startsWith("Executing build") || log.startsWith("Starting task") || log.startsWith("Finished task") || log.startsWith("Running pre-build action")
                 || log.startsWith("Failing task") || log.startsWith("Running post build") || log.startsWith("Running on server") || log.startsWith("Finalising the build...")
                 || log.startsWith("Stopping timer.") || log.startsWith("Finished building") || log.startsWith("All post build plugins have finished")
-                || log.startsWith("Publishing an artifact") || log.startsWith("Unable to publish artifact") || log.startsWith("The artifact hasn't been successfully published");
+                || log.startsWith("Publishing an artifact") || log.startsWith("Unable to publish artifact") || log.startsWith("The artifact hasn't been successfully published")
+                || log.startsWith("Beginning to execute") || log.startsWith("Substituting variable");
     }
 
     /**
