@@ -98,7 +98,8 @@ public class GradeStepResource {
         for (GradeStep gradeStep : gradeSteps) {
             gradeStep.setGradingScale(null);
         }
-        return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps, maxPoints);
+        return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps, maxPoints, gradingScale.getPlagiarismGradeOrDefault(),
+                gradingScale.getNoParticipationGradeOrDefault());
     }
 
     /**
