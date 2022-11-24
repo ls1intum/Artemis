@@ -28,6 +28,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     course?: Course;
     collapsed: boolean;
     courseId: number;
+    numberOfUnreadMessage: number;
 
     private conversationSubscription: Subscription;
     private paramSubscription: Subscription;
@@ -181,24 +182,12 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
         return participant.lastName ? `${participant.firstName} ${participant.lastName}` : participant.firstName!;
     }
 
-    isConversationUnread(conversation: Conversation): boolean {
+    getNumberOfUnreadMessages(conversation: Conversation) {
+        console.log('test ');
         const conversationParticipant = conversation.conversationParticipants!.find(
             (conversationParticipants) => conversationParticipants.user.id === this.courseMessagesService.userId,
         )!;
-
-        if (conversation.id !== this.activeConversation.id && !!conversation.lastMessageDate && !!conversationParticipant.lastRead) {
-            if (conversationParticipant.lastRead.isBefore(conversation.lastMessageDate.subtract(1, 'second'), 'second')) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    getNumberOfUnreadMessages(conversation: Conversation): number {
-        const conversationParticipant = conversation.conversationParticipants!.find(
-            (conversationParticipants) => conversationParticipants.user.id === this.courseMessagesService.userId,
-        )!;
-        return conversationParticipant.unreadMessagesCount!;
+        this.numberOfUnreadMessage = conversationParticipant.unreadMessagesCount!;
     }
 
     /**

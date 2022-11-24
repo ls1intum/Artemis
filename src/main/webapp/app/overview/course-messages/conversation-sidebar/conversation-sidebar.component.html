@@ -42,9 +42,9 @@
                             <span class="conversation-list-item-user">
                                 {{ getNameOfConversationParticipant(conversation) }}
                             </span>
-                            <span *ngIf="isConversationUnread(conversation)">
+                            <span *ngIf="(conversation | unreadMessages) > 0">
                                 <span class="badge bg-secondary">
-                                    {{ getNumberOfUnreadMessages(conversation) }}
+                                    {{ conversation | unreadMessages }}
                                 </span>
                             </span>
                         </li>

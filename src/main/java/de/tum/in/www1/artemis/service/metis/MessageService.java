@@ -182,10 +182,15 @@ public class MessageService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = messageRepository.findMessagePostByIdElseThrow(postId);
-        post.setConversation(mayUpdateOrDeleteMessageElseThrow(post, user));
+        Conversation conversation = mayUpdateOrDeleteMessageElseThrow(post, user);
+        post.setConversation(conversation);
 
         // delete
         messageRepository.deleteById(postId);
+        conversationService.unreadMessages(user.getId(), courseId, conversation.getId());
+        conversation = conversationService.getConversationById(conversation.getId());
+
+        conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.UPDATE), null);
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
     }
 
