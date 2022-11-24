@@ -110,12 +110,12 @@ public class BuildLogEntryService {
     private boolean isMavenErrorLog(String log) {
         return log.startsWith("[ERROR] [Help 1]") || log.startsWith("[ERROR] For more information about the errors and possible solutions")
                 || log.startsWith("[ERROR] Re-run Maven using") || log.startsWith("[ERROR] To see the full stack trace of the errors") || log.startsWith("[ERROR] -> [Help 1]")
-                || log.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins") || "[ERROR] ".equals(log);
+                || log.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins") || "[ERROR]".equals(log.strip());
     }
 
     private boolean isGradleErrorLog(String log) {
         return log.startsWith("> Run with") || log.startsWith("FAILURE") || log.startsWith("* What went wrong:") || log.startsWith("Execution failed")
-                || log.contains("actionable tasks:") || log.startsWith("* Get more help");
+                || log.contains("actionable tasks:") || log.startsWith("* Get more help") || log.startsWith("* Try:");
     }
 
     private boolean isDockerImageLog(String log) {
