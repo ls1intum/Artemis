@@ -2,7 +2,7 @@
     <div class="left-col">
         <div class="title-row">
             <div class="inner-row">
-                <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
+                <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate"></fa-icon>
                 &nbsp;
                 <ng-content select="[pagetitle]"></ng-content>
             </div>

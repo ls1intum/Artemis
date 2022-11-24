@@ -13,7 +13,7 @@
         <ng-template #renderedHint>
             <div [innerHTML]="renderedQuestion.hint"></div>
         </ng-template>
-        <span class="label label-info" [ngbPopover]="renderedHint" placement="auto" triggers="mouseenter:mouseleave" *ngIf="question.hint">
+        <span class="label label-info" [ngbPopover]="renderedHint" triggers="mouseenter:mouseleave" *ngIf="question.hint">
             <fa-icon [icon]="faQuestionCircle"></fa-icon>
             <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
         </span>
@@ -21,7 +21,7 @@
         <ng-template #renderedExplanation>
             <div [innerHTML]="renderedQuestion.explanation"></div>
         </ng-template>
-        <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
+        <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
             <fa-icon [icon]="faExclamationCircle"></fa-icon>
             <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
         </span>
@@ -58,7 +58,7 @@
                     <ng-template #renderedAnswerOptionsHint>
                         <div [innerHTML]="renderedQuestion.renderedSubElements[i].hint"></div>
                     </ng-template>
-                    <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" placement="auto" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
+                    <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
                         <fa-icon [icon]="faQuestionCircle"></fa-icon>
                         <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                     </span>
@@ -84,20 +84,14 @@
                     <ng-template #renderedAnswerOptionsHint2>
                         <div [innerHTML]="renderedQuestion.renderedSubElements![i].hint"></div>
                     </ng-template>
-                    <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint2" placement="top" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
+                    <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint2" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
                         <fa-icon [icon]="faQuestionCircle"></fa-icon>
                         <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                     </span>
                     <ng-template #renderedAnswerOptionsExplanation>
                         <div [innerHTML]="renderedQuestion.renderedSubElements![i].explanation"></div>
                     </ng-template>
-                    <span
-                        class="label label-primary"
-                        [ngbPopover]="renderedAnswerOptionsExplanation"
-                        placement="top"
-                        triggers="mouseenter:mouseleave"
-                        *ngIf="answerOption.explanation"
-                    >
+                    <span class="label label-primary" [ngbPopover]="renderedAnswerOptionsExplanation" triggers="mouseenter:mouseleave" *ngIf="answerOption.explanation">
                         <fa-icon [icon]="faExclamationCircle"></fa-icon>
                         <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
                     </span>
@@ -113,7 +107,6 @@
                 <span id="answer-option-{{ i }}-invalid" *ngIf="answerOption.invalid || question.invalid" class="wrong" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
                 <fa-icon
                     ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.invalid' | artemisTranslate }}"
-                    placement="top"
                     style="color: black"
                     [icon]="faQuestionCircle"
                     *ngIf="answerOption.invalid || question.invalid"

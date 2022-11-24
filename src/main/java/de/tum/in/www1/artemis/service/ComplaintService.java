@@ -277,18 +277,7 @@ public class ComplaintService {
                     + " for an unrated result with no complaints on automatic assessment.", ENTITY_NAME, "complaintOrRequestMoreFeedbackNotGraded");
         }
 
-        ZonedDateTime relevantDueDate = studentParticipation != null && studentParticipation.getIndividualDueDate() != null ? studentParticipation.getIndividualDueDate()
-                : exercise.getDueDate();
-        List<ZonedDateTime> possibleComplaintStartDates = new ArrayList<>();
-        possibleComplaintStartDates.add(result.getCompletionDate());
-        if (relevantDueDate != null) {
-            possibleComplaintStartDates.add(relevantDueDate);
-        }
-        if (exercise.getAssessmentDueDate() != null) {
-            possibleComplaintStartDates.add(exercise.getAssessmentDueDate());
-        }
-        // At least result.getCompletionDate is present, since it was checked earlier
-        ZonedDateTime complaintStartDate = possibleComplaintStartDates.stream().max(Comparator.naturalOrder()).get();
+        final ZonedDateTime complaintStartDate = getComplaintStartDate(exercise, studentParticipation, result);
         boolean isTimeValid = ZonedDateTime.now().isBefore(complaintStartDate.plusDays(maxDays));
 
         if (!isTimeValid) {
@@ -301,6 +290,31 @@ public class ComplaintService {
                     + timeForComplaint + ".";
             throw new BadRequestAlertException(message, ENTITY_NAME, "complaintOrRequestMoreFeedbackTimeInvalid");
         }
+    }
+
+    /**
+     * Obtains the time when the complaint period starts.
+     * <p>
+     * Assumes the {@link Result#getCompletionDate()} to be present.
+     *
+     * @param exercise The exercise for which complaints can be submitted.
+     * @param studentParticipation The participation for which a complaint should be submitted.
+     * @param result The result which the complaint is about.
+     * @return The time from which submitting a complaint is possible.
+     */
+    private static ZonedDateTime getComplaintStartDate(final Exercise exercise, final StudentParticipation studentParticipation, final Result result) {
+        final List<ZonedDateTime> possibleComplaintStartDates = new ArrayList<>();
+        possibleComplaintStartDates.add(result.getCompletionDate());
+
+        final Optional<ZonedDateTime> relevantDueDate = Optional.ofNullable(studentParticipation).flatMap(ExerciseDateService::getDueDate);
+        relevantDueDate.ifPresent(possibleComplaintStartDates::add);
+
+        if (exercise.getAssessmentDueDate() != null) {
+            possibleComplaintStartDates.add(exercise.getAssessmentDueDate());
+        }
+
+        return possibleComplaintStartDates.stream().max(Comparator.naturalOrder())
+                .orElseThrow(() -> new NoSuchElementException("Expected at least the result completion date to be present."));
     }
 
     /**

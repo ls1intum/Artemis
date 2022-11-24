@@ -180,9 +180,11 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteCourse_asInstructorOfCourse_shouldDeleteExercise() throws Exception {
-        request.delete("/api/courses/" + courseId, HttpStatus.OK);
+    void deleteCourse_asAdmin_shouldDeleteExercise() throws Exception {
+        request.delete("/api/admin/courses/" + courseId, HttpStatus.OK);
         assertThat(courseRepository.existsById(courseId)).isFalse();
+        assertThat(exerciseRepository.existsById(idOfIndividualTextExercise)).isFalse();
+        assertThat(exerciseRepository.existsById(idOfTeamTextExercise)).isFalse();
     }
 
     @Test

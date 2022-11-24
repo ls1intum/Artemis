@@ -92,7 +92,7 @@ class Lti10ServiceTest {
 
     @Test
     void performLaunch() {
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean());
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any(), any());
 
@@ -104,7 +104,7 @@ class Lti10ServiceTest {
 
     @Test
     void performLaunchNoOutcomeUrl() {
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean());
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any(), any());
 
