@@ -16,7 +16,7 @@
                 <div class="short-answer-question-container" id="sa-question-container-A" *ngIf="shortAnswerQuestionUtil.isInputField(element)">
                     <input
                         class="short-answer-question-container__input"
-                        type="text"
+                        type="{{ getSpotInputType(element) }}"
                         [maxLength]="maxCharacterCount"
                         [disabled]="clickDisabled"
                         value="{{ getSubmittedTextForSpotAsString(element) }}"

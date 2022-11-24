@@ -257,6 +257,14 @@ export class ShortAnswerQuestionComponent {
     }
 
     /**
+     * Returns the input type for the given spot tag
+     * @param spotTag Spot tag for which to get the input type
+     */
+    getSpotInputType(spotTag: string): string {
+        return this.getSpotType(spotTag).toLowerCase();
+    }
+
+    /**
      * Validates input for spot
      * @param event FocusEvent triggered on blur
      * @param spotTag Spot tag for which input to be validated
@@ -265,7 +273,7 @@ export class ShortAnswerQuestionComponent {
         if (this.getSpotType(spotTag) === SpotType.NUMBER) {
             const inputEl = event.target as HTMLInputElement;
             const value = inputEl.value;
-            if (isNaN(+value)) {
+            if (isNaN(+value) || value.length === 0) {
                 inputEl.value = '';
             }
         }
