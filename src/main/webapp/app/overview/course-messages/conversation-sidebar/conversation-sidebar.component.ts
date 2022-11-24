@@ -28,7 +28,6 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     course?: Course;
     collapsed: boolean;
     courseId: number;
-    numberOfUnreadMessage: number;
 
     private conversationSubscription: Subscription;
     private paramSubscription: Subscription;
@@ -44,7 +43,6 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     faChevronRight = faChevronRight;
     faGripLinesVertical = faGripLinesVertical;
     faConversation = faComments;
-    faMessage = faMessage;
 
     constructor(protected courseMessagesService: MessagingService, private courseManagementService: CourseManagementService, private activatedRoute: ActivatedRoute) {}
 
@@ -180,14 +178,6 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     getNameOfConversationParticipant(conversation: Conversation): string {
         const participant = conversation.conversationParticipants!.find((conversationParticipants) => conversationParticipants.user.id !== this.courseMessagesService.userId)!.user;
         return participant.lastName ? `${participant.firstName} ${participant.lastName}` : participant.firstName!;
-    }
-
-    getNumberOfUnreadMessages(conversation: Conversation) {
-        console.log('test ');
-        const conversationParticipant = conversation.conversationParticipants!.find(
-            (conversationParticipants) => conversationParticipants.user.id === this.courseMessagesService.userId,
-        )!;
-        this.numberOfUnreadMessage = conversationParticipant.unreadMessagesCount!;
     }
 
     /**

@@ -20,18 +20,17 @@ import { ConversationService } from 'app/shared/metis/conversation.service';
 import { MockConversationService } from '../../../helpers/mocks/service/mock-conversation.service';
 import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
 
-import { conversationBetweenUser1User2, conversationsOfUser1, metisCourse, metisUser1, metisUser2, metisUser3 } from '../../../helpers/sample/metis-sample-data';
+import { conversationBetweenUser1User2, conversationsOfUser1, metisCourse, metisUser2, metisUser3 } from '../../../helpers/sample/metis-sample-data';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { MessagingService } from 'app/shared/metis/messaging.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { User } from 'app/core/user/user.model';
+import { UnreadMessagesPipe } from 'app/shared/pipes/unread-messages.pipe';
 
 describe('ConversationSidebarComponent', () => {
     let component: ConversationSidebarComponent;
     let fixture: ComponentFixture<ConversationSidebarComponent>;
     let courseManagementService: CourseManagementService;
-    let accountService: AccountService;
     let emitActiveConversationSpy: jest.SpyInstance;
 
     const id = metisCourse.id;
@@ -51,6 +50,7 @@ describe('ConversationSidebarComponent', () => {
                 MockComponent(FaIconComponent),
                 MockComponent(DataTableComponent),
                 MockPipe(ArtemisTranslatePipe),
+                MockPipe(UnreadMessagesPipe),
                 MockDirective(NgbTooltip),
             ],
             providers: [
@@ -70,10 +70,6 @@ describe('ConversationSidebarComponent', () => {
             .then(() => {
                 courseManagementService = TestBed.inject(CourseManagementService);
                 jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
-
-                accountService = TestBed.inject(AccountService);
-                const user = { id: 1 } as User;
-                jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
 
                 fixture = TestBed.createComponent(ConversationSidebarComponent);
                 component = fixture.componentInstance;
@@ -209,14 +205,4 @@ describe('ConversationSidebarComponent', () => {
         expect(newConversationWithUser.course).toBe(metisCourse);
         expect(newConversationWithUser.conversationParticipants!.first()?.user).toBe(metisUser2);
     }));
-
-    it('should get number of unread messages', () => {
-        const spy = jest.spyOn(component, 'getNumberOfUnreadMessages');
-        component.conversations = conversationsOfUser1;
-
-        component.getNumberOfUnreadMessages(component.conversations[0]);
-        fixture.detectChanges();
-
-        expect(spy).toHaveBeenCalledOnce();
-    });
 });
