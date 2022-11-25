@@ -38,6 +38,10 @@ describe('ChannelsCreateDialogComponent', () => {
         initializeDialog(component, fixture, { course });
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });

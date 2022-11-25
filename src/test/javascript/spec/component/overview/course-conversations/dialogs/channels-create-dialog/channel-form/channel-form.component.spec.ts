@@ -27,6 +27,10 @@ describe('ChannelFormComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });

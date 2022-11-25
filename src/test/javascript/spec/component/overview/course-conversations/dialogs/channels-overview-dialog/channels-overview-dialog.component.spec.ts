@@ -31,6 +31,7 @@ describe('ChannelsOverviewDialogComponent', () => {
     let fixture: ComponentFixture<ChannelsOverviewDialogComponent>;
     const course = { id: 1, isAtLeastInstructor: true } as Course;
     const createChannelFn = jest.fn();
+    const canCreateChannel = jest.fn();
     let channelItems: ChannelItemStubComponent[];
 
     let channelOne: ChannelDTO;
@@ -48,6 +49,10 @@ describe('ChannelsOverviewDialogComponent', () => {
             providers: [MockProvider(ChannelService), MockProvider(ConversationService), MockProvider(AlertService), MockProvider(NgbModal), MockProvider(NgbActiveModal)],
         }).compileComponents();
     }));
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(ChannelsOverviewDialogComponent);
@@ -70,6 +75,8 @@ describe('ChannelsOverviewDialogComponent', () => {
         createChannelFnSpy = createChannelFn.mockReturnValue(EMPTY);
 
         fixture.detectChanges();
+        canCreateChannel.mockReturnValue(true);
+        component.canCreateChannel = canCreateChannel;
         initializeDialog(component, fixture, { course, createChannelFn });
 
         channelItems = fixture.debugElement.queryAll(By.directive(ChannelItemStubComponent)).map((debugElement) => debugElement.componentInstance);
@@ -122,6 +129,12 @@ describe('ChannelsOverviewDialogComponent', () => {
         tick(501);
         expect(createChannelFnSpy).toHaveBeenCalledOnce();
         expect(component.channelModificationPerformed).toBeTrue();
+    }));
+
+    it('should not show create channel button if user is missing the permission', fakeAsync(() => {
+        canCreateChannel.mockReturnValue(false);
+        fixture.detectChanges();
+        expect(fixture.debugElement.nativeElement.querySelector('#createChannel')).toBeFalsy();
     }));
 
     it('should open create channel dialog when button is pressed', fakeAsync(() => {

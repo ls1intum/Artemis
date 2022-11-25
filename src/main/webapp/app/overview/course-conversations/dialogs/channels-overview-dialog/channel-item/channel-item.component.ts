@@ -17,8 +17,6 @@ export class ChannelItemComponent {
     @Input()
     channel: ChannelDTO;
 
-    constructor() {}
-
     emitChannelAction($event: MouseEvent, action: ChannelActionType) {
         $event.stopPropagation();
         this.channelAction.emit({

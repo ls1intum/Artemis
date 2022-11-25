@@ -35,7 +35,6 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     channelActions$ = new Subject<ChannelAction>();
 
     noOfChannels = 0;
-
     channelModificationPerformed = false;
     isLoading = false;
     channels: ChannelDTO[] = [];
