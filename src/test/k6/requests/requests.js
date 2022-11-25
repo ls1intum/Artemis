@@ -19,12 +19,19 @@ const request = function (method, endpoint, authToken, body, params, formData) {
             .join('&');
     }
 
+    let bodyParameter = null;
+    if (body) {
+        bodyParameter = JSON.stringify(body);
+    } else if (formData) {
+        bodyParameter = formData.body();
+    }
+
     let url = baseUrl + '/api' + endpoint + (paramString ? '?' + paramString : '');
     let req = [
         {
             method: method,
             url: url,
-            body: formData ? formData.body() : body ? JSON.stringify(body) : null,
+            body: bodyParameter,
             params: {
                 headers: {
                     Host: host,
