@@ -59,20 +59,7 @@
     }
 
     .result-score-chart {
-        margin-bottom: 1em;
-
-        .result-score-chart-title {
-            display: inline-block;
-            width: 100%;
-            padding-left: 16px;
-            padding-right: 16px;
-            padding-bottom: 5px;
-            font-size: 0.9em;
-
-            .badge {
-                float: right;
-            }
-        }
+        margin-bottom: 1rem;
 
         .chart-tooltip-space {
             margin-top: -10px;
