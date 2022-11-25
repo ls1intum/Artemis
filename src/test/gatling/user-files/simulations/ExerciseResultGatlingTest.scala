@@ -77,7 +77,6 @@ class ExerciseResultGatlingTest extends Simulation {
                 , "buildArtifact":null
                 , "score":null
                 , "rated":null
-                , "hasFeedback":null
                 , "assessmentType":"AUTOMATIC"
                 }""")).asJson
             .check(status.is(201))

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.participation;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -94,9 +95,11 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
             return false;
         }
 
+        final ProgrammingExercise programmingExercise = getProgrammingExercise();
         final ZonedDateTime now = ZonedDateTime.now();
         boolean isAfterDueDate = ExerciseDateService.getDueDate(studentParticipation).map(now::isAfter).orElse(false);
+        boolean isBeforeStartDate = Optional.ofNullable(programmingExercise.getParticipationStartDate()).map(now::isBefore).orElse(false);
 
-        return isAfterDueDate && !studentParticipation.isTestRun();
+        return (isBeforeStartDate || isAfterDueDate) && !studentParticipation.isTestRun();
     }
 }

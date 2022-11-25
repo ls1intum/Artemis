@@ -77,10 +77,6 @@ public class ResultService {
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
     public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback, boolean ratedResult) {
-        if (!result.getFeedbacks().isEmpty()) {
-            result.setHasFeedback(isProgrammingExerciseWithFeedback);
-        }
-
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
