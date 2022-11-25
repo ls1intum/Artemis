@@ -24,7 +24,6 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
         description: undefined,
         isPublic: undefined,
     };
-
     @Output() formSubmitted: EventEmitter<ChannelFormData> = new EventEmitter<ChannelFormData>();
     @Output() channelTypeChanged: EventEmitter<ChannelType> = new EventEmitter<ChannelType>();
 
