@@ -163,6 +163,17 @@ export class CourseManagementService {
         return this.courses.get(courseId)!.observable;
     }
 
+    // Sollte ich nicht stattdessen in der Lage sein, zum fetchen einfach eine Subscription auf getCourseUpdates zu nutzen und dann courseWasUpdated aufzurufen, dann bekomme ich den Kurs aber ist natürlich nicht sehr logisch
+    // Nope geht nicht, in this.courses sind nur die Observables, auf die mal jemand explizit subscribed hat
+    // Dann lieber courses umbenennen zu courseUpdates und courseWasUpdated zu notifyCourseUpdatesSubscribers und getCourseUpdates zu subscribeToCourseUpdates
+    // Und dann ein Feld storedCourses, das genauso funktioniert wie die courses in courseScoreCalculationService
+    getCachedCourse(courseId: number): Course | undefined {
+        if (this.courses.has(courseId)) {
+            return <Course>this.courses.get(courseId)!.subject;
+        }
+        return undefined;
+    }
+
     /**
      * finds all participants of the course corresponding to the given unique identifier
      * @param courseId - the id of the course
