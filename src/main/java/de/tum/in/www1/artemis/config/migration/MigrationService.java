@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 @Service
 public class MigrationService {
 
-    private final Logger log = LoggerFactory.getLogger(MigrationRegistry.class);
+    private final Logger log = LoggerFactory.getLogger(MigrationService.class);
 
     @Value("${artemis.version}")
     private String artemisVersion;
