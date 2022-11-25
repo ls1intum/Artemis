@@ -14,12 +14,14 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 import { MAX_GROUP_CHAT_PARTICIPANTS } from 'app/shared/metis/conversations/conversation-settings';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { Subject, takeUntil } from 'rxjs';
+import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { finalize } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-conversation-add-users-dialog',
     templateUrl: './conversation-add-users-dialog.component.html',
 })
-export class ConversationAddUsersDialogComponent implements OnDestroy {
+export class ConversationAddUsersDialogComponent extends AbstractDialogComponent implements OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     @Input()
@@ -33,24 +35,24 @@ export class ConversationAddUsersDialogComponent implements OnDestroy {
     maxSelectable: number | undefined;
 
     initialize() {
-        if (!this.course || !this.activeConversation) {
-            console.error('Error: Dialog not fully configured');
-        } else {
+        super.initialize(['course', 'activeConversation']);
+        if (this.isInitialized) {
             if (isGroupChatDto(this.activeConversation)) {
                 this.maxSelectable = MAX_GROUP_CHAT_PARTICIPANTS - (this.activeConversation?.numberOfMembers ?? 0);
             }
-
-            this.isInitialized = true;
         }
     }
 
     constructor(
         private alertService: AlertService,
-        private activeModal: NgbActiveModal,
+
+        activeModal: NgbActiveModal,
         public channelService: ChannelService,
         public conversationService: ConversationService,
         public groupChatService: GroupChatService,
-    ) {}
+    ) {
+        super(activeModal);
+    }
 
     ngOnDestroy() {
         this.ngUnsubscribe.next();
@@ -59,10 +61,6 @@ export class ConversationAddUsersDialogComponent implements OnDestroy {
 
     onFormSubmitted({ selectedUsers, addAllStudents, addAllTutors, addAllEditors, addAllInstructors }: AddUsersFormData) {
         this.addUsers(selectedUsers ?? [], addAllStudents, addAllTutors, addAllEditors, addAllInstructors);
-    }
-
-    clear() {
-        this.activeModal.dismiss();
     }
 
     getAsChannel = getAsChannelDto;
@@ -76,27 +74,27 @@ export class ConversationAddUsersDialogComponent implements OnDestroy {
         if (isChannelDto(this.activeConversation)) {
             this.channelService
                 .registerUsersToChannel(this.course.id!, this.activeConversation.id!, addAllStudents, addAllTutors, addAllEditors, addAllInstructors, userLogins)
-                .pipe(takeUntil(this.ngUnsubscribe))
+                .pipe(
+                    finalize(() => this.close()),
+                    takeUntil(this.ngUnsubscribe),
+                )
                 .subscribe({
-                    next: () => {
-                        this.activeModal.close();
-                    },
+                    next: () => {},
                     error: (errorResponse: HttpErrorResponse) => {
                         onError(this.alertService, errorResponse);
-                        this.activeModal.close();
                     },
                 });
         } else if (isGroupChatDto(this.activeConversation)) {
             this.groupChatService
                 .addUsersToGroupChat(this.course.id!, this.activeConversation.id!, userLogins)
-                .pipe(takeUntil(this.ngUnsubscribe))
+                .pipe(
+                    finalize(() => this.close()),
+                    takeUntil(this.ngUnsubscribe),
+                )
                 .subscribe({
-                    next: () => {
-                        this.activeModal.close();
-                    },
+                    next: () => {},
                     error: (errorResponse: HttpErrorResponse) => {
                         onError(this.alertService, errorResponse);
-                        this.activeModal.close();
                     },
                 });
         } else {
