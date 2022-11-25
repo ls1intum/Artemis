@@ -78,6 +78,7 @@
 
             <hr *ngIf="buildLogs?.length" />
 
+            <jhi-feedback-list-programming></jhi-feedback-list-programming>
             <div class="feedback-list">
                 <div class="mb-2 d-flex justify-content-center align-items-center" *ngIf="showOnlyNegativeFeedback || showOnlyPositiveFeedback">
                     <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
