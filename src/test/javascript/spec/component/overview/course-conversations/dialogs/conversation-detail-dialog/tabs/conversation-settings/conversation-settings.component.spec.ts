@@ -20,7 +20,7 @@ import { GenericConfirmationDialogComponent } from 'app/overview/course-conversa
 const examples: ConversationDto[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {
-    describe('ConversationSettingsComponent', () => {
+    describe('ConversationSettingsComponent with ' + activeConversation.type, () => {
         let component: ConversationSettingsComponent;
         let fixture: ComponentFixture<ConversationSettingsComponent>;
         const course = { id: 1 } as Course;

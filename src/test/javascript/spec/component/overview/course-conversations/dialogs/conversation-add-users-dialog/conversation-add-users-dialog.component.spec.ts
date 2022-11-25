@@ -35,7 +35,7 @@ class ConversationAddUsersFormStubComponent {
 }
 const examples: ConversationDto[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 examples.forEach((activeConversation) => {
-    describe('ConversationAddUsersDialogComponent', () => {
+    describe('ConversationAddUsersDialogComponent with ' + activeConversation.type, () => {
         let component: ConversationAddUsersDialogComponent;
         let fixture: ComponentFixture<ConversationAddUsersDialogComponent>;
         const course = { id: 1 } as Course;

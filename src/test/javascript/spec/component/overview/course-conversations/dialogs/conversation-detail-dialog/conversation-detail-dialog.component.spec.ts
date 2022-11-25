@@ -68,7 +68,7 @@ class ConversationInfoStubComponent {
 const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {
-    describe('ConversationDetailDialogComponent', () => {
+    describe('ConversationDetailDialogComponent with ' + activeConversation.type, () => {
         let component: ConversationDetailDialogComponent;
         let fixture: ComponentFixture<ConversationDetailDialogComponent>;
         const course = { id: 1 } as Course;

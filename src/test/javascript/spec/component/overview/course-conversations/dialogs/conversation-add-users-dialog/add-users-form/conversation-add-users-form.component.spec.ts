@@ -16,7 +16,7 @@ import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
 const examples: ConversationDto[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 examples.forEach((activeConversation) => {
-    describe('ConversationAddUsersFormComponent', () => {
+    describe('ConversationAddUsersFormComponent with ' + activeConversation.type, () => {
         let component: ConversationAddUsersFormComponent;
         let fixture: ComponentFixture<ConversationAddUsersFormComponent>;
         const course = { id: 1 } as Course;
