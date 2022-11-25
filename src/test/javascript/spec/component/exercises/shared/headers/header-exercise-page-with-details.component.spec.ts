@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
@@ -7,7 +6,6 @@ import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
-import { MockParticipationWebsocketService } from '../../../../helpers/mocks/service/mock-participation-websocket.service';
 import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ExerciseTypePipe } from 'app/shared/pipes/exercise-type.pipe';
@@ -47,7 +45,7 @@ describe('HeaderExercisePageWithDetails', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ExerciseTypePipe),
             ],
-            providers: [{ provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService }],
+            providers: [],
         })
             .compileComponents()
             .then(() => {

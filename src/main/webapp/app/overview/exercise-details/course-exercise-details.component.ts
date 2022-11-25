@@ -340,6 +340,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 } else {
                     this.exercise.studentParticipations = [...this.studentParticipations, changedParticipation];
                 }
+                this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
+                this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
                 this.mergeResultsAndSubmissionsForParticipations();
 
                 if (ExerciseType.PROGRAMMING === this.exercise?.type) {

@@ -1,5 +1,4 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
@@ -52,10 +51,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
     // Icons
     faQuestionCircle = faQuestionCircle;
-
-    constructor(private participationWebsocketService: ParticipationWebsocketService) {
-        participationWebsocketService.subscribeForParticipationChanges().subscribe(this.ngOnChanges);
-    }
 
     ngOnInit() {
         this.exerciseCategories = this.exercise.categories || [];
