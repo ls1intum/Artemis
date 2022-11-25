@@ -851,9 +851,8 @@ public class ProgrammingExerciseService {
      * @param programmingExerciseId     id of the programming exercise to delete.
      * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
-    @Transactional // ok because of delete
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
-        // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
+        // Note: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
@@ -921,8 +920,12 @@ public class ProgrammingExerciseService {
         if (templateProgrammingExerciseParticipation != null) {
             participationService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation.getId(), true);
         }
-        // This will also delete the template & solution participation.
-        programmingExerciseRepository.delete(programmingExercise);
+
+        // Note: we fetch the programming exercise again here with student participations to avoid Hibernate issues during the delete operation below
+        programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(programmingExerciseId);
+        log.debug("Delete programming exercises with student participations: {}", programmingExercise.getStudentParticipations());
+        // This will also delete the template & solution participation: we explicitly use deleteById to avoid potential Hibernate issues during deletion
+        programmingExerciseRepository.deleteById(programmingExerciseId);
     }
 
     public boolean hasAtLeastOneStudentResult(ProgrammingExercise programmingExercise) {
