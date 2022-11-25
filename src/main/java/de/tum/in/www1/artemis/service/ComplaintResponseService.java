@@ -11,7 +11,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.web.rest.ComplaintResponseResource;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ComplaintResponseLockedException;
@@ -24,7 +23,7 @@ public class ComplaintResponseService {
 
     private static final String ENTITY_NAME = "complaintResponse";
 
-    private final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);
+    private final Logger log = LoggerFactory.getLogger(ComplaintResponseService.class);
 
     private final ComplaintRepository complaintRepository;
 

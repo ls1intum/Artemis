@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("/api")
 public class ComplaintResource {
 
-    private final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
+    private final Logger log = LoggerFactory.getLogger(ComplaintResource.class);
 
     private static final String COMPLAINT_ENTITY_NAME = "complaint";
 
