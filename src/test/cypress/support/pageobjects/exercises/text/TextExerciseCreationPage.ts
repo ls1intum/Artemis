@@ -14,15 +14,15 @@ export class TextExerciseCreationPage {
     }
 
     setReleaseDate(date: Dayjs) {
-        this.typeDate(date, '#release-date');
+        this.typeDate(date, '#pick-releaseDate');
     }
 
     setDueDate(date: Dayjs) {
-        this.typeDate(date, '#due-date');
+        this.typeDate(date, '#pick-dueDate');
     }
 
     setAssessmentDueDate(date: Dayjs) {
-        this.typeDate(date, '#assessment-due-date');
+        this.typeDate(date, '#pick-assessmentDueDate');
     }
 
     typeMaxPoints(maxPoints: number) {

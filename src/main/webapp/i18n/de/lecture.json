@@ -12,7 +12,10 @@
                     "filterFuture": "Zukünftige",
                     "filterUnspecifiedDates": "Ohne Zeitangaben"
                 },
-                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten"
+                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten",
+                "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
+                "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
+                "nextStep": "Weiter"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",
             "updated": "Vorlesung aktualisiert mit ID {{ param }}",
@@ -60,6 +63,27 @@
                 },
                 "searchLecture": "Nach Vorlesung suchen:",
                 "loading": "Lade..."
+            },
+            "wizardMode": {
+                "steps": {
+                    "titleStepTitle": "Titel",
+                    "titleStepMessage": "Gib einen Titel und eine aussagekräftige Beschreibung für die neue Vorlesung ein.",
+                    "periodStepTitle": "Zeitraum",
+                    "periodStepMessage": "Lege das Start- und Enddatum der Vorlesung fest.",
+                    "attachmentsStepTitle": "Anhänge",
+                    "attachmentsStepMessage": "Lade Anhänge für die Vorlesung hoch.",
+                    "unitsStepTitle": "Vorlesungseinheiten",
+                    "unitsStepMessage": "Füge Inhalte zur Vorlesung hinzu durch Erstellung von Vorlesungseinheiten.",
+                    "learningGoalsStepTitle": "Lernziele",
+                    "learningGoalsStepMessage": "Verknüpfe die Einheiten dieser Vorlesung mit Lernzielen, um zu zeigen, welche Lernziele Studenten erreichen werden, wenn sie sie absolvieren."
+                },
+                "newLectureUnit": "Neue Vorlesungseinheit",
+                "editLectureUnit": "Vorlesungseinheit bearbeiten",
+                "newExercise": "Neue Übung erstellen",
+                "backToWizard": "Zurück zur Vorlesung",
+                "learningGoalTitle": "Titel",
+                "learningGoalConnectedUnits": "Verknüpfte Einheiten",
+                "learningGoalNoConnectedUnits": "Keine verknüpften Einheiten"
             }
         },
         "attachment": {
