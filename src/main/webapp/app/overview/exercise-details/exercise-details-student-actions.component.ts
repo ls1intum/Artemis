@@ -15,6 +15,7 @@ import { faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -41,8 +42,6 @@ export class ExerciseDetailsStudentActionsComponent {
     // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
-    startingPracticeMode = false;
-
     // Icons
     faComment = faComment;
     faFolderOpen = faFolderOpen;
@@ -66,9 +65,12 @@ export class ExerciseDetailsStudentActionsComponent {
      * Starting an exercise is not possible in the exam, otherwise see exercise.utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
-        return !this.examMode && isStartExerciseAvailable(this.exercise as ProgrammingExercise);
+        return !this.examMode && isStartExerciseAvailable(this.exercise);
     }
 
+    /**
+     * Resuming an exercise is not possible in the exam, otherwise see exercise.utils -> isResumeExerciseAvailable
+     */
     isResumeExerciseAvailable(): boolean {
         return !this.examMode && isResumeExerciseAvailable(this.exercise, this.studentParticipation);
     }
@@ -151,10 +153,6 @@ export class ExerciseDetailsStudentActionsComponent {
             });
     }
 
-    isManualFeedbackRequestsAllowed(): boolean {
-        return this.exercise.allowManualFeedbackRequests ?? false;
-    }
-
     private feedbackSent = false;
 
     isFeedbackRequestButtonDisabled(): boolean {
@@ -186,6 +184,10 @@ export class ExerciseDetailsStudentActionsComponent {
                 this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
             },
         });
+    }
+
+    get isBeforeStartDateAndStudent(): boolean {
+        return !this.exercise.isAtLeastTutor && !!this.exercise.startDate && dayjs().isBefore(this.exercise.startDate);
     }
 
     /**

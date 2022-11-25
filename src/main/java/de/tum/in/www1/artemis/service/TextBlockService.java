@@ -8,7 +8,6 @@ import java.util.*;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.TextBlock;
@@ -98,7 +97,6 @@ public class TextBlockService {
         textBlockRepository.saveAll(textBlocks);
     }
 
-    @Transactional // ok because of delete
     public void deleteForSubmission(TextSubmission textSubmission) {
         textBlockRepository.deleteAllBySubmission_Id(textSubmission.getId());
     }
