@@ -58,6 +58,7 @@ export class ConversationSettingsComponent implements OnDestroy {
                 .subscribe(() => {
                     this.conversationLeave.emit();
                 });
+            return;
         } else if (isChannelDto(this.activeConversation)) {
             this.channelService
                 .deregisterUsersFromChannel(this.course?.id!, this.activeConversation.id!)
@@ -65,6 +66,7 @@ export class ConversationSettingsComponent implements OnDestroy {
                 .subscribe(() => {
                     this.conversationLeave.emit();
                 });
+            return;
         }
         throw new Error('The conversation type is not supported');
     }

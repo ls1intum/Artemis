@@ -35,7 +35,7 @@ describe('ChannelItemComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should show all three interaction buttons is user has teh required permissions', () => {
+    it('should show buttons only if user has the required permissions', () => {
         expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeTruthy();
         expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeTruthy();
         expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeTruthy();
