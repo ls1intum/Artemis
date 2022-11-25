@@ -41,7 +41,6 @@ const request = function (method, endpoint, authToken, body, params, formData) {
                     'Accept-Encoding': acceptEncoding,
                     Referer: baseUrl + '/',
                     'Content-Type': formData ? 'multipart/form-data; boundary=' + formData.boundary : 'application/json',
-                    'Content-Type': 'application/json',
                     'X-Artemis-Client-Fingerprint': 'b832814fcce0cab9fc5f717d5b93fa07',
                     'X-Artemis-Client-Instance-ID': '9e0b78ec-e43e-43da-a767-89b3f80df63a',
                     Connection: 'keep-alive',
