@@ -11,9 +11,9 @@ jhi-tutor-participation-graph {
         height: 2em;
         text-align: center;
         line-height: 2em;
-        border-radius: 1em;
+        border-radius: 1rem;
         background: green;
-        margin: 0 1em;
+        margin: 0 1rem;
         display: inline-block;
         color: white;
         position: relative;
@@ -88,7 +88,7 @@ jhi-tutor-participation-graph {
         display: inline-flex;
         flex-flow: column nowrap;
         height: auto;
-        margin-bottom: 1em;
+        margin-bottom: 1rem;
 
         .stacked-item {
             &:first-child {
@@ -112,25 +112,25 @@ jhi-tutor-participation-graph {
                 content: '';
                 position: absolute;
                 top: 0.5em;
-                width: 1em;
+                width: 1rem;
                 height: 0.2em;
                 background: green;
                 z-index: -1;
             }
 
             &::before {
-                left: -1em;
+                left: -1rem;
             }
             &::after {
-                right: -1em;
+                right: -1rem;
             }
         }
     }
 
     .stacked-li::before {
         width: 0.2em;
-        left: -1em;
-        height: calc(100% - 1em);
+        left: -1rem;
+        height: calc(100% - 1rem);
     }
 
     .stacked-li::after {
@@ -138,8 +138,8 @@ jhi-tutor-participation-graph {
         position: absolute;
         top: 0.5em;
         width: 0.2em;
-        right: -1em;
-        height: calc(100% - 1em);
+        right: -1rem;
+        height: calc(100% - 1rem);
         background: green;
         z-index: -1;
     }

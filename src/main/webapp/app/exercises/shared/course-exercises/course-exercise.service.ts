@@ -141,10 +141,9 @@ export class CourseExerciseService {
             participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
             if (participation.exercise) {
                 const exercise = participation.exercise;
-                exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
-                exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
+                this.convertExerciseDatesFromServer(exercise);
                 exercise.studentParticipations = [participation];
-                if (participation.exercise.type === ExerciseType.PROGRAMMING && (participation.exercise as ProgrammingExercise).publishBuildPlanUrl) {
+                if (exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).publishBuildPlanUrl) {
                     this.profileService.getProfileInfo().subscribe((profileInfo) => {
                         const programmingParticipations = participation.exercise!.studentParticipations as ProgrammingExerciseStudentParticipation[];
                         setBuildPlanUrlForProgrammingParticipations(profileInfo, programmingParticipations, (participation.exercise as ProgrammingExercise).projectKey);
@@ -158,7 +157,10 @@ export class CourseExerciseService {
 
     convertExerciseDatesFromServer<T extends Exercise>(res: T): T {
         res.releaseDate = convertDateFromServer(res.releaseDate);
+        res.startDate = convertDateFromServer(res.startDate);
         res.dueDate = convertDateFromServer(res.dueDate);
+        res.assessmentDueDate = convertDateFromServer(res.assessmentDueDate);
+        res.exampleSolutionPublicationDate = convertDateFromServer(res.exampleSolutionPublicationDate);
         return res;
     }
 
@@ -166,6 +168,7 @@ export class CourseExerciseService {
         if (res.body) {
             res.body.forEach((exercise: T) => {
                 exercise.releaseDate = convertDateFromServer(exercise.releaseDate);
+                exercise.startDate = convertDateFromServer(exercise.startDate);
                 exercise.dueDate = convertDateFromServer(exercise.dueDate);
                 exercise.assessmentDueDate = convertDateFromServer(exercise.assessmentDueDate);
                 exercise.exampleSolutionPublicationDate = convertDateFromServer(exercise.exampleSolutionPublicationDate);

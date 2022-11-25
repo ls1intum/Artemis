@@ -6,6 +6,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
 import org.apache.http.HttpResponse;
@@ -193,12 +194,13 @@ public class Lti10Service {
     }
 
     /**
-     * Adds the necessary query params for an LTI launch.
+     * Build the response for the LTI launch.
      *
      * @param uriComponentsBuilder the uri builder to add the query params to
+     * @param response the response to add the JWT cookie to
      */
-    public void addLtiQueryParams(UriComponentsBuilder uriComponentsBuilder) {
-        ltiService.addLtiQueryParams(uriComponentsBuilder);
+    public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
+        ltiService.buildLtiResponse(uriComponentsBuilder, response);
     }
 
     /**

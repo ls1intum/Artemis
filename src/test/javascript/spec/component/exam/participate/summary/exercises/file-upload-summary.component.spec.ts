@@ -37,7 +37,7 @@ describe('FileUploadExamSummaryComponent', () => {
 
     it('should correctly display the filepath', () => {
         component.submission.filePath = 'filePath.pdf';
-        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileWithAccessToken');
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
         fixture.detectChanges();
         expect(component.attachmentExtension(component.submission.filePath!)).toBe('pdf');
         const downloadFile = fixture.debugElement.query(By.css('#downloadFileButton'));
