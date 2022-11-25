@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ArtemisNavigationUtilService, findParamInRouteHierarchy } from 'app/utils/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
@@ -13,6 +13,7 @@ import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { ScoreType } from 'app/shared/constants/score-type.constants';
 
 @Component({
     selector: 'jhi-grade-key-overview',

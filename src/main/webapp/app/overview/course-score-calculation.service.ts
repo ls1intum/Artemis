@@ -9,15 +9,7 @@ import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourse
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { convertDateFromServer } from 'app/utils/date.utils';
-
-export enum ScoreType {
-    ABSOLUTE_SCORE = 'absoluteScore',
-    RELATIVE_SCORE = 'relativeScore',
-    MAX_POINTS = 'maxPoints',
-    PRESENTATION_SCORE = 'presentationScore',
-    REACHABLE_POINTS = 'reachableScore',
-    CURRENT_RELATIVE_SCORE = 'currentRelativeScore',
-}
+import { ScoreType } from 'app/shared/constants/score-type.constants';
 
 @Injectable({ providedIn: 'root' })
 export class CourseScoreCalculationService {

@@ -6,7 +6,7 @@ import { sortBy } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -20,6 +20,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { ScoreType } from 'app/shared/constants/score-type.constants';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
