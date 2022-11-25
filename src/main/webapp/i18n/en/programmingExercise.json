@@ -31,7 +31,8 @@
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
             },
-            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students.",
+            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students. But they can only participate after the currently defined start date.",
+            "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students cam participate in the exercise.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
             "templateRepositoryUrl": "Template Repository Url",
@@ -282,7 +283,8 @@
                 "automaticTestsAfterDueDateTooltip": "As soon as the specified due date passes, all submissions will be tested again using ALL tests in the test repository, including tests specified to be run after the due date.",
                 "assessmentTypeTooltipAutomaticAssessment": "The type of assessment after the deadline: No manual assessment",
                 "assessmentTypeTooltipManualAssessment": "The type of assessment after the deadline: Manual assessment by a tutors and complaints allowed if possible",
-                "releaseDateTooltip": "The release date of the exercise. Students will only be able to participate in the exercise starting on the specified date.",
+                "releaseDateTooltip": "The release date of the exercise. Students will be able to see the exercise starting on the specified date. If no start date is defined, students can also start their participation after this date.",
+                "startDateTooltip": "The start date of the exercise. If this date is set, students can only see the exercise before but only participate after this date.",
                 "dueDateTooltip": "The deadline, upon which submitting and committing new code will be deactivated for all students.",
                 "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. These generated results will be marked as 'graded' even though the due date has passed.",
                 "alertNewDueDate": "The due date has been set to the release date!",
@@ -310,7 +312,7 @@
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
-                "tooltip": "The due date has passed, your repository is locked. You may still read the code but you may not make any changes to it."
+                "tooltip": "You are outside of the participation timeframe, your repository is locked. You may still read the code but you may not make any changes to it."
             },
             "preview": {
                 "label": "Preview",

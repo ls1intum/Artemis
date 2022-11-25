@@ -79,7 +79,6 @@ describe('TextSubmissionAssessmentComponent', () => {
             successful: false,
             score: 8,
             rated: true,
-            hasFeedback: true,
             hasComplaint: true,
             submission,
             participation,
