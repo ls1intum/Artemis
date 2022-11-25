@@ -29,7 +29,6 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
 
     isGroupChat = isGroupChatDto;
     isChannel = isChannelDto;
-    getAsGroupChat = getAsGroupChatDto;
     getAsChannel = getAsChannelDto;
     getUserLabel = getUserLabel;
     canChangeChannelProperties = canChangeChannelProperties;

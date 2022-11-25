@@ -2,7 +2,7 @@
     <div class="row info-container">
         <!-- Name (Only for Channels and Group Chats)-->
         <ng-container *ngIf="getAsChannelOrGroupChat(activeConversation) as channelOrGroupChat">
-            <div class="col-12 info-section" [class.interactive]="!readOnlyMode">
+            <div id="name-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
                 <div class="form-floating">
                     <textarea
                         class="form-control"
@@ -29,7 +29,7 @@
         </ng-container>
         <!-- Topic (Only for Channels)-->
         <ng-container *ngIf="getAsChannel(activeConversation) as channel">
-            <div class="col-12 info-section" [class.interactive]="!readOnlyMode">
+            <div id="topic-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
                 <div class="form-floating">
                     <textarea
                         class="form-control"
@@ -48,7 +48,7 @@
         </ng-container>
         <!-- Description (Only for Channels)-->
         <ng-container *ngIf="getAsChannel(activeConversation) as channel">
-            <div class="col-12 info-section" [class.interactive]="!readOnlyMode">
+            <div id="description-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
                 <div class="form-floating">
                     <textarea
                         class="form-control"
@@ -58,7 +58,7 @@
                         value="{{ channel.description ?? ('artemisApp.messages.conversationDetail.infoTab.noDescription' | artemisTranslate) }}"
                     >
                     </textarea>
-                    <label for="topic">{{ 'artemisApp.entities.channel.description' | artemisTranslate }}</label>
+                    <label for="description">{{ 'artemisApp.entities.channel.description' | artemisTranslate }}</label>
                     <button class="action-button right btn btn-outline-primary btn-sm" (click)="openDescriptionTopicModal($event)" *ngIf="canChangeChannelProperties(channel)">
                         {{ 'artemisApp.messages.conversationDetail.infoTab.editDescription' | artemisTranslate }}
                     </button>
@@ -66,7 +66,7 @@
             </div>
         </ng-container>
         <!-- More Info -->
-        <div class="col-12 info-section">
+        <div id="moreinfo-section" class="col-12 info-section">
             <div>
                 <h6>{{ 'artemisApp.messages.conversationDetail.infoTab.moreInfo' | artemisTranslate }}</h6>
             </div>
