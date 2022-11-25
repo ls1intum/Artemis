@@ -16,6 +16,7 @@ import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstra
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
+import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 @Component({
     selector: 'jhi-channel-item',
     template: '',
@@ -151,13 +152,7 @@ describe('ChannelsOverviewDialogComponent', () => {
         tick(501);
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(openDialogSpy).toHaveBeenCalledWith(ChannelsCreateDialogComponent, {
-                size: 'lg',
-                scrollable: false,
-                backdrop: 'static',
-                backdropClass: 'second-layer-modal-bg',
-                centered: true,
-            });
+            expect(openDialogSpy).toHaveBeenCalledWith(ChannelsCreateDialogComponent, defaultSecondLayerDialogOptions);
             expect(mockModalRef.componentInstance.course).toEqual(course);
         });
     }));

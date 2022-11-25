@@ -11,6 +11,7 @@ import { Course } from 'app/entities/course.model';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view' | 'create';
 export type ChannelAction = {
@@ -143,13 +144,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     openCreateChannelDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, {
-            size: 'lg',
-            scrollable: false,
-            backdrop: 'static',
-            backdropClass: 'second-layer-modal-bg',
-            centered: true,
-        });
+        const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, defaultSecondLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
         from(modalRef.result)

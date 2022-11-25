@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
+import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -132,13 +132,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         regexPattern: RegExp | undefined,
         translationKeys: GenericUpdateTextPropertyTranslationKeys,
     ) {
-        const modalRef: NgbModalRef = this.modalService.open(GenericUpdateTextPropertyDialogComponent, {
-            size: 'lg',
-            scrollable: false,
-            backdrop: 'static',
-            backdropClass: 'second-layer-modal-bg',
-            centered: true,
-        });
+        const modalRef: NgbModalRef = this.modalService.open(GenericUpdateTextPropertyDialogComponent, defaultSecondLayerDialogOptions);
         modalRef.componentInstance.propertyName = propertyName;
         modalRef.componentInstance.maxPropertyLength = maxLength;
         modalRef.componentInstance.translationKeys = translationKeys;

@@ -15,6 +15,7 @@ import {
     ConversationDetailTabs,
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 
 @Component({
     selector: '[jhi-conversation-sidebar-entry]',
@@ -73,7 +74,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     openConversationDetailDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.activeConversation = this.conversation;
         modalRef.componentInstance.selectedTab = ConversationDetailTabs.SETTINGS;

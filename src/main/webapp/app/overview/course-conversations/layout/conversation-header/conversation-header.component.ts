@@ -14,6 +14,7 @@ import { Subject, from, takeUntil } from 'rxjs';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -64,7 +65,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
 
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.activeConversation = this.activeConversation;
         modalRef.componentInstance.initialize();
@@ -79,7 +80,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
 
     openConversationDetailDialog(event: MouseEvent, tab: ConversationDetailTabs) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.activeConversation = this.activeConversation;
         modalRef.componentInstance.selectedTab = tab;

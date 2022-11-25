@@ -13,6 +13,7 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { canChangeChannelArchivalState, canDeleteChannel, canLeaveConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 
 @Component({
     selector: 'jhi-conversation-settings',
@@ -94,13 +95,7 @@ export class ConversationSettingsComponent implements OnDestroy {
         };
 
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, {
-            size: 'lg',
-            scrollable: false,
-            backdrop: 'static',
-            backdropClass: 'second-layer-modal-bg',
-            centered: true,
-        });
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
         modalRef.componentInstance.translationParameters = translationParams;
         modalRef.componentInstance.translationKeys = keys;
         modalRef.componentInstance.canBeUndone = true;
@@ -136,13 +131,7 @@ export class ConversationSettingsComponent implements OnDestroy {
         };
 
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, {
-            size: 'lg',
-            scrollable: false,
-            backdrop: 'static',
-            backdropClass: 'second-layer-modal-bg',
-            centered: true,
-        });
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
         modalRef.componentInstance.translationParameters = translationParams;
         modalRef.componentInstance.translationKeys = keys;
         modalRef.componentInstance.canBeUndone = true;

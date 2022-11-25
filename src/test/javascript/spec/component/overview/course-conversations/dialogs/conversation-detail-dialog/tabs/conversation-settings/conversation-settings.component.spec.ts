@@ -16,6 +16,7 @@ import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
+import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 
 const examples: ConversationDto[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -164,13 +165,7 @@ examples.forEach((activeConversation) => {
 
             fixture.whenStable().then(() => {
                 expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(GenericConfirmationDialogComponent, {
-                    size: 'lg',
-                    scrollable: false,
-                    backdrop: 'static',
-                    backdropClass: 'second-layer-modal-bg',
-                    centered: true,
-                });
+                expect(openDialogSpy).toHaveBeenCalledWith(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
             });
         }
     });

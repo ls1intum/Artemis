@@ -17,6 +17,7 @@ import { channelRegex } from 'app/overview/course-conversations/dialogs/channels
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { GenericUpdateTextPropertyDialogComponent } from 'app/overview/course-conversations/dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
+import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {
@@ -183,13 +184,7 @@ examples.forEach((activeConversation) => {
 
             fixture.whenStable().then(() => {
                 expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(GenericUpdateTextPropertyDialogComponent, {
-                    size: 'lg',
-                    scrollable: false,
-                    backdrop: 'static',
-                    backdropClass: 'second-layer-modal-bg',
-                    centered: true,
-                });
+                expect(openDialogSpy).toHaveBeenCalledWith(GenericUpdateTextPropertyDialogComponent, defaultSecondLayerDialogOptions);
                 for (const [key, value] of Object.entries(expectedComponentInstance)) {
                     expect(mockModalRef.componentInstance[key]).toEqual(value);
                 }

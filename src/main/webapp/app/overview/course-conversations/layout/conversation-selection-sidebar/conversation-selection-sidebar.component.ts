@@ -20,6 +20,7 @@ import { GroupChatCreateDialogComponent } from 'app/overview/course-conversation
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationSidebarSectionComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-sidebar-section/conversation-sidebar-section.component';
+import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 
 interface SearchQuery {
     searchTerm: string;
@@ -258,7 +259,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
 
     openCreateChannelDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
@@ -275,7 +276,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     }
     openCreateGroupChatDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GroupChatCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(GroupChatCreateDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
@@ -292,7 +293,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     }
     openCreateOneToOneChatDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(OneToOneChatCreateDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(OneToOneChatCreateDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
@@ -312,7 +313,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
 
     openChannelOverviewDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.createChannelFn = this.metisConversationService.createChannel;
         modalRef.componentInstance.initialize();

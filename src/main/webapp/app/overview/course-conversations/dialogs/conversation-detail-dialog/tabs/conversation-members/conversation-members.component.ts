@@ -13,6 +13,7 @@ import { ConversationAddUsersDialogComponent } from 'app/overview/course-convers
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 
 interface SearchQuery {
     searchTerm: string;
@@ -65,13 +66,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, {
-            size: 'lg',
-            scrollable: false,
-            backdrop: 'static',
-            backdropClass: 'second-layer-modal-bg',
-            centered: true,
-        });
+        const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, defaultSecondLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.activeConversation = this.activeConversation;
         modalRef.componentInstance.initialize();

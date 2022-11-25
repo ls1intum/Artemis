@@ -17,6 +17,7 @@ import { of } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 
 @Component({ selector: '[jhi-conversation-member-row]', template: '' })
 class ConversationMemberRowStubComponent {
@@ -152,13 +153,7 @@ examples.forEach((activeConversation) => {
             tick(301);
             fixture.whenStable().then(() => {
                 expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(ConversationAddUsersDialogComponent, {
-                    size: 'lg',
-                    scrollable: false,
-                    backdrop: 'static',
-                    backdropClass: 'second-layer-modal-bg',
-                    centered: true,
-                });
+                expect(openDialogSpy).toHaveBeenCalledWith(ConversationAddUsersDialogComponent, defaultSecondLayerDialogOptions);
                 expect(mockModalRef.componentInstance.course).toEqual(course);
                 expect(mockModalRef.componentInstance.activeConversation).toEqual(activeConversation);
             });

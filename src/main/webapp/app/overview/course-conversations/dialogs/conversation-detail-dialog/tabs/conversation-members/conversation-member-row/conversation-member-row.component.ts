@@ -7,7 +7,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Subject, from, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { canGrantChannelAdminRights, canRemoveUsersFromConversation, canRevokeChannelAdminRights } from 'app/shared/metis/conversations/conversation-permissions.utils';
-import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
+import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
@@ -120,13 +120,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         };
 
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, {
-            size: 'lg',
-            scrollable: false,
-            backdrop: 'static',
-            backdropClass: 'second-layer-modal-bg',
-            centered: true,
-        });
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
         modalRef.componentInstance.translationParameters = translationParams;
         modalRef.componentInstance.translationKeys = keys;
         modalRef.componentInstance.canBeUndone = true;
@@ -167,13 +161,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         };
 
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, {
-            size: 'lg',
-            scrollable: false,
-            backdrop: 'static',
-            backdropClass: 'second-layer-modal-bg',
-            centered: true,
-        });
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
         modalRef.componentInstance.translationParameters = translationParams;
         modalRef.componentInstance.translationKeys = keys;
         modalRef.componentInstance.canBeUndone = true;
@@ -223,13 +211,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         };
 
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, {
-            size: 'lg',
-            scrollable: false,
-            backdrop: 'static',
-            backdropClass: 'second-layer-modal-bg',
-            centered: true,
-        });
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
         modalRef.componentInstance.translationParameters = translationParams;
         modalRef.componentInstance.translationKeys = keys;
         modalRef.componentInstance.canBeUndone = true;
@@ -268,13 +250,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         };
 
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, {
-            size: 'lg',
-            scrollable: false,
-            backdrop: 'static',
-            backdropClass: 'second-layer-modal-bg',
-            centered: true,
-        });
+        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
         modalRef.componentInstance.translationParameters = translationParams;
         modalRef.componentInstance.translationKeys = keys;
         modalRef.componentInstance.canBeUndone = true;
