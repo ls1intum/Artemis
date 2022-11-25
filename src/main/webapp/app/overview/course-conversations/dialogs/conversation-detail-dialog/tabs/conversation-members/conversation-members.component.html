@@ -1,7 +1,7 @@
 <div *ngIf="course && activeConversation" class="container-fluid">
     <div class="row">
         <div class="col-auto">
-            <button type="button" class="btn btn-outline-secondary" (click)="openAddUsersDialog($event)" *ngIf="canAddUsersToConversation(activeConversation)">
+            <button type="button" class="btn btn-outline-secondary addUsers" (click)="openAddUsersDialog($event)" *ngIf="canAddUsersToConversation(activeConversation)">
                 <fa-icon [icon]="faUserPlus"></fa-icon>
                 {{ 'artemisApp.messages.conversationDetail.memberTab.addUsers' | artemisTranslate }}
             </button>
@@ -26,11 +26,11 @@
             <div class="input-group">
                 <label class="input-group-text" for="searchFilter">Filter</label>
                 <select (ngModelChange)="onFilterChange($event)" [ngModel]="selectedFilter" class="form-select form-select" id="searchFilter">
-                    <option [value]="ALL">{{ 'artemisApp.messages.conversation.allFilter' | artemisTranslate }}</option>
-                    <option [value]="INSTRUCTOR_FILTER_OPTION">{{ 'artemisApp.messages.conversation.instructorFilter' | artemisTranslate }}</option>
-                    <option [value]="EDITOR_FILTER_OPTION">{{ 'artemisApp.messages.conversation.editorFilter' | artemisTranslate }}</option>
-                    <option [value]="TUTOR_FILTER_OPTION">{{ 'artemisApp.messages.conversation.tutorFilter' | artemisTranslate }}</option>
-                    <option [value]="STUDENT_FILTER_OPTION">{{ 'artemisApp.messages.conversation.studentFilter' | artemisTranslate }}</option>
+                    <option id="allFilter" [value]="ALL">{{ 'artemisApp.messages.conversation.allFilter' | artemisTranslate }}</option>
+                    <option id="instructorFilter" [value]="INSTRUCTOR_FILTER_OPTION">{{ 'artemisApp.messages.conversation.instructorFilter' | artemisTranslate }}</option>
+                    <option id="editorFilter" [value]="EDITOR_FILTER_OPTION">{{ 'artemisApp.messages.conversation.editorFilter' | artemisTranslate }}</option>
+                    <option id="tutorFilter" [value]="TUTOR_FILTER_OPTION">{{ 'artemisApp.messages.conversation.tutorFilter' | artemisTranslate }}</option>
+                    <option id="studentFilter" [value]="STUDENT_FILTER_OPTION">{{ 'artemisApp.messages.conversation.studentFilter' | artemisTranslate }}</option>
                     <option *ngIf="isChannel(activeConversation)" [value]="CHANNEL_ADMIN_FILTER_OPTION">
                         {{ 'artemisApp.messages.conversation.channelAdminFilter' | artemisTranslate }}
                     </option>

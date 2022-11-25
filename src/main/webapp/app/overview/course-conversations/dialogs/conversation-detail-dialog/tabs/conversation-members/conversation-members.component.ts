@@ -117,7 +117,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                         this.searchTerm,
                         this.page - 1,
                         this.itemsPerPage,
-                        this.selectedFilter,
+                        Number(this.selectedFilter),
                     ),
                 ),
                 takeUntil(this.ngUnsubscribe),
