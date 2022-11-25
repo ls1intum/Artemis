@@ -339,6 +339,10 @@
         {
             "fullName": "Evgeny Volynsky",
             "photoDirectory": "public/images/about/Evgeny_Volynsky.jpg"
+        },
+        {
+            "fullName": "Benjamin Sebastian Schmitz",
+            "photoDirectory": "public/images/about/Benjamin_Sebastian_Schmitz.jpg"
         }
     ]
 }
