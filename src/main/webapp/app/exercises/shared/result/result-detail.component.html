@@ -72,15 +72,19 @@
                 </div>
                 <hr />
             </div>
+
             <!-- Always show failed build logs first -->
             <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null"></ng-container>
+
             <hr *ngIf="buildLogs?.length" />
+
             <div class="feedback-list">
                 <div class="mb-2 d-flex justify-content-center align-items-center" *ngIf="showOnlyNegativeFeedback || showOnlyPositiveFeedback">
                     <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
                     <span class="ms-1" jhiTranslate="artemisApp.result.chart.filterApplied">A filter is applied to your feedback</span>
                     <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
                 </div>
+
                 <div *ngIf="testCaseCount || scaFeedbackCount || manualFeedbackCount" class="mb-2">
                     <div *ngIf="testCaseCount">
                         {{ 'artemisApp.result.testCount' | artemisTranslate: { passed: passedTestCaseCount, total: testCaseCount } }}
@@ -92,6 +96,7 @@
                         {{ 'artemisApp.result.manualFeedbackCount' | artemisTranslate: { feedbacks: manualFeedbackCount } }}
                     </div>
                 </div>
+
                 <div *ngFor="let feedback of filteredFeedbackList" [ngClass]="['feedback-item', 'alert', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
                     <span>{{ feedback.category }}</span>
                     <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits">
