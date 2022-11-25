@@ -100,9 +100,9 @@ describe('ShortAnswerQuestionComponent', () => {
         expect(component.submittedTexts).toHaveLength(3);
         expect(component.submittedTexts[0].text).toStrictEqual(text);
         expect(component.submittedTexts[0].spot).toStrictEqual(spot1);
-        expect(component.submittedTexts[1].text).toStrictEqual('10');
+        expect(component.submittedTexts[1].text).toBe('10');
         expect(component.submittedTexts[1].spot).toStrictEqual(spot2);
-        expect(component.submittedTexts[2].text).toStrictEqual('');
+        expect(component.submittedTexts[2].text).toBe('');
         expect(component.submittedTexts[2].spot).toStrictEqual(spot3);
     });
 
@@ -233,9 +233,9 @@ describe('ShortAnswerQuestionComponent', () => {
         spot3.spotNr = 3;
         shortAnswerQuestion.spots = [spot1, spot2, spot3];
         component.shortAnswerQuestion = shortAnswerQuestion;
-        expect(component.getSpotInputType('[-spot 1]')).toEqual('text');
-        expect(component.getSpotInputType('[-spot 2]')).toEqual('text');
-        expect(component.getSpotInputType('[-spot-number 3]')).toEqual('number');
+        expect(component.getSpotInputType('[-spot 1]')).toBe('text');
+        expect(component.getSpotInputType('[-spot 2]')).toBe('text');
+        expect(component.getSpotInputType('[-spot-number 3]')).toBe('number');
     });
 
     it('should remove input if spot type is number and input is invalid', () => {
@@ -257,14 +257,14 @@ describe('ShortAnswerQuestionComponent', () => {
         const input1 = fixture.debugElement.query(By.css('#solution-0-0-0')).nativeElement;
         input1.value = 'text';
         input1.dispatchEvent(new FocusEvent('blur'));
-        expect(input1.value).toEqual('text');
+        expect(input1.value).toBe('text');
         const input2 = fixture.debugElement.query(By.css('#solution-0-1-0')).nativeElement;
         input2.value = 'text';
         input2.dispatchEvent(new FocusEvent('blur'));
-        expect(input2.value).toEqual('');
+        expect(input2.value).toBe('');
         const input3 = fixture.debugElement.query(By.css('#solution-0-2-0')).nativeElement;
         input3.value = '-1.2345';
         input3.dispatchEvent(new FocusEvent('blur'));
-        expect(input3.value).toEqual('-1.2345');
+        expect(input3.value).toBe('-1.2345');
     });
 });
