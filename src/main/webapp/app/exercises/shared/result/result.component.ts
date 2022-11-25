@@ -1,13 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import {
-    MissingResultInformation,
-    ResultTemplateStatus,
-    evaluateTemplateStatus,
-    getResultIconClass,
-    getTextColorClass,
-    resultIsPreliminary,
-} from 'app/exercises/shared/result/result.utils';
+import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -47,9 +40,9 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInformation;
     readonly ParticipationType = ParticipationType;
+    readonly ExerciseType = ExerciseType;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
-    readonly resultIsPreliminary = resultIsPreliminary;
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
@@ -63,7 +56,6 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() exercise?: Exercise;
 
     textColorClass: string;
-    hasFeedback: boolean;
     resultIconClass: IconProp;
     resultString: string;
     templateStatus: ResultTemplateStatus;
@@ -181,7 +173,6 @@ export class ResultComponent implements OnInit, OnChanges {
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
         } else if (this.result && this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
-            this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             this.resultTooltip = this.buildResultTooltip();
@@ -211,18 +202,6 @@ export class ResultComponent implements OnInit, OnChanges {
             }
             return 'artemisApp.result.preliminaryTooltip';
         }
-    }
-
-    /**
-     * Checks if there is feedback or not for a build result.
-     */
-    getHasFeedback(): boolean {
-        if (this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING && (this.submission as ProgrammingSubmission).buildFailed) {
-            return true;
-        } else if (this.result?.hasFeedback === undefined) {
-            return false;
-        }
-        return this.result.hasFeedback;
     }
 
     /**
