@@ -207,7 +207,7 @@ describe('CourseLectureDetails', () => {
 
     it('should download file for attachment', fakeAsync(() => {
         const fileService = TestBed.inject(FileService);
-        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileWithAccessToken');
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
         const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
 
         courseLecturesDetailsComponent.downloadAttachment(attachment.link);
