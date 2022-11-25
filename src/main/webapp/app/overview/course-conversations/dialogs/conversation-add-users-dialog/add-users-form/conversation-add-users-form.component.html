@@ -1,9 +1,9 @@
-<div class="row">
+<div class="row" *ngIf="activeConversation && courseId">
     <div class="col-12">
         <div *ngIf="maxSelectable" class="alert alert-info">
             {{ 'artemisApp.messages.addUserForm.maxUsersNote' | artemisTranslate: { max: maxSelectable } }}
         </div>
-        <div [hidden]="!getAsChannel(activeConversation)">
+        <div class="mode-switch" [hidden]="!getAsChannel(activeConversation)">
             <div class="form-group">
                 <div class="btn-group" role="group">
                     <input [(ngModel)]="mode" type="radio" class="btn-check" id="individual" autocomplete="off" [value]="'individual'" [ngModelOptions]="{ standalone: true }" />
@@ -14,7 +14,7 @@
             </div>
         </div>
         <form (ngSubmit)="submitForm()" [formGroup]="form">
-            <div class="row" [hidden]="mode !== 'individual'">
+            <div class="row individual-select" [hidden]="mode !== 'individual'">
                 <div clas="col-12">
                     <jhi-course-users-selector
                         formControlName="selectedUsers"
@@ -31,7 +31,7 @@
                     </div>
                 </div>
             </div>
-            <div class="row" [hidden]="mode !== 'group'">
+            <div class="row group-select" [hidden]="mode !== 'group'">
                 <div class="col-12">
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" id="allStudents" formControlName="addAllStudents" />

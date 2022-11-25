@@ -67,6 +67,10 @@ examples.forEach((activeConversation) => {
             initializeDialog(component, fixture, { course, activeConversation });
         });
 
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
         it('should create', () => {
             expect(component).toBeTruthy();
             expect(component.isInitialized).toBeTrue();
