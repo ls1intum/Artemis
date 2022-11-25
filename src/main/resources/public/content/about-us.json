@@ -61,7 +61,7 @@
         {
             "fullName": "Francisco De las Casas Young",
             "sortBy": "De las Casas Young",
-            "photoDirectory": "public/images/about/Francisco_De_Las_Casas_Young.png"
+            "photoDirectory": "public/images/about/Francisco_De_Las_Casas_Young.jpg"
         },
         {
             "fullName": "Kilian Schulte",
@@ -113,7 +113,7 @@
         },
         {
             "fullName": "Tobias Schamel",
-            "photoDirectory": "public/images/about/Tobias_Schamel.png"
+            "photoDirectory": "public/images/about/Tobias_Schamel.jpg"
         },
         {
             "fullName": "Dominik Fuchs",
