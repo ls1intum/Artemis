@@ -144,7 +144,7 @@ public class LtiResource {
                 .pathSegment("exercises") //
                 .pathSegment(exercise.getId().toString()); //
 
-        lti10Service.addLtiQueryParams(uriBuilder);
+        lti10Service.buildLtiResponse(uriBuilder, response);
 
         String redirectUrl = uriBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);

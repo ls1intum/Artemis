@@ -7,9 +7,11 @@ import java.util.*;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextCluster;
@@ -31,6 +33,8 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     @EntityGraph(type = LOAD, attributePaths = { "submission" })
     Set<TextBlock> findAllBySubmissionIdIn(Set<Long> submissionIdList);
 
+    @Transactional // ok because of delete
+    @Modifying
     void deleteAllBySubmission_Id(Long submissionId);
 
     /**

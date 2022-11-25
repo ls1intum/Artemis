@@ -86,7 +86,6 @@ describe('ResultComponent', () => {
         expect(component.result!.participation).toEqual(participation1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-secondary');
-        expect(component.hasFeedback).toBeFalse();
         expect(component.resultIconClass).toEqual(faQuestionCircle);
         expect(component.resultString).toBe('artemisApp.result.resultString.programming (artemisApp.result.preliminary)');
     });
@@ -105,7 +104,6 @@ describe('ResultComponent', () => {
         expect(component.result!.participation).toEqual(participation1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-danger');
-        expect(component.hasFeedback).toBeFalse();
         expect(component.resultIconClass).toEqual(faCheckCircle);
         expect(component.resultString).toBe('artemisApp.result.resultString.nonProgramming');
         expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
