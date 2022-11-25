@@ -22,7 +22,6 @@ export enum ScoreType {
 @Injectable({ providedIn: 'root' })
 export class CourseScoreCalculationService {
     private SCORE_NORMALIZATION_VALUE = 0.01;
-    private courses: Course[] = [];
 
     constructor() {}
 
@@ -77,20 +76,6 @@ export class CourseScoreCalculationService {
         scores.set(ScoreType.PRESENTATION_SCORE, presentationScore);
         scores.set(ScoreType.REACHABLE_POINTS, reachableMaxPointsInCourse);
         return scores;
-    }
-
-    updateCourse(course: Course) {
-        // filter out the old course object with the same id
-        this.courses = this.courses.filter((existingCourse) => existingCourse.id !== course.id);
-        this.courses.push(course);
-    }
-
-    setCourses(courses: Course[]) {
-        this.courses = courses;
-    }
-
-    getCourse(courseId: number) {
-        return this.courses.find((course) => course.id === courseId);
     }
 
     getParticipationForExercise(exercise: Exercise) {

@@ -4,7 +4,6 @@ import { CourseManagementService } from '../course/manage/course-management.serv
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, forkJoin } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
@@ -21,6 +20,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -58,7 +58,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     constructor(
         private courseService: CourseManagementService,
         private courseExerciseService: CourseExerciseService,
-        private courseCalculationService: CourseScoreCalculationService,
+        private courseStorageService: CourseStorageService,
         private learningGoalService: LearningGoalService,
         private route: ActivatedRoute,
         private teamService: TeamService,
@@ -76,7 +76,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.course = this.courseStorageService.getCourse(this.courseId);
 
         if (this.course) {
             // If the course is present but without learning goals or tutorial groups (e.g. loaded in Artemis overview), we only need to fetch those
@@ -158,8 +158,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.refreshingCourse = refresh;
         this.courseService.findOneForDashboard(this.courseId).subscribe({
             next: (res: HttpResponse<Course>) => {
-                this.courseCalculationService.updateCourse(res.body!);
-                this.course = this.courseCalculationService.getCourse(this.courseId);
+                this.courseStorageService.updateCourse(res.body!);
+                this.course = this.courseStorageService.getCourse(this.courseId);
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             },
             error: (error: HttpErrorResponse) => {
@@ -217,7 +217,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                     if (configuration.body) {
                         this.course.tutorialGroupsConfiguration = configuration.body!;
                     }
-                    this.courseCalculationService.updateCourse(this.course);
+                    this.courseStorageService.updateCourse(this.course);
                 }
             },
             error: () => {},

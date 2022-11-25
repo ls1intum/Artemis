@@ -12,6 +12,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-grade-key-overview',
@@ -31,6 +32,7 @@ export class GradingKeyOverviewComponent implements OnInit {
         private gradingSystemService: GradingSystemService,
         private bonusService: BonusService,
         private courseCalculationService: CourseScoreCalculationService,
+        private courseStorageService: CourseStorageService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private themeService: ThemeService,
     ) {}
@@ -64,8 +66,8 @@ export class GradingKeyOverviewComponent implements OnInit {
                 if (gradeSteps.maxPoints !== undefined) {
                     if (!this.isExam) {
                         // calculate course max points based on exercises
-                        const course = this.courseCalculationService.getCourse(this.courseId!);
-                        const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(ScoreType.REACHABLE_POINTS); // sollten sich direkt aus course auslesen lassen
+                        const course = this.courseStorageService.getCourse(this.courseId!);
+                        const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(ScoreType.REACHABLE_POINTS);
                         this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints!);
                     } else {
                         // for exams the max points filed should equal the total max points (otherwise exams can't be started)

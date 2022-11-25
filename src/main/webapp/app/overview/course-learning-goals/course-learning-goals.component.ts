@@ -10,8 +10,8 @@ import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learni
 import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from '@sentry/browser';
 import { isEqual } from 'lodash-es';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Course } from 'app/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-course-learning-goals',
@@ -35,7 +35,7 @@ export class CourseLearningGoalsComponent implements OnInit {
     constructor(
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
-        private courseCalculationService: CourseScoreCalculationService,
+        private courseStorageService: CourseStorageService,
         private learningGoalService: LearningGoalService,
         private accountService: AccountService,
     ) {}
@@ -45,7 +45,7 @@ export class CourseLearningGoalsComponent implements OnInit {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.course = this.courseStorageService.getCourse(this.courseId);
         if (this.course && this.course.learningGoals && this.course.prerequisites) {
             this.learningGoals = this.course.learningGoals;
             this.prerequisites = this.course.prerequisites;

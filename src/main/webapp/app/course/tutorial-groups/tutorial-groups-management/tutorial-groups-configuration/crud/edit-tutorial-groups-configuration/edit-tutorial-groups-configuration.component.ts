@@ -8,8 +8,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { combineLatest } from 'rxjs';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-edit-tutorial-groups-configuration',
@@ -26,7 +26,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-        private courseManagementService: CourseManagementService,
+        private courseStorageService: CourseStorageService,
         private alertService: AlertService,
     ) {}
 
@@ -74,7 +74,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
                 next: (resp) => {
                     const updatedConfiguration = resp.body!;
                     this.course.tutorialGroupsConfiguration = updatedConfiguration;
-                    this.courseManagementService.courseWasUpdated(this.course);
+                    this.courseStorageService.notifyCourseUpdatesSubscribers(this.course);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

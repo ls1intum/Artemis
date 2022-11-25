@@ -12,7 +12,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Submission, reconnectSubmissions } from 'app/entities/submission.model';
-import { SubjectObservablePair } from 'app/utils/rxjs.utils';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
@@ -23,6 +22,7 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -31,13 +31,13 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 export class CourseManagementService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
 
-    private readonly courses: Map<number, SubjectObservablePair<Course>> = new Map();
-
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
+
     private fetchingCoursesForNotifications = false;
 
     constructor(
         private http: HttpClient,
+        private courseStorageService: CourseStorageService,
         private lectureService: LectureService,
         private accountService: AccountService,
         private entityTitleService: EntityTitleService,
@@ -146,32 +146,8 @@ export class CourseManagementService {
         return this.http.get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
             map((res: EntityResponseType) => this.setParticipationStatusForExercisesInCourse(res)),
-            tap((res: EntityResponseType) => this.courseWasUpdated(res.body)),
+            tap((res: EntityResponseType) => this.courseStorageService.notifyCourseUpdatesSubscribers(res.body)),
         );
-    }
-
-    courseWasUpdated(course: Course | null): void {
-        if (course) {
-            return this.courses.get(course.id!)?.subject.next(course);
-        }
-    }
-
-    getCourseUpdates(courseId: number): Observable<Course> {
-        if (!this.courses.has(courseId)) {
-            this.courses.set(courseId, new SubjectObservablePair());
-        }
-        return this.courses.get(courseId)!.observable;
-    }
-
-    // Sollte ich nicht stattdessen in der Lage sein, zum fetchen einfach eine Subscription auf getCourseUpdates zu nutzen und dann courseWasUpdated aufzurufen, dann bekomme ich den Kurs aber ist natürlich nicht sehr logisch
-    // Nope geht nicht, in this.courses sind nur die Observables, auf die mal jemand explizit subscribed hat
-    // Dann lieber courses umbenennen zu courseUpdates und courseWasUpdated zu notifyCourseUpdatesSubscribers und getCourseUpdates zu subscribeToCourseUpdates
-    // Und dann ein Feld storedCourses, das genauso funktioniert wie die courses in courseScoreCalculationService
-    getCachedCourse(courseId: number): Course | undefined {
-        if (this.courses.has(courseId)) {
-            return <Course>this.courses.get(courseId)!.subject;
-        }
-        return undefined;
     }
 
     /**

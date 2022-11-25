@@ -9,7 +9,7 @@ import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-create-tutorial-groups-configuration',
@@ -25,8 +25,8 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit {
         private router: Router,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private courseManagementService: CourseManagementService,
+        private courseStorageService: CourseStorageService,
         private alertService: AlertService,
-        private courseCalculationService: CourseScoreCalculationService,
     ) {}
 
     ngOnInit(): void {
@@ -64,8 +64,8 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit {
             .subscribe({
                 next: (resp) => {
                     this.course.tutorialGroupsConfiguration = resp.body!;
-                    this.courseManagementService.courseWasUpdated(this.course);
-                    this.courseCalculationService.updateCourse(this.course);
+                    this.courseStorageService.notifyCourseUpdatesSubscribers(this.course);
+                    this.courseStorageService.updateCourse(this.course);
                     this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups-checklist']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

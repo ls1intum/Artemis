@@ -4,7 +4,6 @@ import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
@@ -20,6 +19,7 @@ import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-data
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -184,7 +184,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     };
 
     constructor(
-        private courseService: CourseManagementService,
+        private courseStorageService: CourseStorageService,
         private courseCalculationService: CourseScoreCalculationService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
@@ -199,12 +199,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.course = this.courseStorageService.getCourse(this.courseId);
         this.onCourseLoad();
 
-        this.courseUpdatesSubscription = this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.courseCalculationService.updateCourse(course);
-            this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
+            this.courseStorageService.updateCourse(course);
+            this.course = this.courseStorageService.getCourse(this.courseId);
             this.onCourseLoad();
         });
 

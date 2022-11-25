@@ -16,8 +16,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { cloneDeep } from 'lodash-es';
 import * as Sentry from '@sentry/browser';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Course } from 'app/entities/course.model';
+import { CourseStorageService } from "app/course/manage/course-storage.service";
 
 @Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
 class LearningGoalCardStubComponent {
@@ -55,7 +55,7 @@ describe('CourseLearningGoals', () => {
             declarations: [CourseLearningGoalsComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(CourseScoreCalculationService),
+                MockProvider(CourseStorageService),
                 MockProvider(LearningGoalService),
                 MockProvider(AccountService),
                 {
@@ -88,7 +88,7 @@ describe('CourseLearningGoals', () => {
     });
 
     it('should load progress for each learning goal in a given course', () => {
-        const courseCalculationService = TestBed.inject(CourseScoreCalculationService);
+        const courseStorageService = TestBed.inject(CourseStorageService);
         const learningGoal = new LearningGoal();
         const textUnit = new TextUnit();
         learningGoal.id = 1;
@@ -100,8 +100,8 @@ describe('CourseLearningGoals', () => {
         course.id = 1;
         course.learningGoals = [learningGoal];
         course.prerequisites = [learningGoal];
-        courseCalculationService.setCourses([course]);
-        const getCourseSpy = jest.spyOn(courseCalculationService, 'getCourse').mockReturnValue(course);
+        courseStorageService.setCourses([course]);
+        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
 
         const learningUnitProgress = new IndividualLectureUnitProgress();
         learningUnitProgress.lectureUnitId = textUnit.id!;

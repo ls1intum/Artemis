@@ -6,7 +6,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -18,6 +17,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Router } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-overview',
@@ -44,7 +44,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
         private exerciseService: ExerciseService,
         private alertService: AlertService,
         private accountService: AccountService,
-        private courseScoreCalculationService: CourseScoreCalculationService,
+        private courseStorageService: CourseStorageService,
         private guidedTourService: GuidedTourService,
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -75,7 +75,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
         this.courseService.findAllForDashboard().subscribe({
             next: (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
-                this.courseScoreCalculationService.setCourses(this.courses);
+                this.courseStorageService.setCourses(this.courses);
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
 
                 // get all exams of courses
