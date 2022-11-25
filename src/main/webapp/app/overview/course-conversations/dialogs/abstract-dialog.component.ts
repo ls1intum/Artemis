@@ -16,7 +16,7 @@ export abstract class AbstractDialogComponent {
 
     constructor(public activeModal: NgbActiveModal) {}
 
-    clear() {
+    dismiss() {
         if (this.activeModal) {
             this.activeModal.dismiss();
         }

@@ -10,6 +10,7 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view' | 'create';
 export type ChannelAction = {
@@ -21,7 +22,7 @@ export type ChannelAction = {
     templateUrl: './channels-overview-dialog.component.html',
     styleUrls: ['./channels-overview-dialog.component.scss'],
 })
-export class ChannelsOverviewDialogComponent implements OnInit, OnDestroy {
+export class ChannelsOverviewDialogComponent extends AbstractDialogComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     canCreateChannel = canCreateChannel;
@@ -42,10 +43,8 @@ export class ChannelsOverviewDialogComponent implements OnInit, OnDestroy {
     isInitialized = false;
 
     initialize() {
-        if (!this.course || !this.createChannelFn) {
-            console.error('Error: Dialog not fully configured');
-        } else {
-            this.isInitialized = true;
+        super.initialize(['course', 'createChannelFn']);
+        if (this.isInitialized) {
             this.loadChannelsOfCourse();
         }
     }
@@ -54,9 +53,12 @@ export class ChannelsOverviewDialogComponent implements OnInit, OnDestroy {
         private channelService: ChannelService,
         private conversationService: ConversationService,
         private alertService: AlertService,
-        private activeModal: NgbActiveModal,
         private modalService: NgbModal,
-    ) {}
+
+        activeModal: NgbActiveModal,
+    ) {
+        super(activeModal);
+    }
 
     ngOnInit(): void {
         this.channelActions$.pipe(debounceTime(500), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((channelAction) => {
@@ -71,9 +73,9 @@ export class ChannelsOverviewDialogComponent implements OnInit, OnDestroy {
 
     clear() {
         if (this.channelModificationPerformed) {
-            this.activeModal.close();
+            this.close();
         } else {
-            this.activeModal.dismiss();
+            this.dismiss();
         }
     }
 
@@ -106,7 +108,7 @@ export class ChannelsOverviewDialogComponent implements OnInit, OnDestroy {
                     });
                 break;
             case 'view':
-                this.activeModal.close(channelAction.channel);
+                this.close(channelAction.channel);
                 break;
             case 'create':
                 this.createChannelFn(channelAction.channel)
