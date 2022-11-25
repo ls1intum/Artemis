@@ -23,7 +23,7 @@
                 "addHint": "[hint] Hinweis",
                 "addExplanation": "[exp] Erklärung",
                 "addTextSpot": "[-spot #] Spot für Text erzeugen",
-                "addNumberSpot": "[-spot #] Nummer Spot erzeugen",
+                "addNumberSpot": "[-spot #] Spot für Zahl erzeugen",
                 "addOption": "[-option #] Antwortmöglichkeit hinzufügen",
                 "text": "Text",
                 "visual": "Visuell",
