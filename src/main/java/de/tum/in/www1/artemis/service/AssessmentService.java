@@ -90,7 +90,6 @@ public class AssessmentService {
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             newResult.calculateScoreForProgrammingExercise(programmingExercise);
             newResult.setCompletionDate(ZonedDateTime.now());
-            newResult.setHasFeedback(true);
             newResult.setRated(true);
             newResult.copyProgrammingExerciseCounters(originalResult);
 
@@ -259,8 +258,6 @@ public class AssessmentService {
         result.setAssessor(user);
 
         result.updateAllFeedbackItems(feedbackList, false);
-        // Note: this boolean flag is only used for programming exercises
-        result.setHasFeedback(false);
         result.determineAssessmentType();
 
         if (result.getSubmission() == null) {
