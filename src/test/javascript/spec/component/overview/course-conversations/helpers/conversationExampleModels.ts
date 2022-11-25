@@ -2,6 +2,7 @@ import dayjs from 'dayjs/esm';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 export const generateExampleChannelDTO = ({
     id = 1,
@@ -72,4 +73,33 @@ export const generateExampleGroupChatDTO = ({
     exampleGroupChatDTO.members = members;
 
     return exampleGroupChatDTO;
+};
+
+export const generateOneToOneChatDTO = ({
+    id = 1,
+    creationDate = dayjs(),
+    lastMessageDate = dayjs(),
+    lastReadDate = dayjs(),
+    numberOfMembers = 2,
+    creator = { id: 1, login: 'login', firstName: 'Kaddl', lastName: 'Garching' } as ConversationUserDTO,
+    members = [
+        { id: 1, login: 'login', firstName: 'Kaddl', lastName: 'Garching' } as ConversationUserDTO,
+        { id: 2, login: 'login2', firstName: 'Kaddl2', lastName: 'Garching2' } as ConversationUserDTO,
+    ],
+    isCreator = true,
+    isFavorite = false,
+    isHidden = false,
+}: GroupChatDto) => {
+    const exampleOneToOneChatDTO = new OneToOneChatDTO();
+    exampleOneToOneChatDTO.id = id;
+    exampleOneToOneChatDTO.creationDate = creationDate;
+    exampleOneToOneChatDTO.lastMessageDate = lastMessageDate;
+    exampleOneToOneChatDTO.lastReadDate = lastReadDate;
+    exampleOneToOneChatDTO.numberOfMembers = numberOfMembers;
+    exampleOneToOneChatDTO.creator = creator;
+    exampleOneToOneChatDTO.isCreator = isCreator;
+    exampleOneToOneChatDTO.isFavorite = isFavorite;
+    exampleOneToOneChatDTO.isHidden = isHidden;
+    exampleOneToOneChatDTO.members = members;
+    return exampleOneToOneChatDTO;
 };

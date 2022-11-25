@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -6,6 +6,7 @@ import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
 export enum ConversationDetailTabs {
     MEMBERS = 'members',
@@ -16,9 +17,8 @@ export enum ConversationDetailTabs {
 @Component({
     selector: 'jhi-conversation-detail-dialog',
     templateUrl: './conversation-detail-dialog.component.html',
-    styleUrls: ['./conversation-detail-dialog.component.scss'],
 })
-export class ConversationDetailDialogComponent implements OnInit {
+export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     @Input()
     public activeConversation: ConversationDto;
     @Input()
@@ -29,30 +29,26 @@ export class ConversationDetailDialogComponent implements OnInit {
     isInitialized = false;
 
     initialize() {
-        if (!this.course || !this.activeConversation || !this.selectedTab) {
-            console.error('Error: Dialog not fully configured');
-        } else {
-            this.isInitialized = true;
-        }
+        super.initialize(['course', 'activeConversation', 'selectedTab']);
     }
 
+    isOneToOneChat = isOneToOneChatDto;
     getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
     getConversationName = this.conversationService.getConversationName;
 
-    isOneToOneChat = isOneToOneChatDto;
-
     changesWerePerformed = false;
 
     Tabs = ConversationDetailTabs;
-    constructor(private activeModal: NgbActiveModal, private conversationService: ConversationService) {}
+    constructor(activeModal: NgbActiveModal, private conversationService: ConversationService) {
+        super(activeModal);
+    }
 
-    ngOnInit(): void {}
     clear() {
         if (this.changesWerePerformed) {
-            this.activeModal.close();
+            this.close();
         } else {
-            this.activeModal.dismiss();
+            this.dismiss();
         }
     }
 
