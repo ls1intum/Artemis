@@ -15,7 +15,6 @@ import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOn
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 
@@ -31,7 +30,7 @@ class ConversationMemberRowStubComponent {
     changePerformed = new EventEmitter<void>();
 
     @Input()
-    user: ConversationUserDTO;
+    conversationMember: ConversationUserDTO;
 }
 const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -131,7 +130,7 @@ examples.forEach((activeConversation) => {
             expectSearchPerformed('', ConversationMemberSearchFilter.ALL);
         }));
 
-        it('should open create channel dialog when button is pressed', fakeAsync(() => {
+        it('should open add users dialog when button is pressed', fakeAsync(() => {
             fixture.detectChanges();
             tick(301);
             searchMembersOfConversationSpy.mockClear();
@@ -147,8 +146,8 @@ examples.forEach((activeConversation) => {
 
             const modalService = TestBed.inject(NgbModal);
             const mockModalRef = {
-                componentInstance: { course: undefined, activeConversation, initialize: () => {} },
-                result: Promise.resolve(new ChannelDTO()),
+                componentInstance: { course: undefined, activeConversation: undefined, initialize: () => {} },
+                result: Promise.resolve(),
             };
             const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
             fixture.detectChanges();
