@@ -34,7 +34,7 @@ public class TutorialGroupFreePeriodResource {
 
     private static final String ENTITY_NAME = "tutorialGroupFreePeriod";
 
-    private final Logger log = LoggerFactory.getLogger(TutorialGroupsConfigurationResource.class);
+    private final Logger log = LoggerFactory.getLogger(TutorialGroupFreePeriodResource.class);
 
     private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
