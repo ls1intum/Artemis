@@ -863,8 +863,7 @@ public class ProgrammingExerciseTestService {
             participant = setupTeam(user);
         }
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
-        final var path = "/api/exercises/{exerciseId}/participations".replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
-                String.valueOf(exercise.getId()));
+        final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
@@ -881,10 +880,26 @@ public class ProgrammingExerciseTestService {
 
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
 
-        final var path = "/api/exercises/{exerciseId}/participations".replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
-                String.valueOf(exercise.getId()));
+        final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
+    }
+
+    void startProgrammingExercise(Boolean offlineIde) throws Exception {
+        exercise.setAllowOnlineEditor(true);
+        exercise.setAllowOfflineIde(offlineIde);
+        exercise = programmingExerciseRepository.save(exercise);
+
+        startProgrammingExercise_correctInitializationState(INDIVIDUAL);
+
+        final VersionControlService.RepositoryPermissions permissions;
+        if (offlineIde == null || Boolean.TRUE.equals(offlineIde)) {
+            permissions = VersionControlService.RepositoryPermissions.READ_WRITE;
+        }
+        else {
+            permissions = VersionControlService.RepositoryPermissions.READ_ONLY;
+        }
+        verify(versionControlService).addMemberToRepository(any(), eq(userRepo.getUserByLoginElseThrow(studentLogin)), eq(permissions));
     }
 
     private Course setupCourseWithProgrammingExercise(ExerciseMode exerciseMode) {
