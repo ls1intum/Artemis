@@ -3,7 +3,7 @@
         <h4 class="modal-title">
             <span> Start a group chat between you and a maximum of 9 other users </span>
         </h4>
-        <button type="button" class="btn-close" (click)="clear()"></button>
+        <button type="button" class="btn-close dismiss" (click)="clear()"></button>
     </div>
     <div class="modal-body">
         <form (ngSubmit)="onSubmit()" [formGroup]="form">
@@ -17,7 +17,7 @@
                     {{ 'artemisApp.messages.addUserForm.requiredError' | artemisTranslate }}
                 </div>
                 <div *ngIf="selectedUsersControl?.errors?.maxlength">
-                    {{ 'artemisApp.messages.addUserForm.maxError' | artemisTranslate: { max: 10 } }}
+                    {{ 'artemisApp.messages.addUserForm.maxError' | artemisTranslate : { max: 10 } }}
                 </div>
             </div>
             <div class="row">

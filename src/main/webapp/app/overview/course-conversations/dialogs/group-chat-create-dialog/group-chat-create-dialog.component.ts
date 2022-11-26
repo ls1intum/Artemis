@@ -2,25 +2,25 @@ import { Component, Input } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
 @Component({
     selector: 'jhi-group-chat-create-dialog',
     templateUrl: './group-chat-create-dialog.component.html',
     styleUrls: ['./group-chat-create-dialog.component.scss'],
 })
-export class GroupChatCreateDialogComponent {
+export class GroupChatCreateDialogComponent extends AbstractDialogComponent {
     @Input()
     course: Course;
-    isInitialized = false;
     form: FormGroup;
 
-    constructor(private activeModal: NgbActiveModal, private fb: FormBuilder) {}
+    constructor(activeModal: NgbActiveModal, private fb: FormBuilder) {
+        super(activeModal);
+    }
 
     initialize() {
-        if (!this.course) {
-            console.error('Error: Dialog not fully configured');
-        } else {
-            this.isInitialized = true;
+        super.initialize(['course']);
+        if (this.isInitialized) {
             this.initializeForm();
         }
     }
@@ -45,10 +45,10 @@ export class GroupChatCreateDialogComponent {
     }
 
     clear() {
-        this.activeModal.dismiss();
+        this.dismiss();
     }
 
     onSubmit() {
-        this.activeModal.close(this.selectedUsersControl?.value ?? []);
+        this.close(this.selectedUsersControl?.value ?? []);
     }
 }
