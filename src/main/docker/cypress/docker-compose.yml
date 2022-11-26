@@ -1,3 +1,6 @@
+#TODO: ask for newer docker-compose version on bamboo agents
+version: '2.4'
+
 services:
     artemis-mysql:
         extends:
