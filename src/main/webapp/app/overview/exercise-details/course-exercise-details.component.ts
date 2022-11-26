@@ -257,7 +257,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     this.exampleSolutionUML = JSON.parse(this.modelingExercise.exampleSolutionModel);
                 }
                 break;
-            case (ExerciseType.TEXT, ExerciseType.FILE_UPLOAD):
+            case ExerciseType.TEXT:
+            case ExerciseType.FILE_UPLOAD:
                 const exercise = newExercise as TextExercise & FileUploadExercise;
                 if (exercise.exampleSolution) {
                     this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(exercise.exampleSolution);
