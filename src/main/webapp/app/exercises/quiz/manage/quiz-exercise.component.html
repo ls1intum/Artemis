@@ -82,9 +82,9 @@
                         <span *ngIf="quizExercise.status === QuizStatus.ACTIVE">{{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}</span>
                         <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
                     </td>
-                    <td>{{ quizExercise.releaseDate ? (quizExercise.releaseDate | artemisDate: 'long':true) : '-' }}</td>
+                    <td>{{ quizExercise.releaseDate ? (quizExercise.releaseDate | artemisDate : 'long' : true) : '-' }}</td>
                     <td>{{ quizExercise.quizBatches?.[0]?.startTime ? (quizExercise.quizBatches![0]!.startTime | artemisDate: 'long':true) : '-' }}</td>
-                    <td>{{ quizExercise.dueDate ? (quizExercise.dueDate | artemisDate: 'long':true) : '-' }}</td>
+                    <td>{{ quizExercise.dueDate ? (quizExercise.dueDate | artemisDate : 'long' : true) : '-' }}</td>
                     <td>
                         {{ fullMinutesForSeconds(quizExercise.duration!) }}
                         <span jhiTranslate="{{ quizExercise.duration! % 60 ? 'artemisApp.quizExercise.minutesShort' : 'artemisApp.quizExercise.minutes' }}"></span>

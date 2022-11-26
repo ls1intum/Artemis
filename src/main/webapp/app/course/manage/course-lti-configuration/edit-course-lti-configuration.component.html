@@ -10,8 +10,8 @@
         <jhi-help-icon text="artemisApp.lti.edit.userPrefixTooltip"></jhi-help-icon>
         <input required type="text" class="form-control" name="userPrefix" id="field_userPrefix" formControlName="userPrefix" />
         <ng-container *ngIf="userPrefix.invalid && (userPrefix.dirty || userPrefix.touched)">
-            <div *ngIf="(userPrefix.errors! | keyvalue | removekeys: ['required']).length > 0" class="alert alert-danger">
-                <div *ngFor="let e of userPrefix.errors! | keyvalue | removekeys: ['required']">
+            <div *ngIf="(userPrefix.errors! | keyvalue | removekeys : ['required']).length > 0" class="alert alert-danger">
+                <div *ngFor="let e of userPrefix.errors! | keyvalue | removekeys : ['required']">
                     <div [jhiTranslate]="'artemisApp.lti.edit.form.userPrefix' + '.' + e.key"></div>
                 </div>
             </div>
