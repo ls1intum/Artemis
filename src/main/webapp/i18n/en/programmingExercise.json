@@ -306,7 +306,7 @@
                 "complaintOnAutomaticAssessmentDisabled": "Complaints are not possible",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
                 "releaseTestsWithExampleSolution": "Publish tests",
-                "releaseTestsWithExampleSolutionTooltip": "Additionally to the example solution the automatic tests can be published after the deadline.",
+                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the deadline.",
                 "releaseTestsWithExampleSolutionEnabled": "Publish",
                 "releaseTestsWithExampleSolutionDisabled": "Don't publish"
             },
