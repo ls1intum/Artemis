@@ -4,7 +4,7 @@
             <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
                 <button class="btn" [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }" ngbDropdownToggle id="filter-dropdown-button">
                     <fa-icon [icon]="faFilter"></fa-icon>
-                    <span class="d-s-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
+                    <span class="d-s-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate : { num: activeFilters.size } }}</span>
                 </button>
                 <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                     <li *ngIf="course.isAtLeastTutor">
@@ -102,7 +102,7 @@
             <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise.exercise)">
                 <h3 class="text-primary">
                     <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
-                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExercise.dueDate | artemisDate } }}
+                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate : { date: nextRelevantExercise.dueDate | artemisDate } }}
                     </span>
                     <ng-template #noDueDate>
                         {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeaderWithoutDueDate' | artemisTranslate }}
@@ -125,8 +125,8 @@
                 >
                     <fa-icon class="pe-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
                     <span *ngIf="weeklyExercisesGrouped[weekKey].start && weeklyExercisesGrouped[weekKey].end">
-                        <strong>{{ weeklyExercisesGrouped[weekKey].start | artemisDate: 'long-date' }}</strong> -
-                        <strong>{{ weeklyExercisesGrouped[weekKey].end | artemisDate: 'long-date' }}</strong>
+                        <strong>{{ weeklyExercisesGrouped[weekKey].start | artemisDate : 'long-date' }}</strong> -
+                        <strong>{{ weeklyExercisesGrouped[weekKey].end | artemisDate : 'long-date' }}</strong>
                     </span>
                     <span *ngIf="!weeklyExercisesGrouped[weekKey].start || !weeklyExercisesGrouped[weekKey].end">
                         {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | artemisTranslate }}
