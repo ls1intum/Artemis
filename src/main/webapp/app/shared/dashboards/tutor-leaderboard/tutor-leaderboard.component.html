@@ -50,7 +50,7 @@
                         *ngIf="course?.isAtLeastInstructor && tutor.hasIssuesWithPerformance"
                         [icon]="faExclamationTriangle"
                         class="text-warning"
-                        ngbTooltip="{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate: { tutorName: tutor.name } }}"
+                        ngbTooltip="{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.tutor' | artemisTranslate : { tutorName: tutor.name } }}"
                     ></fa-icon>
                 </td>
                 <td>{{ tutor.points }}</td>

@@ -12,7 +12,7 @@
         *ngIf="latestResult && latestResult.feedbacks && latestResult.feedbacks.length; else noResult"
         class="guided-tour test-status--linked"
         [class]="tests.length === successfulTests.length ? 'text-success' : failedTests.length ? 'text-danger' : 'text-secondary'"
-        [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate: { totalTests: tests.length, passedTests: successfulTests.length }"
+        [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate : { totalTests: tests.length, passedTests: successfulTests.length }"
         (click)="showDetailsForTests()"
     ></span>
     <!-- There are no results at all, build error or never executed.-->
