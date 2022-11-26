@@ -4,7 +4,7 @@ import { User } from 'app/core/user/user.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Subject, from, takeUntil } from 'rxjs';
+import { Observable, Subject, from, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { canGrantChannelAdminRights, canRemoveUsersFromConversation, canRevokeChannelAdminRights } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
@@ -16,7 +16,7 @@ import { GenericConfirmationDialogComponent } from 'app/overview/course-conversa
 import { onError } from 'app/shared/util/global.utils';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 
@@ -102,68 +102,92 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     }
 
     openGrantChannelAdminRightsDialog(event: MouseEvent) {
+        event.stopPropagation();
         const channel = getAsChannelDto(this.activeConversation);
         if (!channel) {
             return;
         }
-
-        const keys = {
+        const translationKeys = {
             titleKey: 'artemisApp.pages.makeChannelAdmin.title',
             questionKey: 'artemisApp.pages.makeChannelAdmin.question',
             descriptionKey: 'artemisApp.pages.makeChannelAdmin.description',
             confirmButtonKey: 'artemisApp.pages.makeChannelAdmin.confirmButton',
         };
-
         const translationParams = {
-            channelName: channel.name,
+            channelName: channel.name!,
             userName: this.userLabel,
         };
-
-        event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.translationParameters = translationParams;
-        modalRef.componentInstance.translationKeys = keys;
-        modalRef.componentInstance.canBeUndone = true;
-        modalRef.componentInstance.isDangerousAction = true;
-        modalRef.componentInstance.initialize();
-
-        from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
-            .subscribe(() => {
-                this.channelService
-                    .grantChannelAdminRights(this.course?.id!, channel.id!, [this.user.login!])
-                    .pipe(takeUntil(this.ngUnsubscribe))
-                    .subscribe({
-                        next: () => {
-                            this.changePerformed.emit();
-                        },
-                        error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-                    });
-            });
+        const confirmedCallback = () => this.channelService.grantChannelAdminRights(this.course?.id!, channel.id!, [this.user.login!]);
+        this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
     openRevokeChannelAdminRightsDialog(event: MouseEvent) {
+        event.stopPropagation();
         const channel = getAsChannelDto(this.activeConversation);
         if (!channel) {
             return;
         }
-
-        const keys = {
+        const translationKeys = {
             titleKey: 'artemisApp.pages.revokeChannelAdmin.title',
             questionKey: 'artemisApp.pages.revokeChannelAdmin.question',
             descriptionKey: 'artemisApp.pages.revokeChannelAdmin.description',
             confirmButtonKey: 'artemisApp.pages.revokeChannelAdmin.confirmButton',
         };
-
         const translationParams = {
-            channelName: channel.name,
+            channelName: channel.name!,
             userName: this.userLabel,
         };
+        const confirmedCallback = () => this.channelService.revokeChannelAdminRights(this.course?.id!, channel.id!, [this.user.login!]);
+        this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
+    }
 
+    openRemoveFromPrivateChannelDialog(event: MouseEvent) {
         event.stopPropagation();
+        const channel = getAsChannelDto(this.activeConversation);
+        if (!channel) {
+            return;
+        }
+        const translationKeys = {
+            titleKey: 'artemisApp.messages.removeUserPrivateChannel.title',
+            questionKey: 'artemisApp.messages.removeUserPrivateChannel.question',
+            descriptionKey: 'artemisApp.messages.removeUserPrivateChannel.warning',
+            confirmButtonKey: 'artemisApp.messages.removeUserPrivateChannel.remove',
+        };
+        const translationParams = {
+            userName: this.userLabel,
+            channelName: channel.name!,
+        };
+        const confirmedCallback = () => this.channelService.deregisterUsersFromChannel(this.course.id!, this.activeConversation.id!, [this.user.login!]);
+        this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
+    }
+
+    openRemoveFromGroupChatDialog(event: MouseEvent) {
+        event.stopPropagation();
+        const groupChat = getAsGroupChatDto(this.activeConversation);
+        if (!groupChat) {
+            return;
+        }
+        const translationKeys = {
+            titleKey: 'artemisApp.messages.removeUserGroupChat.title',
+            questionKey: 'artemisApp.messages.removeUserGroupChat.question',
+            descriptionKey: 'artemisApp.messages.removeUserGroupChat.warning',
+            confirmButtonKey: 'artemisApp.messages.removeUserGroupChat.remove',
+        };
+        const translationParams = {
+            userName: this.userLabel,
+        };
+        const confirmedCallback = () => this.groupChatService.removeUsersFromGroupChat(this.course.id!, this.activeConversation.id!, [this.user.login!]);
+        this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
+    }
+
+    private openConfirmationDialog(
+        translationKeys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string },
+        translationParams: { [key: string]: string },
+        confirmedCallback: () => Observable<HttpResponse<void>>,
+    ) {
         const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
         modalRef.componentInstance.translationParameters = translationParams;
-        modalRef.componentInstance.translationKeys = keys;
+        modalRef.componentInstance.translationKeys = translationKeys;
         modalRef.componentInstance.canBeUndone = true;
         modalRef.componentInstance.isDangerousAction = true;
         modalRef.componentInstance.initialize();
@@ -171,8 +195,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         from(modalRef.result)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe(() => {
-                this.channelService
-                    .revokeChannelAdminRights(this.course?.id!, channel.id!, [this.user.login!])
+                confirmedCallback()
                     .pipe(takeUntil(this.ngUnsubscribe))
                     .subscribe({
                         next: () => {
@@ -191,85 +214,6 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         } else {
             throw new Error('Unsupported conversation type');
         }
-    }
-
-    openRemoveFromPrivateChannelDialog(event: MouseEvent) {
-        const channel = getAsChannelDto(this.activeConversation);
-        if (!channel) {
-            return;
-        }
-        const keys = {
-            titleKey: 'artemisApp.messages.removeUserPrivateChannel.title',
-            questionKey: 'artemisApp.messages.removeUserPrivateChannel.question',
-            descriptionKey: 'artemisApp.messages.removeUserPrivateChannel.warning',
-            confirmButtonKey: 'artemisApp.messages.removeUserPrivateChannel.remove',
-        };
-
-        const translationParams = {
-            userName: this.userLabel,
-            channelName: channel.name,
-        };
-
-        event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.translationParameters = translationParams;
-        modalRef.componentInstance.translationKeys = keys;
-        modalRef.componentInstance.canBeUndone = true;
-        modalRef.componentInstance.isDangerousAction = true;
-        modalRef.componentInstance.initialize();
-
-        from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
-            .subscribe(() => {
-                this.channelService
-                    .deregisterUsersFromChannel(this.course.id!, this.activeConversation.id!, [this.user.login!])
-                    .pipe(takeUntil(this.ngUnsubscribe))
-                    .subscribe({
-                        next: () => {
-                            this.changePerformed.emit();
-                        },
-                        error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-                    });
-            });
-    }
-
-    openRemoveFromGroupChatDialog(event: MouseEvent) {
-        const groupChat = getAsGroupChatDto(this.activeConversation);
-        if (!groupChat) {
-            return;
-        }
-        const keys = {
-            titleKey: 'artemisApp.messages.removeUserGroupChat.title',
-            questionKey: 'artemisApp.messages.removeUserGroupChat.question',
-            descriptionKey: 'artemisApp.messages.removeUserGroupChat.warning',
-            confirmButtonKey: 'artemisApp.messages.removeUserGroupChat.remove',
-        };
-
-        const translationParams = {
-            userName: this.userLabel,
-        };
-
-        event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.translationParameters = translationParams;
-        modalRef.componentInstance.translationKeys = keys;
-        modalRef.componentInstance.canBeUndone = true;
-        modalRef.componentInstance.isDangerousAction = true;
-        modalRef.componentInstance.initialize();
-
-        from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
-            .subscribe(() => {
-                this.groupChatService
-                    .removeUsersFromGroupChat(this.course.id!, this.activeConversation.id!, [this.user.login!])
-                    .pipe(takeUntil(this.ngUnsubscribe))
-                    .subscribe({
-                        next: () => {
-                            this.changePerformed.emit();
-                        },
-                        error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-                    });
-            });
     }
 
     setUserAuthorityIconAndTooltip(): void {
