@@ -62,6 +62,10 @@ examples.forEach((activeConversation) => {
             updateGroupChatSpy.mockReturnValue(of(new HttpResponse({ body: exampleUpdatedGroupChat })));
         });
 
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
         it('should create', () => {
             expect(component).toBeTruthy();
         });

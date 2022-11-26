@@ -81,6 +81,10 @@ examples.forEach((activeConversation) => {
             component.canAddUsersToConversation = canAddUsersToConversation;
         });
 
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
         it('should create', () => {
             expect(component).toBeTruthy();
         });

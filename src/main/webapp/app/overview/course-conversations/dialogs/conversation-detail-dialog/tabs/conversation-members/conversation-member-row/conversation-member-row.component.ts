@@ -38,7 +38,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     changePerformed: EventEmitter<void> = new EventEmitter<void>();
 
     @Input()
-    user: ConversationUserDTO;
+    conversationMember: ConversationUserDTO;
 
     idOfLoggedInUser: number;
 
@@ -47,7 +47,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     isCreator = false;
 
-    canBeDeleted = false;
+    canBeRemovedFromConversation = false;
 
     canBeGrantedChannelAdminRights = false;
 
@@ -63,6 +63,9 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     isChannel = isChannelDto;
 
+    canGrantChannelAdminRights = canGrantChannelAdminRights;
+    canRevokeChannelAdminRights = canRevokeChannelAdminRights;
+    canRemoveUsersFromConversation = canRemoveUsersFromConversation;
     constructor(
         private accountService: AccountService,
         private modalService: NgbModal,
@@ -73,24 +76,26 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
-        if (this.user && this.activeConversation) {
+        if (this.conversationMember && this.activeConversation) {
             this.accountService.identity().then((loggedInUser: User) => {
                 this.idOfLoggedInUser = loggedInUser.id!;
-                if (this.user.id === this.idOfLoggedInUser) {
+                if (this.conversationMember.id === this.idOfLoggedInUser) {
                     this.isCurrentUser = true;
                 }
-                if (this.user.id === this.activeConversation?.creator?.id) {
+                if (this.conversationMember.id === this.activeConversation?.creator?.id) {
                     this.isCreator = true;
                 }
 
-                this.userLabel = getUserLabel(this.user);
+                this.userLabel = getUserLabel(this.conversationMember);
                 this.setUserAuthorityIconAndTooltip();
-                this.canBeDeleted = !this.isCurrentUser && !this.isCreator && canRemoveUsersFromConversation(this.activeConversation);
+                this.canBeRemovedFromConversation = !this.isCurrentUser && !this.isCreator && this.canRemoveUsersFromConversation(this.activeConversation);
 
                 if (isChannelDto(this.activeConversation)) {
-                    this.canBeGrantedChannelAdminRights = canGrantChannelAdminRights(this.activeConversation) && !this.user.isChannelAdmin;
+                    this.canBeGrantedChannelAdminRights = this.canGrantChannelAdminRights(this.activeConversation) && !this.conversationMember.isChannelAdmin;
                     this.canBeRevokedChannelAdminRights =
-                        canRevokeChannelAdminRights(this.activeConversation) && this.activeConversation?.creator?.id !== this.user?.id && !!this.user.isChannelAdmin;
+                        this.canRevokeChannelAdminRights(this.activeConversation) &&
+                        this.activeConversation?.creator?.id !== this.conversationMember?.id &&
+                        !!this.conversationMember.isChannelAdmin;
                 }
             });
         }
@@ -117,7 +122,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             channelName: channel.name!,
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.channelService.grantChannelAdminRights(this.course?.id!, channel.id!, [this.user.login!]);
+        const confirmedCallback = () => this.channelService.grantChannelAdminRights(this.course?.id!, channel.id!, [this.conversationMember.login!]);
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
@@ -137,7 +142,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             channelName: channel.name!,
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.channelService.revokeChannelAdminRights(this.course?.id!, channel.id!, [this.user.login!]);
+        const confirmedCallback = () => this.channelService.revokeChannelAdminRights(this.course?.id!, channel.id!, [this.conversationMember.login!]);
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
@@ -157,7 +162,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             userName: this.userLabel,
             channelName: channel.name!,
         };
-        const confirmedCallback = () => this.channelService.deregisterUsersFromChannel(this.course.id!, this.activeConversation.id!, [this.user.login!]);
+        const confirmedCallback = () => this.channelService.deregisterUsersFromChannel(this.course.id!, this.activeConversation.id!, [this.conversationMember.login!]);
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
@@ -176,7 +181,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         const translationParams = {
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.groupChatService.removeUsersFromGroupChat(this.course.id!, this.activeConversation.id!, [this.user.login!]);
+        const confirmedCallback = () => this.groupChatService.removeUsersFromGroupChat(this.course.id!, this.activeConversation.id!, [this.conversationMember.login!]);
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
@@ -219,10 +224,10 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     setUserAuthorityIconAndTooltip(): void {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
         // highest authority is displayed
-        if (this.user.isInstructor) {
+        if (this.conversationMember.isInstructor) {
             this.userIcon = faChalkboardTeacher;
             this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'instructor');
-        } else if (this.user.isEditor || this.user.isTeachingAssistant) {
+        } else if (this.conversationMember.isEditor || this.conversationMember.isTeachingAssistant) {
             this.userIcon = faUserCheck;
             this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'ta');
         } else {

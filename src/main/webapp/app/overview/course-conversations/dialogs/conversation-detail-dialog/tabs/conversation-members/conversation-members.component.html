@@ -48,7 +48,7 @@
                     *ngFor="let user of members; let i = index; trackBy: trackIdentity"
                     class="list-group-item"
                     jhi-conversation-member-row
-                    [user]="user"
+                    [conversationMember]="user"
                     [activeConversation]="activeConversation"
                     [course]="course"
                     (changePerformed)="onChangePerformed()"
