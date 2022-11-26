@@ -46,7 +46,9 @@
               "js-video-url-parser",
               "dompurify",
               "interactjs",
-              "mobile-drag-drop"
+              "mobile-drag-drop",
+              "dagre",
+              "webcola"
             ],
             "outputPath": "build/resources/main/static/",
             "index": "src/main/webapp/index.html",
