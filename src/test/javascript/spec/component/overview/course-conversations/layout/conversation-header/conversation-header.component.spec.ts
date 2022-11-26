@@ -12,7 +12,7 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { BehaviorSubject, NEVER } from 'rxjs';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
-import { defaultFirstLayerDialogOptions, defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
