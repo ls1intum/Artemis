@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -32,7 +31,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
-    private static final String TEST_PREFIX = "userjenkinsgitlabinttest";
+    private static final String TEST_PREFIX = "userjenk"; // shorter prefix as user's name is limited to 50 chars
 
     @Value("${artemis.continuous-integration.user}")
     private String jenkinsAdminUsername;
@@ -66,7 +65,9 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     }
 
     @AfterEach
-    void teardown() throws IOException {
+    void teardown() throws Exception {
+        jenkinsRequestMockProvider.reset();
+        gitlabRequestMockProvider.reset();
         userTestService.tearDown();
     }
 
@@ -351,8 +352,6 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         Course course = database.addEmptyCourse();
         ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
 
-        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
-
         User newUser = userTestService.student;
         newUser.setId(null);
         newUser.setLogin("batman");
@@ -369,8 +368,6 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     void createUserWithGroupsAlreadyFailsInGitlab() throws Exception {
         Course course = database.addEmptyCourse();
         ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
-
-        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
 
         User newUser = userTestService.student;
         newUser.setId(null);

@@ -99,6 +99,7 @@ public class UserTestService {
     }
 
     public void tearDown() throws IOException {
+        userRepository.deleteAll();
         database.resetDatabase();
     }
 
@@ -151,11 +152,14 @@ public class UserTestService {
     // Test
     public void deleteUsers() throws Exception {
         userRepository.deleteAll();
-        var users = database.addUsers(1, 1, 1, 1);
+        var users = database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         for (var user : users) {
             user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
-            mockDelegate.mockDeleteUserInUserManagement(user, true, false, false);
+            // not expecting to delete the admin user as current user
+            if (!"admin".equals(user.getLogin())) {
+                mockDelegate.mockDeleteUserInUserManagement(user, true, false, false);
+            }
         }
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -174,14 +178,17 @@ public class UserTestService {
     // Test
     public void deleteUsersException() throws Exception {
         userRepository.deleteAll();
-        var users = database.addUsers(1, 1, 1, 1);
+        var users = database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         users.stream().map(User::getLogin).forEach(login -> params.add("login", login));
 
         for (var user : users) {
             user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
-            mockDelegate.mockDeleteUserInUserManagement(user, true, true, true);
+            // not expecting to delete the admin user as current user
+            if (!"admin".equals(user.getLogin())) {
+                mockDelegate.mockDeleteUserInUserManagement(user, true, true, true);
+            }
         }
 
         request.delete("/api/users", HttpStatus.OK, params);
@@ -320,8 +327,6 @@ public class UserTestService {
 
     // Test
     public User createExternalUser_asAdmin_isSuccessful() throws Exception {
-        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
-
         String password = "foobar1234";
         student.setId(null);
         student.setLogin("batman");
@@ -802,25 +807,49 @@ public class UserTestService {
         return params;
     }
 
+    /**
+     * Helper method to determine the user authority which is used most often in a user creation matrix
+     * @param userNumbers the user creation matrix
+     * @return String of the user authority with the most users
+     * @throws Exception
+     */
+    private String getMainUserAuthority(Integer[] userNumbers) throws Exception {
+        List<Integer> userNumbersList = Arrays.asList(userNumbers);
+        var authorityIndex = userNumbersList.indexOf(Collections.max(userNumbersList));
+        switch (authorityIndex) {
+            case 0:
+                return "student";
+            case 1:
+                return "tutor";
+            case 2:
+                return "editor";
+            case 3:
+                return "instructor";
+            default:
+                throw new Exception("Couldn't match the input user array to an authority.");
+        }
+    }
+
     // Test
     public void testUserWithoutGroups() throws Exception {
         final var params = createParamsForPagingRequest("USER", "", "", "", "-1");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
-        for (int[] number : numbers) {
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
+        for (Integer[] number : numbers) {
             userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]);
-            users.get(0).setGroups(Collections.emptySet());
-            users.get(1).setGroups(Set.of("tumuser"));
-            userRepository.saveAll(users);
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setGroups(Collections.emptySet());
+            user2.setGroups(Set.of("tumuser"));
+            userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1); // user
-            assertThat(result.get(0)).isEqualTo(users.get(0));
+            assertThat(result).hasSize(1).contains(user1);
         }
     }
 
@@ -832,18 +861,19 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "", FILTER_WITHOUT_REG_NO, "", Long.toString(course.getId()));
 
         List<User> result;
-        List<User> users;
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
             userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]);
-            users.get(0).setGroups(Collections.emptySet());
-            users.get(1).setGroups(Set.of("tumuser"));
-            userRepository.saveAll(users);
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setGroups(Collections.emptySet());
+            user2.setGroups(Set.of("tumuser"));
+            userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0)).isEqualTo(users.get(1));
+            assertThat(result).hasSize(1).contains(user2);
         }
     }
 
@@ -852,18 +882,20 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "ACTIVATED", "");
 
         List<User> result;
-        List<User> users;
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
             userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setActivated(true);
-            users.get(1).setActivated(false);
-            userRepository.saveAll(users);
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User admin = userRepository.getUserByLoginElseThrow("admin");
+            user1.setActivated(true);
+            user2.setActivated(false);
+            userRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(2); // admin and user
-            assertThat(result.get(0)).isEqualTo(users.get(0));
+            assertThat(result).hasSize(2).contains(user1, admin);
         }
     }
 
@@ -872,20 +904,21 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "DEACTIVATED", "");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
             userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setActivated(true);
-            users.get(1).setActivated(false);
-            userRepository.saveAll(users);
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setActivated(true);
+            user2.setActivated(false);
+            userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1); // user
-            assertThat(result.get(0)).isEqualTo(users.get(1));
+            assertThat(result).hasSize(1).contains(user2);
         }
     }
 
@@ -894,21 +927,22 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "INTERNAL", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
             userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setInternal(true);
-            users.get(1).setInternal(false);
-            userRepository.saveAll(users);
-            final User admin = userRepository.getUserByLoginElseThrow("admin");
-
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User admin = userRepository.getUserByLoginElseThrow("admin");
+            user1.setInternal(true);
+            user2.setInternal(false);
+            userRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(2).contains(users.get(0), admin);
+            assertThat(result).hasSize(2).contains(user1, admin);
         }
     }
 
@@ -917,19 +951,21 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "EXTERNAL", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
             userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setInternal(true);
-            users.get(1).setInternal(false);
-            userRepository.saveAll(users);
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setInternal(true);
+            user2.setInternal(false);
+            userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1).contains(users.get(1));
+            assertThat(result).hasSize(1).contains(user2);
         }
     }
 
@@ -938,17 +974,19 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
             userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setInternal(true);
-            users.get(1).setInternal(false);
-            userRepository.saveAll(users);
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setInternal(true);
+            user2.setInternal(false);
+            userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());
         }
@@ -963,17 +1001,19 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITH_REG_NO", "", "");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
             userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setRegistrationNumber(null);
-            users.get(1).setRegistrationNumber(null);
-            userRepository.saveAll(users);
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setRegistrationNumber(null);
+            user2.setRegistrationNumber(null);
+            userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());
         }
@@ -988,19 +1028,22 @@ public class UserTestService {
         final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
-        List<User> users;
 
         database.addEmptyCourse();
 
-        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
-        for (int[] number : numbers) {
+        Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (Integer[] number : numbers) {
             userRepository.deleteAll();
-            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setRegistrationNumber("5461351");
-            users.get(1).setRegistrationNumber("");
-            userRepository.saveAll(users);
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            final var mainUserAuthority = getMainUserAuthority(number);
+            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            user1.setRegistrationNumber("5461351");
+            user2.setRegistrationNumber("");
+            User admin = userRepository.getUserByLoginElseThrow("admin");
+            userRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result.get(0)).isEqualTo(users.get(2));
+            assertThat(result).hasSize(1).contains(admin);
         }
     }
 }

@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "userbamboobitbucketjirainttest";
+    private static final String TEST_PREFIX = "userbamb"; // shorter prefix as user's name is limited to 50 chars
 
     @Autowired
     private UserTestService userTestService;
@@ -39,6 +39,7 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
 
     @AfterEach
     void teardown() throws IOException {
+        userRepository.deleteAll();
         bitbucketRequestMockProvider.reset();
         userTestService.tearDown();
     }
@@ -120,7 +121,7 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createInternalUser_asAdmin_isSuccessful() throws Exception {
         bitbucketRequestMockProvider.mockUserDoesNotExist("batman");
-        bitbucketRequestMockProvider.mockCreateUser("batman", "foobar1234", "batman@secret.invalid", "student1First student1Last");
+        bitbucketRequestMockProvider.mockCreateUser("batman", "foobar1234", "batman@secret.invalid", TEST_PREFIX + "student1First " + TEST_PREFIX + "student1Last");
         bitbucketRequestMockProvider.mockAddUserToGroups();
         userTestService.createInternalUser_asAdmin_isSuccessful();
     }
