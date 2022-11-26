@@ -1,5 +1,5 @@
-<div class="row footer fixed d-none d-md-flex" id="footer">
-    <div class="guided-tour col-sm-6">
+<footer class="d-none d-md-flex" id="footer">
+    <div class="guided-tour-footer-about col-sm-6">
         <a [routerLink]="['/about']" id="about" jhiTranslate="aboutUs" class="footer-text"></a>
     </div>
 
@@ -9,11 +9,11 @@
         <a [routerLink]="['/privacy']" id="privacy" jhiTranslate="legal.privacy.title" class="footer-text ms-3"></a>
         <a [routerLink]="['/imprint']" id="imprint" jhiTranslate="legal.imprint.title" class="footer-text ms-3"></a>
     </div>
-</div>
+</footer>
 
-<div class="row footer d-md-none justify-content-between mw-100">
+<footer class="d-flex d-md-none justify-content-between mw-100">
     <div class="col-auto px-0">
-        <a [routerLink]="['/about']" jhiTranslate="aboutUs" class="footer-text ms-3"></a>
+        <a [routerLink]="['/about']" jhiTranslate="aboutUs" class="footer-text"></a>
     </div>
     <div class="col-auto px-0">
         <a [href]="requestChangeUrl" jhiTranslate="requestChange" class="footer-text" target="_blank"></a>
@@ -24,4 +24,4 @@
     <div class="col-auto px-0">
         <a [routerLink]="['/imprint']" jhiTranslate="legal.imprint.title" class="footer-text"></a>
     </div>
-</div>
+</footer>
