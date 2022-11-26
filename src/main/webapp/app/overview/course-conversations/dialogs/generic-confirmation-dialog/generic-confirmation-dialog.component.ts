@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
 export interface GenericConfirmationTranslationKeys {
     titleKey: string;
@@ -11,7 +12,7 @@ export interface GenericConfirmationTranslationKeys {
     selector: 'jhi-generic-confirmation-dialog',
     templateUrl: './generic-confirmation-dialog.component.html',
 })
-export class GenericConfirmationDialogComponent {
+export class GenericConfirmationDialogComponent extends AbstractDialogComponent {
     @Input()
     translationParameters = {};
 
@@ -24,23 +25,19 @@ export class GenericConfirmationDialogComponent {
     @Input()
     isDangerousAction = false;
 
-    constructor(private activeModal: NgbActiveModal) {}
-
-    isInitialized = false;
+    constructor(activeModal: NgbActiveModal) {
+        super(activeModal);
+    }
 
     initialize() {
-        if (!this.translationKeys) {
-            console.error('Error: Dialog not fully configured');
-        } else {
-            this.isInitialized = true;
-        }
+        super.initialize(['translationKeys']);
     }
 
     clear() {
-        this.activeModal.dismiss();
+        this.dismiss();
     }
 
     confirm() {
-        this.activeModal.close();
+        this.close();
     }
 }
