@@ -122,7 +122,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                         id: 2374,
                         score: 8,
                         rated: true,
-                        hasFeedback: true,
                         hasComplaint: true,
                         feedbacks: [
                             {
@@ -214,7 +213,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             id: 2374,
             score: 8,
             rated: true,
-            hasFeedback: true,
             hasComplaint: false,
         } as unknown as Result;
 
@@ -260,7 +258,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 id: 2374,
                 score: 8,
                 rated: true,
-                hasFeedback: true,
                 hasComplaint: false,
             } as unknown as Result,
         ];
@@ -309,7 +306,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             id: 2374,
             score: 8,
             rated: true,
-            hasFeedback: true,
             hasComplaint: false,
             participation: {
                 type: ParticipationType.SOLUTION,

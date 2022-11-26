@@ -39,7 +39,7 @@ public class TutorialGroupSessionResource {
 
     private static final String ENTITY_NAME = "tutorialGroupSession";
 
-    private final Logger log = LoggerFactory.getLogger(TutorialGroupSession.class);
+    private final Logger log = LoggerFactory.getLogger(TutorialGroupSessionResource.class);
 
     private final TutorialGroupSessionRepository tutorialGroupSessionRepository;
 

@@ -16,6 +16,7 @@
                 class="btn btn-primary jh-create-entity create-programming-exercise text-truncate mb-1 me-1"
                 [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                 [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
+                queryParamsHandling="merge"
             >
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">Generate new Programming Exercise</span>
