@@ -405,6 +405,9 @@ public class ProgrammingExerciseExportService {
 
         try {
             gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUrl(), clonePath, true);
+            if (!clonePath.toFile().exists()) {
+                Files.createDirectories(clonePath);
+            }
             String assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(exercise.getProgrammingLanguage());
             FileUtils.deleteDirectory(clonePath.resolve(assignmentPath).toFile());
             gitService.getOrCheckoutRepository(exercise.getVcsSolutionRepositoryUrl(), clonePath.resolve(assignmentPath), true);
