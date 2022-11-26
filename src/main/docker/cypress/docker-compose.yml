@@ -92,14 +92,15 @@ services:
         # TODO: Copy security-limits nginx.conf (from ansible task)
         # TODO: Copy systemd-limits nginx.conf (from ansible task)
         image: nginx:latest
+        restart: "unless-stopped"
         volumes:
             - ./nginx-files/timeouts.conf:/etc/nginx/conf.d/timeouts.conf:ro
             - ./nginx-files/artemis.conf:/etc/nginx/conf.d/artemis.conf:ro
             - ./nginx-files/dhparam.pem:/etc/nginx/dhparam.pem:ro
             - ./nginx-files/nginx_502.html:/usr/share/nginx/html/502.html:ro
             - ./nginx-files/70-artemis-setup.sh:/docker-entrypoint.d/70-artemis-setup.sh
-            - ./certs/artemis-nginx+4.pem:/certs/fullchain.pem:ro
-            - ./certs/artemis-nginx+4-key.pem:/certs/priv_key.pem:ro
+            - ../../../test/cypress/certs/artemis-nginx+4.pem:/certs/fullchain.pem:ro
+            - ../../../test/cypress/certs/artemis-nginx+4-key.pem:/certs/priv_key.pem:ro
             #- ./pki:/etc/pki/nginx:ro
             #- ./defaults/templates:/etc/nginx/templates:ro
             #- ./defaults/nginx.conf:/etc/nginx/nginx.conf:ro
