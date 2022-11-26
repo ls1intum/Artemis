@@ -32,7 +32,7 @@ export class CreateModelingExercisePage {
      * @param date should be in Format: YYYY-MM-DDTHH:mm:ss.SSS
      * */
     setReleaseDate(date: string) {
-        cy.get('#pick-modeling-releaseDate').find('#date-input-field').clear().type(date, { force: true });
+        cy.get('#pick-releaseDate').find('#date-input-field').clear().type(date, { force: true });
     }
 
     /**
@@ -40,7 +40,7 @@ export class CreateModelingExercisePage {
      * @param date should be in Format: YYYY-MM-DDTHH:mm:ss.SSS
      * */
     setDueDate(date: string) {
-        cy.get('#pick-modeling-dueDate').find('#date-input-field').clear().type(date, { force: true });
+        cy.get('#pick-dueDate').find('#date-input-field').clear().type(date, { force: true });
     }
 
     /**
@@ -48,7 +48,7 @@ export class CreateModelingExercisePage {
      * @param date should be in Format: YYYY-MM-DDTHH:mm:ss.SSS
      * */
     setAssessmentDueDate(date: string) {
-        cy.get('#pick-modeling-assessmentDueDate').find('#date-input-field').clear().type(date, { force: true });
+        cy.get('#pick-assessmentDueDate').find('#date-input-field').clear().type(date, { force: true });
     }
 
     includeInOverallScore() {

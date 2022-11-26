@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -63,8 +62,8 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
         }
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
-            log.error(ex.getMessage());
-            response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());
+            log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
         }
     }
 
@@ -88,7 +87,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         PrintWriter writer = response.getWriter();
 
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLinkUri);
-        lti13Service.addLtiQueryParams(uriBuilder);
+        lti13Service.buildLtiResponse(uriBuilder, response);
 
         JSONObject json = new JSONObject();
         json.put("targetLinkUri", uriBuilder.build().toUriString());

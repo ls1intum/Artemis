@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 
 class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -151,7 +150,6 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         else {
             jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(email);
         }
-
         jiraRequestMockProvider.mockAddUserToGroup("tumuser", false);
     }
 
@@ -308,38 +306,12 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, params);
     }
 
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void exerciseLtiConfiguration() throws Exception {
-        request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.OK, ExerciseLtiConfigurationDTO.class);
-        request.get("/api/lti/configuration/1234254354", HttpStatus.NOT_FOUND, ExerciseLtiConfigurationDTO.class);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void exerciseLtiConfiguration_withEmptyConfig() throws Throwable {
-        course.setOnlineCourseConfiguration(null);
-        courseRepository.save(course);
-
-        request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.BAD_REQUEST, ExerciseLtiConfigurationDTO.class);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void exerciseLtiConfigurationAsStudent() throws Exception {
-        course.setInstructorGroupName("123");
-        courseRepository.save(course);
-        request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.FORBIDDEN, ExerciseLtiConfigurationDTO.class);
-    }
-
     private void assertParametersExistingStudent(MultiValueMap<String, String> parameters) {
-        assertThat(parameters.getFirst("jwt")).isEqualTo("");
         assertThat(parameters.getFirst("initialize")).isNull();
         assertThat(parameters.getFirst("ltiSuccessLoginRequired")).isNotNull();
     }
 
     private void assertParametersNewStudent(MultiValueMap<String, String> parameters) {
-        assertThat(parameters.getFirst("jwt")).isNotBlank();
         assertThat(parameters.getFirst("initialize")).isNotNull();
         assertThat(parameters.getFirst("ltiSuccessLoginRequired")).isNull();
     }

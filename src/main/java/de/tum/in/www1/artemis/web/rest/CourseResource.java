@@ -79,6 +79,8 @@ public class CourseResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
+
     private final OAuth2JWKSService oAuth2JWKSService;
 
     private final CourseRepository courseRepository;
@@ -102,14 +104,15 @@ public class CourseResource {
     private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            OAuth2JWKSService oAuth2JWKSService, AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository,
-            SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService,
-            ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService, FileService fileService,
-            TutorialGroupsConfigurationService tutorialGroupsConfigurationService) {
+            OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
+            TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.oAuth2JWKSService = oAuth2JWKSService;
+        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.submissionService = submissionService;
@@ -136,7 +139,7 @@ public class CourseResource {
         log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(courseUpdate.getId());
+        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsAndOnlineConfigurationElseThrow(courseUpdate.getId());
 
         if (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
@@ -181,10 +184,11 @@ public class CourseResource {
         courseUpdate.setId(courseId);
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
+        courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
+
         courseUpdate.validateRegistrationConfirmationMessage();
         courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();
         courseUpdate.validateOnlineCourseAndRegistrationEnabled();
-        courseUpdate.validateOnlineCourseConfiguration();
         courseUpdate.validateShortName();
         courseUpdate.validateAccuracyOfScores();
         if (!courseUpdate.isValidStartAndEndDate()) {
@@ -194,6 +198,15 @@ public class CourseResource {
         if (file != null) {
             String pathString = fileService.handleSaveFile(file, false, false);
             courseUpdate.setCourseIcon(pathString);
+        }
+
+        if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
+            if (courseUpdate.isOnlineCourse()) {
+                onlineCourseConfigurationService.createOnlineCourseConfiguration(courseUpdate);
+            }
+            else {
+                courseUpdate.setOnlineCourseConfiguration(null);
+            }
         }
 
         courseUpdate.setId(courseId); // Don't persist a wrong ID
@@ -206,10 +219,6 @@ public class CourseResource {
         final var oldEditorGroup = existingCourse.getEditorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
 
-        if (courseUpdate.isOnlineCourse()) {
-            oAuth2JWKSService.updateKey(courseUpdate.getOnlineCourseConfiguration().getRegistrationId());
-        }
-
         optionalVcsUserManagementService
                 .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
@@ -218,6 +227,41 @@ public class CourseResource {
             tutorialGroupsConfigurationService.onTimeZoneUpdate(result);
         }
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given cours.
+     *
+     * @param courseId the id of the course to update
+     * @param onlineCourseConfiguration the online course configuration to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
+     */
+    @PutMapping("courses/{courseId}/onlineCourseConfiguration")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
+            @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
+        log.debug("REST request to update the online course configuration for Course : {}", courseId);
+
+        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        if (!course.isOnlineCourse()) {
+            throw new BadRequestAlertException("Course must be online course", Course.ENTITY_NAME, "courseMustBeOnline");
+        }
+
+        if (!course.getOnlineCourseConfiguration().getId().equals(onlineCourseConfiguration.getId())) {
+            throw new BadRequestAlertException("The onlineCourseConfigurationId does not match the id of the course's onlineCourseConfiguration",
+                    OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
+        }
+
+        onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+
+        courseRepository.save(course);
+
+        oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
+
+        return ResponseEntity.ok(onlineCourseConfiguration);
     }
 
     /**

@@ -10,7 +10,9 @@
             "unset": "Unset",
             "create": "Create",
             "start": "Start",
-            "edit": "Edit"
+            "edit": "Edit",
+            "copy": "Copy",
+            "copied": "Copied"
         },
         "menu": {
             "home": "Home",

@@ -59,6 +59,11 @@
         <span *ngIf="exercise.releaseDate">{{ exercise.releaseDate | artemisDate }}</span>
         <span *ngIf="!exercise.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
     </dd>
+    <dt><span jhiTranslate="artemisApp.exercise.startDate">Start Date</span></dt>
+    <dd>
+        <span *ngIf="exercise.startDate">{{ exercise.startDate | artemisDate }}</span>
+        <span *ngIf="!exercise.startDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+    </dd>
     <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
     <dd>
         <span *ngIf="exercise.dueDate">{{ exercise.dueDate | artemisDate }}</span>
@@ -117,11 +122,5 @@
             [readonly]="true"
             [criteria]="exercise.gradingCriteria || []"
         ></jhi-structured-grading-instructions-assessment-layout>
-    </dd>
-</ng-container>
-<ng-container *ngIf="isExamExercise === false && exercise.course?.onlineCourse === true && exercise.isAtLeastEditor === true">
-    <dt><span jhiTranslate="artemisApp.lti.lti">LTI</span></dt>
-    <dd>
-        <a [routerLink]="['/course-management', exercise.course?.id, exercise.type + '-exercises', exercise.id, 'lti-configuration']">LTI Configuration</a>
     </dd>
 </ng-container>

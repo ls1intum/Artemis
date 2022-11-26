@@ -47,12 +47,6 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
     List<Feedback> findFeedbackByGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);
 
     /**
-     * Delete all feedbacks that belong to the given result
-     * @param resultId the Id of the result where the feedbacks should be deleted
-     */
-    void deleteByResult_Id(long resultId);
-
-    /**
      * Save the given feedback elements to the database in case they are not yet connected to a result
      *
      * @param feedbackList the feedback items that should be saved

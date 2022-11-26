@@ -10,7 +10,9 @@
             "unset": "Nicht gesetzt",
             "create": "Erstellen",
             "start": "Start",
-            "edit": "Editieren"
+            "edit": "Editieren",
+            "copy": "Kopieren",
+            "copied": "Kopiert"
         },
         "menu": {
             "home": "Startseite",
