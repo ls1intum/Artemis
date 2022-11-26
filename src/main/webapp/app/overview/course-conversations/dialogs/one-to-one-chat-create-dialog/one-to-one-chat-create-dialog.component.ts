@@ -2,13 +2,13 @@ import { Component, Input } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
 @Component({
     selector: 'jhi-one-to-one-chat-create-dialog',
     templateUrl: './one-to-one-chat-create-dialog.component.html',
-    styleUrls: ['./one-to-one-chat-create-dialog.component.scss'],
 })
-export class OneToOneChatCreateDialogComponent {
+export class OneToOneChatCreateDialogComponent extends AbstractDialogComponent {
     @Input()
     course: Course;
 
@@ -16,22 +16,19 @@ export class OneToOneChatCreateDialogComponent {
     selectedUsers: UserPublicInfoDTO[] = [];
     userToChatWith?: UserPublicInfoDTO;
 
-    constructor(private activeModal: NgbActiveModal) {}
-
+    constructor(activeModal: NgbActiveModal) {
+        super(activeModal);
+    }
     initialize() {
-        if (!this.course) {
-            console.error('Error: Dialog not fully configured');
-        } else {
-            this.isInitialized = true;
-        }
+        super.initialize(['course']);
     }
 
     clear() {
-        this.activeModal.dismiss();
+        this.dismiss();
     }
 
     onUserSelected() {
-        this.activeModal.close(this.userToChatWith);
+        this.close(this.userToChatWith);
     }
 
     onSelectedUsersChange(selectedUsers: UserPublicInfoDTO[]) {
