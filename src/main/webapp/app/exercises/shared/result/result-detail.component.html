@@ -1,6 +1,6 @@
 <div class="modal-header">
     <h4 class="modal-title">
-        <ng-container *ngIf="taskName; else noTaskDescription">{{ 'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName } }}</ng-container>
+        <ng-container *ngIf="taskName; else noTaskDescription">{{ 'artemisApp.result.detail.feedbackForTask' | artemisTranslate : { taskName } }}</ng-container>
         <ng-template #noTaskDescription>{{ 'artemisApp.result.detail.feedback' | artemisTranslate }}</ng-template>
     </h4>
     <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()"></button>
@@ -9,7 +9,7 @@
     <!-- Message, if defined -->
     <div *ngIf="messageKey" class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
     <div *ngIf="showMissingAutomaticFeedbackInformation" class="mb-3">
-        <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: latestIndividualDueDate }"></h6>
+        <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate : { date: latestIndividualDueDate }"></h6>
     </div>
     <!-- Loading state -->
     <div *ngIf="isLoading; else feedbackContainer" class="text-muted d-flex justify-content-center" id="result-detail-spinner">
@@ -21,7 +21,7 @@
             <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
                 <span class="result-score-chart-title">
                     <span *ngIf="!exercise?.maxPoints; else scoreWithPoints">
-                        {{ 'artemisApp.result.score' | artemisTranslate: { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
+                        {{ 'artemisApp.result.score' | artemisTranslate : { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
                     </span>
                     <ng-template #scoreWithPoints>
                         <span *ngIf="result.score && exercise && exercise.maxPoints">
@@ -75,17 +75,17 @@
                 </div>
                 <div *ngIf="testCaseCount || numberOfNotExecutedTests || scaFeedbackCount || manualFeedbackCount" class="mb-2">
                     <div *ngIf="testCaseCount">
-                        {{ 'artemisApp.result.testCount' | artemisTranslate: { passed: passedTestCaseCount, total: testCaseCount } }}
+                        {{ 'artemisApp.result.testCount' | artemisTranslate : { passed: passedTestCaseCount, total: testCaseCount } }}
                     </div>
                     <div *ngIf="numberOfNotExecutedTests">
-                        {{ 'artemisApp.result.notExecutedTests' | artemisTranslate: { numberOfNotExecutedTests } }}
+                        {{ 'artemisApp.result.notExecutedTests' | artemisTranslate : { numberOfNotExecutedTests } }}
                         <jhi-help-icon text="artemisApp.result.notExecutedTestsTooltip"></jhi-help-icon>
                     </div>
                     <div *ngIf="scaFeedbackCount">
-                        {{ 'artemisApp.result.scaIssueCount' | artemisTranslate: { issues: scaFeedbackCount } }}
+                        {{ 'artemisApp.result.scaIssueCount' | artemisTranslate : { issues: scaFeedbackCount } }}
                     </div>
                     <div *ngIf="manualFeedbackCount">
-                        {{ 'artemisApp.result.manualFeedbackCount' | artemisTranslate: { feedbacks: manualFeedbackCount } }}
+                        {{ 'artemisApp.result.manualFeedbackCount' | artemisTranslate : { feedbacks: manualFeedbackCount } }}
                     </div>
                 </div>
                 <div *ngFor="let feedback of filteredFeedbackList" [ngClass]="['feedback-item', 'alert', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
@@ -100,7 +100,7 @@
                         <fa-icon
                             *ngIf="feedback.type === FeedbackItemType.Issue && feedback.actualCredits !== feedback.credits"
                             [icon]="faExclamationTriangle"
-                            [ngbTooltip]="'artemisApp.programmingAssessment.codeIssueNotApplied' | artemisTranslate: { points: feedback.credits }"
+                            [ngbTooltip]="'artemisApp.programmingAssessment.codeIssueNotApplied' | artemisTranslate : { points: feedback.credits }"
                         >
                         </fa-icon>
                     </span>
@@ -118,7 +118,7 @@
             <dl class="buildoutput dl-horizontal">
                 <ng-container *ngFor="let logEntry of buildLogs; let i = index">
                     <!--Don't show the timestamp again if it is the same as the last entry's.-->
-                    <dt class="mb-1" *ngIf="i === 0 || logEntry.time !== buildLogs[i - 1].time">{{ logEntry.time | artemisDate: 'short':true }}</dt>
+                    <dt class="mb-1" *ngIf="i === 0 || logEntry.time !== buildLogs[i - 1].time">{{ logEntry.time | artemisDate : 'short' : true }}</dt>
                     <dd
                         [class.text-danger]="logEntry.type === BuildLogType.ERROR"
                         [class.font-weight-bold]="logEntry.type === BuildLogType.ERROR"

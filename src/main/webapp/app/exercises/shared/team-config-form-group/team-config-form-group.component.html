@@ -52,12 +52,12 @@
                         #maxTeamSize="ngModel"
                     />
                 </div>
-                <ng-container *ngFor="let e of minTeamSize.errors! | keyvalue | removekeys: ['required']">
+                <ng-container *ngFor="let e of minTeamSize.errors! | keyvalue | removekeys : ['required']">
                     <div *ngIf="minTeamSize.invalid && (minTeamSize.dirty || minTeamSize.touched)" class="alert alert-danger">
                         <div [jhiTranslate]="'artemisApp.exercise.form.minTeamSize' + '.' + e.key"></div>
                     </div>
                 </ng-container>
-                <ng-container *ngFor="let e of maxTeamSize.errors! | keyvalue | removekeys: ['required']">
+                <ng-container *ngFor="let e of maxTeamSize.errors! | keyvalue | removekeys : ['required']">
                     <div *ngIf="maxTeamSize.invalid && (maxTeamSize.dirty || maxTeamSize.touched)" class="alert alert-danger">
                         <div [jhiTranslate]="'artemisApp.exercise.form.maxTeamSize' + '.' + e.key"></div>
                     </div>

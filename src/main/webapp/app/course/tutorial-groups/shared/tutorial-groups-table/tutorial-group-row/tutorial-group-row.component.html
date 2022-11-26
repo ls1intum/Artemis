@@ -26,7 +26,7 @@
                 (tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! === 1
                     ? 'artemisApp.entities.tutorialGroupSchedule.repetitionOneWeek'
                     : 'artemisApp.entities.tutorialGroupSchedule.repetitionNWeeks'
-                ) | artemisTranslate: { n: tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! }
+                ) | artemisTranslate : { n: tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! }
             }}
         </span>
         <ng-template #no_schedule></ng-template>
@@ -49,9 +49,9 @@
     </td>
     <td>
         <span *ngIf="tutorialGroup.nextSession; else no_session">
-            {{ tutorialGroup.nextSession.start | artemisDate: 'short-date':false:timeZone!:true }}
-            {{ tutorialGroup.nextSession.start | artemisDate: 'time':false:timeZone! }} -
-            {{ tutorialGroup.nextSession.end | artemisDate: 'time':false:timeZone! }}
+            {{ tutorialGroup.nextSession.start | artemisDate : 'short-date' : false : timeZone! : true }}
+            {{ tutorialGroup.nextSession.start | artemisDate : 'time' : false : timeZone! }} -
+            {{ tutorialGroup.nextSession.end | artemisDate : 'time' : false : timeZone! }}
         </span>
         <ng-template #no_session></ng-template>
     </td>

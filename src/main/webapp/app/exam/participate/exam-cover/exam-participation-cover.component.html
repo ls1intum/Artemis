@@ -23,7 +23,7 @@
 <div class="container d-flex flex-column align-items-center justify-content-center">
     <h2 style="text-align: center; font-weight: normal" *ngIf="startView">
         <span>
-            {{ 'artemisApp.examParticipation.greeting' | artemisTranslate: { title: exam.title } }}
+            {{ 'artemisApp.examParticipation.greeting' | artemisTranslate : { title: exam.title } }}
         </span>
         <br />
     </h2>
@@ -74,7 +74,7 @@
                 </div>
                 <div class="row justify-content-center">
                     <div class="col-md-6" style="font-weight: lighter">
-                        <span> ({{ 'artemisApp.examParticipation.nameDisplay' | artemisTranslate: { fullName: accountName } }}) </span>
+                        <span> ({{ 'artemisApp.examParticipation.nameDisplay' | artemisTranslate : { fullName: accountName } }}) </span>
                     </div>
                 </div>
                 <div class="row justify-content-center">
@@ -116,13 +116,13 @@
             </div>
         </div>
         <div class="exam-waiting-for-start-overlay alert alert-info" *ngIf="waitingForExamStart">
-            <span>{{ 'artemisApp.examParticipation.waitForStart' | artemisTranslate: { title: exam.title } }}</span>
+            <span>{{ 'artemisApp.examParticipation.waitForStart' | artemisTranslate : { title: exam.title } }}</span>
             <div *ngIf="exam.startDate">
                 <hr />
                 <span jhiTranslate="artemisApp.examParticipation.timeUntilPlannedStart"></span>
                 <span class="text-bold">{{ timeUntilStart }}</span>
                 <br />
-                <span>({{ exam.startDate | artemisDate: 'time' }})</span>
+                <span>({{ exam.startDate | artemisDate : 'time' }})</span>
             </div>
         </div>
     </ng-container>

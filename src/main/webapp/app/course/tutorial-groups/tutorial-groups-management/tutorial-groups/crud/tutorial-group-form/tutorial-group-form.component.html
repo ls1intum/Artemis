@@ -9,14 +9,14 @@
                     class="form-control"
                     id="title"
                     formControlName="title"
-                    [placeholder]="'artemisApp.forms.tutorialGroupForm.titleInput.placeholder' | artemisTranslate: { from: '12:00', to: '13:00' }"
+                    [placeholder]="'artemisApp.forms.tutorialGroupForm.titleInput.placeholder' | artemisTranslate : { from: '12:00', to: '13:00' }"
                 />
                 <div *ngIf="titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)" class="alert alert-danger">
                     <div *ngIf="titleControl?.errors?.required">
                         {{ 'artemisApp.forms.tutorialGroupForm.titleInput.requiredValidationError' | artemisTranslate }}
                     </div>
                     <div *ngIf="titleControl?.errors?.maxlength">
-                        {{ 'artemisApp.forms.tutorialGroupForm.titleInput.maxLengthValidationError' | artemisTranslate: { max: '19' } }}
+                        {{ 'artemisApp.forms.tutorialGroupForm.titleInput.maxLengthValidationError' | artemisTranslate : { max: '19' } }}
                     </div>
                     <div *ngIf="!titleControl?.errors?.required && !titleControl?.errors?.maxlength && titleControl?.errors?.pattern">
                         {{ 'artemisApp.forms.tutorialGroupForm.titleInput.regexValidationError' | artemisTranslate }}
@@ -78,7 +78,7 @@
                 <small id="campusHelp" class="form-text text-muted">{{ 'artemisApp.forms.tutorialGroupForm.campusInput.campusHelp' | artemisTranslate }}</small>
                 <div *ngIf="campusControl?.invalid && (campusControl?.dirty || campusControl?.touched)" class="alert alert-danger">
                     <div *ngIf="campusControl?.errors?.max">
-                        {{ 'artemisApp.forms.tutorialGroupForm.campusInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
+                        {{ 'artemisApp.forms.tutorialGroupForm.campusInput.maxLengthValidationError' | artemisTranslate : { max: '255' } }}
                     </div>
                 </div>
             </div>
@@ -153,7 +153,7 @@
 
                 <div *ngIf="notificationControl?.invalid && (notificationControl?.dirty || notificationControl?.touched)" class="alert alert-danger">
                     <div *ngIf="notificationControl?.errors?.maxlength">
-                        {{ 'artemisApp.forms.tutorialGroupForm.notificationInput.maxLengthValidationError' | artemisTranslate: { max: '1000' } }}
+                        {{ 'artemisApp.forms.tutorialGroupForm.notificationInput.maxLengthValidationError' | artemisTranslate : { max: '1000' } }}
                     </div>
                 </div>
             </div>
