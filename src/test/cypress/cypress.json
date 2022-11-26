@@ -1,4 +1,16 @@
 {
+    "clientCertificates": [
+        {
+            "url": "https://artemis-nginx",
+            "ca": ["certs/rootCA.pem"],
+            "certs": [
+                {
+                    "cert": "certs/artemis-nginx+4.pem",
+                    "key": "certs/artemis-nginx+4-key.pem"
+                }
+            ]
+        }
+    ],
     "fixturesFolder": "fixtures",
     "integrationFolder": "integration",
     "pluginsFile": "plugins/index.ts",
