@@ -39,7 +39,7 @@
 
         <div *ngIf="submittedFileName && submission?.filePath" class="card-text">
             <h6>
-                {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName } }}
+                {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate : { filename: submittedFileName } }}
                 <span> {{ submission!.submissionDate! | artemisTimeAgo }}</span>
             </h6>
             <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
