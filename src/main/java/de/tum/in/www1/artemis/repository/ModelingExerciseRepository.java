@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -19,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data JPA repository for the ModelingExercise entity.

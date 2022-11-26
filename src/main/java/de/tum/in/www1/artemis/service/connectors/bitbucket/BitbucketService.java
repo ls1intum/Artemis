@@ -13,9 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -46,6 +43,8 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 @Profile("bitbucket")

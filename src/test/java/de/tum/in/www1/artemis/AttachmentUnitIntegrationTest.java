@@ -6,8 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +27,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import jakarta.validation.constraints.NotNull;
 
 class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

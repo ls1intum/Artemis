@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import java.time.ZonedDateTime;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
@@ -12,9 +10,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DatabaseNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
+import jakarta.persistence.*;
 
 /**
  * A Notification.
@@ -40,11 +41,47 @@ public abstract class Notification extends DomainObject {
     @Column(name = "text")
     private String text;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "jhi_type")
+    private DatabaseNotificationType type;
+
     @Column(name = "notification_date")
     private ZonedDateTime notificationDate;
 
     @Column(name = "target")
     private String target;
+
+    @ManyToOne
+    // should only be used for SingleUserNotification sub class
+    private User recipient;
+
+    @ManyToOne
+    // should only be used for GroupUserNotification sub class
+    private Course course;
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    public User getRecipient() {
+        return recipient;
+    }
+
+    public void setRecipient(User user) {
+        this.recipient = user;
+    }
+
+    public DatabaseNotificationType getType() {
+        return type;
+    }
+
+    public void setType(DatabaseNotificationType type) {
+        this.type = type;
+    }
 
     /**
      * The String target is created based on a custom JAVA class

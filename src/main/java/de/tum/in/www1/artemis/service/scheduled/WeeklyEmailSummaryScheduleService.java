@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.scheduled;
 import java.time.*;
 import java.util.*;
 
-import javax.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.EmailSummaryService;
+import jakarta.annotation.PostConstruct;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service

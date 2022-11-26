@@ -7,8 +7,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +27,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.web.rest.dto.UserPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data JPA repository for the User entity.

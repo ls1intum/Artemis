@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.web.websocket;
 
 import java.security.Principal;
 
-import javax.validation.Valid;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -19,6 +17,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
+import jakarta.validation.Valid;
 
 @SuppressWarnings("unused")
 @Controller

@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifi
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.annotation.Nullable;
-
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -21,6 +19,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService.PlagiarismMapping;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import jakarta.annotation.Nullable;
 
 /**
  * Service Implementation for calculating course scores.

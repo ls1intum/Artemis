@@ -7,9 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import javax.persistence.*;
-import javax.validation.constraints.Size;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -17,6 +14,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 /**
  * A {@link TutorialGroupSchedule} is a schedule for a {@link TutorialGroup}. It represents a recurrence pattern for {@link TutorialGroupSession}s.

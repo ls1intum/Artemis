@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.domain.lti;
 
+import org.json.simple.JSONObject;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.util.Assert;
-
-import com.nimbusds.jose.shaded.json.JSONObject;
 
 public class Lti13LaunchRequest {
 

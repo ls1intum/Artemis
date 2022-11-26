@@ -7,10 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
-import javax.servlet.ServletContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.server.MimeMappings;
@@ -26,8 +22,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.FilterRegistration;
+import jakarta.servlet.ServletContext;
 import tech.jhipster.config.JHipsterProperties;
-import tech.jhipster.web.filter.CachingHttpHeadersFilter;
 
 /**
  * Configuration of web application with Servlet 3.0 APIs.

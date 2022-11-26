@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.time.ZonedDateTime;
 
-import javax.validation.Valid;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +30,7 @@ import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import jakarta.validation.Valid;
 
 /**
  * REST controller for managing QuizSubmission.

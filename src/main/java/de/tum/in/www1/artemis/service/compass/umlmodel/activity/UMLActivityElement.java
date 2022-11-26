@@ -3,9 +3,8 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.activity;
 import java.io.Serializable;
 import java.util.Objects;
 
-import javax.annotation.Nullable;
-
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import jakarta.annotation.Nullable;
 
 public abstract class UMLActivityElement extends UMLElement implements Serializable {
 

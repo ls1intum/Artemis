@@ -8,7 +8,7 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeCo
 import java.util.List;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.enumeration.DatabaseNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -26,7 +26,7 @@ public class GroupNotificationFactory {
      * @param notificationText      custom notification text
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Attachment attachment, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
+    public static GroupNotification createNotification(Attachment attachment, User author, DatabaseNotificationType groupNotificationType, NotificationType notificationType,
             String notificationText) {
         String title;
         String text;
@@ -68,7 +68,7 @@ public class GroupNotificationFactory {
      * @param notificationText      custom notification text
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Exercise exercise, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
+    public static GroupNotification createNotification(Exercise exercise, User author, DatabaseNotificationType groupNotificationType, NotificationType notificationType,
             String notificationText) {
         String title;
         String text;
@@ -162,7 +162,7 @@ public class GroupNotificationFactory {
      * @param course                the post belongs to
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Post post, User author, GroupNotificationType groupNotificationType, NotificationType notificationType, Course course) {
+    public static GroupNotification createNotification(Post post, User author, DatabaseNotificationType groupNotificationType, NotificationType notificationType, Course course) {
         String title;
         String text;
         GroupNotification notification;
@@ -228,7 +228,7 @@ public class GroupNotificationFactory {
      * @param archiveErrors         a list of errors that occurred during archiving
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Course course, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
+    public static GroupNotification createNotification(Course course, User author, DatabaseNotificationType groupNotificationType, NotificationType notificationType,
             List<String> archiveErrors) {
         String title;
         String text;
@@ -267,7 +267,7 @@ public class GroupNotificationFactory {
      * @param archiveErrors         a list of errors that occurred during archiving
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Exam exam, User author, GroupNotificationType groupNotificationType, NotificationType notificationType,
+    public static GroupNotification createNotification(Exam exam, User author, DatabaseNotificationType groupNotificationType, NotificationType notificationType,
             List<String> archiveErrors) {
         String title;
         String text;

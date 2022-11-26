@@ -4,8 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import javax.validation.Valid;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +17,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.service.metis.MessageService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import io.swagger.annotations.ApiParam;
+import jakarta.validation.Valid;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**

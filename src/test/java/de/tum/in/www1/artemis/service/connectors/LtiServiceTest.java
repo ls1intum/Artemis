@@ -8,8 +8,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletResponse;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -28,6 +26,7 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
+import jakarta.servlet.http.HttpServletResponse;
 
 class LtiServiceTest {
 

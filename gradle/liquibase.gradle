@@ -5,7 +5,7 @@ configurations {
 }
 
 dependencies {
-    liquibase "org.liquibase.ext:liquibase-hibernate5:4.17.2"
+    liquibase "org.liquibase.ext:liquibase-hibernate5:${liquibase_version}"
 }
 
 if (OperatingSystem.current().isWindows()) {
@@ -41,7 +41,7 @@ def liquibaseCommand(command) {
         main = "liquibase.integration.commandline.Main"
 
         args "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml"
-        args "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQL8Dialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"
+        args "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQLDialect&hibernate.physical_naming_strategy=org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"
         args "--username=root"
         args "--password="
         args "--url=jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"

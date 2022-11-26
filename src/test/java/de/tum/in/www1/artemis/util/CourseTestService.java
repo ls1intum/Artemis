@@ -17,8 +17,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +58,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class CourseTestService {

@@ -7,8 +7,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -24,6 +22,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.annotation.Nullable;
 
 @Service
 public class StatisticsService {

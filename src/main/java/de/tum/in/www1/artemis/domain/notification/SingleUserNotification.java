@@ -2,11 +2,10 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import java.time.ZonedDateTime;
 
-import javax.persistence.*;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.User;
+import jakarta.persistence.*;
 
 /**
  * A SingleUserNotification.
@@ -15,17 +14,6 @@ import de.tum.in.www1.artemis.domain.User;
 @DiscriminatorValue(value = "U")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class SingleUserNotification extends Notification {
-
-    @ManyToOne
-    private User recipient;
-
-    public User getRecipient() {
-        return recipient;
-    }
-
-    public void setRecipient(User user) {
-        this.recipient = user;
-    }
 
     public String getTopic() {
         return "/topic/user/" + getRecipient().getId() + "/notifications";

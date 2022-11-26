@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.config;
 
 import java.util.ArrayList;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.*;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
@@ -18,6 +16,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.BambooAuthorizationInter
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * For now only provides a basic {@link org.springframework.web.client.RestTemplate RestTemplate} bean. Can be extended

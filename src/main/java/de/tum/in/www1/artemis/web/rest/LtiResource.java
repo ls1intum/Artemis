@@ -3,9 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import java.io.IOException;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -25,6 +22,8 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.Lti10Service;
 import de.tum.in.www1.artemis.service.connectors.LtiDynamicRegistrationService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * REST controller to handle LTI10 launches.

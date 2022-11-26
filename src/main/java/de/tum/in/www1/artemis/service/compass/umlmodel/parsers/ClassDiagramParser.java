@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 import java.io.IOException;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.lang3.EnumUtils;
 
 import com.google.common.base.CaseFormat;
@@ -16,6 +14,7 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
+import jakarta.validation.constraints.NotNull;
 
 public class ClassDiagramParser {
 

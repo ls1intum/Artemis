@@ -23,8 +23,6 @@ import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.api.Git;
@@ -66,6 +64,7 @@ import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:

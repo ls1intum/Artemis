@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.tutorialgroups;
 import java.util.ArrayList;
 import java.util.Set;
 
-import javax.transaction.Transactional;
-
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -15,6 +13,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupFreePeriodRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
+import jakarta.transaction.Transactional;
 
 @Service
 public class TutorialGroupsConfigurationService {

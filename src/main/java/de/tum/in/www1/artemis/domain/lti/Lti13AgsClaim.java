@@ -2,10 +2,9 @@ package de.tum.in.www1.artemis.domain.lti;
 
 import java.util.*;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
-
-import com.nimbusds.jose.shaded.json.JSONArray;
-import com.nimbusds.jose.shaded.json.JSONObject;
 
 /**
  * A wrapper class for an LTI 1.3 Assignment and Grading Services Claim. We support the Score Publishing Service in order to transmit scores.

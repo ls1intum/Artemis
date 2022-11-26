@@ -11,8 +11,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.validation.constraints.NotNull;
-
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +41,7 @@ import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class ProgrammingPlagiarismDetectionService {

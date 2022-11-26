@@ -4,14 +4,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TeamAssignmentPayload {

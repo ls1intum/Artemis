@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -18,6 +16,7 @@ import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class TutorLeaderboardService {

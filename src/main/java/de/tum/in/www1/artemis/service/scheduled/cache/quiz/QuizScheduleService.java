@@ -9,9 +9,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +39,8 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizMessagingService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class QuizScheduleService {

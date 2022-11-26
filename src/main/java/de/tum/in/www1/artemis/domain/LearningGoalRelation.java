@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 /**
  * This class models the relation between two learning goal. Imagine a graph: (tail) --- type --> (head)

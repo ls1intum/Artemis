@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -17,6 +15,7 @@ import de.tum.in.www1.artemis.domain.TempIdObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+import jakarta.persistence.*;
 
 /**
  * A DragItem.

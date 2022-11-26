@@ -2,12 +2,11 @@ package de.tum.in.www1.artemis.service.dto;
 
 import java.util.Objects;
 
-import javax.validation.constraints.Size;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.User;
+import jakarta.validation.constraints.Size;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StudentDTO {

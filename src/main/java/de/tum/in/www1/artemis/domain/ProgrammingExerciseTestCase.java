@@ -3,9 +3,6 @@ package de.tum.in.www1.artemis.domain;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -15,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.*;
+import jakarta.annotation.Nonnull;
+import jakarta.persistence.*;
 
 /**
  * A ProgrammingExerciseTestCase.

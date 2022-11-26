@@ -10,8 +10,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
@@ -28,6 +26,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
+import jakarta.servlet.http.HttpServletRequest;
 
 class Lti10ServiceTest {
 

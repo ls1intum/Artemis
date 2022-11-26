@@ -5,8 +5,6 @@ import static java.util.Comparator.comparing;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +13,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 @Profile("athene")

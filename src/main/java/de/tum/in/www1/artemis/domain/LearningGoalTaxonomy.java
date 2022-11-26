@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 /**
  * The type of learning goal according to Bloom's revised taxonomy.

@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service.programming;
 
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
-
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +18,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class ProgrammingExerciseParticipationService {

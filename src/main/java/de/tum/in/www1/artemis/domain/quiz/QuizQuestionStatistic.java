@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
+
+import jakarta.persistence.*;
 
 @Entity
 @DiscriminatorValue(value = "Q")

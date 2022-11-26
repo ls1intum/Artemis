@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +38,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
 import de.tum.in.www1.artemis.util.TestConstants;
+import jakarta.validation.constraints.NotNull;
 
 @Component
 @Profile("bamboo")

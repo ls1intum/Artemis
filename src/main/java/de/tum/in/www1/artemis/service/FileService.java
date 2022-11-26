@@ -15,9 +15,6 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
@@ -44,6 +41,8 @@ import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class FileService implements DisposableBean {

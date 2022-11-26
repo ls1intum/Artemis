@@ -9,8 +9,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +35,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
+import jakarta.validation.constraints.NotNull;
 
 class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

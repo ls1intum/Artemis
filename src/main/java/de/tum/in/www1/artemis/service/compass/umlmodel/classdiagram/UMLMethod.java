@@ -5,12 +5,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import javax.validation.constraints.NotNull;
-
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+import jakarta.validation.constraints.NotNull;
 
 public class UMLMethod extends UMLElement implements Serializable {
 

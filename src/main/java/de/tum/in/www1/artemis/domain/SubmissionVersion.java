@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.domain;
 
 import java.time.Instant;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.CreatedDate;
@@ -11,6 +9,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "submission_version")

@@ -8,10 +8,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -31,7 +28,9 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.lti.Lti13LaunchFilter;
 import de.tum.in.www1.artemis.service.connectors.Lti13Service;
-import net.minidev.json.JSONObject;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
@@ -108,7 +107,7 @@ class Lti13LaunchFilterTest {
     void authenticatedLogin() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
         doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
-        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
+        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(HttpServletRequest.class), any(HttpServletResponse.class));
         doReturn(responseWriter).when(httpResponse).getWriter();
         initValidIdToken();
 
@@ -130,7 +129,8 @@ class Lti13LaunchFilterTest {
     void authenticatedLogin_oauth2AuthenticationException() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
         doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
-        doThrow(new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST))).when(defaultFilter).attemptAuthentication(any(), any());
+        doThrow(new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST))).when(defaultFilter).attemptAuthentication(any(HttpServletRequest.class),
+                any(HttpServletResponse.class));
 
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
 
@@ -142,7 +142,7 @@ class Lti13LaunchFilterTest {
     void authenticatedLogin_noAuthenticationTokenReturned() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
         doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
-        doReturn(null).when(defaultFilter).attemptAuthentication(any(), any());
+        doReturn(null).when(defaultFilter).attemptAuthentication(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
 

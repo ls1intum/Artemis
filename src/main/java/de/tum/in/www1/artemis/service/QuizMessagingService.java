@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -15,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import jakarta.annotation.Nullable;
 
 @Service
 public class QuizMessagingService {

@@ -2,13 +2,12 @@ package de.tum.in.www1.artemis.security;
 
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import jakarta.annotation.Nullable;
 
 public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
 

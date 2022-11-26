@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.util.Optional;
 
-import javax.validation.Valid;
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -22,6 +21,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api")

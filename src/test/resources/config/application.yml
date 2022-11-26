@@ -77,7 +77,7 @@ spring:
         hibernate:
 #            ddl-auto: none                         # out commented because it would lead to test execution errors
             naming:
-                physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+                physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
         properties:
             hibernate.jdbc.time_zone: UTC

@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -41,6 +39,8 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * REST controller for managing ExerciseGroup.

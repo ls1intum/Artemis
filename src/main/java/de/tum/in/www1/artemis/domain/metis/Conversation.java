@@ -4,8 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
-
 import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -13,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "conversation")

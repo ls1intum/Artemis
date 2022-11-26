@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -26,6 +24,7 @@ import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.TextAssessmentQueueService;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 @Profile("athene")

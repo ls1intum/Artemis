@@ -6,8 +6,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +33,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import jakarta.annotation.Nullable;
 
 /**
  * REST controller for managing TextAssessment.

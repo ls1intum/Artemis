@@ -7,8 +7,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,6 +18,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data JPA repository for the Course entity.
@@ -191,13 +190,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                substring(s.submissionDate, 1, 10), p.student.login
+                SUBSTRING(CAST( s.submissionDate as String ), 1, 10), p.student.login
                 )
             FROM StudentParticipation p JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
-                AND s.submissionDate >= :#{#startDate}
-                AND s.submissionDate <= :#{#endDate}
-                group by substring(s.submissionDate, 1, 10), p.student.login
+                AND s.submissionDate >= :startDate
+                AND s.submissionDate <= :endDate
+                GROUP BY SUBSTRING( CAST( s.submissionDate as String ), 1, 10), p.student.login
             """)
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 

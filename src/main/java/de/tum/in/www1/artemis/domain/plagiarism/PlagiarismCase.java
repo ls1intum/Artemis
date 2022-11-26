@@ -4,8 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Set;
 
-import javax.persistence.*;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -14,6 +12,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "plagiarism_case")

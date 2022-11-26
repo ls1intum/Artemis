@@ -3,9 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.LearningGoal;
@@ -18,6 +15,8 @@ import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class LectureUnitService {

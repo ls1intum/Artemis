@@ -9,8 +9,6 @@ import static org.mockito.Mockito.*;
 
 import java.time.temporal.ChronoUnit;
 
-import javax.mail.internet.MimeMessage;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +22,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
+import jakarta.mail.internet.MimeMessage;
 
 class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

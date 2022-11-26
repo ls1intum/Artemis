@@ -7,9 +7,6 @@ import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,6 +21,8 @@ import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service

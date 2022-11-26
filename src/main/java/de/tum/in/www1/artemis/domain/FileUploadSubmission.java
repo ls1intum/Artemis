@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.domain;
 
 import java.nio.file.Path;
 
-import javax.persistence.*;
-
 import org.apache.commons.lang3.math.NumberUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -11,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
+import jakarta.persistence.*;
 
 /**
  * A FileUploadSubmission.

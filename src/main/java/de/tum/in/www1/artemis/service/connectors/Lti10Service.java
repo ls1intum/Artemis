@@ -5,10 +5,6 @@ import java.security.GeneralSecurityException;
 import java.util.Locale;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -33,6 +29,9 @@ import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotNull;
 import oauth.signpost.exception.OAuthException;
 
 @Service
@@ -78,7 +77,8 @@ public class Lti10Service {
 
         LtiVerifier ltiVerifier = new LtiOauthVerifier();
         try {
-            LtiVerificationResult ltiResult = ltiVerifier.verify(request, onlineCourseConfiguration.getLtiSecret());
+            // TODO: we need a better solution than casting here, which will probably fail
+            LtiVerificationResult ltiResult = ltiVerifier.verify((javax.servlet.http.HttpServletRequest) request, onlineCourseConfiguration.getLtiSecret());
             if (!ltiResult.getSuccess()) {
                 final var message = "LTI signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError() + ", launch result: "
                         + ltiResult.getLtiLaunchResult();

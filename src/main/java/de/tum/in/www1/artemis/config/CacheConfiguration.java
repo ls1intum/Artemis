@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.config;
 
 import java.util.Collections;
 
-import javax.annotation.PreDestroy;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +26,7 @@ import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import jakarta.annotation.PreDestroy;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 

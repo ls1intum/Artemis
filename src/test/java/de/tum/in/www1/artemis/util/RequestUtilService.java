@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
-import javax.annotation.Nullable;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -36,6 +34,8 @@ import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.annotation.Nullable;
 
 @Service
 public class RequestUtilService {

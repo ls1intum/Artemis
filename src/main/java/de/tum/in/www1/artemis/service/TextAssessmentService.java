@@ -5,8 +5,6 @@ import static org.hibernate.Hibernate.isInitialized;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -14,6 +12,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import jakarta.annotation.Nullable;
 
 @Service
 public class TextAssessmentService extends AssessmentService {

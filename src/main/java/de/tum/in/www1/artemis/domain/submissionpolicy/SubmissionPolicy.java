@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.submissionpolicy;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
@@ -10,6 +8,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import jakarta.persistence.*;
 
 /**
  * Represents an abstract submission policy.

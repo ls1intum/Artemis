@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.domain.exam;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -13,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "exercise_group")

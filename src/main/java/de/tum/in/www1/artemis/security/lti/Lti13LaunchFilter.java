@@ -3,11 +3,7 @@ package de.tum.in.www1.artemis.security.lti;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -20,7 +16,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.lti.Claims;
 import de.tum.in.www1.artemis.service.connectors.Lti13Service;
-import net.minidev.json.JSONObject;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
 

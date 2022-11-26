@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import javax.persistence.EntityManagerFactory;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.hibernate.event.service.spi.EventListenerRegistry;
 import org.hibernate.event.spi.*;
@@ -19,6 +17,7 @@ import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
+import jakarta.persistence.EntityManagerFactory;
 
 /**
  * Listens to Hibernate events and invalidates the cached titles of an entity if the title changed.
@@ -117,7 +116,7 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
     }
 
     @Override
-    public boolean requiresPostCommitHanding(EntityPersister persister) {
+    public boolean requiresPostCommitHandling(EntityPersister persister) {
         return false;
     }
 }

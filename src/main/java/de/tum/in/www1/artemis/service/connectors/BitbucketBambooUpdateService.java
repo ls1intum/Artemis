@@ -6,9 +6,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jsoup.Jsoup;
@@ -32,6 +29,8 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.ApplicationLinksDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 @Service
 // Only activate this service bean, if both Bamboo and Bitbucket are activated (@Profile({"bitbucket","bamboo"}) would activate

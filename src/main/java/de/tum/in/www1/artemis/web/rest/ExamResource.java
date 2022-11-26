@@ -14,8 +14,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +45,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringS
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * REST controller for managing Exam.

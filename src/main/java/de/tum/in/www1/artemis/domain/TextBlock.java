@@ -6,15 +6,15 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
-import javax.persistence.*;
-import javax.validation.constraints.Size;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 /**
  * A TextBlock.

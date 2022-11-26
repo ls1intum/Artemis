@@ -14,8 +14,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
-
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +53,7 @@ import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
+import jakarta.annotation.Nullable;
 
 @Service
 @Profile("bamboo")

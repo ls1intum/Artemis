@@ -2,9 +2,9 @@ package de.tum.in.www1.artemis.domain;
 
 import java.util.Objects;
 
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import jakarta.persistence.Transient;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class TempIdObject extends DomainObject {

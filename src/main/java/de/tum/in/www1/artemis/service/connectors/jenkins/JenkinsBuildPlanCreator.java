@@ -8,8 +8,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
+import jakarta.annotation.PostConstruct;
 
 @Profile("jenkins")
 @Component

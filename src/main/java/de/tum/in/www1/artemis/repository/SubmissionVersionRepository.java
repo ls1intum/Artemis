@@ -15,7 +15,16 @@ import de.tum.in.www1.artemis.domain.SubmissionVersion;
 @Repository
 public interface SubmissionVersionRepository extends JpaRepository<SubmissionVersion, Long> {
 
-    @Query("select version from SubmissionVersion version left join version.submission submission left join submission.versions where submission.id = :#{#submissionId} and version.id = (select max(id) from submission.versions)")
+    @Query("""
+             SELECT version
+             FROM SubmissionVersion version
+                 LEFT JOIN version.submission submission
+                 LEFT JOIN submission.versions
+             WHERE submission.id = :submissionId
+                 AND version.id = (SELECT MAX(v.id)
+                                   FROM submission.versions v
+                                   )
+            """)
     Optional<SubmissionVersion> findLatestVersion(@Param("submissionId") long submissionId);
 
 }

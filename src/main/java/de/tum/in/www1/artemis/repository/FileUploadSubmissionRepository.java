@@ -4,8 +4,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data JPA repository for the FileUploadSubmission entity.

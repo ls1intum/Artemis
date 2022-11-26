@@ -12,8 +12,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.springframework.util.ResourceUtils;
 
@@ -44,6 +42,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.*;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import jakarta.validation.constraints.NotNull;
 
 public class ModelFactory {
 
@@ -991,7 +990,7 @@ public class ModelFactory {
         return singleUserNotification;
     }
 
-    public static GroupNotification generateGroupNotification(ZonedDateTime notificationDate, Course course, GroupNotificationType type) {
+    public static GroupNotification generateGroupNotification(ZonedDateTime notificationDate, Course course, DatabaseNotificationType type) {
         GroupNotification groupNotification = new GroupNotification();
         groupNotification.setNotificationDate(notificationDate);
         groupNotification.setCourse(course);

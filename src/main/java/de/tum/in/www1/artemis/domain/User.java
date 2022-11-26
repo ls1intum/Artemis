@@ -10,13 +10,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
-
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
@@ -31,6 +24,12 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 /**
  * A user.
@@ -393,5 +392,16 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setTutorialGroupRegistrations(Set<TutorialGroupRegistration> tutorialGroupRegistrations) {
         this.tutorialGroupRegistrations = tutorialGroupRegistrations;
+    }
+
+    public void removeUnnecessaryVariables() {
+        setLastNotificationRead(null);
+        setActivationKey(null);
+        setLangKey(null);
+        setLastNotificationRead(null);
+        setLastModifiedBy(null);
+        setLastModifiedDate(null);
+        setCreatedBy(null);
+        setCreatedDate(null);
     }
 }

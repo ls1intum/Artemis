@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.security.jwt;
 import java.security.Key;
 import java.util.Date;
 
-import javax.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +15,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 
 /**
  * This component is used to create a jwt token for the tutor-assessment tracking.

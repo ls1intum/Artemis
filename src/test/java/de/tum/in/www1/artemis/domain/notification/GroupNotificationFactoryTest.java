@@ -16,7 +16,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.enumeration.DatabaseNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -72,7 +72,7 @@ class GroupNotificationFactoryTest {
 
     private NotificationType notificationType;
 
-    private GroupNotificationType groupNotificationType = GroupNotificationType.STUDENT;
+    private DatabaseNotificationType groupNotificationType = DatabaseNotificationType.STUDENT;
 
     private static String notificationText = "notification text";
 

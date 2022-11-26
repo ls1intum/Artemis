@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.domain.scores;
 
 import java.time.Instant;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
@@ -18,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
+import jakarta.persistence.*;
 
 /**
  * Participant scores store the last (rated) result for each student/team and exercise combination.

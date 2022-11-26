@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.repository.specs;
 
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Predicate;
-
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.in.www1.artemis.domain.metis.Conversation_;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Post_;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
 
 public class MessageSpecs {
 

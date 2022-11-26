@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service.metis;
 
 import java.util.Objects;
 
-import javax.validation.Valid;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -27,6 +25,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
+import jakarta.validation.Valid;
 
 @Service
 public class MessageService extends PostingService {

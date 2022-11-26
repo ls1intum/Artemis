@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
-
 import org.eclipse.jgit.lib.ObjectId;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -51,6 +49,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import jakarta.validation.constraints.NotNull;
 
 class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

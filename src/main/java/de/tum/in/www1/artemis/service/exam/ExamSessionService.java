@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.exam;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -13,6 +11,7 @@ import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import inet.ipaddr.IPAddress;
+import jakarta.annotation.Nullable;
 
 /**
  * Service Implementation for managing ExamSession.

@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.metis;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 /**
  * A specific ConstraintValidator that validates if the Post context is mutually exclusive,

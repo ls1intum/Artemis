@@ -4,10 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
-import javax.annotation.Nullable;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -41,12 +37,16 @@ import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupScheduleServic
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.annotation.Nullable;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 @RestController
 @RequestMapping("/api")
 public class TutorialGroupResource {
 
-    private static final String TITLE_REGEX = "^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$";
+    private static final String TITLE_REGEX = "^[a-zA-Z0-9][a-zA-Z0-9- ]{0,19}$";
 
     public static final String ENTITY_NAME = "tutorialGroup";
 
@@ -192,14 +192,7 @@ public class TutorialGroupResource {
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, responsibleUser);
 
-        Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
-        if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
-        }
-        var configuration = configurationOptional.get();
-        if (configuration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
-        }
+        TutorialGroupsConfiguration configuration = validateConfiguration(courseId);
 
         tutorialGroup.setCourse(course);
         trimStringFields(tutorialGroup);
@@ -224,6 +217,19 @@ public class TutorialGroupResource {
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
                 .body(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
+    }
+
+    @NotNull
+    private TutorialGroupsConfiguration validateConfiguration(Long courseId) {
+        Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
+        if (configurationOptional.isEmpty()) {
+            throw new BadRequestException("The course has no tutorial groups configuration");
+        }
+        var configuration = configurationOptional.get();
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
+        return configuration;
     }
 
     /**
@@ -276,7 +282,7 @@ public class TutorialGroupResource {
         }
         var oldTutorialGroup = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         updatedTutorialGroup.setCourse(oldTutorialGroup.getCourse());
-        checkEntityIdMatchesPathIds(oldTutorialGroup, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
+        checkEntityIdMatchesPathIds(oldTutorialGroup, Optional.ofNullable(courseId), Optional.of(tutorialGroupId));
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, oldTutorialGroup.getCourse(), responsibleUser);
 
@@ -285,14 +291,7 @@ public class TutorialGroupResource {
             checkTitleIsValid(updatedTutorialGroup);
         }
 
-        Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
-        if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
-        }
-        var configuration = configurationOptional.get();
-        if (configuration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
-        }
+        TutorialGroupsConfiguration configuration = validateConfiguration(courseId);
 
         // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails
 
@@ -311,7 +310,7 @@ public class TutorialGroupResource {
         if (StringUtils.hasText(tutorialGroupUpdateDTO.notificationText())) {
             tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(oldTutorialGroup,
                     updatedTutorialGroup.getTeachingAssistant() == null || !updatedTutorialGroup.getTeachingAssistant().equals(responsibleUser),
-                    StringUtils.trimWhitespace(tutorialGroupUpdateDTO.notificationText()));
+                    tutorialGroupUpdateDTO.notificationText().strip());
         }
 
         overrideValues(updatedTutorialGroup, oldTutorialGroup);
@@ -390,7 +389,7 @@ public class TutorialGroupResource {
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), responsibleUser);
-        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
+        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.ofNullable(courseId), Optional.of(tutorialGroupId));
         Set<StudentDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudents(tutorialGroupFromDatabase, studentDtos,
                 TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
         return ResponseEntity.ok().body(notFoundStudentDtos);

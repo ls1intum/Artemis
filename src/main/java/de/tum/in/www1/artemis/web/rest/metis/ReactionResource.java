@@ -3,14 +3,13 @@ package de.tum.in.www1.artemis.web.rest.metis;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import javax.validation.Valid;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.service.metis.ReactionService;
+import jakarta.validation.Valid;
 
 /**
  * REST controller for Reaction on Postings.

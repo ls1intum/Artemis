@@ -4,15 +4,15 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 
-import javax.persistence.EntityManager;
-import javax.persistence.JoinTable;
-import javax.persistence.Table;
-import javax.persistence.metamodel.ManagedType;
-
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.Table;
+import jakarta.persistence.metamodel.ManagedType;
 
 /**
  * Test utility service that allows to truncate all tables in the test database.

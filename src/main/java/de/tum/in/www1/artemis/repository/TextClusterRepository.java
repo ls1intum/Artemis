@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +18,7 @@ import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.web.rest.dto.TextClusterStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data repository for the TextCluster entity.

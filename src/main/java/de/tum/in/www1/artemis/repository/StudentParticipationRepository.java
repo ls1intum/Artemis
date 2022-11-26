@@ -7,8 +7,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -28,6 +26,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -185,9 +184,11 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.results r
             LEFT JOIN FETCH r.submission s
-            WHERE p.exercise.id = :#{#exerciseId}
-                AND (r.id = (SELECT max(id) FROM p.results)
-                    OR r IS NULL)
+            WHERE p.exercise.id = :exerciseId
+                AND (r.id = (SELECT MAX(r2.id)
+                             FROM p.results r2
+                            )
+                    OR r.id IS NULL)
             """)
     Set<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
 
@@ -195,13 +196,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.results r
             LEFT JOIN FETCH r.submission s
-            WHERE p.exercise.id = :#{#exerciseId}
-                AND p.testRun = :#{#testRun}
+            WHERE p.exercise.id = :exerciseId
+                AND p.testRun = :testRun
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
                 AND r.id = (
-                    SELECT max(id)
-                    FROM p.results
-                    WHERE completionDate IS NOT NULL
+                    SELECT MAX(r2.id)
+                    FROM p.results r2
+                    WHERE r2.completionDate IS NOT NULL
                     )
             """)
     Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerLegalSubmissionsAndLatestResultWithCompletionDate(@Param("exerciseId") Long exerciseId,
@@ -329,17 +330,21 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
-            select distinct p from StudentParticipation p
-            left join fetch p.results r
-            left join fetch r.feedbacks
-            left join fetch r.submission s
-            where p.exercise.id = :#{#exerciseId}
-                and p.student.id = :#{#studentId}
-                and p.testRun = :#{#testRun}
-                and (r.id = (select max(pr.id) from p.results pr
-                        left join pr.submission prs
-                        where (prs.type <> 'ILLEGAL' or prs.type is null))
-                    or r.id = null)
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.submission s
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+                AND p.testRun = :testRun
+                AND (r.id = (SELECT MAX(pr.id)
+                             FROM p.results pr
+                                LEFT JOIN pr.submission prs
+                             WHERE prs.type <> 'ILLEGAL'
+                                OR prs.type IS NULL
+                             )
+                    OR r.id IS NULL)
             """)
     Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithLatestResult(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId,
             @Param("testRun") boolean testRun);
@@ -356,29 +361,36 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      */
     @Query("""
                 SELECT DISTINCT p FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions submission
-                LEFT JOIN FETCH submission.results result
-                LEFT JOIN FETCH result.feedbacks feedbacks
-                LEFT JOIN FETCH result.assessor
+                    LEFT JOIN FETCH p.submissions submission
+                    LEFT JOIN FETCH submission.results result
+                    LEFT JOIN FETCH result.feedbacks feedbacks
+                    LEFT JOIN FETCH result.assessor
                 WHERE p.exercise.id = :#{#exerciseId}
-                AND p.testRun = FALSE
-                AND 0L = (SELECT COUNT(r2)
-                                 FROM Result r2 WHERE r2.assessor IS NOT NULL
-                                     AND (r2.rated IS NULL OR r2.rated = FALSE)
-                                     AND r2.submission = submission)
-                AND
-                  :#{#correctionRound} = (SELECT COUNT(r)
-                                 FROM Result r WHERE r.assessor IS NOT NULL
-                                     AND r.rated = TRUE
-                                     AND r.submission = submission
-                                     AND r.completionDate IS NOT NULL
-                                     AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
-                                     AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate))
-                AND :#{#correctionRound} = (SELECT COUNT (prs)
-                                FROM p.results prs
-                                WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
-                AND submission.submitted = true
-                AND submission.id = (SELECT max(id) FROM p.submissions)
+                    AND p.testRun = FALSE
+                    AND 0L = (SELECT COUNT(r2)
+                              FROM Result r2
+                              WHERE r2.assessor IS NOT NULL
+                                  AND (r2.rated IS NULL OR r2.rated = FALSE)
+                                  AND r2.submission = submission
+                              )
+                    AND
+                      :correctionRound = (SELECT COUNT(r)
+                                          FROM Result r
+                                          WHERE r.assessor IS NOT NULL
+                                              AND r.rated = TRUE
+                                              AND r.submission = submission
+                                              AND r.completionDate IS NOT NULL
+                                              AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
+                                              AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
+                                          )
+                    AND :correctionRound = (SELECT COUNT (prs)
+                                            FROM p.results prs
+                                            WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
+                                            )
+                    AND submission.submitted = true
+                    AND submission.id = (SELECT MAX(s2.id)
+                                         FROM p.submissions s2
+                                        )
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") Long exerciseId,
             @Param("correctionRound") long correctionRound);
@@ -388,14 +400,14 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.feedbacks
-            WHERE p.exercise.id = :#{#exerciseId}
-            AND (p.individualDueDate IS NULL OR p.individualDueDate <= :#{#now})
-            AND p.testRun = false
-            AND NOT EXISTS
-                (SELECT prs FROM p.results prs
-                    WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
-                    AND s.submitted = true
-                    AND s.id = (SELECT max(id) FROM p.submissions)
+            WHERE p.exercise.id = :exerciseId
+                AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
+                AND p.testRun = FALSE
+                AND NOT EXISTS
+                    (SELECT prs FROM p.results prs
+                        WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
+                        AND s.submitted = TRUE
+                        AND s.id = (SELECT MAX(s2.id) FROM p.submissions s2)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
             @Param("now") ZonedDateTime now);
@@ -657,15 +669,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     // TODO SE Improve - maybe leave out max id line?
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results r
-            WHERE p.exercise.id = :#{#exerciseId}
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+            WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
-                AND s.id = (SELECT max(id) FROM p.submissions)
+                AND s.id = (SELECT MAX(s2.id)
+                            FROM p.submissions s2
+                            )
                 AND EXISTS (SELECT s1 FROM p.submissions s1
-                    WHERE s1.participation.id = p.id
-                    AND s1.submitted = TRUE
-                    AND (r.assessor = :#{#assessor} OR r.assessor.id IS NULL))
+                            WHERE s1.participation.id = p.id
+                                AND s1.submitted = TRUE
+                                AND (r.assessor = :assessor OR r.assessor.id IS NULL)
+                            )
             """)
     List<StudentParticipation> findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
             @Param("assessor") User assessor);

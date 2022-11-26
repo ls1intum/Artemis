@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.activation.MimetypesFileTypeMap;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -39,6 +37,7 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.lecture.AttachmentUnitResource;
+import jakarta.activation.MimetypesFileTypeMap;
 
 /**
  * REST controller for managing Files.

@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -24,6 +22,7 @@ import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.statistics.ScoreDistribution;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
+import jakarta.validation.constraints.NotNull;
 
 @Repository
 public interface ParticipantScoreRepository extends JpaRepository<ParticipantScore, Long> {

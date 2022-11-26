@@ -19,40 +19,47 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
     @Query("""
-            SELECT notification FROM Notification notification LEFT JOIN notification.course LEFT JOIN notification.recipient
+            SELECT notification
+            FROM Notification notification
+                LEFT JOIN notification.course
+                LEFT JOIN notification.recipient
             WHERE notification.notificationDate IS NOT NULL
-                AND (:#{#hideUntil} IS NULL OR notification.notificationDate > :#{#hideUntil})
+                AND (:hideUntil IS NULL OR notification.notificationDate > :hideUntil)
                 AND (
-                    (type(notification) = GroupNotification
-                        AND ((notification.course.instructorGroupName IN :#{#currentGroups} AND notification.type = 'INSTRUCTOR')
-                            OR (notification.course.teachingAssistantGroupName IN :#{#currentGroups} AND notification.type = 'TA')
-                            OR (notification.course.editorGroupName IN :#{#currentGroups} AND notification.type = 'EDITOR')
-                            OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT')
+                    (TYPE(notification) = GroupNotification
+                        AND ((notification.course.instructorGroupName IN :currentGroups AND notification.type = 'INSTRUCTOR')
+                            OR (notification.course.teachingAssistantGroupName IN :currentGroups AND notification.type = 'TA')
+                            OR (notification.course.editorGroupName IN :currentGroups AND notification.type = 'EDITOR')
+                            OR (notification.course.studentGroupName IN :currentGroups AND notification.type = 'STUDENT')
                         )
                     )
-                    OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login}
+                    OR TYPE(notification) = SingleUserNotification
+                        AND notification.recipient.login = :login
                 )
             """)
     Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
             @Param("hideUntil") ZonedDateTime hideUntil, Pageable pageable);
 
     @Query("""
-            SELECT notification FROM Notification notification LEFT JOIN notification.course LEFT JOIN notification.recipient
+            SELECT notification
+            FROM Notification notification
+                LEFT JOIN notification.course
+                LEFT JOIN notification.recipient
             WHERE notification.notificationDate IS NOT NULL
-                AND (:#{#hideUntil} IS NULL OR notification.notificationDate > :#{#hideUntil})
+                AND (:hideUntil IS NULL OR notification.notificationDate > :hideUntil)
                 AND (
-                     (type(notification) = GroupNotification
-                        AND (notification.title NOT IN :#{#deactivatedTitles}
+                     (TYPE(notification) = GroupNotification
+                        AND (notification.title NOT IN :deactivatedTitles
                             OR notification.title IS NULL
                         )
-                        AND ((notification.course.instructorGroupName IN :#{#currentGroups} AND notification.type = 'INSTRUCTOR')
-                           OR (notification.course.teachingAssistantGroupName IN :#{#currentGroups} AND notification.type = 'TA')
-                           OR (notification.course.editorGroupName IN :#{#currentGroups} AND notification.type = 'EDITOR')
-                           OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT'))
+                        AND ((notification.course.instructorGroupName IN :currentGroups AND notification.type = 'INSTRUCTOR')
+                           OR (notification.course.teachingAssistantGroupName IN :currentGroups AND notification.type = 'TA')
+                           OR (notification.course.editorGroupName IN :currentGroups AND notification.type = 'EDITOR')
+                           OR (notification.course.studentGroupName IN :currentGroups AND notification.type = 'STUDENT'))
                      )
-                     OR (type(notification) = SingleUserNotification
-                        AND notification.recipient.login = :#{#login}
-                        AND (notification.title NOT IN :#{#deactivatedTitles}
+                     OR (TYPE(notification) = SingleUserNotification
+                        AND notification.recipient.login = :login
+                        AND (notification.title NOT IN :deactivatedTitles
                             OR notification.title IS NULL
                         )
                      )

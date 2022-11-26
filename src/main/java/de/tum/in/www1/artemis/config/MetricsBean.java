@@ -5,8 +5,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.*;
@@ -23,6 +21,7 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 
 @Component
 public class MetricsBean {

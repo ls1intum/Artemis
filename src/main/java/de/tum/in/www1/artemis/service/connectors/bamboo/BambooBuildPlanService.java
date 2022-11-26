@@ -8,8 +8,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -58,6 +56,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import jakarta.annotation.Nullable;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service

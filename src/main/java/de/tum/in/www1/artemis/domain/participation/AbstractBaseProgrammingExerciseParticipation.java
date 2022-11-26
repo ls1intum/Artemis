@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -10,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
 
 @MappedSuperclass
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

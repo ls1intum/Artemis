@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.repository;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 
 @Repository
 public interface ParticipationRepository extends JpaRepository<Participation, Long> {
@@ -27,11 +26,15 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     Optional<Participation> findByIdWithResultsAndSubmissionsResults(@Param("participationId") Long participationId);
 
     @Query("""
-            SELECT p FROM Participation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results r
+            SELECT p
+            FROM Participation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
             WHERE p.id = :participationId
-                AND (s.id = (SELECT max(id) FROM p.submissions) OR s.id = NULL)
+                AND (s.id = (SELECT MAX(s2.id)
+                             FROM p.submissions s2
+                             )
+                OR s.id IS NULL)
             """)
     Optional<Participation> findByIdWithLatestSubmissionAndResult(@Param("participationId") Long participationId);
 

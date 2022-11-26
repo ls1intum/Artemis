@@ -5,8 +5,6 @@ import static java.lang.Integer.compare;
 import java.text.BreakIterator;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
@@ -14,6 +12,7 @@ import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class TextBlockService {

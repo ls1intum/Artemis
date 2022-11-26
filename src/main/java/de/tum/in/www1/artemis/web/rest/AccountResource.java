@@ -5,9 +5,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +24,8 @@ import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 /**
  * REST controller for managing the current user's account.

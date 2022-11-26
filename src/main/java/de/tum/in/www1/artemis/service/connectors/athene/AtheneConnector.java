@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.athene;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.exception.NetworkingError;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * This class allows for an easy implementation of Connectors to Remote Artemis Services (e.g. the Text Clustering System).

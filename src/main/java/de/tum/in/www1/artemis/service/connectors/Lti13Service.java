@@ -7,10 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
-
 import org.joda.time.DateTime;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -32,7 +30,8 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import net.minidev.json.JSONObject;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class Lti13Service {

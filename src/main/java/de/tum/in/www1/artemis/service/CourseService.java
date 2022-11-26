@@ -14,8 +14,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,6 +54,7 @@ import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Service Implementation for managing Course.
@@ -714,14 +713,7 @@ public class CourseService {
             // explicitly set the registration number
             user.setVisibleRegistrationNumber(user.getRegistrationNumber());
             // remove some values which are not needed in the client
-            user.setLastNotificationRead(null);
-            user.setActivationKey(null);
-            user.setLangKey(null);
-            user.setLastNotificationRead(null);
-            user.setLastModifiedBy(null);
-            user.setLastModifiedDate(null);
-            user.setCreatedBy(null);
-            user.setCreatedDate(null);
+            user.removeUnnecessaryVariables();
         });
         removeUserVariables(usersInGroup);
         return ResponseEntity.ok().body(usersInGroup);
@@ -907,16 +899,7 @@ public class CourseService {
      *
      * @param usersInGroup  user whose variables are removed
      */
-    private void removeUserVariables(List<User> usersInGroup) {
-        usersInGroup.forEach(user -> {
-            user.setLastNotificationRead(null);
-            user.setActivationKey(null);
-            user.setLangKey(null);
-            user.setLastNotificationRead(null);
-            user.setLastModifiedBy(null);
-            user.setLastModifiedDate(null);
-            user.setCreatedBy(null);
-            user.setCreatedDate(null);
-        });
+    private static void removeUserVariables(List<User> usersInGroup) {
+        usersInGroup.forEach(User::removeUnnecessaryVariables);
     }
 }

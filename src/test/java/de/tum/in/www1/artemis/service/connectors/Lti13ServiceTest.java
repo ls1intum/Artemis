@@ -7,8 +7,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletResponse;
-
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,10 +23,6 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.nimbusds.jose.shaded.json.JSONObject;
-import com.nimbusds.jose.shaded.json.parser.JSONParser;
-import com.nimbusds.jose.shaded.json.parser.ParseException;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.lti.Scopes;
@@ -35,6 +32,7 @@ import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletResponse;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 
 class Lti13ServiceTest {
@@ -450,7 +448,7 @@ class Lti13ServiceTest {
         assertNotNull(authHeaders, "Score publish request must contain an Authorization header");
         assertTrue(authHeaders.contains("Bearer " + accessToken), "Score publish request must contain the corresponding Authorization Bearer token");
 
-        JSONParser jsonParser = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
+        JSONParser jsonParser = new JSONParser();
         JSONObject body = (JSONObject) jsonParser.parse(httpEntity.getBody());
         assertEquals(launch.getSub(), body.get("userId"), "Invalid parameter in score publish request: userId");
         assertNotNull(body.get("timestamp"), "Parameter missing in score publish request: timestamp");

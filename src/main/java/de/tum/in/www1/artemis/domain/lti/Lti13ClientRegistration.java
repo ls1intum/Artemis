@@ -45,7 +45,8 @@ public class Lti13ClientRegistration {
     }
 
     public Lti13ClientRegistration(String serverUrl, Course course, String clientRegistrationId) {
-        this.setGrantTypes(Arrays.asList(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(), AuthorizationGrantType.IMPLICIT.getValue()));
+        // TODO: is this the correct replacement IMPLICIT --> JWT_BEARER
+        this.setGrantTypes(Arrays.asList(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(), AuthorizationGrantType.JWT_BEARER.getValue()));
         this.setResponseTypes(List.of("id_token"));
         this.setClientName("Artemis - " + course.getShortName());
         this.setTokenEndpointAuthMethod("private_key_jwt");

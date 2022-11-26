@@ -4,13 +4,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+
+import jakarta.persistence.*;
 
 /**
  * A ShortAnswerQuestionStatistic.

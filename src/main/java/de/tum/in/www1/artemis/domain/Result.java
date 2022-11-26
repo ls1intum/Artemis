@@ -7,9 +7,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -28,6 +25,8 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.listeners.ResultListener;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
 
 /**
  * A Result.

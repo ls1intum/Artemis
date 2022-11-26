@@ -5,8 +5,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +19,7 @@ import com.hazelcast.nio.serialization.StreamSerializer;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * This class represents the cache for a single exam monitoring.

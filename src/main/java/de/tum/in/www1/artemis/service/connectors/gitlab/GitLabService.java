@@ -13,8 +13,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import javax.annotation.Nullable;
-
 import org.apache.http.HttpStatus;
 import org.gitlab4j.api.Constants;
 import org.gitlab4j.api.GitLabApi;
@@ -46,6 +44,7 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.dto.GitLabPushNotificationDTO;
 import de.tum.in.www1.artemis.service.util.UrlUtils;
+import jakarta.annotation.Nullable;
 
 @Profile("gitlab")
 @Service

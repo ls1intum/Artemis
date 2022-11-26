@@ -20,8 +20,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.CanceledException;
@@ -71,6 +69,7 @@ import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:

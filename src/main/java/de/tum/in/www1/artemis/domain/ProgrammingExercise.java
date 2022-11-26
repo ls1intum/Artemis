@@ -7,9 +7,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
-
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +25,8 @@ import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
 
 /**
  * A ProgrammingExercise.

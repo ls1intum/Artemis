@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.domain.participation;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToOne;
 
 @Entity
 @DiscriminatorValue(value = "TPEP")

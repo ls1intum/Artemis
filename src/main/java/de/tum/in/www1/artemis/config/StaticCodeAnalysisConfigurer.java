@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.config;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +12,7 @@ import de.tum.in.www1.artemis.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import jakarta.annotation.PostConstruct;
 
 /**
  * Provides hard-coded programming language specific static code analysis default categories as an unmodifiable Map

@@ -10,8 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.mail.internet.MimeMessage;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +34,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import jakarta.mail.internet.MimeMessage;
 
 class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
