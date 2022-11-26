@@ -1,7 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectorRef, Component, Input } from '@angular/core';
 import { FormGroup, Validators } from '@angular/forms';
 import { FormBuilder } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
 export interface GenericUpdateTextPropertyTranslationKeys {
     labelKey: string;
@@ -20,7 +21,7 @@ export interface GenericUpdateTextPropertyTranslationKeys {
     selector: 'jhi-generic-update-text-property-dialog',
     templateUrl: './generic-update-text-property-dialog.component.html',
 })
-export class GenericUpdateTextPropertyDialogComponent {
+export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComponent {
     @Input()
     propertyName: string;
 
@@ -40,13 +41,9 @@ export class GenericUpdateTextPropertyDialogComponent {
     translationKeys: GenericUpdateTextPropertyTranslationKeys;
     form: FormGroup;
 
-    isInitialized = false;
-
     initialize() {
-        if (!this.propertyName || !this.maxPropertyLength || !this.translationKeys) {
-            console.error('Error: Dialog not fully configured');
-        } else {
-            this.isInitialized = true;
+        super.initialize(['propertyName', 'maxPropertyLength', 'translationKeys']);
+        if (this.isInitialized) {
             this.initializeForm();
         }
     }
@@ -58,7 +55,9 @@ export class GenericUpdateTextPropertyDialogComponent {
     get control() {
         return this.form.get(this.propertyName);
     }
-    constructor(private fb: FormBuilder, private activeModal: NgbActiveModal) {}
+    constructor(private fb: FormBuilder, activeModal: NgbActiveModal) {
+        super(activeModal);
+    }
     private initializeForm() {
         if (this.form) {
             return;
@@ -81,10 +80,10 @@ export class GenericUpdateTextPropertyDialogComponent {
     }
 
     clear() {
-        this.activeModal.dismiss();
+        this.dismiss();
     }
 
     submitForm() {
-        this.activeModal.close(this.control!.value);
+        this.close(this.control!.value);
     }
 }
