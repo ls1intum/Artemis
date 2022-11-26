@@ -283,7 +283,7 @@
             <div class="form-check">
                 <input id="toggleMedianOverall" class="form-check-input" type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
                 <label for="toggleMedianOverall" class="form-check-label">
-                    {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate: { median: this.overallChartMedian } }}
+                    {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate : { median: this.overallChartMedian } }}
                 </label>
             </div>
             <!-- Histogram -->
@@ -457,7 +457,7 @@
                         </th>
                         <ng-container *ngIf="hasBonus">
                             <th *ngIf="presentationScoreThreshold != undefined" jhiSortBy="gradeWithBonus.achievedPresentationScore">
-                                <span>{{ 'artemisApp.examScores.presentationScoreThresholdColumn' | artemisTranslate: { threshold: presentationScoreThreshold } }}</span>
+                                <span>{{ 'artemisApp.examScores.presentationScoreThresholdColumn' | artemisTranslate : { threshold: presentationScoreThreshold } }}</span>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="gradeWithBonus.bonusGrade">

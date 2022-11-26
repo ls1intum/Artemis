@@ -5,5 +5,5 @@
     </span>
     <br />
     <span>{{ 'artemisApp.exam.examSummary.lastCommitHash' | artemisTranslate }}:</span>
-    <span [title]="submission?.commitHash">{{ (submission?.commitHash | slice: 0:7) || ('artemisApp.exam.examSummary.noCommitHash' | artemisTranslate) }}</span>
+    <span [title]="submission?.commitHash">{{ (submission?.commitHash | slice : 0 : 7) || ('artemisApp.exam.examSummary.noCommitHash' | artemisTranslate) }}</span>
 </h6>

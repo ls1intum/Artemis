@@ -139,7 +139,7 @@
         </div>
         <!-- information on loaded posts -->
         <div *ngIf="!isLoading" class="col-12 post-result-information">
-            {{ totalItems === 0 ? ('artemisApp.metis.noPosts' | artemisTranslate) : ('artemisApp.metis.postNumberInformation' | artemisTranslate: { number: totalItems }) }}
+            {{ totalItems === 0 ? ('artemisApp.metis.noPosts' | artemisTranslate) : ('artemisApp.metis.postNumberInformation' | artemisTranslate : { number: totalItems }) }}
         </div>
         <!-- list of posts -->
         <div class="col-12">
