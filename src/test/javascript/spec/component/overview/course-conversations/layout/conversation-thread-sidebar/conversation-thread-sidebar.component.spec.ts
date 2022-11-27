@@ -1,12 +1,29 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { PostComponent } from 'app/shared/metis/post/post.component';
+import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { Post } from 'app/entities/metis/post.model';
+import { post } from '../../../../../helpers/sample/metis-sample-data';
 
 describe('ConversationThreadSidebarComponent', () => {
     let component: ConversationThreadSidebarComponent;
     let fixture: ComponentFixture<ConversationThreadSidebarComponent>;
 
     beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({ declarations: [ConversationThreadSidebarComponent] }).compileComponents();
+        TestBed.configureTestingModule({
+            declarations: [
+                ConversationThreadSidebarComponent,
+                MockComponent(FaIconComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(PostComponent),
+                MockComponent(MessageReplyInlineInputComponent),
+                MockDirective(NgbTooltip),
+            ],
+        }).compileComponents();
     }));
 
     beforeEach(() => {
@@ -15,5 +32,16 @@ describe('ConversationThreadSidebarComponent', () => {
         fixture.detectChanges();
     });
 
-    it.todo('should create');
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should create empty default answer post', () => {
+        const newPost = new Post();
+        post.id = 1;
+        component.activePost = newPost;
+        expect(component.createdAnswerPost).toBeDefined();
+        expect(component.createdAnswerPost.content).toBe('');
+        expect(component.createdAnswerPost.post).toEqual(newPost);
+    });
 });
