@@ -1,7 +1,7 @@
 <div class="table-responsive">
     <div class="col-12 mb-2">
         <div class="alert alert-info">
-            {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate: { timeZone: timeZoneUsedForDisplay } }}
+            {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate : { timeZone: timeZoneUsedForDisplay } }}
         </div>
     </div>
     <table class="table table-sm table-hover">
@@ -57,8 +57,8 @@
                     <div class="text-center">
                         <h4>
                             {{ 'artemisApp.pages.tutorialGroupSessionManagement.currentDate' | artemisTranslate }}
-                            {{ getCurrentDate() | artemisDate: 'long-date':false:timeZoneUsedForDisplay:true }}
-                            {{ getCurrentDate() | artemisDate: 'time':false:timeZoneUsedForDisplay:false }}
+                            {{ getCurrentDate() | artemisDate : 'long-date' : false : timeZoneUsedForDisplay : true }}
+                            {{ getCurrentDate() | artemisDate : 'time' : false : timeZoneUsedForDisplay : false }}
                         </h4>
                     </div>
                 </td>
