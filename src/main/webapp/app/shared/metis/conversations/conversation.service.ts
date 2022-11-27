@@ -127,12 +127,12 @@ export class ConversationService {
         return res;
     };
 
-    public convertServerDates = (conversation: ConversationDto) => {
+    public convertServerDates(conversation: ConversationDto) {
         conversation.creationDate = conversation.creationDate ? dayjs(conversation.creationDate) : undefined;
         conversation.lastMessageDate = conversation.lastMessageDate ? dayjs(conversation.lastMessageDate) : undefined;
         conversation.lastReadDate = conversation.lastReadDate ? dayjs(conversation.lastReadDate) : undefined;
         return conversation;
-    };
+    }
 
     public convertDateArrayFromServer = (res: HttpResponse<ConversationDto[]>): HttpResponse<ConversationDto[]> => {
         if (res.body) {

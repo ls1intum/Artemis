@@ -26,15 +26,15 @@ import dayjs from 'dayjs/esm';
 export class MetisConversationService implements OnDestroy {
     // Stores the conversation of the course where the current user is a member
     private _conversationsOfUser: ConversationDto[] = [];
-    private _conversationsOfUser$: ReplaySubject<ConversationDto[]> = new ReplaySubject<ConversationDto[]>(1);
+    _conversationsOfUser$: ReplaySubject<ConversationDto[]> = new ReplaySubject<ConversationDto[]>(1);
     // Stores the currently selected conversation
     private _activeConversation: ConversationDto | undefined = undefined;
-    private _activeConversation$: ReplaySubject<ConversationDto | undefined> = new ReplaySubject<ConversationDto | undefined>(1);
+    _activeConversation$: ReplaySubject<ConversationDto | undefined> = new ReplaySubject<ConversationDto | undefined>(1);
     // Stores the course for which the service is setup -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
     private _isLoading = false;
-    private _isLoading$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
+    _isLoading$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
 
     private subscribedConversationMembershipTopic?: string;
     private userId: number;
@@ -114,13 +114,14 @@ export class MetisConversationService implements OnDestroy {
                     }
                 }
                 this._activeConversation$.next(this._activeConversation);
+                this.setIsLoading(false);
                 return;
             }),
-            // refresh complete
-            switchMap(() => EMPTY),
             finalize(() => {
                 this.setIsLoading(false);
             }),
+            // refresh complete
+            switchMap(() => EMPTY),
         );
     };
 
@@ -177,13 +178,14 @@ export class MetisConversationService implements OnDestroy {
                 this._activeConversation = undefined;
                 this._activeConversation$.next(this._activeConversation);
                 this.subscribeToConversationMembershipTopic(courseId, this.userId);
+                this.setIsLoading(false);
                 return;
             }),
-            // service is ready to use and cached values can be received via the respective replay subjects
-            switchMap(() => EMPTY),
             finalize(() => {
                 this.setIsLoading(false);
             }),
+            // service is ready to use and cached values can be received via the respective replay subjects
+            switchMap(() => EMPTY),
         );
     };
 
