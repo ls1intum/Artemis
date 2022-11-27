@@ -1,12 +1,12 @@
-import { Component, ContentChild, HostBinding, Input, TemplateRef } from '@angular/core';
+import { Component, ContentChild, HostBinding, Input, OnInit, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
-import { isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -16,6 +16,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import dayjs from 'dayjs/esm';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -23,10 +24,11 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['../course-overview.scss'],
     providers: [SourceTreeService],
 })
-export class ExerciseDetailsStudentActionsComponent {
+export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
-    readonly ParticipationStatus = ParticipationStatus;
+    readonly InitializationState = InitializationState;
+    readonly dayjs = dayjs;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -41,6 +43,11 @@ export class ExerciseDetailsStudentActionsComponent {
 
     // extension points, see shared/extension-point
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
+
+    uninitializedQuiz: boolean;
+    quizNotStarted: boolean;
+    gradedParticipation?: StudentParticipation;
+    practiceParticipation?: StudentParticipation;
 
     // Icons
     faComment = faComment;
@@ -60,6 +67,18 @@ export class ExerciseDetailsStudentActionsComponent {
         private translateService: TranslateService,
         private participationService: ParticipationService,
     ) {}
+
+    ngOnInit(): void {
+        this.uninitializedQuiz = this.exercise.type === ExerciseType.QUIZ && !!(this.exercise as QuizExercise)?.quizBatches?.some((batch) => batch.started);
+        this.quizNotStarted =
+            !this.uninitializedQuiz &&
+            (!this.exercise.studentParticipations?.[0].initializationState ||
+                ![InitializationState.INITIALIZED, InitializationState.FINISHED].includes(this.exercise.studentParticipations[0].initializationState));
+
+        const studentParticipations = this.exercise.studentParticipations ?? [];
+        this.gradedParticipation = this.studentParticipation ?? this.participationService.getSpecificStudentParticipation(studentParticipations, false);
+        this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
+    }
 
     /**
      * Starting an exercise is not possible in the exam, otherwise see exercise.utils -> isStartExerciseAvailable
@@ -111,7 +130,6 @@ export class ExerciseDetailsStudentActionsComponent {
                 next: (participation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
-                        this.exercise.participationStatus = this.participationStatusWrapper();
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
@@ -143,7 +161,6 @@ export class ExerciseDetailsStudentActionsComponent {
                         resumedParticipation.results = participation ? participation.results : [];
                         const replacedIndex = this.exercise.studentParticipations!.indexOf(participation!);
                         this.exercise.studentParticipations![replacedIndex] = resumedParticipation;
-                        this.exercise.participationStatus = participationStatus(this.exercise);
                         this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                     }
                 },
@@ -191,25 +208,18 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     /**
-     * Wrapper for using participationStatus() in the template
-     *
-     * @return {ParticipationStatus}
-     */
-    participationStatusWrapper(testRun?: boolean): ParticipationStatus {
-        return participationStatus(this.exercise, testRun);
-    }
-
-    /**
      * Display the 'open code editor' or 'clone repo' buttons if
      * - the participation is initialized (build plan exists, this is always the case during an exam), or
      * - the participation is inactive (build plan cleaned up), but can not be resumed (e.g. because we're after the due date)
      */
     public shouldDisplayIDEButtons(): boolean {
         return !!this.exercise.studentParticipations?.some((participation) => {
-            const status = participationStatus(this.exercise, participation.testRun);
             const startExerciseNotAvailable = !isStartExerciseAvailable(this.exercise) && !participation.testRun;
             const startPracticeNotAvailable = !isStartPracticeAvailable(this.exercise) && participation.testRun;
-            return status === ParticipationStatus.INITIALIZED || (status === ParticipationStatus.INACTIVE && (startExerciseNotAvailable || startPracticeNotAvailable));
+            return (
+                participation.initializationState === InitializationState.INITIALIZED ||
+                (participation.initializationState === InitializationState.INACTIVE && (startExerciseNotAvailable || startPracticeNotAvailable))
+            );
         });
     }
 

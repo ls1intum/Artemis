@@ -110,20 +110,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).toBeNull();
     }));
 
-    it('should reflect the correct participation state when a team was assigned to the student', fakeAsync(() => {
-        comp.exercise = teamExerciseWithoutTeamAssigned;
-        fixture.detectChanges();
-        tick();
-
-        expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.NO_TEAM_ASSIGNED);
-
-        comp.exercise.studentAssignedTeamId = team.id;
-        fixture.detectChanges();
-        tick();
-
-        expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.UNINITIALIZED);
-    }));
-
     it('should show the button "Team" for a team exercise for a student to view his team when assigned to a team', fakeAsync(() => {
         comp.exercise = teamExerciseWithTeamAssigned;
 
@@ -157,14 +143,13 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.UNINITIALIZED);
         expect(startExerciseStub).toHaveBeenCalledOnce();
         participationSubject.next(initPart);
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.INITIALIZED);
+        expect(comp.studentParticipation?.initializationState).toEqual(InitializationState.INITIALIZED);
 
         // Check that button "Start exercise" is no longer shown
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
@@ -197,26 +182,33 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         let startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).not.toBeNull();
 
+        let cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepositoryButton).toBeNull();
+
         comp.exercise.studentParticipations = [inactivePart];
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.UNINITIALIZED);
+        // Check that button "Start practice" is no longer shown
+        startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
+        expect(startPracticeButton).not.toBeNull();
+
+        // Check that button "Clone repository" is shown
+        cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepositoryButton).toBeNull();
 
         comp.exercise.studentParticipations = [initPart];
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.INITIALIZED);
-
         // Check that button "Start practice" is no longer shown
         startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).toBeNull();
 
         // Check that button "Clone repository" is shown
-        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
+        cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
         expect(cloneRepositoryButton).not.toBeNull();
 
         fixture.destroy();
@@ -234,7 +226,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         comp.resumeProgrammingExercise(false);
 
         expect(comp.exercise.studentParticipations).toEqual([activeParticipation, practiceParticipation]);
-        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.INITIALIZED);
     });
 
     it('should not allow to publish a build plan for text exercises', () => {

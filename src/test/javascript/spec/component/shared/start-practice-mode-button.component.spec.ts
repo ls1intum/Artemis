@@ -10,13 +10,12 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
-import { ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
 
@@ -73,7 +72,6 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(participationStatus(exercise, true)).toEqual(ParticipationStatus.UNINITIALIZED);
         expect(comp.exercise.studentParticipations).toEqual([inactivePart]);
         expect(startPracticeStub).toHaveBeenCalledOnce();
 
@@ -83,7 +81,6 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(participationStatus(exercise, true)).toEqual(ParticipationStatus.INITIALIZED);
         expect(comp.exercise.studentParticipations).toEqual([initPart]);
 
         fixture.destroy();
@@ -116,7 +113,6 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(participationStatus(exercise, true)).toEqual(ParticipationStatus.UNINITIALIZED);
         expect(comp.exercise.studentParticipations).toEqual([gradedPart, inactivePart]);
         expect(startPracticeStub).toHaveBeenCalledOnce();
 
@@ -125,7 +121,6 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(participationStatus(exercise, true)).toEqual(ParticipationStatus.INITIALIZED);
         expect(comp.exercise.studentParticipations).toEqual([gradedPart, initPart]);
 
         fixture.destroy();

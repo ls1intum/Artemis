@@ -33,6 +33,7 @@ import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -64,7 +65,7 @@ const activeQuiz: QuizExercise = {
     id: 8,
     isActiveQuiz: true,
     quizMode: QuizMode.SYNCHRONIZED,
-    participationStatus: ParticipationStatus.QUIZ_ACTIVE,
+    studentParticipations: [{ initializationState: InitializationState.INITIALIZED }],
     numberOfAssessmentsOfCorrectionRounds: [],
     secondCorrectionEnabled: false,
     studentAssignedTeamIdComputed: false,

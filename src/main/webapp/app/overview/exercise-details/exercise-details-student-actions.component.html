@@ -21,7 +21,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_NOT_STARTED"
+                *ngIf="quizNotStarted"
                 (click)="startExercise()"
             ></button>
             <button
@@ -33,7 +33,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_UNINITIALIZED"
+                *ngIf="uninitializedQuiz"
                 (click)="startExercise()"
             ></button>
             <button
@@ -41,7 +41,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faPlayCircle"
                 [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
-                *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_ACTIVE"
+                *ngIf="exercise.studentParticipations?.[0]?.initializationState === InitializationState.INITIALIZED"
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
@@ -59,7 +59,7 @@
                 [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
                 [outlined]="true"
                 [buttonLoading]="!!exercise.loading"
-                *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_SUBMITTED"
+                *ngIf="exercise.studentParticipations?.[0]?.initializationState === InitializationState.FINISHED"
                 [smallButton]="smallButtons"
                 (click)="startExercise()"
             ></button>
@@ -69,7 +69,7 @@
                 [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
                 [outlined]="true"
                 [buttonLoading]="!!exercise.loading"
-                *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_FINISHED && showResult"
+                *ngIf="exercise.dueDate && dayjs(exercise.dueDate).isBefore(dayjs()) && studentParticipation?.results?.length && showResult"
                 [smallButton]="smallButtons"
                 (click)="startExercise()"
             ></button>
@@ -96,7 +96,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -113,7 +113,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -183,7 +183,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -200,7 +200,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="participationStatusWrapper(false) === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
+                    *ngIf="gradedParticipation && isStartExerciseAvailable()"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -209,7 +209,7 @@
                 class="start-practice me-1"
                 [smallButtons]="smallButtons"
                 [exercise]="exercise"
-                *ngIf="participationStatusWrapper(true) === ParticipationStatus.UNINITIALIZED && isStartPracticeAvailable()"
+                *ngIf="!practiceParticipation && isStartPracticeAvailable()"
             ></jhi-start-practice-mode-button>
 
             <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
@@ -261,7 +261,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="participationStatusWrapper(false) === ParticipationStatus.INACTIVE && isResumeExerciseAvailable()"
+                *ngIf="gradedParticipation"
                 (click)="resumeProgrammingExercise(false)"
             ></button>
             <button
@@ -273,7 +273,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="participationStatusWrapper(true) === ParticipationStatus.INACTIVE && isStartPracticeAvailable()"
+                *ngIf="practiceParticipation"
                 (click)="resumeProgrammingExercise(true)"
             ></button>
             <a
@@ -301,7 +301,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -317,7 +317,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -385,7 +385,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
+                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
             ></button>
@@ -397,7 +397,7 @@
                     [buttonIcon]="faPlayCircle"
                     [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
                     [buttonLoading]="!!exercise.loading"
-                    *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"

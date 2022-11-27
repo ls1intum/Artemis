@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
@@ -18,6 +18,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { InitializationState } from 'app/entities/participation/participation.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -223,7 +224,7 @@ export class ExerciseService {
         const nextQuizExercises = exercises?.filter((exercise: QuizExercise) => exercise.quizMode === QuizMode.SYNCHRONIZED && !exercise.quizEnded);
         return (
             // 1st priority is an active quiz
-            nextQuizExercises?.find((exercise: QuizExercise) => this.isActiveQuiz(exercise)) ||
+            nextQuizExercises?.find((exercise: QuizExercise) => this.isActiveQuiz(exercise as QuizExercise)) ||
             // 2nd priority is a visible quiz
             nextQuizExercises?.find((exercise: QuizExercise) => exercise.visibleToStudents) ||
             // 3rd priority is the next due exercise
@@ -235,11 +236,11 @@ export class ExerciseService {
         );
     }
 
-    isActiveQuiz(exercise: Exercise) {
+    isActiveQuiz(exercise: QuizExercise) {
         return (
-            exercise.participationStatus === ParticipationStatus.QUIZ_UNINITIALIZED ||
-            exercise.participationStatus === ParticipationStatus.QUIZ_ACTIVE ||
-            exercise.participationStatus === ParticipationStatus.QUIZ_SUBMITTED
+            exercise?.quizBatches?.some((batch) => batch.started) ||
+            exercise.studentParticipations?.[0].initializationState === InitializationState.INITIALIZED ||
+            exercise.studentParticipations?.[0].initializationState === InitializationState.FINISHED
         );
     }
 
