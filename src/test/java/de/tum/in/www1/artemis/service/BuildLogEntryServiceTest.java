@@ -125,6 +125,44 @@ class BuildLogEntryServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
             Build mtc Test Maven - ARTEMISADMIN - Default Job #7 (MTCTSTMVN-ARTEMISADMIN-JOB1-7) started building on agent Agent1, bamboo version: 8.2.5
             the first of its kind
             Build working directory is /var/atlassian/application-data/bamboo/local-working-dir/MTCTSTMVN-ARTEMISADMIN-JOB1
+            Unable to find image 'ls1tum/artemis-maven-template:java17-11' locally
+            java17-11: Pulling from ls1tum/artemis-maven-template
+            eaead16dc43b: Already exists
+            b5503608cd3e: Already exists
+            eae98b5113a2: Already exists
+            e55eee3584d7: Already exists
+            9061e3a33440: Already exists
+            4e0db99c631f: Already exists
+            c0a509b0e776: Already exists
+            1bd9db93e080: Already exists
+            a1a351a4ea8d: Pulling fs layer
+            4f4fb700ef54: Pulling fs layer
+            380917b8d95f: Pulling fs layer
+            36b21db8cfd5: Pulling fs layer
+            1d98a0f12066: Pulling fs layer
+            73cbc73d72f9: Pulling fs layer
+            36b21db8cfd5: Waiting
+            1d98a0f12066: Waiting
+            73cbc73d72f9: Waiting
+            4f4fb700ef54: Download complete
+            380917b8d95f: Verifying Checksum
+            380917b8d95f: Download complete
+            a1a351a4ea8d: Verifying Checksum
+            a1a351a4ea8d: Download complete
+            73cbc73d72f9: Verifying Checksum
+            73cbc73d72f9: Download complete
+            a1a351a4ea8d: Pull complete
+            4f4fb700ef54: Pull complete
+            380917b8d95f: Pull complete
+            36b21db8cfd5: Verifying Checksum
+            36b21db8cfd5: Download complete
+            1d98a0f12066: Verifying Checksum
+            1d98a0f12066: Download complete
+            36b21db8cfd5: Pull complete
+            1d98a0f12066: Pull complete
+            73cbc73d72f9: Pull complete
+            Digest: sha256:d82b8a02960018ed070279a3c850638fe6527e72af076cc90531163b9ed229e5
+            Status: Downloaded newer image for ls1tum/artemis-maven-template:java17-11
             Executing build mtc Test Maven - ARTEMISADMIN - Default Job #7 (MTCTSTMVN-ARTEMISADMIN-JOB1-7)
             Starting task 'Checkout Default Repository' of type 'com.atlassian.bamboo.plugins.vcs:task.vcs.checkout'
             Checking out into /var/atlassian/application-data/bamboo/local-working-dir/MTCTSTMVN-ARTEMISADMIN-JOB1
