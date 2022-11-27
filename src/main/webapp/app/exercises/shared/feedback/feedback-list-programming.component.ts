@@ -13,6 +13,9 @@ type FeedbackItemMap = {
     [key in FeedbackItemGroup]: FeedbackItem[];
 };
 
+/*
+ * TODO: WIP DO NOT USE YET.
+ */
 @Component({
     selector: 'jhi-feedback-list-programming',
     templateUrl: './feedback-list-programming.component.html',

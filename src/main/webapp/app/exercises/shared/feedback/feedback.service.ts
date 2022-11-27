@@ -12,7 +12,7 @@ export class FeedbackService {
     /**
      * Creates a feedback item with a category, title and text for each feedback object.
      * @param feedbacks The list of feedback objects.
-     * @param isProgrammingExercise TODO: find other way
+     * @param isProgrammingExercise
      * @param showTestDetails
      */
     public createFeedbackItems(feedbacks: Feedback[], isProgrammingExercise: boolean, showTestDetails: boolean): FeedbackItem[] {
