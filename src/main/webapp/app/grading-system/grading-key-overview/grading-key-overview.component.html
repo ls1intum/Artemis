@@ -18,10 +18,10 @@
                     <tr *ngFor="let gradeStep of gradeSteps; let i = index; let last = last" [class.highlighted]="gradeStep.gradeName == studentGrade">
                         <td>{{ gradeStep.gradeName }}</td>
                         <td>
-                            <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
+                            <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.PERCENTAGE : last | safeHtml"></span>
                         </td>
                         <td *ngIf="hasPointsSet()">
-                            <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS:last | safeHtml"></span>
+                            <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.POINTS : last | safeHtml"></span>
                         </td>
                     </tr>
                 </tbody>

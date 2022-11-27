@@ -140,7 +140,7 @@
                     <td>
                         <span>
                             <ng-container *ngIf="complaint.accepted === undefined"> &gt;= </ng-container>
-                            {{ complaintService.getResponseTimeInSeconds(complaint) | artemisDurationFromSeconds: true }}
+                            {{ complaintService.getResponseTimeInSeconds(complaint) | artemisDurationFromSeconds : true }}
                             <fa-icon
                                 *ngIf="complaintService.shouldHighlightComplaint(complaint)"
                                 [icon]="faExclamationTriangle"
