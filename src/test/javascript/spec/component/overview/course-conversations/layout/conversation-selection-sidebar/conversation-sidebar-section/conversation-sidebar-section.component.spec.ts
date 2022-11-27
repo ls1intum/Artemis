@@ -30,9 +30,9 @@ class ConversationSidebarEntryStubComponent {
     settingsChanged = new EventEmitter<void>();
 }
 
-const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 examples.forEach((activeConversation) => {
-    describe('ConversationSidebarSectionComponent with ' + activeConversation.type, () => {
+    describe('ConversationSidebarSectionComponent with ' + (activeConversation?.type || 'no active conversation'), () => {
         let component: ConversationSidebarSectionComponent;
         let fixture: ComponentFixture<ConversationSidebarSectionComponent>;
         const course = { id: 1 } as Course;

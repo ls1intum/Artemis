@@ -37,9 +37,6 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     private ngUnsubscribe = new Subject<void>();
     private readonly search$ = new Subject<SearchQuery>();
     searchTerm = '';
-
-    canCreateChannel = canCreateChannel;
-
     course?: Course;
 
     activeConversation?: ConversationDto;
@@ -63,6 +60,8 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     faExpand = faExpand;
     faCompress = faCompress;
 
+    canCreateChannel = canCreateChannel;
+
     constructor(
         private modalService: NgbModal,
         private cdr: ChangeDetectorRef,
@@ -78,7 +77,6 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         this.subscribeToActiveConversation();
         this.subscribeToConversationsOfUser();
     }
-
     private subscribeToSearch() {
         this.search$
             .pipe(
@@ -130,8 +128,8 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
-            this.activeConversation = conversation;
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((activeConversation: ConversationDto) => {
+            this.activeConversation = activeConversation;
         });
     }
 

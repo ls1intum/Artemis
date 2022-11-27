@@ -147,8 +147,8 @@ describe('ChannelsOverviewDialogComponent', () => {
         const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
         fixture.detectChanges();
 
-        const cancelButton = fixture.debugElement.nativeElement.querySelector('#createChannel');
-        cancelButton.click();
+        const createChannelButton = fixture.debugElement.nativeElement.querySelector('#createChannel');
+        createChannelButton.click();
         tick(501);
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();

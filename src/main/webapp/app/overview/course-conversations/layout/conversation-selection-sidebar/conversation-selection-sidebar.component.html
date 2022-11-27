@@ -60,8 +60,14 @@
                                         <fa-icon [icon]="faPlus" size="xs"></fa-icon>
                                     </button>
                                     <div ngbDropdownMenu>
-                                        <button ngbDropdownItem (click)="openChannelOverviewDialog($event)">Browse Channels</button>
-                                        <button ngbDropdownItem [hidden]="!course.isAtLeastInstructor" (click)="openCreateChannelDialog($event)" *ngIf="canCreateChannel(course)">
+                                        <button id="channelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event)">Browse Channels</button>
+                                        <button
+                                            id="createChannel"
+                                            ngbDropdownItem
+                                            [hidden]="!course.isAtLeastInstructor"
+                                            (click)="openCreateChannelDialog($event)"
+                                            *ngIf="canCreateChannel(course)"
+                                        >
                                             Create Channel
                                         </button>
                                     </div>
@@ -83,7 +89,7 @@
                         >
                             <ng-template>
                                 <div class="d-inline-block">
-                                    <button class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateGroupChatDialog($event)">
+                                    <button id="createGroupChat" class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateGroupChatDialog($event)">
                                         <fa-icon [icon]="faPlus" size="xs"></fa-icon>
                                     </button>
                                 </div>
@@ -104,7 +110,7 @@
                         >
                             <ng-template>
                                 <div class="d-inline-block">
-                                    <button class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateOneToOneChatDialog($event)">
+                                    <button id="createOneToOne" class="btn btn-sm btn-outline-secondary" type="button" (click)="openCreateOneToOneChatDialog($event)">
                                         <fa-icon [icon]="faPlus" size="xs"></fa-icon>
                                     </button>
                                 </div>
