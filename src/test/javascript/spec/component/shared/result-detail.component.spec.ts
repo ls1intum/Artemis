@@ -18,7 +18,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { FeedbackCollapseComponent } from 'app/exercises/shared/result/feedback-collapse.component';
+import { FeedbackCollapseComponent } from 'app/exercises/shared/feedback/feedback-collapse.component';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BarChartModule } from '@swimlane/ngx-charts';

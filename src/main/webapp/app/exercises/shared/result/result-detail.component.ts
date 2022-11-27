@@ -33,7 +33,7 @@ import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { resultIsPreliminary } from 'app/exercises/shared/result/result.utils';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import { computeFeedbackPreviewText } from 'app/exercises/shared/result/feedback.util';
+import { computeFeedbackPreviewText } from 'app/exercises/shared/feedback/feedback.util';
 
 export enum FeedbackItemType {
     Issue,

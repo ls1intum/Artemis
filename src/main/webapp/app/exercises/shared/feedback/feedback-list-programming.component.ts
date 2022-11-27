@@ -17,7 +17,7 @@ type FeedbackItemMap = {
     selector: 'jhi-feedback-list-programming',
     templateUrl: './feedback-list-programming.component.html',
 })
-export class FeedbackListComponent {
+export class FeedbackListProgrammingComponent {
     feedbackMap: FeedbackItemMap;
 
     private createFeedbackItemsMap(feedbacks: Feedback[]): FeedbackItemMap {

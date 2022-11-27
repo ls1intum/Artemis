@@ -3,7 +3,7 @@ import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-feedback-collapse',
-    styleUrls: ['./result-detail.scss'],
+    styleUrls: ['../result/result-detail.scss'],
     templateUrl: './feedback-collapse.component.html',
 })
 /**
