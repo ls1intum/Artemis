@@ -20,20 +20,25 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.jms.annotation.EnableJms;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.simp.stomp.StompReactorNettyCodec;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.NativeMessageHeaderAccessor;
 import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.DelegatingWebSocketMessageBrokerConfiguration;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -60,6 +65,7 @@ import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Configuration
+@EnableJms
 // See https://stackoverflow.com/a/34337731/3802758
 public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {
 
@@ -116,8 +122,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         if (tcpClient != null) {
             log.info("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
             config
+                    // .setApplicationDestinationPrefixes("/topic/team")
                     // Enable the relay for "/topic"
-                    .enableStompBrokerRelay("/topic")
+                    .enableStompBrokerRelay("/topic", "/queue")
                     // Messages that could not be sent to a user (as he is not connected to this server) will be forwarded to "/topic/unresolved-user"
                     .setUserDestinationBroadcast("/topic/unresolved-user")
                     // Information about connected users will be sent to "/topic/user-registry"
@@ -168,7 +175,50 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new TopicSubscriptionInterceptor());
+        registration.interceptors(new TopicSubscriptionInterceptor(), new ChannelInterceptor() {
+
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                System.err.println("preSend");
+                MultiValueMap<String, String> nativeHeaders = (MultiValueMap<String, String>) message.getHeaders().get(NativeMessageHeaderAccessor.NATIVE_HEADERS);
+                Authentication authentication = message.getHeaders().get(SimpMessageHeaderAccessor.USER_HEADER, Authentication.class);
+                if (nativeHeaders != null && authentication != null && authentication.isAuthenticated()) {
+                    org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+                    nativeHeaders.add("userName", user.getUsername());
+                }
+                return ChannelInterceptor.super.preSend(message, channel);
+            }
+
+            @Override
+            public void postSend(Message<?> message, MessageChannel channel, boolean sent) {
+                System.err.println("postSend");
+                ChannelInterceptor.super.postSend(message, channel, sent);
+            }
+
+            @Override
+            public void afterSendCompletion(Message<?> message, MessageChannel channel, boolean sent, Exception ex) {
+                System.err.println("afterSendCompletion");
+                ChannelInterceptor.super.afterSendCompletion(message, channel, sent, ex);
+            }
+
+            @Override
+            public boolean preReceive(MessageChannel channel) {
+                System.err.println("preReceive");
+                return ChannelInterceptor.super.preReceive(channel);
+            }
+
+            @Override
+            public Message<?> postReceive(Message<?> message, MessageChannel channel) {
+                System.err.println("postReceive");
+                return ChannelInterceptor.super.postReceive(message, channel);
+            }
+
+            @Override
+            public void afterReceiveCompletion(Message<?> message, MessageChannel channel, Exception ex) {
+                System.err.println("afterReceiveCompletion");
+                ChannelInterceptor.super.afterReceiveCompletion(message, channel, ex);
+            }
+        });
     }
 
     @NotNull

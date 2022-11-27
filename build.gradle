@@ -243,6 +243,7 @@ dependencies {
     }
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-artemis:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:2.4.1"

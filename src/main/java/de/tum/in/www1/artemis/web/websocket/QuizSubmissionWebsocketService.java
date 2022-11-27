@@ -7,7 +7,6 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
@@ -55,7 +54,8 @@ public class QuizSubmissionWebsocketService {
      * @param quizSubmission the submission which should be saved
      * @param principal      refers to the user who initiated the request
      */
-    @MessageMapping("/topic/quizExercise/{exerciseId}/submission")
+    // @MessageMapping("/queue/quizExercise/{exerciseId}/submission")
+    // @JmsListener(destination = "/queue/quizExercise/*/submission", containerFactory = )
     public void saveSubmission(@DestinationVariable Long exerciseId, @Valid @Payload QuizSubmission quizSubmission, Principal principal) {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
@@ -69,7 +69,7 @@ public class QuizSubmissionWebsocketService {
         }
         catch (QuizSubmissionException ex) {
             // send error message over websocket (use a thread to prevent that the outbound channel blocks the inbound channel (e.g. due a slow client))
-            new Thread(() -> messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/quizExercise/" + exerciseId + "/submission", new WebsocketError(ex.getMessage())))
+            new Thread(() -> messagingTemplate.convertAndSendToUser(principal.getName(), "/queue/quizExercise/" + exerciseId + "/submission", new WebsocketError(ex.getMessage())))
                     .start();
         }
     }
