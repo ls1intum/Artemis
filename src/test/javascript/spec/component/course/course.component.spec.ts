@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { Exercise, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { CourseCardComponent } from 'app/overview/course-card.component';

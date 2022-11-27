@@ -12,7 +12,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import dayjs from 'dayjs/esm';
 import { MockCourseService } from '../../../helpers/mocks/service/mock-course.service';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
@@ -112,66 +112,6 @@ describe('CourseExerciseRowComponent', () => {
         const result = fixture.debugElement.query(By.css('jhi-submission-result-status'));
         expect(result).not.toBeNull();
     });
-
-    const setupForTestingParticipationStatusExerciseTypeQuiz = (
-        isPlannedToStart: boolean,
-        dueDate: dayjs.Dayjs,
-        releaseDate: dayjs.Dayjs,
-        visibleToStudents: boolean,
-        hasParticipations: boolean,
-        initializationState?: InitializationState,
-        hasResults?: boolean,
-        duration = 10,
-    ) => {
-        comp.exercise = {
-            id: 1,
-            dueDate,
-            quizBatches: isPlannedToStart
-                ? [{ startTime: releaseDate, started: isPlannedToStart && releaseDate.isBefore(dayjs()), ended: dueDate.isBefore(dayjs()) } as QuizBatch]
-                : [],
-            releaseDate: visibleToStudents ? releaseDate : undefined,
-            type: ExerciseType.QUIZ,
-            visibleToStudents,
-            quizStarted: isPlannedToStart && visibleToStudents && releaseDate.isBefore(dayjs()),
-            quizEnded: dueDate.isBefore(dayjs()),
-            duration,
-        } as QuizExercise;
-
-        if (hasParticipations) {
-            const studentParticipation = {
-                id: 1,
-                initializationState,
-            } as StudentParticipation;
-
-            if (hasResults) {
-                studentParticipation.results = [{ id: 1 } as Result];
-            }
-
-            comp.exercise.studentParticipations = [studentParticipation];
-
-            getAllParticipationsStub.mockReturnValue([studentParticipation]);
-        } else {
-            getAllParticipationsStub.mockReturnValue([]);
-        }
-
-        comp.ngOnChanges();
-        comp.ngOnInit();
-    };
-
-    const setupForTestingParticipationStatusExerciseTypeText = (exerciseType: ExerciseType, initializationState: InitializationState, inDueDate: boolean) => {
-        const dueDate = inDueDate ? dayjs().add(3, 'days') : dayjs().subtract(3, 'days');
-        setupExercise(exerciseType, dueDate);
-
-        const studentParticipation = {
-            id: 1,
-            initializationState,
-        } as StudentParticipation;
-        comp.exercise.studentParticipations = [studentParticipation];
-
-        getAllParticipationsStub.mockReturnValue([studentParticipation]);
-        comp.ngOnChanges();
-        comp.ngOnInit();
-    };
 
     const setupExercise = (exerciseType: ExerciseType, dueDate: dayjs.Dayjs) => {
         comp.exercise = {

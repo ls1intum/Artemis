@@ -3,7 +3,7 @@ import { DebugElement } from '@angular/core';
 import { Subject, of } from 'rxjs';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { ExerciseMode, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { ExerciseMode, ExerciseType } from 'app/entities/exercise.model';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
