@@ -132,7 +132,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             jest.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
-            comp.backupExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
             // WHEN
             comp.save();
@@ -149,6 +149,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
             comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
             // WHEN
             comp.save();
@@ -166,6 +167,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             entity.title = 'My Exercise   ';
             jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 1 } })));
             comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
 
             // WHEN
