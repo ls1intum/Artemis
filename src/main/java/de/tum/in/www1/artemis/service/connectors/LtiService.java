@@ -5,10 +5,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -29,7 +32,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 
 @Service
@@ -47,16 +50,16 @@ public class LtiService {
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private final TokenProvider tokenProvider;
+    private final JWTCookieService jwtCookieService;
 
     private final LtiUserIdRepository ltiUserIdRepository;
 
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            TokenProvider tokenProvider, LtiUserIdRepository ltiUserIdRepository) {
+            JWTCookieService jwtCookieService, LtiUserIdRepository ltiUserIdRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
-        this.tokenProvider = tokenProvider;
+        this.jwtCookieService = jwtCookieService;
         this.ltiUserIdRepository = ltiUserIdRepository;
     }
 
@@ -69,18 +72,23 @@ public class LtiService {
      * @param firstName the user's firstname if we create a new user
      * @param lastName the user's lastname if we create a new user
      * @param requireExistingUser false if it's not allowed to create new users
-     * @param lookupUserByEmail false if it's not allowed to find existing users with the provided email
      * @throws InternalAuthenticationServiceException if no email is provided, or if no user can be authenticated, this exception will be thrown
      */
-    public void authenticateLtiUser(String email, String userId, String username, String firstName, String lastName, boolean requireExistingUser, boolean lookupUserByEmail)
+    public void authenticateLtiUser(String email, String userId, String username, String firstName, String lastName, boolean requireExistingUser)
             throws InternalAuthenticationServiceException {
-        if (SecurityUtils.isAuthenticated()) {
-            // 1. Case: User is already signed in. We are done here.
-            return;
-        }
 
         if (StringUtils.isEmpty(email)) {
             throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
+        }
+
+        if (SecurityUtils.isAuthenticated()) {
+            User user = userRepository.getUser();
+            if (email.equalsIgnoreCase(user.getEmail())) { // 1. Case: User is already signed in and email matches the one provided in the launch
+                return;
+            }
+            else {
+                SecurityContextHolder.getContext().setAuthentication(null); // User is signed in but email does not match, meaning launch is for a different user
+            }
         }
 
         // 2. Case: Existing mapping for LTI user id
@@ -92,14 +100,11 @@ public class LtiService {
             return;
         }
 
-        // 3. Case: Lookup user with the LTI email address and sign in as this user if lookup by email is enabled
-        if (lookupUserByEmail) {
-            // check if a user with this email address exists
-            final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
-            if (usernameLookupByEmail.isPresent()) {
-                SecurityContextHolder.getContext().setAuthentication(loginUserByEmail(usernameLookupByEmail.get(), email));
-                return;
-            }
+        // 3. Case: Lookup user with the LTI email address and sign in as this user
+        final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
+        if (usernameLookupByEmail.isPresent()) {
+            SecurityContextHolder.getContext().setAuthentication(loginUserByEmail(usernameLookupByEmail.get(), email));
+            return;
         }
 
         // 4. Case: Create new user if an existing user is not required
@@ -197,21 +202,24 @@ public class LtiService {
     }
 
     /**
-     * Adds the necessary query params for an LTI launch.
+     * Build the response for the LTI launch to include the necessary query params and the JWT cookie.
      *
      * @param uriComponentsBuilder the uri builder to add the query params to
+     * @param response the response to add the JWT cookie to
      */
-    public void addLtiQueryParams(UriComponentsBuilder uriComponentsBuilder) {
+    public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         User user = userRepository.getUser();
 
         if (!user.getActivated()) {
+            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
             uriComponentsBuilder.queryParam("initialize", "");
-            String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), true);
-            log.debug("created jwt token: {}", jwt);
-            uriComponentsBuilder.queryParam("jwt", jwt);
         }
         else {
-            uriComponentsBuilder.queryParam("jwt", "");
+            ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
             uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }
     }

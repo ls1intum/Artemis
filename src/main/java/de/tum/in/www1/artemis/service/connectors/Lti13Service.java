@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
 import org.joda.time.DateTime;
@@ -99,7 +100,7 @@ public class Lti13Service {
         }
 
         ltiService.authenticateLtiUser(ltiIdToken.getEmail(), ltiIdToken.getSubject(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration),
-                ltiIdToken.getGivenName(), ltiIdToken.getFamilyName(), false, true);
+                ltiIdToken.getGivenName(), ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
         User user = userRepository.getUserWithGroupsAndAuthorities();
         ltiService.onSuccessfulLtiAuthentication(user, ltiIdToken.getSubject(), targetExercise.get());
 
@@ -284,11 +285,12 @@ public class Lti13Service {
     }
 
     /**
-     * Adds the necessary query params for an LTI launch.
+     * Build the response for the LTI launch.
      *
      * @param uriComponentsBuilder the uri builder to add the query params to
+     * @param response the response to add the JWT cookie to
      */
-    public void addLtiQueryParams(UriComponentsBuilder uriComponentsBuilder) {
-        ltiService.addLtiQueryParams(uriComponentsBuilder);
+    public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
+        ltiService.buildLtiResponse(uriComponentsBuilder, response);
     }
 }

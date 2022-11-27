@@ -92,7 +92,7 @@ describe('Course management', () => {
             cy.get('#field_shortName').type(courseShortName);
             cy.get('#field_testCourse').check();
             cy.get('#field_customizeGroupNamesEnabled').uncheck();
-            cy.intercept(POST, BASE_API + 'courses').as('createCourseQuery');
+            cy.intercept(POST, BASE_API + 'admin/courses').as('createCourseQuery');
             cy.get('#save-entity').click();
             cy.wait('@createCourseQuery').then((request: Interception) => {
                 courseId = request.response!.body.id!;

@@ -151,7 +151,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         participation.team = undefined;
         component.isTeamParticipation = false;
         url = component.getHttpOrSshRepositoryUrl();
-        expect(url).toBe(info.versionControlUrl!);
+        expect(url).toBe(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should get copy the repository url', () => {
@@ -169,7 +169,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         participation.team = undefined;
         component.isTeamParticipation = false;
         url = component.getHttpOrSshRepositoryUrl();
-        expect(url).toBe(info.versionControlUrl!);
+        expect(url).toBe(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should insert the correct token in the repository url', () => {
@@ -228,12 +228,12 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.ngOnChanges();
 
         expect(component.isTeamParticipation).toBeFalse();
-        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git');
+        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://user1@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git');
         expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.clonePracticeRepository');
 
         component.switchPracticeMode();
 
-        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git');
+        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://user1@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git');
         expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.cloneRatedRepository');
     });
 
@@ -244,7 +244,7 @@ describe('JhiCloneRepoButtonComponent', () => {
         component.ngOnInit();
 
         expect(component.isTeamParticipation).toBeFalsy();
-        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
+        expect(component.getHttpOrSshRepositoryUrl()).toBe('https://user1@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
     });
 
     it('should fetch and store ssh preference', fakeAsync(() => {

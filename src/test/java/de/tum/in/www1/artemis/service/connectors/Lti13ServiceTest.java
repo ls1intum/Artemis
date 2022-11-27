@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -108,7 +110,7 @@ class Lti13ServiceTest {
 
         User user = new User();
         doReturn(user).when(userRepository).getUserWithGroupsAndAuthorities();
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any(), any());
 
         lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
@@ -136,7 +138,7 @@ class Lti13ServiceTest {
 
         User user = new User();
         doReturn(user).when(userRepository).getUserWithGroupsAndAuthorities();
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean(), anyBoolean());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any(), any());
 
         assertThrows(IllegalArgumentException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
@@ -264,11 +266,11 @@ class Lti13ServiceTest {
     }
 
     @Test
-    void addLtiQueryParamsCallLtiService() {
+    void buildLtiResponseCallLtiService() {
 
-        lti13Service.addLtiQueryParams(UriComponentsBuilder.newInstance());
+        lti13Service.buildLtiResponse(UriComponentsBuilder.newInstance(), mock(HttpServletResponse.class));
 
-        verify(ltiService, times(1)).addLtiQueryParams(any());
+        verify(ltiService, times(1)).buildLtiResponse(any(), any());
     }
 
     @Test
