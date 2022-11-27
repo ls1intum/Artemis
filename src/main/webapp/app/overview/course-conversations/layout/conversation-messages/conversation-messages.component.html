@@ -5,7 +5,13 @@
                 <!-- search bar -->
                 <div class="bold-line row mt-2 mb-3"></div>
                 <div class="input-group col-10 px-0">
-                    <input name="searchText" [(ngModel)]="searchText" class="form-control" placeholder="{{ 'artemisApp.messages.searchBarPlaceholder' | artemisTranslate }}" />
+                    <input
+                        id="postSearch"
+                        name="searchText"
+                        [(ngModel)]="searchText"
+                        class="form-control"
+                        placeholder="{{ 'artemisApp.messages.searchBarPlaceholder' | artemisTranslate }}"
+                    />
                     <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSearch()"></jhi-button>
                     <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSearch()"></jhi-button>
                 </div>
@@ -23,7 +29,6 @@
             </div>
             <!-- list of messages -->
             <div
-                *ngIf="_activeConversation"
                 id="scrollableDiv"
                 #container
                 class="{{ totalNumberOfPosts !== 0 ? 'posting-infinite-scroll-container' : '' }}"
@@ -31,6 +36,8 @@
                 [scrollWindow]="false"
                 (scrolledUp)="fetchNextPage()"
             >
+                <!-- list of all top level posts -->
+                <!-- answers are opened in the thread sidebar -->
                 <jhi-posting-thread
                     #postingThread
                     *ngFor="let post of posts; trackBy: postsTrackByFn"

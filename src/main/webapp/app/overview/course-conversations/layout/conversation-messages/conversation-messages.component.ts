@@ -1,12 +1,12 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { Subject, Subscription, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { Channel, getAsChannel, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Channel, getAsChannelDto, isChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
@@ -35,9 +35,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     previousScrollDistanceFromTop: number;
     // as set for the css class '.posting-infinite-scroll-container'
     messagesContainerHeight = 350;
-
-    private scrollBottomSubscription: Subscription;
-    private postInThread: Post;
+    postDisplayedInThread: Post;
 
     currentPostContextFilter?: PostContextFilter;
     searchText?: string;
@@ -47,13 +45,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     posts: Post[] = [];
     totalNumberOfPosts = 0;
     page = 1;
-
     public isFetchingPosts = true;
-
-    // subscriptions
-    metisPostsSubscription: Subscription;
-    metisTotalNumberOfPostsSubscription: Subscription;
-
     // Icons
     faTimes = faTimes;
     faSearch = faSearch;
@@ -63,10 +55,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     constructor(
         protected metisService: MetisService, // instance from course-messages.component
         public metisConversationService: MetisConversationService, // instance from course-messages.component
+        public cdr: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
         this.course = this.metisConversationService.course!;
+        this.cdr.detectChanges();
         this.setupMetis();
         this.subscribeToMetis();
         this.subscribeToActiveConversation();
@@ -102,11 +96,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private subscribeToMetis() {
-        this.metisPostsSubscription = this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
+        this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.setPosts(posts);
             this.isFetchingPosts = false;
         });
-        this.metisTotalNumberOfPostsSubscription = this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
+        this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
         });
     }
@@ -127,8 +121,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     setPosts(posts: Post[]): void {
         this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
         this.posts = posts.slice().reverse();
-        if (this.postInThread) {
-            this.setPostForThread(posts.find((post) => post.id === this.postInThread?.id)!);
+        if (this.postDisplayedInThread) {
+            this.setPostForThread(posts.find((post) => post.id === this.postDisplayedInThread?.id)!);
         }
     }
 
@@ -179,7 +173,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     postsTrackByFn = (index: number, post: Post): number => post.id!;
 
     setPostForThread(post: Post) {
-        this.postInThread = post;
+        this.postDisplayedInThread = post;
         this.openThread.emit(post);
     }
     handleScrollOnNewMessage = () => {
