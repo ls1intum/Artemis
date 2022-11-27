@@ -12,6 +12,7 @@
                 "searchForUsers": "Benutzer im Kurs suchen",
                 "minQueryLengthHint": "Tippe min. {{ Länge }} Buchstaben",
                 "others": "{{ count }} andere",
+                "onlyYou": "Nur du",
                 "allFilter": "Alle Mitglieder:innen",
                 "instructorFilter": "Lehrende",
                 "editorFilter": "Editor:innen",

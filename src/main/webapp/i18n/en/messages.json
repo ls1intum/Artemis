@@ -12,6 +12,7 @@
                 "searchForUsers": "Search users within course",
                 "minQueryLengthHint": "Type min. {{ length }} letters",
                 "others": "{{ count }} others",
+                "onlyYou": "Only you",
                 "allFilter": "All Members",
                 "instructorFilter": "Course Instructors",
                 "editorFilter": "Course Editors",
