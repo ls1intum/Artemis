@@ -224,14 +224,15 @@ public class ConversationService {
      * @param courseId          courseId id of the course that the messaging is happening
      * @param conversationId    conversationId id of the conversation with participants
      */
-    public void unreadMessages(Long userId, Long courseId, Long conversationId) {
+    public void updateUnreadMessagesCountOfParticipants(Long userId, Long courseId, Long conversationId) {
 
         List<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversationId);
-        ConversationParticipant receiverConversationParticipants = conversationParticipants.stream()
-                .filter(conversationParticipant -> conversationParticipant.getUser().getId() != userId).findAny().get();
-        long unreadMessagesCount = conversationRepository.findUnreadMessages(courseId, receiverConversationParticipants.getUser().getId(), conversationId);
-
-        receiverConversationParticipants.setUnreadMessagesCount(unreadMessagesCount);
-        conversationParticipantRepository.save(receiverConversationParticipants);
+        conversationParticipants.forEach((conversationParticipant) -> {
+            if (conversationParticipant.getUser().getId() != userId) {
+                long unreadMessagesCount = conversationRepository.findUnreadMessages(courseId, conversationParticipant.getUser().getId(), conversationId);
+                conversationParticipant.setUnreadMessagesCount(unreadMessagesCount);
+                conversationParticipantRepository.save(conversationParticipant);
+            }
+        });
     }
 }

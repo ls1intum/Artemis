@@ -7,8 +7,7 @@ import { MessagingService } from 'app/shared/metis/messaging.service';
 })
 export class UnreadMessagesPipe implements PipeTransform {
     constructor(private courseMessagesService: MessagingService) {}
-    transform(conversation: Conversation, ...args: unknown[]): number {
-        console.log('test pipe');
+    transform(conversation: Conversation): number {
         const conversationParticipant = conversation.conversationParticipants!.find(
             (conversationParticipants) => conversationParticipants.user.id === this.courseMessagesService.userId,
         )!;
