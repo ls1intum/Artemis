@@ -17,7 +17,6 @@
                 [activeConversation]="activeConversation"
                 [course]="course"
                 jhi-conversation-sidebar-entry
-                [isActive]="activeConversation && conversation && activeConversation.id! === conversation.id!"
                 (click)="conversationSelected.emit(conversation)"
                 (settingsChanged)="settingsChanged.emit()"
             ></li>
@@ -32,7 +31,6 @@
                         [activeConversation]="activeConversation"
                         [course]="course"
                         jhi-conversation-sidebar-entry
-                        [isActive]="activeConversation && conversation && activeConversation.id! === conversation.id!"
                         (click)="conversationSelected.emit(conversation)"
                         (settingsChanged)="settingsChanged.emit()"
                     ></li>

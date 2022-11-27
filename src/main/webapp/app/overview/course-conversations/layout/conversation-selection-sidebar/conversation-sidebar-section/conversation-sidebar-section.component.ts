@@ -61,7 +61,7 @@ export class ConversationSidebarSectionComponent implements OnInit {
     // icon imports
     faChevronRight = faChevronRight;
 
-    constructor(public conversationService: ConversationService, private localStorageService: LocalStorageService) {}
+    constructor(public conversationService: ConversationService, public localStorageService: LocalStorageService) {}
 
     conversationsTrackByFn = (index: number, conversation: ConversationDto): number => conversation.id!;
     showHiddenConversations = false;

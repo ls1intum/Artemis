@@ -37,27 +37,28 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     @Input()
     activeConversation: ConversationDto | undefined;
 
-    @Input()
-    isActive: boolean | undefined = false;
-
     @Output()
     settingsChanged = new EventEmitter<void>();
-
     faEllipsis = faEllipsis;
     faMessage = faMessage;
     constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal) {}
 
-    isConversationUnread(conversation: ConversationDto): boolean {
+    get isConversationUnread(): boolean {
         // do not show unread badge for open conversation that the user is currently reading
-        if (this.activeConversation && this.activeConversation.id === conversation.id) {
+        if (this.isActiveConversation || !this.conversation) {
             return false;
         } else {
-            return !!(conversation.lastReadDate && conversation.lastMessageDate && conversation.lastReadDate.isBefore(conversation.lastMessageDate));
+            return !!(this.conversation.lastReadDate && this.conversation.lastMessageDate && this.conversation.lastReadDate.isBefore(this.conversation.lastMessageDate));
         }
+    }
+
+    get isActiveConversation() {
+        return this.activeConversation && this.conversation && this.activeConversation.id! === this.conversation.id!;
     }
 
     getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
+
     isOneToOneChat = isOneToOneChatDto;
     getConversationName = this.conversationService.getConversationName;
 
