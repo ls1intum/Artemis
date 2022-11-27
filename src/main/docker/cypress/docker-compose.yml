@@ -7,16 +7,18 @@ services:
             file: ../mysql.yml
             service: artemis-mysql
         healthcheck:
-            test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-            interval: 1s
+            test: mysqladmin ping -h localhost
+            interval: 5s
             timeout: 3s
             retries: 30
+            start_period: 30s
 
     artemis-app:
         build:
             # This is required to copy the Artemis war file properly into the container
             context: ../../../..
             dockerfile: src/main/docker/Dockerfile
+        restart: "unless-stopped"
         volumes:
             - ../../resources/config/application-prod.yml:/opt/artemis/config/application-prod.yml:ro
             - ./application.yml:/opt/artemis/config/application.yml:ro
@@ -46,8 +48,9 @@ services:
         networks:
             - artemis
         healthcheck:
-            test: [ "CMD", "wget" ,"-nv", "-t1", "--spider", "http://localhost:8080" ]
-            interval: 15s
+            test: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
+            start_period: 300s
+            interval: 1s
         depends_on:
             artemis-mysql:
                 condition: service_healthy
@@ -113,6 +116,12 @@ services:
         ports:
             - 80:80
             - 443:443
+        depends_on:
+            artemis-app:
+                condition: service_started
+        healthcheck:
+            test: service nginx status || exit 1
+            start_period: 30s
         networks:
             - artemis
 
@@ -133,8 +142,7 @@ services:
             - CYPRESS_tutorGroupName
             - CYPRESS_editorGroupName
             - CYPRESS_instructorGroupName
-        # Wait up to 5 minutes until Artemis has booted
-        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm exec -- wait-on -i 1000 -t 300000 https://artemis-nginx && npm run cypress:run"
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:run"
         volumes:
             - ../../../../:/app/artemis
         networks:
