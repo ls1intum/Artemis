@@ -58,7 +58,6 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     getAsChannel = getAsChannelDto;
     getAsGroupChat = getAsGroupChatDto;
-
     isOneToOneChat = isOneToOneChatDto;
     getConversationName = this.conversationService.getConversationName;
 
